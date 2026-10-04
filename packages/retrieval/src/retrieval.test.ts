@@ -139,6 +139,24 @@ test("an embedder that is down never breaks the library: sections are stored and
   expect((await search(db, { query: "azithromycin dose", hospitalId: "h1" }, down)).map(h => h.sourceId)).toEqual(["ats-2019#macrolides"]);
 });
 
+test("a search says how it was really made: keywords alone when the embedder is down, unranked when the reranker is", async () => {
+  const db = await createTestDb();
+  await ingest(db, guideline, guidelineText, stubEmbedder);
+  const asked = { query: "azithromycin dose", hospitalId: "h1" };
+  // No reranker given: nothing to report about ranking.
+  const plain = await search(db, asked, stubEmbedder);
+  expect([plain.retrieval, plain.ranked]).toEqual(["hybrid", undefined]);
+  expect((await search(db, asked, down)).retrieval).toBe("keywords");
+  const ranked = await search(db, asked, stubEmbedder, async (_q, passages) => passages.map(() => 0.5));
+  expect(ranked.ranked).toBe(true);
+  // A reranker that fails, or scores the wrong number of passages, leaves the fused order and scores as they were.
+  for (const broken of [async () => { throw new Error("box ② is starting"); }, async () => [0.9]]) {
+    const hits = await search(db, asked, stubEmbedder, broken);
+    expect([hits.retrieval, hits.ranked]).toEqual(["hybrid", false]);
+    expect(hits.map(h => [h.sourceId, h.score])).toEqual(plain.map(h => [h.sourceId, h.score]));
+  }
+});
+
 test("a re-index gives every section its vector from the current embedder, and search then finds a passage by meaning alone", async () => {
   const db = await createTestDb();
   await ingest(db, guideline, guidelineText, down);

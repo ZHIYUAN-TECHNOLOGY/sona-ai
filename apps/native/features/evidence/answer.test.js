@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { basis, calmTerms, forPatient, searchedLine, sections, stepLines, strength, unanswered } from "./answer";
+import { basis, calmTerms, fallbackNote, forPatient, searchedLine, sections, stepLines, strength, unanswered } from "./answer";
 
 const refs = [
   { n: 1, design: "Guideline" }, { n: 2, design: "Trial" }, { n: 3, design: "Trial" }, { n: 4, design: "Library" },
@@ -57,4 +57,17 @@ test("a model that did not answer is said as that, or as starting; never as too 
   expect(unanswered({ source: "fixture", enough: true })).toBeUndefined();
   expect(unanswered({ source: "cached", enough: true })).toBeUndefined();
   expect(unanswered(undefined)).toBeUndefined();
+});
+
+test("an answer made with less than usual says so in one plain line; a fallback that changed nothing on screen is not mentioned", () => {
+  const study = { kind: "study" }, passage = { kind: "library" };
+  expect(fallbackNote({ references: [study, passage], retrieval: "hybrid", ranked: true })).toBeUndefined();
+  expect(fallbackNote({ references: [study, passage], retrieval: "hybrid" })).toBeUndefined();
+  expect(fallbackNote({ references: [study, passage], retrieval: "hybrid", ranked: false })).toBe("Library passages are not ranked for relevance: Sona's ranking model did not answer.");
+  // Keywords alone is the larger fallback, so it is the one said.
+  expect(fallbackNote({ references: [passage], retrieval: "keywords", ranked: false })).toBe("Your library was searched by keywords only: Sona's search model did not answer.");
+  // No library passage among the sources: nothing of the library's search shows, so nothing is said of it.
+  expect(fallbackNote({ references: [study], retrieval: "keywords", ranked: false })).toBeUndefined();
+  expect(fallbackNote({ references: [study], cutShort: true })).toBe("Sona's model stopped before finishing, so this answer may be missing a point.");
+  expect(fallbackNote(undefined)).toBeUndefined();
 });

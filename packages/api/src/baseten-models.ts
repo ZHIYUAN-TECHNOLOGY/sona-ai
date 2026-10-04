@@ -69,6 +69,7 @@ Answer with JSON only: {"bottomLine": "<one sentence>", "claims": [{"text": "<on
 Rules:
 - bottomLine: the direct answer to the question in one short sentence, drawn only from your claims.
 - 2 to 4 claims, each supported by and citing at least one numbered source. Never state a dose, number or finding that a cited source does not contain.
+- cites: the numbers in square brackets before the sources the claim rests on, as integers (never a PMID).
 - topic: "dose" for doses and durations, "harms" for side effects and risks, otherwise "evidence".
 - quotes: for each source a claim cites, copy the one sentence from that source that supports it, word for word.
 - Say how strong each claim is in words from the source's design (a guideline recommends, a randomised trial found, a review concluded).
@@ -307,8 +308,11 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
 
     async synthesiseEvidence(input) {
       try {
-        const read = await brain(EVIDENCE, evidenceQuestion(input), 900);
-        if (read && Array.isArray(read.claims)) return { ...evidenceOf(read), source: "model", model: BRAIN_MODEL };
+        const asked = evidenceQuestion(input);
+        const out = await call("brain", "/v1/chat/completions", JSON.stringify(evidenceChat(asked.content)), "application/json", EVIDENCE_MS);
+        const choice = out?.choices?.[0];
+        const read = evidenceRead(choice?.message?.content, asked.shown, choice?.finish_reason === "length");
+        if (read) return { ...read, source: "model", model: BRAIN_MODEL };
       } catch { /* falls back below */ }
       return fallback.synthesiseEvidence(input);
     },
@@ -448,54 +452,124 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
    */
   async function* streamEvidence(input: EvidenceInput): AsyncGenerator<EvidencePart, Awaited<ReturnType<Models["synthesiseEvidence"]>>> {
     try {
-      const body = JSON.stringify({ model: BRAIN_MODEL, messages: [{ role: "system", content: EVIDENCE }, { role: "user", content: evidenceQuestion(input) }], stream: true, temperature: 0.1, max_tokens: 900 });
-      const res = await send("brain", "/v1/chat/completions", body, "application/json", 60_000);
+      const asked = evidenceQuestion(input);
+      const res = await send("brain", "/v1/chat/completions", JSON.stringify({ ...evidenceChat(asked.content), stream: true }), "application/json", EVIDENCE_MS);
       let written = "", bottom = false, sent = 0;
       for await (const delta of deltas(res.body!, () => answered("brain"))) {
         written += delta;
         const part = partialEvidence(written);
         if (!bottom && part.bottomLine?.trim()) { bottom = true; yield { bottomLine: part.bottomLine.trim().slice(0, 240) }; }
-        for (const claim of evidenceOf({ claims: part.claims.slice(sent) }).claims) yield { claim };
+        for (const claim of evidenceOf({ claims: part.claims.slice(sent) }, asked.shown).claims) yield { claim };
         sent = part.claims.length;
       }
-      const read = jsonIn(written);
-      if (read && Array.isArray(read.claims)) return { ...evidenceOf(read), source: "model", model: BRAIN_MODEL };
+      // The stream's text carries no finish reason (./sse), but an answer cut at the length limit never closes its JSON,
+      // so it is read the same way: the claims that closed are kept, marked cut short; none closed, and it is asked whole.
+      const read = evidenceRead(written, asked.shown);
+      if (read) return { ...read, source: "model", model: BRAIN_MODEL };
     } catch { /* the whole answer below */ }
     return await wrapped.synthesiseEvidence(input);
   }
   return { ...wrapped, streamEvidence };
 }
 
-/** The question, the thread so far and the numbered sources, as the evidence prompt reads them. */
-function evidenceQuestion(input: EvidenceInput) {
-  const sources = input.sources.map(s => `[${s.n}] (${s.design}${s.year ? `, ${s.year}` : ""}) ${s.title}\n${s.text}`).join("\n\n");
-  const thread = input.thread.map(t => `Earlier question: ${t.question}\nEarlier answer: ${t.answer}`).join("\n");
-  return `${thread ? `${thread}\n\n` : ""}Question: ${input.question}\n\nSources:\n${sources}`;
+/**
+ * The evidence prompt's size. Gemma's box reads 16,384 tokens in all (vLLM --max-model-len, packages/infra/baseten/brain
+ * and aws/brain), the answer included. The answer gets 2,000: four claims of two sentences, each with a copied sentence
+ * from up to three sources, run to about 1,800 (900 cut answers off mid-claim). The rest, less 384 for the chat
+ * template, is the prompt, counted at 3 characters a token.
+ * ponytail: characters stand in for tokens (no tokenizer in the Worker). English abstracts run nearer 4 a token, so
+ * this errs short; a Chinese library passage is nearer 1, and a prompt full of them would be refused by the box
+ * (said as the model not answering). Count with the model's tokenizer if the library goes multilingual.
+ */
+const CONTEXT_TOKENS = 16_384, EVIDENCE_MAX_TOKENS = 2000, CHARS_PER_TOKEN = 3;
+const PROMPT_CHARS = (CONTEXT_TOKENS - EVIDENCE_MAX_TOKENS - 384) * CHARS_PER_TOKEN;
+/** 2,000 tokens can take longer to write than the 30 s other calls get. */
+const EVIDENCE_MS = 60_000;
+const evidenceChat = (content: string) => ({ model: BRAIN_MODEL, messages: [{ role: "system", content: EVIDENCE }, { role: "user", content }], temperature: 0.1, max_tokens: EVIDENCE_MAX_TOKENS });
+
+/** A source as the evidence route sends it: for a PubMed study, its journal and PMID too (optional: the stub reads neither). */
+type EvidenceSource = EvidenceInput["sources"][number] & { from?: string; pmid?: string };
+/** An evidence answer, and whether it was cut short: the model stopped before closing it, so only its finished claims are in it. */
+type EvidenceRead = EvidenceAnswer & { cutShort?: boolean };
+
+/** The start of `text` that fits in `max` characters without ending mid-sentence; "" when not even its first sentence fits. */
+function wholeSentences(text: string, max: number) {
+  if (text.length <= max) return text;
+  // ponytail: a full stop before a space ends a sentence, so "vs. placebo" can end one early; nothing is cut inside a number.
+  const end = [...text.slice(0, Math.max(0, max + 1)).matchAll(/[.!?](?=\s)/g)].at(-1);
+  return end ? text.slice(0, end.index + 1) : "";
 }
 
 /**
- * Gemma's evidence JSON as an answer: claims with text and numeric cites (their topic and quotes passed on for the route
- * to check: sourcedClaims drops claims citing nothing or a number outside the sources, quotedClaims keeps only quotes the
- * source says), up to 3 follow-ups, the general answer and the bottom line.
+ * The question, the thread so far and the numbered sources, as the evidence prompt reads them, and the sources that are
+ * in it. Sources come ranked (PubMed's best evidence first, then the library's passages), so each goes in whole while
+ * there is room; the first that does not fit is cut at a sentence end and the ones after it are left out (`shown` has
+ * neither, so a claim cannot cite what the model never read).
  */
-function evidenceOf(read: Record<string, unknown>): EvidenceAnswer {
-  const claims = (Array.isArray(read.claims) ? read.claims : []).flatMap((c: { text?: unknown; cites?: unknown; topic?: unknown; quotes?: unknown }) => typeof c?.text === "string" && Array.isArray(c.cites)
-    ? [{ text: c.text.trim(), cites: c.cites.filter((n: unknown): n is number => Number.isInteger(n)), topic: c.topic as Claim["topic"],
-      quotes: Array.isArray(c.quotes) ? c.quotes.filter((q: { n?: unknown; text?: unknown }) => Number.isInteger(q?.n) && typeof q?.text === "string") : undefined }] : []);
+function evidenceQuestion(input: EvidenceInput) {
+  const thread = input.thread.map(t => `Earlier question: ${t.question}\nEarlier answer: ${t.answer}`).join("\n");
+  const head = `${thread ? `${thread}\n\n` : ""}Question: ${input.question}\n\nSources:\n`;
+  let room = PROMPT_CHARS - EVIDENCE.length - head.length;
+  const shown: EvidenceSource[] = [], blocks: string[] = [];
+  for (const s of input.sources as EvidenceSource[]) {
+    const title = `[${s.n}] (${[s.design, s.year, s.from, s.pmid && `PMID ${s.pmid}`].filter(Boolean).join(", ")}) ${s.title}\n`;
+    const text = wholeSentences(s.text, room - title.length - 2);
+    if (!text && s.text) break;
+    blocks.push(title + text); shown.push(s); room -= title.length + text.length + 2;
+  }
+  return { content: head + blocks.join("\n\n"), shown };
+}
+
+/**
+ * The sources a citation names, however Gemma wrote it: 1, "1", "[1, 2]", "[1][2]", "(1)", "Source 2", or a study's PMID
+ * in place of its number. Only numbers of sources that were in the prompt come back: anything else names nothing.
+ */
+function citedSources(raw: unknown, sources: { n: number; pmid?: string }[]): number[] {
+  const numbers = [raw].flat(3).flatMap(c => (typeof c === "number" ? [c] : typeof c === "string" ? (c.match(/\d+/g) ?? []).map(Number) : []));
+  return [...new Set(numbers.flatMap(n => { const s = sources.find(s => s.n === n) ?? sources.find(s => s.pmid === String(n)); return s ? [s.n] : []; }))];
+}
+// Citations written into a claim's own sentence: "[1]", "[1, 2]", "[PMID 25608756]" anywhere (never "[95% CI 1.2 to 3]"), "(1)" only at its end.
+const INLINE_CITES = /\s*\[\s*(?:(?:PMID|source)?:?\s*\d+\s*[,;]?\s*)+\]|\s*\(\s*(?:\d{1,2}\s*[,;]?\s*)+\)(?=[\s.]*$)/gi;
+
+/**
+ * Gemma's evidence JSON as an answer: claims with text and cites, up to 3 follow-ups, the general answer and the bottom
+ * line. A claim's citations are read from its `cites` however they are written, and from its own sentence (then taken
+ * out of it, since the card shows them as pills); a claim left citing no source that was in the prompt is dropped here,
+ * never shown uncited. The route checks again (sourcedClaims), and keeps only quotes the cited source says (quotedClaims).
+ */
+function evidenceOf(read: Record<string, unknown>, shown: EvidenceSource[]): EvidenceAnswer {
+  const claims = (Array.isArray(read.claims) ? read.claims : []).flatMap((c: { text?: unknown; cites?: unknown; topic?: unknown; quotes?: unknown }) => {
+    if (typeof c?.text !== "string") return [];
+    const cites = citedSources([c.cites, c.text.match(INLINE_CITES) ?? []], shown);
+    const quotes = Array.isArray(c.quotes) ? c.quotes.flatMap((q: { n?: unknown; text?: unknown }) => { const [n] = citedSources(q?.n, shown); return n && typeof q?.text === "string" ? [{ n, text: q.text }] : []; }) : undefined;
+    return cites.length ? [{ text: c.text.replace(INLINE_CITES, "").trim(), cites, topic: c.topic as Claim["topic"], quotes }] : [];
+  });
   return { claims, followUps: strings(read.followUps, 3), general: text(read.general), bottomLine: text(read.bottomLine, 240) };
 }
 
 /**
- * bge-reranker-v2-m3 in box ②. When the box is asleep or slow, the hybrid order stands (scores fall in
- * rank order) so a search never fails on it, and the box is woken for the next one.
+ * What Gemma wrote, as an answer; undefined when it is no answer at all. An answer whose JSON closed is read whole. One
+ * that did not (it hit the length limit, `cut`, or the reply broke off) is never read as complete: the claims that
+ * closed before the cut are kept, each still whole and cited, and the answer says it was cut short; with none, it is no answer.
+ */
+function evidenceRead(written: unknown, shown: EvidenceSource[], cut = false): EvidenceRead | undefined {
+  const read = jsonIn(written);
+  if (read && (Array.isArray(read.claims) || typeof read.general === "string")) return { ...evidenceOf(read, shown), ...cut && { cutShort: true } };
+  const part = partialEvidence(typeof written === "string" ? written : "");
+  const kept = evidenceOf({ claims: part.claims, bottomLine: part.bottomLine }, shown);
+  return kept.claims.length ? { ...kept, cutShort: true } : undefined;
+}
+
+/**
+ * bge-reranker-v2-m3 in box ②. When the box is asleep or slow it throws, and the box is woken for the next search:
+ * the search keeps its hybrid order and says the ranking did not run (packages/retrieval), where returning stand-in
+ * scores passed that order off as ranked.
  */
 export function basetenReranker(options: Baseten): Reranker {
   const { call } = boxes(options);
   return async (query, passages) => {
-    try {
-      const out = await call("voice", "/v1/rerank", JSON.stringify({ query, passages }), "application/json", 8000);
-      if (Array.isArray(out?.scores) && out.scores.length === passages.length) return out.scores as number[];
-    } catch { /* keeps the hybrid order below */ }
-    return passages.map((_, i) => -i);
+    const out = await call("voice", "/v1/rerank", JSON.stringify({ query, passages }), "application/json", 8000);
+    if (Array.isArray(out?.scores) && out.scores.length === passages.length) return out.scores as number[];
+    throw new Error("The reranker gave no scores");
   };
 }

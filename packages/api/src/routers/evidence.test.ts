@@ -38,6 +38,8 @@ async function signedIn(fetcher: typeof fetch, signed = true, models?: Models) {
 }
 
 const REHEARSED_Q = "Steroids for this patient with community-acquired pneumonia?";
+/** A sentence from the findings of the prednisone trial's abstract (not its conclusion). */
+const RARE_HARMS = "Other adverse events compatible with corticosteroid use were rare and similar in both groups.";
 /** Claims without their proof, to compare with the authored ones (their quotes are checked on their own). */
 const bare = (claims: Claim[]) => claims.map(({ quotes: _, ...c }) => c);
 
@@ -124,15 +126,25 @@ test("with a model configured the rehearsed question is searched and written lik
   let seen: Parameters<Models["synthesiseEvidence"]>[0] | undefined;
   const models: Models = { ...stubModels, synthesiseEvidence: async input => {
     seen = input;
-    return { bottomLine: "It shortens time to stability.", claims: [{ text: "A randomised trial found prednisone shortened time to clinical stability.", cites: [1], topic: "evidence" }], followUps: ["At what dose?"], source: "model", model: "gemma-test" };
+    return { bottomLine: "It shortens time to stability.", claims: [{ text: "A randomised trial found prednisone shortened time to clinical stability.", cites: [1], topic: "evidence", quotes: [{ n: 1, text: RARE_HARMS }] }], followUps: ["At what dose?"], source: "model", model: "gemma-test" };
   } };
   const { api, db } = await signedIn(fetcher, true, models);
   const r = await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
   expect(state.calls.some(u => u.includes("esearch") && u.includes("steroids"))).toBe(true);
-  // The model read the study's own abstract, not the authored summary of it.
-  expect(seen).toMatchObject({ question: REHEARSED_Q, sources: [{ n: 1, design: "Trial", year: 2015, text: expect.stringMatching(/^Prednisone treatment for 7 days/) }] });
+  // The model read the study's whole abstract (not its conclusion alone, nor the authored summary), with its journal and PMID.
+  const whole = /^BACKGROUND: Clinical trials yielded[\s\S]*\nFINDINGS: [\s\S]*3·0 days[\s\S]*\nINTERPRETATION: Prednisone treatment for 7 days[^\n]*$/;
+  expect(seen).toMatchObject({ question: REHEARSED_Q, sources: [{ n: 1, design: "Trial", year: 2015, from: "Lancet", pmid: "25608756", text: expect.stringMatching(whole) }] });
   expect({ source: r.source, enough: r.enough, bottomLine: r.bottomLine, followUps: r.followUps }).toEqual({ source: "gemma-test", enough: true, bottomLine: "It shortens time to stability.", followUps: ["At what dose?"] });
   expect(bare(r.claims)).toEqual([{ text: "A randomised trial found prednisone shortened time to clinical stability.", cites: [1], topic: "evidence" }]);
+  // Its quote is from the abstract's findings: kept, because the abstract says it, while the source card still shows the conclusion.
+  expect(r.claims[0]!.quotes).toEqual([{ n: 1, text: RARE_HARMS }]);
+  expect(r.references[0]!.text).toStartWith("Prednisone treatment for 7 days");
+  // With PubMed down, the saved copy is the whole abstract too.
+  state.down = true;
+  const offline = await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
+  expect([offline.pubmed, offline.references[0]!.text.slice(0, 31), offline.claims[0]!.quotes]).toEqual(["cached", "Prednisone treatment for 7 days", [{ n: 1, text: RARE_HARMS }]]);
+  expect(seen!.sources[0]!.text).toMatch(whole);
+  state.down = false;
   expect(r.references.map(s => [s.pmid, s.text === STUDIES[1]!.finding])).toEqual([["25608756", false]]);
   expect((await db.select().from(provenance))[0]).toMatchObject({ model: "gemma-test" });
   // A suggested follow-up, word for word, is the model's too; and the stream says it is being written.
@@ -229,6 +241,27 @@ test("the library is searched while PubMed is, not after it", async () => {
   await addClinician(db, "dr-aisyah");
   const api = createRouterClient(appRouter, { context: { db, session, fetch: waiting, library } });
   expect((await api.evidence.ask({ question: "Does prednisone shorten time to stability?" })).references.map(r => r.pmid)).toEqual(["25608756"]);
+});
+
+test("a search that fell back and an answer that was cut short are said in the answer, never passed off as the usual", async () => {
+  const hit = { chunkId: "c1", documentId: "ward-protocol", sourceId: "ward-protocol#steroids", text: "Check glucose daily on steroids.", score: 0.03, tags: { source: "Ward protocol", year: 2024, section: "Steroids" } };
+  // packages/retrieval's search: the embedder failed (keywords alone) and so did the reranker (the fused order stands).
+  let hits: (typeof hit)[] = Object.assign([hit], { retrieval: "keywords", ranked: false });
+  const library = { search: async () => hits, ingest: async () => 0, reindex: async () => 0 };
+  let cutShort: boolean | undefined = true;
+  const models = { ...stubModels, synthesiseEvidence: async () => ({ claims: [{ text: "The ward protocol checks glucose daily.", cites: [2] }], followUps: [], cutShort, source: "model" as const, model: "gemma-test" }) };
+  const db = await createTestDb();
+  await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
+  await addClinician(db, "dr-aisyah");
+  const api = createRouterClient(appRouter, { context: { db, session, fetch: pubmed(["25608756"]).fetcher, library, models } });
+  const r = await api.evidence.ask({ question: "Glucose checks on prednisone?" });
+  // The passage is real, so it is still a source and its claim stands.
+  expect(r).toMatchObject({ retrieval: "keywords", ranked: false, cutShort: true, enough: true, claims: [{ cites: [2] }], references: [{ pmid: "25608756" }, { kind: "library" }] });
+  // Nothing fell back and the answer was whole: nothing is said.
+  hits = Object.assign([hit], { retrieval: "hybrid", ranked: true }); cutShort = undefined;
+  const usual = await api.evidence.ask({ question: "Glucose checks on prednisone?" });
+  expect(usual).toMatchObject({ retrieval: "hybrid", ranked: true });
+  expect("cutShort" in usual).toBe(false);
 });
 
 test("PubMed is searched by the question's key terms, never the patient's name or record number, and an article without an abstract is not a source", async () => {

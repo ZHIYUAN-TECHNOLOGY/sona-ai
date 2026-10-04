@@ -8,7 +8,8 @@ import { studyKind, type StudyKind } from "@sona-ai/domain/evidence";
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const TIMEOUT_MS = 4000;
 
-export type Article = { pmid: string; title: string; journal: string; year: number; kind: StudyKind; publicationTypes: string[]; conclusion: string };
+/** `abstract` is the whole abstract, as the model reads it; `conclusion` the part of it a source card shows. */
+export type Article = { pmid: string; title: string; journal: string; year: number; kind: StudyKind; publicationTypes: string[]; abstract: string; conclusion: string };
 
 async function get(url: string, fetcher: typeof fetch) {
   const res = await fetcher(`${url}&tool=sona-ai`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
@@ -32,7 +33,7 @@ const FILLER = new Set(`a about after again all also am an and any are as at be 
 during each either for from get gets give given giving good got has have having he her here hers him his how i if in into is it its just
 may me might more most much must my need needed needs no nor not now of on only or other our over own patient patients really right same
 she should so some still such take takes taking than that the their them then there these they this those to too under up us very was way we were what
-when where which while who whom why will with within without would yet you your
+when where which while who whom whose why will with within without would yet you your
 safe safely safety effective benefit beneficial help helps helpful useful use used using work works worth better best reasonable
 appropriate indicated recommend recommended recommends consider considered option options start starting stop stopping continue
 change changes main key evidence data study studies trial trials research literature say says show shows know known think mean means
@@ -65,7 +66,8 @@ export function keyTerms(question: string, drop: string[] = []): string[] {
   // Numbers (ages, doses, IC digits) and single letters say nothing a search can use either, nor does a compound of them ("65-year-old").
   const noise = (w: string) => FILLER.has(w) || w.length < 2 || !/[a-z]/.test(w);
   const phrases: string[][] = [[]];
-  for (const word of question.toLowerCase().replace(/\bhow long\b/g, "duration").match(/[a-z0-9]+(?:-[a-z0-9]+)*/g) ?? []) {
+  // "type 2 diabetes" is one term: its number is kept, where any other number ends a phrase.
+  for (const word of question.toLowerCase().replace(/\bhow long\b/g, "duration").replace(/\btype ([12])\b/g, "type-$1").match(/[a-z0-9]+(?:-[a-z0-9]+)*/g) ?? []) {
     if (skip.has(word) || word.split("-").every(noise)) phrases.push([]); // ends the phrase
     else phrases.at(-1)!.push(word);
   }
@@ -112,14 +114,28 @@ export async function searchEvidence(terms: string[], fetcher: typeof fetch = fe
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 /** Element text without inline markup (<i>, <sup>) or entities. */
-const text = (s = "") => s.replace(/<[^>]+>/g, "").replace(/&(#\d+|\w+);/g, (m, e: string) => e.startsWith("#") ? String.fromCharCode(Number(e.slice(1))) : ENTITIES[e] ?? m).replace(/\s+/g, " ").trim();
+const text = (s = "") => s.replace(/<[^>]+>/g, "").replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (m, e: string) => e.startsWith("#") ? String.fromCodePoint(Number(/^#x/i.test(e) ? `0${e.slice(1)}` : e.slice(1))) : ENTITIES[e] ?? m).replace(/\s+/g, " ").trim();
 const first = (xml: string, re: RegExp) => text(xml.match(re)?.[1]);
 
-/** The abstract's conclusion (labelled CONCLUSIONS or, in the Lancet, INTERPRETATION), else its last paragraph; funding notes dropped. */
-function conclusionOf(article: string) {
-  const parts = [...article.matchAll(/<AbstractText([^>]*)>([\s\S]*?)<\/AbstractText>/g)];
-  const labelled = parts.find(p => /Label="(CONCLUSIONS?|INTERPRETATION)/i.test(p[1]!));
-  return text((labelled ?? parts.at(-1))?.[2]).replace(/\s*\((Funded|Supported) by[^)]*\)\.?$/, "");
+/** An article's abstract, part by part: PubMed's label for each (BACKGROUND, METHODS…; none for an abstract in one piece) and its text. */
+const abstractParts = (article: string) => [...article.matchAll(/<AbstractText([^>]*)>([\s\S]*?)<\/AbstractText>/g)]
+  .map(p => ({ label: text(p[1]!.match(/Label="([^"]+)"/)?.[1]), body: text(p[2]) })).filter(p => p.body);
+
+/**
+ * The whole abstract as the model reads it, one part a line, each under PubMed's own label ("RESULTS: …") when it has
+ * one: the conclusion alone left the model without the numbers, doses and harms a doctor asks about. Who paid for the
+ * study and where it was registered are left out: they answer no clinical question.
+ */
+const abstractOf = (article: string) => abstractParts(article).filter(p => !/FUNDING|REGISTRATION|CLINICALTRIALS/i.test(p.label)).map(p => (p.label ? `${p.label.toUpperCase()}: ${p.body}` : p.body)).join("\n");
+
+/**
+ * An abstract's conclusion, for the source card: its part labelled CONCLUSIONS or, in the Lancet, INTERPRETATION, else
+ * its last part (the whole of an abstract in one piece); the label and funding notes dropped.
+ */
+export function conclusionOf(abstract: string) {
+  const parts = abstract.split("\n");
+  const last = parts.find(p => /^(CONCLUSIONS?|INTERPRETATION)\b[^:]*: /i.test(p)) ?? parts.at(-1)!;
+  return last.replace(/^[A-Z][A-Z ,/&-]*: /, "").replace(/\s*\((Funded|Supported) by[^)]*\)\.?$/, "");
 }
 
 /** The articles for these PubMed IDs, in the order given (IDs PubMed does not return are left out). */
@@ -129,9 +145,10 @@ export async function fetchArticles(pmids: string[], fetcher: typeof fetch = fet
   const articles = body.split(/<PubmedArticle>/).slice(1).map((article): Article => {
     const publicationTypes = [...article.matchAll(/<PublicationType[^>]*>([^<]+)</g)].map(m => text(m[1]));
     const year = Number(first(article, /<PubDate>[\s\S]*?<Year>(\d{4})</) || first(article, /<MedlineDate>(\d{4})/));
+    const abstract = abstractOf(article);
     return {
       pmid: first(article, /<PMID[^>]*>(\d+)</), title: first(article, /<ArticleTitle>([\s\S]*?)<\/ArticleTitle>/).replace(/\.$/, ""),
-      journal: first(article, /<ISOAbbreviation>([\s\S]*?)<\/ISOAbbreviation>/), year, kind: studyKind(publicationTypes), publicationTypes, conclusion: conclusionOf(article),
+      journal: first(article, /<ISOAbbreviation>([\s\S]*?)<\/ISOAbbreviation>/), year, kind: studyKind(publicationTypes), publicationTypes, abstract, conclusion: conclusionOf(abstract),
     };
   });
   return pmids.flatMap(id => articles.filter(a => a.pmid === id));
@@ -158,8 +175,7 @@ export type Abstract = { pmid: string; title: string; journal: string; year: num
 export async function fetchAbstract(pmid: string, fetcher: typeof fetch = fetch): Promise<Abstract | null> {
   const article = (await get(`${EUTILS}/efetch.fcgi?db=pubmed&retmode=xml&id=${pmid}`, fetcher)).split(/<PubmedArticle>/)[1];
   if (!article) return null;
-  const parts = [...article.matchAll(/<AbstractText([^>]*)>([\s\S]*?)<\/AbstractText>/g)]
-    .map(p => ({ label: text(p[1]!.match(/Label="([^"]+)"/)?.[1]) || "Abstract", body: text(p[2]) })).filter(p => p.body);
+  const parts = abstractParts(article).map(p => ({ ...p, label: p.label || "Abstract" }));
   if (!parts.length) return null;
   const year = Number(first(article, /<PubDate>[\s\S]*?<Year>(\d{4})</) || first(article, /<MedlineDate>(\d{4})/));
   return {

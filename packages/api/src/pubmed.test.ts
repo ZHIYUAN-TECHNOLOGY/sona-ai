@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
-import { fetchArticles, keyTerms, searchEvidence, searchPubmed, searchTerms } from "./pubmed";
+import { conclusionOf, fetchArticles, keyTerms, searchEvidence, searchPubmed, searchTerms } from "./pubmed";
 
 // Real E-utilities efetch output for the three studies behind the rehearsed steroid question.
 const xml = readFileSync(new URL("./fixtures/pubmed-cap-steroids.xml", import.meta.url), "utf8");
@@ -17,6 +17,19 @@ test("an efetch reply becomes articles: title, journal, year, design and the abs
   expect(articles[2]!.conclusion).not.toContain("<");
 });
 
+test("an article keeps its whole abstract for the model: each part under PubMed's label, the funding left out; its conclusion is read back from it", async () => {
+  const [, blum, capeCod] = await fetchArticles(["31573350", "25608756", "36942789"], serve(xml));
+  expect(blum!.abstract.split("\n").map(p => p.slice(0, p.indexOf(":")))).toEqual(["BACKGROUND", "METHODS", "FINDINGS", "INTERPRETATION"]);
+  // The numbers a doctor asks about are in the findings; the Lancet's decimal point arrives as a character, not as "&#xb7;".
+  expect(blum!.abstract).toContain("prednisone 50 mg daily for 7 days");
+  expect(blum!.abstract).toContain("(76 [19%] vs 43 [11%]; OR 1·96, 95% CI 1·31-2·93, p=0·0010)");
+  expect(blum!.abstract).not.toMatch(/&#|FUNDING|Swiss National/);
+  expect(capeCod!.abstract).toStartWith("BACKGROUND: ");
+  for (const a of [blum!, capeCod!]) expect(conclusionOf(a.abstract)).toBe(a.conclusion);
+  // A cached row saved before abstracts were kept whole holds a conclusion alone, and an abstract in one piece has no labels: each is its own conclusion.
+  expect(conclusionOf("Prednisone shortens time to stability. It raises blood sugar.")).toBe("Prednisone shortens time to stability. It raises blood sugar.");
+});
+
 test("a search returns PubMed IDs in its order; a failed call is an error, not an empty answer", async () => {
   expect(await searchPubmed("steroids pneumonia", serve(JSON.stringify({ esearchresult: { idlist: ["2", "1"] } })))).toEqual(["2", "1"]);
   expect(searchPubmed("steroids pneumonia", serve("busy", 429))).rejects.toThrow("PubMed answered 429");
@@ -27,6 +40,8 @@ test("a question keeps its clinical terms as phrases; framing words, numbers and
   expect(keyTerms("Procalcitonin to stop antibiotics in lower respiratory tract infection?")).toEqual(["procalcitonin", "antibiotics", "lower respiratory tract infection"]);
   expect(keyTerms("How much IV fluid should I give in dengue with warning signs?")).toEqual(["iv fluid", "dengue", "warning signs"]);
   expect(keyTerms("How long should a 65-year-old take 500 mg amoxicillin?")).toEqual(["duration", "amoxicillin"]);
+  // "Type 2" keeps its number (any other number ends a phrase), and "whose" frames like "who".
+  expect(keyTerms("When should I start insulin in a type 2 diabetic whose HbA1c is still high on metformin?")).toEqual(["insulin", "type-2 diabetic", "hba1c", "high", "metformin"]);
   // An abstract's own labels ("AIM:", "RESULTS:") would match every article.
   expect(keyTerms("What oxygen saturation should I aim for in COPD with pneumonia?")).toEqual(["oxygen saturation", "copd", "pneumonia"]);
   expect(keyTerms("Should Amelia (SYN-1042) get oseltamivir for her influenza?", ["Amelia Tan", "SYN-1042"])).toEqual(["oseltamivir", "influenza"]);

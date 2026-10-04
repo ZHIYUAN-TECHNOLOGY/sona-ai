@@ -83,3 +83,19 @@ export function forPatient(question: string, firstName: string, curb?: { score: 
 export const NO_MODEL_ANSWER = "Sona's model did not answer. Ask again in a moment.";
 export const unanswered = (data: { source: string; enough: boolean; general?: string } | undefined, waking?: number) =>
   !data || data.source !== "fixture" || data.enough || data.general ? undefined : waking ? startingReply(waking) : NO_MODEL_ANSWER;
+
+/**
+ * One plain line when a real answer was made with less than usual, so it is not read as the usual: the model stopped
+ * before finishing (its finished claims show), the library was searched by keywords alone (the search model did not
+ * answer), or its passages were left in search order (the ranking model did not). The library's part is said only when
+ * a library passage is among the sources; otherwise the fallback changed nothing on screen. Undefined when all ran.
+ */
+export function fallbackNote(data: { cutShort?: boolean; retrieval?: string; ranked?: boolean; references: { kind: string }[] } | undefined) {
+  if (!data) return undefined;
+  const library = data.references.some(r => r.kind === "library");
+  return [
+    data.cutShort && "Sona's model stopped before finishing, so this answer may be missing a point.",
+    library && data.retrieval === "keywords" ? "Your library was searched by keywords only: Sona's search model did not answer."
+      : library && data.ranked === false && "Library passages are not ranked for relevance: Sona's ranking model did not answer.",
+  ].filter(Boolean).join(" ") || undefined;
+}

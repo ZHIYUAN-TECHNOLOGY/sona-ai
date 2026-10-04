@@ -132,6 +132,80 @@ test("the evidence answer asks Gemma with numbered sources and keeps only well-f
   const body = JSON.parse(calls.at(-1)!.init.body as string);
   expect(body.model).toBe(BRAIN_MODEL);
   expect(body.messages[1].content).toContain("[1] (Guideline, 2019) ATS/IDSA CAP");
+  // Room for a whole answer: four claims with their copied sentences.
+  expect(body.max_tokens).toBe(2000);
+});
+
+// Two PubMed studies as the route sends them (journal and PMID with each), then a library passage.
+const evidenceSources = [
+  { n: 1, design: "Guideline", year: 2019, title: "ATS/IDSA CAP", text: "Do not routinely use corticosteroids.", from: "Am J Respir Crit Care Med", pmid: "31573350" },
+  { n: 2, design: "Trial", year: 2015, title: "Prednisone in CAP", text: "Prednisone 50 mg daily shortened time to stability.", from: "Lancet", pmid: "25608756" },
+  { n: 3, design: "Library", year: 2024, title: "Ward protocol", text: "Check glucose daily on steroids." },
+];
+const evidenceInput = { question: "Steroids in pneumonia?", thread: [], sources: evidenceSources };
+
+test("a citation is read however Gemma writes it, but a claim is only ever kept with sources that were in the prompt", async () => {
+  const claims = [
+    { text: "A guideline advises against routine steroids [1].", cites: "[1]" },
+    { text: "A trial found earlier stability.", cites: ["[1][2]"] },
+    { text: "High blood sugar was more common (2).", cites: [] },
+    { text: "The trial gave prednisone 50 mg daily [PMID: 25608756]", quotes: [{ n: "25608756", text: "Prednisone 50 mg daily shortened time to stability." }, { n: 9, text: "From nowhere." }] },
+    { text: "The effect was clear [95% CI 1.2 to 3.4].", cites: "1, 2" },
+    { text: "The protocol checks glucose.", cites: [["Source 3 (2024)"]] },
+    { text: "Cites only what was never retrieved.", cites: [7, "PMID 99999999"] },
+    { text: "Cites nothing at all." },
+  ];
+  const { fetcher, calls } = fake({ [box("brain")]: chatReply(JSON.stringify({ bottomLine: "Not routinely.", claims })) });
+  const read = await basetenModels({ apiKey: "k", fetcher }).synthesiseEvidence(evidenceInput);
+  expect(read.source).toBe("model");
+  expect(read.claims.map(c => [c.text, c.cites])).toEqual([
+    ["A guideline advises against routine steroids.", [1]],
+    ["A trial found earlier stability.", [1, 2]],
+    ["High blood sugar was more common.", [2]],
+    ["The trial gave prednisone 50 mg daily", [2]],
+    ["The effect was clear [95% CI 1.2 to 3.4].", [1, 2]],
+    ["The protocol checks glucose.", [3]],
+  ]);
+  // A quote's source is read the same way, and one from a source not in the prompt is not passed on.
+  expect(read.claims[3]!.quotes).toEqual([{ n: 2, text: "Prednisone 50 mg daily shortened time to stability." }]);
+  // Each study goes to Gemma with its design, year, journal and PMID.
+  expect(JSON.parse(calls.at(-1)!.init.body as string).messages[1].content).toContain("[2] (Trial, 2015, Lancet, PMID 25608756) Prednisone in CAP\nPrednisone 50 mg daily");
+});
+
+test("sources go in whole, best first, while the prompt has room: the first that does not fit ends on a sentence, later ones are left out and cannot be cited", async () => {
+  const long = Array.from({ length: 2500 }, (_, i) => `Sentence ${i} of a very long guideline section.`).join(" ");
+  const sources = [evidenceSources[0]!, { ...evidenceSources[1]!, text: long }, evidenceSources[2]!];
+  const reply = { claims: [{ text: "A guideline advises against routine steroids.", cites: [1] }, { text: "The protocol checks glucose.", cites: [3] }] };
+  const { fetcher, calls } = fake({ [box("brain")]: chatReply(JSON.stringify(reply)) });
+  const read = await basetenModels({ apiKey: "k", fetcher }).synthesiseEvidence({ ...evidenceInput, sources });
+  const body = JSON.parse(calls.at(-1)!.init.body as string);
+  const prompt: string = body.messages[1].content;
+  // 16,384 tokens of context, less the answer's 2,000 and the template's 384, at 3 characters a token.
+  expect(body.messages[0].content.length + prompt.length).toBeLessThanOrEqual(42_000);
+  expect(prompt.length).toBeGreaterThan(30_000);
+  expect(prompt).toContain("Do not routinely use corticosteroids.");
+  expect(prompt).toMatch(/Sentence \d+ of a very long guideline section\.$/);
+  expect(prompt).not.toContain("Ward protocol");
+  expect(read.claims.map(c => c.cites)).toEqual([[1]]);
+});
+
+test("an evidence answer cut off at the length limit is never read as complete: its finished claims are kept and it says so; with none finished, the model did not answer", async () => {
+  const cut = '{"bottomLine":"Not routinely.","claims":[{"text":"A guideline advises against routine steroids.","cites":[1]},{"text":"A trial found ear';
+  const reply = (content: string) => ({ choices: [{ finish_reason: "length", message: { content } }] });
+  const models = (content: string) => basetenModels({ apiKey: "k", fetcher: fake({ [box("brain")]: reply(content) }).fetcher });
+  expect(await models(cut).synthesiseEvidence(evidenceInput)).toEqual({ bottomLine: "Not routinely.", claims: [{ text: "A guideline advises against routine steroids.", cites: [1] }], followUps: [], cutShort: true, source: "model", model: BRAIN_MODEL });
+  expect(await models(cut.slice(0, 60)).synthesiseEvidence(evidenceInput)).toMatchObject({ source: "fixture" });
+  // The same when it streams: the stream just ends, its JSON never closed.
+  const encoder = new TextEncoder();
+  const streamed = (url: string) => url.endsWith("/health") ? new Response("ok") : new Response(new ReadableStream({ start(c) {
+    for (const piece of cut.match(/[\s\S]{1,9}/g)!) c.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: piece } }] })}\n\n`));
+    c.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: "length" }] })}\n\ndata: [DONE]\n\n`)); c.close();
+  } }), { headers: { "content-type": "text/event-stream" } });
+  const run = basetenModels({ apiKey: "k", fetcher: fake({ [box("brain")]: streamed }).fetcher }).streamEvidence!(evidenceInput);
+  let next = await run.next();
+  for (; !next.done; next = await run.next());
+  expect(next.value).toMatchObject({ bottomLine: "Not routinely.", claims: [{ cites: [1] }], cutShort: true, source: "model" });
+  expect(next.value.claims).toHaveLength(1);
 });
 
 test("a brief always names a recorded allergy, even when Gemma leaves it out", async () => {
@@ -154,12 +228,14 @@ test("an X-ray goes to MedGemma as an image; a plain-sentence reply is kept, and
   expect(body.messages[0].content[0].image_url.url).toBe(`data:image/jpeg;base64,${btoa("\x01\x02\x03")}`);
 });
 
-test("the reranker scores passages in box ②, and keeps the hybrid order when the box is asleep", async () => {
+test("the reranker scores passages in box ②; asleep, it says so (the search keeps its own order and reports it) and the box is woken", async () => {
   const up = fake({ [box("voice")]: { scores: [0.1, 0.9] } });
   expect(await basetenReranker({ apiKey: "k", fetcher: up.fetcher })("steroid", ["a", "b"])).toEqual([0.1, 0.9]);
+  // Scores for the wrong number of passages rank nothing.
+  await expect(basetenReranker({ apiKey: "k", fetcher: up.fetcher })("steroid", ["a", "b", "c"])).rejects.toThrow("no scores");
   boxState.clear(); // asleep, not just failing after it answered
   const down = fake({});
-  expect(await basetenReranker({ apiKey: "k", fetcher: down.fetcher })("steroid", ["a", "b", "c"])).toEqual([-0, -1, -2]);
+  await expect(basetenReranker({ apiKey: "k", fetcher: down.fetcher })("steroid", ["a", "b", "c"])).rejects.toThrow("starting");
   expect(down.wakes()).toHaveLength(1);
 });
 

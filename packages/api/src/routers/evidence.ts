@@ -7,7 +7,7 @@ import { z } from "zod";
 import type { Context } from "../context";
 import { stubModels, type Models } from "../models";
 import { protectedProcedure } from "../index";
-import { fetchArticles, searchEvidence, searchTerms, type Article } from "../pubmed";
+import { conclusionOf, fetchArticles, searchEvidence, searchTerms, type Article } from "../pubmed";
 
 /**
  * Flow 4, the evidence answer (docs/evidence-answer-spec.md): short claims each citing numbered
@@ -28,9 +28,14 @@ const REHEARSED = {
 };
 
 type Cached = typeof pubmedArticles.$inferSelect;
-const fromCache = (r: Cached): Article => ({ pmid: r.pmid, title: r.title, journal: r.journal, year: r.year, publicationTypes: r.publicationTypes, kind: studyKind(r.publicationTypes), conclusion: r.conclusion });
+// ponytail: the cache's `conclusion` column holds the whole abstract since the model reads all of it (no migration two
+// days before the demo); a row saved before that holds the conclusion alone, and reads as a short abstract until it is
+// fetched again. Rename the column to `abstract` with the next migration.
+const fromCache = (r: Cached): Article => ({ pmid: r.pmid, title: r.title, journal: r.journal, year: r.year, publicationTypes: r.publicationTypes, kind: studyKind(r.publicationTypes), abstract: r.conclusion, conclusion: conclusionOf(r.conclusion) });
 /** How long a search's PubMed IDs are reused before PubMed is searched again. */
 const SEARCH_DAYS = 7;
+/** Studies read per question: five whole abstracts and three library passages are about a third of the model's prompt (baseten-models), and one efetch. */
+const STUDIES_MAX = 5;
 
 /**
  * The articles, live from PubMed (and cached) when it answers, else from the cache. Terms searched in the last week
@@ -44,12 +49,12 @@ async function articlesFor(db: Context["db"], fetcher: typeof fetch, terms: stri
   let pmids = rehearsed ? REHEARSED.pmids : saved?.pmids ?? [];
   try {
     if (!rehearsed && !recent) {
-      pmids = await searchEvidence(terms, fetcher);
+      pmids = await searchEvidence(terms, fetcher, STUDIES_MAX);
       await db.insert(pubmedSearches).values({ terms: key, pmids }).onConflictDoUpdate({ target: pubmedSearches.terms, set: { pmids, searchedAt: sql`now()` } });
     }
     // An article without an abstract has nothing to cite (the search asks for abstracts; this catches the odd one without).
-    const articles = (await fetchArticles(pmids, fetcher)).filter(a => rehearsed || a.conclusion);
-    if (articles.length) await db.insert(pubmedArticles).values(articles.map(a => ({ pmid: a.pmid, title: a.title, journal: a.journal, year: a.year, publicationTypes: a.publicationTypes, conclusion: a.conclusion })))
+    const articles = (await fetchArticles(pmids, fetcher)).filter(a => rehearsed || a.abstract);
+    if (articles.length) await db.insert(pubmedArticles).values(articles.map(a => ({ pmid: a.pmid, title: a.title, journal: a.journal, year: a.year, publicationTypes: a.publicationTypes, conclusion: a.abstract })))
       .onConflictDoUpdate({ target: pubmedArticles.pmid, set: { title: sql`excluded.title`, conclusion: sql`excluded.conclusion`, publicationTypes: sql`excluded.publication_types`, fetchedAt: sql`now()` } });
     return { articles, pubmed: "live" as const };
   } catch {
@@ -61,15 +66,20 @@ async function articlesFor(db: Context["db"], fetcher: typeof fetch, terms: stri
 
 /**
  * Up to three passages from the library (the shared guidelines and the hospital's own uploads, and
- * the doctor's own) for the question, each with its document title and section.
+ * the doctor's own) for the question, each with its document title and section; and how they were found, when the
+ * search fell back: `retrieval: "keywords"` (the embedder failed), `ranked: false` (the reranker did). The passages
+ * are real either way, so they are still used, and the answer says so.
  * ponytail: the nearest passages come back with no relevance floor; add a reranker score floor when bge-reranker is on.
  */
 async function passagesFor(context: Context, hospitalId: string, question: string) {
   const hits = context.library ? await context.library.search({ query: question, hospitalId, userId: context.session?.user.id, k: 3 }) : [];
-  if (!hits.length) return [];
+  // packages/retrieval's search carries its report on the hits (SearchReport there; that package imports this one, so the type is not imported back).
+  const { retrieval, ranked } = hits as { retrieval?: "hybrid" | "keywords"; ranked?: boolean };
+  const found = { ...retrieval && { retrieval }, ...ranked !== undefined && { ranked } };
+  if (!hits.length) return { passages: [], found };
   const docs = await context.db.select({ id: documents.id, title: documents.title }).from(documents).where(inArray(documents.id, hits.map(h => h.documentId)));
   const title = new Map(docs.map(d => [d.id, d.title]));
-  return hits.map(h => ({ id: h.sourceId, documentId: h.documentId, title: title.get(h.documentId) ?? h.tags.source, section: h.tags.section, from: h.tags.source, year: h.tags.year, text: h.text }));
+  return { found, passages: hits.map(h => ({ id: h.sourceId, documentId: h.documentId, title: title.get(h.documentId) ?? h.tags.source, section: h.tags.section, from: h.tags.source, year: h.tags.year, text: h.text })) };
 }
 
 const turn = z.object({ question: z.string().trim().min(1).max(500), answer: z.string().max(4000) });
@@ -100,14 +110,17 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   // PubMed gets the question's key terms (a follow-up keeps the thread's topic), never the patient's name or record number.
   const terms = searchTerms(input.question, input.thread.map(t => t.question), visit ? [visit.name, visit.patientId] : []);
   // PubMed and the library are searched at once.
-  const [{ articles, pubmed }, passages] = await Promise.all([articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored)), passagesFor(context, hospitalId, input.question)]);
+  const [{ articles, pubmed }, { passages, found }] = await Promise.all([articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored)), passagesFor(context, hospitalId, input.question)]);
   // Authored answers show their reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.
   const summary = (pmid: string) => (authored ? STUDIES.find(s => s.pmid === pmid)?.finding : undefined);
   const studies: Reference[] = articles.map((a, i) => ({ n: i + 1, id: `pmid:${a.pmid}`, kind: "study", design: a.kind, title: a.title, year: a.year, from: a.journal, text: summary(a.pmid) ?? a.conclusion, url: pubmedUrl({ pmid: a.pmid, query: a.title }), pmid: a.pmid }));
   const references: Reference[] = [...studies, ...passages.map((p, i) => ({ n: studies.length + i + 1, kind: "library" as const, design: "Library" as const, ...p }))];
   yield { type: "step", step: "read", studies: studies.length, passages: passages.length, references } as EvidenceStep;
+  // A configured model reads each study's whole abstract (the card shows its conclusion), and a quote may come from any part of it.
+  const abstract = new Map(articles.map(a => [a.pmid, a.abstract]));
+  const read = authored || !context.models ? references : references.map(r => ({ ...r, text: (r.pmid && abstract.get(r.pmid)) || r.text }));
 
-  let claims: Claim[], followUps: string[], source: string, waking: number | undefined, general: string | undefined, bottomLine: string | undefined;
+  let claims: Claim[], followUps: string[], source: string, waking: number | undefined, general: string | undefined, bottomLine: string | undefined, cutShort = false;
   if (authored) {
     // Authored cites number the three rehearsed studies; renumber them to where each study landed, so a missing study drops its claims.
     const at = (n: number) => studies.findIndex(s => s.pmid === STUDIES[n - 1]?.pmid) + 1;
@@ -116,36 +129,38 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   } else {
     yield { type: "step", step: "write" } as EvidenceStep;
     const models = context.models ?? stubModels;
-    const asked = { question: input.question, thread: input.thread, sources: references.map(r => ({ n: r.n, design: r.design, year: r.year, title: r.title, text: r.text })) };
-    let read: Awaited<ReturnType<Models["synthesiseEvidence"]>>;
+    const asked = { question: input.question, thread: input.thread, sources: read.map(r => ({ n: r.n, design: r.design, year: r.year, title: r.title, text: r.text, from: r.from, pmid: r.pmid })) };
+    let written: Awaited<ReturnType<Models["synthesiseEvidence"]>> & { cutShort?: boolean };
     if (models.streamEvidence) {
       // Each part goes to the app as soon as it is written, checked as the whole answer is: a claim must cite a source, and its quotes must be in it.
       const run = models.streamEvidence(asked);
       for (let next = await run.next(); ; next = await run.next()) {
-        if (next.done) { read = next.value; break; }
+        if (next.done) { written = next.value; break; }
         if ("bottomLine" in next.value) { yield { type: "bottomLine", text: next.value.bottomLine } as EvidenceStep; continue; }
-        const [claim] = quotedClaims(sourcedClaims([next.value.claim], references.length), references);
+        const [claim] = quotedClaims(sourcedClaims([next.value.claim], references.length), read);
         if (claim) yield { type: "claim", claim } as EvidenceStep;
       }
-    } else read = await models.synthesiseEvidence(asked);
+    } else written = await models.synthesiseEvidence(asked);
     // A configured model that did not answer (its box starting, or the call failing) came back as the stub's sample: that
     // is said as it is, with no claims and `waking` kept so the app asks again, instead of showing text no model wrote.
-    if (context.models && read.source === "fixture") read = { ...read, claims: [], followUps: [], general: undefined, bottomLine: undefined };
-    claims = sourcedClaims(read.claims, references.length); followUps = read.followUps.slice(0, 3); source = read.source === "model" ? read.model : "fixture";
+    if (context.models && written.source === "fixture") written = { ...written, claims: [], followUps: [], general: undefined, bottomLine: undefined };
+    claims = sourcedClaims(written.claims, references.length); followUps = written.followUps.slice(0, 3); source = written.source === "model" ? written.model : "fixture";
     // While Gemma is starting, the sample says in how many minutes.
-    waking = read.source === "fixture" ? read.waking : undefined;
+    waking = written.source === "fixture" ? written.waking : undefined;
     // No source answers it: Gemma's general answer shows instead, marked as not from the sources.
-    general = claims.length ? undefined : read.general;
-    bottomLine = claims.length ? read.bottomLine : undefined;
+    general = claims.length ? undefined : written.general;
+    bottomLine = claims.length ? written.bottomLine : undefined;
+    // The model stopped before finishing: the claims it finished stand, and the answer says more was cut off.
+    cutShort = written.source === "model" && written.cutShort === true && claims.length > 0;
   }
   // Each claim's proof: the sentence from each cited source that says it, checked word for word against that source.
-  claims = quotedClaims(claims, references);
+  claims = quotedClaims(claims, read);
 
   const rows = visit ? await db.select().from(observations).where(eq(observations.patientId, visit.patientId)).orderBy(asc(observations.observedAt)) : [];
   const curb65 = visit ? curb65FromObservations(rows as ObservationRow[], visit.age) : null;
 
   await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId: input.encounterId ?? null, kind: "evidence-answer", output: { question: input.question, bottomLine, claims, general }, sourceIds: references.map(r => r.id), model: source, approvedBy: null });
-  return { question: input.question, bottomLine, claims, enough: claims.length > 0, general, followUps, source, ...waking ? { waking } : {}, references, pubmed, curb65 };
+  return { question: input.question, bottomLine, claims, enough: claims.length > 0, general, followUps, source, ...waking ? { waking } : {}, ...cutShort && { cutShort }, references, pubmed, ...found, curb65 };
 }
 
 export const evidenceRouter = {

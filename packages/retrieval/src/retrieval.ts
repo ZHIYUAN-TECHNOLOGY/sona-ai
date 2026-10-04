@@ -103,10 +103,18 @@ const RERANK_POOL = 20; // the reranker sees the fused top 20 (the largest k)
 type Row = { id: string; document_id: string; source_id: string; section: string; text: string; source: string; year: number };
 
 /**
- * Hybrid search: full-text and cosine vector search fused by reciprocal rank, then optionally reranked. When the
- * embedder fails or is slow, keywords answer alone; a stand-in vector from another model would rank at random.
+ * How a search was really made, carried on its hits: `retrieval` is "keywords" when the embedder failed and keywords
+ * answered alone; `ranked` is false when a reranker was given and failed (the fused order stands), true when it scored
+ * the hits, and absent when none was given. The passages are real either way; a caller that shows them can say which.
  */
-export async function search(db: AnyDb, input: z.input<typeof searchInputSchema>, embedder: Embedder, reranker?: Reranker): Promise<RetrievalHit[]> {
+export type SearchReport = { retrieval: "hybrid" | "keywords"; ranked?: boolean };
+
+/**
+ * Hybrid search: full-text and cosine vector search fused by reciprocal rank, then optionally reranked. When the
+ * embedder fails or is slow, keywords answer alone; a stand-in vector from another model would rank at random. When
+ * the reranker fails, the fused order stands. Neither fails the search, and both are reported (SearchReport).
+ */
+export async function search(db: AnyDb, input: z.input<typeof searchInputSchema>, embedder: Embedder, reranker?: Reranker): Promise<RetrievalHit[] & SearchReport> {
   const { query, hospitalId, userId, k } = searchInputSchema.parse(input);
   const cols = sql`c.id, c.document_id, c.source_id, c.section, c.text, d.source, d.year`;
   // ponytail: scoped in the query, not by row-level security; add RLS policies when the Worker sets a per-request hospital.
@@ -129,14 +137,18 @@ export async function search(db: AnyDb, input: z.input<typeof searchInputSchema>
       fused.set(row.id, entry);
     });
   }
-  let ranked = [...fused.values()].sort((a, b) => b.score - a.score);
-  if (reranker) {
+  let ranked = [...fused.values()].sort((a, b) => b.score - a.score), reranked: boolean | undefined;
+  if (reranker && ranked.length) {
     ranked = ranked.slice(0, RERANK_POOL);
-    const scores = await reranker(query, ranked.map(r => r.row.text));
-    ranked = ranked.map((r, i) => ({ ...r, score: scores[i]! })).sort((a, b) => b.score - a.score);
+    const scores = await reranker(query, ranked.map(r => r.row.text)).catch(() => undefined);
+    reranked = scores?.length === ranked.length;
+    if (reranked) ranked = ranked.map((r, i) => ({ ...r, score: scores![i]! })).sort((a, b) => b.score - a.score);
   }
-  return ranked.slice(0, k).map(({ row, score }) => ({
+  const hits = ranked.slice(0, k).map(({ row, score }) => ({
     chunkId: row.id, documentId: row.document_id, sourceId: row.source_id, text: row.text, score,
     tags: { source: row.source, year: row.year, section: row.section },
   }));
+  // ponytail: the report rides on the array (it does not survive JSON), because `Library.search` is typed as hits alone
+  // in packages/api's context; give it a `{ hits, ...report }` result when that type can change with its callers.
+  return Object.assign(hits, { retrieval: qv ? "hybrid" as const : "keywords" as const, ...reranked !== undefined && { ranked: reranked } });
 }

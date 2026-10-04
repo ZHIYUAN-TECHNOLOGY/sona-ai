@@ -1,4 +1,4 @@
-import { PressScale } from "@/components/sona/parts";
+import { ErrorLine, Press, PressScale } from "@/components/sona/parts";
 import * as WebBrowser from "expo-web-browser";
 import { QuestionList } from "@/components/sona/list";
 import { MarkedText, TINT, segments, type Mark } from "@/components/sona/marked-text";
@@ -21,7 +21,7 @@ import { StreamedLead } from "@/features/encounter/conversation";
 import type { Patient } from "@/features/encounter/types";
 import { threadBefore, useLiveEvidence, type EvidenceStep, type ServerEvidence, type Turn } from "@/features/live/evidence-sync";
 import { wakingOf } from "@/features/live/waking";
-import { basis, calmTerms, forPatient, searchedLine, sections, stepLines, strength, unanswered } from "./answer";
+import { basis, calmTerms, fallbackNote, forPatient, searchedLine, sections, stepLines, strength, unanswered } from "./answer";
 import { authoredAnswer, authoredReferences, curb65, quotedClaims, type Claim, type Reference } from "./model";
 
 /*
@@ -61,9 +61,14 @@ export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
  * A citation opens, under its claim, the sentence from that source that supports it. Live mode asks the server;
  * otherwise the authored answers show, for the rehearsed question and its follow-ups only.
  */
-export function EvidenceAnswer({ question, encounterId, answerKey, thread, patient, lead = false, onAsk }: {
-  question: string; encounterId?: string; answerKey: string; thread: Turn[]; patient?: Patient; lead?: boolean; onAsk: (question: string) => void;
-}) {
+type AnswerProps = { question: string; encounterId?: string; answerKey: string; thread: Turn[]; patient?: Patient; lead?: boolean; onAsk: (question: string) => void };
+export function EvidenceAnswer(props: AnswerProps) {
+  // Retry asks the same question again: a failed answer is never kept (evidence-sync's `keeps`), so mounting the answer afresh asks the server once more.
+  const [attempt, setAttempt] = useState(0);
+  return <Answer key={attempt} {...props} onRetry={() => setAttempt(a => a + 1)} />;
+}
+
+function Answer({ question, encounterId, answerKey, thread, patient, lead = false, onAsk, onRetry }: AnswerProps & { onRetry: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const { live, data, steps, written, error } = useLiveEvidence(encounterId, answerKey, question, thread);
   const [focus, setFocus] = useState<{ n: number; at: number }>();
@@ -72,7 +77,7 @@ export function EvidenceAnswer({ question, encounterId, answerKey, thread, patie
   const at = (i: number) => (landing && !reducedMotion ? rise(i) : undefined);
   // Streamed from the moment its first part is written: the steps fold away and the answer grows in place, part by part.
   const writing = live && !data && written && (written.bottomLine || written.claims.length) ? written : undefined;
-  if (live && !data && !writing) return error ? <Surface feature style={{ padding: 16 }}><Text style={{ ...type.subhead, color: palette.red }}>{error}</Text></Surface>
+  if (live && !data && !writing) return error ? <Surface feature style={{ padding: 16 }}><ErrorLine text={`The evidence answer didn't load: ${error}`} onRetry={onRetry} /></Surface>
     : <Animated.View exiting={reducedMotion ? undefined : fold} style={{ transformOrigin: "top" }}><EvidenceSteps steps={steps} /></Animated.View>;
   const authored = data || writing ? undefined : authoredAnswer(question);
   const shown: Shown | undefined = data
@@ -84,6 +89,8 @@ export function EvidenceAnswer({ question, encounterId, answerKey, thread, patie
   const rests = shown?.enough ? basis(shown.claims, shown.references) : "";
   // The model did not answer (or is starting, and is asked again by itself): said as that, not as thin evidence or a sample.
   const failed = unanswered(data, wakingOf(data));
+  // A real answer made with less than usual (cut short, or the library found without its search or ranking model) says so in one line.
+  const fallback = failed ? undefined : fallbackNote(data);
   // Tied to the patient once the server's CURB-65 is in (or, without the server, the chart's own).
   const mine = patient && !writing && forPatient(question, patient.name.split(" ")[0]!, data ? data.curb65 : curb65(patient));
 
@@ -109,8 +116,16 @@ export function EvidenceAnswer({ question, encounterId, answerKey, thread, patie
           <Text selectable style={{ ...type.callout, color: palette.ink }}>{data.general}</Text>
           <Text selectable style={{ ...type.caption, color: palette.muted }}>General answer · no source found for this</Text>
         </View>
-        : <Text selectable style={{ ...type.callout, color: palette.amber }}>{failed ?? NOT_ENOUGH}</Text>}
+        : failed ? <View accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Text selectable style={{ ...type.callout, flex: 1, color: palette.amber }}>{failed}</Text>
+          {/* While the model starts the card asks again by itself (every 45 s); Retry asks now. */}
+          <Press onPress={onRetry} accessibilityLabel={`Retry. ${failed}`} scale={0.96} style={{ minHeight: 44, justifyContent: "center" }}>
+            <Text style={{ ...type.callout, fontWeight: "600", color: palette.blue }}>Retry</Text>
+          </Press>
+        </View>
+        : <Text selectable style={{ ...type.callout, color: palette.amber }}>{NOT_ENOUGH}</Text>}
       {shown && <View style={{ gap: 4 }}>
+        {fallback ? <Text selectable style={{ ...type.caption, color: palette.amber }}>{fallback}</Text> : null}
         {data && data.references.length > 0 && !failed && <SampleLabel source={data.source === "fixture" || data.source === "cached" ? data.source : "model"} model={data.source} waking={wakingOf(data)} what="evidence" />}
         {caption ? <Text selectable style={{ ...type.caption, color: palette.muted }}>{caption}</Text> : null}
       </View>}
