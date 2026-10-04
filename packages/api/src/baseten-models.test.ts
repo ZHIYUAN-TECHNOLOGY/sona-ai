@@ -415,3 +415,11 @@ test("the evidence answer streams: its bottom line, then each claim as it closes
   const down = await basetenModels({ apiKey: "k", fetcher: fake({}).fetcher }).streamEvidence!(input).next();
   expect(down.done && down.value).toMatchObject({ source: "fixture", waking: COLD_START_MIN.brain });
 });
+
+test("a code whose evidence quotes the note's words, not the sentence id, is kept when one sentence holds the quote", async () => {
+  const { citedSentence } = await import("./baseten-models");
+  const sentences = [{ id: "subjective", text: "Cough for five days, fever since yesterday. Wheeze at night." }, { id: "plan", text: "Chest film today." }];
+  expect(citedSentence("Cough for five days, fever since yesterday.", sentences)?.id).toBe("subjective");
+  expect(citedSentence("[plan] Chest film today.", sentences)?.id).toBe("plan");
+  expect(citedSentence("Something the note never says at all", sentences)).toBeUndefined();
+});

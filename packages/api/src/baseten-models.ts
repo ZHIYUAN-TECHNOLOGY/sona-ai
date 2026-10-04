@@ -172,11 +172,18 @@ function statedIn(sentence: string, label: string) {
   });
 }
 
-/** The sentence a model cites: Gemma writes "[diagnosis] Community-acquired…" as often as the bare id "diagnosis". */
-export function citedSentence<T extends { id: string }>(raw: unknown, sentences: T[]) {
+/**
+ * The sentence a model cites: Gemma writes "[diagnosis] Community-acquired…" as often as the bare id "diagnosis", and
+ * on a note with one long section it quotes the words instead (5 Oct, real Gemma); a quote counts only when exactly one
+ * sentence holds it.
+ */
+export function citedSentence<T extends { id: string; text?: string }>(raw: unknown, sentences: T[]) {
   const cited = String(raw ?? "").trim();
   const id = cited.match(/^\[([^\]]+)\]/)?.[1] ?? cited.split(/\s/)[0]!.replace(/[[\]:,.]/g, "");
-  return sentences.find(s => s.id === id || s.id === cited);
+  const named = sentences.find(s => s.id === id || s.id === cited);
+  if (named || cited.length < 12) return named;
+  const quoted = sentences.filter(s => s.text?.includes(cited));
+  return quoted.length === 1 ? quoted[0] : undefined;
 }
 
 const CODE_LIKE = /\b[A-Z]\d{2}(?:\.\d{1,2})?\b|\b\d{2}\.\d{2}\b/g;
