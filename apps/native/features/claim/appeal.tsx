@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Pressable, TextInput, View, type TextStyle } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
+import { keptByText } from "@/components/sona/sample-label";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
@@ -45,7 +46,8 @@ export function DeniedCard({ denial }: { denial: Denial }) {
   </Animated.View>;
 }
 
-type Draft = { letter: AppealLetter; sentences: Sentence[]; source: "fixture" | "model"; model?: string };
+// `codedBy` (live): who suggested the letter's codes the appeal argues from, which the draft's own `source` does not say.
+type Draft = { letter: AppealLetter; sentences: Sentence[]; source: "fixture" | "model"; model?: string; codedBy?: ClaimState["codedBy"] };
 
 /**
  * Sona's appeal for a denied letter. Live mode drafts on the server (claim.appealDraft); fixture mode
@@ -80,13 +82,13 @@ export function AppealCard({ patient, state, onChange, onApproved }: { patient: 
   const send = () => {
     if (!letter || !ready || busy) return;
     haptic("select"); setBusy(true); setError(undefined);
-    const sent = (appealedAt: string, reviewUrl?: string) => {
-      onChange({ status: "appealed", appealedAt, reviewUrl }); setBusy(false); haptic("success");
+    const sent = (appealedAt: string, reviewUrl?: string, by?: Pick<ClaimState, "codedBy" | "appealDraftedBy">) => {
+      onChange({ status: "appealed", appealedAt, reviewUrl, ...by }); setBusy(false); haptic("success");
       AccessibilityInfo.announceForAccessibility(`Appeal sent to ${INSURER}`);
     };
     if (live && user) {
       api.claim.appeal({ encounterId: patient.encounterId, requestId: sendId, approvedBy: user.id, letter })
-        .then(async () => { const s = await api.claim.status({ encounterId: patient.encounterId }).catch(() => undefined); sent(s?.appealedAt ?? new Date().toISOString(), s?.reviewUrl); })
+        .then(async () => { const s = await api.claim.status({ encounterId: patient.encounterId }).catch(() => undefined); sent(s?.appealedAt ?? new Date().toISOString(), s?.reviewUrl, s && { codedBy: s.codedBy, appealDraftedBy: s.appealDraftedBy }); })
         .catch(e => { setError(errorText(e)); setBusy(false); setSendId(requestId()); });
       return;
     }
@@ -95,12 +97,15 @@ export function AppealCard({ patient, state, onChange, onApproved }: { patient: 
     timers.current.push(setTimeout(onApproved, reducedMotion ? 0 : 2300));
   };
 
+  const sentBy = [keptByText(state.appealDraftedBy, "drafted by"), keptByText(state.codedBy, "suggested by")].map((who, i) => who && `${i ? "Codes" : "Appeal"} as sent · ${who}`).filter(Boolean).join(" · ");
   if (appealed) return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 10 }}>
     <View accessible style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <Icon name="hourglass" size={16} color={palette.blue} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Appeal sent · awaiting insurer</Text>
         <Text style={{ ...type.caption, color: palette.muted }}>{state.appealedAt ? `${clock(state.appealedAt)} · ` : ""}{live ? `${INSURER} reviews it on a new link` : "mock insurer"}</Text>
+        {/* Who drafted the appeal that went and who suggested the codes it argues from, as each was frozen; nothing where it was not kept. */}
+        {sentBy !== "" && <Text style={{ ...type.caption, color: palette.muted }}>{sentBy}</Text>}
       </View>
     </View>
     {state.reviewUrl && <Pressable accessibilityRole="link" accessibilityLabel="Open the insurer's review page" hitSlop={12} onPress={() => { void WebBrowser.openBrowserAsync(state.reviewUrl!).catch(() => {}); }}
@@ -131,6 +136,7 @@ export function AppealCard({ patient, state, onChange, onApproved }: { patient: 
           <Arrive index={letter.points.length + 1}><Paragraph label="Closing paragraph" value={letter.closing} onChange={closing => edit(l => ({ ...l, closing }))} /></Arrive>
           <Arrive index={letter.points.length + 2} style={{ gap: 10 }}>
             <SampleLabel source={draft.source} model={draft.model} waking={wakingOf(draft)} what="appeal" />
+            {keptByText(draft.codedBy, "suggested by") && <Text style={{ ...type.caption, color: palette.muted }}>Argues from the letter's codes · {keptByText(draft.codedBy, "suggested by")}</Text>}
             <Text style={{ ...type.footnote, color: palette.ink }}>Goes to {INSURER} with a new review link, {letter.points.length} {letter.points.length === 1 ? "point" : "points"} from the note{user?.name ? ` · approved by ${user.name}` : ""}.</Text>
             {error && <Text style={{ ...type.footnote, color: RED }}>Not sent: {error}</Text>}
             {live && !role.can("claim.appeal") ? <LockedAction label="Needs a doctor or management to send" path="claim.appeal" height={46} />

@@ -57,7 +57,7 @@ export function reviseEncounter(encounter: Encounter): Encounter {
   return { ...encounter, revision: encounter.revision + 1, medicationCheckedRevision: undefined, reviewInvalidated: encounter.medicationCheckedRevision !== undefined || encounter.reviewInvalidated, amendmentOperation: encounter.amendmentOperation && !["complete", "failed", "cancelled"].includes(encounter.amendmentOperation.phase) ? { ...encounter.amendmentOperation, phase: "cancelled", error: "Clinical context changed. The prior receipt is unchanged; rerun the amendment." } : encounter.amendmentOperation, requests: encounter.requests.map(item => item.status === "streaming" ? { ...item, status: "cancelled" } : item) };
 }
 /** A receipt the server wrote (live mode): its id, time, revision and approver there, the regimen it recorded, and for an amendment the receipt it supersedes. */
-export type ServerReceipt = { id: string; requestId: string; revision: number; createdAt: Date | string; approvedBy?: string; payload: unknown };
+export type ServerReceipt = { id: string; requestId: string; revision: number; createdAt: Date | string; approvedBy?: string; approvedByName?: string; payload: unknown };
 /**
  * The outcome of Prescribe on this visit. Live: the server's receipt, with the regimen it recorded. Sample mode: this phone's
  * own run of the checks on what was entered here; nothing is saved to a hospital record, and the audit says so.
@@ -80,7 +80,7 @@ export function issueSimulation(encounter: Encounter, patient: Patient, operatio
     createdAt, regimen, checks, inputs: encounter.prescriptionInputs ? { ...encounter.prescriptionInputs } : undefined,
     supersedes: recorded?.amendment?.supersedes ?? (previous && previous.revision !== encounter.revision ? previous.id : undefined),
     audit: [
-      server ? `Recorded in the visit record on the server · receipt ${server.id} · server revision ${server.revision}${server.approvedBy ? ` · prescribed by ${(server as { approvedByName?: string }).approvedByName ?? server.approvedBy}` : ""}` : "Sample mode · checked on this phone; nothing was saved to a hospital record",
+      server ? `Recorded in the visit record on the server · receipt ${server.id} · server revision ${server.revision}${server.approvedBy ? ` · prescribed by ${server.approvedByName ?? server.approvedBy}` : ""}` : "Sample mode · checked on this phone; nothing was saved to a hospital record",
       `Patient ${patient.id} · encounter ${patient.encounterId} · revision ${encounter.revision}`,
       ...(regimen ? [`Regimen entered by the clinician: ${regimenLine(regimen)}`, `Indication: ${regimen.indication}`, `Dose limits: ${regimen.sourceVersion}`] : ["No regimen entered"]),
       ...checks.map(c => `${c.label}: ${c.status} — ${c.detail}`), ...(encounter.prescriptionAmendment ? [`Amendment reason: ${encounter.prescriptionAmendment}`] : []), `Operation ${operationId} · ${createdAt}`,

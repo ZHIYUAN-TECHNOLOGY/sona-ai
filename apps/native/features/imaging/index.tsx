@@ -163,7 +163,7 @@ function ModelRead({ reading, onRetry }: { reading: NonNullable<ReturnType<typeo
     <Text accessibilityRole="header" style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>What the image model describes</Text>
     {data.findings.map((f, i) => <Text key={i} selectable style={{ ...type.callout, color: palette.ink }}>{f}</Text>)}
     <View style={{ gap: 4 }}>
-      <SampleLabel source="model" model={"model" in data ? data.model : undefined} />
+      <SampleLabel source="model" model={"model" in data ? data.model : undefined} storedAt={"storedAt" in data ? data.storedAt : undefined} />
       <Caption icon={null}>Unvalidated: not a radiologist’s report or a diagnosis. Check it against the image.</Caption>
     </View>
   </View>;
@@ -319,7 +319,7 @@ export function XrayScreen() {
     <Heading identity={`${patient.name} · saved revision ${savedCard?.revision} · ${attachment ? (upload?.state === "uploaded" ? "image in your hospital’s storage" : "local image, no model inference") : "reference example, not this patient"}`} result={resultLine(analysed, analysis)} open={open} />
     {/* The visit's findings travel with its film, so a saved answer shows the same marks as the live view. */}
     {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} /> : <Notice>No image was attached when this response was created.</Notice>}
-    {image && <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} />}
+    {image && <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} read={found.readOf(patient.encounterId)} onRead={role.can("findings.detect") ? () => found.detect(patient.encounterId) : undefined} />}
     <AnalysisDetails snapshot={analysed} reading={analysis} />
   </ViewerPage>;
 
@@ -357,7 +357,7 @@ export function XrayScreen() {
     <Heading identity={attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"} result={analysing ? "Analysing…" : resultLine(analysed, analysis)} open={open} />
     {pickerError && <Notice warning>{pickerError}</Notice>}
     <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} />
-    <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} />
+    <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} read={found.readOf(patient.encounterId)} onRead={role.can("findings.detect") ? () => found.detect(patient.encounterId) : undefined} />
     {/* The latest analysis sits right under the image: one page, no separate details screen. */}
     <AnalysisDetails snapshot={analysed} reading={analysis} />
 

@@ -47,7 +47,8 @@ import { createORPCClient } from "../../../packages/api/node_modules/@orpc/clien
 import { RPCLink } from "../../../packages/api/node_modules/@orpc/client/dist/adapters/fetch/index.mjs";
 import { TEST_DOCTOR, TEST_MANAGER, TEST_PATIENT } from "../../../packages/db/src/seed";
 
-const args = process.argv.slice(2), flag = (name: string) => { const i = args.indexOf(`--${name}`); return i < 0 ? undefined : args[i + 1] ?? ""; };
+// Typed here, so the file also checks where Node's types are not loaded (`process` is then untyped, and every callback over `args` was an implicit any).
+const args: string[] = process.argv.slice(2), flag = (name: string): string | undefined => { const i = args.indexOf(`--${name}`); return i < 0 ? undefined : args[i + 1] ?? ""; };
 const server = args[0]?.startsWith("--") ? undefined : args[0];
 const only = flag("only")?.split(",").map(s => s.trim()).filter(Boolean), wavPath = flag("wav");
 const writes = args.includes("--writes"), json = args.includes("--json"), timeoutMs = (Number(flag("timeout")) || 60) * 1000;
@@ -159,7 +160,9 @@ async function voiceCall(): Promise<Outcome> {
       await sleep(20);
     }
     socket.send(JSON.stringify({ type: "end_call" }));
-    return { ...origin(turn), fail: unvoiced ?? (frames ? undefined : "words but no audio"), empty: !words, note: `${frames} audio frames` };
+    // Who heard the question (`ear`, the ASR's source and model): printed, never judged here, since this question is typed and has no ear.
+    const ear = turn.ear as { source?: string; model?: string } | undefined;
+    return { ...origin(turn), fail: unvoiced ?? (frames ? undefined : "words but no audio"), empty: !words, note: notes(`${frames} audio frames`, `ear: ${ear ? ear.model ?? ear.source : "none (typed question)"}`) };
   } finally { socket.close(); }
 }
 

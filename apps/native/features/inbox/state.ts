@@ -14,6 +14,12 @@ export const LABEL_STYLE: Record<Label, { text: string; ink: string; wash: strin
   clinical: { text: "Clinical", ink: palette.blue, wash: "rgba(36,91,204,0.09)" },
   admin: { text: "Admin", ink: palette.muted, wash: "rgba(20,28,40,0.06)" },
 };
+/**
+ * A message triage did not run on (`triagedBy.source` "none") is listed under the server's default label, clinical,
+ * but nobody read it: it must not pass for a calm clinical question, so it is amber and says "Not triaged".
+ */
+const UNTRIAGED = { text: "Not triaged", ink: palette.amber, wash: "rgba(196,120,20,0.13)" };
+export const triageStyle = (label: Label, by?: { source: string }) => by?.source === "none" ? UNTRIAGED : LABEL_STYLE[label];
 
 /** "just now", "12 min", "2 h", "3 d": how long someone has waited, by the server's (demo) clock. */
 export function waited(since: Date | string, now: Date | string) {
@@ -61,7 +67,7 @@ export const lastLine = (t: Pick<InboxThread, "lastText" | "lastPhoto">) => t.la
 export function sampleInbox(now = new Date()): Inbox {
   const ago = (minutes: number) => new Date(now.getTime() - minutes * 60_000);
   const thread = (patientId: string, name: string, initials: string, lastText: string, minutes: number, lastPhoto: string | null = null) =>
-    ({ patientId, name, initials, bed: null, lastText, lastFrom: "patient" as const, lastAt: ago(minutes), lastPhoto, waitingSince: ago(minutes), waiting: 1, unread: 1, handled: false, ...triageByRules(lastText) });
+    ({ patientId, name, initials, bed: null, lastText, lastFrom: "patient" as const, lastAt: ago(minutes), lastPhoto, waitingSince: ago(minutes), waiting: 1, unread: 1, handled: false, ...triageByRules(lastText), triagedBy: { source: "fixture" as const } });
   return { now, threads: [
     thread("SYN-1042", "Amelia Tan", "AT", "Also I am breathless when I walk", 12),
     thread("SYN-1086", "Daniel Rahman", "DR", "Please check a medicine I added from a photo: Cetirizine 10 mg, once at night.", 95, "Cetirizine 10 mg"),

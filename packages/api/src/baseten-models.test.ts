@@ -197,15 +197,23 @@ test("an evidence answer cut off at the length limit is never read as complete: 
   expect(await models(cut.slice(0, 60)).synthesiseEvidence(evidenceInput)).toMatchObject({ source: "fixture" });
   // The same when it streams: the stream just ends, its JSON never closed.
   const encoder = new TextEncoder();
-  const streamed = (url: string) => url.endsWith("/health") ? new Response("ok") : new Response(new ReadableStream({ start(c) {
-    for (const piece of cut.match(/[\s\S]{1,9}/g)!) c.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: piece } }] })}\n\n`));
-    c.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: "length" }] })}\n\ndata: [DONE]\n\n`)); c.close();
+  const streamed = (content: string, finish_reason: string) => (url: string) => url.endsWith("/health") ? new Response("ok") : new Response(new ReadableStream({ start(c) {
+    for (const piece of content.match(/[\s\S]{1,9}/g)!) c.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: piece } }] })}\n\n`));
+    c.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason }] })}\n\ndata: [DONE]\n\n`)); c.close();
   } }), { headers: { "content-type": "text/event-stream" } });
-  const run = basetenModels({ apiKey: "k", fetcher: fake({ [box("brain")]: streamed }).fetcher }).streamEvidence!(evidenceInput);
-  let next = await run.next();
-  for (; !next.done; next = await run.next());
-  expect(next.value).toMatchObject({ bottomLine: "Not routinely.", claims: [{ cites: [1] }], cutShort: true, source: "model" });
-  expect(next.value.claims).toHaveLength(1);
+  const whole = async (content: string, finish_reason: string) => {
+    const run = basetenModels({ apiKey: "k", fetcher: fake({ [box("brain")]: streamed(content, finish_reason) }).fetcher }).streamEvidence!(evidenceInput);
+    let next = await run.next();
+    for (; !next.done; next = await run.next());
+    return next.value;
+  };
+  const kept = await whole(cut, "length");
+  expect(kept).toMatchObject({ bottomLine: "Not routinely.", claims: [{ cites: [1] }], cutShort: true, source: "model" });
+  expect(kept.claims).toHaveLength(1);
+  // The stream's finish reason is read as the whole call's is: an answer whose JSON closed is cut short only when the stream says "length".
+  const closed = '{"bottomLine":"Not routinely.","claims":[{"text":"A guideline advises against routine steroids.","cites":[1]}]}';
+  expect((await whole(closed, "length")).cutShort).toBe(true);
+  expect("cutShort" in await whole(closed, "stop")).toBe(false);
 });
 
 test("a brief always names a recorded allergy, even when Gemma leaves it out", async () => {

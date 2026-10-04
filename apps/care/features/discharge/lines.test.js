@@ -1,5 +1,14 @@
 import { expect, test } from "bun:test";
-import { homeLine, scheduleLine, takeLine, takeSentence } from "./lines";
+import { homeLine, leafletOrigin, scheduleLine, takeLine, takeSentence } from "./lines";
+
+test("the leaflet says who wrote it only when that is known", () => {
+  expect(leafletOrigin({ source: "model", approvedBy: "Dr Aisyah" })).toBe("Drafted by Sona, approved by Dr Aisyah");
+  expect(leafletOrigin({ source: "model", approvedBy: "Dr Aisyah" }, "ms")).toBe("Dideraf oleh Sona, diluluskan oleh Dr Aisyah");
+  expect(leafletOrigin({ source: "fixture" })).toBe("This is the hospital's general leaflet. It was not written for you personally.");
+  expect(leafletOrigin({ source: "fixture" }, "zh")).toBe("这是医院的通用说明单，不是专门为您写的。");
+  expect(leafletOrigin({ source: "unknown", approvedBy: "Dr Aisyah" })).toBeUndefined();
+  expect(leafletOrigin({ source: "model" })).toBeUndefined();
+});
 
 const med = name => ({ name, line: "" });
 const medicines = { new: [med("Paracetamol")], changed: [med("Azithromycin")], stopped: [med("Salbutamol nebuliser")], continue: [med("Cetirizine")] };

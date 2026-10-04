@@ -20,7 +20,7 @@ addStrings({
     "msg.sending": "Sending…", "msg.sent": "Sent · {time}", "msg.seen": "Seen by care team · {time}",
     "msg.waitTitle": "While you wait", "msg.wait999": "If you faint or have chest pain, call 999.", "msg.waitA11y": "While you wait. {wait} {call}",
     "msg.chipA11y": "{p}. Sends this to your care team", "msg.placeholder": "Write to your care team…", "msg.label": "Message to your care team",
-    "msg.you": "You", "msg.teamAt": "Care team · ", "msg.sendingA11y": "sending", "msg.initials": "CT",
+    "msg.you": "You", "msg.teamAt": "Care team · ", "msg.auto": "Sona · automatic safety message", "msg.sendingA11y": "sending", "msg.initials": "CT",
   },
   ms: {
     "msg.replyTime": "Biasanya membalas dalam beberapa jam", "msg.replyTimeShort": "biasanya membalas dalam beberapa jam",
@@ -39,7 +39,7 @@ addStrings({
     "msg.sending": "Menghantar…", "msg.sent": "Dihantar · {time}", "msg.seen": "Dilihat oleh pasukan penjagaan · {time}",
     "msg.waitTitle": "Sementara menunggu", "msg.wait999": "Jika anda pengsan atau sakit dada, hubungi 999.", "msg.waitA11y": "Sementara menunggu. {wait} {call}",
     "msg.chipA11y": "{p}. Hantar kepada pasukan penjagaan anda", "msg.placeholder": "Tulis kepada pasukan penjagaan anda…", "msg.label": "Mesej kepada pasukan penjagaan anda",
-    "msg.you": "Anda", "msg.teamAt": "Pasukan penjagaan · ", "msg.sendingA11y": "sedang dihantar", "msg.initials": "PP",
+    "msg.you": "Anda", "msg.teamAt": "Pasukan penjagaan · ", "msg.auto": "Sona · mesej keselamatan automatik", "msg.sendingA11y": "sedang dihantar", "msg.initials": "PP",
   },
   zh: {
     "msg.replyTime": "通常几小时内回复", "msg.replyTimeShort": "通常几小时内回复",
@@ -58,6 +58,6 @@ addStrings({
     "msg.sending": "发送中…", "msg.sent": "已发送 · {time}", "msg.seen": "医护团队已读 · {time}",
     "msg.waitTitle": "等待回复时", "msg.wait999": "如果晕倒或胸痛，请拨打 999。", "msg.waitA11y": "等待回复时。{wait} {call}",
     "msg.chipA11y": "{p}。发送给医护团队", "msg.placeholder": "写给医护团队…", "msg.label": "给医护团队的留言",
-    "msg.you": "您", "msg.teamAt": "医护团队 · ", "msg.sendingA11y": "发送中", "msg.initials": "医护",
+    "msg.you": "您", "msg.teamAt": "医护团队 · ", "msg.auto": "Sona · 自动安全提示", "msg.sendingA11y": "发送中", "msg.initials": "医护",
   },
 });

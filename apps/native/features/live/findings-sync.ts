@@ -21,11 +21,24 @@ const listeners = new Set<() => void>();
 const notify = () => listeners.forEach(l => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
-/** Re-reads the server's findings; with an encounter, runs detection on it first (a rerun changes nothing). */
-export async function refreshFindings(detect?: string) {
-  if (detect) await api.findings.detect({ encounterId: detect });
-  server = await (detect ? api.findings.list({}) : listing ??= api.findings.list({}).finally(() => { listing = undefined; }));
-  notify();
+/** Who last read each visit's current film for findings (api.findings.status): null when nobody has, absent until asked. */
+export type FilmRead = Awaited<ReturnType<typeof api.findings.status>>;
+let reads: Record<string, FilmRead> = {};
+
+/**
+ * Re-reads the server's findings; with an encounter, runs detection on it first (a rerun changes nothing).
+ * `readOf` (the detected visit unless given: a role that may not detect still asks) then reads who read its film, whether
+ * or not detection worked, so an empty list is shown as a model's clean read or as a film no model has read, never as
+ * either by default. A failed status read leaves the last one (or none): the screen then makes no claim.
+ */
+export async function refreshFindings(detect?: string, readOf = detect) {
+  try {
+    if (detect) await api.findings.detect({ encounterId: detect });
+    server = await (detect ? api.findings.list({}) : listing ??= api.findings.list({}).finally(() => { listing = undefined; }));
+  } finally {
+    if (readOf) await api.findings.status({ encounterId: readOf }).then(read => { reads = { ...reads, [readOf]: read }; }, () => {});
+    notify();
+  }
 }
 
 export function useFindings() {
@@ -33,6 +46,7 @@ export function useFindings() {
   const { patient, updateEncounter } = useEncounter();
   const fixtureRows = useSyncExternalStore(subscribe, () => fixture);
   const serverRows = useSyncExternalStore(subscribe, () => server);
+  const filmReads = useSyncExternalStore(subscribe, () => reads);
   const [error, setError] = useState<string>();
   const { can } = useRole();
   useEffect(() => {
@@ -68,9 +82,11 @@ export function useFindings() {
   };
   /** Reads the encounter's image for findings (the X-ray screen calls it on open); in live mode a role that may not only re-reads. */
   const detect = (encounterId: string) => {
-    if (on) { void refreshFindings(can("findings.detect") ? encounterId : undefined).catch(e => setError(errorText(e))); return; }
+    if (on) { setError(undefined); void refreshFindings(can("findings.detect") ? encounterId : undefined, can("findings.status") ? encounterId : undefined).catch(e => setError(errorText(e))); return; }
     const next = detectFixture(fixture, encounterId, new Date());
     if (next !== fixture) { fixture = next; notify(); }
   };
-  return { live: on, findings: on ? serverRows ?? NONE : fixtureRows, error, track, dismiss, detect };
+  /** Live only: who read this visit's film, for the card's empty state (undefined: not asked, or sample mode). */
+  const readOf = (encounterId: string | undefined) => on && encounterId ? filmReads[encounterId] : undefined;
+  return { live: on, findings: on ? serverRows ?? NONE : fixtureRows, error, track, dismiss, detect, readOf };
 }

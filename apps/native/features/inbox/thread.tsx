@@ -21,7 +21,8 @@ import { useRole } from "@/features/live/roles";
 import { refreshServerData } from "@/features/live/server-day";
 import { MessageActions } from "./index";
 import { PhotoMessage } from "./photo";
-import { clock, LABEL_STYLE, type Label } from "./state";
+import { readerText } from "@/components/sona/sample-label";
+import { clock, triageStyle, type Label } from "./state";
 
 /**
  * One patient's Sona Care thread for the care team. Opening it marks the patient's messages seen
@@ -118,6 +119,8 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
   const first = patient?.name.split(" ")[0] ?? "the patient";
   const show = waiting && !waiting.attachment && draft?.for === waiting.id && hidden !== waiting.id ? draft : undefined;
   const label: Label = waiting?.triage ?? "clinical";
+  // Who triaged it, when it was not a model alone; a message triage did not run on is amber "Not triaged", never the default's calm blue.
+  const chip = triageStyle(label, waiting?.triagedBy), by = readerText(waiting?.triagedBy), untriaged = waiting?.triagedBy?.source === "none";
 
   return <View ref={root} collapsable={false} style={{ flex: 1 }}>
     <CanvasBackground />
@@ -133,10 +136,11 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
           the waiting message's triage in its colour and why, and for urgent ones Reply / Call back as on Today. */}
       {on && waiting && <View style={{ marginTop: headerHeight, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 10, gap: 10, borderBottomWidth: 1, borderColor: glass.hairline }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, backgroundColor: LABEL_STYLE[label].wash }}>
-            <Text style={{ ...type.caption, fontWeight: "700", color: LABEL_STYLE[label].ink }}>{LABEL_STYLE[label].text}</Text>
+          <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, backgroundColor: chip.wash }}>
+            <Text style={{ ...type.caption, fontWeight: "700", color: chip.ink }}>{chip.text}</Text>
           </View>
-          <Text numberOfLines={2} style={{ ...type.footnote, fontWeight: label === "urgent" ? "600" : "400", color: label === "urgent" ? palette.red : palette.muted, flex: 1 }}>{waiting.triageReason ?? "Not triaged: read it first"}</Text>
+          <Text numberOfLines={2} style={{ ...type.footnote, fontWeight: label === "urgent" || untriaged ? "600" : "400", color: label === "urgent" ? palette.red : untriaged ? palette.amber : palette.muted, flex: 1 }}>
+            {untriaged ? "Triage did not run · read it first" : `${waiting.triageReason ?? "Not triaged: read it first"}${by ? ` · ${by}` : ""}`}</Text>
         </View>
         {label === "urgent" && canReply && <MessageActions item={{ patientId, title: first }} onReply={() => input.current?.focus()} />}
       </View>}
@@ -191,12 +195,14 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
 function Bubble({ message: m, reduced }: { message: Thread["messages"][number]; reduced: boolean }) {
   const team = m.from === "care-team";
   const tail: ViewStyle = team ? { borderBottomRightRadius: 8 } : { borderBottomLeftRadius: 8 };
-  const header = <Text style={{ ...type.caption, color: palette.muted, paddingHorizontal: 4 }}><Text style={{ fontWeight: "600", color: palette.ink }}>{m.author}</Text> · {clock(m.createdAt)}</Text>;
+  // Sona's call-999 line is the safety rule's template, sent by itself: no person and no model wrote it, and it says so.
+  const author = m.rule === "call-999" ? "Sona · automatic safety message" : m.author;
+  const header = <Text style={{ ...type.caption, color: palette.muted, paddingHorizontal: 4 }}><Text style={{ fontWeight: "600", color: palette.ink }}>{author}</Text> · {clock(m.createdAt)}</Text>;
   if (m.attachment?.kind === "medicine-photo") return <Animated.View entering={reduced ? undefined : FadeIn.duration(220)} style={{ alignSelf: "flex-start", maxWidth: "84%", gap: 4 }}>
     {header}
     <PhotoMessage messageId={m.id} attachment={m.attachment} first={m.author} />
   </Animated.View>;
-  return <Animated.View entering={reduced ? undefined : FadeIn.duration(220)} accessible accessibilityLabel={`${m.author}, ${clock(m.createdAt)}: ${m.text}`}
+  return <Animated.View entering={reduced ? undefined : FadeIn.duration(220)} accessible accessibilityLabel={`${author}, ${clock(m.createdAt)}: ${m.text}`}
     style={{ alignSelf: team ? "flex-end" : "flex-start", maxWidth: "84%", gap: 4, alignItems: team ? "flex-end" : "flex-start" }}>
     {header}
     <View style={[team ? { backgroundColor: palette.dark, borderRadius: radius.group, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: radius.group }, tail, { paddingHorizontal: 14, paddingVertical: 10 }]}>

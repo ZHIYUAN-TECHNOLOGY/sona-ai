@@ -35,7 +35,8 @@ export type ReplyLabel = "fine" | "worse" | "urgent";
 export type CheckInLanguage = Language;
 
 /** A check-in as the server lists it and the app's fixture holds it. */
-export type Reply = { id: string; text: string; label: ReplyLabel; source: string; receivedAt: Date; task: { id: string; title: string; completed: boolean } | null };
+/** `source` is who read the reply (a model's name, or "fixture" for the keyword rule); `decidedBy`, on the server's rows, says when the rule's urgent words decided over the model. */
+export type Reply = { id: string; text: string; label: ReplyLabel; source: string; decidedBy?: "model" | "rules"; receivedAt: Date; task: { id: string; title: string; completed: boolean } | null };
 export type CheckIn = { id: string; patientId: string; encounterId: string; day: number; language: Language; message: string; dueAt: Date; sentAt: Date | null; replies: Reply[] };
 
 // ponytail: every demo hospital keeps Malaysian time; read it from the hospital row once one is elsewhere.

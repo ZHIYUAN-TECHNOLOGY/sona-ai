@@ -1,4 +1,5 @@
-import { PressScale } from "@/components/sona/parts";
+import { Caption, ErrorLine, PressScale } from "@/components/sona/parts";
+import { emptyReadText } from "@/components/sona/sample-label";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
@@ -28,10 +29,20 @@ const BAND: Record<RiskBand, { label: string; ink: string; fill: string }> = {
 /** Where the findings came from, honestly: authored fixtures are never presented as a reading, and a model's is never a validated one. */
 const provenance = (f: Finding) => f.source === "fixture" ? "Unvalidated · not read from this image" : `Not a validated read · marked by ${f.source}`;
 
-export function FindingsCard({ findings, error, focus, onFocus, onTrack, onDismiss }: { findings: Finding[]; error?: string; focus?: string; onFocus?: (id: string) => void; onTrack?: (f: Finding) => void; onDismiss?: (f: Finding, reason: string) => void }) {
+/**
+ * `read` (live: findings.status for the visit's film) and `onRead` (detect again, for a role that may) are for the
+ * empty state: with no finding on the film, the card's place says whether a model read it and found nothing, or
+ * no model has read it (with Retry), so "nothing listed" is never taken for a clean film.
+ */
+export function FindingsCard({ findings, error, focus, onFocus, onTrack, onDismiss, read, onRead }: { findings: Finding[]; error?: string; focus?: string; onFocus?: (id: string) => void; onTrack?: (f: Finding) => void; onDismiss?: (f: Finding, reason: string) => void; read?: Parameters<typeof emptyReadText>[0]; onRead?: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const shown = findings.filter(f => f.status !== "dismissed");
-  if (!shown.length) return null;
+  if (!shown.length) {
+    const none = findings.length ? undefined : emptyReadText(read);
+    if (!none) return null;
+    return none.unread ? <ErrorLine text={`Incidental findings · ${error ? `${none.text}: ${error}` : none.text}`} onRetry={onRead} />
+      : <Caption>Incidental findings · {none.text}</Caption>;
+  }
   return <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 18, gap: 4 }}>
     <View style={{ gap: 2, paddingBottom: 6 }}>
       <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Incidental findings</Text>

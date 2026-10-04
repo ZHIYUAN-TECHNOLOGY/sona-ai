@@ -10,7 +10,7 @@ import { Icon, pillStyle, useAccessibleEffects } from "./ui";
 import { Press } from "./parts";
 import { JUDGE } from "@/features/live";
 import { wakingOf } from "@/features/live/waking";
-import { sampleText } from "./sample-label";
+import { draftText, sampleText } from "./sample-label";
 
 /*
  * A model answer arriving from the server (live mode). While it drafts, soft bars breathe in place
@@ -82,9 +82,7 @@ export function DataPill({ onPress = openAbout }: { onPress?: () => void }) {
  */
 export const answerSource = (answer: { loading: boolean; data?: { source?: string } }) => answer.loading ? undefined : answer.data?.source ?? "fixture";
 
-const MODEL_NAMES: [RegExp, string][] = [[/^medgemma/i, "MedGemma"], [/^gemma/i, "Gemma"], [/asr/i, "Sona speech"]];
-/** A hosted model's plain name for its label ("gemma-4-26b-a4b" → "Gemma"). */
-export const modelName = (id?: string) => MODEL_NAMES.find(([re]) => id && re.test(id))?.[1] ?? "a hosted model";
+export { modelName } from "./sample-label";
 
 /**
  * The one label for an answer no model gave: "Sample · <what> model not switched on" (authored) or
@@ -95,11 +93,12 @@ export const modelName = (id?: string) => MODEL_NAMES.find(([re]) => id && re.te
  * The judge build never says "Sample": there this state means the model did not answer or is starting, and the label
  * says that. `error` (or the `answer`'s) is why the model was not reached, for a rule-based fallback shown after a failed call.
  */
-export function SampleLabel({ source: given, model: givenModel, answer, what, rule = false, waking: givenWaking, error }: { source?: string; model?: string; answer?: { loading: boolean; data?: { source?: string; model?: string }; error?: string }; what?: string; rule?: boolean; waking?: number; error?: string }) {
+export function SampleLabel({ source: given, model: givenModel, storedAt, answer, what, rule = false, waking: givenWaking, error }: { source?: string; model?: string; storedAt?: Date | string; answer?: { loading: boolean; data?: { source?: string; model?: string; storedAt?: Date | string }; error?: string }; what?: string; rule?: boolean; waking?: number; error?: string }) {
   const source = answer ? answerSource(answer) : given;
-  // A model's answer says which model drafted it and that it is a draft to check, never a finding on its own.
+  // A model's answer says which model drafted it and that it is a draft to check, never a finding on its own;
+  // one the server kept from earlier (`storedAt`) also says when it was drafted.
   if (source === "model") {
-    const text = `AI draft · ${modelName(answer?.data?.model ?? givenModel)} · check before acting`;
+    const text = draftText(answer?.data?.model ?? givenModel, answer?.data?.storedAt ?? storedAt);
     return <Press accessibilityLabel={text} accessibilityHint="What this label means" onPress={openAbout} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
       <Text style={{ ...type.caption, color: palette.muted, flexShrink: 1 }}>{text}</Text>
       <Icon name="info.circle" size={12} color={palette.muted} />

@@ -130,7 +130,7 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
     yield { type: "step", step: "write" } as EvidenceStep;
     const models = context.models ?? stubModels;
     const asked = { question: input.question, thread: input.thread, sources: read.map(r => ({ n: r.n, design: r.design, year: r.year, title: r.title, text: r.text, from: r.from, pmid: r.pmid })) };
-    let written: Awaited<ReturnType<Models["synthesiseEvidence"]>> & { cutShort?: boolean };
+    let written: Awaited<ReturnType<Models["synthesiseEvidence"]>>;
     if (models.streamEvidence) {
       // Each part goes to the app as soon as it is written, checked as the whole answer is: a claim must cite a source, and its quotes must be in it.
       const run = models.streamEvidence(asked);

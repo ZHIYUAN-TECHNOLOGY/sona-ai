@@ -1,5 +1,14 @@
 import { expect, test } from "bun:test";
-import { insight, lastLine, sampleInbox, sections, summary, waited } from "./state";
+import { insight, LABEL_STYLE, lastLine, sampleInbox, sections, summary, triageStyle, waited } from "./state";
+
+test("a message triage did not run on never wears the default label's calm colour", () => {
+  expect(triageStyle("clinical", { source: "none" }).text).toBe("Not triaged");
+  expect(triageStyle("clinical", { source: "none" }).ink).not.toBe(LABEL_STYLE.clinical.ink);
+  for (const source of ["model", "fixture", "unknown"]) expect(triageStyle("clinical", { source })).toBe(LABEL_STYLE.clinical);
+  expect(triageStyle("urgent", undefined)).toBe(LABEL_STYLE.urgent);
+  // Demo mode's sample rows are the rules' own triage, and say so.
+  expect(sampleInbox().threads.every(t => t.triagedBy.source === "fixture")).toBe(true);
+});
 
 const now = "2026-09-26T04:00:00.000Z";
 const row = (name, label, waitingSince, handled = false) => ({ patientId: name, name, label: handled ? null : label, waitingSince: handled ? null : waitingSince, handled });

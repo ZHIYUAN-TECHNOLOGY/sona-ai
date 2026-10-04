@@ -4,7 +4,7 @@ import type { Patient } from "@/features/encounter/types";
 import { JUDGE, useLive } from "@/features/live";
 import { useDemoOffset } from "@/features/live/demo-clock";
 import { useFindings } from "@/features/live/findings-sync";
-import { useServerData, useServerDay } from "@/features/live/server-day";
+import { useServerData, useServerDay, useServerDayError } from "@/features/live/server-day";
 import { useServerBeds, useWardFailure } from "@/features/live/ward-sync";
 import { dayVisits } from "@/features/patients/record";
 import { localDate } from "@/features/tasks/state";
@@ -22,6 +22,16 @@ export function useDay(patients: Patient[]) {
   const offset = useDemoOffset();
   const today = useServerDay(server ? localDate(new Date(Date.now() + offset)) : undefined);
   return dayVisits(JUDGE, patients, today);
+}
+
+/**
+ * Why today's visits are not here in live mode: the day's read failed (the server's reason), with `retry`. Undefined in
+ * sample mode, while it loads, and once it arrived, so a count over useDay can say "didn't load" instead of nothing or zero.
+ */
+export function useDayError() {
+  const server = useServerData();
+  const offset = useDemoOffset();
+  return useServerDayError(server ? localDate(new Date(Date.now() + offset)) : undefined);
 }
 
 /** Today's visits as a list (see useDay); the judge build's is empty until the server's day arrives. */

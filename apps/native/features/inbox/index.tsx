@@ -20,7 +20,8 @@ import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
 import { refreshServerData } from "@/features/live/server-day";
-import { clock, insight, LABEL_STYLE, lastLine, sampleInbox, sections, summary, waited, type Inbox, type InboxThread, type Label } from "./state";
+import { readerText } from "@/components/sona/sample-label";
+import { clock, insight, LABEL_STYLE, lastLine, sampleInbox, sections, summary, triageStyle, waited, type Inbox, type InboxThread, type Label } from "./state";
 
 /**
  * The care team's inbox for Sona Care messages, ranked by triage so nothing urgent is buried: the
@@ -214,8 +215,11 @@ function SectionHead({ label, count }: { label: Label; count: number }) {
 function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: InboxThread; now: Date; first: boolean; canHandle: boolean; onHandle: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const [why, setWhy] = useState(false);
-  const label = t.label ?? "clinical", style = LABEL_STYLE[label];
+  const label = t.label ?? "clinical", style = triageStyle(label, t.triagedBy);
   const urgent = label === "urgent";
+  // Who gave the label, when it was not a model alone: the safety rule, the rules, or no one (amber: nobody has read it).
+  const by = readerText(t.triagedBy), untriaged = t.triagedBy?.source === "none";
+  const note = [urgent && t.reason, by].filter(Boolean).join(" · ");
   const wait = t.waitingSince ? waited(t.waitingSince, now) : "";
   const tx = useSharedValue(0), width = useSharedValue(360);
   const open = () => router.push(`/inbox/${t.patientId}`);
@@ -238,7 +242,7 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
   useAnimatedReaction(() => tx.value >= SWIPE, (over, was) => { if (over && was === false) scheduleOnRN(haptic, "select"); });
   const rowStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }], backgroundColor: interpolateColor(tx.value, [0, 12], ["rgba(252,253,255,0)", "rgba(252,253,255,0.96)"]) }));
   const revealStyle = useAnimatedStyle(() => ({ opacity: interpolate(tx.value, [0, SWIPE], [0, 1], "clamp"), transform: [{ scale: interpolate(tx.value, [0, SWIPE], [0.8, 1], "clamp") }] }));
-  const a11y = `${t.name}${t.bed ? `, ${t.bed}` : ""}. ${style.text}${urgent && t.reason ? `: ${t.reason}` : ""}. Waiting ${wait}${t.unread ? `, ${t.unread} unread` : ""}. ${t.lastFrom === "patient" ? "" : "You: "}${lastLine(t)}`;
+  const a11y = `${t.name}${t.bed ? `, ${t.bed}` : ""}. ${style.text}${urgent && t.reason ? `: ${t.reason}` : ""}${by && !untriaged ? `, ${by}` : ""}. Waiting ${wait}${t.unread ? `, ${t.unread} unread` : ""}. ${t.lastFrom === "patient" ? "" : "You: "}${lastLine(t)}`;
 
   return <Animated.View layout={reducedMotion ? undefined : LAYOUT} exiting={reducedMotion ? FadeOut.duration(150) : fold} onLayout={e => width.set(e.nativeEvent.layout.width)}
     style={first ? undefined : { borderTopWidth: 1, borderColor: glass.hairline }}>
@@ -264,7 +268,7 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
             </View>
             {t.lastPhoto ? <LastPhoto label={t.lastPhoto} color={t.unread ? palette.ink : palette.muted} />
               : <Text numberOfLines={1} style={{ ...type.subhead, color: t.unread ? palette.ink : palette.muted }}>{t.lastFrom === "patient" ? "" : "You: "}{t.lastText}</Text>}
-            {urgent && t.reason && <Text numberOfLines={1} style={{ ...type.caption, fontWeight: "600", color: palette.red }}>{t.reason}</Text>}
+            {note !== "" && <Text numberOfLines={1} style={{ ...type.caption, fontWeight: urgent || untriaged ? "600" : "400", color: urgent ? palette.red : untriaged ? palette.amber : palette.muted }}>{note}</Text>}
             {why && <Expand><Text style={{ ...type.caption, color: style.ink, paddingTop: 2 }}>{style.text} · {t.reason}</Text></Expand>}
           </View>
         </PressScale>}</Pressable>

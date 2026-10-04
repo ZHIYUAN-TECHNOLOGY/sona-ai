@@ -4,6 +4,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { MarkedText } from "@/components/sona/marked-text";
 import { LAYOUT, unfold, type riseIn } from "@/components/sona/motion";
 import { ErrorLine, PressScale } from "@/components/sona/parts";
+import { readerText } from "@/components/sona/sample-label";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Icon, useAccessibleEffects } from "@/components/sona/ui";
@@ -59,7 +60,8 @@ export function CheckInThread({ patient, entering }: { patient: Patient; enterin
           <View style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: LABEL[r.label].wash }}>
             <MarkedText text={r.text} style={{ ...type.subhead, color: palette.ink }} />
           </View>
-          <Text style={{ ...type.caption, fontWeight: "600", color: LABEL[r.label].ink }}>{r.task?.completed ? "Handled" : LABEL[r.label].text}</Text>
+          {/* Who read the reply, when it was not a model alone: "Safety rule" (its urgent words decided) or "Rule-based". */}
+          <Text style={{ ...type.caption, fontWeight: "600", color: LABEL[r.label].ink }}>{[r.task?.completed ? "Handled" : LABEL[r.label].text, readerText(r)].filter(Boolean).join(" · ")}</Text>
         </Animated.View>)}
       </View>)}
       {!JUDGE && <Text style={{ ...type.caption, color: palette.muted }}>Simulated inbox · no real patient is contacted</Text>}

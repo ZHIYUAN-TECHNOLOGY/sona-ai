@@ -5,6 +5,17 @@ import "./strings";
 export type Plan = Awaited<ReturnType<AppRouterClient["care"]["discharge"]>>;
 export type Discharged = Extract<Plan, { status: "discharged" }>;
 
+/**
+ * Where the leaflet on screen came from, in the patient's words: a model's draft that a named clinician approved for
+ * them, or the hospital's general leaflet (`fixture`: the authored text, also every language other than the one
+ * approved at discharge). Nothing for a leaflet from before its origin was kept, or a draft with no approver on record.
+ */
+export function leafletOrigin(leaflet: { source: string; approvedBy?: string }, lang: Lang = "en") {
+  const t = tFor(lang);
+  if (leaflet.source === "model") return leaflet.approvedBy ? t("dis.leafletBy", { name: leaflet.approvedBy }) : undefined;
+  return leaflet.source === "fixture" ? t("dis.leafletGeneral") : undefined;
+}
+
 export type Group = keyof Discharged["medicines"];
 export type Med = Discharged["medicines"][Group][number];
 

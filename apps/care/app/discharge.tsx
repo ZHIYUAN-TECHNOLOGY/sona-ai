@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 import { upcomingOf } from "@/features/check-ins/model";
 import { useCheckIns } from "@/features/check-ins/today";
-import { changeOf, homeLine, listOf, scheduleLine, takeLine, type Discharged, type Group, type Med } from "@/features/discharge/lines";
+import { changeOf, homeLine, leafletOrigin, listOf, scheduleLine, takeLine, type Discharged, type Group, type Med } from "@/features/discharge/lines";
 import "@/features/doses/strings";
 import { tFor, useLang } from "@/lib/i18n";
 import { Tag, useDischarge } from "@/features/discharge/row";
@@ -48,6 +48,7 @@ function Plan({ plan, reduced }: { plan: Discharged; reduced: boolean }) {
   const [picked, setPicked] = useState<string>();
   // The leaflet in the language Sona Care speaks, else the one chosen at discharge.
   const leaflet = plan.leaflets.find(l => l.language === (picked ?? lang)) ?? plan.leaflets.find(l => l.language === plan.language) ?? plan.leaflets[0]!;
+  const origin = leafletOrigin(leaflet, lang);
   const meds = GROUPS.flatMap(group => plan.medicines[group].map(m => ({ ...m, group })));
   // The check-ins still to come, from the visit's rows: a day the follow-up agent added is there, a past one is not.
   const now = useNow(), rows = useCheckIns().data;
@@ -74,6 +75,7 @@ function Plan({ plan, reduced }: { plan: Discharged; reduced: boolean }) {
           })}
         </View>
         <Text style={{ ...type.body, color: palette.ink }}>{leaflet.text}</Text>
+        {origin && <Text style={{ ...type.footnote, color: palette.muted }}>{origin}</Text>}
       </Card>
     </Animated.View>
 

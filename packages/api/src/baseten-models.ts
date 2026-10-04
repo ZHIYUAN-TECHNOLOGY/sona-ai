@@ -454,17 +454,18 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
     try {
       const asked = evidenceQuestion(input);
       const res = await send("brain", "/v1/chat/completions", JSON.stringify({ ...evidenceChat(asked.content), stream: true }), "application/json", EVIDENCE_MS);
-      let written = "", bottom = false, sent = 0;
-      for await (const delta of deltas(res.body!, () => answered("brain"))) {
+      let written = "", bottom = false, sent = 0, cut = false;
+      for await (const delta of deltas(res.body!, reason => { answered("brain"); cut = reason === "length"; })) {
         written += delta;
         const part = partialEvidence(written);
         if (!bottom && part.bottomLine?.trim()) { bottom = true; yield { bottomLine: part.bottomLine.trim().slice(0, 240) }; }
         for (const claim of evidenceOf({ claims: part.claims.slice(sent) }, asked.shown).claims) yield { claim };
         sent = part.claims.length;
       }
-      // The stream's text carries no finish reason (./sse), but an answer cut at the length limit never closes its JSON,
-      // so it is read the same way: the claims that closed are kept, marked cut short; none closed, and it is asked whole.
-      const read = evidenceRead(written, asked.shown);
+      // Read as the whole call reads it, with the stream's finish reason (./sse): an answer cut at the length limit is
+      // marked cut short even if its JSON happened to close; one that never closed keeps the claims that did, also marked;
+      // none closed, and it is asked whole.
+      const read = evidenceRead(written, asked.shown, cut);
       if (read) return { ...read, source: "model", model: BRAIN_MODEL };
     } catch { /* the whole answer below */ }
     return await wrapped.synthesiseEvidence(input);
@@ -487,10 +488,7 @@ const PROMPT_CHARS = (CONTEXT_TOKENS - EVIDENCE_MAX_TOKENS - 384) * CHARS_PER_TO
 const EVIDENCE_MS = 60_000;
 const evidenceChat = (content: string) => ({ model: BRAIN_MODEL, messages: [{ role: "system", content: EVIDENCE }, { role: "user", content }], temperature: 0.1, max_tokens: EVIDENCE_MAX_TOKENS });
 
-/** A source as the evidence route sends it: for a PubMed study, its journal and PMID too (optional: the stub reads neither). */
-type EvidenceSource = EvidenceInput["sources"][number] & { from?: string; pmid?: string };
-/** An evidence answer, and whether it was cut short: the model stopped before closing it, so only its finished claims are in it. */
-type EvidenceRead = EvidenceAnswer & { cutShort?: boolean };
+type EvidenceSource = EvidenceInput["sources"][number];
 
 /** The start of `text` that fits in `max` characters without ending mid-sentence; "" when not even its first sentence fits. */
 function wholeSentences(text: string, max: number) {
@@ -552,7 +550,7 @@ function evidenceOf(read: Record<string, unknown>, shown: EvidenceSource[]): Evi
  * that did not (it hit the length limit, `cut`, or the reply broke off) is never read as complete: the claims that
  * closed before the cut are kept, each still whole and cited, and the answer says it was cut short; with none, it is no answer.
  */
-function evidenceRead(written: unknown, shown: EvidenceSource[], cut = false): EvidenceRead | undefined {
+function evidenceRead(written: unknown, shown: EvidenceSource[], cut = false): EvidenceAnswer | undefined {
   const read = jsonIn(written);
   if (read && (Array.isArray(read.claims) || typeof read.general === "string")) return { ...evidenceOf(read, shown), ...cut && { cutShort: true } };
   const part = partialEvidence(typeof written === "string" ? written : "");

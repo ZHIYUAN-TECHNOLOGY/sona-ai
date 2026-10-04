@@ -18,3 +18,43 @@ export function sampleText({ judge, rule = false, what, waking, error, answerErr
   const said = unanswered(true, { loading: false, data: { source: "fixture", waking }, error: answerError })!;
   return `${waking && rule ? "Rule-based for now · " : lead}${said.why === "failed" ? `Sona's model did not answer: ${said.reason}` : said.reason}`;
 }
+
+const MODEL_NAMES: [RegExp, string][] = [[/^medgemma/i, "MedGemma"], [/^gemma/i, "Gemma"], [/asr/i, "Sona speech"]];
+/** A hosted model's plain name for its label ("gemma-4-26b-a4b" → "Gemma"). */
+export const modelName = (id?: string) => MODEL_NAMES.find(([re]) => id && re.test(id))?.[1] ?? "a hosted model";
+
+// As the check-in follow-up writes a time: the hospital's clock (Malaysia), whatever the phone's.
+const WHEN = { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" } as const;
+/**
+ * A model answer's label. With `storedAt` the model was not asked now: the server gave back the answer it kept
+ * (packages/api answers), so the label says when it was drafted, and a model that is off now is not read as answering now.
+ */
+export const draftText = (model?: string, storedAt?: Date | string) =>
+  `AI draft · ${modelName(model)}${storedAt ? ` · drafted earlier, ${new Date(storedAt).toLocaleString("en-GB", WHEN)}` : ""} · check before acting`;
+
+type By = { source: string; model?: string; decidedBy?: string };
+/**
+ * Who read a patient's words (a message's triage, a check-in reply's label) when it was not a model alone: the urgent-word
+ * rule deciding over the model ("Safety rule"), the rules with no model ("Rule-based"), or no one ("Not triaged": the
+ * label shown is only the default). Nothing for a model's own reading, and no claim for a row from before this was kept.
+ * `source` is the server's: "model", "fixture", "none", "unknown", or (check-ins) the model's name itself.
+ */
+export const readerText = (by?: By) =>
+  !by || by.source === "unknown" ? undefined : by.source === "none" ? "Not triaged" : by.source === "fixture" ? "Rule-based" : by.decidedBy === "rules" ? "Safety rule" : undefined;
+
+/** Who made something kept as sent (a letter's codes, an appeal): "<verb> Gemma", "Rule-based", or no claim when it was not kept. */
+export const keptByText = (by: By | undefined, verb: string) => by?.source === "model" ? `${verb} ${modelName(by.model)}` : by?.source === "fixture" ? "Rule-based" : undefined;
+
+/** Who took the patient's name out before a hosted model read a scan (scan.read's `deidentifier`); nothing when nothing left the server ("none"). */
+export const deidentifiedText = (by?: string) => !by || by === "none" ? undefined : `Name removed before reading · ${by === "rules" ? "Rule-based" : by}`;
+
+/**
+ * An empty findings list, said as what it is (findings.status): a model read the film and found nothing, or no model
+ * has read it (`unread`: never a clean result; null is a film nobody read, "fixture" the stub). Nothing while the
+ * status is not known, when the reading did find something, or for a reading whose reader was not kept.
+ */
+export function emptyReadText(read?: (By & { found: number }) | null) {
+  if (read === undefined || read?.source === "unknown") return undefined;
+  if (read?.source === "model") return read.found ? undefined : { text: `Read by ${modelName(read.model)} · nothing found`, unread: false };
+  return { text: "This film has not been read by a model", unread: true };
+}

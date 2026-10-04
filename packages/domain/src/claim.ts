@@ -19,7 +19,11 @@ export type ClaimState = {
   reviewUrl?: string; query?: string;
   /** The insurer's denial (kept once appealed, so the history reads "denied, then appealed"), and when the appeal went. */
   denial?: Denial; appealedAt?: string;
+  /** Live mode: who suggested the codes frozen into the letter that went, and who drafted the appeal that went (claim.status). */
+  codedBy?: KeptBy; appealDraftedBy?: KeptBy;
 };
+/** Who made something kept as sent: a model by name, the rules ("fixture"), or "unknown" on a row from before this was kept. */
+export type KeptBy = { source: "model"; model: string } | { source: "fixture" } | { source: "unknown" };
 export type DenialCode = "PEC" | "MED" | "DOC" | "COV";
 export type Denial = { code: DenialCode; reason: string; note?: string; at: string };
 /** An appeal letter: every point cites the note sentence behind it, so nothing in it is ungrounded. */
@@ -30,7 +34,8 @@ export type Code = { code: string; label: string; kind: "Principal" | "Secondary
 export const EMPTY_CLAIM: ClaimState = { organismConfirmed: false, ivReasonAdded: false, status: "draft" };
 export const INSURER = "Synthetic insurer";
 
-// Sample mode's note for the demo patient. Connected, her visit has no note until her consultation's is saved.
+// Sample mode's note for the demo patient. Connected, the letter reads her visit's saved note instead: the seed saves
+// one for her stay (packages/db seedDemoNote), and a note saved from her consultation is its next revision.
 const NOTE: Sentence[] = [
   { id: "presenting", text: "Five days of cough, fever since yesterday." },
   { id: "xray", text: "Chest film: right lower zone consolidation." },

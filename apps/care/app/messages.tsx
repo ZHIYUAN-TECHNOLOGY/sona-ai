@@ -121,7 +121,9 @@ function Pill({ label }: { label: string }) {
 function Bubble({ m, sending, reduced }: { m: Message; sending: boolean; reduced: boolean }) {
   const t = useT();
   const mine = m.from === "patient", urgent = urgentFromTeam(m);
-  const who = mine ? t("msg.you") : t("msg.title");
+  // Sona's call-999 line is the safety rule's template, sent by itself (`rule`): it is not passed off as the care team's own words.
+  const auto = "rule" in m && m.rule === "call-999";
+  const who = mine ? t("msg.you") : auto ? t("msg.auto") : t("msg.title");
   const tail: ViewStyle = mine ? { borderBottomRightRadius: 8 } : { borderBottomLeftRadius: 8 };
   const enter = reduced ? FadeIn.duration(200) : mine ? springIn : FadeIn.duration(240);
   const bubble = <Animated.View entering={enter} accessible accessibilityLabel={`${who}, ${sending ? t("msg.sendingA11y") : clockOf(m.createdAt)}: ${m.text}`}
@@ -132,7 +134,7 @@ function Bubble({ m, sending, reduced }: { m: Message; sending: boolean; reduced
         : urgent ? { backgroundColor: palette.redWash, borderWidth: 1, borderColor: palette.redEdge, borderRadius: 24, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: 24 }, tail, { paddingHorizontal: 16, paddingVertical: 12 }]}>
         <Text selectable style={{ ...type.body, color: mine ? palette.white : palette.ink }}>{m.text}</Text>
       </View>
-      <Text style={{ fontSize: 12, lineHeight: 16, color: palette.faint, paddingHorizontal: 4 }}>{mine ? "" : t("msg.teamAt")}{sending ? t("msg.sending") : clockOf(m.createdAt)}</Text>
+      <Text style={{ fontSize: 12, lineHeight: 16, color: palette.faint, paddingHorizontal: 4 }}>{mine ? "" : auto ? `${t("msg.auto")} · ` : t("msg.teamAt")}{sending ? t("msg.sending") : clockOf(m.createdAt)}</Text>
     </View>
   </Animated.View>;
   if (!urgent) return bubble;

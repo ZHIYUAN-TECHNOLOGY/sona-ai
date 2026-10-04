@@ -1,5 +1,49 @@
 import { expect, test } from "bun:test";
-import { sampleText } from "./sample-label";
+import { deidentifiedText, draftText, emptyReadText, keptByText, readerText, sampleText } from "./sample-label";
+
+test("a model's answer kept from earlier says when it was drafted", () => {
+  expect(draftText("gemma-4-26b-a4b")).toBe("AI draft · Gemma · check before acting");
+  const kept = draftText("medgemma-27b", "2026-10-05T06:02:00Z");
+  expect(kept).toStartWith("AI draft · MedGemma · drafted earlier, Mon");
+  expect(kept).toContain("5 Oct");
+  expect(kept).toEndWith("14:02 · check before acting"); // Malaysia's clock
+});
+
+test("who read a patient's words is said only when it was not a model alone", () => {
+  expect(readerText({ source: "model", model: "gemma", decidedBy: "model" })).toBeUndefined();
+  expect(readerText({ source: "model", model: "gemma", decidedBy: "rules" })).toBe("Safety rule");
+  expect(readerText({ source: "fixture" })).toBe("Rule-based");
+  expect(readerText({ source: "none" })).toBe("Not triaged");
+  expect(readerText({ source: "unknown" })).toBeUndefined();
+  expect(readerText(undefined)).toBeUndefined();
+  // A check-in reply keeps the model's name as its source.
+  expect(readerText({ source: "gemma-4-26b-a4b", decidedBy: "model" })).toBeUndefined();
+  expect(readerText({ source: "gemma-4-26b-a4b", decidedBy: "rules" })).toBe("Safety rule");
+  expect(readerText({ source: "fixture", decidedBy: "rules" })).toBe("Rule-based");
+});
+
+test("what was kept as sent names its maker, or makes no claim", () => {
+  expect(keptByText({ source: "model", model: "gemma-4-26b-a4b" }, "suggested by")).toBe("suggested by Gemma");
+  expect(keptByText({ source: "fixture" }, "suggested by")).toBe("Rule-based");
+  expect(keptByText({ source: "unknown" }, "drafted by")).toBeUndefined();
+  expect(keptByText(undefined, "drafted by")).toBeUndefined();
+});
+
+test("a scan says who removed the name only when something left the server", () => {
+  expect(deidentifiedText("none")).toBeUndefined();
+  expect(deidentifiedText(undefined)).toBeUndefined();
+  expect(deidentifiedText("rules")).toBe("Name removed before reading · Rule-based");
+  expect(deidentifiedText("openmed-pii")).toBe("Name removed before reading · openmed-pii");
+});
+
+test("an empty findings list is a model's clean read or an unread film, never a guess", () => {
+  expect(emptyReadText({ source: "model", model: "medgemma-4b", found: 0 })).toEqual({ text: "Read by MedGemma · nothing found", unread: false });
+  expect(emptyReadText({ source: "model", model: "medgemma-4b", found: 2 })).toBeUndefined();
+  expect(emptyReadText({ source: "fixture", found: 0 })).toEqual({ text: "This film has not been read by a model", unread: true });
+  expect(emptyReadText(null)).toEqual({ text: "This film has not been read by a model", unread: true });
+  expect(emptyReadText({ source: "unknown", found: 0 })).toBeUndefined();
+  expect(emptyReadText(undefined)).toBeUndefined();
+});
 
 test("outside the judge build the label is today's: a sample or rule-based, and why", () => {
   expect(sampleText({ judge: false, what: "briefing" })).toBe("Sample · briefing model not switched on");

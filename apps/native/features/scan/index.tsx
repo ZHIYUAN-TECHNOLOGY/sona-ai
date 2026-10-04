@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { CaptureScan } from "@/components/sona/capture-scan";
 import { SampleLabel } from "@/components/sona/model-answer";
+import { deidentifiedText } from "@/components/sona/sample-label";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
@@ -39,7 +40,8 @@ import { NoVisit } from "@/components/sona/no-visit";
  * Nothing is written until "Add to the record"; fixture mode applies to the local draft, live mode via scan.apply.
  */
 type Photo = { source: number | { uri: string }; sample: boolean; base64?: string | null; mimeType?: string | null };
-type Reading = HandwrittenNote & ({ source: "fixture" } | { source: "model"; model: string });
+// `deidentifier`: who took the name out before a hosted model read the photo (scan.read); absent on the bundled sample.
+type Reading = HandwrittenNote & ({ source: "fixture" } | { source: "model"; model: string }) & { deidentifier?: string };
 type Phase =
   | { kind: "start"; error?: string }
   | { kind: "confirm"; photo: Photo }
@@ -224,6 +226,7 @@ function PhotoHeader({ photo, settled, source }: { photo: Photo; settled: boolea
           <Text style={{ ...type.headline, color: palette.ink }}>{photo.sample ? "Sample ward-round note" : "Your photo"}</Text>
           {source?.source === "fixture" ? <SampleLabel source="fixture" waking={wakingOf(source)} what="handwriting" />
             : source && <Text style={{ ...type.footnote, color: palette.muted }}>Read by {source.model} · check every item</Text>}
+          {deidentifiedText(source?.deidentifier) && <Text style={{ ...type.caption, color: palette.muted }}>{deidentifiedText(source?.deidentifier)}</Text>}
           <Text style={{ ...type.caption, color: palette.blue }}>{words ? `${words} ${words === 1 ? "word" : "words"} to check · ` : ""}Tap to compare</Text>
         </Animated.View>}
       </Surface>

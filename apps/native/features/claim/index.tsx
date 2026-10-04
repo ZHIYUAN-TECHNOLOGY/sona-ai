@@ -17,6 +17,7 @@ import { useServerEncounter } from "@/features/live/sync";
 import type { PrescriptionCheck } from "@/features/encounter/types";
 import { CODES, EMPTY_CLAIM, INSURER, ORGANISM_UNKNOWN, approveClaim, claimChecks, ivReason, noteFor, withFix, type ClaimState, type Code, type Sentence } from "./model";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
+import { keptByText } from "@/components/sona/sample-label";
 import { useLiveCodes } from "@/features/live/model-sync";
 import { unanswered } from "@/features/clinical/judge-answer";
 import { AppealCard, DeniedCard, Paragraph } from "./appeal";
@@ -99,7 +100,7 @@ export function ClaimScreen() {
       api.claim.send({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id })
         .then(async () => {
           const first = await api.claim.status({ encounterId: patient.encounterId }).catch(() => undefined);
-          set({ status: "sent", reviewUrl: first?.reviewUrl, query: undefined }); setSending(false);
+          set({ status: "sent", reviewUrl: first?.reviewUrl, query: undefined, codedBy: first?.codedBy }); setSending(false);
           const poll = setInterval(() => {
             api.claim.status({ encounterId: patient.encounterId }).then(r => {
               if (r.status === "queried") { clearInterval(poll); set({ status: "queried", query: r.query }); haptic("warning"); return; }
@@ -226,6 +227,8 @@ export function ClaimScreen() {
           <Text style={{ ...type.caption, color: c.inTable === false ? palette.amber : palette.muted }}>{c.inTable === false ? "Not in ICD-10 table" : c.kind}</Text>
         </Pressable></Arrive>; })}
         {!held?.reason && !noNote && <SampleLabel answer={server} rule what="coding" />}
+        {/* Once a letter has gone: who suggested the codes frozen into it, which the label above (the codes as suggested now) does not say. */}
+        {state.status !== "draft" && keptByText(state.codedBy, "suggested by") && <Text style={{ ...type.caption, color: palette.muted }}>Codes as sent · {keptByText(state.codedBy, "suggested by")}</Text>}
       </Animated.View>
       </Animated.View>
     </Surface>

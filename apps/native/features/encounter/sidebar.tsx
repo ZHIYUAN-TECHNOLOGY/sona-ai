@@ -13,8 +13,8 @@ import { useLiveHandover } from "@/features/live/handover-sync";
 import { useTrainingStatus } from "@/features/training";
 import { trainingLine } from "@/features/training/model";
 import { wardSummary } from "@/features/ward/model";
-import { useDay, useOpenTasks, useWardBeds } from "@/features/day/use-counts";
-import { auditLine, auditOf, wardLine } from "./quick-actions";
+import { useDay, useDayError, useOpenTasks, useWard } from "@/features/day/use-counts";
+import { auditLine, auditOf, BEDS_FAILED, DAY_FAILED, wardLine } from "./quick-actions";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -81,7 +81,10 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
   // Today's visits from the same schedule as Today and Patients, so the three never disagree.
   // Undefined until the server's day arrives (judge build): no count meanwhile, never "No visits today" for a day not read yet.
   const day = useDay(patients);
-  const ward = wardSummary(useWardBeds()); // the Ward page's beds
+  // A failed read is said on its row, where a tap reads again (the home keys' words), instead of no line or a count of none.
+  const dayError = useDayError();
+  const { beds, failure: bedsFailed, retry: retryBeds } = useWard();
+  const ward = wardSummary(beds); // the Ward page's beds
   const audit = auditOf(useOpenAudit());
   const training = useTrainingStatus();
   const handover = useLiveHandover(open);
@@ -98,6 +101,7 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
       { label: "Shift handover", sf: "arrow.left.arrow.right", detail: handoverCount === undefined ? undefined : `${handoverCount} ${handoverCount === 1 ? "patient" : "patients"}`, show: can("handover.list"), onPress: go(() => router.push("/handover")) },
     ] },
     { title: "Patients", items: [
+      dayError ? { label: "Patients", icon: "patients", detail: DAY_FAILED, show: can("patients.list"), onPress: dayError.retry } :
       { label: "Patients", icon: "patients", detail: !day ? undefined : day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today", show: can("patients.list"), onPress: go(() => router.push("/patients")) },
     ] },
     { title: "Continue", items: [
@@ -106,6 +110,7 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
       ...(entries.length > CONTINUE_LIMIT ? [{ label: `See all ${entries.length}`, sf: "ellipsis.circle", onPress: go(() => router.push({ pathname: "/patients", params: { tab: "continue" } })) }] : []),
     ] },
     { title: "Ward & hospital", items: [
+      bedsFailed ? { label: "Ward", sf: "bed.double", detail: BEDS_FAILED, show: can("ward.beds"), onPress: retryBeds } :
       { label: "Ward", sf: "bed.double", detail: wardLine(ward), show: can("ward.beds"), onPress: go(() => router.push("/ward")) },
       { label: "Coding audit", sf: "doc.text.magnifyingglass", detail: auditLine(audit), show: can("audit.list"), onPress: go(() => router.push("/audit")) },
       { label: "Training data", sf: "shield.lefthalf.filled", detail: training.status ? trainingLine(training.status.counts) : undefined, show: can("training.status"), onPress: go(() => router.push("/training")) },

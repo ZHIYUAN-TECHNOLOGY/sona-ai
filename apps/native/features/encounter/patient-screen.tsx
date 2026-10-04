@@ -5,7 +5,7 @@ import { Fragment, useCallback, useMemo, useRef, useState, type ReactNode, type 
 import { Alert, ScrollView, TextInput, View } from "react-native";
 import { ListRow } from "@/components/sona/list";
 import { Chip, Icon, Insight, Tone, canvasImage, useAccessibleEffects } from "@/components/sona/ui";
-import { Press } from "@/components/sona/parts";
+import { ErrorLine, Press } from "@/components/sona/parts";
 import { palette, type, radius } from "@/components/sona/theme";
 import { mostUrgent } from "@/components/sona/tone";
 import { GROUPS, letters, listItems, rosterRows, syntheticCensus, type Group, type Item, type Row, type View as Tab } from "@/features/patients/census";
@@ -14,7 +14,7 @@ import { useServerCensus } from "@/features/patients/server-census";
 import { needsYou } from "@/features/ask/answers";
 import { JUDGE } from "@/features/live";
 import { needLine, patientFlags, unconfirmedOf } from "@/features/day/counts";
-import { useDayPatients, usePendingResult } from "@/features/day/use-counts";
+import { useDayError, useDayPatients, usePendingResult } from "@/features/day/use-counts";
 import { PatientSheet, type Go } from "./patient-sheet";
 import { useEncounter } from "./store";
 import { openSession } from "./navigation";
@@ -60,6 +60,8 @@ export function PatientScreen() {
   const now = new Date().getHours() * 60 + new Date().getMinutes();
   // Today's visits come from the same schedule as Today (the server's appointments in live mode), so the two pages agree.
   const day = useDayPatients(patients);
+  // Live mode: today's read failed, so the rows carry no appointment times and the count is not today's: say so, with Retry.
+  const dayError = useDayError();
   const result = usePendingResult(); // the result Today flags, so an acknowledged one stops showing here too
   const real: Row[] = patients.flatMap(p => {
     const visit = day.find(d => d.id === p.id);
@@ -119,6 +121,7 @@ export function PatientScreen() {
   const header = <View style={{ gap: 14, paddingBottom: 14 }}>
     <Stack.Screen options={{ title: picking ? "Choose a patient" : "Patients" }} />
     <Insight>{insight.map((part, i) => [i ? " · " : "", part])}</Insight>
+    {dayError && <ErrorLine text={`Today's visits didn't load: ${dayError.error}`} onRetry={dayError.retry} />}
     <View style={{ borderRadius: radius.control, backgroundColor: palette.surface, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14 }}><Icon name="magnifyingglass" color={palette.muted} size={18} /><TextInput accessibilityLabel="Search patients" placeholder={`Search ${rows.length} patients by name, ID or bed`} value={query} onChangeText={setQuery} placeholderTextColor={palette.placeholder} clearButtonMode="while-editing" style={{ flex: 1, minHeight: 52, ...type.headline, fontWeight: "400", lineHeight: undefined, color: palette.ink }} /></View>
     {!query && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }} style={{ marginHorizontal: -20 }} contentInset={{ left: 20, right: 20 }} contentOffset={{ x: -20, y: 0 }}>
       {/* The design system's pill: the picked tab is ink, like every picked option. */}

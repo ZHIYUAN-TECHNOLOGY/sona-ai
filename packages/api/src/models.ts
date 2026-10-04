@@ -28,8 +28,10 @@ export type Origin = { source: "fixture"; waking?: number } | { source: "model";
 export type DecidedBy = { decidedBy?: "model" | "rules" };
 type Answer<T> = Promise<T & Origin>;
 
-export type EvidenceInput = { question: string; thread: { question: string; answer: string }[]; sources: { n: number; design: string; year?: number; title: string; text: string }[] };
-export type EvidenceAnswer = { claims: Claim[]; followUps: string[]; general?: string; bottomLine?: string };
+/** `from` and `pmid`: a PubMed study's journal and PMID, so the prompt can name them (the stub reads neither). */
+export type EvidenceInput = { question: string; thread: { question: string; answer: string }[]; sources: { n: number; design: string; year?: number; title: string; text: string; from?: string; pmid?: string }[] };
+/** `cutShort`: the model stopped before closing its answer (the length limit), so only the claims it finished are in it. */
+export type EvidenceAnswer = { claims: Claim[]; followUps: string[]; general?: string; bottomLine?: string; cutShort?: boolean };
 /** A part of an evidence answer, as soon as it is written: its bottom line, or one claim. */
 export type EvidencePart = { bottomLine: string } | { claim: Claim };
 

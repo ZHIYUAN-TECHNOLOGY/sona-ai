@@ -59,7 +59,8 @@ test("the scribe's draft names Amelia by first name: the rules miss it, the gate
   const { doctor, manager, amelia } = await world();
   await manager.training.setContributes({ contributes: true });
   await amelia.care.setTrainingConsent({ consented: true });
-  await saveNote(doctor, 0, "Amelia Tan (SYN-1042): cough for five days; fever since yesterday.");
+  // The save itself says who de-identified the sample it became, and that the gate stopped it.
+  expect(await saveNote(doctor, 0, "Amelia Tan (SYN-1042): cough for five days; fever since yesterday.")).toMatchObject({ revision: 1, sample: { deidentifier: "rules", status: "blocked" } });
   await amelia.care.checkIns.reply({ checkInId: "check-in:visit-1042:2", text: "demam balik" });
   const samples = await manager.training.samples();
   expect(samples.map(s => [s.source, s.status, s.leak])).toEqual([["check-in-reply", "pending", null], ["note-edit", "blocked", ["name"]]]);

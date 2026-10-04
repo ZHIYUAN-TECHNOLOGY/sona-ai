@@ -4,7 +4,7 @@ import type { Context as ApiContext } from "@sona-ai/api/context";
 import { stubModels } from "@sona-ai/api/models";
 import { lastDischarge, patientPlan, planText } from "@sona-ai/api/routers/care-plan";
 import { careLinkOf } from "@sona-ai/api/routers/hospital";
-import { LINES, answerTurn, basetenChat } from "@sona-ai/api/voice-agent/answer";
+import { LINES, answerTurn, basetenChat, type TurnSummary } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber } from "@sona-ai/api/voice-agent/listen";
 import { SonaVoice, VOICE_RATE, basetenSpeak, basetenSpeakStream, startingBoxes, warmBoxes, type PhoneVoice } from "@sona-ai/api/voice-agent/voice";
@@ -29,7 +29,7 @@ type Language = keyof typeof LINES;
  * per sentence down). An answer sent with no audio (Sona's voice is starting, slow or unavailable) is read by the phone's
  * own voice, and so is a notice (Sona's line, then "listening"). Three more JSON events, which a client may ignore:
  * - `sona_say` {text, reason: "starting" | "slow" | "unavailable" | "notice", waking?}: a sentence sent with no audio, and why.
- * - `sona_turn` {grounded, urgent, source, model?, waking?}: how the answer went, after its last sentence.
+ * - `sona_turn` {grounded, urgent, source, model?, waking?, ear?}: how the answer went, after its last sentence (`ear`: who heard a spoken question).
  * - `sona_care_team` {taskId, title}: what the patient reported reached their care team as a flagged task.
  */
 export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16", sampleRate: VOICE_RATE }) {
@@ -38,6 +38,13 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
   readonly #chat = this.#baseten && basetenChat(this.#baseten);
   /** Each answer turn's phone, so a sentence for the phone's voice reaches the phone that asked. */
   readonly #phoneOf = new WeakMap<AbortSignal, Connection>();
+  /**
+   * The last words the ASR heard on each phone, and who heard them (the transcribe answer's source and model).
+   * ponytail: one per phone, matched to a turn by its words, since the SDK hands onTurn the transcript alone. A turn
+   * whose words differ (a typed question, or a later reading that landed first) claims no ear; carry it with the
+   * utterance if the SDK ever passes one through.
+   */
+  readonly #heard = new WeakMap<Connection, { text: string; by: NonNullable<TurnSummary["ear"]> }>();
   /** The language chosen at discharge, read when a call starts: Sona's own lines when the app does not say (`?lang=`). */
   #discharged: Language | undefined;
 
@@ -58,7 +65,12 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
   }
 
   createTranscriber(connection: Connection) {
-    return new SonaTranscriber(audio => this.#models.transcribe({ audio }), waking => {
+    // Who heard the words is kept beside them, so the turn they start can say so (`sona_turn`'s `ear`).
+    return new SonaTranscriber(async audio => {
+      const heard = await this.#models.transcribe({ audio });
+      if (heard.source === "model") this.#heard.set(connection, { text: heard.text.trim(), by: { source: "model", model: heard.model } });
+      return heard;
+    }, waking => {
       const lines = LINES[this.#language(connection)];
       if (!this.#baseten) this.#tell(connection, lines.off, { reason: "unavailable" });
       // The ears and Sona's voice share box ②: while it starts, the phone reads this too.
@@ -82,6 +94,8 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
 
   async onTurn(transcript: string, { connection, messages, signal }: VoiceTurnContext) {
     this.#phoneOf.set(signal, connection);
+    // Read before anything is awaited, while the last words heard are still this turn's.
+    const ear = this.#heard.get(connection), heard = ear?.text === transcript ? ear.by : undefined;
     const { hospitalId, patientId } = patientOf(this.name);
     const db = getDb();
     // As a route's context: the hospital's demo clock, live updates, and the visit's check-in agent (a report wakes it, as a reply in the app does).
@@ -90,7 +104,7 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
     const home = plan.status === "discharged" ? plan : undefined;
     if (home) this.#discharged = home.language;
     return answerTurn({
-      question: transcript, history: messages, signal, chat: this.#chat,
+      question: transcript, heard, history: messages, signal, chat: this.#chat,
       plan: home && planText(home),
       language: this.#language(connection),
       escalate: async () => {

@@ -177,13 +177,15 @@ test("the SDK hanging up mid-answer cancels the stream too, so vLLM stops writin
 });
 
 test("server-sent events: text split anywhere (a character's bytes too) comes back whole; reasoning and [DONE] are skipped", async () => {
-  const frames = [`data: ${JSON.stringify({ choices: [{ delta: { reasoning_content: "hmm" } }] })}\n\n`, `data: ${JSON.stringify({ choices: [{ delta: { content: "您的计划" } }] })}\n\ndata: ${JSON.stringify({ choices: [{ delta: { content: "写着。" } }] })}\n\n`, "data: [DONE]\n\n"];
+  const frames = [`data: ${JSON.stringify({ choices: [{ delta: { reasoning_content: "hmm" } }] })}\n\n`, `data: ${JSON.stringify({ choices: [{ delta: { content: "您的计划" } }] })}\n\ndata: ${JSON.stringify({ choices: [{ delta: { content: "写着。" }, finish_reason: null }] })}\n\n`,
+    `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: "length" }] })}\n\n`, "data: [DONE]\n\n"];
   const bytes = new TextEncoder().encode(frames.join(""));
   const body = new ReadableStream<Uint8Array>({ start(c) { for (let i = 0; i < bytes.length; i += 7) c.enqueue(bytes.slice(i, i + 7)); c.close(); } });
-  let finished = false;
+  let finished: string | undefined;
   const out: string[] = [];
-  for await (const text of deltas(body, () => { finished = true; })) out.push(text);
-  expect([out, finished]).toEqual([["您的计划", "写着。"], true]);
+  for await (const text of deltas(body, reason => { finished = `ended: ${reason}`; })) out.push(text);
+  // The stream's finish reason reaches `finished`, so a reply cut at the token limit is known as one.
+  expect([out, finished]).toEqual([["您的计划", "写着。"], "ended: length"]);
 });
 
 test("the chat alternates turns, as chat templates require; flags may be fenced or missing; sentences split as spoken", () => {

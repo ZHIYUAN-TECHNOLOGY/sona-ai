@@ -70,7 +70,7 @@ export function demoLine(status: { offsetMs: number; dischargedAt: Date | string
 
 /** What the server holds for a visit (the encounter row's state), as far as the app reads it. */
 export type ServerVisitState = Partial<Pick<Encounter, "medicationEntries" | "prescriptionInputs" | "proposedMedicine" | "historyFacts">> & { discharge?: object; claim?: object };
-type ClaimStatus = { status: string; approvedAt?: string | Date; reviewUrl?: string; query?: string; denial?: Denial; appealedAt?: string };
+type ClaimStatus = { status: string; approvedAt?: string | Date; reviewUrl?: string; query?: string; denial?: Denial; appealedAt?: string; codedBy?: ClaimState["codedBy"]; appealDraftedBy?: ClaimState["appealDraftedBy"] };
 const STATUSES: ClaimState["status"][] = ["approved", "sent", "queried", "denied", "appealed"];
 
 /**
@@ -87,6 +87,6 @@ export function mergeServerState<T extends Partial<Encounter>>(value: T, server:
     ...(server.proposedMedicine !== undefined ? { proposedMedicine: server.proposedMedicine } : {}),
     ...(server.historyFacts ? { historyFacts: server.historyFacts } : {}),
     discharge: { ...EMPTY_DISCHARGE, ...value.discharge, ...server.discharge, glReceived },
-    claim: { ...EMPTY_CLAIM, ...server.claim, status, approvedAt: claim.approvedAt === undefined ? undefined : String(claim.approvedAt), reviewUrl: claim.reviewUrl, query: claim.query, denial: claim.denial, appealedAt: claim.appealedAt },
+    claim: { ...EMPTY_CLAIM, ...server.claim, status, approvedAt: claim.approvedAt === undefined ? undefined : String(claim.approvedAt), reviewUrl: claim.reviewUrl, query: claim.query, denial: claim.denial, appealedAt: claim.appealedAt, codedBy: claim.codedBy, appealDraftedBy: claim.appealDraftedBy },
   };
 }

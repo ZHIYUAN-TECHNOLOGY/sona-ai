@@ -43,8 +43,9 @@ export const noteRouter = {
       .onConflictDoNothing().returning({ id: notes.id });
     if (!rows.length) throw stale(encounterId);
     // The scribe's draft and the saved note become a de-identified training sample (if consented); never fails the save.
-    await captureNoteEdit(context, hospitalId, encounterId, sentences.map(s => s.text).join("\n"), input.excludeFromTraining);
-    return { encounterId, revision, sentences };
+    const sample = await captureNoteEdit(context, hospitalId, encounterId, sentences.map(s => s.text).join("\n"), input.excludeFromTraining);
+    // `sample`, as on a check-in reply: who de-identified the training sample this save became, and whether the leak gate let it through (none without consent).
+    return { encounterId, revision, sentences, ...sample && { sample } };
   }),
   /**
    * The scribe's draft of the visit's note from its consultation, for the doctor to review and edit before note.save:
