@@ -39,3 +39,5 @@ ask() {
 ask "Can I take paracetamol on an empty stomach? Answer in two short sentences." en
 ask "Bolehkah saya makan paracetamol semasa perut kosong? Jawab dalam dua ayat pendek." ms
 ask "Can I take paracetamol on an empty stomach? Answer in two short sentences." en-again
+# THEN: one more command while the endpoint is up (packages/api/src/sagemaker-live.ts: the server's own path to it).
+[ -z "${THEN:-}" ] || bash -c "$THEN"

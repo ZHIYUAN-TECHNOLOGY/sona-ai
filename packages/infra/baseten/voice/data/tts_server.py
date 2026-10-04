@@ -3,6 +3,7 @@ decoding step as CUDA graphs (VoxCPM2 0.10x real time on a 4090 in its benchmark
 L4, 1 Oct). Runs in its own venv (/opt/tts: torch 2.8 with prebuilt flash-attn), started by gateway.py on :8002."""
 import contextlib
 import io
+import os
 
 import numpy as np
 import soundfile as sf
@@ -21,7 +22,7 @@ async def lifespan(_: FastAPI):
 
     # The rated settings (10 steps here, cfg 2.0 per request). A small share of the L4, which the ASR and the reranker
     # share; a part is a sentence or two (care.speak takes at most 300 characters), so short contexts and few at once.
-    voice = VoxCPM.from_pretrained("/app/models/tts", inference_timesteps=10, max_num_seqs=8, max_model_len=2048,
+    voice = VoxCPM.from_pretrained(os.environ.get("MODELS", "/app/models") + "/tts", inference_timesteps=10, max_num_seqs=8, max_model_len=2048,
                                    max_num_batched_tokens=4096, gpu_memory_utilization=0.35)
     await voice.wait_for_ready()
     rate = (await voice.get_model_info())["output_sample_rate"]

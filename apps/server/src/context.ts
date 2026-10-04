@@ -7,6 +7,7 @@ import { getAgentByName } from "agents";
 import { basetenModels, basetenReranker } from "@sona-ai/api/baseten-models";
 import type { EncounterStore } from "@sona-ai/api/context";
 import { workersEmbedder } from "@sona-ai/api/workers-models";
+import { hosted } from "@sona-ai/api/sagemaker";
 import { ingest, reindex, search, stubEmbedder } from "@sona-ai/retrieval/retrieval";
 
 import { ENV } from "./env.server";
@@ -25,7 +26,7 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     headers: context.req.raw.headers,
   });
   // The hosted models once a Baseten key is set; without one every model answer stays a labelled fixture.
-  const baseten = ENV.BASETEN_API_KEY ? { apiKey: ENV.BASETEN_API_KEY } : undefined;
+  const baseten = hosted(ENV);
   const reranker = baseten && basetenReranker(baseten);
   // EmbeddingGemma on Workers AI; the hashed stub only where the Worker has no AI binding. Switching between them
   // needs one `library.reindex`, since stored vectors from the other one do not compare.
