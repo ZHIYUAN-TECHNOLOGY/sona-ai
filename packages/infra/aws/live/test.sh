@@ -9,7 +9,8 @@
 # 2.7 s after the question. With TRANSCRIBE her own writing-down (2.6 s) stalls her voice: leave that to box ② here.
 # Since then the image also holds box ② (the third GPU; serve.py), and calls come from outside over sagemakerLive.
 # The router (SONA_LIVE_BRAIN=router) with this machine and Gemma, her voice after the patient stops (4 Oct): a greeting
-# 2.0-2.2 s and thanks 1.7 s (her own), a question about care 4.6-5.2 s (Gemma's, right). Nobody has listened to the sound.
+# 2.0-2.2 s and thanks 1.7 s (her own), a question about care 3.3-3.9 s once Gemma is warm (hers, right; 4.6-5.2 s before she was held for those turns).
+# Nobody has listened to the sound.
 # Usage: AWS_PROFILE=sona bash test.sh   (the image and weights come from buildspec.yml; TYPE= another instance)
 set -u
 export AWS_DEFAULT_REGION=ap-southeast-5 AWS_SDK_UA_APP_ID=AWSSkill-SageMaker

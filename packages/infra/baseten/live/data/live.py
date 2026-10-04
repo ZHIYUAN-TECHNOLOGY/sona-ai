@@ -8,6 +8,7 @@ WebSocket /v1/live, one call per connection:
           "max_speak_tokens" (tokens a unit, the brain's pace), "voice" ("v1", Sona's trained talker, or "base"),
           "turn_silence_ms" (QUIET below: her turn starts that soon after the patient stops)}
        2. binary frames: the patient's audio, 16 kHz mono PCM16 little-endian, any length
+          JSON {"type": "hold", "on": bool}: from now she only listens (a "say" is still said), or is free again
        3. JSON {"type": "stop"}, or just close
   out  JSON {"type": "ready"} once the call is set up; then for each second heard
        JSON {"type": "unit", "i", "listen", "text", "end_of_turn", "ms" (model time), "cost" (ms by part: brain, talker,
@@ -369,6 +370,8 @@ async def live(ws: WebSocket):
                 note = json.loads(m["text"]) if m.get("text") else {}
                 if m["type"] == "websocket.disconnect" or note.get("type") == "stop":
                     break
+                if note.get("type") == "hold":  # another model has this turn: she waits for its words (or is free again)
+                    call["hold"] = bool(note.get("on"))
                 if note.get("type") == "say":  # from the next second on; "release" lets her answer by herself after it
                     call["script"], call["release"] = script(note["text"], int(note.get("rate", 4))), bool(note.get("release"))
                 if m.get("bytes"):

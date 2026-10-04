@@ -167,6 +167,11 @@ export class Says {
 
   constructor(private readonly send: (say: Say) => void) {}
 
+  /** Nothing of an answer is with the box, waiting, or open on the phone. */
+  get idle() {
+    return !this.#with && !this.#open && !this.#waiting.length;
+  }
+
   /** A new answer starts, over whatever was left of the last. As `stop`, a unit for the phone may come back. */
   begin() {
     const close = this.stop();
@@ -274,8 +279,9 @@ export const onlyTalk = (text: string) => {
  * The live call where box ④ answers talk by itself and Gemma answers the rest (SONA_LIVE_BRAIN=router). She is free
  * to answer, as on her own, so a greeting is met at her own speed. What she starts to say is kept here, unheard, until
  * the patient's words come from the ear (box ②, about a second after they stop: before her voice for that second is
- * made): only talk, and what was kept goes to the phone and the rest follows; anything else, and it is left out, and
- * Gemma's answer, given to her to say (Says), takes its place. The box marks the seconds it was given to say
+ * made): only talk, and what was kept goes to the phone and the rest follows; anything else, and it is left out, she
+ * is held to listening (the box's "hold": left free she went on with her own answer, and Gemma's first words came a
+ * second later for it, 4.6-5.2 s against 3.3-4.0 s, 4 Oct), and Gemma's answer, given to her to say (Says), takes its place. The box marks the seconds it was given to say
  * (`scripted`); those are never kept back.
  * ponytail: with no words from the ear she stays unheard (as the hybrid call would); and what is kept is bounded.
  */

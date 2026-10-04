@@ -49,6 +49,14 @@ class LiveCall {
   script?: string;
   /** With the router: her own words kept back until the patient's are known, and whose the last second was (its voice follows). */
   router?: Router;
+  /** The patient's plan as read when the call began, for Gemma's answers. */
+  plan?: string;
+
+  /** With the router: she only listens while a turn is Gemma's, and is free again after it. */
+  hold(on: boolean) {
+    if (this.router) this.say(JSON.stringify({ type: "hold", on }));
+    if (!on) this.router?.done();
+  }
   scripted = new Map<number, boolean>();
   voiceOf?: number;
   last = false;
@@ -126,6 +134,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     const home = plan?.status === "discharged" ? plan : undefined;
     const discharged = home?.language ?? await lastDischarge(getDb(), hospitalId, patientId).then(d => d?.language, () => undefined);
     call.language = languageOf(connection, discharged);
+    call.plan = home && planText(home);
     const box = await openBox(this.env.SONA_LIVE_URL, this.env, this.#baseten?.apiKey).catch(() => undefined);
     if (call.closed) return box?.close();
     if (!box) return this.#tell(connection, LINES[call.language].unavailable);
@@ -164,8 +173,8 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     if (unit.listen) { call.router.listened(); return this.#show(connection, call, unit); }
     if (!unit.scripted) return this.#show(connection, call, call.router.own(unit, unit.end_of_turn), true);
     const said = call.says!.unit(unit);
-    if (said?.end_of_turn) call.router.done();
     this.#show(connection, call, said);
+    if (said?.end_of_turn) call.hold(false);
   }
 
   /** One second of Sona's side of the call, on the phone; `own`: an answer of her own on a call where Gemma answers too. */
@@ -211,13 +220,11 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     call.summary = undefined;
     this.#show(connection, call, says.begin());
     try {
-      const { hospitalId, patientId } = patientOf(this.name);
-      // ponytail: the plan is read again each turn, as onTurn reads it (two queries before Gemma is asked); the one
-      // onCallStart read could be kept for the call if those milliseconds matter.
-      const plan = await patientPlan({ ...await this.#context(hospitalId), hospitalId, patientId });
+      // The plan as the call began with it (onCallStart): reading it again each turn put two queries before Gemma's
+      // first word. ponytail: a plan changed during a call is not seen until the next call.
       const parts = answerTurn({
         question, history, signal, chat: this.#chat,
-        plan: plan.status === "discharged" ? planText(plan) : undefined,
+        plan: call.plan,
         language: call.language,
         escalate: () => reported ?? this.#careTeam(connection, question),
         done: summary => { call.summary = summary; },
@@ -231,7 +238,9 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     } catch {
       if (!signal.aborted) this.#tell(connection, LINES[call.language].unavailable);
     }
-    if (!signal.aborted) this.#show(connection, call, says.end());
+    if (signal.aborted) return;
+    this.#show(connection, call, says.end());
+    if (says.idle) call.hold(false); // nothing was said (Gemma failed, or had no words): she is not left waiting
   }
 
   /**
@@ -240,9 +249,13 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
    */
   #route(connection: Connection, call: LiveCall, transcript: string, reported?: Promise<boolean>) {
     const { by, kept } = call.router!.heard(transcript);
-    if (by === "gemma") return void this.#answer(connection, call, call.says!, transcript, reported);
+    if (by === "gemma") {
+      call.hold(true);
+      return void this.#answer(connection, call, call.says!, transcript, reported);
+    }
     call.answering?.abort(); // an answer of Gemma's still being said gives way to the new turn, as on the hybrid call
     this.#show(connection, call, call.says!.stop());
+    call.say(JSON.stringify({ type: "hold", on: false }));
     for (const item of kept) {
       if (item instanceof ArrayBuffer) { if (!call.muted) sendAudio(connection, item); }
       else this.#show(connection, call, item as Unit, true);
@@ -285,7 +298,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     call.muted = true;
     call.answering?.abort();
     this.#show(connection, call, call.says?.stop());
-    call.router?.done();
+    call.hold(false);
   }
 
   onCallEnd(connection: Connection) {
