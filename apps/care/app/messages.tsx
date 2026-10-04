@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, ScrollView, View, type ViewStyle } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Keyboard, ScrollView, View, type ViewStyle } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { FadeIn, LayoutAnimationConfig, useReducedMotion, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,7 +24,8 @@ import { now as clockNow } from "@/lib/clock";
  * the composer and is followed by its status ("Sent · 12:01", then "Seen by care team · 12:04"); a
  * warning sign in it adds what to do while waiting. The care team's urgent message ("call 999 now") is
  * red, with a Call 999 button under it. Up to three likely replies sit over the composer as chips and send
- * in one tap. The emergency line never leaves the screen. Replies arrive over the live socket (features/live).
+ * in one tap; while the keyboard is up they sit right where a tap to put it down lands, so that tap only puts it down
+ * (a message to the care team, "I'm going to the emergency department", is never sent by accident). The emergency line never leaves the screen. Replies arrive over the live socket (features/live).
  */
 const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 type Draft = { text: string; requestId: string; at: Date };
@@ -53,6 +54,8 @@ export default function Messages() {
   const go = (words: string) => {
     const t = words.trim();
     if (!t || send.isPending) return;
+    // Sent: the keyboard goes down, so the message and what follows it (its status, what to do while waiting) are in view.
+    Keyboard.dismiss();
     const requestId = t === attempt.text ? attempt.requestId : newRequestId();
     setAttempt({ text: t, requestId });
     if (process.env.EXPO_OS === "ios") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -102,7 +105,7 @@ export default function Messages() {
 
     <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 12), gap: 8 }}>
       {data && picks.length > 0 && <Animated.View key={picks.join("|")} entering={FadeIn.duration(220)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {picks.map(p => <Chip key={p} label={p} accessibilityLabel={t("msg.chipA11y", { p })} onPress={() => go(p)} />)}
+        {picks.map(p => <Chip key={p} label={p} accessibilityLabel={t("msg.chipA11y", { p })} onPress={() => Keyboard.isVisible() ? Keyboard.dismiss() : go(p)} />)}
       </Animated.View>}
       {send.error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(send.error, lang)}</Text>}
       <Composer value={text} onChangeText={setText} placeholder={t("msg.placeholder")} label={t("msg.label")} onSend={() => go(text)} canSend={!!text.trim() && !send.isPending} busy={send.isPending} />

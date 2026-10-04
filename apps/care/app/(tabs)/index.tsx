@@ -5,12 +5,11 @@ import { Pressable, ScrollView, useWindowDimensions, View, type LayoutChangeEven
 import { Text } from "@/lib/text";
 import Animated, { FadeIn, FadeOut, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { KeyboardAwareScrollView, type KeyboardAwareScrollViewRef } from "react-native-keyboard-controller";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { todayOf } from "@/features/check-ins/model";
 import { TodayCard, useCheckIns } from "@/features/check-ins/today";
 import { rise, useNextDose, useNow } from "@/features/doses";
 import { clock, dueNow } from "@/features/doses/model";
-import { away } from "@/features/follow-ups/lines";
+import { away, needing } from "@/features/follow-ups/lines";
 import { useFollowUps } from "@/features/follow-ups/row";
 import { daysHome, headerDate, needsLine, type Need } from "@/features/home";
 import { LanguageRow } from "@/features/language/picker";
@@ -25,7 +24,7 @@ import { Opening } from "@/features/opening";
 import { Welcome } from "@/features/sign-in/welcome";
 import { DOCK_SPACE } from "@/lib/dock";
 import { motion, palette, space, type } from "@/lib/theme";
-import { Button, Card, Chip, CircleButton, DataPill, Section, Title } from "@/lib/ui";
+import { Button, Card, Chip, CircleButton, DataPill, Section, Title, useBelowStatusBar } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 /** Every open thing on home, most urgent first; each chip jumps to or opens its thing. */
@@ -36,7 +35,7 @@ function useNeeds(): (Need & { dot: string })[] {
   const checkIns = useCheckIns();
   const ask = checkIns.data && todayOf(checkIns.data, now).ask;
   const reply = useMessageNeeds();
-  const visits = useFollowUps().data?.filter(f => f.status === "due-soon" || f.status === "missed") ?? [];
+  const visits = needing(useFollowUps().data, now);
   return [
     ...(dose && dueNow(dose.dueAt, now) ? [{ kind: "dose" as const, name: dose.name, label: t("home.chip", { what: dose.name, when: clock(dose.dueAt, lang) }), dot: palette.warning }] : []),
     ...(ask ? [{ kind: "check-in" as const, label: t("checkin.title", { day: ask.day }), dot: palette.warning }] : []),
@@ -96,7 +95,7 @@ function Home() {
   const now = useNow();
   const lang = useLang(), t = tFor(lang);
   const reduced = useReducedMotion();
-  const insets = useSafeAreaInsets();
+  const below = useBelowStatusBar();
   const { fontScale } = useWindowDimensions();
   const scroll = useRef<KeyboardAwareScrollViewRef>(null);
   const spots = useRef({ cards: 0, today: 0 });
@@ -107,7 +106,7 @@ function Home() {
   const offline = health.isError || (health.data !== undefined && health.data !== "OK");
   const layout = reduced ? undefined : LinearTransition.springify().duration(380).dampingRatio(1);
   const spot = (to: keyof typeof spots.current) => (e: LayoutChangeEvent) => { spots.current[to] = e.nativeEvent.layout.y; };
-  const jump = (to: keyof typeof spots.current) => scroll.current?.scrollTo({ y: Math.max(0, spots.current[to] - insets.top - 12), animated: !reduced });
+  const jump = (to: keyof typeof spots.current) => scroll.current?.scrollTo({ y: Math.max(0, spots.current[to] - 12), animated: !reduced });
   const go = (kind: Need["kind"]) => kind === "dose" ? jump("cards") : kind === "check-in" ? jump("today") : router.push(kind === "reply" ? "/messages" : "/follow-ups");
   // The bell means "what needs you now" (Messages has its own tab); with nothing open it still opens the thread.
   const bell = () => needs[0] ? go(needs[0].kind) : router.push("/messages");
@@ -118,7 +117,7 @@ function Home() {
   const chips = needs.filter(n => n.kind !== "dose");
   const calm = still || reduced;
   // Keyboard-aware: typing a check-in reply keeps the box and its Send button above the keyboard (bottomOffset covers the button under the box).
-  return <KeyboardAwareScrollView ref={scroll} bottomOffset={140} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
+  return <KeyboardAwareScrollView ref={scroll} style={below} bottomOffset={140} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     {state === "joined" && me
       ? <>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>

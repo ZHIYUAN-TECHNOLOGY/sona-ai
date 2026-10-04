@@ -74,6 +74,13 @@ test("any question goes to the model first; a plan question's authored answer on
   expect(asked).toEqual(["When is my next visit?"]);
   expect(await answer("when is my next visit?", asks, api(fixture), "chest infection")).toEqual({ kind: "plan", asked: asks[2] });
   expect(await answer("When is my next visit?", asks, api(failing))).toEqual({ kind: "plan", asked: asks[2] });
+  // The label is in her language, the plan's part too (the model names it in English); a part not known shows as written.
+  const sourceIn = async (lang, reply) => (await answer("Bila?", [], api(modelSays({ answer: "Esok.", urgent: false, ...reply })), undefined, lang)).asked.source;
+  expect(await sourceIn("ms", { grounded: true, from: "Warning signs" })).toBe("Daripada pelan discaj anda · tanda amaran");
+  expect(await sourceIn("zh", { grounded: true, from: "medicines" })).toBe("来自您的出院计划 · 药物");
+  expect(await sourceIn("ms", { grounded: true, from: "allergies" })).toBe("Daripada pelan discaj anda · allergies");
+  expect(await sourceIn("ms", { grounded: false })).toBe("Jawapan umum · bukan daripada rekod anda");
+  expect(await sourceIn("zh", { grounded: false })).toBe("一般回答 · 并非来自您的病历");
   // No content limit: an answer from general knowledge is shown too, marked as not from their records.
   expect(await answer("Can I drink coffee?", asks, api(modelSays({ answer: "A cup of coffee is fine for most people.", grounded: false, urgent: false })))).toEqual({
     kind: "plan", asked: { question: "", answer: "A cup of coffee is fine for most people.", source: "General answer · not from your records", kind: "medicine" },

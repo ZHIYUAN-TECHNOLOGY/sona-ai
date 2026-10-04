@@ -1,8 +1,8 @@
-import { accessLogs, appointments, checkIns, encounters, findings, followUpRules, hospitalMembers, patients } from "@sona-ai/db/schema/clinical";
+import { accessLogs, appointments, bookingRequests, checkIns, doctors, encounters, findings, followUpRules, hospitalMembers, patients } from "@sona-ai/db/schema/clinical";
 import { appointmentWords, followUpTiming, malaysianDay, patientMeds, reviewWords, warningSigns } from "@sona-ai/domain/care";
 import { checkInDaysLine, checkInSchedule } from "@sona-ai/domain/check-ins";
 import { FOLLOW_UPS, LANGUAGES, planFor, type DischargeState, type Language } from "@sona-ai/domain/discharge";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, gte, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 import { originOf } from "../answers";
@@ -42,12 +42,14 @@ const reviewDate = (d: DischargeState & { dischargedAt: string }) => {
   return days === undefined ? undefined : new Date(new Date(d.dischargedAt).getTime() + days * 86400_000);
 };
 
+type PatientContext = Context & { hospitalId: string; patientId: string };
+
 /**
  * The patient's own plan as Sona Care shows it (and as care.ask grounds its answers), or in-hospital; patient-facing words in `lang`.
  * Courses are read on the demo clock, so a finished one says so. The check-ins are the visit's own rows (the check-in
  * agent can bring one forward); a discharge from before they were stored keeps the days chosen then.
  */
-export async function patientPlan(context: Context & { hospitalId: string; patientId: string }, lang: Language = "en") {
+export async function patientPlan(context: PatientContext, lang: Language = "en") {
     const d = await lastDischarge(context.db, context.hospitalId, context.patientId);
     if (!d) return { status: "in-hospital" as const };
     const [plan, scheduled] = await Promise.all([
@@ -104,35 +106,64 @@ async function seenDays(db: Context["db"], hospitalId: string, patientId: string
 /** Sona Care asks for its words in the patient's language; English when it does not say. */
 const langInput = z.object({ lang: z.enum(["en", "ms", "zh"]).optional() }).optional();
 
+/**
+ * What is coming up, earliest first: booked appointments (clinic visits and finding recalls), the
+ * clinic review from discharge, and tracked findings whose recall is missing (a recall is keyed
+ * `recall:<finding>`, so nothing shows twice). Open findings are not shown until a doctor decides.
+ * A visit stays due soon all through its own day; after it, attended if a doctor saw the patient that
+ * day (seenDays), else missed (the app offers to call the clinic). Words in `lang`, English when absent.
+ */
+export async function followUpsOf(context: PatientContext, lang?: Language) {
+  const { db, hospitalId, patientId } = context, now = clockOf(context);
+  const [booked, tracked, d, seen] = await Promise.all([
+    db.select().from(appointments).where(and(eq(appointments.patientId, patientId), eq(appointments.hospitalId, hospitalId))),
+    db.select({ id: findings.id, kind: findings.kind, dueAt: findings.dueAt, action: followUpRules.action }).from(findings).leftJoin(followUpRules, eq(followUpRules.id, findings.ruleId)).where(and(eq(findings.patientId, patientId), eq(findings.hospitalId, hospitalId), eq(findings.status, "tracked"))),
+    lastDischarge(db, hospitalId, patientId),
+    seenDays(db, hospitalId, patientId),
+  ]);
+  const kindOf = new Map(tracked.map(f => [`recall:${f.id}`, f.kind]));
+  const review = d && reviewDate(d);
+  const items = [
+    ...booked.map(a => ({ id: a.id, date: a.startsAt, ...appointmentWords(a.kind, kindOf.get(a.id), lang) })),
+    ...tracked.filter(f => f.dueAt && !booked.some(a => a.id === `recall:${f.id}`)).map(f => ({ id: `recall:${f.id}`, date: f.dueAt!, ...appointmentWords(f.action ?? f.kind, f.kind, lang) })),
+    ...(review ? [{ id: "discharge-review", date: review, ...reviewWords(await planOf(db, hospitalId, patientId), lang) }] : []),
+  ];
+  // A past visit only counts once she has gone home and it came after; one from her stay is dropped.
+  const home = d ? new Date(d.dischargedAt) : now;
+  return items.map(i => ({ ...i, ...followUpTiming(i.date, now, seen.has(malaysianDay(i.date))) })).filter(i => i.inDays >= 0 || i.date >= home)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+/** "Thu, 01 Oct 2026 10:30": the time in Malaysia. */
+const malaysiaTime = (at: Date) => new Date(at.getTime() + 8 * 3600_000).toUTCString().slice(0, 22);
+
+/**
+ * Her visits as plain text for the model, in hospital or home: the ones her Home and Schedule show (followUpsOf) and
+ * the times she asked for that the care team has yet to confirm. With the time now, so "next" is never one already
+ * gone by. A booked visit has a time; a recall or the discharge review only its day.
+ */
+export async function visitsText(context: PatientContext) {
+  const { db, hospitalId, patientId } = context, now = clockOf(context);
+  const [visits, asked] = await Promise.all([
+    followUpsOf(context),
+    db.select({ doctor: doctors.name, specialty: doctors.specialty, at: bookingRequests.startsAt }).from(bookingRequests).innerJoin(doctors, eq(doctors.id, bookingRequests.doctorId))
+      .where(and(eq(bookingRequests.hospitalId, hospitalId), eq(bookingRequests.patientId, patientId), eq(bookingRequests.status, "requested"), gte(bookingRequests.startsAt, now)))
+      .orderBy(asc(bookingRequests.startsAt)),
+  ]);
+  const line = (v: (typeof visits)[number]) => {
+    const dayOnly = v.id.startsWith("recall:") || v.id === "discharge-review";
+    return `- ${v.title}: ${dayOnly ? malaysiaDay(v.date) : malaysiaTime(v.date)} (${v.status === "attended" || v.status === "missed" ? v.status : !dayOnly && v.date < now ? "earlier today" : "coming up"})`;
+  };
+  return [
+    `Now: ${malaysiaTime(now)} (Malaysia time)`,
+    "Visits booked:", ...(visits.length ? visits.map(line) : ["- none"]),
+    "Visits requested, waiting for the care team to confirm:", ...(asked.length ? asked.map(r => `- ${r.doctor} (${r.specialty}): ${malaysiaTime(r.at)}`) : ["- none"]),
+  ].join("\n");
+}
+
 /** Sona Care's read of the patient's own plan: what they take home and what comes next. */
 export const carePlanRouter = {
   discharge: patientProcedure.input(langInput).handler(({ context, input }) => patientPlan(context, input?.lang)),
-
-  /**
-   * What is coming up, earliest first: booked appointments (clinic visits and finding recalls), the
-   * clinic review from discharge, and tracked findings whose recall is missing (a recall is keyed
-   * `recall:<finding>`, so nothing shows twice). Open findings are not shown until a doctor decides.
-   * A visit stays due soon all through its own day; after it, attended if a doctor saw the patient that
-   * day (seenDays), else missed (the app offers to call the clinic). Words in `lang`, English when absent.
-   */
-  followUps: patientProcedure.input(langInput).handler(async ({ context, input }) => {
-    const { db, hospitalId, patientId } = context, now = clockOf(context), lang = input?.lang;
-    const [booked, tracked, d, seen] = await Promise.all([
-      db.select().from(appointments).where(and(eq(appointments.patientId, patientId), eq(appointments.hospitalId, hospitalId))),
-      db.select({ id: findings.id, kind: findings.kind, dueAt: findings.dueAt, action: followUpRules.action }).from(findings).leftJoin(followUpRules, eq(followUpRules.id, findings.ruleId)).where(and(eq(findings.patientId, patientId), eq(findings.hospitalId, hospitalId), eq(findings.status, "tracked"))),
-      lastDischarge(db, hospitalId, patientId),
-      seenDays(db, hospitalId, patientId),
-    ]);
-    const kindOf = new Map(tracked.map(f => [`recall:${f.id}`, f.kind]));
-    const review = d && reviewDate(d);
-    const items = [
-      ...booked.map(a => ({ id: a.id, date: a.startsAt, ...appointmentWords(a.kind, kindOf.get(a.id), lang) })),
-      ...tracked.filter(f => f.dueAt && !booked.some(a => a.id === `recall:${f.id}`)).map(f => ({ id: `recall:${f.id}`, date: f.dueAt!, ...appointmentWords(f.action ?? f.kind, f.kind, lang) })),
-      ...(review ? [{ id: "discharge-review", date: review, ...reviewWords(await planOf(db, hospitalId, patientId), lang) }] : []),
-    ];
-    // A past visit only counts once she has gone home and it came after; one from her stay is dropped.
-    const home = d ? new Date(d.dischargedAt) : now;
-    return items.map(i => ({ ...i, ...followUpTiming(i.date, now, seen.has(malaysianDay(i.date))) })).filter(i => i.inDays >= 0 || i.date >= home)
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
-  }),
+  /** Her visits, earliest first (followUpsOf). */
+  followUps: patientProcedure.input(langInput).handler(({ context, input }) => followUpsOf(context, input?.lang)),
 };

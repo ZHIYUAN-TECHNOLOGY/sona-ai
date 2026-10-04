@@ -21,7 +21,7 @@ import { Sunbeam } from "@/lib/halftone";
 import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { motion, palette, space, type } from "@/lib/theme";
-import { Button, Card, HoldButton, LoadError, pillStyle, QuickKey, Section, surfaceStyle, Title } from "@/lib/ui";
+import { Button, Card, HoldButton, LoadError, pillStyle, QuickKey, Section, surfaceStyle, Title, useBelowStatusBar } from "@/lib/ui";
 import { now as clockNow } from "@/lib/clock";
 
 /** The tick, drawn from its short stroke (4,12 → 9,17 → 20,6). */
@@ -57,8 +57,9 @@ export default function DoseScreen() {
   const line = out ? insight(today, now, lang) : undefined;
   const week = out && meds.some(m => m.at?.length) ? weekStrip(weekOf(meds, out, taken, now), now, lang) : undefined;
   const missed = week?.some(d => d.mark === "amber") ?? false;
+  const below = useBelowStatusBar();
 
-  return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
+  return <ScrollView style={below} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     <Animated.View entering={enter(0)} style={{ gap: 14 }}>
       <Title greeting={t("dose.titleLight")} accent={t("dose.titleBold")} line={line?.text} lineTone={line?.tone} />
       {week && <WeekChart days={week} height={96} interactive />}
