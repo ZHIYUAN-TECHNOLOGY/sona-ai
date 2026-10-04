@@ -1,5 +1,8 @@
-"""Box ④ under SageMaker's two routes. live.py runs beside this on port 8000 as on Baseten, and /ping answers once it
-has loaded and warmed.
+"""Boxes ④ and ② under SageMaker's two routes, on one machine with four L4s. live.py runs beside this on port 8000 as
+on Baseten, on the first two GPUs (VOICE_GPU: her voice on the second), in its own Python (/opt/live). Box ②'s gateway
+(/app/data/gateway.py: the ASR, Sona's VoxCPM voice, the reranker) runs on port 8003 on the third GPU. /ping answers
+once both have loaded. A request with SageMaker's custom attribute "voice" (the Worker names the box it is calling:
+sagemakerFetcher) goes to box ②'s own /invocations as it is; any other is the live call's, below.
 
 A live call is a WebSocket, and SageMaker in Malaysia carries none (its two-way streaming is not offered in
 ap-southeast-5, 4 Oct 2026). So /invocations carries one call as plain requests (the Worker's end: sagemakerLive in
@@ -24,14 +27,20 @@ import sys
 import time
 import urllib.request
 
+import httpx
 import uvicorn
 import websockets
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import StreamingResponse
 
 LISTEN_S = 45
+HERE, PYTHON = os.path.dirname(os.path.abspath(__file__)), "/opt/live/bin/python"
 log = open("/tmp/live.log", "w")
-live = subprocess.Popen([sys.executable, "/app/data/live.py"], env={**os.environ, "PORT": "8000"}, stdout=log, stderr=subprocess.STDOUT)
+# live.py from the model's folder when one is there (S3, live/ear1/code/live.py): a change to it then needs no new image.
+LIVE = next(p for p in ("/opt/ml/model/code/live.py", f"{HERE}/live.py") if os.path.exists(p))
+live = subprocess.Popen([PYTHON, LIVE], env={**os.environ, "PORT": "8000", "CUDA_VISIBLE_DEVICES": "0,1", "VOICE_GPU": "1"}, stdout=log, stderr=subprocess.STDOUT)
+# Box ②, with its own share: the gateway's three models fit one L4, as on their own endpoint.
+ears = subprocess.Popen(["python3", "/app/data/gateway.py"], env={**os.environ, "PORT": "8003", "CUDA_VISIBLE_DEVICES": "2", "MODELS": os.environ.get("VOICE_BOX", "/opt/ml/model/voicebox")})
 run = {"proc": None}
 call: dict = {}  # the open call: its socket to live.py, what live.py has sent that no listen has taken yet, its reader
 app = FastAPI()
@@ -46,10 +55,11 @@ def tail(path, n=40):
 
 @app.get("/ping")
 def ping():
-    if live.poll() is not None:  # it died (out of memory?): say why in the endpoint's log, and fail the start
+    if live.poll() is not None or ears.poll() is not None:  # one died (out of memory?): say why in the endpoint's log, and fail the start
         print("\n".join(tail("/tmp/live.log", 60)), flush=True)
         return Response(status_code=500)
     try:
+        urllib.request.urlopen("http://127.0.0.1:8003/health", timeout=2)
         return Response(status_code=urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=2).status)
     except OSError:
         return Response(status_code=503)
@@ -98,6 +108,10 @@ async def frames(out: asyncio.Queue):
 @app.post("/invocations")
 async def invocations(request: Request):
     body = await request.body()
+    if request.headers.get("x-amzn-sagemaker-custom-attributes") == "voice":  # box ②'s: as it is, to its gateway
+        async with httpx.AsyncClient(timeout=600) as box2:
+            r = await box2.post("http://127.0.0.1:8003/invocations", content=body, headers={"content-type": request.headers.get("content-type", "application/json")})
+        return Response(r.content, status_code=r.status_code, media_type=r.headers.get("content-type"))
     if request.headers.get("content-type", "").startswith("application/octet-stream"):
         if not call:
             return Response(status_code=409)
@@ -118,7 +132,7 @@ async def invocations(request: Request):
             await hang_up()
         return Response(status_code=204)
     if "run" in message:
-        run["proc"] = subprocess.Popen([sys.executable, "/app/check.py", "/app/question.wav"], cwd="/tmp",
+        run["proc"] = subprocess.Popen([PYTHON, f"{HERE}/check.py", f"{HERE}/question.wav"], cwd="/tmp",
                                        env={**os.environ, "JSON": "/tmp/run.json", "OUT": "/tmp/reply.wav", **message["run"]},
                                        stdout=open("/tmp/run.log", "w"), stderr=subprocess.STDOUT)
     gpu = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.used,memory.total,utilization.gpu", "--format=csv,noheader"],

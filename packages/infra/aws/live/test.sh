@@ -7,7 +7,9 @@
 # Result (4 Oct): it fits (16.7 GB and 6.5 GB of 23) and keeps up. A spoken second: the brain 0.56-0.81 s, her voice
 # 0.82-1.02 s beside it (in one line on one GPU's worth of work it was 1.25 s and she fell behind). First sound about
 # 2.7 s after the question. With TRANSCRIBE her own writing-down (2.6 s) stalls her voice: leave that to box ② here.
-# Not done: a live socket to the endpoint (a call is played inside the box), and nobody has listened to the sound.
+# Since then the image also holds box ② (the third GPU; serve.py), and calls come from outside over sagemakerLive.
+# The router (SONA_LIVE_BRAIN=router) with this machine and Gemma, her voice after the patient stops (4 Oct): a greeting
+# 2.0-2.2 s and thanks 1.7 s (her own), a question about care 4.6-5.2 s (Gemma's, right). Nobody has listened to the sound.
 # Usage: AWS_PROFILE=sona bash test.sh   (the image and weights come from buildspec.yml; TYPE= another instance)
 set -u
 export AWS_DEFAULT_REGION=ap-southeast-5 AWS_SDK_UA_APP_ID=AWSSkill-SageMaker
@@ -23,10 +25,10 @@ down() {
 trap down EXIT
 aws sagemaker delete-endpoint-config --endpoint-config-name $N > /dev/null 2>&1; aws sagemaker delete-model --model-name $N > /dev/null 2>&1
 aws sagemaker create-model --model-name $N --execution-role-arn "arn:aws:iam::${A}:role/sona-sagemaker-hosting" \
-  --primary-container "{\"Image\":\"${A}.dkr.ecr.ap-southeast-5.amazonaws.com/sona/live:1\",\"ModelDataSource\":{\"S3DataSource\":{\"S3Uri\":\"s3://${B}/live/ear1/\",\"S3DataType\":\"S3Prefix\",\"CompressionType\":\"None\"}},\"Environment\":{\"VOICE_GPU\":\"1\"}}" \
+  --primary-container "{\"Image\":\"${A}.dkr.ecr.ap-southeast-5.amazonaws.com/sona/live:2\",\"ModelDataSource\":{\"S3DataSource\":{\"S3Uri\":\"s3://${B}/live/ear1/\",\"S3DataType\":\"S3Prefix\",\"CompressionType\":\"None\"}},\"Environment\":{\"VLLM_LOGGING_LEVEL\":\"WARNING\"}}" \
   --query ModelArn --output text || exit 1
 aws sagemaker create-endpoint-config --endpoint-config-name $N --production-variants \
-  "VariantName=main,ModelName=$N,InstanceType=${TYPE:-ml.g6.12xlarge},InitialInstanceCount=1,ContainerStartupHealthCheckTimeoutInSeconds=900,ModelDataDownloadTimeoutInSeconds=1200" \
+  "VariantName=main,ModelName=$N,InstanceType=${TYPE:-ml.g6.12xlarge},InitialInstanceCount=1,ContainerStartupHealthCheckTimeoutInSeconds=1500,ModelDataDownloadTimeoutInSeconds=1200" \
   --query EndpointConfigArn --output text || exit 1
 T0=$(date +%s)
 aws sagemaker create-endpoint --endpoint-name $N --endpoint-config-name $N --query EndpointArn --output text || exit 1

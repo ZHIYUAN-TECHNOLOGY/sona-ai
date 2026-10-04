@@ -6,7 +6,7 @@ import { lastDischarge, patientPlan, planText } from "@sona-ai/api/routers/care-
 import { LINES, answerTurn, basetenChat, callNow, type TurnSummary } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber, type SessionHooks } from "@sona-ai/api/voice-agent/listen";
-import { CallHistory, Checks, LiveTurns, Says, liveBrief, liveStart, mayReport, type Ear, type Heard, type Unit } from "@sona-ai/api/voice-agent/live";
+import { CallHistory, Checks, LiveTurns, Router, Says, liveBrief, liveStart, mayReport, type Brain, type Ear, type Heard, type Unit } from "@sona-ai/api/voice-agent/live";
 import { awsOf, hosted, sagemakerLive, type HostingEnv, type LiveLink } from "@sona-ai/api/sagemaker";
 import { Agent, type Connection } from "agents";
 import { withVoiceInput } from "agents/voice";
@@ -47,6 +47,11 @@ class LiveCall {
   summary?: TurnSummary;
   /** The say written before the box took the call: it goes once it has (a say replaces the one before, so only the last). */
   script?: string;
+  /** With the router: her own words kept back until the patient's are known, and whose the last second was (its voice follows). */
+  router?: Router;
+  scripted = new Map<number, boolean>();
+  voiceOf?: number;
+  last = false;
 
   say(message: string) {
     if (this.box) this.box.send(message);
@@ -84,7 +89,8 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
   readonly #baseten = hosted(this.env);
   readonly #models = this.#baseten ? basetenModels(this.#baseten) : stubModels;
   readonly #chat = this.#baseten && basetenChat(this.#baseten);
-  readonly #gemma = this.env.SONA_LIVE_BRAIN === "gemma";
+  readonly #brain: Brain = this.env.SONA_LIVE_BRAIN === "gemma" || this.env.SONA_LIVE_BRAIN === "router" ? this.env.SONA_LIVE_BRAIN : "own";
+  readonly #gemma = this.#brain === "gemma";
   /** Box ④ writes the patient down for Gemma itself, and box ② is left out of the call. */
   readonly #oneEar = this.#gemma && this.env.SONA_LIVE_EAR === "own";
   readonly #calls = new Map<string, LiveCall>();
@@ -98,7 +104,8 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
   createTranscriber(connection: Connection) {
     this.#calls.get(connection.id)?.close();
     const call = new LiveCall();
-    if (this.#gemma) call.says = new Says(say => call.say(JSON.stringify(say)));
+    if (this.#brain !== "own") call.says = new Says(say => call.say(JSON.stringify(say)));
+    if (this.#brain === "router") call.router = new Router();
     this.#calls.set(connection.id, call);
     if (this.#oneEar) return { createSession: () => ({ feed: (chunk: ArrayBuffer) => call.hear(chunk), close: () => {} }) };
     const ears = new SonaTranscriber(audio => this.#models.transcribe({ audio }));
@@ -127,7 +134,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     // Her trained voice in every language (the box's "v1" slot holds talker voice-v3, trained on the live layout:
     // docs/minicpm-o-finetune.md); voice-v1 garbled live English, so English and Chinese used the model's own until 3 Oct.
     // On SageMaker's L4s her own writing-down (2.6 s) stalls her voice, so box ② alone writes the patient down there.
-    box.send(JSON.stringify(liveStart(liveBrief(home && planText(home), call.language), this.#gemma ? "gemma" : "own", !onSageMaker(this.env.SONA_LIVE_URL), this.#oneEar ? "own" : "box2")));
+    box.send(JSON.stringify(liveStart(liveBrief(home && planText(home), call.language), this.#brain, !onSageMaker(this.env.SONA_LIVE_URL), this.#oneEar ? "own" : "box2")));
     send(connection, { type: "audio_config", format: "pcm16", sampleRate: 24_000 });
     call.box = box;
     for (const chunk of call.pending.splice(0)) box.send(chunk);
@@ -136,17 +143,33 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
 
   #fromBox(connection: Connection, call: LiveCall, data: string | ArrayBuffer) {
     if (typeof data !== "string") {
-      if (!call.muted) sendAudio(connection, data); // the second of her voice the last unit described
+      // The second of her voice the last unit described (on two GPUs, the unit a "voice" event named just before).
+      const scripted = call.voiceOf === undefined ? call.last : call.scripted.get(call.voiceOf) ?? call.last;
+      call.voiceOf = undefined;
+      const audio = call.router && !scripted ? call.router.own(data) : data;
+      if (audio && !call.muted) sendAudio(connection, audio);
       return;
     }
-    const unit = JSON.parse(data) as Unit | Heard | { type: "ready" };
+    const unit = JSON.parse(data) as Unit | Heard | { type: "ready" } | { type: "voice"; i: number };
     if (unit.type === "heard") return this.#heard(connection, call, unit.text);
+    if (unit.type === "voice") { call.voiceOf = unit.i; return; }
     if (unit.type !== "unit") return;
-    this.#show(connection, call, call.says ? call.says.unit(unit) : unit);
+    if (!call.router) return this.#show(connection, call, call.says ? call.says.unit(unit) : unit);
+    // The router: a second given to her to say is Gemma's answer (Says); one of her own goes by whether the turn is hers.
+    if (!unit.listen) {
+      call.last = Boolean(unit.scripted);
+      call.scripted.set(unit.i, call.last);
+      if (call.scripted.size > 64) call.scripted.delete(call.scripted.keys().next().value!);
+    }
+    if (unit.listen) { call.router.listened(); return this.#show(connection, call, unit); }
+    if (!unit.scripted) return this.#show(connection, call, call.router.own(unit, unit.end_of_turn), true);
+    const said = call.says!.unit(unit);
+    if (said?.end_of_turn) call.router.done();
+    this.#show(connection, call, said);
   }
 
-  /** One second of Sona's side of the call, on the phone. */
-  #show(connection: Connection, call: LiveCall, unit?: Pick<Unit, "listen" | "text" | "end_of_turn">) {
+  /** One second of Sona's side of the call, on the phone; `own`: an answer of her own on a call where Gemma answers too. */
+  #show(connection: Connection, call: LiveCall, unit?: Pick<Unit, "listen" | "text" | "end_of_turn">, own = false) {
     if (!unit) return;
     for (const event of call.turns.unit(unit)) {
       if (event.type === "transcript_start") call.muted = false;
@@ -154,7 +177,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
       if (event.type !== "transcript_end") continue;
       // As SonaVoiceAgent ends a turn (a client may ignore it; apps/server/test/voice-call.ts waits for it). Gemma's
       // answer ends as answerTurn summed it up; one cut off has no summary, as there.
-      const turn = call.says ? call.summary : { grounded: true, urgent: EMERGENCY.test(event.text), source: "model", model: "sona-live" };
+      const turn = call.says && !own ? call.summary : { grounded: true, urgent: EMERGENCY.test(event.text), source: "model", model: "sona-live" };
       if (turn) send(connection, { type: "sona_turn", ...turn });
     }
   }
@@ -170,6 +193,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     if (call) {
       call.heardAt = Date.now();
       const reported = this.#check(connection, call, "box2", transcript);
+      if (call.router) return this.#route(connection, call, transcript, reported), null;
       if (call.says) void this.#answer(connection, call, call.says, transcript, reported);
     }
     return null;
@@ -210,6 +234,21 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     if (!signal.aborted) this.#show(connection, call, says.end());
   }
 
+  /**
+   * The router's turn: only talk, and what she has begun to say by herself goes to the phone (the rest follows as she
+   * says it); anything else, and Gemma answers it as on the hybrid call, her own start left out.
+   */
+  #route(connection: Connection, call: LiveCall, transcript: string, reported?: Promise<boolean>) {
+    const { by, kept } = call.router!.heard(transcript);
+    if (by === "gemma") return void this.#answer(connection, call, call.says!, transcript, reported);
+    call.answering?.abort(); // an answer of Gemma's still being said gives way to the new turn, as on the hybrid call
+    this.#show(connection, call, call.says!.stop());
+    for (const item of kept) {
+      if (item instanceof ArrayBuffer) { if (!call.muted) sendAudio(connection, item); }
+      else this.#show(connection, call, item as Unit, true);
+    }
+  }
+
   /** The same turn as box ④ wrote it down: checked too, and shown when box ②'s words do not come (quiet comes as "."). */
   #heard(connection: Connection, call: LiveCall, transcript: string) {
     if (!/[\p{L}\p{N}]/u.test(transcript)) return;
@@ -246,6 +285,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     call.muted = true;
     call.answering?.abort();
     this.#show(connection, call, call.says?.stop());
+    call.router?.done();
   }
 
   onCallEnd(connection: Connection) {

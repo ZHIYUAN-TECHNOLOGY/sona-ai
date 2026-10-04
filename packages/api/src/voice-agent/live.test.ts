@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { answerTurn, type ChatMessage, type ChatStream } from "./answer";
-import { CallHistory, Checks, LiveTurns, Says, liveBrief, liveStart, mayReport, type PhoneEvent } from "./live";
+import { CallHistory, Checks, LiveTurns, Router, Says, liveBrief, liveStart, mayReport, onlyTalk, type PhoneEvent } from "./live";
 
 const listen = { listen: true, text: "", end_of_turn: false };
 const speak = (text: string, end_of_turn = false) => ({ listen: false, text, end_of_turn });
@@ -220,4 +220,36 @@ test("a turn cut off before any answer leaves two patient lines for Gemma, not a
   const call = new CallHistory();
   call.turn("How do I");
   expect(call.turn("How do I take it?").history).toEqual([{ role: "user", content: "How do I" }]);
+});
+
+test("only talk is hers to answer: a greeting, thanks, a goodbye; anything about care, a number or a question of what to do is Gemma's", () => {
+  for (const hers of ["Hi Sona.", "Hello!", "Good morning Sona", "Thank you so much", "Okay, bye", "Who are you?", "Terima kasih", "Selamat pagi", "Apa khabar?", "你好", "谢谢你", "再见"])
+    expect([hers, onlyTalk(hers)]).toEqual([hers, true]);
+  for (const gemmas of ["Hi Sona. I have a fever of 39 degrees since last night. How many paracetamol tablets can I take, and how often?",
+    "Hi Sona, can I take my medicine now?", "Thanks. When is my appointment?", "Okay, how many tablets?", "I have chest pain", "Hello, I feel dizzy",
+    "Terima kasih, bila temu janji saya?", "Saya demam", "Boleh saya makan ubat?", "你好，我可以吃药吗", "我发烧了", "Tell me about my discharge plan", "What happens next?"])
+    expect([gemmas, onlyTalk(gemmas)]).toEqual([gemmas, false]);
+  expect(liveStart("brief", "router", true)).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: true });
+});
+
+test("the router keeps her own words back until the patient's are known: talk goes on to the phone, the rest is left out for Gemma", () => {
+  const r = new Router(), a = { text: "Hello" }, voice = new ArrayBuffer(4), b = { text: " there" };
+  // She starts before the ear has answered: nothing reaches the phone yet.
+  expect([r.own(a), r.own(voice)]).toEqual([undefined, undefined]);
+  // Only talk: what was kept comes back in order, and the rest of her turn passes as it comes.
+  expect(r.heard("Hi Sona.")).toEqual({ by: "own", kept: [a, voice] });
+  expect(r.own(b, true)).toBe(b);
+  // Her turn is over: the next one waits for its own words.
+  const c = { text: "You can take" };
+  expect(r.own(c)).toBeUndefined();
+  expect(r.heard("How many tablets can I take?")).toEqual({ by: "gemma", kept: [] });
+  expect(r.own({ text: " two" })).toBeUndefined(); // the rest of her own answer is left out too
+  r.done();
+  // The ear first, then she speaks: no wait at all.
+  expect(r.heard("Thank you").by).toBe("own");
+  expect(r.own(a)).toBe(a);
+  // A turn judged hers that she never took does not open the next one.
+  expect(r.heard("Okay").by).toBe("own");
+  for (let i = 0; i < 5; i++) r.listened();
+  expect(r.own(c)).toBeUndefined();
 });

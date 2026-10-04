@@ -3,6 +3,7 @@ import type { Language } from "@sona-ai/domain/discharge";
 
 import { EMERGENCY } from "../baseten-models";
 import { LANGUAGE_NAME } from "../chat-models";
+import { callNow } from "./answer";
 
 /**
  * Sona Care's live voice on MiniCPM-o (box ④, packages/infra/baseten/live): one model hears the patient and answers in
@@ -67,7 +68,7 @@ export class Checks {
 }
 
 /** Box ④'s report for one second of the call: listening, or speaking these words; their audio follows as one binary frame. */
-export type Unit = { type: "unit"; i: number; listen: boolean; text: string; end_of_turn: boolean; ms: number; behind: number };
+export type Unit = { type: "unit"; i: number; listen: boolean; text: string; end_of_turn: boolean; ms: number; behind: number; scripted?: boolean };
 export type PhoneEvent =
   | { type: "status"; status: "listening" | "speaking" }
   | { type: "transcript_start"; role: "assistant" }
@@ -110,6 +111,12 @@ export class LiveTurns {
   }
 }
 
+/**
+ * Who writes Sona's answers on the live call (SONA_LIVE_BRAIN): box ④ itself ("own"), Gemma for every turn ("gemma"),
+ * or box ④ for the turns that are only talk and Gemma for the rest ("router").
+ */
+export type Brain = "own" | "gemma" | "router";
+
 /** After this much quiet box ④ asks its judge of turns whether the patient has finished (data/live.py, QUIET). */
 const TURN_SILENCE_MS = 500;
 
@@ -119,7 +126,7 @@ const TURN_SILENCE_MS = 500;
  * she then never does, so box ② is the ear; unless she is the ear too (SONA_LIVE_EAR=own), when the box writes each
  * turn down as soon as its judge hears the patient finish.
  */
-export const liveStart = (system: string, brain: "own" | "gemma", transcribe: boolean, ear: "box2" | "own" = "box2") => ({
+export const liveStart = (system: string, brain: Brain, transcribe: boolean, ear: "box2" | "own" = "box2") => ({
   type: "start", system, voice: "v1",
   ...brain !== "gemma" ? { transcribe } : ear === "own" ? { transcribe: true, hold: true, turn_silence_ms: TURN_SILENCE_MS } : { transcribe: false, hold: true },
 });
@@ -241,3 +248,72 @@ export class CallHistory {
     return { history, said: sentence => { answer.content += `${answer.content && " "}${sentence}`; } };
   }
 }
+
+// Turns that are only talk: a greeting, thanks, a goodbye, "who are you", an "okay". Anything with a number, or a word
+// of medicine, a symptom, a dose, a time or a place in it is not.
+const TALK = [
+  /^(hi|hello|hey|good (morning|afternoon|evening|night)|thanks?( you)?( so much| very much)?|bye|goodbye|see you|ok(ay)?|alright|all right|i see|got it|great|nice|how are you|who are you|what('?s| is) your name|can you hear me)\b/i,
+  /^(hai|helo|hello|selamat (pagi|petang|malam|tengah ?hari|tinggal|jalan)|terima kasih|apa khabar|siapa (awak|kamu|anda)|ok(ay)?|baik(lah)?|faham|jumpa lagi|boleh dengar)\b/i,
+  /^(你好|您好|早安|早上好|晚安|谢谢|多谢|再见|拜拜|好的?|明白了?|知道了|你是谁|你叫什么|听得到吗)/,
+];
+const CARE = /\d|\b(medicine|medication|pill|tablet|dose|take|pain|hurt|fever|cough|dizzy|bleed|breath|vomit|rash|wound|appointment|follow|doctor|nurse|clinic|hospital|when|how (much|many|long|often)|should|can i|what (do|should|if)|ubat|pil|biji|dos|makan|sakit|demam|batuk|pening|darah|nafas|muntah|luka|temu ?janji|doktor|jururawat|klinik|bila|berapa|boleh(kah)? saya|patut|perlu)\b|药|片|粒|剂量|吃|痛|疼|烧|咳|晕|血|喘|吐|伤口|复诊|医生|护士|诊所|医院|什么时候|多少|几|可以|应该|怎么/i;
+const TALK_WORDS = 8;
+
+/**
+ * Whether a turn is only talk, which box ④ answers by itself, at once and in its own way. Everything else is Gemma's:
+ * the rule errs that way on purpose, since her own brain slips on doses and numbers (docs/minicpm-o-finetune.md).
+ * ponytail: lists of words, not a model; a turn they miss costs only speed (Gemma answers it), never an answer of hers
+ * that should have been Gemma's, unless the patient's care is asked about in none of these words.
+ */
+export const onlyTalk = (text: string) => {
+  const said = text.trim().replace(/^[^\p{L}\p{N}]+/u, ""), words = said.split(/\s+/).length, han = (said.match(/[\u3400-\u9fff]/g) ?? []).length;
+  return words <= TALK_WORDS && han <= 2 * TALK_WORDS && TALK.some(t => t.test(said)) && !CARE.test(said) && !callNow(said);
+};
+
+/**
+ * The live call where box ④ answers talk by itself and Gemma answers the rest (SONA_LIVE_BRAIN=router). She is free
+ * to answer, as on her own, so a greeting is met at her own speed. What she starts to say is kept here, unheard, until
+ * the patient's words come from the ear (box ②, about a second after they stop: before her voice for that second is
+ * made): only talk, and what was kept goes to the phone and the rest follows; anything else, and it is left out, and
+ * Gemma's answer, given to her to say (Says), takes its place. The box marks the seconds it was given to say
+ * (`scripted`); those are never kept back.
+ * ponytail: with no words from the ear she stays unheard (as the hybrid call would); and what is kept is bounded.
+ */
+export class Router {
+  #by?: "own" | "gemma";
+  #kept: unknown[] = [];
+  /** Seconds she has listened since a turn was judged hers: a judgement not used by then is the last turn's. */
+  #quiet = 0;
+
+  /** The patient's words: who answers, and what was kept of her own answer to show now when it is hers. */
+  heard(text: string): { by: "own" | "gemma"; kept: unknown[] } {
+    this.#by = onlyTalk(text) ? "own" : "gemma";
+    this.#quiet = 0;
+    const kept = this.#by === "own" ? this.#kept : [];
+    this.#kept = [];
+    return { by: this.#by, kept };
+  }
+
+  /** One second of her own words, or its voice: itself when it may go to the phone now, else nothing (kept, or left out). */
+  own<T>(item: T, ends = false): T | undefined {
+    if (this.#by === "own") {
+      this.#quiet = 0;
+      if (ends) this.#by = undefined;
+      return item;
+    }
+    if (!this.#by && this.#kept.push(item) > KEPT) this.#kept.shift();
+    return undefined;
+  }
+
+  /** A second she listened through. */
+  listened() {
+    if (this.#by === "own" && ++this.#quiet > STALE_S) this.#by = undefined;
+  }
+
+  /** Gemma's answer has been said, or cut off: the next turn is judged afresh. */
+  done() {
+    this.#by = undefined;
+    this.#kept = [];
+  }
+}
+const KEPT = 40, STALE_S = 4;

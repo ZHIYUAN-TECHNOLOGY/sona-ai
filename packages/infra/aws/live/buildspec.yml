@@ -8,8 +8,8 @@ phases:
   build:
     commands:
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR
-      - docker build -t $ECR/sona/live:1 .
-      - docker push $ECR/sona/live:1
+      - docker build --build-arg VOICE_IMAGE=$ECR/sona/voice:1 -t $ECR/sona/live:2 .
+      - docker push $ECR/sona/live:2
       - docker image prune -af > /dev/null
       - pip install -q huggingface_hub
       - |
@@ -24,3 +24,5 @@ phases:
       - cp /tmp/v/code/sona_voice.wav /tmp/w/sona_voice.wav
       - du -sh /tmp/w/*
       - aws s3 sync /tmp/w s3://$BUCKET/live/ear1/ --only-show-errors --exclude ".cache/*" --exclude "*/.cache/*"
+      # Box ②'s weights beside them (../voice/buildspec.yml put them in S3), for its models on the third GPU.
+      - aws s3 sync s3://$BUCKET/voice/1/ s3://$BUCKET/live/ear1/voicebox/ --only-show-errors --copy-props none

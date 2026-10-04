@@ -67,7 +67,8 @@ export function sagemakerFetcher(sm: SageMaker, fetcher: typeof fetch = fetch, n
     if (endpoint.startsWith("lambda:")) return viaLambda(sm, endpoint.slice(7), route.slice(4), body, contentType, fetcher, now(), init?.signal);
     const streamed = contentType.startsWith("application/json") && /"stream"\s*:\s*true/.test(new TextDecoder().decode(body));
     const url = `https://runtime.sagemaker.${sm.region}.amazonaws.com/endpoints/${encodeURIComponent(endpoint)}/${streamed ? "invocations-response-stream" : "invocations"}`;
-    const headers = await signed(sm, "sagemaker", url, body, contentType, now());
+    // The box is named too: one endpoint may hold two boxes (packages/infra/aws/live: box ② beside box ④), and tells by this.
+    const headers = { ...await signed(sm, "sagemaker", url, body, contentType, now()), "x-amzn-sagemaker-custom-attributes": box! };
     const res = await fetcher(url, { method: "POST", body, headers, signal: init?.signal });
     if (!streamed || !res.ok || !res.body) return res;
     return new Response(res.body.pipeThrough(payloads()), { status: res.status, headers: { "content-type": "text/event-stream" } });

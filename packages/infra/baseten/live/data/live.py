@@ -11,7 +11,7 @@ WebSocket /v1/live, one call per connection:
        3. JSON {"type": "stop"}, or just close
   out  JSON {"type": "ready"} once the call is set up; then for each second heard
        JSON {"type": "unit", "i", "listen", "text", "end_of_turn", "ms" (model time), "cost" (ms by part: brain, talker,
-       voice), "behind" (seconds queued)}, followed, when Sona speaks, by one binary frame: 24 kHz mono PCM16
+       voice), "behind" (seconds queued), "scripted" (true when the second's words were a "say", not her own)}, followed, when Sona speaks, by one binary frame: 24 kHz mono PCM16
        little-endian. On two GPUs (VOICE_GPU below) her voice for a second comes when it is made, after a JSON
        {"type": "voice", "i", "ms"}, and the next second's unit may come before it.
 Off CUDA (a Mac, for tests) the voice decoder cannot run, so the box answers in text only.
@@ -264,9 +264,9 @@ def pcm(wave) -> bytes | None:
 
 
 def step(audio: np.ndarray, opts: dict, call: dict) -> tuple[dict, bytes | Future | None]:
-    t = time.time()
+    t, scripted = time.time(), bool(call.get("script"))
     duplex.streaming_prefill(audio_waveform=audio)
-    if call.get("script"):  # this second's tokens are given, not chosen: the brain's states still drive her voice
+    if scripted:  # this second's tokens are given, not chosen: the brain's states still drive her voice
         forced = iter(call["script"].pop(0))
         choose, duplex.decoder.decode, duplex.force_listen_count = duplex.decoder.decode, lambda **_: torch.tensor(
             [next(forced)], dtype=torch.long, device=duplex.device), 0
@@ -288,7 +288,7 @@ def step(audio: np.ndarray, opts: dict, call: dict) -> tuple[dict, bytes | Futur
     text = said[len(call["said"]):] if said.startswith(call["said"]) else said
     call["said"], call["speaking"] = said, not r["is_listen"]
     return {"type": "unit", "i": r["current_time"], "listen": r["is_listen"], "text": text,
-            "end_of_turn": r["end_of_turn"], "ms": round((time.time() - t) * 1000),
+            "end_of_turn": r["end_of_turn"], "ms": round((time.time() - t) * 1000), "scripted": scripted,
             "cost": {k[5:]: round(r[k] * 1000) for k in ("cost_llm", "cost_tts", "cost_token2wav") if r.get(k)}}, speech
 
 
