@@ -67,7 +67,18 @@ export async function listCheckIns(db: Context["db"], hospitalId: string, { enco
 }
 
 /** The author of the agent's messages in a patient's thread: Sona, not a person (the care team's view shows "Care team"). */
-const SONA_AUTHOR = "sona";
+export const SONA_AUTHOR = "sona";
+
+/**
+ * Sona tells a patient with an emergency sign to call 999 now: the existing template in her thread, and a push.
+ * Keyed by what she wrote (a check-in reply, a message), so a replay tells her once.
+ */
+export async function tellCall999(context: Pick<Context, "db" | "fetch">, hospitalId: string, patient: { id: string; name: string }, key: string, language: Language, at: Date) {
+  const text = draftByRules({ text: "", label: "urgent", patientFirstName: patient.name.split(" ")[0]!, language });
+  const [told] = await context.db.insert(careMessages).values({ id: `message:${patient.id}:call-999:${key}`, hospitalId, patientId: patient.id, from: "care-team", authorId: SONA_AUTHOR, text, createdAt: at })
+    .onConflictDoNothing().returning({ id: careMessages.id });
+  if (told) await tellPatient(context, hospitalId, patient.id, { kind: "call-999", text });
+}
 
 /**
  * One wake of a visit's check-in agent (apps/server/src/agents/check-in.ts; tests run it in memory). On the
@@ -95,13 +106,8 @@ export async function runFollowUp(context: Pick<Context, "db" | "fetch" | "annou
 
   if (decision.reask) await tellPatient(context, hospitalId, patient.id, { kind: "reask", day: decision.reask.day });
   if (decision.bringForward) await scheduleCheckIns(db, hospitalId, patient, encounterId, discharge.language, visit.dischargedAt, [decision.bringForward.day]);
-  for (const { replyId, language } of decision.call999) {
-    const text = draftByRules({ text: "", label: "urgent", patientFirstName: patient.name.split(" ")[0]!, language });
-    // Keyed by the reply, so a replayed wake tells her once.
-    const [told] = await db.insert(careMessages).values({ id: `message:${patient.id}:call-999:${replyId}`, hospitalId, patientId: patient.id, from: "care-team", authorId: SONA_AUTHOR, text, createdAt: now })
-      .onConflictDoNothing().returning({ id: careMessages.id });
-    if (told) await tellPatient(context, hospitalId, patient.id, { kind: "call-999", text });
-  }
+  // Keyed by the reply, so a replayed wake tells her once.
+  for (const { replyId, language } of decision.call999) await tellCall999(context, hospitalId, patient, replyId, language, now);
   // What it did shows at once: Sona Pro re-reads My Day and the check-ins, her Sona Care re-reads too.
   const announce = (change: Change) => context.announce?.(hospitalId, change).catch(() => {});
   if (sent || decision.reask || decision.bringForward || decision.call999.length) await announce({ topic: "checkIns", encounterId, patientId: patient.id });

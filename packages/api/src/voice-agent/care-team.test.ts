@@ -33,23 +33,35 @@ async function world(label: "fine" | "worse" | "urgent") {
   return { db, doctor, context, heard };
 }
 
-test("a patient telling Sona they feel worse flags a task for the attending doctor, the way a check-in reply does, and Sona Pro hears it", async () => {
+test("a patient telling Sona they feel worse flags one task for the attending doctor and Sona Pro hears it; no check-in is sent or answered by it", async () => {
   const { db, doctor, context, heard } = await world("worse");
   const told = await tellCareTeam(context, DEMO_HOSPITAL, "SYN-1042", "Demam saya datang balik malam tadi");
   expect(told?.title).toBe("Amelia: fever returned after discharge");
   expect(heard).toEqual([[DEMO_HOSPITAL, { topic: "checkIns", patientId: "SYN-1042" }]]);
   const [task] = await db.select().from(tasks).where(eq(tasks.id, told!.taskId));
-  expect([task!.kind, task!.owner, task!.due, task!.completed]).toEqual(["check-in", "Attending doctor", "Today", false]);
-  // On the doctor's side it is a reply to the day-2 check-in (sent now), with its flag, so My Day shows it with Book in.
-  const [day2] = await doctor.checkIns.list({ encounterId: "visit-1042" });
-  expect([day2!.day, Boolean(day2!.sentAt), day2!.replies.map(r => [r.text, r.label, r.task?.id])]).toEqual([2, true, [["Demam saya datang balik malam tadi", "worse", told!.taskId]]]);
+  expect([task!.kind, task!.owner, task!.due, task!.completed, task!.encounterId]).toEqual(["check-in", "Attending doctor", "Today", false, "visit-1042"]);
+  // The same problem said again rides on the open task: the doctor sees one item.
+  expect(await tellCareTeam(context, DEMO_HOSPITAL, "SYN-1042", "Masih demam")).toEqual(told);
+  expect(await db.select().from(tasks).where(eq(tasks.kind, "check-in"))).toHaveLength(1);
+  // Her scheduled check-ins are untouched (day 2 is not due yet), and still hers to answer.
+  expect((await doctor.checkIns.list({ encounterId: "visit-1042" })).map(c => [c.day, c.sentAt, c.replies.length])).toEqual([[2, null, 0], [7, null, 0]]);
+  const answered = await doctor.checkIns.reply({ checkInId: "check-in:visit-1042:2", text: "Demam balik" });
+  expect(answered.replies.map(r => [r.label, r.task?.id])).toEqual([["worse", told!.taskId]]);
+  // Booked in like any flagged reply.
+  expect((await doctor.checkIns.bookIn({ taskId: told!.taskId })).kind).toBe("Clinic review · fever returned");
 });
 
-test("a reply read as fine flags nothing; a patient with no check-ins (still in hospital) is not passed on", async () => {
+test("words read as fine flag nothing; a patient still in hospital, with no check-ins, is passed on too", async () => {
   const fine = await world("fine");
   expect(await tellCareTeam(fine.context, DEMO_HOSPITAL, "SYN-1042", "Saya rasa lebih baik hari ini")).toBeUndefined();
   expect(await fine.db.select().from(tasks).where(eq(tasks.kind, "check-in"))).toEqual([]);
+  expect(fine.heard).toEqual([]);
   const inHospital = await world("urgent");
-  expect(await tellCareTeam(inHospital.context, DEMO_HOSPITAL, "SYN-1086", "Sakit dada")).toBeUndefined();
-  expect(inHospital.heard).toEqual([]);
+  const told = await tellCareTeam(inHospital.context, DEMO_HOSPITAL, "SYN-1086", "Sakit dada");
+  // Not "after discharge": he has not left.
+  expect(told?.title).toBe("Daniel: fever returned");
+  expect((await inHospital.doctor.tasks.list()).filter(t => t.kind === "check-in").map(t => [t.id, t.title, t.owner, t.due, t.encounterId, t.completed]))
+    .toEqual([[told!.taskId, "Daniel: fever returned", "Attending doctor", "Today", "visit-1086", false]]);
+  expect(inHospital.heard).toEqual([[DEMO_HOSPITAL, { topic: "checkIns", patientId: "SYN-1086" }]]);
+  expect(await tellCareTeam(inHospital.context, DEMO_HOSPITAL, "SYN-0000", "Sakit dada")).toBeUndefined();
 });

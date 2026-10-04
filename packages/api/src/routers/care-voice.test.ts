@@ -84,3 +84,31 @@ test("with the model, her Manglish reply flags the doctor with the model's own w
   expect(prompt).toContain("The fever comes back");
   expect(prompt).not.toContain("SYN-1086");
 });
+
+test("a question that reports feeling worse or names an emergency sign reaches her care team as a flagged task, and uses up no check-in", async () => {
+  // The stub answers nothing, yet its keyword reader still flags the doctor.
+  const { doctor, amelia } = await world();
+  const worse = await amelia.care.ask({ question: "Demam saya datang balik malam tadi, boleh makan ubat lagi?" });
+  expect(worse).toMatchObject({ answer: "", source: "fixture", careTeam: { title: "Amelia: fever returned after discharge", line: "Saya sudah maklumkan pasukan penjagaan anda." } });
+  const urgent = await amelia.care.ask({ question: "I have chest pain since this morning" });
+  expect(urgent.careTeam?.title).toBe("Amelia: chest pain after discharge");
+  expect((await doctor.tasks.list()).filter(t => t.kind === "check-in").map(t => [t.id, t.title, t.owner, t.encounterId, t.completed])).toEqual([
+    [worse.careTeam!.taskId, "Amelia: fever returned after discharge", "Attending doctor", "visit-1042", false],
+    [urgent.careTeam!.taskId, "Amelia: chest pain after discharge", "Attending doctor", "visit-1042", false],
+  ]);
+  expect((await amelia.care.checkIns.list()).map(c => [c.day, c.sentAt, c.replies.length])).toEqual([[2, null, 0], [7, null, 0]]);
+  // A plain question tells no one.
+  expect(await amelia.care.ask({ question: "Bila saya makan ubat?" })).not.toHaveProperty("careTeam");
+  expect((await doctor.tasks.list()).filter(t => t.kind === "check-in")).toHaveLength(2);
+});
+
+test("the model's own urgent flag reaches the care team when no keyword does; a failed report never fails the answer", async () => {
+  const answerFromPlan: Models["answerFromPlan"] = async () => ({ answer: "Hubungi 999 sekarang.", grounded: false, urgent: true, source: "model", model: "gemma-test" });
+  const { doctor, amelia } = await world({ ...stubModels, answerFromPlan, classifyReply: async () => ({ label: "urgent", symptom: "Confused", source: "model", model: "gemma-test" }) });
+  const answer = await amelia.care.ask({ question: "Saya keliru, tak ingat di mana saya" });
+  expect(answer).toMatchObject({ answer: "Hubungi 999 sekarang.", urgent: true, careTeam: { title: "Amelia: confused after discharge" } });
+  expect((await doctor.tasks.list()).filter(t => t.kind === "check-in").map(t => t.id)).toEqual([answer.careTeam!.taskId]);
+
+  const broken = await world({ ...stubModels, answerFromPlan, classifyReply: async () => { throw new Error("model down"); } });
+  expect(await broken.amelia.care.ask({ question: "Sakit dada" })).toEqual({ answer: "Hubungi 999 sekarang.", grounded: false, urgent: true, source: "model", model: "gemma-test" });
+});

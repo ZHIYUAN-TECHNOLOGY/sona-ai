@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { user } from "@sona-ai/db/schema/auth";
 import { admissions, careMessages, encounters, hospitalMembers, patients, tasks, type MedicineReading, type MessageAttachment } from "@sona-ai/db/schema/clinical";
+import type { Language } from "@sona-ai/domain/discharge";
 import { LABEL_RANK, type MessageLabel } from "@sona-ai/domain/messages";
 import { defaultMedications } from "@sona-ai/domain/prescribing";
 import { mergeMedicines } from "@sona-ai/domain/scan";
@@ -15,6 +16,7 @@ import { stubModels } from "../models";
 import { tellPatient, when } from "../push";
 import type { Role } from "../roles";
 import { lastDischarge, patientPlan } from "./care-plan";
+import { SONA_AUTHOR, tellCall999 } from "./check-ins";
 import { editEncounter, loadEncounter, visitOf } from "./encounter";
 import { bucket } from "./xray";
 
@@ -36,6 +38,8 @@ const TITLE_CHARS = 60;
 /** The inbox keeps a thread for a week after its last message, so a handled one can be found again. */
 const RECENT_DAYS = 7;
 const CARE_TEAM: readonly Role[] = ["doctor", "nurse"];
+/** The language to answer a message in: Chinese when it is written in Chinese, else the leaflet's (English before discharge). */
+const answerIn = (text: string, leaflet?: Language): Language => /[一-鿿]/.test(text) ? "zh" : leaflet ?? "en";
 
 const own = { id: careMessages.id, from: careMessages.from, text: careMessages.text, createdAt: careMessages.createdAt, seenAt: careMessages.seenAt, attachment: careMessages.attachment };
 const thread = (db: Context["db"], patientId: string) =>
@@ -63,8 +67,13 @@ export const careMessagesRouter = {
     // The task shares the message's ID, so a replay inserts neither.
     await db.insert(tasks).values({ id, hospitalId, encounterId: patient!.encounterId, kind: "message", title, owner: "Attending doctor", due: "Today", sourceId: id, idempotencyKey: id })
       .onConflictDoNothing();
-    await db.insert(careMessages).values({ id, hospitalId, patientId, from: "patient", authorId: context.session.user.id, text: input.text, taskId: id, createdAt: clockOf(context), triage: triage?.label, triageReason: triage?.reason, attachment: input.attachment })
+    const at = clockOf(context);
+    await db.insert(careMessages).values({ id, hospitalId, patientId, from: "patient", authorId: context.session.user.id, text: input.text, taskId: id, createdAt: at, triage: triage?.label, triageReason: triage?.reason, attachment: input.attachment })
       .onConflictDoNothing();
+    // An emergency sign waits for no one: Sona tells them to call 999 at once, as for an urgent check-in reply, just after
+    // their message in the thread (the middleware's "messages" change shows it). Keyed by the message, so a resend tells them once.
+    if (triage?.label === "urgent")
+      await tellCall999(context, hospitalId, { id: patientId, name: patient!.name }, input.requestId, answerIn(input.text, (await lastDischarge(db, hospitalId, patientId))?.language), new Date(at.getTime() + 1));
     return stored(db, id);
   }),
 };
@@ -144,7 +153,7 @@ export const messagesRouter = {
     const { db, hospitalId } = context, now = clockOf(context);
     const since = new Date(now.getTime() - RECENT_DAYS * 86400_000);
     const rows = await db.select({ patientId: careMessages.patientId, from: careMessages.from, text: careMessages.text, createdAt: careMessages.createdAt, seenAt: careMessages.seenAt, attachment: careMessages.attachment,
-      triage: careMessages.triage, triageReason: careMessages.triageReason, taskDone: tasks.completed, name: patients.name, initials: patients.initials })
+      triage: careMessages.triage, triageReason: careMessages.triageReason, taskDone: tasks.completed, name: patients.name, initials: patients.initials, authorId: careMessages.authorId })
       .from(careMessages).innerJoin(patients, eq(patients.id, careMessages.patientId)).leftJoin(tasks, eq(tasks.id, careMessages.taskId))
       .where(and(eq(careMessages.hospitalId, hospitalId), or(gte(careMessages.createdAt, since), eq(tasks.completed, false))))
       .orderBy(asc(careMessages.createdAt), asc(careMessages.id));
@@ -152,7 +161,8 @@ export const messagesRouter = {
     const beds = ids.length ? await db.select({ patientId: admissions.patientId, bed: admissions.bed }).from(admissions)
       .where(and(eq(admissions.hospitalId, hospitalId), inArray(admissions.patientId, ids), isNull(admissions.dischargedAt))) : [];
     const threads = ids.map(patientId => {
-      const msgs = rows.filter(r => r.patientId === patientId), last = msgs.at(-1)!;
+      // Sona's own "call 999" line is not the thread's last word: the row (and My Day's urgent row) keeps the patient's.
+      const msgs = rows.filter(r => r.patientId === patientId), last = msgs.findLast(m => m.authorId !== SONA_AUTHOR) ?? msgs.at(-1)!;
       const waiting = msgs.filter(m => m.from === "patient" && m.taskDone === false);
       const top = waiting.reduce<(typeof waiting)[number] | undefined>((best, m) => !best || LABEL_RANK[labelOf(m.triage)] > LABEL_RANK[labelOf(best.triage)] ? m : best, undefined);
       return {
@@ -196,8 +206,7 @@ export const messagesRouter = {
     const latest = (await staffThread(context.db, patient)).filter(m => m.unanswered).at(-1);
     if (!latest) return null;
     const discharged = await lastDischarge(context.db, context.hospitalId, patient.id);
-    // A message written in Chinese is answered in Chinese, whatever the leaflet's language.
-    const language = /[一-鿿]/.test(latest.text) ? "zh" : discharged?.language ?? "en";
+    const language = answerIn(latest.text, discharged?.language);
     const plan = await patientPlan({ ...context, patientId: patient.id }, language);
     const label = latest.triage ? labelOf(latest.triage) : "clinical";
     const asked = {
