@@ -2,6 +2,7 @@ import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { api, errorText, useLive } from ".";
+import { keepSame } from "./keep-same";
 import { useLiveChanges } from "./channel";
 
 export type ServerBed = Awaited<ReturnType<AppRouterClient["ward"]["beds"]>>[number];
@@ -37,7 +38,7 @@ function useWardRead<T>(which: Which, read: () => Promise<T>, key?: unknown) {
   useFocusEffect(useCallback(() => {
     if (!on) { setData(undefined); return; }
     let current = true;
-    read().then(rows => { failed(which); if (current) setData(rows); }, e => failed(which, errorText(e)));
+    read().then(rows => { failed(which); if (current) setData(held => keepSame(held, rows)); }, e => failed(which, errorText(e)));
     return () => { current = false; };
   }, [on, key, version])); // eslint-disable-line react-hooks/exhaustive-deps
   return on ? data : undefined;
