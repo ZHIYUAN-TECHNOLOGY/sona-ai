@@ -24,8 +24,8 @@ mock.module("./doses", () => ({ clearTaken() {}, syncTaken: async () => {} }));
 mock.module("./me", () => ({ useMe: () => ({ state: "joined" }) }));
 mock.module("./questions", () => ({ sendQuestions: async () => {} }));
 const { now, setClockOffset } = await import("@/lib/clock");
-const { startLive } = await import("./live");
-const settle = () => new Promise(r => setTimeout(r, 0));
+const { COALESCE_MS, startLive } = await import("./live");
+const settle = (ms = 0) => new Promise(r => setTimeout(r, ms));
 
 test("Care reads the hospital's clock on joining, on every return to the foreground and on every socket open", async () => {
   const stop = startLive();
@@ -44,22 +44,27 @@ test("Care reads the hospital's clock on joining, on every return to the foregro
   setClockOffset(0);
 });
 
-test("a change re-reads what its topic touches, an unknown topic everything; a reconnect what was read before the drop", async () => {
+test("a change re-reads what its topic touches, any other topic her visit's record, a burst once; a reconnect what was read before the drop", async () => {
   const stop = startLive();
   await settle();
   const socket = sockets.at(-1);
   socket.onopen();
-  const heard = async topic => {
+  const heard = async (...topics) => {
+    await settle(COALESCE_MS + 20);
     invalidated.length = 0;
-    socket.onmessage({ data: JSON.stringify({ topic }) });
-    await settle();
+    for (const topic of topics) socket.onmessage({ data: JSON.stringify({ topic }) });
+    await settle(COALESCE_MS + 20);
     return invalidated.map(f => f.queryKey);
   };
+  const visit = [[["care", "me"]], [["care", "discharge"]], [["care", "followUps"]], [["care", "checkIns"]]];
   expect(await heard("messages")).toEqual([[["care", "messages"]]]);
   expect(await heard("doses")).toEqual([]); // the echo of a dose taken on this phone
-  expect(await heard("visit")).toEqual([undefined]); // not known here: everything
-  // Staff approved her discharge (the Worker tells the visit's patient): her plan, medicines, leaflet, check-ins and days home all re-read.
-  expect(await heard("discharge")).toEqual([undefined]);
+  // Staff approved her discharge (the Worker tells the visit's patient): who she is, her plan, medicines, leaflet, visits and check-ins re-read.
+  expect(await heard("discharge")).toEqual(visit);
+  expect(await heard("visit")).toEqual(visit);
+  // One save announcing three topics re-reads each query once.
+  expect(await heard("note", "discharge", "messages")).toEqual([...visit, [["care", "messages"]]]);
+  expect(await heard("demo")).toEqual([undefined]); // the demo clock moved: everything
   invalidated.length = 0;
   socket.onclose();
   socket.onopen(); // the retry is back
