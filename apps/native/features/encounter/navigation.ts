@@ -74,6 +74,10 @@ export function openPage(navigation: Stacked, path: "/recording" | "/note" | "/t
   if (!backTo(navigation, path.slice(1))) router.push(path);
 }
 
+/** A visit's tool pages, which a visit opens on arrival when asked to (`view`). */
+export const TOOL_PAGES = ["recording", "note", "xray", "tasks", "scan", "claim", "discharge"] as const;
+export const isToolPage = (view?: string): view is (typeof TOOL_PAGES)[number] => TOOL_PAGES.includes(view as never);
+
 /**
  * Leaves a sheet (`sheet`: its screen's navigation) for a visit in one navigation: the sheet slides down over the visit,
  * which is already in place, rather than closing on a timer while the visit pushes in behind it.

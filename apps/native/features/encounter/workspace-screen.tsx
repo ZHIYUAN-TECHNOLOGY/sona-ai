@@ -23,7 +23,7 @@ import { answerOf, clearThread, type Entry, type Reply } from "@/features/ask/th
 import { isWatch } from "@sona-ai/domain/watch";
 import { capabilitySchema, namedPatient, offeredAs, routeInThread, routePrompt } from "./state";
 import { carry, takeCarried } from "./carry";
-import { openSession } from "./navigation";
+import { isToolPage, openSession } from "./navigation";
 import { useEncounterSelect } from "./store";
 import { sameShallow } from "@/features/live/keep-same";
 import type { Capability, FeatureProps, FocusView, RequestState, ResponseCard } from "./types";
@@ -129,10 +129,12 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
     arrived.current = true;
     const next = capabilitySchema.safeParse(params.next);
     if (next.success) request(next.data, params.prompt);
-    // Arrived without a slide (under a closing sheet): later arrivals and the swipe back slide as usual.
-    if (params.quiet) router.setParams({ quiet: undefined });
     const view = params.view;
-    if (!(view === "recording" || view === "note" || view === "xray" || view === "tasks" || view === "scan" || view === "claim" || view === "discharge")) return;
+    if (!isToolPage(view)) return;
+    // Under a closing sheet (`quiet`: a patient card's key) the visit has no slide of its own, and its tool page is placed on
+    // it at once, also without one, so the sheet sliding down reveals the page. Pushed after the visit's arrival, the page
+    // landed while RNScreens was still dismissing the sheet ("sheetPresentationController is null"); a modal waited by itself.
+    if (params.quiet) { router.push({ pathname: `/${view}`, params: { quiet: "1" } } as never); return; }
     // The tool page opens once this visit's own transition has ended, never during it (on a 320 ms timer the two overlapped).
     let opened = false;
     const open = () => { if (opened) return; opened = true; stop(); router.push(`/${view}`); };
