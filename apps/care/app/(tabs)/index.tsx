@@ -13,7 +13,7 @@ import { away, needing } from "@/features/follow-ups/lines";
 import { useFollowUps } from "@/features/follow-ups/row";
 import { daysHome, headerDate, needsLine, type Need } from "@/features/home";
 import { LanguageRow } from "@/features/language/picker";
-import { SettingsSheet, SignOutRow } from "@/features/home/settings-sheet";
+import { SignOutRow } from "@/features/home/sign-out";
 import { tFor, useLang } from "@/lib/i18n";
 import { ConsistencyTile, LatestTile, MedicinesTile, VisitTile } from "@/features/home/bento";
 import { useMe } from "@/features/me";
@@ -99,7 +99,6 @@ function Home() {
   const { fontScale } = useWindowDimensions();
   const scroll = useRef<KeyboardAwareScrollViewRef>(null);
   const spots = useRef({ cards: 0, today: 0 });
-  const [settings, setSettings] = useState(false);
   const [still] = useState(() => seen);
   useEffect(() => { if (state === "joined") seen = true; }, [state]);
   const health = useQuery(orpc.healthCheck.queryOptions());
@@ -121,7 +120,7 @@ function Home() {
     {state === "joined" && me
       ? <>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <Initials name={me.name} label={t("home.settings", { name: me.name })} onPress={() => setSettings(true)} />
+          <Initials name={me.name} label={t("home.settings", { name: me.name })} onPress={() => router.push("/settings")} />
           <View accessible accessibilityRole="header" style={{ flex: 1, alignItems: "center" }}>
             <Text numberOfLines={1} style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{t("home.hello", { name: me.firstName })}</Text>
             <Text numberOfLines={1} style={{ fontSize: 18, lineHeight: 24, fontWeight: "500", letterSpacing: -0.4, color: palette.ink }}>{headerDate(now, lang)}</Text>
@@ -170,7 +169,6 @@ function Home() {
         <TodayCard />
       </Animated.View>
       <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("common.emergency")}</Text>
-      <SettingsSheet open={settings} onClose={() => setSettings(false)} />
     </>}
     {/* The one place Sona Care says its data is fictional, by the emergency line; tap for the details. */}
     {state !== "loading" && <DataPill />}

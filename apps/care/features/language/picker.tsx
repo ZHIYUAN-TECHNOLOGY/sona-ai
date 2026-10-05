@@ -45,12 +45,6 @@ function LanguageSheet({ open, onClose }: { open: boolean; onClose: () => void }
     setLeaving(true);
     setTimeout(() => { setLeaving(false); onClose(); }, still ? 0 : OUT_MS);
   };
-  const pick = (to: Lang) => {
-    if (to === lang) return;
-    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
-    setLang(to);
-    AccessibilityInfo.announceForAccessibility(LANGS.find(l => l.id === to)!.label);
-  };
   // Words that change language crossfade in place (keyed on the language).
   const fade = still ? undefined : FadeIn.duration(260).easing(EASE_OUT);
   const shown = open && !leaving;
@@ -69,26 +63,46 @@ function LanguageSheet({ open, onClose }: { open: boolean; onClose: () => void }
         <AccentText style={{ fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -1.9, color: palette.ink, textAlign: "center" }}>{t("lang.bold")}</AccentText>
       </Animated.View>
       <AnimatedText key={`line-${lang}`} entering={fade} style={{ ...type.footnote, color: palette.faint, textAlign: "center", paddingBottom: 8 }}>{t("lang.line")}</AnimatedText>
-      {LANGS.map((l, i) => {
-        const on = l.id === lang;
-        return <Animated.View key={l.id} entering={still ? undefined : FadeInDown.duration(260).delay(140 + i * 40).easing(EASE_OUT)}>
-          <Pressable accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={l.label} onPress={() => pick(l.id)}
-            style={({ pressed }) => ({ minHeight: 60, flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, borderRadius: 22, borderCurve: "continuous",
-              backgroundColor: on ? palette.card : "transparent", borderWidth: 1, borderColor: on ? palette.line : "transparent", transform: [{ scale: pressed ? 0.97 : 1 }] })}>
-            <View style={{ flex: 1, gap: 1 }}>
-              {/* Each language in its own words, so a patient finds theirs whatever is on screen now. */}
-              <Text style={{ fontSize: 18, lineHeight: 24, fontWeight: on ? "600" : "500", color: palette.ink }}>{l.label}</Text>
-              {l.id !== lang && <Text style={{ ...type.footnote, color: palette.faint }}>{translate(l.id, "lang.title")}</Text>}
-            </View>
-            <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", borderWidth: on ? 0 : 1.5, borderColor: "#DADADA" }}>
-              {on && <Animated.View entering={fade} style={{ position: "absolute", inset: 0, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark }}>
-                <Icon name="check" size={15} color={palette.white} />
-              </Animated.View>}
-            </View>
-          </Pressable>
-        </Animated.View>;
-      })}
+      <LanguageChoices stagger />
       <View style={{ marginTop: 10 }}><Button label={t("common.done")} onPress={close} /></View>
     </Animated.View>}
   </Modal>;
+}
+
+/**
+ * The three languages as radio rows, in the sheet and in place on Settings: a tap applies the choice at once,
+ * so the screen around it changes language as a live preview, and the ink check moves to the chosen row. In the sheet
+ * (`stagger`) the rows rise 40 ms apart; on a pushed page they arrive with the page.
+ */
+export function LanguageChoices({ stagger = false }: { stagger?: boolean }) {
+  const still = useReducedMotion();
+  const lang = useLang();
+  const pick = (to: Lang) => {
+    if (to === lang) return;
+    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+    setLang(to);
+    AccessibilityInfo.announceForAccessibility(LANGS.find(l => l.id === to)!.label);
+  };
+  const fade = still ? undefined : FadeIn.duration(260).easing(EASE_OUT);
+  return <>
+    {LANGS.map((l, i) => {
+      const on = l.id === lang;
+      return <Animated.View key={l.id} entering={still || !stagger ? undefined : FadeInDown.duration(260).delay(140 + i * 40).easing(EASE_OUT)}>
+        <Pressable accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={l.label} onPress={() => pick(l.id)}
+          style={({ pressed }) => ({ minHeight: 60, flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, borderRadius: 22, borderCurve: "continuous",
+            backgroundColor: on ? palette.card : "transparent", borderWidth: 1, borderColor: on ? palette.line : "transparent", transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+          <View style={{ flex: 1, gap: 1 }}>
+            {/* Each language in its own words, so a patient finds theirs whatever is on screen now. */}
+            <Text style={{ fontSize: 18, lineHeight: 24, fontWeight: on ? "600" : "500", color: palette.ink }}>{l.label}</Text>
+            {l.id !== lang && <Text style={{ ...type.footnote, color: palette.faint }}>{translate(l.id, "lang.title")}</Text>}
+          </View>
+          <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", borderWidth: on ? 0 : 1.5, borderColor: "#DADADA" }}>
+            {on && <Animated.View entering={fade} style={{ position: "absolute", inset: 0, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark }}>
+              <Icon name="check" size={15} color={palette.white} />
+            </Animated.View>}
+          </View>
+        </Pressable>
+      </Animated.View>;
+    })}
+  </>;
 }
