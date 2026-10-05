@@ -1,4 +1,6 @@
-import { Canvas, Fill, Shader, Skia, type SkRuntimeEffect } from "@shopify/react-native-skia";
+import { Canvas, Fill, processUniforms, Shader, Skia, type SkRuntimeEffect } from "@shopify/react-native-skia";
+import { Image } from "expo-image";
+import { PixelRatio } from "react-native";
 import { type SharedValue, useDerivedValue } from "react-native-reanimated";
 
 /**
@@ -34,6 +36,10 @@ export function HalftoneShimmer({ width, height, progress }: { width: number; he
 /**
  * A still patch of halftone dots, densest at `origin` and thinning out over `reach` (x, y):
  * light catching the edge of glass. Drawn once; nothing animates.
+ *
+ * Shown as an image, not a canvas: each canvas is its own Metal surface, redrawn on the main thread whenever its parent
+ * re-renders (31-42 glint redraws while a visit slid in, on screens of 10+ tiles and buttons). The same shader draws each
+ * look once, offscreen at the screen's density, so the dots are the same pixels; every later glint with that look reuses it.
  */
 let compiledGlint: SkRuntimeEffect | undefined;
 const glint = () => compiledGlint ??= Skia.RuntimeEffect.Make(`
@@ -54,8 +60,32 @@ half4 main(float2 q) {
   return half4(hue * alpha, alpha);
 }`)!;
 
+// ponytail: kept for the session, never evicted; the looks are a handful (fixed sizes, some per screen width).
+const drawn = new Map<string, string>();
+function glintImage(width: number, height: number, uniforms: Record<string, number | number[]>) {
+  const key = JSON.stringify([width, height, uniforms]);
+  const seen = drawn.get(key);
+  if (seen) return seen;
+  const scale = PixelRatio.get();
+  const surface = Skia.Surface.MakeOffscreen(Math.ceil(width * scale), Math.ceil(height * scale));
+  if (!surface) return undefined;
+  const paint = Skia.Paint();
+  paint.setShader(glint().makeShader(processUniforms(glint(), uniforms)));
+  const canvas = surface.getCanvas();
+  canvas.scale(scale, scale);
+  canvas.drawPaint(paint);
+  surface.flush();
+  const uri = `data:image/png;base64,${surface.makeImageSnapshot().encodeToBase64()}`;
+  drawn.set(key, uri);
+  return uri;
+}
+
 export function HalftoneGlint({ width, height, origin, reach, pitch = 4, strength = 1, tint = [0.3, 0.62, 0.86], hueShift = 1, style }: { width: number; height: number; origin: [number, number]; reach: [number, number]; pitch?: number; strength?: number; tint?: [number, number, number]; hueShift?: number; style?: object }) {
-  return <Canvas pointerEvents="none" style={[{ position: "absolute", width, height }, style]}>
-    <Fill><Shader source={glint()} uniforms={{ origin, reach, pitch, strength, tint, hueShift, res: [width, height] }} /></Fill>
+  const uniforms = { origin, reach, pitch, strength, tint, hueShift, res: [width, height] };
+  const uri = glintImage(width, height, uniforms);
+  // No offscreen surface to draw into: the canvas, as before.
+  if (!uri) return <Canvas pointerEvents="none" style={[{ position: "absolute", width, height }, style]}>
+    <Fill><Shader source={glint()} uniforms={uniforms} /></Fill>
   </Canvas>;
+  return <Image pointerEvents="none" source={uri} cachePolicy="memory" contentFit="fill" style={[{ position: "absolute", width, height }, style]} />;
 }
