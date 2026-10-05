@@ -5,8 +5,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { AccessibilityInfo, Keyboard, Modal, Pressable, TextInput, View, useWindowDimensions } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { AccessibilityInfo, Keyboard, Pressable, TextInput, View, useWindowDimensions } from "react-native";
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { CaptureScan } from "@/components/sona/capture-scan";
 import { SampleLabel } from "@/components/sona/model-answer";
@@ -14,7 +13,7 @@ import { deidentifiedText } from "@/components/sona/sample-label";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Expand, Icon, IconButton, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Expand, Icon, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import { OriginalImageViewer } from "@/features/imaging/viewer";
 import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
@@ -203,7 +202,8 @@ function Start({ patientName, live, busy, error, onCamera, onLibrary, onSample }
 
 /**
  * The photo: large at first, shrinking into a 72 pt thumbnail at the top (520 ms, ease-out) while the
- * checklist starts; in review it is a card with the source line, and tapping it opens the original.
+ * checklist starts; in review it is a card with the source line, and tapping it unfolds the original, zoomable, right
+ * under it and above the checklist, so the photo and the reading are compared on one page (not in a sheet over it).
  */
 function PhotoHeader({ photo, settled, source }: { photo: Photo; settled: boolean; source?: Reading }) {
   const { width } = useWindowDimensions();
@@ -217,7 +217,7 @@ function PhotoHeader({ photo, settled, source }: { photo: Photo; settled: boolea
   const image = useAnimatedStyle(() => ({ width: interpolate(p.value, [0, 1], [full, 72]), height: interpolate(p.value, [0, 1], [full * 1.1, 92]), borderRadius: interpolate(p.value, [0, 1], [24, 14]) }));
   const words = source ? unsureWords(source).length : 0;
   return <>
-    <Pressable accessibilityRole="imagebutton" accessibilityLabel="Scanned note photo" accessibilityHint="Opens the original to compare with the reading" disabled={!settled} onPress={() => { haptic("tap"); setOpen(true); }}>
+    <Pressable accessibilityRole="imagebutton" accessibilityLabel="Scanned note photo" accessibilityHint={open ? "Hides the original" : "Shows the original to compare with the reading"} accessibilityState={{ expanded: open }} disabled={!settled} onPress={() => { haptic("tap"); setOpen(o => !o); }}>
       <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 10, borderRadius: radius.card, flexDirection: "row", alignItems: "center", gap: 14 }}>
         <Animated.View style={[{ overflow: "hidden", borderCurve: "continuous", backgroundColor: palette.dark }, image]}>
           <Image source={photo.source} contentFit="cover" style={{ flex: 1 }} accessibilityIgnoresInvertColors />
@@ -227,21 +227,13 @@ function PhotoHeader({ photo, settled, source }: { photo: Photo; settled: boolea
           {source?.source === "fixture" ? <SampleLabel source="fixture" waking={wakingOf(source)} what="handwriting" />
             : source && <Text style={{ ...type.footnote, color: palette.muted }}>Read by {source.model} · check every item</Text>}
           {deidentifiedText(source?.deidentifier) && <Text style={{ ...type.caption, color: palette.muted }}>{deidentifiedText(source?.deidentifier)}</Text>}
-          <Text style={{ ...type.caption, color: palette.blue }}>{words ? `${words} ${words === 1 ? "word" : "words"} to check · ` : ""}Tap to compare</Text>
+          <Text style={{ ...type.caption, color: palette.blue }}>{words ? `${words} ${words === 1 ? "word" : "words"} to check · ` : ""}{open ? "Hide original" : "Tap to compare"}</Text>
         </Animated.View>}
       </Surface>
     </Pressable>
-    <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.canvas }}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 12, paddingLeft: 20 }}>
-          <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Original photo</Text>
-          <IconButton name="xmark" label="Close photo" onPress={() => setOpen(false)} />
-        </View>
-        <View style={{ paddingHorizontal: 20 }}>
-          <OriginalImageViewer asset={{ id: "scan", source: photo.source, title: "scanned note", attribution: photo.sample ? "Sample photo" : "Your photo", license: "pinch or double-tap to zoom", sourceUrl: "" }} />
-        </View>
-      </GestureHandlerRootView>
-    </Modal>
+    {open && <Expand>
+      <OriginalImageViewer asset={{ id: "scan", source: photo.source, title: "scanned note", attribution: photo.sample ? "Sample photo" : "Your photo", license: "pinch or double-tap to zoom", sourceUrl: "" }} />
+    </Expand>}
   </>;
 }
 
