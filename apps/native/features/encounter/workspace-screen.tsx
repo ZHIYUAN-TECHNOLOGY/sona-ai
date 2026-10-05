@@ -15,7 +15,7 @@ import { openTaskCount } from "@/features/day/counts";
 import { useServerData } from "@/features/live/server-day";
 import { api, useLive, useLiveSettled } from "@/features/live";
 import { touch } from "@/features/patients/continue-store";
-import { PLACEHOLDER, forWhichPatient, matchQuestion, suggestion } from "@/features/ask/answers";
+import { PLACEHOLDER, forWhichPatient, matchQuestion, suggestion, type Answer } from "@/features/ask/answers";
 import { answerFree } from "@/features/ask";
 import { useTodayAnswers } from "@/features/ask/today";
 import { ThreadEntry, useTodayThread } from "@/features/ask/today-thread";
@@ -79,6 +79,19 @@ function RequestAnswer({ req, card, revision, props, onRetry, lead = true, leave
  * `session`: one visit's conversation, pushed over home; swipe back returns home.
  */
 export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session"; sessionId?: string }) {
+  return mode === "home" ? <TodayWorkspace /> : <Workspace mode="session" sessionId={sessionId} todayAnswers={NO_ANSWERS} />;
+}
+
+/**
+ * Today's answers (who needs you, what's overdue, the beds) are read only on Today, the one page that shows them: read in a
+ * visit too, their reads re-rendered it as they came back (2 of a visit's 9 renders while it slid in).
+ */
+function TodayWorkspace() {
+  return <Workspace mode="home" todayAnswers={useTodayAnswers()} />;
+}
+const NO_ANSWERS: Answer[] = [];
+
+function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"; sessionId?: string; todayAnswers: Answer[] }) {
   const store = useEncounter();
   const { patients, encounters, request, runInPlace, cancel, voiceInput, compactResponses, selectPatient, leaveVisit, updateEncounter } = store;
   const home = mode === "home";
@@ -222,7 +235,6 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const pick = (item: Suggestion) => item.kind === "recording" ? open("recording") : run(item.kind, item.text);
   // Sona on Today: a question about the day (typed, dictated, the dock's ✦ suggestion or Sona Live) joins Today's thread,
   // shown in place of the dashboard; a clinical question opens the patient picker (run) and runs once a visit is chosen.
-  const todayAnswers = useTodayAnswers();
   const today = useTodayThread(todayAnswers);
   const thread = home ? today.entries : [], newest = thread.at(-1);
   // The canvas holds a conversation (a visit's requests or Today's thread) rather than the dashboard.
