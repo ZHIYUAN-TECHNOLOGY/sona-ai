@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { useEncounter } from "@/features/encounter/store";
+import { sameVisits, useEncounterSelect } from "@/features/encounter/store";
 import { api, JUDGE, useLive } from "@/features/live";
 import { keepSame } from "@/features/live/keep-same";
 import { completeServerTask, refreshServerData } from "@/features/live/server-day";
@@ -22,7 +22,8 @@ export async function refreshCheckIns() { const server = keepSame(store.server, 
 export function useCheckIns(): CheckIn[] {
   const { on, wanted } = useLive();
   const snapshot = useSyncExternalStore(subscribe, () => store);
-  const { patients, encounters } = useEncounter();
+  // Discharges alone make check-ins: Today reads these under an open visit, which writes everything else.
+  const patients = useEncounterSelect(s => s.patients), encounters = useEncounterSelect(s => s.encounters, sameVisits("discharge"));
   useEffect(() => {
     if (on) void refreshCheckIns().catch(() => {});
     else if (!wanted) set({ server: undefined });

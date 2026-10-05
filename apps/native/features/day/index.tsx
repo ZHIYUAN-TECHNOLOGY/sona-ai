@@ -12,7 +12,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { ErrorLine, PressScale } from "@/components/sona/parts";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
 import { withFindings } from "@/features/findings/model";
@@ -34,7 +34,7 @@ import { MessageActions, useInbox } from "@/features/inbox";
 import { TodayWatches } from "@/features/watches";
 import { needLine } from "./counts";
 import { useNeedsYou, usePendingResult, useWardBeds } from "./use-counts";
-import { bookingItems, canSnooze, dayOf, glDeniedItems, groupVisits, messageItems, ownersOf, rankDay, rankOtherDay, scheduleFor, snooze, splitSnoozed, unownedBlocked, type DayItem, type DayTone, type ScheduleVisit, type Snoozed } from "./model";
+import { bookingItems, canSnooze, dayOf, glDeniedItems, groupVisits, messageItems, ownersOf, rankDay, rankOtherDay, sameForToday, scheduleFor, snooze, splitSnoozed, unownedBlocked, type DayItem, type DayTone, type ScheduleVisit, type Snoozed } from "./model";
 
 /*
  * My day, ranked (after Superlist's AI list making): on first open, as the opening layer lifts, the ranked
@@ -307,7 +307,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
     if (target.view === "check-in") { router.push({ pathname: "/patients/[id]", params: { id } }); return; }
     open(id, target);
   };
-  const { encounters } = useEncounter();
+  const encounters = useEncounterSelect(s => s.encounters, sameForToday);
   const { reducedMotion } = useAccessibleEffects();
   const now = nowMinutes(clock);
   // First open: the opening layer covers the wait (components/sona/opening), and the ranked rows rise in as it lifts.

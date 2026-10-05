@@ -15,7 +15,8 @@ import { BarChart } from "@/components/charts/bar-chart";
 import { AUDIT_NEXT, mostMoney } from "@/features/ask/answers";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { haptic } from "@/features/clinical/medication-parts";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounter, useEncounterSelect } from "@/features/encounter/store";
+import { sameJSON } from "@/features/live/keep-same";
 import { UNDO_MS, UndoPill } from "@/features/inbox";
 import { api, errorText, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
@@ -57,17 +58,18 @@ function loadServerAudit(nameOf: (id: string) => string) {
  * again each time it turns true: the side menu passes whether it is open, so its line is the screen's.
  */
 export function useOpenAudit(reread?: boolean): AuditItem[] {
-  const { encounters, patients } = useEncounter();
   const { on: live } = useLive();
   const { can } = useRole();
   const sent = useSent();
+  // The items, not the visits they come from: Today counts these under an open visit, which writes on every step.
+  const patients = useEncounterSelect(s => s.patients), fixture = useEncounterSelect(s => live ? undefined : openItems(s.encounters, sent), sameJSON);
   const server = useSyncExternalStore(l => { serverListeners.add(l); return () => serverListeners.delete(l); }, () => serverItems);
   const allowed = can("audit.list");
   useEffect(() => {
     // The patient list is only read for names, so it is not a dependency.
     if (live && allowed && (reread ?? !serverItems)) void loadServerAudit(id => patients.find(p => p.id === id)?.name ?? id).catch(() => {});
   }, [live, allowed, reread]); // eslint-disable-line react-hooks/exhaustive-deps
-  return live ? (server ?? []).filter(i => !sent.has(i.id)) : openItems(encounters, sent);
+  return live ? (server ?? []).filter(i => !sent.has(i.id)) : fixture ?? [];
 }
 
 export function AuditScreen() {

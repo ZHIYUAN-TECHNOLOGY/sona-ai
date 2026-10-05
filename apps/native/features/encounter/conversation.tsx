@@ -22,7 +22,8 @@ import { askAfter, threadEnd } from "./visit-next";
 import { prescribingState } from "./next-steps";
 import { useRole } from "@/features/live/roles";
 import { useInboxSummary } from "@/features/inbox";
-import { useEncounter } from "./store";
+import { useEncounterSelect } from "./store";
+import { sameForToday } from "@/features/day/model";
 import { SweptLead, wordCount } from "@/components/sona/marked-text";
 import { Chip, GlassButton, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
@@ -77,8 +78,7 @@ export function VisitLead({ req, card, patient }: { req: RequestState; card: Res
 
 /** VisitLead's sentence (Sona Live says it above the card); undefined without a card or while it has nothing settled. */
 export function useVisitLead(req: RequestState | undefined, card: ResponseCard | undefined, patient: Patient | undefined) {
-  const { encounters } = useEncounter();
-  const encounter = patient && encounters[patient.id];
+  const encounter = useEncounterSelect(s => patient && s.encounters[patient.id]);
   const tasksOf = useVisitTasks();
   const { on: live } = useLive();
   const answered = useAnsweredEvidence().get(req?.id ?? "");
@@ -194,21 +194,29 @@ function InboxButton({ home }: { home: boolean }) {
 function greeting() { const hour = new Date().getHours(); return hour < 12 ? "Good morning." : hour < 18 ? "Good afternoon." : "Good evening."; }
 
 /** Idle canvas: one greeting, one line of context, a couple of starting points. */
-export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatient }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void }) {
+export function Home({ patient, patients, onPick }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void }) {
+  // Two pages, each reading only its own: a visit's tiles used to count Today's keys too (the day, the ward, the handover).
+  return patient ? <VisitHome patient={patient} onPick={onPick} /> : <DayHome patients={patients} />;
+}
+
+// Reading order top-down: greeting under the top bar, then the next section at a fixed rhythm.
+// Nothing is centred or pinned to the bottom, so the gap never stretches with screen height.
+/** Without a visit, the greeting and the ranked day are one section: MyDay owns the header. */
+function DayHome({ patients }: { patients: Patient[] }) {
+  const homeKeys = useHomeActions(patients, useEncounterSelect(s => s.encounters, sameForToday));
+  return <View style={{ paddingTop: 20 }}><MyDay patients={patients} greeting={greeting().replace(/\.$/, "")} onOpen={(id, open) => openSession(id, open)}
+    actions={homeKeys} /></View>;
+}
+
+function VisitHome({ patient, onPick }: { patient: Patient; onPick: (item: Suggestion) => void }) {
   const { reducedMotion } = useAccessibleEffects();
-  const { encounters } = useEncounter();
-  const result = usePendingResult(patient?.id); // the same result Today and Patients flag
-  const homeKeys = useHomeActions(patients, encounters);
+  const encounter = useEncounterSelect(s => s.encounters[patient.id]);
+  const result = usePendingResult(patient.id); // the same result Today and Patients flag
   const canScan = useRole().can("scan.read");
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 80 + i * 70, distance: 14, duration: 460 });
-  // Reading order top-down: greeting under the top bar, then the next section at a fixed rhythm.
-  // Nothing is centred or pinned to the bottom, so the gap never stretches with screen height.
-  // Without a visit, the greeting and the ranked day are one section: MyDay owns the header.
-  if (!patient) return <View style={{ paddingTop: 20 }}><MyDay patients={patients} greeting={greeting().replace(/\.$/, "")} onOpen={(id, open) => openSession(id, open)}
-    actions={homeKeys} /></View>;
   // Glance to decision: who and when in one line, the one next step with its action (the screen's one
   // feature card), every tool in view as the sheet's keys in the order it's used, then two questions worth asking.
-  const encounter = encounters[patient.id], name = first(patient);
+  const name = first(patient);
   const discharged = Boolean(encounter?.discharge?.dischargedAt);
   const need: VisitNeed = visitNeed(patient, encounter, result)
     ?? { tone: "calm", text: discharged ? `${name} is discharged · hand over when you’re done` : `Nothing needs ${name} now`, action: "Hand over", target: "handover" };

@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { patients } from "@/features/encounter/fixtures";
 import { newEncounter } from "@/features/encounter/fixtures";
 import { wardBeds } from "@/features/ward/model";
-import { bookingItems, glDeniedItems, rankDay, testInSentence } from "./model";
+import { bookingItems, glDeniedItems, rankDay, sameForToday, testInSentence } from "./model";
 
 test("a denied guarantee letter is an amber My Day row that opens the appeal, and it goes once the appeal is sent", () => {
   const denial = { code: "MED", reason: "Admission not medically necessary", at: "2026-09-26T02:00:00Z" };
@@ -99,4 +99,14 @@ test("an urgent unanswered message is a red row in the patient's words; against 
   expect([result, flag(105, "2026-09-28T02:00:00Z"), message].sort(byUrgency).map(i => i.kind)).toEqual(["message", "check-in", "result"]);
   expect([message, flag(105, "2026-09-28T04:00:00Z")].sort(byUrgency).map(i => i.kind)).toEqual(["check-in", "message"]);
   expect([message, flag(120, "2026-09-28T01:00:00Z")].sort(byUrgency).map(i => i.kind)).toEqual(["check-in", "message"]);
+});
+
+test("Today reads a visit the same while it streams an answer in, and differently once it starts, its medicines or its tasks change", () => {
+  const visit = newEncounter(), held = { "SYN-1042": visit };
+  // A card arriving, a note edited: Today ranks nothing from these, so it is left alone.
+  expect(sameForToday(held, { "SYN-1042": { ...visit, cards: [], note: "Seen" } })).toBe(true);
+  expect(sameForToday(held, { "SYN-1042": { ...visit, requests: [{ id: "r1" }] } })).toBe(false);
+  expect(sameForToday(held, { "SYN-1042": { ...visit, tasks: [] } })).toBe(false);
+  expect(sameForToday(held, { "SYN-1042": { ...visit, medicationEntries: [] } })).toBe(false);
+  expect(sameForToday(held, { ...held, "SYN-1086": newEncounter() })).toBe(false);
 });

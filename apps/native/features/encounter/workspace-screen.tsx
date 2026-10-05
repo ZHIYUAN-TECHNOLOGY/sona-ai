@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, Home, suggestionFor, thinkingLabel, TopBar, VisitEnd, VisitLead, type Suggestion } from "./conversation";
-import { openTaskCount } from "@/features/day/counts";
+import { useOpenTasks } from "@/features/day/use-counts";
 import { useServerData } from "@/features/live/server-day";
 import { api, useLive, useLiveSettled } from "@/features/live";
 import { touch } from "@/features/patients/continue-store";
@@ -24,7 +24,8 @@ import { isWatch } from "@sona-ai/domain/watch";
 import { capabilitySchema, namedPatient, offeredAs, routeInThread, routePrompt } from "./state";
 import { carry, takeCarried } from "./carry";
 import { openSession } from "./navigation";
-import { useEncounter } from "./store";
+import { useEncounterSelect } from "./store";
+import { sameShallow } from "@/features/live/keep-same";
 import type { Capability, FeatureProps, FocusView, RequestState, ResponseCard } from "./types";
 import { VoiceDock } from "./voice-dock";
 import { Bubble, type LiveAdapter } from "./sona-live";
@@ -92,13 +93,14 @@ function TodayWorkspace() {
 const NO_ANSWERS: Answer[] = [];
 
 function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"; sessionId?: string; todayAnswers: Answer[] }) {
-  const store = useEncounter();
-  const { patients, encounters, request, runInPlace, cancel, voiceInput, compactResponses, selectPatient, leaveVisit, updateEncounter } = store;
+  // Slices of the store, not all of it: Today under an open visit re-rendered on each of the visit's writes (4 as an answer streams in).
+  const { request, runInPlace, cancel, voiceInput, compactResponses, selectPatient, leaveVisit, updateEncounter } = useEncounterSelect(s => ({ request: s.request, runInPlace: s.runInPlace, cancel: s.cancel, voiceInput: s.voiceInput, compactResponses: s.compactResponses, selectPatient: s.selectPatient, leaveVisit: s.leaveVisit, updateEncounter: s.updateEncounter }), sameShallow);
+  const patients = useEncounterSelect(s => s.patients);
   const home = mode === "home";
   // Home ignores any visit another screen left selected; a session only ever shows its own visit.
   // Read straight from the route so the first frame of the push already shows this visit.
   const patient = home ? undefined : patients.find(p => p.id === sessionId);
-  const encounter = patient ? encounters[patient.id] : undefined;
+  const encounter = useEncounterSelect(s => patient ? s.encounters[patient.id] : undefined);
   useServerEncounter(patient); // live mode: the visit opens on the server's record, not the fixture
   const params = useLocalSearchParams<{ next?: string; prompt?: string; view?: string; quiet?: string }>();
   const navigation = useNavigation();
@@ -206,7 +208,8 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
   const openId = useRef(patient?.id); openId.current = patient?.id;
   useEffect(() => { setTiles(false); }, [requests.length, visitAsides.length, patient?.id]);
   const steps = patient && latest && !active && !tiles ? nextSteps(latest.kind, encounter, patient, canPrescribe) : undefined;
-  const server = useServerData(); // live mode: the top bar counts the server's tasks too
+  const server = useServerData();
+  const openTasks = useOpenTasks(patient); // live mode: the top bar counts the server's tasks too
   const liveSettled = useLiveSettled();
   const next = useNextStep();
   const jumpToId = (id: string) => { const index = sections.findIndex(section => section.id === id); if (index >= 0) jumpTo(index); return index >= 0; };
@@ -349,18 +352,18 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
 
   // Sona Live (a tap on the orb) is the page's voice. In a visit it routes as the dock does (Laya first, then keywords)
   // and its answer is the visit's own request, shown on the page as a typed one is.
-  const encRef = useRef(encounters); encRef.current = encounters;
-  /** Resolves once request `id` has its card or has ended (4 s at most), so Live knows Sona has answered. */
-  const settled = (patientId: string, id: string) => new Promise<void>(resolve => {
+  const encRef = useRef(encounter); encRef.current = encounter;
+  /** Resolves once this visit's request `id` has its card or has ended (4 s at most), so Live knows Sona has answered. */
+  const settled = (id: string) => new Promise<void>(resolve => {
     const until = Date.now() + 4000;
     const check = () => {
-      const e = encRef.current[patientId], req = e?.requests.find(r => r.id === id);
+      const e = encRef.current, req = e?.requests.find(r => r.id === id);
       if (Date.now() > until || (req && (req.status !== "streaming" || e!.cards.some(c => c.requestId === id)))) resolve(); else setTimeout(check, 60);
     };
     check();
   });
   // The page's top bar.
-  const bar = { patient, inEncounter: !home, openTasks: openTaskCount(patient ? [patient] : patients, encounters, server), onMenu: openDrawer,
+  const bar = { patient, inEncounter: !home, openTasks, onMenu: openDrawer,
     // Today with a conversation: Back returns to the day's dashboard (the menu stays one tap away there).
     onBack: home ? (thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined) : back, onPatient: () => router.push({ pathname: "/patients", params: { switch: "1" } }), onTasks: () => router.push("/tasks"),
   };
@@ -381,7 +384,7 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
       if (!kind && !image && live) { await askAside(question); return { shown: true }; }
       if (!kind || !id) return { notice: UNROUTED };
       // The page shows the request as it shows a typed one (it brings the newest into view); Live waits for it to land.
-      await settled(patient.id, id);
+      await settled(id);
       return { shown: true };
     },
   };

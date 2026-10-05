@@ -40,6 +40,15 @@ const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); 
 const until = (hhmm: string, now: number) => ((minutes(hhmm) - now + 720) % 1440 + 1440) % 1440 - 720;
 const ago = (from: number, now: number) => { const d = Math.max(0, now - from); return d < 60 ? `${d} min` : `${Math.floor(d / 60)} h`; };
 
+/**
+ * Two stores' visits read the same on Today: what rankDay and the home keys (homeActions) read of each, whether it has
+ * started, its medicines and its tasks. Today sits under an open visit and re-rendered on each of its writes (an answer
+ * streaming in writes 4 times); read through this, only when one of these changes. A new read of a visit there joins it here.
+ */
+export const sameForToday = (a: Record<string, Encounter | undefined>, b: Record<string, Encounter | undefined>) =>
+  Object.keys(a).length === Object.keys(b).length
+  && Object.keys(b).every(id => a[id]?.requests.length === b[id]?.requests.length && a[id]?.medicationEntries === b[id]?.medicationEntries && a[id]?.tasks === b[id]?.tasks);
+
 /** `live` (live backend mode) replaces the fixture result and each visit's tasks with the server's. */
 export function rankDay(patients: Patient[], encounters: Record<string, Encounter | undefined>, now: number, reviewed: Set<string> = new Set(),
   live?: { result: PendingResult | undefined; tasksOf: (patient: Patient) => Task[] }): DayItem[] {
