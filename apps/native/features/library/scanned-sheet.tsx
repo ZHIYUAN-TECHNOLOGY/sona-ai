@@ -32,9 +32,10 @@ export function ScannedSheet() {
   const asXray = () => {
     haptic("tap");
     handOffXray(pages[0]!);
-    // Close the scan sheets, then choose whose visit it belongs to; the visit opens on its X-ray page with this image attached.
+    // Close the scan sheets over Patients, placed under them in the same navigation (`quiet`: their slide down is the one
+    // transition), to choose whose visit it belongs to; the visit opens on its X-ray page with this image attached.
     router.dismissAll();
-    setTimeout(() => router.push({ pathname: "/patients", params: { view: "xray" } }), 300);
+    router.push({ pathname: "/patients", params: { view: "xray", quiet: "1" } });
   };
 
   const rows = [
