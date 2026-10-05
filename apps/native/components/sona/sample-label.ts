@@ -19,6 +19,18 @@ export function sampleText({ judge, rule = false, what, waking, error, answerErr
   return `${waking && rule ? "Rule-based for now · " : lead}${said.why === "failed" ? `Sona's model did not answer: ${said.reason}` : said.reason}`;
 }
 
+/**
+ * What a SampleLabel means, the one line it unfolds under itself when tapped, in the About data sheet's words. In place:
+ * the label sits inside review pages (Discharge, the guarantee letter, X-ray, a scan, the consultation), and a sheet
+ * opened over them only to say this stacked on top of the work. The sheet stays for the "Synthetic data" pill.
+ */
+export function labelMeaning({ judge, model = false, rule = false, waking, error }: { judge: boolean; model?: boolean; rule?: boolean; waking?: number; error?: string }) {
+  if (model) return "Written by a model: check it before acting.";
+  if (rule) return "Fixed rules worked this out, not a model.";
+  if (judge) return "Until Sona's model answers, nothing is shown in its place.";
+  return `An authored example, shown ${error ? "because the model could not be reached" : waking ? "until the model has started" : "until the AI model is switched on"}.`;
+}
+
 const MODEL_NAMES: [RegExp, string][] = [[/^medgemma/i, "MedGemma"], [/^gemma/i, "Gemma"], [/asr/i, "Sona speech"]];
 /** A hosted model's plain name for its label ("gemma-4-26b-a4b" → "Gemma"). */
 export const modelName = (id?: string) => MODEL_NAMES.find(([re]) => id && re.test(id))?.[1] ?? "a hosted model";

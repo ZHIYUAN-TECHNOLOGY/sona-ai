@@ -6,11 +6,11 @@ import { riseIn } from "./motion";
 import { Text } from "./text";
 import { palette, type } from "./theme";
 import { HalftoneGlint } from "./halftone-shimmer";
-import { Icon, pillStyle, useAccessibleEffects } from "./ui";
+import { Expand, Icon, pillStyle, useAccessibleEffects } from "./ui";
 import { Press } from "./parts";
 import { JUDGE } from "@/features/live";
 import { wakingOf } from "@/features/live/waking";
-import { draftText, sampleText } from "./sample-label";
+import { draftText, labelMeaning, sampleText } from "./sample-label";
 
 /*
  * A model answer arriving from the server (live mode). While it drafts, soft bars breathe in place
@@ -59,9 +59,9 @@ export function Arrive({ index = 0, animate = true, children, style }: { index?:
 
 /*
  * Honesty: two truths, two treatments. The DATA is synthetic everywhere, so that is said once
- * (DataPill, in the sidebar header). An answer no model gave is labelled where it appears
- * (SampleLabel), driven by the server's `source`, so the label goes by itself once a model answers.
- * Both open the same short sheet (app/about-data).
+ * (DataPill, in the sidebar header), and it opens a short sheet (app/about-data). An answer no model
+ * gave is labelled where it appears (SampleLabel), driven by the server's `source`, so the label goes
+ * by itself once a model answers; tapped, it says what it means in place.
  */
 const openAbout = () => router.push("/about-data");
 
@@ -87,7 +87,7 @@ export { modelName } from "./sample-label";
 /**
  * The one label for an answer no model gave: "Sample · <what> model not switched on" (authored) or
  * "Rule-based" (fixed rules; with `what`, the model that replaces them). Shown only while `source` is
- * "fixture"; once a model answered, "AI draft · <model> · check before acting". Tap (the info glyph) for the about sheet. Pass `answer`
+ * "fixture"; once a model answered, "AI draft · <model> · check before acting". Tap (the info glyph): its meaning unfolds under it. Pass `answer`
  * (a live-answer hook's result) instead of `source`, so demo mode is labelled as live mode is. While the model
  * starts (the server's `waking`, read from `answer` or passed with `source`): "Sample for now · Sona's model is starting, about N min".
  * The judge build never says "Sample": there this state means the model did not answer or is starting, and the label
@@ -98,23 +98,26 @@ export function SampleLabel({ source: given, model: givenModel, storedAt, answer
   // A model's answer says which model drafted it and that it is a draft to check, never a finding on its own;
   // one the server kept from earlier (`storedAt`) also says when it was drafted.
   if (source === "model") {
-    const text = draftText(answer?.data?.model ?? givenModel, answer?.data?.storedAt ?? storedAt);
-    return <Press accessibilityLabel={text} accessibilityHint="What this label means" onPress={openAbout} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-      <Text style={{ ...type.caption, color: palette.muted, flexShrink: 1 }}>{text}</Text>
-      <Icon name="info.circle" size={12} color={palette.muted} />
-    </Press>;
+    return <Explained text={draftText(answer?.data?.model ?? givenModel, answer?.data?.storedAt ?? storedAt)} meaning={labelMeaning({ judge: JUDGE, model: true })} hint="What this label means" />;
   }
   if (source !== "fixture") return null;
   const waking = givenWaking ?? wakingOf(answer?.data);
-  const text = sampleText({ judge: JUDGE, rule, what, waking, error, answerError: answer?.error });
-  return <Press accessibilityLabel={text} accessibilityHint="Why this is not a model answer" onPress={openAbout} hitSlop={8}
-    style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-    <Text style={{ ...type.caption, color: palette.muted, flexShrink: 1 }}>{text}</Text>
-    <Icon name="info.circle" size={12} color={palette.muted} />
-  </Press>;
+  return <Explained text={sampleText({ judge: JUDGE, rule, what, waking, error, answerError: answer?.error })} meaning={labelMeaning({ judge: JUDGE, rule, waking, error })} hint="Why this is not a model answer" />;
 }
 
-/** The sheet both open: what is fictional, and what "Sample" and "Rule-based" mean (the judge build has no samples: what "AI draft" means, and what a card says when no model answered). */
+/** The label, and under it, unfolded by a tap, what it means. */
+function Explained({ text, meaning, hint }: { text: string; meaning: string; hint: string }) {
+  const [open, setOpen] = useState(false);
+  return <View style={{ gap: 4, flexShrink: 1 }}>
+    <Press accessibilityLabel={text} accessibilityHint={hint} expanded={open} onPress={() => setOpen(o => !o)} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <Text style={{ ...type.caption, color: palette.muted, flexShrink: 1 }}>{text}</Text>
+      <Icon name={open ? "chevron.up" : "info.circle"} size={12} color={palette.muted} />
+    </Press>
+    {open && <Expand><Text selectable style={{ ...type.caption, color: palette.ink }}>{meaning}</Text></Expand>}
+  </View>;
+}
+
+/** The sheet the pill opens: what is fictional, and what "Sample" and "Rule-based" mean (the judge build has no samples: what "AI draft" means, and what a card says when no model answered). */
 export function AboutDataSheet() {
   return <View style={{ paddingTop: 36, paddingBottom: 34, paddingHorizontal: 24, gap: 12 }}>
     <Text accessibilityRole="header" style={{ ...type.heading, color: palette.ink }}>Synthetic data</Text>
