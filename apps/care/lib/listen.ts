@@ -1,4 +1,5 @@
-import { AudioModule, IOSOutputFormat, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState, type RecordingOptions } from "expo-audio";
+import { AudioModule, IOSOutputFormat, RecordingPresets, setAudioModeAsync, type AudioRecorder, type RecordingOptions } from "expo-audio";
+import { createRecordingOptions } from "expo-audio/build/utils/options";
 import { File } from "expo-file-system";
 import { base64, partialDue, PARTIAL_MS, wavSoFar } from "@sona-ai/domain/partial-wav";
 import { useEffect, useRef, useState } from "react";
@@ -32,8 +33,13 @@ const SPEECH_DB = -38, SILENCE_MS = 800, MAX_MS = 30_000, NOTHING_MS = 7_000;
 export type Listening = "idle" | "listening" | "reading" | "error";
 
 export function useListen({ language, onHeard, untilStop }: { language?: "en" | "ms" | "zh"; onHeard: (text: string) => void; untilStop?: boolean }) {
-  const recorder = useAudioRecorder(OPTIONS);
-  const status = useAudioRecorderState(recorder, 100);
+  // The recorder is made on the first tap, not when a screen with a mic opens: making one (an AVAudioRecorder) held the
+  // JS thread for about 100 ms each time Ask, voice mode or a check-in opened (expo-audio's useAudioRecorder makes it in
+  // render), and its status was polled 10 times a second while nobody was recording. Now it is polled only while listening.
+  const made = useRef<AudioRecorder>(undefined);
+  const recorder = () => made.current ??= new AudioModule.AudioRecorder(createRecordingOptions(OPTIONS));
+  useEffect(() => () => { made.current?.release(); }, []);
+  const [status, setStatus] = useState<{ metering?: number; durationMillis: number }>({ durationMillis: 0 });
   const [state, setState] = useState<Listening>("idle");
   const [error, setError] = useState<string>();
   const [partial, setPartial] = useState("");
@@ -47,9 +53,9 @@ export function useListen({ language, onHeard, untilStop }: { language?: "en" | 
     // The silence check runs on every level update; only the first end of a turn counts.
     if (state !== "listening" || ending.current) return;
     ending.current = true;
-    await recorder.stop().catch(() => {});
+    await recorder().stop().catch(() => {});
     await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
-    const uri = recorder.uri;
+    const uri = recorder().uri;
     // The partial stays on screen while the whole file is read (no blank wait); if that read fails or hears
     // nothing, the partial is what they said, so it lands in the field instead of an error.
     const said = latest.current;
@@ -76,12 +82,20 @@ export function useListen({ language, onHeard, untilStop }: { language?: "en" | 
     const permission = await AudioModule.requestRecordingPermissionsAsync();
     if (!permission.granted) { setError(translate(currentLang(), "listen.mic")); setState("error"); return; }
     await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-    await recorder.prepareToRecordAsync();
-    recorder.record();
+    await recorder().prepareToRecordAsync();
+    recorder().record();
+    setStatus({ durationMillis: 0 });
     spoke.current = false; quietSince.current = undefined; startedAt.current = Date.now(); ending.current = false;
     turn.current++; partialSent.current = 0; latest.current = ""; setPartial("");
     setState("listening");
   };
+
+  // The level and the time, every 100 ms while recording (what expo-audio's useAudioRecorderState polled).
+  useEffect(() => {
+    if (state !== "listening") return;
+    const tick = setInterval(() => { const { metering, durationMillis } = recorder().getStatus(); setStatus({ metering, durationMillis }); }, 100);
+    return () => clearInterval(tick);
+  }, [state]); // eslint-disable-line react-hooks/exhaustive-deps -- one poll per recording
 
   // Ends the turn by itself: a pause after speaking sends it (unless `untilStop`); nothing said for a while, or too long, stops.
   const level = status.metering ?? -160;
@@ -100,7 +114,7 @@ export function useListen({ language, onHeard, untilStop }: { language?: "en" | 
   useEffect(() => {
     if (!untilStop || state !== "listening") return;
     const tick = setInterval(() => {
-      const uri = recorder.uri, mine = turn.current;
+      const uri = recorder().uri, mine = turn.current;
       if (!uri || ending.current) return;
       const file = new File(uri), size = file.size;
       if (!partialDue({ busy: partialBusy.current, spoke: spoke.current, sent: partialSent.current, size })) return;
