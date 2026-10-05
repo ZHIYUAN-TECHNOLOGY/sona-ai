@@ -1,5 +1,6 @@
 import { readReply } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
+import { NOT_FOUND, groundsOf, unsupported, type Grounds } from "@sona-ai/domain/grounding";
 
 import { BRAIN_MODEL, EMERGENCY, answered, boxes, wakingOf, type Baseten } from "../baseten-models";
 import { deltas } from "../sse";
@@ -29,6 +30,8 @@ export type TurnSummary = {
   grounded: boolean; urgent: boolean; source: "model" | "fixture"; model?: string; waking?: number; ear?: Heard;
   /** The hospital's leaflets the answer used, by title (care.ask's `sources`); empty when it used none, or none were found in time. */
   sources: Source[];
+  /** Sentences not spoken because they stated a fact about her that her record does not hold (domain/grounding), as care.ask counts them. */
+  withheld: number;
 };
 /** Who turned the patient's speech into `question`: the ASR model, or a fixture when none did. */
 export type Heard = { source: "model"; model: string } | { source: "fixture" };
@@ -186,8 +189,8 @@ function within(promise: Promise<boolean>, ms: number) {
 }
 
 export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
-  const lines = LINES[turn.language], summary: TurnSummary = { grounded: false, urgent: false, source: "fixture", sources: [], ...turn.heard && { ear: turn.heard } };
-  let told: Promise<boolean> | undefined, said = false, passages: Passage[] = [];
+  const lines = LINES[turn.language], summary: TurnSummary = { grounded: false, urgent: false, source: "fixture", sources: [], withheld: 0, ...turn.heard && { ear: turn.heard } };
+  let told: Promise<boolean> | undefined, said = false, passages: Passage[] = [], grounds: Grounds | undefined;
   const escalate = (label: "worse" | "urgent") => { told ??= turn.escalate(label).catch(() => false); };
   function* say(text: string): Generator<Part> {
     said = true;
@@ -202,6 +205,10 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
   function* sayModel(sentence: string): Generator<Part> {
     // The 999 line already led; Gemma's own call to 999 would only repeat it. The told line is Sona's, said once a task exists.
     if ((summary.urgent && EMERGENCY.test(sentence)) || TOLD.includes(sentence)) return;
+    // Cannot invent (domain/grounding): a sentence stating a fact about her that her record does not hold is not spoken.
+    // Judged here, sentence by sentence, so the first is spoken while Gemma still writes; the not-found line comes once, last.
+    const why = grounds && unsupported(sentence, grounds);
+    if (why) { summary.withheld++; console.warn("voice turn withheld", JSON.stringify({ sentence, ...why })); return; }
     yield* say(sentence);
   }
 
@@ -218,6 +225,8 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
   if (got && "text" in got) {
     summary.source = "model";
     summary.model = got.model;
+    // Her record and the leaflets Gemma was given, read once for the turn (her discharge leaflet is in the record, planText).
+    grounds = groundsOf(turn.plan ?? "", passages.map(p => p.text));
     let text = "", flags: Flags | null | undefined;
     try {
       for await (const delta of got.text) {
@@ -244,6 +253,7 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
       if (turn.signal.aborted) return;
       if (!said) summary.source = "fixture";
     }
+    if (summary.withheld) yield* say(NOT_FOUND[turn.language]);
   } else summary.waking = got?.waking;
 
   if (!said) yield* say(summary.waking ? lines.starting(summary.waking) : lines.unavailable);

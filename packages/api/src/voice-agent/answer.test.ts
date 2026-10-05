@@ -1,3 +1,4 @@
+import { NOT_FOUND } from "@sona-ai/domain/grounding";
 import { beforeEach, expect, test } from "bun:test";
 
 import { boxState } from "../baseten-models";
@@ -54,11 +55,11 @@ test("each sentence is handed on as soon as Gemma finishes it, after the flags l
   const rest: string[] = [];
   for await (const p of parts) if (p.type === "text-delta") rest.push(p.text);
   expect(rest).toEqual(["It is for 2 more days."]);
-  expect(summaries).toEqual([{ grounded: true, urgent: false, sources: [], source: "model", model: "gemma-test" }]);
+  expect(summaries).toEqual([{ grounded: true, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test" }]);
   // A spoken question names its ear beside Gemma; a typed one (above) names none.
   const heard = turnOf({ question: "After breakfast or dinner?", chat: gemma(["Hello there, Amelia."]).chat, heard: { source: "model", model: "asr-test" } });
   await spoken(heard.turn);
-  expect(heard.summaries).toEqual([{ grounded: true, urgent: false, sources: [], source: "model", model: "gemma-test", ear: { source: "model", model: "asr-test" } }]);
+  expect(heard.summaries).toEqual([{ grounded: true, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test", ear: { source: "model", model: "asr-test" } }]);
   expect(log.messages.map(m => m.role)).toEqual(["system", "user", "assistant", "user"]);
   expect(log.messages[0]!.content).toContain("Azithromycin (changed): Now a tablet once a day");
   expect(log.messages.at(-1)!.content).toBe("After breakfast or dinner?");
@@ -118,7 +119,7 @@ test("'I've let your care team know' is said once, by Sona when a task exists: G
 test("honest when there is no answer: Gemma starting (with its minutes), a reply with no words; a patient still in hospital is answered too; a reply without flags still counts", async () => {
   const starting = turnOf({ question: "Bila saya makan ubat?", language: "ms", chat: async () => ({ waking: 12 }) });
   expect(await spoken(starting.turn)).toEqual([LINES.ms.starting(12)]);
-  expect(starting.summaries).toEqual([{ grounded: false, urgent: false, sources: [], source: "fixture", waking: 12 }]);
+  expect(starting.summaries).toEqual([{ grounded: false, urgent: false, sources: [], withheld: 0, source: "fixture", waking: 12 }]);
   const notSaid = turnOf({ question: "Can I fly next week?", chat: gemma(['{"triage":"fine","inPlan":false}']).chat });
   expect(await spoken(notSaid.turn)).toEqual([LINES.en.unavailable]);
   expect(notSaid.summaries[0]!.grounded).toBe(false);
@@ -201,4 +202,18 @@ test("the chat alternates turns, as chat templates require; flags may be fenced 
   // As the SDK's chunker and Sona Care's karaoke count: under 10 characters joins the next; every sentence ends with a mark.
   expect(sentencesOf("Ya. Your plan says rest.\n- Drink water", true)).toEqual([["Ya. Your plan says rest.", "Drink water."], ""]);
   expect(sentencesOf("**请多休息** 多喝水", true)).toEqual([["请多休息 多喝水。"], ""]);
+});
+
+test("a sentence stating a fact her record does not hold is not spoken; the not-found line is said once, last; an urgent sentence is never withheld; general advice passes", async () => {
+  const { chat } = gemma(['{"triage":"fine","inPlan":true}\nYour azithromycin is 1 tablet once a day. Your potassium was 3.1 mmol/L. Your sodium was 120 mmol/L. Rest and drink plenty of water.']);
+  const { turn, summaries } = turnOf({ question: "What are my results?", chat });
+  expect(await spoken(turn)).toEqual(["Your azithromycin is 1 tablet once a day.", "Rest and drink plenty of water.", NOT_FOUND.en]);
+  expect(summaries[0]).toMatchObject({ grounded: true, withheld: 2 });
+  const urgent = turnOf({ question: "What was my sodium?", chat: gemma(['{"triage":"fine","inPlan":true}\nYour sodium was 120 mmol/L, so see a doctor immediately.']).chat });
+  expect(await spoken(urgent.turn)).toEqual(["Your sodium was 120 mmol/L, so see a doctor immediately."]);
+  expect(urgent.summaries[0]!.withheld).toBe(0);
+  // Today's real answer, with no fact about her in it.
+  const general = turnOf({ question: "肺炎康复期间我应该注意什么？", language: "zh", chat: gemma(['{"triage":"fine","inPlan":false}\n请多喝水并休息。保持环境空气清新对康复有帮助。如有呼吸困难请立即就医。']).chat });
+  expect((await spoken(general.turn)).join("")).toBe("请多喝水并休息。保持环境空气清新对康复有帮助。如有呼吸困难请立即就医。");
+  expect(general.summaries[0]!.withheld).toBe(0);
 });

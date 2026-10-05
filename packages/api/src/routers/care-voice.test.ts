@@ -38,7 +38,7 @@ test("without a speech model, speaking is refused plainly and asking answers not
   const { amelia } = await world();
   const e = await amelia.care.transcribe({ audio: btoa("RIFF-some-audio-bytes") }).catch(e => e);
   expect([e.code, e.data?.code, e.message]).toEqual(["PRECONDITION_FAILED", "SPEECH_OFF", "Speaking to Sona Care isn't switched on yet. Please type instead."]);
-  expect(await amelia.care.ask({ question: "Bila saya makan ubat?" })).toEqual({ answer: "", grounded: false, urgent: false, sources: [], source: "fixture" });
+  expect(await amelia.care.ask({ question: "Bila saya makan ubat?" })).toEqual({ answer: "", grounded: false, urgent: false, sources: [], withheld: 0, source: "fixture" });
   // No voice: no audio, so the phone reads the answer.
   expect(await amelia.care.speak({ text: "Ambil ubat ini selepas makan." })).toEqual({ source: "fixture" });
 });
@@ -52,7 +52,7 @@ test("while the models are starting, speaking says in how many minutes, and so d
   });
   const e = await amelia.care.transcribe({ audio: btoa("RIFF-some-audio-bytes") }).catch(e => e);
   expect([e.code, e.data?.code, e.message]).toEqual(["PRECONDITION_FAILED", "SPEECH_OFF", "Speaking to Sona Care is starting (about 30 min). Please type instead, or try again then."]);
-  expect(await amelia.care.ask({ question: "Bila saya makan ubat?" })).toEqual({ answer: "", grounded: false, urgent: false, sources: [], source: "fixture", waking: 12 });
+  expect(await amelia.care.ask({ question: "Bila saya makan ubat?" })).toEqual({ answer: "", grounded: false, urgent: false, sources: [], withheld: 0, source: "fixture", waking: 12 });
   expect(await amelia.care.speak({ text: "Ambil ubat ini selepas makan." })).toEqual({ source: "fixture", waking: 30 });
 });
 
@@ -81,7 +81,7 @@ test("with the model, her Manglish reply flags the doctor with the model's own w
   expect((await doctor.tasks.list()).some(t => t.title === "Amelia: fever back, cough worse after discharge")).toBe(true);
 
   const answer = await amelia.care.ask({ question: "Bila saya makan ubat?" });
-  expect(answer).toEqual({ answer: "Ambil Azithromycin sekali sehari.", grounded: true, urgent: false, sources: [], from: "medicines", source: "model", model: TEXT_MODEL });
+  expect(answer).toEqual({ answer: "Ambil Azithromycin sekali sehari.", grounded: true, urgent: false, sources: [], withheld: 0, from: "medicines", source: "model", model: TEXT_MODEL });
   // Only her own record went to the model: her medicines and warning signs, nobody else's record.
   const prompt = asked.find(a => a.includes("Patient's record"))!;
   expect(prompt).toContain("Azithromycin");
@@ -166,5 +166,5 @@ test("the model's own urgent flag reaches the care team when no keyword does; a 
   expect((await doctor.tasks.list()).filter(t => t.kind === "check-in").map(t => t.id)).toEqual([answer.careTeam!.taskId]);
 
   const broken = await world({ ...stubModels, answerFromPlan, classifyReply: async () => { throw new Error("model down"); } });
-  expect(await broken.amelia.care.ask({ question: "Sakit dada" })).toEqual({ answer: "Hubungi 999 sekarang.", grounded: false, urgent: true, sources: [], source: "model", model: "gemma-test" });
+  expect(await broken.amelia.care.ask({ question: "Sakit dada" })).toEqual({ answer: "Hubungi 999 sekarang.", grounded: false, urgent: true, sources: [], withheld: 0, source: "model", model: "gemma-test" });
 });

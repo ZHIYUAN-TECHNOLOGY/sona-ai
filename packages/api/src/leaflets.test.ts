@@ -57,13 +57,13 @@ test("a typed question: the leaflets found reach Gemma under their own heading, 
   expect(prompt).toContain("never invent one, and never give a new diagnosis or say what a result means for them beyond the record's own words");
   expect(prompt).toContain('Never answer such a question with only "ask your care team"');
   // 7 was never offered and "2" is not a number: neither names a source. The number is not shown in the answer.
-  expect(answer).toEqual({ answer: "The hospital's leaflet says to finish your antibiotics.", grounded: false, urgent: false, sources: [{ title: "Chest infection", kind: "leaflet" }], source: "model", model: "gemma-test" });
+  expect(answer).toEqual({ answer: "The hospital's leaflet says to finish your antibiotics.", grounded: false, urgent: false, sources: [{ title: "Chest infection", kind: "leaflet" }], withheld: 0, source: "model", model: "gemma-test" });
 });
 
 test("a search that is late, fails, or has no library still answers as before, with no sources and none offered", async () => {
   const prompts: string[] = [];
   const chat: Chat = async system => { prompts.push(system); return { answer: "In general, rest and drink plenty of water.", grounded: false, urgent: false, cites: [1] }; };
-  const expected = { answer: "In general, rest and drink plenty of water.", grounded: false, urgent: false, sources: [], source: "model", model: "gemma-test" };
+  const expected = { answer: "In general, rest and drink plenty of water.", grounded: false, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test" };
   const failed = await world(chat, library(async () => { throw new Error("embedder and database down"); }));
   expect(await failed.amelia.care.ask({ question: "How do I recover faster?" })).toEqual(expected);
   const none = await world(chat);
@@ -120,7 +120,7 @@ test("a spoken question: the 999 line is said before the leaflets are in, Gemma 
   expect(system).toContain("never invent one, and never give a new diagnosis or say what a result means for them beyond the record's own words");
   expect(system).toContain('Never answer such a question with only "ask your care team"');
   // 4 was never offered.
-  expect(summaries).toEqual([{ grounded: false, urgent: true, sources: [{ title: "Chest infection", kind: "leaflet" }], source: "model", model: "gemma-test" }]);
+  expect(summaries).toEqual([{ grounded: false, urgent: true, sources: [{ title: "Chest infection", kind: "leaflet" }], withheld: 0, source: "model", model: "gemma-test" }]);
 });
 
 test("a call whose leaflet search failed is still answered, with none offered", async () => {
@@ -131,7 +131,7 @@ test("a call whose leaflet search failed is still answered, with none offered", 
   }
   expect(said).toEqual(["In general, rest and drink water."]);
   expect(log.messages[0]!.content).toEndWith("None found for this question.");
-  expect(summaries).toEqual([{ grounded: false, urgent: false, sources: [], source: "model", model: "gemma-test" }]);
+  expect(summaries).toEqual([{ grounded: false, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test" }]);
 });
 
 test("each leaflet is offered once, in the patient's language when that copy was found, best first and three at most", () => {

@@ -30,7 +30,7 @@ type Language = keyof typeof LINES;
  * per sentence down). An answer sent with no audio (Sona's voice is starting, slow or unavailable) is read by the phone's
  * own voice, and so is a notice (Sona's line, then "listening"). Three more JSON events, which a client may ignore:
  * - `sona_say` {text, reason: "starting" | "slow" | "unavailable" | "notice", waking?}: a sentence sent with no audio, and why.
- * - `sona_turn` {grounded, urgent, sources, source, model?, waking?, ear?}: how the answer went, after its last sentence (`ear`: who heard
+ * - `sona_turn` {grounded, urgent, sources, withheld, source, model?, waking?, ear?}: how the answer went, after its last sentence (`ear`: who heard
  *   a spoken question; `sources`: the hospital's leaflets the answer used, by title, as care.ask gives them).
  * - `sona_care_team` {taskId, title}: what the patient reported reached their care team as a flagged task.
  */

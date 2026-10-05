@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { DEMO_PATIENT_PHONE, DEMO_SIGN_IN_CODE } from "@sona-ai/db/demo";
 import { careCodes, careLinks, encounters, hospitalMembers, hospitals, patients } from "@sona-ai/db/schema/clinical";
+import { grounded, groundsOf } from "@sona-ai/domain/grounding";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -158,7 +159,13 @@ export const careRouter = {
     const told = await (floor ?? (answer.urgent ? tell() : undefined));
     // Only a leaflet that was offered can be a source: a number Gemma made up names nothing.
     const sources = citedSources(cites, passages);
-    return { ...answer, sources, ...told && { careTeam: { ...told, line: LINES[language].told } } };
+    // Cannot invent (domain/grounding): a sentence stating a fact about her that her record does not hold is withheld
+    // before she sees it, and the answer says so once. Her discharge leaflet is in the record (planText), so it vouches
+    // too. What was withheld is logged here, never shown; `withheld` only counts it. An answer whose record-based
+    // sentences all went is not "From your record".
+    const checked = grounded(answer.answer, groundsOf(record, passages.map(p => p.text)), language);
+    if (checked.changed) console.warn("care.ask withheld", JSON.stringify(checked.removed));
+    return { ...answer, answer: checked.text, grounded: answer.grounded && Boolean(checked.kept), withheld: checked.removed.length, sources, ...told && { careTeam: { ...told, line: LINES[language].told } } };
   }),
 
   /**
