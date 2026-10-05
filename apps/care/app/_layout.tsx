@@ -14,7 +14,7 @@ import { DoseReminders } from "@/features/doses/remind";
 import { PushSetup } from "@/features/notifications";
 import { CalmCanvas } from "@/lib/canvas";
 import { Dock } from "@/lib/dock";
-import { poke } from "@/lib/idle";
+import { poke, slide } from "@/lib/idle";
 import { FONTS } from "@/lib/text";
 import { palette } from "@/lib/theme";
 import { queryClient } from "@/utils/orpc";
@@ -53,8 +53,10 @@ export default function RootLayout() {
         Every screen carries its own living canvas (screenLayout), so it is opaque, and a page opened on top slides in
         with the native push; the swipe back (from anywhere on the screen) slides it off and uncovers the page beneath.
         When screens were clear over one shared canvas, a swipe back showed both pages' text on top of each other.
-        Sheets keep their white. Screens out of sight are frozen, so their clocks and live queries don't re-render. */}
+        Sheets keep their white. Screens out of sight are frozen, so their clocks and live queries don't re-render.
+        Every screen's and sheet's transition is reported (`slide`): the canvas and the orb hold their frame while one slides. */}
     <Stack screenLayout={({ route, children }) => SHEETS.has(route.name) ? children : <View style={{ flex: 1 }}><CalmCanvas />{children}</View>}
+      screenListeners={{ transitionStart: e => { if (e.target) slide(e.target, true); }, transitionEnd: e => { if (e.target) slide(e.target, false); } }}
       screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" },
       fullScreenGestureEnabled: true, freezeOnBlur: true }}>
       {/* The dock's four places are one tab navigator (app/(tabs)): they switch at once, with no swipe back between them. */}

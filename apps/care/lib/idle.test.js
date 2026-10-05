@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { createIdle } from "./idle";
+import { createIdle, createSlides } from "./idle";
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -20,4 +20,20 @@ test("idle after the quiet spell; a poke wakes it at once and restarts the spell
   await sleep(40);
   expect(idle.isIdle()).toBe(true);
   expect(changes).toBe(3); // idle, awake, idle: repeated pokes while awake don't notify
+});
+
+test("sliding while any screen is mid-transition; a transition that never ends lets go after the cap", async () => {
+  const slides = createSlides(40);
+  let changes = 0;
+  slides.subscribe(() => changes++);
+  slides.slide("ask", true); slides.slide("tabs", true); // a push starts both screens' transitions
+  expect(slides.isSliding()).toBe(true);
+  slides.slide("tabs", false);
+  expect(slides.isSliding()).toBe(true); // Ask is still sliding in
+  slides.slide("ask", false);
+  expect(slides.isSliding()).toBe(false);
+  slides.slide("doctor", true); // and never ends (a held swipe back)
+  await sleep(60);
+  expect(slides.isSliding()).toBe(false);
+  expect(changes).toBe(4);
 });

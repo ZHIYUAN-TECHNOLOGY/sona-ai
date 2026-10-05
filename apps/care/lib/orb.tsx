@@ -2,7 +2,7 @@ import { memo } from "react";
 import { Blur, Canvas, Circle, Fill, FractalNoise, Group, LinearGradient, Oval, Paint, RadialGradient, Rect, Shader, Skia, vec } from "@shopify/react-native-skia";
 import { useDerivedValue, useReducedMotion, useSharedValue, type SharedValue } from "react-native-reanimated";
 import { useCalmClock } from "./calm-clock";
-import { useIdle } from "./idle";
+import { useIdle, useSliding } from "./idle";
 
 /**
  * The Sona orb, an azure-violet pearl with a sunbeam tide (orb study round 4, "#5 × Dawn, slow"; recoloured
@@ -104,8 +104,9 @@ export const SonaOrb = memo(function SonaOrb({ size = 148, flood, tx, ty, lift =
   const still = useReducedMotion();
   // Under Reduce Motion the orb holds still, so its clock stops too (useClock kept ticking for nothing). On a screen left
   // alone (./idle) it holds its frame, unless `awake`: a voice call, Sona working, the opening, where nobody touches it.
-  const idle = useIdle();
-  const clock = useCalmClock(!still && (awake || !idle));
+  // Awake or not, it holds while a screen slides (unseen in a 350 ms slide).
+  const idle = useIdle(), sliding = useSliding();
+  const clock = useCalmClock(!still && !sliding && (awake || !idle));
   const zero = useSharedValue(0);
   const fl = flood ?? zero, x = tx ?? zero, y = ty ?? zero;
   const s = size, k = s / 148, pad = orbPad(s), W = s + pad * 2, center = vec(s / 2, s / 2);
