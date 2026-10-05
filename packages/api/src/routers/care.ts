@@ -10,7 +10,7 @@ import { checkInReplySchema, xrayUploadSchema } from "../contracts";
 import { listCheckIns, replyToCheckIn } from "./check-ins";
 import { clockOffsetOf } from "../clock";
 import { stubModels } from "../models";
-import { patientPlan, planText, visitsText } from "./care-plan";
+import { recordText } from "./care-plan";
 import { loadEncounter } from "./encounter";
 import { careDosesRouter } from "./doses";
 import { careMessagesRouter } from "./messages";
@@ -132,18 +132,18 @@ export const careRouter = {
   }),
 
   /**
-   * Patient: any question, answered. Their own care comes from their record (the discharge plan once they are home,
-   * and their booked and requested visits from the first day), anything else from general knowledge: `grounded` says which. The stub
+   * Patient: any question, answered. Their own care comes from their record (recordText: the discharge plan once they are
+   * home, their visits, and what the hospital recorded about them: history, allergy, medicines, observations, results,
+   * the latest note, their check-in replies and doses), anything else from general knowledge: `grounded` says which. The stub
    * answers nothing (source "fixture") and the app keeps its authored plan answers. A question that reports feeling
    * worse or names an emergency sign also reaches their care team, as it does in the live call: `careTeam` is the
    * flagged task (the call's `sona_care_team`) with Sona's line saying so (`line`, in the plan's language), there only
    * once a task is made.
    */
   ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(500) })).handler(async ({ context, input }) => {
-    // Her visits are real whether or not she has gone home; only the take-home plan waits for discharge. Visits that
-    // cannot be read never fail the answer: the gates below must still run.
-    const [plan, visits] = await Promise.all([patientPlan(context), visitsText(context).catch(error => { console.error("visits not read", error); return ""; })]);
-    const record = `${plan.status === "discharged" ? planText(plan) : "Still in hospital: no take-home medicines or leaflet yet."}\n${visits}`;
+    // Her visits and her record are real whether or not she has gone home; only the take-home plan waits for discharge.
+    // A part that cannot be read never fails the answer (recordText): the gates below must still run.
+    const { plan, text: record } = await recordText(context);
     // The live call's gates: the keyword floors, or the model's own urgent flag; the care team's reader then decides. Never fails the answer.
     const tell = () => tellCareTeam(context, context.hospitalId, context.patientId, input.question).catch(error => { console.error("care team not told", error); return undefined; });
     const floor = callNow(input.question) || mayReport(input.question) ? tell() : undefined;

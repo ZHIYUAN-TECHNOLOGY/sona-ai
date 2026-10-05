@@ -6,8 +6,8 @@ import { deltas } from "../sse";
 import { LANGUAGE_NAME, jsonIn } from "../chat-models";
 
 /**
- * One answer turn of Sona Care's live voice (withVoice's onTurn). The patient's own plan (their record), the conversation
- * so far and what they just said go to Gemma (box ①), streaming. Gemma answers anything: their own care from the plan, any
+ * One answer turn of Sona Care's live voice (withVoice's onTurn). The patient's own record (recordText), the conversation
+ * so far and what they just said go to Gemma (box ①), streaming. Gemma answers anything: their own care from the record, any
  * other health or general question from what it knows (user, 1 Oct: no limit on what Sona may answer). Each sentence is
  * handed on as soon as it is written, so Sona starts talking while Gemma is still writing. An emergency sign gets the 999
  * line first, from the keyword floor before Gemma is even asked or from Gemma's own flag; a patient who reports feeling
@@ -32,7 +32,7 @@ export type AnswerTurn = {
   question: string;
   /** The conversation before this turn, oldest first (the SDK keeps it). */
   history: { role: "user" | "assistant"; content: string }[];
-  /** The plan as Gemma reads it (planText); none while the patient is still in hospital. */
+  /** Her record as Gemma reads it (care-plan's recordText, the text care.ask reads); none when it could not be read. */
   plan?: string;
   /** The language of Sona's own lines, and Gemma's when it cannot tell the patient's. */
   language: Language;
@@ -87,15 +87,16 @@ const URGENT_MS_ZH = /sakit dada|dada (sakit|sesak|ketat)|sesak nafas|susah (nak
 /** The keyword floor for the 999 line: broad on purpose, since the line says "if this is happening now". */
 export const callNow = (text: string) => URGENT.test(text) || URGENT_MS_ZH.test(text) || readReply(text) === "urgent";
 
-const VOICE = `You are Sona Care, a hospital's assistant for its patients, talking with one patient by voice. Answer whatever they ask: their own care, any other health or medicine question, or anything else. For their own medicines, doses and appointments, use their discharge plan below: it is their record.
+const VOICE = `You are Sona Care, a hospital's assistant for its patients, talking with one patient by voice. Answer whatever they ask: their own care, any other health or medicine question, or anything else. For anything about them (their medicines, doses, visits, conditions, allergies, results, what their doctor noted, what they told us), use their record below: it is what the hospital has recorded about them.
 Begin every reply with one line of JSON, then the words to say on the next line:
 {"triage": "fine" | "worse" | "urgent", "inPlan": true | false}
 - triage is about how the patient says they feel: "urgent" for an emergency sign (chest pain, severe breathlessness, confusion, fainting, coughing blood), "worse" if a symptom came back or got worse or a new problem started, otherwise "fine" (a question is fine).
-- inPlan is true when your answer comes from their plan.
+- inPlan is true when your answer comes from their record.
 The words to say:
 - Plain and kind, at a reading age of about 12, at most 3 short sentences. The first has at most 10 words: it is spoken while you write the rest. No lists, symbols or markdown: they are read aloud.
 - In the language the patient spoke (Malay, English or Chinese).
-- If urgent, tell them to call 999 now.`;
+- If urgent, tell them to call 999 now.
+- About them, say only what their record says: never invent a result, a number or a date, and never give a new diagnosis or say what a result means for them beyond the record's own words. If their record does not have it, say so and suggest asking their care team.`;
 
 /**
  * Sona's "told your care team" line, in every language: only a made task says it (the end of answerTurn), never Gemma.
@@ -104,7 +105,7 @@ The words to say:
 const TOLD = Object.values(LINES).map(l => l.told);
 
 /**
- * The chat for one turn: the plan in the system message; the conversation strictly alternating, as chat templates
+ * The chat for one turn: her record in the system message; the conversation strictly alternating, as chat templates
  * require (an interrupted turn leaves two patient lines in a row); Sona's told line left out, so Gemma does not echo it.
  */
 export function messagesFor(turn: Pick<AnswerTurn, "question" | "history" | "plan" | "language">): ChatMessage[] {
@@ -115,7 +116,7 @@ export function messagesFor(turn: Pick<AnswerTurn, "question" | "history" | "pla
     else if (last || m.role === "user") said.push({ role: m.role, content });
   }
   // Malaysians mix languages in one sentence, so a mixed question gets the patient's own app language.
-  return [{ role: "system", content: `${VOICE}\nWhen they mix languages, or you cannot tell, answer in ${LANGUAGE_NAME[turn.language]}.\n\nDischarge plan:\n${turn.plan ?? "None yet: they are still in hospital."}` }, ...said];
+  return [{ role: "system", content: `${VOICE}\nWhen they mix languages, or you cannot tell, answer in ${LANGUAGE_NAME[turn.language]}.\n\nPatient's record:\n${turn.plan ?? "None could be read."}` }, ...said];
 }
 
 type Flags = { triage?: unknown; inPlan?: unknown };

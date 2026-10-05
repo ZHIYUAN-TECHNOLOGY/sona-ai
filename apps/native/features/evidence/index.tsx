@@ -57,7 +57,8 @@ export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
 /**
  * One evidence answer, in a visit or anywhere else (no `patient`): while Sona works, the steps it has taken so far; then,
  * when `lead`, its bottom line (a visit says it as the visit's lead instead), what the answer rests on, the line tying it
- * to this patient, the claims under their topics with each citation's strength, the sources, and Related questions.
+ * to this patient, the claims under their topics with each citation's strength, in a visit what the evidence means for
+ * this patient (each point with its source and the recorded fact it rests on), the sources, and Related questions.
  * A citation opens, under its claim, the sentence from that source that supports it. Live mode asks the server;
  * otherwise the authored answers show, for the rehearsed question and its follow-ups only.
  */
@@ -124,6 +125,15 @@ function Answer({ question, encounterId, answerKey, thread, patient, lead = fals
           </Press>
         </View>
         : <Text selectable style={{ ...type.callout, color: palette.amber }}>{NOT_ENOUGH}</Text>}
+      {/* Asked in a visit: what the evidence means for this patient, set apart under the claims and labelled as theirs. Each
+          point keeps its source pills, and under it the fact from the patient's record it rests on, in the record's own words. */}
+      {data?.enough && data.patientPoints?.length ? <Animated.View entering={at(5)} style={{ gap: 10, paddingTop: 12, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
+        <Text style={{ ...type.overline, color: palette.blue }}>{patient ? `For ${patient.name.split(" ")[0]}` : "For this patient"} · from the record</Text>
+        {data.patientPoints.map((p, j) => <View key={j} style={{ gap: 4 }}>
+          <ClaimLine claim={p} references={data.references} onCite={cite} />
+          <Text selectable style={{ ...type.caption, color: palette.muted }}>Recorded: {p.fact}</Text>
+        </View>)}
+      </Animated.View> : null}
       {shown && <View style={{ gap: 4 }}>
         {fallback ? <Text selectable style={{ ...type.caption, color: palette.amber }}>{fallback}</Text> : null}
         {data && data.references.length > 0 && !failed && <SampleLabel source={data.source === "fixture" || data.source === "cached" ? data.source : "model"} model={data.source} waking={wakingOf(data)} what="evidence" />}

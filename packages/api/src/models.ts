@@ -2,7 +2,7 @@ import { readReply } from "@sona-ai/domain/check-ins";
 import { CODES, appealByRules, type AppealLetter, type Code, type DenialCode, type Sentence } from "@sona-ai/domain/claim";
 import { draftByRules, triageByRules, type DraftPlan, type MessageLabel } from "@sona-ai/domain/messages";
 import { planFor, type Language } from "@sona-ai/domain/discharge";
-import type { Claim } from "@sona-ai/domain/evidence";
+import type { Claim, PatientPoint } from "@sona-ai/domain/evidence";
 import type { DetectedFinding } from "@sona-ai/domain/findings";
 import { deidentifyByRules, type KnownIdentity, type Replacement } from "@sona-ai/domain/training";
 import { SAMPLE_NOTE, type HandwrittenNote } from "@sona-ai/domain/scan";
@@ -28,10 +28,16 @@ export type Origin = { source: "fixture"; waking?: number } | { source: "model";
 export type DecidedBy = { decidedBy?: "model" | "rules" };
 type Answer<T> = Promise<T & Origin>;
 
-/** `from` and `pmid`: a PubMed study's journal and PMID, so the prompt can name them (the stub reads neither). */
-export type EvidenceInput = { question: string; thread: { question: string; answer: string }[]; sources: { n: number; design: string; year?: number; title: string; text: string; from?: string; pmid?: string }[] };
-/** `cutShort`: the model stopped before closing its answer (the length limit), so only the claims it finished are in it. */
-export type EvidenceAnswer = { claims: Claim[]; followUps: string[]; general?: string; bottomLine?: string; cutShort?: boolean };
+/**
+ * `from` and `pmid`: a PubMed study's journal and PMID, so the prompt can name them (the stub reads neither).
+ * `patient`: asked in a visit, that patient's record as lines of text with no name or record number (the stub reads none).
+ */
+export type EvidenceInput = { question: string; thread: { question: string; answer: string }[]; sources: { n: number; design: string; year?: number; title: string; text: string; from?: string; pmid?: string }[]; patient?: string };
+/**
+ * `cutShort`: the model stopped before closing its answer (the length limit), so only the claims it finished are in it.
+ * `patientPoints`: what the evidence means for the visit's patient, as written (the route keeps only points whose fact is in the record).
+ */
+export type EvidenceAnswer = { claims: Claim[]; followUps: string[]; general?: string; bottomLine?: string; cutShort?: boolean; patientPoints?: PatientPoint[] };
 /** A part of an evidence answer, as soon as it is written: its bottom line, or one claim. */
 export type EvidencePart = { bottomLine: string } | { claim: Claim };
 
@@ -81,8 +87,9 @@ export type Models = {
    */
   speak(input: { text: string }): Answer<{ audio?: string }>;
   /**
-   * Sona Care: an answer to any question the patient asks; their own care from their discharge plan. `grounded` false
-   * means the answer is general knowledge, not their plan (the app marks it so); `urgent` puts the 999 line first.
+   * Sona Care: an answer to any question the patient asks; their own care from their record (`plan`: recordText, the
+   * discharge plan and what the hospital recorded about them). `grounded` false means the answer is general knowledge,
+   * not their record (the app marks it so); `from` names the part of the record; `urgent` puts the 999 line first.
    * The stub answers nothing, so the app's authored plan answers stay in charge.
    */
   answerFromPlan(input: { question: string; plan: string; language: Language }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string }>;

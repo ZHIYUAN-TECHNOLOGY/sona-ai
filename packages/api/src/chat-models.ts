@@ -6,7 +6,7 @@ import type { Models } from "./models";
 
 /**
  * The readers any open chat model can do the same way, whichever host serves it (Workers AI's SEA-LION,
- * Baseten's Gemma): check-in replies, inbox triage and answers from the patient's own plan. `chat` asks the
+ * Baseten's Gemma): check-in replies, inbox triage and answers from the patient's own record. `chat` asks the
  * model with a system and a user message and returns the JSON in its reply. A failed or unreadable call
  * falls back to the rules, labelled fixture, so a failure is never shown as a model reading. When the model answered
  * but the keyword rule's urgent words set the label, the answer says `decidedBy: "rules"` beside the model's name.
@@ -31,12 +31,13 @@ Answer with JSON only: {"label": "fine" | "worse" | "urgent", "symptom": "<2-5 E
 - fine: better, or the same with no new concern.
 If unsure between two labels, choose the more serious one.`;
 
-const ANSWER = `You are Sona Care, a hospital's assistant for its patients, answering one patient. Answer whatever they ask: their own care, any other health or medicine question, or anything else. For their own medicines, doses and appointments, use their discharge plan below: it is their record.
+const ANSWER = `You are Sona Care, a hospital's assistant for its patients, answering one patient. Answer whatever they ask: their own care, any other health or medicine question, or anything else. For anything about them (their medicines, doses, visits, conditions, allergies, results, what their doctor noted, what they told us), use their record below: it is what the hospital has recorded about them.
 Rules:
 - Use plain, kind words at a reading age of about 12. At most 3 short sentences. Answer in the language the patient wrote in (Malay, English or Chinese; mixed Malay-English is fine).
-- Set "grounded" to true when your answer comes from their plan, false when it comes from general knowledge.
+- About them, say only what their record says, in plain words: never invent a result, a number or a date, and never give a new diagnosis or say what a result means for them beyond the record's own words. If their record does not have it, say so and suggest asking their care team.
+- Set "grounded" to true when your answer comes from their record, false when it comes from general knowledge.
 - If they describe an emergency sign (chest pain, severe breathlessness, confusion, fainting, coughing blood), set "urgent" to true and tell them to call 999 now.
-Answer with JSON only: {"answer": "<text>", "grounded": true|false, "urgent": true|false, "from": "<which part of the plan: medicines, leaflet, warning signs or follow-up; empty if not from the plan>"}.`;
+Answer with JSON only: {"answer": "<text>", "grounded": true|false, "urgent": true|false, "from": "<which part of the record: medicines, leaflet, warning signs, follow-up, visits, history, allergies, results, note, check-ins or doses; empty if not from the record>"}.`;
 
 const INBOX = `You triage a patient's message to their hospital care team so the most urgent is read first.
 The message may be in Malay, English, Chinese or a mix. Judge only what the patient says.
@@ -80,7 +81,7 @@ export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Mo
 
     async answerFromPlan(input) {
       try {
-        const read = await chat(`${ANSWER}\n\nDischarge plan:\n${input.plan}`, `Patient's question (answer in the same language as the question; if unclear, ${LANGUAGE_NAME[input.language]}): ${input.question}`);
+        const read = await chat(`${ANSWER}\n\nPatient's record:\n${input.plan}`, `Patient's question (answer in the same language as the question; if unclear, ${LANGUAGE_NAME[input.language]}): ${input.question}`);
         if (read && typeof read.answer === "string" && read.answer.trim()) {
           return {
             answer: read.answer.trim().slice(0, 800), grounded: read.grounded === true, urgent: read.urgent === true,

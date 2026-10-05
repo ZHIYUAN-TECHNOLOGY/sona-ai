@@ -136,6 +136,22 @@ test("the evidence answer asks Gemma with numbered sources and keeps only well-f
   expect(body.max_tokens).toBe(2000);
 });
 
+test("asked with a patient's record, the evidence prompt carries it after the sources and asks for a separate part about this patient; without one, neither", async () => {
+  const reply = '{"claims":[{"text":"A guideline recommends against routine steroids.","cites":[1]}],"forPatient":[{"text":"Her recorded asthma is a reason she may already be on steroids [1].","cites":[],"fact":"Asthma since childhood"},{"text":"no fact","cites":[1]}],"followUps":[]}';
+  const { fetcher, calls } = fake({ [box("brain")]: chatReply(reply) });
+  const input = { question: "Steroids in pneumonia?", thread: [], sources: [{ n: 1, design: "Guideline", year: 2019, title: "ATS/IDSA CAP", text: "Do not routinely use corticosteroids." }] };
+  const read = await basetenModels({ apiKey: "k", fetcher }).synthesiseEvidence({ ...input, patient: "Age 42, female.\nHistory: Asthma since childhood" });
+  // A point's citation is read as a claim's is (here from its own sentence); one with no fact is no point.
+  expect(read).toMatchObject({ claims: [{ cites: [1] }], patientPoints: [{ text: "Her recorded asthma is a reason she may already be on steroids.", cites: [1], fact: "Asthma since childhood" }] });
+  const [system, user] = JSON.parse(calls.at(-1)!.init.body as string).messages;
+  expect(system.content).toContain('"forPatient"');
+  expect(user.content).toEndWith("Do not routinely use corticosteroids.\n\nPatient record:\nAge 42, female.\nHistory: Asthma since childhood");
+  await basetenModels({ apiKey: "k", fetcher }).synthesiseEvidence(input);
+  const [bare, asked] = JSON.parse(calls.at(-1)!.init.body as string).messages;
+  expect(bare.content).not.toContain("forPatient");
+  expect(asked.content).not.toContain("Patient record");
+});
+
 // Two PubMed studies as the route sends them (journal and PMID with each), then a library passage.
 const evidenceSources = [
   { n: 1, design: "Guideline", year: 2019, title: "ATS/IDSA CAP", text: "Do not routinely use corticosteroids.", from: "Am J Respir Crit Care Med", pmid: "31573350" },

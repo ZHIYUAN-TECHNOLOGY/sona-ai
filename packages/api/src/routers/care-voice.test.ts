@@ -1,13 +1,17 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { encounters, guaranteeLetters } from "@sona-ai/db/schema/clinical";
+import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
+import { encounters, guaranteeLetters, labResults } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
+import { doseKey, doseSlots } from "@sona-ai/domain/doses";
 import { eq } from "drizzle-orm";
 
 import { stubModels, type Models } from "../models";
 import { TEXT_MODEL, workersModels, type WorkersAi } from "../workers-models";
+import { messagesFor } from "../voice-agent/answer";
+import { RECORD_CHARS, recordText } from "./care-plan";
 import { appRouter } from "./index";
 
 const user = (id: string) => ({
@@ -27,7 +31,7 @@ async function world(models?: Models) {
   const doctor = as("dr-aisyah"), amelia = as("amelia-account");
   await doctor.discharge.request({ encounterId: "visit-1042", requestId: "req-d1", approvedBy: "dr-aisyah" });
   await amelia.care.join({ code: (await doctor.care.code({ encounterId: "visit-1042" })).code });
-  return { doctor, amelia };
+  return { doctor, amelia, db, as };
 }
 
 test("without a speech model, speaking is refused plainly and asking answers nothing (the app keeps its own answers)", async () => {
@@ -67,7 +71,7 @@ test("with the model, her Manglish reply flags the doctor with the model's own w
     async run(model, input) {
       const text = JSON.stringify(input);
       asked.push(text);
-      if (text.includes("Discharge plan")) return { response: '{"answer":"Ambil Azithromycin sekali sehari.","grounded":true,"urgent":false,"from":"medicines"}' };
+      if (text.includes("Patient's record")) return { response: '{"answer":"Ambil Azithromycin sekali sehari.","grounded":true,"urgent":false,"from":"medicines"}' };
       return { response: '{"label":"worse","symptom":"Fever back, cough worse"}' };
     },
   };
@@ -78,11 +82,63 @@ test("with the model, her Manglish reply flags the doctor with the model's own w
 
   const answer = await amelia.care.ask({ question: "Bila saya makan ubat?" });
   expect(answer).toEqual({ answer: "Ambil Azithromycin sekali sehari.", grounded: true, urgent: false, from: "medicines", source: "model", model: TEXT_MODEL });
-  // Only her own plan went to the model: her medicines and warning signs, nobody else's record.
-  const prompt = asked.find(a => a.includes("Discharge plan"))!;
+  // Only her own record went to the model: her medicines and warning signs, nobody else's record.
+  const prompt = asked.find(a => a.includes("Patient's record"))!;
   expect(prompt).toContain("Azithromycin");
   expect(prompt).toContain("The fever comes back");
   expect(prompt).not.toContain("SYN-1086");
+  expect(prompt).not.toContain("Discharge plan:");
+});
+
+test("her question is answered from her own record as recorded (history, allergy, results, note, check-in reply, doses), and never from another patient's rows", async () => {
+  const read: string[] = [];
+  const models: Models = { ...stubModels, answerFromPlan: async input => { read.push(input.plan); return { answer: "", grounded: false, urgent: false, source: "fixture" }; } };
+  const { doctor, amelia, db, as } = await world(models);
+  await db.insert(labResults).values({ id: "lab-1042-crp", patientId: "SYN-1042", test: "CRP", value: "48", unit: "mg/L", flag: "high", sourceId: "lab-1042-crp", receivedAt: new Date("2026-09-26T09:00:00+08:00") });
+  await doctor.note.save({ encounterId: "visit-1042", expectedRevision: 0, sentences: [{ id: "assessment", text: "Community-acquired pneumonia, mild; CURB-65 0." }, { id: "plan", text: "Oral azithromycin for 2 more days." }] });
+  await amelia.care.checkIns.reply({ checkInId: "check-in:visit-1042:2", text: "Demam balik, batuk makin teruk" });
+  await amelia.care.ask({ question: "Am I allergic to anything?" });
+  const hers = read[0]!;
+  for (const recorded of [
+    "Medicines:", "Now: Mon, 28 Sep 2026 10:05 (Malaysia time)",
+    "Recorded by the hospital:\nAge 42, female. Came in with: Cough for five days, with fever since yesterday.",
+    "History: Asthma since childhood", "Family history: Mother has asthma", "Allergies: Penicillin — reported rash", "Medicines before admission: Salbutamol inhaler, as needed",
+    "Urea 5.1 mmol/L", "Results:\n- CRP 48 mg/L, high (Sat, 26 Sep 2026)",
+    "Doctor's note (saved ", "Community-acquired pneumonia, mild; CURB-65 0. Oral azithromycin for 2 more days.",
+    'Check-in replies:\n- Day 2 check-in, Mon, 28 Sep 2026: "Demam balik, batuk makin teruk" (read as worse)',
+  ]) expect(hers).toContain(recorded);
+  expect(hers.length).toBeLessThanOrEqual(RECORD_CHARS);
+  // The text says who she is by her record, not by name or number, and holds none of the other patient's rows (his potassium, his history).
+  expect(hers).not.toMatch(/SYN-1042|SYN-1086|Potassium|Hb 9\.8/);
+
+  // Two days on, her doses count from her plan's schedule: the one she marked taken, and the ones she did not.
+  const plan = await amelia.care.discharge(), later = new Date("2026-09-30T10:05:00+08:00");
+  const azithromycin = plan.status === "discharged" ? plan.medicines.changed[0]! : undefined;
+  await amelia.care.doses.take({ key: doseKey(azithromycin!.name, doseSlots(azithromycin!, new Date("2026-09-28T10:05:00+08:00"), later)[0]!) });
+  const { text } = await recordText({ db, session: null, now: () => later, hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042" });
+  expect(text).toMatch(/\nDoses since going home: 1 of [2-9] due marked taken; not marked taken: .*(Azithromycin|Cetirizine) \w{3}, \d\d Sep 2026 \d\d:\d\d/);
+
+  // The other patient, joined on his own account, reads his own rows and none of hers.
+  const other = as("farid-account");
+  await other.care.join({ code: (await doctor.care.code({ encounterId: "visit-1086" })).code });
+  await other.care.ask({ question: "What were my blood results?" });
+  const his = read[1]!;
+  expect(his).toContain("- Potassium 3.1 mmol/L, low");
+  expect(his).toContain("- Hb 9.8 g/dL, low");
+  expect(his).not.toMatch(/Penicillin — reported rash|Asthma since childhood|CRP 48|Demam balik|Community-acquired pneumonia, mild/);
+});
+
+test("a call reads the same record as a typed question: recordText is what care.ask gives the model and what the call's chat carries", async () => {
+  const read: string[] = [];
+  const now = new Date("2026-09-28T10:05:00+08:00");
+  const { amelia, db } = await world({ ...stubModels, answerFromPlan: async input => { read.push(input.plan); return { answer: "", grounded: false, urgent: false, source: "fixture" }; } });
+  await amelia.care.ask({ question: "Bila temu janji saya?" });
+  // The voice agents (apps/server/src/agents) call recordText with the patient their socket was signed in as, once a call.
+  const spoken = await recordText({ db, session: null, now: () => now, hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042" });
+  expect(spoken.text).toBe(read[0]!);
+  expect(spoken.text).toContain("Visits booked:");
+  expect(spoken.text).toContain("Allergies: Penicillin — reported rash");
+  expect(messagesFor({ question: "Bila temu janji saya?", history: [], plan: spoken.text, language: "ms" })[0]!.content).toEndWith(`Patient's record:\n${read[0]}`);
 });
 
 test("a question that reports feeling worse or names an emergency sign reaches her care team as a flagged task, and uses up no check-in", async () => {

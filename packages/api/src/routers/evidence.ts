@@ -1,5 +1,6 @@
 import { documents, encounters, observations, patients, provenance, pubmedArticles, pubmedSearches } from "@sona-ai/db/schema/clinical";
-import { STUDIES, authoredAnswer, curb65FromObservations, isRehearsed, pubmedUrl, quotedClaims, severityApplies, sourcedClaims, studyKind, type Claim, type ObservationRow, type Reference } from "@sona-ai/domain/evidence";
+import { STUDIES, authoredAnswer, curb65FromObservations, isRehearsed, pubmedUrl, quotedClaims, recordedPoints, severityApplies, sourcedClaims, studyKind, type Claim, type ObservationRow, type PatientPoint, type Reference } from "@sona-ai/domain/evidence";
+import { deidentifyByRules } from "@sona-ai/domain/training";
 import { ORPCError } from "@orpc/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -8,6 +9,7 @@ import type { Context } from "../context";
 import { stubModels, type Models } from "../models";
 import { protectedProcedure } from "../index";
 import { conclusionOf, fetchArticles, searchEvidence, searchTerms, type Article } from "../pubmed";
+import { recordFacts } from "./encounter";
 
 /**
  * Flow 4, the evidence answer (docs/evidence-answer-spec.md): short claims each citing numbered
@@ -20,6 +22,9 @@ import { conclusionOf, fetchArticles, searchEvidence, searchTerms, type Article 
  * app captions "Rehearsed answer") and anything else from the stub's labelled sample. No source, no
  * claim: the route drops any claim citing nothing or a number not in the list. Fetched articles are
  * cached, so a question asked once still has its sources when PubMed is unreachable.
+ * Asked in a visit, the model also reads that patient's record (recordFacts, with no name or record number) and adds,
+ * after the claims, what in the evidence bears on this patient (`patientPoints`): each point cites a source and the
+ * record fact it used, and a point whose fact is not in the record text is dropped. Asked anywhere else, there is none.
  */
 const REHEARSED = {
   matches: isRehearsed,
@@ -120,7 +125,7 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   const abstract = new Map(articles.map(a => [a.pmid, a.abstract]));
   const read = authored || !context.models ? references : references.map(r => ({ ...r, text: (r.pmid && abstract.get(r.pmid)) || r.text }));
 
-  let claims: Claim[], followUps: string[], source: string, waking: number | undefined, general: string | undefined, bottomLine: string | undefined, cutShort = false;
+  let claims: Claim[], followUps: string[], source: string, waking: number | undefined, general: string | undefined, bottomLine: string | undefined, cutShort = false, patientPoints: PatientPoint[] = [];
   if (authored) {
     // Authored cites number the three rehearsed studies; renumber them to where each study landed, so a missing study drops its claims.
     const at = (n: number) => studies.findIndex(s => s.pmid === STUDIES[n - 1]?.pmid) + 1;
@@ -129,7 +134,12 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   } else {
     yield { type: "step", step: "write" } as EvidenceStep;
     const models = context.models ?? stubModels;
-    const asked = { question: input.question, thread: input.thread, sources: read.map(r => ({ n: r.n, design: r.design, year: r.year, title: r.title, text: r.text, from: r.from, pmid: r.pmid })) };
+    // In a visit the model reads the patient's record by age, sex and facts, never by identity: the name (whole, and each
+    // of its words) and the record number are taken out of the record and of the doctor's own words before they reach it.
+    const unnamed = (text: string) => visit ? deidentifyByRules(text, { names: [visit.name, ...visit.name.split(/\s+/).filter(w => w.length > 2)], mrn: visit.patientId }).text : text;
+    // A record that cannot be read costs the answer its patient section, never the answer.
+    const record = visit ? unnamed((await recordFacts(db, hospitalId, visit.patientId).catch(() => [] as string[])).join("\n")) : undefined;
+    const asked = { question: unnamed(input.question), thread: input.thread.map(t => ({ question: unnamed(t.question), answer: unnamed(t.answer) })), sources: read.map(r => ({ n: r.n, design: r.design, year: r.year, title: r.title, text: r.text, from: r.from, pmid: r.pmid })), ...record && { patient: record } };
     let written: Awaited<ReturnType<Models["synthesiseEvidence"]>>;
     if (models.streamEvidence) {
       // Each part goes to the app as soon as it is written, checked as the whole answer is: a claim must cite a source, and its quotes must be in it.
@@ -152,6 +162,8 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
     bottomLine = claims.length ? written.bottomLine : undefined;
     // The model stopped before finishing: the claims it finished stand, and the answer says more was cut off.
     cutShort = written.source === "model" && written.cutShort === true && claims.length > 0;
+    // About this patient: only under claims that stood, and only points whose fact the record text holds.
+    if (record && claims.length) patientPoints = recordedPoints(written.patientPoints ?? [], references.length, record);
   }
   // Each claim's proof: the sentence from each cited source that says it, checked word for word against that source.
   claims = quotedClaims(claims, read);
@@ -162,8 +174,8 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   const rows = scored ? await db.select().from(observations).where(eq(observations.patientId, scored.patientId)).orderBy(asc(observations.observedAt)) : [];
   const curb65 = scored ? curb65FromObservations(rows as ObservationRow[], scored.age) : null;
 
-  await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId: input.encounterId ?? null, kind: "evidence-answer", output: { question: input.question, bottomLine, claims, general }, sourceIds: references.map(r => r.id), model: source, approvedBy: null });
-  return { question: input.question, bottomLine, claims, enough: claims.length > 0, general, followUps, source, ...waking ? { waking } : {}, ...cutShort && { cutShort }, references, pubmed, ...found, curb65 };
+  await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId: input.encounterId ?? null, kind: "evidence-answer", output: { question: input.question, bottomLine, claims, general, ...patientPoints.length && { patientPoints } }, sourceIds: references.map(r => r.id), model: source, approvedBy: null });
+  return { question: input.question, bottomLine, claims, enough: claims.length > 0, general, followUps, source, ...waking ? { waking } : {}, ...cutShort && { cutShort }, ...patientPoints.length && { patientPoints }, references, pubmed, ...found, curb65 };
 }
 
 export const evidenceRouter = {

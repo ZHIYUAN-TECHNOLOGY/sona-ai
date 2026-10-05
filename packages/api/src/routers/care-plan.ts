@@ -1,15 +1,17 @@
-import { accessLogs, appointments, bookingRequests, checkIns, doctors, encounters, findings, followUpRules, hospitalMembers, patients } from "@sona-ai/db/schema/clinical";
+import { accessLogs, appointments, bookingRequests, checkIns, doctors, doseLogs, encounters, findings, followUpRules, hospitalMembers, notes, patients } from "@sona-ai/db/schema/clinical";
 import { appointmentWords, followUpTiming, malaysianDay, patientMeds, reviewWords, warningSigns } from "@sona-ai/domain/care";
 import { checkInDaysLine, checkInSchedule } from "@sona-ai/domain/check-ins";
 import { FOLLOW_UPS, LANGUAGES, planFor, type DischargeState, type Language } from "@sona-ai/domain/discharge";
-import { and, asc, eq, gte, inArray } from "drizzle-orm";
+import { adherence } from "@sona-ai/domain/doses";
+import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 import { originOf } from "../answers";
 import { clockOf, type Context } from "../context";
 import { patientProcedure } from "../index";
 import type { ApprovedLeaflet } from "./discharge";
-import { recordOf } from "./encounter";
+import { listCheckIns } from "./check-ins";
+import { malaysiaDay, recordFacts, recordOf } from "./encounter";
 
 /** The patient's own discharge plan, built from their record in this hospital. */
 export async function planOf(db: Context["db"], hospitalId: string, patientId: string) {
@@ -35,6 +37,10 @@ export async function doseScheduleOf(db: Context["db"], hospitalId: string, pati
   const m = patientMeds(await planOf(db, hospitalId, patientId));
   return { dischargedAt: d.dischargedAt, meds: [...m.new, ...m.changed, ...m.continue] };
 }
+
+/** The dose keys this patient marked taken (hold to take in Sona Care). */
+export const takenKeys = async (db: Context["db"], hospitalId: string, patientId: string) =>
+  (await db.select({ key: doseLogs.key }).from(doseLogs).where(and(eq(doseLogs.hospitalId, hospitalId), eq(doseLogs.patientId, patientId)))).map(r => r.key);
 
 /** The clinic review booked at discharge, counted from the day they left. */
 const reviewDate = (d: DischargeState & { dischargedAt: string }) => {
@@ -72,9 +78,6 @@ export async function patientPlan(context: PatientContext, lang: Language = "en"
       checkIns: scheduled.length ? scheduled : checkInSchedule(new Date(d.dischargedAt), d.checkInDays).map(c => ({ day: c.day, date: c.dueAt })),
     };
 }
-
-/** "Thu, 01 Oct 2026": the day in Malaysia, the same on any server. */
-const malaysiaDay = (at: Date) => new Date(at.getTime() + 8 * 3600_000).toUTCString().slice(0, 16);
 
 /** The plan as plain text for the model: only what the patient's own app already shows them. A course gives its last dose. */
 export function planText(plan: Extract<Awaited<ReturnType<typeof patientPlan>>, { status: "discharged" }>) {
@@ -159,6 +162,52 @@ export async function visitsText(context: PatientContext) {
     "Visits booked:", ...(visits.length ? visits.map(line) : ["- none"]),
     "Visits requested, waiting for the care team to confirm:", ...(asked.length ? asked.map(r => `- ${r.doctor} (${r.specialty}): ${malaysiaTime(r.at)}`) : ["- none"]),
   ].join("\n");
+}
+
+/**
+ * The size of the record a Sona Care answer reads, typed or spoken: 6,000 characters, about 2,000 of Gemma's 16,384
+ * tokens at 3 characters a token (baseten-models), so a call's conversation and the answer keep the rest, and a spoken
+ * turn waits on a short prompt. Inside it the doctor's note gets NOTE_CHARS and the check-ins their last REPLIES_MAX replies.
+ */
+export const RECORD_CHARS = 6000;
+const NOTE_CHARS = 1200, REPLIES_MAX = 5, REPLY_CHARS = 200, MISSED_MAX = 5;
+
+/**
+ * Her own record as plain text for the model, the same for a typed question (care.ask) and a call (the voice agents):
+ * her plan once home (planText), her visits (visitsText), then what the hospital recorded about her (recordFacts: history,
+ * allergy, medicines, observations, results), her latest saved note, her check-in replies as they were read, and the doses
+ * she marked taken or not. Every row is hers alone: each read is keyed by the signed-in patient and her hospital.
+ * Only the plan must be read (as before); a part that cannot be read is left out, never failing the answer, so the urgent
+ * gates after it still run.
+ */
+export async function recordText(context: PatientContext) {
+  const { db, hospitalId, patientId } = context, now = clockOf(context);
+  const unread = <T>(what: string, none: T) => (error: unknown) => { console.error(`${what} not read`, error); return none; };
+  const [plan, visits, facts, [note], asked, taken] = await Promise.all([
+    patientPlan(context),
+    visitsText(context).catch(unread("visits", "")),
+    recordFacts(db, hospitalId, patientId).catch(unread("record", [] as string[])),
+    db.select({ sentences: notes.sentences, at: notes.createdAt }).from(notes).innerJoin(encounters, eq(encounters.id, notes.encounterId))
+      .where(and(eq(encounters.patientId, patientId), eq(encounters.hospitalId, hospitalId))).orderBy(desc(notes.createdAt), desc(notes.revision)).limit(1)
+      .catch(unread("note", [] as { sentences: { id: string; text: string }[]; at: Date }[])),
+    listCheckIns(db, hospitalId, { patientId }).catch(unread("check-ins", [] as Awaited<ReturnType<typeof listCheckIns>>)),
+    takenKeys(db, hospitalId, patientId).catch(unread("doses", [] as string[])),
+  ]);
+  const replies = asked.flatMap(c => c.replies.map(r => `- Day ${c.day} check-in, ${malaysiaDay(r.receivedAt)}: "${r.text.slice(0, REPLY_CHARS)}" (read as ${r.label})`)).slice(-REPLIES_MAX);
+  // The note's sentences in order, whole, while they fit.
+  const noted = (note?.sentences ?? []).map(s => s.text).filter((_, i, all) => all.slice(0, i + 1).join(" ").length <= NOTE_CHARS).join(" ");
+  // Doses count from the plan's own schedule, as the care team's adherence line does (doses.ts).
+  const doses = plan.status === "discharged" ? adherence([...plan.medicines.new, ...plan.medicines.changed, ...plan.medicines.continue], plan.dischargedAt, taken, now) : undefined;
+  // ponytail: her rows are read whole and the text cut at RECORD_CHARS from its end; a long record would need selection by the question (retrieval).
+  const text = [
+    plan.status === "discharged" ? planText(plan) : "Still in hospital: no take-home medicines or leaflet yet.",
+    visits,
+    ...(facts.length ? ["Recorded by the hospital:", ...facts] : []),
+    ...(noted ? [`Doctor's note (saved ${malaysiaDay(note!.at)}):`, noted] : []),
+    ...(replies.length ? ["Check-in replies:", ...replies] : []),
+    ...(doses?.due ? [`Doses since going home: ${doses.taken} of ${doses.due} due marked taken${doses.missed.length ? `; not marked taken: ${doses.missed.slice(-MISSED_MAX).map(m => `${m.name} ${malaysiaTime(m.dueAt)}`).join(", ")}` : ""}`] : []),
+  ].filter(Boolean).join("\n");
+  return { plan, text: text.length > RECORD_CHARS ? text.slice(0, text.lastIndexOf("\n", RECORD_CHARS)) : text };
 }
 
 /** Sona Care's read of the patient's own plan: what they take home and what comes next. */
