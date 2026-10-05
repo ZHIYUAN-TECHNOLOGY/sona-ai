@@ -69,16 +69,22 @@ test("any question goes to the model first; a plan question's authored answer on
   const asked = [];
   const grounded = modelSays({ answer: "Your next visit is the clinic review on 11 October.", grounded: true, urgent: false, from: "follow-up" });
   expect(await answer("When is my next visit?", asks, api(async q => { asked.push(q); return grounded(); }), "chest infection")).toEqual({
-    kind: "plan", asked: { question: "", answer: "Your next visit is the clinic review on 11 October.", source: "From your discharge plan · follow-up", kind: "medicine" },
+    kind: "plan", asked: { question: "", answer: "Your next visit is the clinic review on 11 October.", source: "From your record · follow-up", kind: "medicine" },
   });
   expect(asked).toEqual(["When is my next visit?"]);
   expect(await answer("when is my next visit?", asks, api(fixture), "chest infection")).toEqual({ kind: "plan", asked: asks[2] });
   expect(await answer("When is my next visit?", asks, api(failing))).toEqual({ kind: "plan", asked: asks[2] });
   // The label is in her language, the plan's part too (the model names it in English); a part not known shows as written.
   const sourceIn = async (lang, reply) => (await answer("Bila?", [], api(modelSays({ answer: "Esok.", urgent: false, ...reply })), undefined, lang)).asked.source;
-  expect(await sourceIn("ms", { grounded: true, from: "Warning signs" })).toBe("Daripada pelan discaj anda · tanda amaran");
-  expect(await sourceIn("zh", { grounded: true, from: "medicines" })).toBe("来自您的出院计划 · 药物");
-  expect(await sourceIn("ms", { grounded: true, from: "allergies" })).toBe("Daripada pelan discaj anda · allergies");
+  expect(await sourceIn("ms", { grounded: true, from: "Warning signs" })).toBe("Daripada rekod anda · tanda amaran");
+  expect(await sourceIn("zh", { grounded: true, from: "medicines" })).toBe("来自您的病历 · 药物");
+  // The record's other parts (what the hospital recorded about her) are named in her language too.
+  expect(await sourceIn("ms", { grounded: true, from: "allergies" })).toBe("Daripada rekod anda · alahan");
+  expect(await sourceIn("zh", { grounded: true, from: "results" })).toBe("来自您的病历 · 检查结果");
+  expect(await sourceIn("en", { grounded: true, from: "check-ins" })).toBe("From your record · check-ins");
+  expect(await sourceIn("en", { grounded: true, from: "note" })).toBe("From your record · doctor's note");
+  expect(await sourceIn("ms", { grounded: true, from: "family" })).toBe("Daripada rekod anda · family");
+  expect(await sourceIn("zh", { grounded: true })).toBe("来自您的病历");
   expect(await sourceIn("ms", { grounded: false })).toBe("Jawapan umum · bukan daripada rekod anda");
   expect(await sourceIn("zh", { grounded: false })).toBe("一般回答 · 并非来自您的病历");
   // No content limit: an answer from general knowledge is shown too, marked as not from their records.
@@ -106,7 +112,7 @@ test("anything else is the model's grounded answer, or the honest no (urgent whe
   expect(spoken(await answer("Can I drink coffee?", asks, api(failing)))).toBe(NO_ANSWER);
   expect(await answer("I feel confused", asks, api(modelSays({ answer: "Call 999 now.", grounded: false, urgent: true })))).toEqual({ kind: "none", urgent: true });
   const bm = await answer("Boleh saya minum kopi?", asks, api(modelSays({ answer: "Pelan anda tidak menyebut kopi.", grounded: true, urgent: false })), undefined, "ms");
-  expect(bm.asked.source).toBe("Daripada pelan discaj anda");
+  expect(bm.asked.source).toBe("Daripada rekod anda");
 });
 
 test("doctor questions search the directory: by the question's words, else the plan's condition, else the care team (1–3)", async () => {

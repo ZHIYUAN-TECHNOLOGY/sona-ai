@@ -2,7 +2,7 @@ import { basetenModels } from "@sona-ai/api/baseten-models";
 import { clockOffsetOf, shifted } from "@sona-ai/api/clock";
 import type { Context as ApiContext } from "@sona-ai/api/context";
 import { stubModels } from "@sona-ai/api/models";
-import { lastDischarge, patientPlan, planText } from "@sona-ai/api/routers/care-plan";
+import { lastDischarge, recordText } from "@sona-ai/api/routers/care-plan";
 import { careLinkOf } from "@sona-ai/api/routers/hospital";
 import { LINES, answerTurn, basetenChat, type TurnSummary } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
@@ -21,7 +21,7 @@ type Language = keyof typeof LINES;
 /**
  * Sona Care's live voice, on the Cloudflare Agents SDK (withVoice): one Durable Object per patient, named by the Worker
  * from the signed-in session (voiceRoute), never by the app. The patient talks naturally: our Manglish ASR hears each
- * turn (packages/api/src/voice-agent/listen.ts), Gemma answers anything they ask, their own care from their plan, sentence
+ * turn (packages/api/src/voice-agent/listen.ts), Gemma answers anything they ask, their own care from their record, sentence
  * by sentence (answer.ts), and Sona's Malaysian voice speaks it (voice.ts). The patient can cut in at any
  * point, which cancels the answer and the voice in flight. The SDK keeps the conversation, so follow-ups work.
  *
@@ -47,6 +47,12 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
   readonly #heard = new WeakMap<Connection, { text: string; by: NonNullable<TurnSummary["ear"]> }>();
   /** The language chosen at discharge, read when a call starts: Sona's own lines when the app does not say (`?lang=`). */
   #discharged: Language | undefined;
+  /**
+   * Her record for the call (recordText, the text a typed question reads), read once as the call starts: reading it each
+   * turn put its queries before Gemma's first word, and the same text every turn is a prefix box ① has already read.
+   * ponytail: a record changed during a call (and the time now in it) is not seen until the next call.
+   */
+  readonly #records = new WeakMap<Connection, Promise<Awaited<ReturnType<typeof recordText>> | undefined>>();
 
   // Her voice comes as it is made (raw PCM, a piece at a time); box ② needs its /v1/tts/stream route for it.
   tts = new SonaVoice(this.#baseten ? basetenSpeak(this.#baseten) : async () => ({}), (said, turn) => {
@@ -82,6 +88,7 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
   /** On picking up, the call's boxes are woken, and the patient is told plainly if hearing or answers are still starting. */
   async onCallStart(connection: Connection) {
     const { hospitalId, patientId } = patientOf(this.name);
+    this.#records.set(connection, this.#read());
     try {
       this.#discharged = (await lastDischarge(getDb(), hospitalId, patientId))?.language ?? this.#discharged;
     } catch { /* Sona's lines stay in the app's language, or English */ }
@@ -97,15 +104,16 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
     // Read before anything is awaited, while the last words heard are still this turn's.
     const ear = this.#heard.get(connection), heard = ear?.text === transcript ? ear.by : undefined;
     const { hospitalId, patientId } = patientOf(this.name);
-    const db = getDb();
-    // As a route's context: the hospital's demo clock, live updates, and the visit's check-in agent (a report wakes it, as a reply in the app does).
-    const context: ApiContext = { db, session: null, models: this.#models, now: shifted(undefined, await clockOffsetOf(db, hospitalId)), announce: announcer(this.env), followUps: followUpAgents(this.env) };
-    const plan = await patientPlan({ ...context, hospitalId, patientId });
-    const home = plan.status === "discharged" ? plan : undefined;
-    if (home) this.#discharged = home.language;
+    // A turn with no call started before it (a typed one) reads the record itself, once for the connection.
+    const reading = this.#records.get(connection) ?? this.#read();
+    this.#records.set(connection, reading);
+    const [context, record] = await Promise.all([this.#context(hospitalId), reading]);
+    // A record that could not be read is read again next turn; this turn is still answered, so its 999 and care-team checks run.
+    if (!record) this.#records.delete(connection);
+    if (record?.plan.status === "discharged") this.#discharged = record.plan.language;
     return answerTurn({
       question: transcript, heard, history: messages, signal, chat: this.#chat,
-      plan: home && planText(home),
+      plan: record?.text,
       language: this.#language(connection),
       escalate: async () => {
         const told = await tellCareTeam(context, hospitalId, patientId, transcript);
@@ -114,6 +122,18 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
       },
       done: summary => send(connection, { type: "sona_turn", ...summary }),
     });
+  }
+
+  /** As a route's context: the hospital's demo clock, live updates, and the visit's check-in agent (a report wakes it, as a reply in the app does). */
+  async #context(hospitalId: string): Promise<ApiContext> {
+    const db = getDb();
+    return { db, session: null, models: this.#models, now: shifted(undefined, await clockOffsetOf(db, hospitalId)), announce: announcer(this.env), followUps: followUpAgents(this.env) };
+  }
+
+  /** Her record as care.ask reads it; none when it cannot be read. */
+  async #read() {
+    const { hospitalId, patientId } = patientOf(this.name);
+    return recordText({ ...await this.#context(hospitalId), hospitalId, patientId }).catch(() => undefined);
   }
 
   /** The app's language (`?lang=` on the socket), else the one chosen at discharge, else English. */

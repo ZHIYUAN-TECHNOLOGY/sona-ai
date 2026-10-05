@@ -111,6 +111,26 @@ export function quotedClaims(claims: Claim[], references: Pick<Reference, "n" | 
   });
 }
 
+/**
+ * In a visit, what the evidence means for this patient: one sentence, the references behind it, and the fact from the
+ * patient's record it rests on, in the record's own words.
+ */
+export type PatientPoint = { text: string; cites: number[]; fact: string };
+/**
+ * No source or no recorded fact, no point: keeps a point (at most 3) only if it cites one of the `count` references and
+ * its `fact` is in the record text the model was given, word for word (case and spacing aside), so a fact about the
+ * patient can never be invented.
+ * ponytail: the fact is checked, the sentence written around it is not; the card shows the fact under it for the doctor to compare.
+ */
+export function recordedPoints(points: PatientPoint[], count: number, record: string): PatientPoint[] {
+  const recorded = plain(record);
+  return points.flatMap(p => {
+    const [claim] = sourcedClaims([{ text: typeof p.text === "string" ? p.text : "", cites: Array.isArray(p.cites) ? p.cites : [] }], count);
+    const fact = typeof p.fact === "string" ? p.fact.trim().slice(0, 200) : "";
+    return claim && plain(fact).length >= 3 && recorded.includes(plain(fact)) ? [{ text: claim.text, cites: claim.cites, fact }] : [];
+  }).slice(0, 3);
+}
+
 /** A retrieved study opens its own abstract; an authored one opens a PubMed search for it. */
 export const pubmedUrl = (s: Pick<Study, "query" | "pmid">) => s.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${s.pmid}/` : `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(s.query)}`;
 

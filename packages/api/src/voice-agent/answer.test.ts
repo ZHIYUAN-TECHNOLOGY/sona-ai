@@ -123,7 +123,7 @@ test("honest when there is no answer: Gemma starting (with its minutes), a reply
   expect(await spoken(notSaid.turn)).toEqual([LINES.en.unavailable]);
   expect(notSaid.summaries[0]!.grounded).toBe(false);
   let asked = false;
-  expect(await spoken(turnOf({ question: "When can I go home?", plan: undefined, chat: async messages => { asked = messages[0]!.content.includes("None yet: they are still in hospital."); return { waking: 1 }; } }).turn)).toEqual([LINES.en.starting(1)]);
+  expect(await spoken(turnOf({ question: "When can I go home?", plan: undefined, chat: async messages => { asked = messages[0]!.content.includes("Patient's record:\nNone could be read."); return { waking: 1 }; } }).turn)).toEqual([LINES.en.starting(1)]);
   expect(asked).toBe(true);
   const bare = turnOf({ question: "Can I rest?", chat: gemma(["Your plan says rest ", "at home."]).chat });
   expect(await spoken(bare.turn)).toEqual(["Your plan says rest at home."]);

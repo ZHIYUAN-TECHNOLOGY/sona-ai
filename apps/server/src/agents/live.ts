@@ -2,7 +2,7 @@ import { EMERGENCY, basetenModels } from "@sona-ai/api/baseten-models";
 import { clockOffsetOf, shifted } from "@sona-ai/api/clock";
 import type { Context as ApiContext } from "@sona-ai/api/context";
 import { stubModels } from "@sona-ai/api/models";
-import { lastDischarge, patientPlan, planText } from "@sona-ai/api/routers/care-plan";
+import { lastDischarge, recordText } from "@sona-ai/api/routers/care-plan";
 import { LINES, answerTurn, basetenChat, callNow, type TurnSummary } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber, type SessionHooks } from "@sona-ai/api/voice-agent/listen";
@@ -49,7 +49,7 @@ class LiveCall {
   script?: string;
   /** With the router: her own words kept back until the patient's are known, and whose the last second was (its voice follows). */
   router?: Router;
-  /** The patient's plan as read when the call began, for Gemma's answers. */
+  /** Her record (recordText) as read when the call began, for Gemma's answers and box ④'s brief. */
   plan?: string;
 
   /** With the router: she only listens while a turn is Gemma's, and is free again after it. */
@@ -125,16 +125,17 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     };
   }
 
-  /** Box ④ takes the call with the patient's plan in its brief; Sona's voice comes back as 24 kHz PCM, a second a frame. */
+  /** Box ④ takes the call with the patient's record in its brief; Sona's voice comes back as 24 kHz PCM, a second a frame. */
   async onCallStart(connection: Connection) {
     const call = this.#calls.get(connection.id);
     if (!call) return;
     const { hospitalId, patientId } = patientOf(this.name);
-    const plan = await patientPlan({ ...await this.#context(hospitalId), hospitalId, patientId }).catch(() => undefined);
-    const home = plan?.status === "discharged" ? plan : undefined;
+    // Her record as care.ask reads it (recordText), read once for the call.
+    const record = await recordText({ ...await this.#context(hospitalId), hospitalId, patientId }).catch(() => undefined);
+    const home = record?.plan.status === "discharged" ? record.plan : undefined;
     const discharged = home?.language ?? await lastDischarge(getDb(), hospitalId, patientId).then(d => d?.language, () => undefined);
     call.language = languageOf(connection, discharged);
-    call.plan = home && planText(home);
+    call.plan = record?.text;
     const box = await openBox(this.env.SONA_LIVE_URL, this.env, this.#baseten?.apiKey).catch(() => undefined);
     if (call.closed) return box?.close();
     if (!box) return this.#tell(connection, LINES[call.language].unavailable);
@@ -143,7 +144,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     // Her trained voice in every language (the box's "v1" slot holds talker voice-v3, trained on the live layout:
     // docs/minicpm-o-finetune.md); voice-v1 garbled live English, so English and Chinese used the model's own until 3 Oct.
     // On SageMaker's L4s her own writing-down (2.6 s) stalls her voice, so box ② alone writes the patient down there.
-    box.send(JSON.stringify(liveStart(liveBrief(home && planText(home), call.language), this.#brain, !onSageMaker(this.env.SONA_LIVE_URL), this.#oneEar ? "own" : "box2")));
+    box.send(JSON.stringify(liveStart(liveBrief(call.plan, call.language), this.#brain, !onSageMaker(this.env.SONA_LIVE_URL), this.#oneEar ? "own" : "box2")));
     send(connection, { type: "audio_config", format: "pcm16", sampleRate: 24_000 });
     call.box = box;
     for (const chunk of call.pending.splice(0)) box.send(chunk);
@@ -220,8 +221,8 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     call.summary = undefined;
     this.#show(connection, call, says.begin());
     try {
-      // The plan as the call began with it (onCallStart): reading it again each turn put two queries before Gemma's
-      // first word. ponytail: a plan changed during a call is not seen until the next call.
+      // Her record as the call began with it (onCallStart): reading it again each turn put its queries before Gemma's
+      // first word. ponytail: a record changed during a call is not seen until the next call.
       const parts = answerTurn({
         question, history, signal, chat: this.#chat,
         plan: call.plan,

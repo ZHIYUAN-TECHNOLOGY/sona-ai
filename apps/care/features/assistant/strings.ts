@@ -7,8 +7,9 @@ import "@/lib/strings";
  */
 addStrings({
   en: {
-    "ask.plan": "From your discharge plan", "ask.from": "From your {name} instructions", "ask.fromModel": "From your discharge plan · {from}", "ask.general": "General answer · not from your records",
+    "ask.plan": "From your discharge plan", "ask.from": "From your {name} instructions", "ask.fromModel": "From your record · {from}", "ask.record": "From your record", "ask.general": "General answer · not from your records",
     "ask.part.medicines": "medicines", "ask.part.leaflet": "leaflet", "ask.part.warning-signs": "warning signs", "ask.part.follow-up": "follow-up",
+    "ask.part.visits": "visits", "ask.part.history": "history", "ask.part.allergies": "allergies", "ask.part.results": "results", "ask.part.note": "doctor's note", "ask.part.check-ins": "check-ins", "ask.part.doses": "doses taken",
     "ask.planSays": "Your plan says: {text}", "ask.never": "Never take two doses at once to make up for one.",
     "ask.noMissInfo": "Your plan doesn't say what to do if you miss a dose of {name}, so ask your care team.", "ask.usual": "Your usual dose: {usual}.", "ask.at": "at {times}",
     "ask.qMiss": "What if I miss a dose of {name}?", "ask.qFor": "What is {name} for?", "ask.take": "Take {take}", "ask.qChanged": "What changed with {name}?", "ask.qVisit": "When is my next visit?",
@@ -52,8 +53,9 @@ addStrings({
     "mic.stop": "Stop recording", "mic.recording": "Recording, {time}", "mic.transcribing": "Transcribing", "mic.reading": "Reading what you said", "mic.speak": "Speak", "mic.stopHint": "Or just stop talking", "mic.hint": "Speak in Malay, English or Chinese", "mic.finishing": "Finishing…",
   },
   ms: {
-    "ask.plan": "Daripada pelan discaj anda", "ask.from": "Daripada arahan {name} anda", "ask.fromModel": "Daripada pelan discaj anda · {from}", "ask.general": "Jawapan umum · bukan daripada rekod anda",
+    "ask.plan": "Daripada pelan discaj anda", "ask.from": "Daripada arahan {name} anda", "ask.fromModel": "Daripada rekod anda · {from}", "ask.record": "Daripada rekod anda", "ask.general": "Jawapan umum · bukan daripada rekod anda",
     "ask.part.medicines": "ubat", "ask.part.leaflet": "risalah", "ask.part.warning-signs": "tanda amaran", "ask.part.follow-up": "rawatan susulan",
+    "ask.part.visits": "lawatan", "ask.part.history": "sejarah kesihatan", "ask.part.allergies": "alahan", "ask.part.results": "keputusan ujian", "ask.part.note": "nota doktor", "ask.part.check-ins": "semakan", "ask.part.doses": "dos yang diambil",
     "ask.planSays": "Pelan anda menyatakan: {text}", "ask.never": "Jangan sesekali ambil dua dos sekali gus untuk menggantikan dos yang terlepas.",
     "ask.noMissInfo": "Pelan anda tidak menyatakan apa perlu dibuat jika terlepas dos {name}, jadi tanya pasukan penjagaan anda.", "ask.usual": "Dos biasa anda: {usual}.", "ask.at": "pada {times}",
     "ask.qMiss": "Bagaimana jika saya terlepas dos {name}?", "ask.qFor": "{name} untuk apa?", "ask.take": "Ambil {take}", "ask.qChanged": "Apa yang berubah dengan {name}?", "ask.qVisit": "Bila lawatan saya yang seterusnya?",
@@ -97,8 +99,9 @@ addStrings({
     "mic.stop": "Berhenti merakam", "mic.recording": "Merakam, {time}", "mic.transcribing": "Menukar suara kepada teks", "mic.reading": "Sedang membaca apa yang anda kata", "mic.speak": "Cakap", "mic.stopHint": "Atau berhenti bercakap sahaja", "mic.hint": "Cakap dalam Bahasa Melayu, Inggeris atau Cina", "mic.finishing": "Menyiapkan…",
   },
   zh: {
-    "ask.plan": "来自您的出院计划", "ask.from": "来自{name}的用药说明", "ask.fromModel": "来自您的出院计划 · {from}", "ask.general": "一般回答 · 并非来自您的病历",
+    "ask.plan": "来自您的出院计划", "ask.from": "来自{name}的用药说明", "ask.fromModel": "来自您的病历 · {from}", "ask.record": "来自您的病历", "ask.general": "一般回答 · 并非来自您的病历",
     "ask.part.medicines": "药物", "ask.part.leaflet": "说明单", "ask.part.warning-signs": "警示症状", "ask.part.follow-up": "复诊",
+    "ask.part.visits": "预约", "ask.part.history": "病史", "ask.part.allergies": "过敏", "ask.part.results": "检查结果", "ask.part.note": "医生记录", "ask.part.check-ins": "回访", "ask.part.doses": "服药记录",
     "ask.planSays": "您的计划写着：{text}", "ask.never": "千万不要一次吃两份来补漏掉的那一次。",
     "ask.noMissInfo": "您的计划没有说漏吃{name}该怎么办，请问医护团队。", "ask.usual": "平常的剂量：{usual}。", "ask.at": "{times}",
     "ask.qMiss": "漏吃了一次{name}怎么办？", "ask.qFor": "{name}是治什么的？", "ask.take": "服用：{take}", "ask.qChanged": "{name}有什么改变？", "ask.qVisit": "我下次复诊是什么时候？",

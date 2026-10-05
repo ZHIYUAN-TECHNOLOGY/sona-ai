@@ -3,7 +3,7 @@ import { admissions, appointments, checkInReplies, checkIns, encounters, finding
 import type { MedChange } from "@sona-ai/domain/discharge";
 import type { Encounter, Patient } from "@sona-ai/domain/types";
 import type { WardRecord } from "@sona-ai/domain/ward";
-import { and, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { encounterEditSchema, recordReviewSchema, type EncounterEdit, type RecordReview } from "../contracts";
@@ -55,6 +55,43 @@ export async function logAnswer<T extends Origin>(db: Db, encounterId: string | 
 /** One dated thing the record holds about the visit's patient. */
 export type TimelineEvent = { id: string; at: Date; title: string; detail?: string };
 const sentenceCase = (text: string) => text.charAt(0).toUpperCase() + text.slice(1).replace(/-/g, " ");
+const reading = (o: { kind: string; value: number; unit: string }) => o.unit === "AMT" ? `AMT ${o.value}/10` : `${sentenceCase(o.kind)} ${o.value} ${o.unit}`;
+/** "Thu, 01 Oct 2026": the day in Malaysia, the same on any server. */
+export const malaysiaDay = (at: Date) => new Date(at.getTime() + 8 * 3600_000).toUTCString().slice(0, 16);
+/** Results a model reads about one patient: the latest dozen. */
+const RESULTS_MAX = 12;
+
+/**
+ * A patient's record as the lines a model reads, from what the briefing and its timeline read (recordOf, the chart, the
+ * results): age and sex (never the name or the record number), why they came, history, allergy, medicines, the latest
+ * reading of each observation and the latest results, each with its day. Nothing is told that no row holds. Only in the
+ * caller's hospital: a patient of another hospital has no lines. Sona Care's answers (care-plan's recordText) and the
+ * evidence answer's patient section (evidence.ts) read the same lines.
+ */
+export async function recordFacts(db: Db, hospitalId: string, patientId: string): Promise<string[]> {
+  const [row] = await db.select().from(patients).where(and(eq(patients.id, patientId), eq(patients.hospitalId, hospitalId)));
+  if (!row) return [];
+  const [chart, labs] = await Promise.all([
+    db.select().from(observations).where(eq(observations.patientId, patientId)).orderBy(asc(observations.observedAt)),
+    db.select().from(labResults).where(eq(labResults.patientId, patientId)).orderBy(desc(labResults.receivedAt)).limit(RESULTS_MAX),
+  ]);
+  const p = recordOf(row);
+  // The last reading of each kind (rows come oldest first); a record with no chart rows keeps the vitals written at intake.
+  const latest = [...new Map(chart.map(o => [o.kind, o])).values()];
+  return [
+    `Age ${p.age}, ${p.sex.toLowerCase()}. Came in with: ${p.complaint}`,
+    p.history.length ? `History: ${p.history.join("; ")}` : "",
+    p.family ? `Family history: ${p.family}` : "",
+    p.social ? `Social history: ${p.social}` : "",
+    `Allergies: ${p.allergies ?? "none recorded"}`,
+    `Medicines before admission: ${p.medicines.join("; ") || "none recorded"}`,
+    latest.length ? `Observations (latest of each): ${latest.map(o => `${reading(o)} (${malaysiaDay(o.observedAt)})`).join(" · ")}`
+      : p.vitals?.length ? `Observations at intake: ${p.vitals.map(v => `${v.label} ${v.value}`).join(" · ")}` : "",
+    ...(labs.length ? ["Results:", ...labs.map(l => l.flag === "pending" ? `- ${l.test}: sent to the lab, result pending (${malaysiaDay(l.receivedAt)})`
+      : `- ${[l.test, l.value, l.unit].filter(Boolean).join(" ")}${l.flag ? `, ${l.flag}` : ""} (${malaysiaDay(l.receivedAt)})`)] : []),
+    p.incomplete ? "The record is marked incomplete." : "",
+  ].filter(Boolean);
+}
 
 /**
  * The briefing's timeline, read from the rows that carry a time: the chart, results, the visit's notes, the stay (fit,
@@ -78,7 +115,6 @@ export async function timelineOf(db: Db, hospitalId: string, encounterId: string
   ]);
   // One round of observations is one event, however many readings it took.
   const rounds = Map.groupBy(chart, o => o.observedAt.getTime());
-  const reading = (o: (typeof chart)[number]) => o.unit === "AMT" ? `AMT ${o.value}/10` : `${sentenceCase(o.kind)} ${o.value} ${o.unit}`;
   const RECEIPT: Record<string, string> = { prescription: "Prescription approved", claim: "Guarantee letter request sent", appeal: "Appeal sent to the insurer" };
   const events: (TimelineEvent | false | null | undefined)[] = [
     ...[...rounds].map(([time, readings]) => ({ id: `observations-${time}`, at: new Date(time), title: "Observations", detail: readings.map(reading).join(" · ") })),

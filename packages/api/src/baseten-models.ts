@@ -1,6 +1,6 @@
 import type { AppealLetter, Code } from "@sona-ai/domain/claim";
 import { planFor, type Language, type PlanRecord } from "@sona-ai/domain/discharge";
-import type { Claim } from "@sona-ai/domain/evidence";
+import type { Claim, PatientPoint } from "@sona-ai/domain/evidence";
 import { DRAFT_MAX } from "@sona-ai/domain/messages";
 import { huddle } from "@sona-ai/domain/ward";
 
@@ -330,7 +330,7 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
     async synthesiseEvidence(input) {
       try {
         const asked = evidenceQuestion(input);
-        const out = await call("brain", "/v1/chat/completions", JSON.stringify(evidenceChat(asked.content)), "application/json", EVIDENCE_MS);
+        const out = await call("brain", "/v1/chat/completions", JSON.stringify(evidenceChat(asked.content, input.patient)), "application/json", EVIDENCE_MS);
         const choice = out?.choices?.[0];
         const read = evidenceRead(choice?.message?.content, asked.shown, choice?.finish_reason === "length");
         if (read) return { ...read, source: "model", model: BRAIN_MODEL };
@@ -482,7 +482,7 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
   async function* streamEvidence(input: EvidenceInput): AsyncGenerator<EvidencePart, Awaited<ReturnType<Models["synthesiseEvidence"]>>> {
     try {
       const asked = evidenceQuestion(input);
-      const res = await send("brain", "/v1/chat/completions", JSON.stringify({ ...evidenceChat(asked.content), stream: true }), "application/json", EVIDENCE_MS);
+      const res = await send("brain", "/v1/chat/completions", JSON.stringify({ ...evidenceChat(asked.content, input.patient), stream: true }), "application/json", EVIDENCE_MS);
       let written = "", bottom = false, sent = 0, cut = false;
       for await (const delta of deltas(res.body!, reason => { answered("brain"); cut = reason === "length"; })) {
         written += delta;
@@ -515,7 +515,19 @@ const CONTEXT_TOKENS = 16_384, EVIDENCE_MAX_TOKENS = 2000, CHARS_PER_TOKEN = 3;
 const PROMPT_CHARS = (CONTEXT_TOKENS - EVIDENCE_MAX_TOKENS - 384) * CHARS_PER_TOKEN;
 /** 2,000 tokens can take longer to write than the 30 s other calls get. */
 const EVIDENCE_MS = 60_000;
-const evidenceChat = (content: string) => ({ model: BRAIN_MODEL, messages: [{ role: "system", content: EVIDENCE }, { role: "user", content }], temperature: 0.1, max_tokens: EVIDENCE_MAX_TOKENS });
+/**
+ * Added to the evidence prompt when the question is asked in a visit: the patient's record follows the sources (no name
+ * or record number in it), and the answer gains a separate part about this patient. The claims stay as grounded as
+ * without it; a point's fact is checked against the record by the route (recordedPoints), and one not in it is dropped.
+ */
+const EVIDENCE_PATIENT = `
+This question was asked while seeing one patient. Their record follows the sources, under "Patient record", without their name.
+Add to the JSON, after "claims": "forPatient": [{"text": "<one sentence>", "cites": [<source numbers>], "fact": "<words copied from the patient record>"}]
+- forPatient: up to 3 short points on what in your claims bears on THIS patient: a drug in the evidence they are allergic to or already take, a dose caution for their kidney function, age or another recorded condition, a recorded result that changes which evidence applies.
+- Each point cites the numbered source it rests on, and copies in "fact", word for word, the one fact from the patient record it uses.
+- Use only facts written in the patient record: never guess one, never give a diagnosis, and return "forPatient": [] when nothing in the record bears on the evidence.
+- The claims, the bottom line and "general" stay about the evidence, exactly as above, and state no fact about the patient: the record's facts go only in "forPatient".`;
+const evidenceChat = (content: string, patient?: string) => ({ model: BRAIN_MODEL, messages: [{ role: "system", content: patient ? EVIDENCE + EVIDENCE_PATIENT : EVIDENCE }, { role: "user", content }], temperature: 0.1, max_tokens: EVIDENCE_MAX_TOKENS });
 
 type EvidenceSource = EvidenceInput["sources"][number];
 
@@ -536,7 +548,9 @@ function wholeSentences(text: string, max: number) {
 function evidenceQuestion(input: EvidenceInput) {
   const thread = input.thread.map(t => `Earlier question: ${t.question}\nEarlier answer: ${t.answer}`).join("\n");
   const head = `${thread ? `${thread}\n\n` : ""}Question: ${input.question}\n\nSources:\n`;
-  let room = PROMPT_CHARS - EVIDENCE.length - head.length;
+  // The visit's patient's record goes after the sources, and its room is taken first: it is short, and the sources are cut to fit.
+  const record = input.patient ? `\n\nPatient record:\n${input.patient}` : "";
+  let room = PROMPT_CHARS - EVIDENCE.length - head.length - (record ? EVIDENCE_PATIENT.length + record.length : 0);
   const shown: EvidenceSource[] = [], blocks: string[] = [];
   for (const s of input.sources as EvidenceSource[]) {
     const title = `[${s.n}] (${[s.design, s.year, s.from, s.pmid && `PMID ${s.pmid}`].filter(Boolean).join(", ")}) ${s.title}\n`;
@@ -544,7 +558,7 @@ function evidenceQuestion(input: EvidenceInput) {
     if (!text && s.text) break;
     blocks.push(title + text); shown.push(s); room -= title.length + text.length + 2;
   }
-  return { content: head + blocks.join("\n\n"), shown };
+  return { content: head + blocks.join("\n\n") + record, shown };
 }
 
 /**
@@ -571,7 +585,10 @@ function evidenceOf(read: Record<string, unknown>, shown: EvidenceSource[]): Evi
     const quotes = Array.isArray(c.quotes) ? c.quotes.flatMap((q: { n?: unknown; text?: unknown }) => { const [n] = citedSources(q?.n, shown); return n && typeof q?.text === "string" ? [{ n, text: q.text }] : []; }) : undefined;
     return cites.length ? [{ text: c.text.replace(INLINE_CITES, "").trim(), cites, topic: c.topic as Claim["topic"], quotes }] : [];
   });
-  return { claims, followUps: strings(read.followUps, 3), general: text(read.general), bottomLine: text(read.bottomLine, 240) };
+  // The part about the visit's patient, as written: its citations read like a claim's; the route checks each fact against the record.
+  const patientPoints: PatientPoint[] | undefined = Array.isArray(read.forPatient) ? read.forPatient.flatMap((p: { text?: unknown; cites?: unknown; fact?: unknown }) =>
+    typeof p?.text === "string" && typeof p.fact === "string" ? [{ text: p.text.replace(INLINE_CITES, "").trim(), cites: citedSources([p.cites, p.text.match(INLINE_CITES) ?? []], shown), fact: p.fact }] : []) : undefined;
+  return { claims, followUps: strings(read.followUps, 3), general: text(read.general), bottomLine: text(read.bottomLine, 240), ...patientPoints?.length && { patientPoints } };
 }
 
 /**

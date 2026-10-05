@@ -140,11 +140,12 @@ async function doctorsFor(q: string, find: Api["doctors"], condition: string | u
 }
 
 /**
- * A model's care.ask answer as a reply. Any question gets its answer (no content limit): from their plan, it says where
- * from; otherwise it is marked as a general answer, not from their records. A warning sign is the 999 card.
+ * A model's care.ask answer as a reply. Any question gets its answer (no content limit): from their record (their plan,
+ * and what the hospital recorded about them), it says which part; otherwise it is marked as a general answer, not from
+ * their records. A warning sign is the 999 card.
  */
 /**
- * The part of the plan a model says its answer is from, in the patient's language. The model names it in English
+ * The part of the record a model says its answer is from, in the patient's language. The model names it in English
  * whatever the question's language (care.ask's prompt lists them); a part not listed there shows as the model wrote it.
  */
 function partOf(from: string, lang: Lang) {
@@ -156,7 +157,7 @@ function fromModel(a: PlanAnswer, lang: Lang): Exclude<Reply, { kind: "doctors" 
   if (!a.answer) return NONE;
   if (a.urgent) return CALL_999;
   const t = tFor(lang);
-  const source = a.grounded ? a.from ? t("ask.fromModel", { from: partOf(a.from, lang) }) : t("ask.plan") : t("ask.general");
+  const source = a.grounded ? a.from ? t("ask.fromModel", { from: partOf(a.from, lang) }) : t("ask.record") : t("ask.general");
   return { kind: "plan", asked: { question: "", answer: a.answer, source, kind: "medicine" } };
 }
 

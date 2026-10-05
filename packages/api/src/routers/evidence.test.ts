@@ -280,6 +280,46 @@ test("PubMed is searched by the question's key terms, never the patient's name o
   expect(r.references.map(s => s.pmid)).toEqual(["25608756"]);
 });
 
+test("asked in a visit, the model reads that patient's record without their name or record number and says what bears on them; a point naming an unrecorded fact is dropped; asked anywhere else there is no patient", async () => {
+  const calls: string[] = [];
+  const fetcher = (async (url: string) => {
+    calls.push(decodeURIComponent(String(url)));
+    return new Response(String(url).includes("esearch") ? JSON.stringify({ esearchresult: { idlist: ["25608756"] } }) : efetch);
+  }) as unknown as typeof fetch;
+  const seen: Parameters<Models["synthesiseEvidence"]>[0][] = [];
+  const models: Models = { ...stubModels, synthesiseEvidence: async input => {
+    seen.push(input);
+    return { claims: [{ text: "A randomised trial found prednisone shortened time to clinical stability.", cites: [1], topic: "evidence" }], followUps: [], source: "model", model: "gemma-test", patientPoints: [
+      { text: "She has a recorded penicillin allergy, so a penicillin is not an option alongside it.", cites: [1], fact: "Penicillin — reported rash" },
+      { text: "Her kidney function is poor, so the dose needs lowering.", cites: [1], fact: "eGFR 28 mL/min" },
+      { text: "Her asthma is recorded.", cites: [9], fact: "Asthma since childhood" },
+    ] };
+  } };
+  const { api, db } = await signedIn(fetcher, true, models);
+  const question = "Should Amelia Tan (SYN-1042) get prednisone for her pneumonia?";
+  const r = await api.evidence.ask({ encounterId: "visit-1042", question, thread: [{ question: "Is Amelia's pneumonia severe?", answer: "Amelia Tan scores CURB-65 0." }] });
+  // Her record as the rows hold it: age and sex, history, allergy, medicines, the chart's latest readings (urea among them).
+  const record = seen[0]!.patient!;
+  for (const fact of ["Age 42, female. Came in with: Cough for five days", "History: Asthma since childhood", "Allergies: Penicillin — reported rash", "Medicines before admission: Salbutamol inhaler", "Urea 5.1 mmol/L", "Oxygen saturation 97 %"]) expect(record).toContain(fact);
+  // Nothing the model reads names her: not her record, not the doctor's question, not the thread. Nor do PubMed's terms.
+  expect(JSON.stringify(seen[0])).not.toMatch(/amelia|\btan\b|syn-1042/i);
+  expect(seen[0]!.question).toBe("Should [NAME] ([MRN]) get prednisone for her pneumonia?");
+  expect(calls.some(u => u.includes("esearch") && u.includes("prednisone"))).toBe(true);
+  expect(calls.some(u => /amelia|tan\b|syn-1042/i.test(u))).toBe(false);
+  // The recorded allergy stands, citing its source and the record's own words; the unrecorded kidney function and the point citing no source are dropped.
+  expect(r.patientPoints).toEqual([{ text: "She has a recorded penicillin allergy, so a penicillin is not an option alongside it.", cites: [1], fact: "Penicillin — reported rash" }]);
+  expect(r.claims.map(c => c.cites)).toEqual([[1]]);
+  expect((await db.select().from(provenance)).at(-1)!.output).toMatchObject({ patientPoints: r.patientPoints });
+  // Another visit's patient is read from her own rows only (her low potassium, not Amelia's allergy).
+  await api.evidence.ask({ encounterId: "visit-1086", question });
+  expect(seen[1]!.patient).toContain("- Potassium 3.1 mmol/L, low");
+  expect(seen[1]!.patient).not.toContain("Penicillin — reported rash");
+  // Asked outside a visit: no record goes to the model, and nothing about a patient comes back, whatever the model wrote.
+  const anywhere = await api.evidence.ask({ question });
+  expect(seen[2]!.patient).toBeUndefined();
+  expect(anywhere).not.toHaveProperty("patientPoints");
+});
+
 test("evidence needs a login", async () => {
   const { api } = await signedIn(pubmed().fetcher, false);
   expect(api.evidence.ask({ encounterId: "visit-1042", question: "Steroids?" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
