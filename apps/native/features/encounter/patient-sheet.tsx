@@ -22,28 +22,29 @@ import { QuickActions } from "@/components/sona/quick-actions";
 import { visitActions } from "./quick-actions";
 import { PIN_LIMIT } from "@/features/patients/continue";
 import { pin, replaceOldest, unpin, useContinueState } from "@/features/patients/continue-store";
-import { openSessionFromSheet } from "./navigation";
+import { openVisitFromCard, usePreloadVisit } from "./navigation";
 import { HistoryFacts } from "./source-screen";
 import { useEncounter } from "./store";
 import type { Patient } from "./types";
 
 /**
- * A patient's card, pushed inside the Patients sheet (app/patients): back returns to the list as it was left. Its
- * actions leave the sheet and open the visit in one navigation (./navigation), carrying what the sheet was opened to
- * do (a question, a tool, a switch from another visit).
+ * A patient's card, a page pushed over Patients (app/patients): back returns to the list as it was left. Its actions push
+ * over it (./navigation), so back from a visit returns here, carrying what Patients was opened to do (a question, a tool,
+ * a switch from another visit).
  */
 export function PatientCardScreen() {
   const { id, next, view, prompt, switch: switching } = useLocalSearchParams<{ id: string; next?: string; view?: string; prompt?: string; switch?: string }>();
   const { patients, patient: current, encounter, updateEncounter } = useEncounter();
   const day = useDayPatients(patients);
-  const sheet = useNavigation().getParent();
+  const navigation = useNavigation();
+  usePreloadVisit(id); // the visit this card opens, built while the card sits still
   const picked = patients.find(p => p.id === id);
-  if (!picked || !sheet) return null;
+  if (!picked) return null;
   // Today's appointment time, as the row showed it: the judge build's roster carries no clock time of its own.
   const patient = { ...picked, time: day.find(d => d.id === id)?.time ?? picked.time };
   const select = (go: Go) => {
     // Switching from a session replaces it; a pending question or tool page runs once the visit is open.
-    const proceed = () => { if (go.to) { sheet.goBack(); router.push(go.to); } else openSessionFromSheet(sheet, patient.id, { next: go.next ?? next, prompt: go.next ? undefined : prompt, view: go.view ?? view }, switching === "1"); };
+    const proceed = () => { if (go.to) router.push(go.to); else openVisitFromCard(navigation, patient.id, { next: go.next ?? next, prompt: go.next ? undefined : prompt, view: go.view ?? view }, switching === "1"); };
     if (patient.id !== current?.id && (encounter?.recording === "recording" || encounter?.recording === "paused")) {
       Alert.alert("Stop this consultation?", "Stop the current playback before switching patients. Your transcript and note will be kept.", [{ text: "Keep this patient", style: "cancel" }, { text: "Stop & switch", onPress: () => { updateEncounter(c => ({ ...c, recording: "stopped" })); proceed(); } }]);
     } else proceed();
@@ -133,7 +134,7 @@ function PatientCard({ patient, onGo }: { patient: Patient; onGo: (go: Go) => vo
       {summary ? <Text style={{ ...type.footnote, color: palette.muted }}>{summary}</Text> : null}
     </Animated.View>
 
-    {/* In place: the card is already in the Patients sheet, so the history unfolds here rather than as a second sheet on it. */}
+    {/* In place: the history unfolds here rather than as a sheet over the card. */}
     <Pressable accessibilityRole="button" accessibilityState={{ expanded: history }} onPress={() => setHistory(o => !o)} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, flexDirection: "row", alignItems: "center", gap: 5 }}>
       <Text style={{ ...type.footnote, color: palette.blue }}>{history ? "Hide full history" : "Full history & sources"}</Text>
       <Icon name={history ? "chevron.up" : "chevron.down"} size={10} color={palette.blue} />

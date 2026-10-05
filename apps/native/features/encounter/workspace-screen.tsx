@@ -117,7 +117,7 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
   const patient = home ? undefined : patients.find(p => p.id === sessionId);
   const encounter = useEncounterSelect(s => patient ? s.encounters[patient.id] : undefined);
   useServerEncounter(patient); // live mode: the visit opens on the server's record, not the fixture
-  const params = useLocalSearchParams<{ next?: string; prompt?: string; view?: string; quiet?: string }>();
+  const params = useLocalSearchParams<{ next?: string; prompt?: string; view?: string }>();
   const navigation = useNavigation();
   const arrived = useRef(false);
   useFocusEffect(useCallback(() => {
@@ -131,17 +131,13 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
     if (next.success) request(next.data, params.prompt);
     const view = params.view;
     if (!isToolPage(view)) return;
-    // Under a closing sheet (`quiet`: a patient card's key) the visit has no slide of its own, and its tool page is placed on
-    // it at once, also without one, so the sheet sliding down reveals the page. Pushed after the visit's arrival, the page
-    // landed while RNScreens was still dismissing the sheet ("sheetPresentationController is null"); a modal waited by itself.
-    if (params.quiet) { router.push({ pathname: `/${view}`, params: { quiet: "1" } } as never); return; }
     // The tool page opens once this visit's own transition has ended, never during it (on a 320 ms timer the two overlapped).
     let opened = false;
     const open = () => { if (opened) return; opened = true; stop(); router.push(`/${view}`); };
     const stop = (navigation as unknown as { addListener: (event: "transitionEnd", run: () => void) => () => void }).addListener("transitionEnd", open);
     // ponytail: a fallback in case the transition ended before this listened, so the tool page still opens.
     setTimeout(open, 700);
-  }, [home, sessionId, leaveVisit, selectPatient, request, params.next, params.prompt, params.view, params.quiet, navigation]));
+  }, [home, sessionId, leaveVisit, selectPatient, request, params.next, params.prompt, params.view, navigation]));
   const insets = useSafeAreaInsets();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const draftKey = patient?.id ?? "unassigned";

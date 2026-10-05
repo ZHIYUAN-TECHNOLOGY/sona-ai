@@ -1,6 +1,7 @@
 import { Text } from "@/components/sona/text";
 import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { Stack, router, useLocalSearchParams } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { Fragment, useCallback, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Alert, ScrollView, TextInput, View } from "react-native";
 import { ListRow } from "@/components/sona/list";
@@ -37,7 +38,7 @@ const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); 
 export function PatientScreen() {
   const { patients, patient, encounters } = useEncounter();
   const { next, view, prompt, switch: switching, tab: startTab } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string; switch?: string; tab?: string }>();
-  // A row's card is pushed inside this sheet, carrying what the sheet was opened to do (a question, a tool, a switch).
+  // A row's card is pushed over this page, carrying what Patients was opened to do (a question, a tool, a switch).
   const open = (id: string) => router.push({ pathname: "/patients/[id]", params: { id, ...next && { next }, ...view && { view }, ...prompt && { prompt }, ...switching && { switch: switching } } });
   const [query, setQuery] = useState("");
   const [tab, keepTab] = useState<Tab>(TABS.some(t => t.id === startTab) ? startTab as Tab : kept.tab ?? "needs");
@@ -119,7 +120,7 @@ export function PatientScreen() {
     {!items.length && <Text style={{ ...type.callout, color: palette.muted, paddingHorizontal: 4 }}>{query ? "No one matches. Try a name, patient ID or bed." : tab === "continue" ? "Nothing unfinished. Visits you work on show here for 24 hours, and pinned patients stay." : "Nobody here right now."}</Text>}
   </View>;
 
-  // A picker: no Sona bar here (search is the way in), so the list runs to the sheet's edge.
+  // A picker: no Sona bar here (search is the way in), so the list runs to the page's edge.
   return <>
     <LegendList ref={list} data={items} keyExtractor={i => i.key} getItemType={i => i.kind} renderItem={renderItem} recycleItems estimatedItemSize={64}
       ListHeaderComponent={header} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }} contentContainerStyle={{ padding: 20, paddingBottom: 44 }}
@@ -135,6 +136,7 @@ export function PatientScreen() {
  */
 function AtoZ({ rows, items, list }: { rows: Row[]; items: Item[]; list: RefObject<LegendListRef | null> }) {
   const { reducedMotion } = useAccessibleEffects();
+  const header = useHeaderHeight();
   const all = letters(rows);
   const [at, setAt] = useState(0);
   const strip = useRef<View>(null);
@@ -143,8 +145,8 @@ function AtoZ({ rows, items, list }: { rows: Row[]; items: Item[]; list: RefObje
     const n = Math.max(0, Math.min(all.length - 1, i));
     const index = items.findIndex(x => x.kind === "header" && x.title === all[n]);
     setAt(n);
-    // The sheet's transparent header covers the top ~64 pt, so the letter lands just below it.
-    if (index >= 0) void list.current?.scrollToIndex({ index, animated: !reducedMotion, viewOffset: 64 });
+    // The transparent header covers the top of the list, so the letter lands just below it.
+    if (index >= 0) void list.current?.scrollToIndex({ index, animated: !reducedMotion, viewOffset: header });
   };
   const read = (pageY: number) => { const n = Math.floor(((pageY - box.current.y) / box.current.h) * all.length); if (n !== at) jump(n); };
   return <View pointerEvents="box-none" style={{ position: "absolute", right: 0, top: 210, bottom: 60, justifyContent: "center" }}>

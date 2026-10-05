@@ -74,15 +74,24 @@ export function openPage(navigation: Stacked, path: "/recording" | "/note" | "/t
   if (!backTo(navigation, path.slice(1))) router.push(path);
 }
 
+/**
+ * A patient's card (a page) opens the visit over itself, so back returns to the card. Switching from a visit (its patient
+ * chip opened Patients) instead leaves the pages over that visit and replaces it, in one transition.
+ */
+export function openVisitFromCard(navigation: Stacked, patientId: string, params: { next?: string; prompt?: string; view?: string }, switching = false) {
+  openSession(patientId, params, switching && backTo(navigation, "session/[patientId]"));
+}
+
 /** A visit's tool pages, which a visit opens on arrival when asked to (`view`). */
 export const TOOL_PAGES = ["recording", "note", "xray", "tasks", "scan", "claim", "discharge"] as const;
 export const isToolPage = (view?: string): view is (typeof TOOL_PAGES)[number] => TOOL_PAGES.includes(view as never);
 
 /**
  * Leaves a sheet (`sheet`: its screen's navigation) for a visit in one navigation: the sheet slides down over the visit,
- * which is already in place, rather than closing on a timer while the visit pushes in behind it.
+ * which is already in place, rather than closing on a timer while the visit pushes in behind it. No tool page (`view`):
+ * one pushed while the sheet was still closing made RNScreens report "sheetPresentationController is null".
  */
-export function openSessionFromSheet(sheet: { goBack: () => void }, patientId: string, params: { next?: string; prompt?: string; view?: string } = {}, replace = false) {
+export function openSessionFromSheet(sheet: { goBack: () => void }, patientId: string, params: { next?: string; prompt?: string } = {}) {
   sheet.goBack();
-  openSession(patientId, { ...params, quiet: true }, replace);
+  openSession(patientId, { ...params, quiet: true });
 }
