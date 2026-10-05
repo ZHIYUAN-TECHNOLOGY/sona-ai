@@ -28,14 +28,17 @@ const nowListeners = new Set<() => void>();
 const tickNow = () => { current = clockNow(); at = Date.now(); nowListeners.forEach(l => l()); };
 const subscribeNow = (l: () => void) => {
   nowListeners.add(l);
-  if (Date.now() - at > 1000) tickNow(); // a screen opening late reads the time now, as before
   timer ??= setInterval(tickNow, 30_000);
   return () => { nowListeners.delete(l); if (!nowListeners.size && timer) { clearInterval(timer); timer = undefined; } };
 };
+// A screen opening late reads the time now, without telling every other screen and tile that shows it (they move on
+// the next tick). Ticking them all on each new subscriber re-rendered home and its four tiles whenever a page with a
+// clock opened, and rendered that page twice.
+const readNow = () => { if (Date.now() - at > 1000) { current = clockNow(); at = Date.now(); } return current; };
 export function useNow() {
   const offset = useClockOffset();
   useEffect(() => { if (offset !== lastOffset) { lastOffset = offset; tickNow(); } }, [offset]);
-  return useSyncExternalStore(subscribeNow, () => current);
+  return useSyncExternalStore(subscribeNow, readNow);
 }
 
 /** The next dose from the discharge plan, or undefined (still in hospital, or nothing on a schedule), with the timed medicines and what is taken. */
