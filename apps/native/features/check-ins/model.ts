@@ -49,6 +49,10 @@ export const scheduleLine = (dischargedAt: Date, days?: number[]) => checkInSche
 /** Tasks already shown as a flagged check-in row, so My Day does not list them twice. */
 export const flaggedTaskIds = (checkIns: CheckIn[]) => checkIns.flatMap(c => c.replies.flatMap(r => (r.task ? [r.task.id] : [])));
 
+// A flagged reply opens on the patient's sheet, where the check-in thread and her messages are: the visit's conversation
+// (where an empty `open` goes) is the stay she has left, with nothing about the reply in it.
+const CHECK_IN = { view: "check-in" };
+
 /**
  * My Day's red rows: every worse or urgent reply whose task is still open, plus any in `keep` (just
  * booked in, still offering its same-visit follow-ups); the row's ID carries the task's.
@@ -58,7 +62,7 @@ export function flaggedItems(checkIns: CheckIn[], keep: string[] = []): DayItem[
     const flag = r.task && (!r.task.completed || keep.includes(r.task.id)) ? replyFlag(r.task.title.split(":")[0]!, r.label, r.text) : undefined;
     return flag ? [{
       id: `check-in-${r.task!.id}`, kind: "check-in" as const, title: r.task!.title, detail: `“${r.text}” · day ${c.day} check-in`,
-      reason: `${r.label === "urgent" ? "Urgent" : "Worse"} after discharge · replied ${clock(new Date(r.receivedAt))}`, tone: "urgent" as const, score: flag.score, at: new Date(r.receivedAt).getTime(), patientId: c.patientId, open: {},
+      reason: `${r.label === "urgent" ? "Urgent" : "Worse"} after discharge · replied ${clock(new Date(r.receivedAt))}`, tone: "urgent" as const, score: flag.score, at: new Date(r.receivedAt).getTime(), patientId: c.patientId, open: CHECK_IN,
     }] : [];
   }));
 }
@@ -79,7 +83,7 @@ export function reportItems(tasks: ReportTask[], checkIns: CheckIn[], patientOf:
     const urgent = readReply(t.title) === "urgent", at = new Date(t.createdAt);
     return {
       id: `check-in-${t.id}`, kind: "check-in" as const, title: t.title, detail: "Told to Sona Care",
-      reason: `${urgent ? "Urgent" : "Worse"} · reported ${clock(at)}`, tone: "urgent" as const, score: urgent ? 120 : 105, at: at.getTime(), patientId: t.encounterId ? patientOf(t.encounterId) : undefined, open: {},
+      reason: `${urgent ? "Urgent" : "Worse"} · reported ${clock(at)}`, tone: "urgent" as const, score: urgent ? 120 : 105, at: at.getTime(), patientId: t.encounterId ? patientOf(t.encounterId) : undefined, open: CHECK_IN,
     };
   });
 }

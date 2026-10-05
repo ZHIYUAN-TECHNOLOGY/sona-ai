@@ -11,7 +11,7 @@ const patientOf = id => ({ "enc-1": "SYN-1042" })[id];
 
 test("a problem told to Sona Care is a red flagged row from its task, with the row ID Book in reads", () => {
   expect(reportItems([task()], [], patientOf)).toEqual([{ id: "check-in-t-report", kind: "check-in", title: "Amelia: chest pain after discharge", detail: "Told to Sona Care",
-    reason: `Urgent · reported ${clock}`, tone: "urgent", score: 120, at: at.getTime(), patientId: "SYN-1042", open: {} }]);
+    reason: `Urgent · reported ${clock}`, tone: "urgent", score: 120, at: at.getTime(), patientId: "SYN-1042", open: { view: "check-in" } }]);
   // Not an emergency sign: still red, ranked as worse; a visit the app does not know still lists (Book in needs only the task).
   expect(reportItems([task({ title: "Amelia: cough", encounterId: "enc-9" })], [], patientOf)[0]).toMatchObject({ reason: `Worse · reported ${clock}`, score: 105, patientId: undefined });
 });

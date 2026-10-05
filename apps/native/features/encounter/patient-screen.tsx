@@ -38,8 +38,9 @@ const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); 
  */
 export function PatientScreen() {
   const { patients, patient, encounter, encounters, updateEncounter } = useEncounter();
-  const { next, view, prompt, switch: switching, tab: startTab } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string; switch?: string; tab?: string }>();
-  const [open, setOpen] = useState<string>();
+  // `open`: a patient whose sheet is up on arrival (a flagged check-in on Today opens her thread there).
+  const { next, view, prompt, switch: switching, tab: startTab, open: arriving } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string; switch?: string; tab?: string; open?: string }>();
+  const [open, setOpen] = useState<string | undefined>(arriving);
   const [query, setQuery] = useState("");
   const [tab, keepTab] = useState<Tab>(TABS.some(t => t.id === startTab) ? startTab as Tab : kept.tab ?? "needs");
   const setTab = (t: Tab) => { kept.tab = t; keepTab(t); };

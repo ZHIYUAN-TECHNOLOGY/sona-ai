@@ -48,7 +48,7 @@ const TONE: Record<DayTone, { dot: string; ink: string; wash: string }> = {
   routine: { dot: "rgba(36,91,204,0.5)", ink: palette.blue, wash: "rgba(36,91,204,0.08)" },
 };
 const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "pills", visit: "calendar", task: "checklist", "check-in": "exclamationmark.bubble", booking: "calendar.badge.clock", message: "bubble.left.and.bubble.right", claim: "doc.text.magnifyingglass" };
-const HINT = (item: DayItem) => item.kind === "message" ? "Opens the messages" : item.kind === "claim" ? "Opens the guarantee letter and its appeal" : "Opens the visit";
+const HINT = (item: DayItem) => item.kind === "message" ? "Opens the messages" : item.kind === "check-in" ? "Opens the patient's check-in thread" : item.kind === "claim" ? "Opens the guarantee letter and its appeal" : "Opens the visit";
 let sortedOnce = false;
 
 const nowMinutes = (d: Date) => d.getHours() * 60 + d.getMinutes();
@@ -302,6 +302,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const onOpen = (id: string | undefined, target: DayItem["open"]) => {
     if (!id) return;
     if (target.view === "messages") { router.push({ pathname: "/inbox/[patientId]", params: { patientId: id } }); return; }
+    if (target.view === "check-in") { router.push({ pathname: "/patients", params: { open: id } }); return; }
     open(id, target);
   };
   const { encounters } = useEncounter();
