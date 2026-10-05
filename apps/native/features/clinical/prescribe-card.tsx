@@ -111,10 +111,11 @@ export function useSettling(blockedIds: string[]): Set<string> {
     if (!justPassed.length) return;
     haptic("select");
     setSettling(list => [...list, ...justPassed]);
-    const timer = setTimeout(() => setSettling(list => list.filter(id => !justPassed.includes(id))), reducedMotion ? 300 : 900);
-    return () => clearTimeout(timer);
+    // Not cleared when the blocked set changes again: a second change inside the 900 ms used to cancel this and leave the rows resolved for good.
+    setTimeout(() => setSettling(list => list.filter(id => !justPassed.includes(id))), reducedMotion ? 300 : 900);
   }, [key, reducedMotion]);
-  return new Set([...settling, ...fresh]);
+  // A check that is blocked again is not resolved, whatever just played.
+  return new Set([...settling.filter(id => !blockedIds.includes(id)), ...fresh]);
 }
 
 /** Live mode: only a doctor prescribes (the server's own rule); the card and the next-step bar show anyone else a lock. */

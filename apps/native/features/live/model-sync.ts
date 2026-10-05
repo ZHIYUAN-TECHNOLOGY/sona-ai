@@ -51,10 +51,13 @@ function useLiveAnswer<T>(key: string, ask: boolean, read: () => Promise<T>, kee
     }, r => setState({ key, data: r }), e => setState(s => ({ key, error: errorText(e), last: s.last })));
   }, [on, ask, key, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
   const mine = on && ask && state.key === key;
-  const data = mine ? state.data ?? (keep ? state.last : undefined) : undefined;
+  // `keep` also covers the one render between a new key and the effect above noting it: the state is still the previous key's
+  // answer then, and showing nothing for that render made the claim's criteria vanish and come back as if all were just resolved.
+  const kept = keep && on && ask ? (mine ? state.last : state.data ?? state.last) : undefined;
+  const data = (mine ? state.data : undefined) ?? kept;
   return {
     live: on, loading: on && ask && !data && !(mine && state.error), data, error: mine ? state.error : undefined,
-    stale: Boolean(mine && keep && !state.data && state.last),
+    stale: Boolean(kept && !(mine && state.data)),
     // Clears this key's failure or stub so the card drafts again, then asks (a model's answer already kept comes straight back).
     retry: () => { setState(s => (s.key === key ? { key, last: s.last } : s)); setAttempt(a => a + 1); },
   };
