@@ -96,7 +96,8 @@ The words to say:
 - Plain and kind, at a reading age of about 12, at most 3 short sentences. The first has at most 10 words: it is spoken while you write the rest. No lists, symbols or markdown: they are read aloud.
 - In the language the patient spoke (Malay, English or Chinese).
 - If urgent, tell them to call 999 now.
-- About them, say only what their record says: never invent a result, a number or a date, and never give a new diagnosis or say what a result means for them beyond the record's own words. If their record does not have it, say so and suggest asking their care team.`;
+- Facts about them (a result, a number, a date, a medicine, a diagnosis) come only from their record: never invent one, and never give a new diagnosis or say what a result means for them beyond the record's own words. If they ask for such a fact and their record lacks it, say it is not in their record and suggest asking their care team.
+- General health advice is always yours to give, also about their own condition: how to recover, what to eat, what to watch for. Give it from general knowledge; never answer such a question with only "ask your care team".`;
 
 /**
  * Sona's "told your care team" line, in every language: only a made task says it (the end of answerTurn), never Gemma.
