@@ -8,7 +8,8 @@ import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Chip, Expand, glass, Icon, Insight, Notice, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { noteNext } from "@/features/ask/answers";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
+import { sameShallow } from "@/features/live/keep-same";
 import type { FeatureProps } from "@/features/encounter/types";
 import { buildDraft, editNote, readNoteSections, scriptFor, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
 import { SampleLabel } from "@/components/sona/model-answer";
@@ -31,7 +32,7 @@ const emptyDetail: Record<keyof NoteSections, string> = {
 
 /** The answer in the conversation: what the note holds, section by section, and one way in. */
 export function NoteCard({ onOpen, onSource, patient }: FeatureProps) {
-  const { encounter } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounter);
   // The judge build only ever records: the scripted sample's wording never shows, even before the sign-in is known.
   const live = wantsLive(JUDGE, useLive().on);
   const drafted = useScribe(patient.id).draft?.source === "model";
@@ -91,7 +92,7 @@ function QuietLink({ label, icon, onPress }: { label: string; icon: string; onPr
 
 /** Structured note: patient, one state line, four editable sections, and a floating bar to save. */
 export function NoteScreen() {
-  const { patient, encounter, updateEncounter, showDemoControls } = useEncounter();
+  const { patient, encounter, updateEncounter, showDemoControls } = useEncounterSelect(s => ({ patient: s.patient, encounter: s.encounter, updateEncounter: s.updateEncounter, showDemoControls: s.showDemoControls }), sameShallow);
   const { reducedMotion } = useAccessibleEffects();
   const [suggestion, setSuggestion] = useState<NoteSections>();
   const [failNextSave, setFailNextSave] = useState(false);

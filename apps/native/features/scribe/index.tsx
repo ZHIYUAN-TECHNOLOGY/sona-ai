@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
+import { sameShallow } from "@/features/live/keep-same";
 import { JUDGE, useLive } from "@/features/live";
 import { wantsLive } from "@/features/live/judge";
 import { LiveRecorder } from "./live-recorder";
@@ -19,7 +20,7 @@ export function RecordingScreen() {
  * sample otherwise. The judge build never plays the script, so a transcript there is only ever what was recorded.
  */
 export function ScribePlayback() {
-  const { patient, encounter, updateEncounter } = useEncounter();
+  const { patient, encounter, updateEncounter } = useEncounterSelect(s => ({ patient: s.patient, encounter: s.encounter, updateEncounter: s.updateEncounter }), sameShallow);
   const live = wantsLive(JUDGE, useLive().on);
   useEffect(() => {
     if (live || encounter?.recording !== "recording") return;

@@ -9,7 +9,8 @@ import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, Chip, CloseButton, Expand, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
+import { sameShallow } from "@/features/live/keep-same";
 import type { TranscriptLine } from "@/features/encounter/types";
 import { JUDGE, useLive } from "@/features/live";
 import { wantsLive } from "@/features/live/judge";
@@ -55,7 +56,7 @@ function InterimSegment({ speaker, text, tone, reduced }: { speaker: string; tex
  * and a caption's label is its time, not a speaker, until the draft says who said what.
  */
 function TranscriptSegment({ line, interpretation, tone, last, fresh, live = false }: { line: TranscriptLine; interpretation: boolean; tone: string; last: boolean; fresh: boolean; live?: boolean }) {
-  const { encounter, updateEncounter } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounter), updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const draft = encounter?.transcriptDraft;
   const editing = draft?.lineId === line.id;
   const speaker = editing ? draft.speaker : line.speaker;
@@ -183,7 +184,7 @@ const liveTone = (line: TranscriptLine) => isCaption(line) ? palette.muted : lin
  * who said what. Stop, then draft: Gemma writes the note for review on the note screen.
  */
 function LiveRecording() {
-  const { patient, encounter, updateEncounter } = useEncounter();
+  const { patient, encounter, updateEncounter } = useEncounterSelect(s => ({ patient: s.patient, encounter: s.encounter, updateEncounter: s.updateEncounter }), sameShallow);
   const { reducedMotion } = useAccessibleEffects();
   const scribe = useScribe(patient?.id);
   const [drafting, setDrafting] = useState(false);
@@ -285,7 +286,7 @@ function LiveRecording() {
  * controls for that state); the transcript grows beneath it as a rail of speaker turns.
  */
 function ScriptedRecording() {
-  const { patient, encounter, updateEncounter, showDemoControls } = useEncounter();
+  const { patient, encounter, updateEncounter, showDemoControls } = useEncounterSelect(s => ({ patient: s.patient, encounter: s.encounter, updateEncounter: s.updateEncounter, showDemoControls: s.showDemoControls }), sameShallow);
   const { reducedMotion } = useAccessibleEffects();
   const [interpretation, setInterpretation] = useState(false);
   const [capture, setCapture] = useState<Capture>("ready");

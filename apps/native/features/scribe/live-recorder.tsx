@@ -2,7 +2,8 @@ import { AudioModule, setAudioModeAsync, useAudioRecorder } from "expo-audio";
 import { File } from "expo-file-system";
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { AppState } from "react-native";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect, type useEncounter } from "@/features/encounter/store";
+import { sameShallow } from "@/features/live/keep-same";
 import type { TranscriptLine } from "@/features/encounter/types";
 import { api, errorText } from "@/features/live";
 import { OPTIONS } from "@/features/live/voice-input";
@@ -85,7 +86,7 @@ const DENIED = "Sona can't hear the consultation: allow the microphone for Sona 
  * PCM stream (useAudioStream) would cut without a gap if words go missing at the joins.
  */
 export function LiveRecorder() {
-  const { patient, encounter, updateEncounter } = useEncounter();
+  const { patient, encounter, updateEncounter } = useEncounterSelect(s => ({ patient: s.patient, encounter: s.encounter, updateEncounter: s.updateEncounter }), sameShallow);
   const recorder = useAudioRecorder(OPTIONS);
   const run = useRef<Run>(undefined);
   // Recorder steps run one after another, so a cut in progress finishes before a stop or a new start.
