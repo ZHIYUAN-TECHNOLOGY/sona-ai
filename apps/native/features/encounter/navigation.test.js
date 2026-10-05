@@ -2,7 +2,7 @@ import { expect, mock, test } from "bun:test";
 
 // The navigation calls, in the order they were made.
 const calls = [];
-mock.module("expo-router", () => ({ router: { push: to => calls.push(["push", to]), replace: to => calls.push(["replace", to]) } }));
+mock.module("expo-router", () => ({ router: { push: to => calls.push(["push", to]), replace: to => calls.push(["replace", to]) }, useFocusEffect: () => {}, useNavigation: () => ({}) }));
 const { openSession, openSessionFromSheet, underVisit } = await import("./navigation");
 const sheet = { goBack: () => calls.push(["close sheet"]) };
 

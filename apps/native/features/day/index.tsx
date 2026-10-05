@@ -12,6 +12,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { ErrorLine, PressScale } from "@/components/sona/parts";
+import { usePreloadVisit } from "@/features/encounter/navigation";
 import { useEncounterSelect } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
@@ -340,6 +341,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const { active, later } = splitSnoozed(ranked, snoozed, at);
   const ordered = [...active.filter(item => pins.includes(item.id)), ...active.filter(item => !pins.includes(item.id))];
   const [top, ...rest] = ordered;
+  // The visit most likely opened next (the top row's, else the first on the roster) is built once the opening has lifted.
+  usePreloadVisit(opened ? top?.patientId ?? patients[0]?.id : undefined);
   // Insight first: the most urgent item leads, the shortcuts follow, without a key that repeats it.
   // The shelf reports where it ends, so the collapsed capsule appears only once it has scrolled away.
   const keys = top?.kind === "result" ? actions.filter(a => a.key !== "results") : actions;

@@ -1,4 +1,9 @@
-import { router } from "expo-router";
+import { router, useFocusEffect, useNavigation } from "expo-router";
+import { useCallback } from "react";
+
+const VISIT = "session/[patientId]";
+// After Today comes into focus: past the pop's ~470 ms slide back to it, so the build never lands on a moving frame.
+const PRELOAD_AFTER_MS = 700;
 
 /**
  * A session is one patient visit's conversation. Home never shows answers: asking, tapping a
@@ -11,6 +16,27 @@ export function openSession(patientId: string, params: { next?: string; prompt?:
   const { quiet, ...rest } = params;
   const to = { pathname: "/session/[patientId]" as const, params: { patientId, ...rest, ...quiet && { quiet: "1" } } };
   if (replace) router.replace(to); else router.push(to);
+}
+
+/**
+ * Today builds the next visit's page while it sits still (a preloaded route: rendered off screen, never focused), so a tap
+ * only slides in a page already made. Built on the tap, the visit's whole tree rendered on the JS thread (190-340 ms) before
+ * the push could start, and its native views (glass, blur, canvases) mounted on the UI thread in the push's first frames
+ * (150-180 ms frames on the simulator). Any visit's push takes the preloaded page (the stack matches it by route name, and
+ * the push's params re-render it for the patient tapped): `patientId`, the likeliest, only saves that re-render.
+ * The visit's own arrival (selecting the patient, a question asked on the way in) waits for its focus, as before.
+ */
+export function usePreloadVisit(patientId: string | undefined) {
+  const navigation = useNavigation();
+  useFocusEffect(useCallback(() => {
+    if (!patientId) return;
+    const timer = setTimeout(() => {
+      // One at a time: a second preload of the same route replaces the first, and would build the page again.
+      if ((navigation.getState() as { preloadedRoutes?: { name: string }[] } | undefined)?.preloadedRoutes?.some(r => r.name === VISIT)) return;
+      router.prefetch({ pathname: "/session/[patientId]", params: { patientId } });
+    }, PRELOAD_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [patientId, navigation]));
 }
 
 /**

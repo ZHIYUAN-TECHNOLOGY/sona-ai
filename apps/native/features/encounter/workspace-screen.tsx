@@ -6,7 +6,7 @@ import { palette, type } from "@/components/sona/theme";
 import { Action, Notice, Reveal } from "@/components/sona/ui";
 import { ClinicalResponseRenderer } from "@/features/presentation";
 import { EdgeBlur } from "@/components/sona/edge-blur";
-import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
+import { router, useFocusEffect, useIsFocused, useLocalSearchParams, useNavigation } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -73,6 +73,21 @@ function RequestAnswer({ req, card, revision, props, onRetry, lead = true, leave
         ponytail: any free answer in the visit counts as "something else" (they are listed after the cards, in no shared order); give both one order if a stop after one must still say so. */}
     {req.status === "cancelled" && newest && <Notice>Response stopped. Completed content and your edits are kept.</Notice>}
   </>;
+}
+
+/**
+ * A visit counts as opened only once it is in front: Today builds one ahead of the tap (usePreloadVisit), unseen until then.
+ * Working on it keeps it in Continue ("where you left off") for the next 24 h, and attachments sent from Today wait in it
+ * for its next question. Its own component, so focus changes re-render only this, never the visit.
+ */
+function Arrival({ patientId, asked, onCarried }: { patientId: string; asked: number; onCarried: (items: Attachment[]) => void }) {
+  const focused = useIsFocused();
+  // Once per arrival and per question, as before: coming back from a tool page is not news (and Today, under the visit,
+  // would re-render as that slide starts).
+  const touched = useRef("");
+  useEffect(() => { const key = `${patientId}:${asked}`; if (focused && touched.current !== key) { touched.current = key; touch(patientId); } }, [focused, patientId, asked]);
+  useEffect(() => { if (!focused) return; const items = takeCarried(); if (items.length) onCarried(items); }, [focused, patientId, onCarried]);
+  return null;
 }
 
 /**
@@ -247,7 +262,9 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
   const backToTiles = !home && (requests.length > 0 || visitAsides.length > 0) && !tiles;
   const back = () => { if (backToTiles) { setTiles(true); scroll.current?.scrollTo({ y: 0, animated: false }); } else if (router.canGoBack()) router.back(); else router.replace("/"); };
   // Android's back does the same; iOS's edge swipe would leave the visit, so it waits until the tiles show.
-  useEffect(() => { navigation.setOptions({ gestureEnabled: !backToTiles }); }, [backToTiles, navigation]);
+  // A visit Today built ahead of the tap (usePreloadVisit) has a placeholder navigation that refuses options; once pushed its
+  // navigation is replaced, so this runs again then.
+  useEffect(() => { try { navigation.setOptions({ gestureEnabled: !backToTiles }); } catch {} }, [backToTiles, navigation]);
   useEffect(() => { if (!backToTiles) return; const sub = BackHandler.addEventListener("hardwareBackPress", () => { back(); return true; }); return () => sub.remove(); }, [backToTiles]); // eslint-disable-line react-hooks/exhaustive-deps
   const nudge = home ? suggestion(todayAnswers) : undefined;
   const { on: live } = useLive();
@@ -330,10 +347,7 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
     } finally { routing.current = false; setRoutingNow(false); }
   };
 
-  // A visit opened for attachments sent from Today has them waiting, to go with its next question.
-  useEffect(() => { setShowEarlier(false); setNotice(undefined); setPending(patient ? takeCarried() : []); if (!patient) setDrafts({}); }, [patient?.id]);
-  // Working on a visit keeps it in Continue ("where you left off") for the next 24 h.
-  useEffect(() => { if (!home && patient) touch(patient.id); }, [home, patient?.id, encounter?.requests.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setShowEarlier(false); setNotice(undefined); if (!patient) setDrafts({}); }, [patient?.id]);
   useEffect(() => { if (!active) return; setPhase("thinking"); const timer = setTimeout(() => setPhase("working"), 320); return () => clearTimeout(timer); }, [active?.id]);
   useEffect(() => {
     if (latest?.status !== "complete") return;
@@ -401,6 +415,7 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
 
   return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
     {home && <Sidebar open={drawer} progress={drawerP} onClose={closeDrawer} />}
+    {patient && <Arrival patientId={patient.id} asked={requests.length} onCarried={setPending} />}
     <GestureDetector gesture={dragClose}>
     <Animated.View style={[{ flex: 1, overflow: "hidden", borderCurve: "continuous", backgroundColor: palette.canvas }, pageStyle]}>
     <View ref={backdrop} collapsable={false} accessibilityElementsHidden={drawer} importantForAccessibility={drawer ? "no-hide-descendants" : "auto"} style={{ flex: 1, backgroundColor: palette.canvas }}>
