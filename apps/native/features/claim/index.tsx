@@ -10,7 +10,7 @@ import { Action, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffec
 import { BlockerRow, useSettling, Ring } from "@/features/clinical/prescribe-card";
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { BarLine, Decide, FixChip, ModalHeader } from "@/features/discharge";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
@@ -38,9 +38,8 @@ const TEAL = palette.green;
 const GLIDE = { duration: 250, dampingRatio: 0.72 }, STRETCH = { duration: 320, dampingRatio: 0.8 };
 
 export function ClaimScreen() {
-  const { patient, encounters, updateEncounter } = useEncounter();
+  const patient = useEncounterSelect(s => s.patient), encounter = useEncounterSelect(s => s.encounter), updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const { reducedMotion } = useAccessibleEffects();
-  const encounter = patient ? encounters[patient.id] : undefined;
   const state = encounter?.claim ?? EMPTY_CLAIM;
   const { live, refresh } = useServerEncounter(patient);
   // Connected: the codes and the note sentences they cite come from the server, read from the visit's saved note. The
