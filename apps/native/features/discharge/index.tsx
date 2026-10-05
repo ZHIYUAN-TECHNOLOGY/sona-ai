@@ -11,7 +11,7 @@ import { Action, CloseButton, glass, Icon, Insight, Screen, Surface, Tone, useAc
 import { BlockerRow, useSettling, Pill, Ring } from "@/features/clinical/prescribe-card";
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { capabilityLabels } from "@/features/encounter/conversation";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
@@ -41,11 +41,11 @@ const TEAL = palette.green;
 
 export function DischargeScreen() {
   // The open visit is the one being discharged (updateEncounter writes to it).
-  const { patient, encounters } = useEncounter();
+  const patient = useEncounterSelect(s => s.patient), encounter = useEncounterSelect(s => s.encounter);
   const { reducedMotion } = useAccessibleEffects();
   if (!patient) return <><ModalHeader title="Discharge" /><NoVisit view="discharge" what="a discharge" /></>;
-  const discharged = Boolean(encounters[patient.id]?.discharge?.dischargedAt);
-  const answers = encounters[patient.id]?.requests.map(r => capabilityLabels[r.kind]) ?? [];
+  const discharged = Boolean(encounter?.discharge?.dischargedAt);
+  const answers = encounter?.requests.map(r => capabilityLabels[r.kind]) ?? [];
   // An already discharged patient opens still, on the receipt.
   return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
     <ModalHeader title="Discharge" />
@@ -109,9 +109,8 @@ export function FixChip({ label, icon, onPress, strong = false }: { label: strin
 
 /** The page: header, the folded visit, the discharge card, and the decision pinned in the bar. */
 function DischargePage({ patient, answers, animate }: { patient: Patient; answers: string[]; animate: boolean }) {
-  const { encounters, updateEncounter } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounters[patient.id]), updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const { reducedMotion } = useAccessibleEffects();
-  const encounter = encounters[patient.id];
   const state = encounter?.discharge ?? EMPTY_DISCHARGE;
   const { live, refresh } = useServerEncounter(patient);
   const { user } = useLive();
