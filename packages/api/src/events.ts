@@ -10,7 +10,9 @@ export type Change = { topic: string; encounterId?: string; patientId?: string }
 // A model answer only logs its provenance, so it is a read too (announcing it would set the ward re-reading, and a
 // visit's patient's Sona Care refetching everything). So is a phone's push token: no app shows it.
 const READS = new Set(["list", "inbox", "thread", "get", "status", "beds", "forecast", "ask", "read", "briefing", "reasoning", "draft", "suggestCodes", "appealDraft", "huddle", "slots", "samples", "photo", "followUp",
-  "stream", "route", "free", "transcribe", "previewArticle", "me", "register", "unregister"]);
+  "stream", "route", "free", "transcribe", "previewArticle", "me", "register", "unregister",
+  // A visit opened in Sona Pro reads its timeline and discharge plan: announced, its patient's Sona Care re-read everything each time.
+  "timeline", "plan"]);
 
 export function changeFor(path: readonly string[], input: unknown): Change | undefined {
   const [topic, verb] = path;
