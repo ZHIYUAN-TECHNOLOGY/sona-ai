@@ -6,7 +6,7 @@ import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
 import { AccentText, Button } from "@/lib/ui";
 
-/** What the "Synthetic data" pill and every "Sample" label open: what is fictional, and what "sample" means. */
+/** What the "Synthetic data" pill on home opens: what is fictional, and what "sample" means. */
 export default function AboutData() {
   const t = useT();
   const insets = useSafeAreaInsets();

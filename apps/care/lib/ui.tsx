@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode, type Ref } from "react";
 import { AccessibilityInfo, ActivityIndicator, Linking, Pressable, View, type TextInput as RNTextInput, type TextInputProps, type TextStyle, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, TextInput } from "./text";
-import Animated, { cancelAnimation, Easing, interpolateColor, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { cancelAnimation, Easing, FadeIn, interpolateColor, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { HalftoneGlint } from "./halftone";
 import { Icon, type IconName } from "./icons";
@@ -315,8 +315,8 @@ export function Field({ secret, style, onFocus, onBlur, ref, ...props }: TextInp
 /*
  * Honesty, two truths, two treatments (mirrors apps/native model-answer). The data is fictional, so
  * that is said once, on home (DataPill). An answer no model gave is labelled where it appears
- * (SampleLabel), driven by the server's `source`, so it goes by itself once a model answers. Both open
- * the same short sheet (app/about-data).
+ * (SampleLabel), driven by the server's `source`, so it goes by itself once a model answers. The pill opens
+ * a short sheet (app/about-data); the label explains itself in place, so nothing opens over the flow it sits in.
  */
 const openAbout = () => router.push("/about-data");
 
@@ -330,14 +330,24 @@ export function DataPill() {
   </Pressable>;
 }
 
-/** "Sample · <what> model not switched on" under an answer no model gave (`source` "fixture"); nothing once a model answers. */
+/**
+ * "Sample · <what> model not switched on" under an answer no model gave (`source` "fixture"); nothing once a model
+ * answers. A tap unfolds what "sample" means right under it, and a second tap folds it away.
+ */
 export function SampleLabel({ source, what }: { source?: string; what: "photo" }) {
   const t = useT();
+  const still = useReducedMotion();
+  const [open, setOpen] = useState(false);
   if (source !== "fixture") return null;
   const text = t("sample.model", { what: t(`sample.${what}`) });
-  return <Pressable accessibilityRole="button" accessibilityLabel={text} accessibilityHint={t("sample.hint")} onPress={openAbout} hitSlop={12}
-    style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 5, opacity: pressed ? 0.6 : 1 })}>
-    <Text style={{ ...type.footnote, flexShrink: 1, color: palette.muted }}>{text}</Text>
-    <Icon name="info" size={14} color={palette.muted} />
-  </Pressable>;
+  return <View style={{ gap: 4 }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={text} accessibilityHint={t("sample.hint")} accessibilityState={{ expanded: open }} onPress={() => setOpen(o => !o)} hitSlop={12}
+      style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 5, opacity: pressed ? 0.6 : 1 })}>
+      <Text style={{ ...type.footnote, flexShrink: 1, color: palette.muted }}>{text}</Text>
+      <Icon name="info" size={14} color={palette.muted} />
+    </Pressable>
+    {open && <Animated.View entering={still ? undefined : FadeIn.duration(180)}>
+      <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.faint }}>{t("synthetic.sample")}</Text>
+    </Animated.View>}
+  </View>;
 }

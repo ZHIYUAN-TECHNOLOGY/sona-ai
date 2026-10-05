@@ -51,7 +51,6 @@ export default function DoseScreen() {
   useEffect(() => { shown = true; }, []);
   const enter = (i: number) => first ? rise(reduced, i) : undefined;
   const [took, setTook] = useState<{ dose: Dose; at: Date }>();
-  const [adding, setAdding] = useState(false);
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const today = dosesToday(meds, out, taken, now);
   const line = out ? insight(today, now, lang) : undefined;
@@ -84,7 +83,7 @@ export default function DoseScreen() {
         {meds.some(m => m.at?.length) && <Animated.View entering={enter(2)}><RemindCard /></Animated.View>}
 
         {/* Everything to do here, in one 2×2 shelf of quick-action keys with live status (Sona's quick actions). */}
-        <Animated.View entering={enter(2)}><Shelf planned={meds.map(m => m.name)} onAdd={() => setAdding(true)} timed={meds.some(m => m.at?.length)} /></Animated.View>
+        <Animated.View entering={enter(2)}><Shelf planned={meds.map(m => m.name)} timed={meds.some(m => m.at?.length)} /></Animated.View>
 
         {/* One list, like My plan's, so no card is left alone in a row. */}
         <Animated.View entering={enter(3)} style={{ gap: 12 }}>
@@ -93,8 +92,8 @@ export default function DoseScreen() {
             {[...meds].sort((a, b) => Number(!!a.finished) - Number(!!b.finished)).map((m, i) => <MedRow key={m.name} med={m} first={i === 0} today={today.filter(d => d.name === m.name)} />)}
           </View> : <Text style={{ ...type.body, color: palette.muted }}>{t("dose.nothingAtHome")}</Text>}
         </Animated.View>
-        {/* A medicine from a photo waits here for the care team (unless the plan already lists it); its sheet opens from the shelf. */}
-        <Animated.View entering={enter(4)}><PhotoMedicines planned={meds.map(m => m.name)} adding={adding} onDone={() => setAdding(false)} /></Animated.View>
+        {/* A medicine from a photo waits here for the care team (unless the plan already lists it); its page opens from the shelf. */}
+        <Animated.View entering={enter(4)}><PhotoMedicines planned={meds.map(m => m.name)} /></Animated.View>
 
         {!missed && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("dose.missedTip")}</Text>}
       </>}
@@ -263,14 +262,14 @@ function Check({ size, pop, style }: { size: number; pop?: boolean; style?: View
  * wait for the care team), the full plan (since when), the care team (a new reply, or how soon they reply) and dose
  * reminders (a real switch, in place; a phone that blocks them opens Settings).
  */
-function Shelf({ planned, onAdd, timed }: { planned: string[]; onAdd: () => void; timed: boolean }) {
+function Shelf({ planned, timed }: { planned: string[]; timed: boolean }) {
   const lang = useLang(), t = tFor(lang);
   const plan = useDischarge().data;
   const waitingCount = usePhotoMedicines(planned).filter(m => m.status !== "added").length;
   const reply = useMessageNeeds() > 0;
   return <View style={{ gap: 12 }}>
     <View style={{ flexDirection: "row", gap: 12 }}>
-      <QuickKey icon="camera" label={t("photo.add")} hint={t("photo.addLine")} onPress={onAdd}
+      <QuickKey icon="camera" label={t("photo.add")} hint={t("photo.addLine")} onPress={() => router.push("/add-photo")}
         status={waitingCount ? t("photo.waitingCount", { n: waitingCount }) : t("photo.addShort")} tone={waitingCount ? "attention" : undefined} />
       <QuickKey icon="doc" label={t("dose.fullPlan")} hint={t("dose.fullPlanHint")} onPress={() => router.push("/discharge")}
         status={plan?.status === "discharged" ? t("dose.planSince", { day: dayLabel(plan.dischargedAt, lang) }) : t("dose.fullPlanShort")} />
