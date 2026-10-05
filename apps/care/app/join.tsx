@@ -13,7 +13,7 @@ import "@/features/sign-in/strings";
 import { tFor, useLang } from "@/lib/i18n";
 import { authClient } from "@/lib/auth-client";
 import { palette, type } from "@/lib/theme";
-import { BackButton, Button, Field, pillStyle } from "@/lib/ui";
+import { BackButton, Button, Field, pillStyle, useBelowStatusBar } from "@/lib/ui";
 import { hospitalName } from "@/features/me";
 import { client, queryClient } from "@/utils/orpc";
 
@@ -22,6 +22,7 @@ import { client, queryClient } from "@/utils/orpc";
  * card): scan the QR (or type its code), confirm it is for you, create an account (or use the one you
  * are signed in with), and the code links it to your record.
  * The QR holds sona-care://join?code=…, so the phone's camera can also open this screen directly.
+ * A page pushed from home (steps, a camera and typing, so not a modal): back, or the swipe, leaves it.
  */
 const codeFrom = (text: string) => text.match(/code=([A-Za-z0-9-]+)/)?.[1] ?? text;
 const QR = "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM6 6h1v1H6zM17 6h1v1h-1zM6 17h1v1H6zM14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2";
@@ -31,6 +32,7 @@ const SPRING_IN = FadeInDown.springify().duration(380).dampingRatio(1);
 export default function Join() {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
+  const below = useBelowStatusBar();
   const lang = useLang(), t = tFor(lang);
   const params = useLocalSearchParams<{ code?: string }>();
   const { data: session } = authClient.useSession();
@@ -71,9 +73,9 @@ export default function Join() {
   const cameraOff = permission && !permission.granted && !permission.canAskAgain;
   const showField = typing || code !== "";
 
-  return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, padding: 20, paddingTop: 16, paddingBottom: Math.max(insets.bottom, 16) + 8, gap: 20 }}>
-      <BackButton label={t("common.close")} />
+  return <KeyboardAvoidingView behavior="padding" style={[{ flex: 1 }, below]}>
+    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, padding: 20, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 16) + 8, gap: 20 }}>
+      <BackButton />
 
       {!who ? <>
         <Head light={t("join.scanLight")} bold={t("join.scanBold")} />
