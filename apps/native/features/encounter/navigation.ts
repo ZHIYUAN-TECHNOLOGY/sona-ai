@@ -48,6 +48,32 @@ export function usePreloadVisit(patientId: string | undefined) {
 export const underVisit = (routes: readonly { key: string; name: string }[], key: string) =>
   routes.slice(routes.findIndex(r => r.key === key) + 1).some(r => r.name === "session/[patientId]");
 
+type Stacked = { getState: () => { routes: readonly { name: string; params?: object }[] } | undefined };
+
+/**
+ * Goes back to a page already open under this one (`name`, a route of the stack `navigation` belongs to; `patientId`: only
+ * that patient's copy), popping what lies between in one transition. False when it is not open, so the caller opens it.
+ */
+export function backTo(navigation: Stacked, name: string, patientId?: string) {
+  const routes = navigation.getState()?.routes ?? [];
+  for (let i = routes.length - 2; i >= 0; i--) {
+    const route = routes[i]!;
+    if (route.name !== name || (patientId && (route.params as { patientId?: string } | undefined)?.patientId !== patientId)) continue;
+    router.dismiss(routes.length - 1 - i);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Opens a visit's page, or returns to it when it is already open under this one. The note's "Open consultation", over the
+ * consultation that drafted it, pushed a second consultation, whose "Create draft note" pushed a second note: each round of
+ * the loop added two pages, and back walked through every copy.
+ */
+export function openPage(navigation: Stacked, path: "/recording" | "/note" | "/tasks" | "/handover") {
+  if (!backTo(navigation, path.slice(1))) router.push(path);
+}
+
 /**
  * Leaves a sheet (`sheet`: its screen's navigation) for a visit in one navigation: the sheet slides down over the visit,
  * which is already in place, rather than closing on a timer while the visit pushes in behind it.

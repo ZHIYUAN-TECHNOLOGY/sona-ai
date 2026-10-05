@@ -1,5 +1,5 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
-import { router, Stack } from "expo-router";
+import { router, Stack, useNavigation } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, ScrollView, TextInput, View, type TextStyle, type ViewStyle } from "react-native";
@@ -14,7 +14,7 @@ import { Caption, ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, CanvasBackground, Chip, glass, Icon, RoundAction, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
-import { openSession } from "@/features/encounter/navigation";
+import { backTo, openSession } from "@/features/encounter/navigation";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
@@ -48,6 +48,7 @@ const measure = (view: View | TextInput | null) => new Promise<Box | undefined>(
 });
 
 export function ThreadScreen({ patientId }: { patientId: string }) {
+  const navigation = useNavigation();
   const { on: live } = useLive();
   const role = useRole();
   const on = live && role.can("messages.thread");
@@ -124,12 +125,13 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
 
   return <View ref={root} collapsable={false} style={{ flex: 1 }}>
     <CanvasBackground />
+    {/* Open visit returns to the visit this thread was opened from (its Messages round) rather than stacking a second copy. */}
     <Stack.Screen options={{
       headerTitle: () => <View accessible accessibilityRole="header" accessibilityLabel={patient ? `${patient.name}${patient.bed ? `, ${patient.bed}` : ""}` : "Messages"} style={{ alignItems: "center" }}>
         <Text style={{ ...type.headline, color: palette.ink }}>{patient?.name ?? "Messages"}</Text>
         {patient?.bed && <Text style={{ ...type.caption, color: palette.muted }}>{patient.bed}</Text>}
       </View>,
-      headerRight: () => patient ? <Chip label="Open visit" accessibilityLabel={`Open ${patient.name}'s visit`} onPress={() => openSession(patient.id)} /> : null,
+      headerRight: () => patient ? <Chip label="Open visit" accessibilityLabel={`Open ${patient.name}'s visit`} onPress={() => { if (!backTo(navigation, "session/[patientId]", patient.id)) openSession(patient.id); }} /> : null,
     }} />
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       {/* Insight first, pinned under the header so the bottom-anchored thread never scrolls it away:
