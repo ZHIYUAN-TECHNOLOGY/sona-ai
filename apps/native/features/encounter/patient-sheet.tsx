@@ -9,7 +9,7 @@ import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { Press } from "@/components/sona/parts";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Expand, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { CareMessages } from "@/features/care-messages";
 import { CheckInThread } from "@/features/check-ins/thread";
 import { confirmedAllergy, patientFlags, unconfirmedOf, type Go } from "@/features/day/counts";
@@ -23,6 +23,7 @@ import { visitActions } from "./quick-actions";
 import { PIN_LIMIT } from "@/features/patients/continue";
 import { pin, replaceOldest, unpin, useContinueState } from "@/features/patients/continue-store";
 import { openSessionFromSheet } from "./navigation";
+import { HistoryFacts } from "./source-screen";
 import { useEncounter } from "./store";
 import type { Patient } from "./types";
 
@@ -61,6 +62,7 @@ function PatientCard({ patient, onGo }: { patient: Patient; onGo: (go: Go) => vo
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
   const encounter = encounters[patient.id];
+  const [history, setHistory] = useState(false);
   const flags = patientFlags(patient, unconfirmedOf(patient, encounter), result, encounter);
   // Doctors also get "Scan note" (full width under the grid); it opens the visit with the scan on top.
   const visit = visitActions(patient, encounter, result, kind => go(kind === "recording" || kind === "scan" ? { view: kind } : { next: kind }), useRole().can("scan.read"));
@@ -114,7 +116,7 @@ function PatientCard({ patient, onGo }: { patient: Patient; onGo: (go: Go) => vo
     </Animated.View>
 
     <CheckInThread patient={patient} entering={rise(3)} />
-    <CareMessages patient={patient} entering={rise(3)} />
+    <CareMessages patient={patient} entering={rise(3)} onOpenThread={() => go({ to: `/inbox/${patient.id}` })} />
 
     <Animated.View entering={rise(3)} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 12 }}>
       {/* A sparse record (a ward patient's) shows only what it holds: no empty overline, no blank line. */}
@@ -131,9 +133,12 @@ function PatientCard({ patient, onGo }: { patient: Patient; onGo: (go: Go) => vo
       {summary ? <Text style={{ ...type.footnote, color: palette.muted }}>{summary}</Text> : null}
     </Animated.View>
 
-    <Pressable accessibilityRole="link" onPress={() => router.push({ pathname: "/source", params: { id: "history", patientId: patient.id } })} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, justifyContent: "center" }}>
-      <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>
+    {/* In place: the card is already in the Patients sheet, so the history unfolds here rather than as a second sheet on it. */}
+    <Pressable accessibilityRole="button" accessibilityState={{ expanded: history }} onPress={() => setHistory(o => !o)} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, flexDirection: "row", alignItems: "center", gap: 5 }}>
+      <Text style={{ ...type.footnote, color: palette.blue }}>{history ? "Hide full history" : "Full history & sources"}</Text>
+      <Icon name={history ? "chevron.up" : "chevron.down"} size={10} color={palette.blue} />
     </Pressable>
+    {history && <Expand style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 10 }}><HistoryFacts patient={patient} /></Expand>}
 
     {/* PDPA: who opened this record (doctors and management, live mode). */}
     <AccessTrail patientId={patient.id} encounterId={patient.encounterId} entering={rise(4)} />

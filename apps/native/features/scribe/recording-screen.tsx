@@ -1,5 +1,5 @@
 import { PressScale } from "@/components/sona/parts";
-import { router, Stack } from "expo-router";
+import { router, Stack, useNavigation } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Keyboard, KeyboardAvoidingView, Pressable, TextInput, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
@@ -8,7 +8,7 @@ import { SampleLabel } from "@/components/sona/model-answer";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Chip, CloseButton, Expand, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, BackButton, Chip, Expand, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounterSelect } from "@/features/encounter/store";
 import { sameShallow } from "@/features/live/keep-same";
 import type { TranscriptLine } from "@/features/encounter/types";
@@ -20,6 +20,7 @@ import { LiveWaveform } from "./live-waveform";
 import { buildDraft, elapsedLabel, scriptFor } from "./model";
 import { Dot, fieldStyle, haptic, StateLine } from "./parts";
 import { NoVisit } from "@/components/sona/no-visit";
+import { openPage } from "@/features/encounter/navigation";
 
 type Capture = "ready" | "permission" | "denied" | "interrupted" | "failed" | "processing";
 const RAIL = "rgba(20,28,40,0.12)";
@@ -185,6 +186,7 @@ const liveTone = (line: TranscriptLine) => isCaption(line) ? palette.muted : lin
  */
 function LiveRecording() {
   const { patient, encounter, updateEncounter } = useEncounterSelect(s => ({ patient: s.patient, encounter: s.encounter, updateEncounter: s.updateEncounter }), sameShallow);
+  const navigation = useNavigation();
   const { reducedMotion } = useAccessibleEffects();
   const scribe = useScribe(patient?.id);
   const [drafting, setDrafting] = useState(false);
@@ -207,21 +209,21 @@ function LiveRecording() {
   const canDraft = !drafting && !pending.length && lines.length > 0 && !encounter.transcriptDraft;
   // The draft is applied for review even if the clinician has left this screen; only then does it open the note.
   const draft = async () => {
-    if (encounter.note) return router.push("/note");
+    if (encounter.note) return openPage(navigation, "/note");
     const owner = patient.id;
     haptic("tap"); setDrafting(true);
     try { applyDraft(owner, await askDraft(patient.encounterId, encounter.transcript), updateEncounter); haptic("done"); }
     catch (e) { applyCaptured(owner, e, updateEncounter); haptic("warn"); }
     if (!shown.current) return;
     setDrafting(false);
-    router.push("/note");
+    openPage(navigation, "/note");
   };
   const subtitle = !lines.length && !waiting.length ? (stopped ? "No speech captured, so there is nothing to draft from." : "Captions appear here about every 30 seconds while you record.")
     : lines.some(line => !isCaption(line)) ? "Who said what, as Sona read it; unsure speakers are amber. Tap a turn to correct it."
     : "Captions as heard, part by part. Tap one to correct a word; Sona marks who said what when it drafts the note.";
 
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}><Screen>
-    <Stack.Screen options={{ headerRight: () => <CloseButton label={active || paused ? "Minimize to encounter" : "Return to encounter"} /> }} />
+    <Stack.Screen options={{ headerLeft: () => <BackButton label={active || paused ? "Minimize to encounter" : "Return to encounter"} /> }} />
     {/* Who, then one honesty line: the words are the speech model's, and the audio does not stay. */}
     <View style={{ gap: 4 }}>
       <Text selectable style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{patient.name} · {patient.id}</Text>
@@ -287,6 +289,7 @@ function LiveRecording() {
  */
 function ScriptedRecording() {
   const { patient, encounter, updateEncounter, showDemoControls } = useEncounterSelect(s => ({ patient: s.patient, encounter: s.encounter, updateEncounter: s.updateEncounter, showDemoControls: s.showDemoControls }), sameShallow);
+  const navigation = useNavigation();
   const { reducedMotion } = useAccessibleEffects();
   const [interpretation, setInterpretation] = useState(false);
   const [capture, setCapture] = useState<Capture>("ready");
@@ -321,7 +324,7 @@ function ScriptedRecording() {
     ? nextSegment.original.slice(0, Math.ceil(nextSegment.original.length * (encounter.recordingSeconds % 4) / 4)) : "";
   const partial = stopped && encounter.transcript.length < script.length;
   const play = () => { haptic("tap"); setCapture("ready"); updateEncounter(current => ({ ...current, recording: "recording" })); };
-  const createDraft = () => { if (!encounter.note) updateEncounter(current => ({ ...current, note: buildDraft(current.transcript), noteReviewed: false })); router.push("/note"); };
+  const createDraft = () => { if (!encounter.note) updateEncounter(current => ({ ...current, note: buildDraft(current.transcript), noteReviewed: false })); openPage(navigation, "/note"); };
   const canDraft = encounter.transcript.length > 0 && capture !== "processing" && !encounter.transcriptDraft;
   // Speakers take a colour in order of first appearance: the first blue, the rest ink.
   const firstSpeaker = encounter.transcript[0]?.speaker ?? script[0]?.speaker;
@@ -331,8 +334,8 @@ function ScriptedRecording() {
   const minimizeLabel = active || paused ? "Minimize to encounter" : "Return to encounter";
 
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}><Screen>
-    {/* Close (minimize) is the header's one control; playback keeps running from the encounter shell. */}
-    <Stack.Screen options={{ headerRight: () => <CloseButton label={minimizeLabel} /> }} />
+    {/* Back (minimize) is the header's one control; playback keeps running from the encounter shell. */}
+    <Stack.Screen options={{ headerLeft: () => <BackButton label={minimizeLabel} /> }} />
     {/* Who, then one quiet honesty line: a sample (links to About data) with no microphone or audio. */}
     <View style={{ gap: 4 }}>
       <Text selectable style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{patient.name} · {patient.id}</Text>

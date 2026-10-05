@@ -9,7 +9,7 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { Action, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { BlockerRow, useSettling, Ring } from "@/features/clinical/prescribe-card";
 import { Seal, haptic } from "@/features/clinical/medication-parts";
-import { BarLine, Decide, FixChip, ModalHeader } from "@/features/discharge";
+import { BarLine, Decide, FixChip } from "@/features/discharge";
 import { useEncounterSelect } from "@/features/encounter/store";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
@@ -65,7 +65,7 @@ export function ClaimScreen() {
   const [serverError, setServerError] = useState<string>();
   const role = useRole();
 
-  if (!patient || !encounter) return <><ModalHeader title="Guarantee letter" /><NoVisit view="claim" what="a guarantee letter" /></>;
+  if (!patient || !encounter) return <NoVisit view="claim" what="a guarantee letter" />;
   const set = (change: Partial<ClaimState>) => updateEncounter(value => ({ ...value, claim: { ...(value.claim ?? EMPTY_CLAIM), ...change } }));
   // Connected, a fix is a new revision of the visit's saved note (only a doctor writes it), so the letter is built on the
   // note everyone reads. In sample mode the sample note grows on this phone instead (the two switches in the claim's state).
@@ -150,7 +150,6 @@ export function ClaimScreen() {
     </>;
 
   return <Screen bottom={bar}>
-    <ModalHeader title="Guarantee letter" />
 
     {(denied || appealed) && state.denial && <>
       <DeniedCard denial={state.denial} />

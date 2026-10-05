@@ -1,4 +1,3 @@
-import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Pressable, TextInput, View, type TextStyle } from "react-native";
@@ -9,7 +8,7 @@ import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import type { Patient } from "@/features/encounter/types";
 import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
@@ -129,7 +128,7 @@ export function AppealCard({ patient, state, onChange, onApproved }: { patient: 
               <Text style={{ ...type.callout, fontWeight: "700", color: palette.blue, paddingTop: 10, fontVariant: ["tabular-nums"] }}>{i + 1}</Text>
               <View style={{ flex: 1, gap: 4 }}>
                 <Paragraph label={`Point ${i + 1}`} value={p.claim} onChange={claim => edit(l => ({ ...l, points: l.points.map((x, j) => j === i ? { ...x, claim } : x) }))} />
-                {sentence && <FromTheNote patientId={patient.id} sentence={sentence} />}
+                {sentence && <FromTheNote sentence={sentence} />}
               </View>
             </Arrive>;
           })}
@@ -170,12 +169,23 @@ export function Paragraph({ label, value, onChange, placeholder }: { label: stri
       borderColor: focused ? "rgba(36,91,204,0.35)" : "transparent", backgroundColor: focused ? "rgba(255,255,255,0.9)" : "rgba(20,28,40,0.035)" } as TextStyle} />;
 }
 
-/** The small source pill under a point: opens the exact note sentence it cites in the source sheet. */
-function FromTheNote({ patientId, sentence }: { patientId: string; sentence: Sentence }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={`From the note: ${sentence.text}`} accessibilityHint="Opens the note sentence this point cites" hitSlop={{ top: 8, bottom: 8, left: 4, right: 12 }}
-    onPress={() => { haptic("select"); router.push({ pathname: "/source", params: { id: "note", patientId, quote: sentence.text } }); }}
-    style={{ alignSelf: "flex-start", marginLeft: 10 }}>{({ pressed }) => <PressScale pressed={pressed} style={{ flexDirection: "row", alignItems: "center", gap: 5, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: "#E6EEFC" }}>
-    <Icon name="doc.text" size={11} color={palette.blue} />
-    <Text style={{ ...type.caption, fontWeight: "600", color: palette.blue }}>From the note</Text>
-  </PressScale>}</Pressable>;
+/**
+ * The small source pill under a point: unfolds, right under it, the exact note sentence the point cites. In place, not
+ * the source sheet: the sheet only repeated this one sentence, over the letter and the discharge under it.
+ */
+function FromTheNote({ sentence }: { sentence: Sentence }) {
+  const [open, setOpen] = useState(false);
+  return <View style={{ gap: 6, marginLeft: 10 }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`From the note: ${sentence.text}`} accessibilityHint={open ? "Hides the note sentence" : "Shows the note sentence this point cites"} accessibilityState={{ expanded: open }} hitSlop={{ top: 8, bottom: 8, left: 4, right: 12 }}
+      onPress={() => { haptic("select"); setOpen(o => !o); }}
+      style={{ alignSelf: "flex-start" }}>{({ pressed }) => <PressScale pressed={pressed} style={{ flexDirection: "row", alignItems: "center", gap: 5, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: "#E6EEFC" }}>
+      <Icon name="doc.text" size={11} color={palette.blue} />
+      <Text style={{ ...type.caption, fontWeight: "600", color: palette.blue }}>From the note</Text>
+      <Icon name={open ? "chevron.up" : "chevron.down"} size={9} color={palette.blue} />
+    </PressScale>}</Pressable>
+    {open && <Expand style={{ paddingLeft: 10, borderLeftWidth: 2, borderColor: "rgba(36,91,204,0.25)" }}>
+      <Text selectable style={{ ...type.footnote, color: palette.ink }}>“{sentence.text}”</Text>
+      <Text style={{ ...type.caption, color: palette.muted }}>As written in the consultation note</Text>
+    </Expand>}
+  </View>;
 }

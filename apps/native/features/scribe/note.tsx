@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Keyboard, Pressable, Switch, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
@@ -21,6 +21,7 @@ import { wantsLive } from "@/features/live/judge";
 import { noteSections, noteSentences } from "@/features/live/prescribing-sync";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { NoVisit } from "@/components/sona/no-visit";
+import { openPage } from "@/features/encounter/navigation";
 
 const clip = (value: string, length = 140) => value.length > length ? `${value.slice(0, length).trimEnd()}…` : value;
 const emptyDetail: Record<keyof NoteSections, string> = {
@@ -93,6 +94,7 @@ function QuietLink({ label, icon, onPress }: { label: string; icon: string; onPr
 /** Structured note: patient, one state line, four editable sections, and a floating bar to save. */
 export function NoteScreen() {
   const { patient, encounter, updateEncounter, showDemoControls } = useEncounterSelect(s => ({ patient: s.patient, encounter: s.encounter, updateEncounter: s.updateEncounter, showDemoControls: s.showDemoControls }), sameShallow);
+  const navigation = useNavigation();
   const { reducedMotion } = useAccessibleEffects();
   const [suggestion, setSuggestion] = useState<NoteSections>();
   const [failNextSave, setFailNextSave] = useState(false);
@@ -205,7 +207,7 @@ export function NoteScreen() {
     // The judge build with nothing recorded: no transcript, so no draft; the way in is the recorder.
     : !hasContent && from === "nothing" ? <>
       <StateLine>Nothing recorded yet, so there is nothing to draft from. Record the consultation, then review the note Sona drafts from it.</StateLine>
-      <Action label="Open consultation" icon="waveform" onPress={() => { haptic("tap"); router.push("/recording"); }} />
+      <Action label="Open consultation" icon="waveform" onPress={() => { haptic("tap"); openPage(navigation, "/recording"); }} />
     </>
     : !hasContent ? suggestionBlocked ? <StateLine>{suggestionBlocked}</StateLine> : <>
       <Action label={drafting ? "Drafting from consultation…" : "Draft from consultation"} icon="waveform" disabled={drafting} onPress={draftNote} />
@@ -223,7 +225,7 @@ export function NoteScreen() {
       <View style={{ flex: 1 }}><Action label={saving ? "Saving…" : status === "failed" ? "Retry save" : "Save draft"} accessibilityLabel={status === "failed" ? "Retry saving draft" : undefined} icon="checkmark" disabled={saving} onPress={save} /></View>
       <View style={{ flex: 1 }}><Action label={encounter.noteReviewed ? "Reviewed" : "Mark reviewed"} accessibilityLabel={encounter.noteReviewed ? "Marked reviewed" : "Mark note reviewed"} secondary disabled={encounter.noteReviewed || saving || status !== "saved"} onPress={() => { Keyboard.dismiss(); haptic("done"); updateEncounter(current => ({ ...current, noteReviewed: true })); }} /></View>
     </View>
-    {next && <QuietLink label={`Next: ${next.label}`} icon="arrow.right.circle" onPress={() => { haptic("tap"); router.push(next.op.slice(3) as never); }} />}
+    {next && <QuietLink label={`Next: ${next.label}`} icon="arrow.right.circle" onPress={() => { haptic("tap"); openPage(navigation, next.op.slice(3) as "/tasks" | "/handover"); }} />}
     {live && <Pressable accessibilityRole="switch" accessibilityLabel="Exclude this note from training" accessibilityHint="When on, saving keeps this visit's note out of the de-identified training data" accessibilityState={{ checked: excludeFromTraining }}
       onPress={() => setExcludeFromTraining(v => !v)} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 4 }}>
       <Text style={{ ...type.footnote, flex: 1, color: palette.muted }}>Exclude from training</Text>
@@ -242,7 +244,7 @@ export function NoteScreen() {
       {liveDraft?.error && !encounter.noteReviewed && <StateLine warning>{`Sona couldn't draft this note (${liveDraft.error}), so it holds the consultation as captured.`}</StateLine>}
       {!!liveDraft?.dropped && !encounter.noteReviewed && <StateLine>{`Sona left out ${liveDraft.dropped} ${liveDraft.dropped === 1 ? "statement" : "statements"} it couldn't check against the transcript.`}</StateLine>}
       {unsure > 0 && <StateLine warning>{`${unsure} ${unsure === 1 ? "turn has" : "turns have"} an unsure speaker.`}</StateLine>}
-      {unsure > 0 && <QuietLink label="Check speakers" icon="person.2" onPress={() => { haptic("tap"); router.push("/recording"); }} />}
+      {unsure > 0 && <QuietLink label="Check speakers" icon="person.2" onPress={() => { haptic("tap"); openPage(navigation, "/recording"); }} />}
       {missing.length > 0 && <StateLine warning>{`${failedLine(missing)} Not in this draft.`}</StateLine>}
       {encounter.transcript.some(line => line.corrected && !line.englishReviewed) && <StateLine warning>Unreviewed interpretations in the transcript. Check the original dialogue first.</StateLine>}
       {serverError && <StateLine warning>{serverError}</StateLine>}

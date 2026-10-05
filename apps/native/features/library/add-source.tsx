@@ -1,20 +1,21 @@
 import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Linking, Pressable, ScrollView, TextInput, View, useWindowDimensions } from "react-native";
+import { Linking, Pressable, TextInput, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { LAYOUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Disclosure, ErrorLine, IconDisc, Mark, Press, TextLink } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Expand, glass, Icon, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Expand, glass, Icon, pillStyle, Screen, useAccessibleEffects } from "@/components/sona/ui";
 import { JUDGE } from "@/features/live";
 import { useAddSource, type Added, type ArticlePreview, type LibraryScope } from "@/features/live/library-sync";
 import { haptic } from "@/features/scribe/parts";
 
 /**
- * Route `/library-add`: add a source to the doctor's library (after 60fps "Speechify Add Document
- * Sheet", https://60fps.design/shots/speechify-add-document-sheet: one sheet, one row per way in).
+ * Route `/library-add`: add a source to the doctor's library, a page pushed from Settings (after 60fps "Speechify Add
+ * Document Sheet", https://60fps.design/shots/speechify-add-document-sheet: one row per way in). A page, not a sheet: it
+ * has keyboard fields, and opens the camera, "What did you scan?" and Read with OCR, none of which may stack on a sheet.
  * A PDF uploads straight from its row; PubMed and pasted text open in place. While the server reads
  * the source, a status panel unfolds under the rows on the layout spring and pushes nothing off
  * screen (after "Google Photos Logo Spin to Backup Loader Animation",
@@ -29,11 +30,10 @@ const SCOPES: { key: LibraryScope; label: string; icon: string; detail: string }
 
 type Status = { state: "working"; label: string } | { state: "done"; added: Added } | { state: "refused"; label: string; error: string; retry?: () => void; reason?: string };
 
-export function AddSourceSheet() {
+export function AddSourceScreen() {
   const [scope, setScope] = useState<LibraryScope>("me");
   const [open, setOpen] = useState<"pubmed" | "paste">();
   const [status, setStatus] = useState<Status>();
-  const { height } = useWindowDimensions();
   const { reducedMotion } = useAccessibleEffects();
   const add = useAddSource();
   const working = status?.state === "working";
@@ -86,17 +86,15 @@ export function AddSourceSheet() {
     </Disclosure>,
   ].filter(row => row !== false);
 
-  return <ScrollView style={{ maxHeight: height * 0.9, flexGrow: 0 }} contentContainerStyle={{ paddingTop: 36, paddingBottom: 34, paddingHorizontal: 20, gap: 16 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
-    <View style={{ gap: 4 }}>
-      <Text accessibilityRole="header" style={{ ...type.heading, color: palette.ink }}>Add a source</Text>
-      <Text style={{ ...type.subhead, color: palette.muted }}>Evidence answers cite it next to PubMed, without grading it.</Text>
-    </View>
+  // The native title says "Add a source"; the page opens on what adding one does.
+  return <Screen>
+    <Text style={{ ...type.subhead, color: palette.muted }}>Evidence answers cite it next to PubMed, without grading it.</Text>
     <ScopeToggle value={scope} onChange={setScope} disabled={working} />
     <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 14 }}>
       {rows.map((row, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: 60 + i * 45, distance: 8, duration: 280 })} style={i ? { borderTopWidth: 1, borderColor: glass.hairline } : undefined}>{row}</Animated.View>)}
     </Animated.View>
     {status && <Expand><StatusPanel status={status} scope={scope} onAnother={() => setStatus(undefined)} /></Expand>}
-  </ScrollView>;
+  </Screen>;
 }
 
 /**

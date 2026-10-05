@@ -1,5 +1,5 @@
 import { ErrorLine, PressScale } from "@/components/sona/parts";
-import { router, Stack } from "expo-router";
+import { router } from "expo-router";
 import { MarkedText } from "@/components/sona/marked-text";
 import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
@@ -7,7 +7,7 @@ import Animated, { FadeIn, withSpring, withTiming } from "react-native-reanimate
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, CloseButton, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { BlockerRow, useSettling, Pill, Ring } from "@/features/clinical/prescribe-card";
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { capabilityLabels } from "@/features/encounter/conversation";
@@ -43,20 +43,15 @@ export function DischargeScreen() {
   // The open visit is the one being discharged (updateEncounter writes to it).
   const patient = useEncounterSelect(s => s.patient), encounter = useEncounterSelect(s => s.encounter);
   const { reducedMotion } = useAccessibleEffects();
-  if (!patient) return <><ModalHeader title="Discharge" /><NoVisit view="discharge" what="a discharge" /></>;
+  if (!patient) return <NoVisit view="discharge" what="a discharge" />;
   const discharged = Boolean(encounter?.discharge?.dischargedAt);
   const answers = encounter?.requests.map(r => capabilityLabels[r.kind]) ?? [];
   // An already discharged patient opens still, on the receipt.
   return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
-    <ModalHeader title="Discharge" />
     <DischargePage key={patient.id} patient={patient} answers={answers} animate={!reducedMotion && !discharged} />
   </View>;
 }
 
-/** The modal's header, as Consultation's and Scan's: the native bar's centred title and glass Close (these modals start without it). */
-export function ModalHeader({ title }: { title: string }) {
-  return <Stack.Screen options={{ headerShown: true, title, headerLeft: () => null, headerRight: () => <CloseButton /> }} />;
-}
 
 /** The decision bar's one line above its button: what the action will do, or why it just failed. */
 export function BarLine({ children, error = false }: { children: string; error?: boolean }) {
@@ -237,7 +232,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   const bar = done ? <>
     {error ? <BarLine error>{error}</BarLine> : <BarLine>{`Sona Care checks in on day ${checkInDaysFor(checkIns, patient.encounterId, checkInDaysOf(state, plan)).join(", ")} · ${language.name}`}</BarLine>}
     <View style={{ flexDirection: "row", gap: 10 }}>
-      {followUps > 0 && <View style={{ flex: 1 }}><Action label="View tasks" icon="checklist" secondary onPress={() => { router.back(); setTimeout(() => router.push("/tasks"), 320); }} /></View>}
+      {followUps > 0 && <View style={{ flex: 1 }}><Action label="View tasks" icon="checklist" secondary onPress={() => router.replace("/tasks")} /></View>}
       <View style={{ flex: 1 }}><Action label="Done" onPress={() => router.back()} /></View>
     </View>
   </> : <>

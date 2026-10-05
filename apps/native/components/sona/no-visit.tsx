@@ -3,8 +3,7 @@ import { Action, Insight, Screen } from "./ui";
 
 /**
  * A visit page opened without a visit (from a link, or after the visit closed): what it needs and the one way
- * on, the patient picker, which reopens this page (`view`) once a patient is chosen. Modals that hide the native
- * header put ModalHeader (features/discharge) above it, so Close is always there.
+ * on, the patient picker, which reopens this page (`view`) once a patient is chosen.
  */
 export function NoVisit({ view, what }: { view: string; what: string }) {
   return <Screen>

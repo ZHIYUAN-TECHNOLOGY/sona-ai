@@ -56,7 +56,7 @@ export function receiptLine(ack: Ack, now: Date) {
 export const resultLine = (r: PendingResult) => [`${r.test} ${r.value}`, r.flag.toLowerCase(), r.last ? `last ${r.last}` : ""].filter(Boolean).join(" · ");
 
 /** Where a flag leads: a question in the visit, a page in it, or another page. */
-export type Go = { next?: string; view?: string; to?: "/handover" };
+export type Go = { next?: string; view?: string; to?: "/handover" | `/inbox/${string}` };
 export type Flag = { label: string; tone: "urgent" | "caution"; go: Go };
 
 /** The allergy a clinician recorded in this visit (the allergy row's Confirm, or a history correction); until one is, the record's allergy needs confirming. */

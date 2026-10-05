@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { deidentifiedText, draftText, emptyReadText, keptByText, readerText, sampleText } from "./sample-label";
+import { deidentifiedText, draftText, emptyReadText, keptByText, labelMeaning, readerText, sampleText } from "./sample-label";
 
 test("a model's answer kept from earlier says when it was drafted", () => {
   expect(draftText("gemma-4-26b-a4b")).toBe("AI draft · Gemma · check before acting");
@@ -65,4 +65,13 @@ test("the judge build never says Sample: the model is starting, or it did not an
 
 test("a fallback after a failed call says the call failed, in every build", () => {
   for (const judge of [true, false]) expect(sampleText({ judge, rule: true, what: "scribe", error: "Network request failed" })).toBe("Rule-based · the scribe model could not be reached: Network request failed");
+});
+
+test("a label says what it means in place, as the About data sheet does", () => {
+  expect(labelMeaning({ judge: true, model: true })).toBe("Written by a model: check it before acting.");
+  expect(labelMeaning({ judge: false, rule: true })).toBe("Fixed rules worked this out, not a model.");
+  expect(labelMeaning({ judge: false })).toBe("An authored example, shown until the AI model is switched on.");
+  expect(labelMeaning({ judge: false, waking: 3 })).toBe("An authored example, shown until the model has started.");
+  // The judge build has no samples: never "an authored example".
+  expect(labelMeaning({ judge: true })).not.toContain("authored");
 });

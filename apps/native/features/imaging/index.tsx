@@ -28,7 +28,6 @@ import { takeXray } from "@/features/library/scan-state";
 import { teachingImage, type TeachingImage } from "./fixture";
 import { ImageEdge, OriginalImageViewer, VIEWING } from "./viewer";
 import { NoVisit } from "@/components/sona/no-visit";
-import { CloseButton } from "@/components/sona/ui";
 
 export { OriginalImageViewer } from "./viewer";
 
@@ -349,8 +348,8 @@ export function XrayScreen() {
       <View style={{ flex: 1 }}><Action label={analysing ? "Analysing…" : "Analyse X-ray"} icon="sparkles" disabled={analysing || picking} onPress={analyse} /></View>
     </View>
   </>}>
-    {/* Image actions live in the header's right slot, before Close. */}
-    <Stack.Screen options={{ headerRight: () => <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><MenuTrigger open={menuOpen} onPress={() => setMenuOpen(value => !value)} /><CloseButton /></View> }} />
+    {/* Image actions live in the header's right slot; back is the chevron on the left. */}
+    <Stack.Screen options={{ headerRight: () => <MenuTrigger open={menuOpen} onPress={() => setMenuOpen(value => !value)} /> }} />
     {menuOpen && <MenuPanel onClose={() => setMenuOpen(false)} items={[
       { label: picking ? "Opening library…" : "Choose local image", icon: "photo.on.rectangle", disabled: picking || analysing, onPress: pickImage },
       { label: "Remove image", icon: "trash", disabled: analysing, onPress: () => updateEncounter(current => ({ ...current, imagingAttachment: undefined, hideTeachingImage: true }), true) },
