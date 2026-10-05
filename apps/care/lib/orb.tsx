@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Blur, Canvas, Circle, Fill, FractalNoise, Group, LinearGradient, Oval, Paint, RadialGradient, Rect, Shader, Skia, vec } from "@shopify/react-native-skia";
 import { useDerivedValue, useReducedMotion, useSharedValue, type SharedValue } from "react-native-reanimated";
 import { useCalmClock } from "./calm-clock";
@@ -94,8 +95,12 @@ function tide(t: number) {
   return 0.08 + 0.62 * (p < 0.35 ? rise : p < 0.55 ? 1 : 1 - fall);
 }
 
-/** The orb drawn in a canvas `size + 2 × pad` wide (the pad leaves room for its soft lift). */
-export function SonaOrb({ size = 148, flood, tx, ty, lift = true, awake = false }: { size?: number; flood?: SharedValue<number>; tx?: SharedValue<number>; ty?: SharedValue<number>; lift?: boolean; awake?: boolean }) {
+/**
+ * The orb drawn in a canvas `size + 2 × pad` wide (the pad leaves room for its soft lift). Memoised: its props are a
+ * size, flags and shared values, so a parent re-rendering (Ask on every keystroke, voice mode on every word read aloud,
+ * the dock on every navigation) no longer re-renders its Skia tree each time.
+ */
+export const SonaOrb = memo(function SonaOrb({ size = 148, flood, tx, ty, lift = true, awake = false }: { size?: number; flood?: SharedValue<number>; tx?: SharedValue<number>; ty?: SharedValue<number>; lift?: boolean; awake?: boolean }) {
   const still = useReducedMotion();
   // Under Reduce Motion the orb holds still, so its clock stops too (useClock kept ticking for nothing). On a screen left
   // alone (./idle) it holds its frame, unless `awake`: a voice call, Sona working, the opening, where nobody touches it.
@@ -152,7 +157,7 @@ export function SonaOrb({ size = 148, flood, tx, ty, lift = true, awake = false 
           </Group>
         </Group>
   </Canvas>;
-}
+});
 
 /** Room around the orb for its lift shadow. */
 export const orbPad = (size: number) => size * 0.17;
