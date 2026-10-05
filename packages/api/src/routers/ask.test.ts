@@ -101,7 +101,27 @@ test("an invalid or ungrounded free answer is fixture, marked unanswered (the mo
   // One database for all of them: the fake box answers with whichever reply is current.
   let reply: unknown;
   const client = await nurse(boxes(() => gemma(reply)).baseten);
-  for (reply of rejected) expect(await client.ask.free(free)).toEqual({ source: "fixture", unanswered: true });
+  // Never the model's own words. Where it did answer from the page (a spec), the page's own lines stand in, as the rules' answer.
+  const pageSays = { root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "AskLead", props: { text: "2 patients need you now, most urgent first. 1 task overdue." }, children: [] } } };
+  for (reply of rejected) expect(await client.ask.free(free)).toEqual({ source: "fixture", unanswered: true, ...typeof reply === "object" && "elements" in reply! && { spec: pageSays } });
+  // A page that says nothing has nothing to stand in.
+  expect(await client.ask.free({ ...free, context: { lines: [], rows: context.rows } })).toEqual({ source: "fixture", unanswered: true });
+});
+
+test("a list longer than an answer may show is cut to its first 12 rows, whoever wrote it, instead of failing the whole answer", async () => {
+  const rows = Array.from({ length: 14 }, (_, i) => ({ id: `SYN-${i}`, title: `Patient ${i}`, detail: "Result to review", tone: "soon" as const, op: `open:SYN-${i}` }));
+  const many = { lines: ["Who needs me now? 14 patients need you now, most urgent first."], rows };
+  const read = groundedSpec(spec("14 patients need you now.", rows), many);
+  expect((read!.elements["f-1"]!.props.rows as unknown[])).toEqual(rows.slice(0, 12));
+});
+
+test("a clinical question Gemma marks as one the literature answers comes back as evidence, for the app to answer with citations", async () => {
+  const asked = { ...free, question: "Is tranexamic acid helpful in upper GI bleeding?" };
+  const marked = await (await nurse(boxes(() => gemma({ general: "It has not been shown to reduce deaths.", evidence: true })).baseten)).ask.free(asked);
+  expect(marked).toMatchObject({ source: "model", general: true, evidence: true });
+  // Unmarked (or marked by anything but true), a general answer stays one.
+  const plain = await (await nurse(boxes(() => gemma({ general: "Ward rounds usually start at 8.", evidence: "yes" })).baseten)).ask.free(asked);
+  expect(plain).not.toHaveProperty("evidence");
 });
 
 test("a question the page doesn't answer gets a general answer from Gemma, marked general (no content limit)", async () => {

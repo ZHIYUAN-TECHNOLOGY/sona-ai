@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { defaultMedications, effectivePatient, getPrescriptionChecks } from "./clinical-state";
 import { editNote, readNoteSections } from "../scribe/model";
 import { patients, newEncounter } from "./fixtures";
-import { acceptCard, beginRequest, createCard, finishRequest, issueSimulation, reviseEncounter, routeInThread, routePrompt, revealSections, queueAmendment, reconcileAmendment } from "./state";
+import { acceptCard, beginRequest, createCard, finishRequest, issueSimulation, namedPatient, offeredAs, reviseEncounter, routeInThread, routePrompt, revealSections, queueAmendment, reconcileAmendment } from "./state";
 
 const patient = patients[0];
 const regimen = "Paracetamol 500 mg tablet · 1000 mg · Oral · Every 6 hours · 3 days";
@@ -155,6 +155,37 @@ test("a question typed after an evidence answer continues the evidence thread un
   expect(routeInThread("What harms should I watch for?", "briefing")).toBe(null);
   expect(routeInThread("Review drug interactions", "evidence")).toBe("medication");
   expect(routeInThread("Steroids for her pneumonia?")).toBe("evidence");
+});
+
+test("a question sent with its attachment settles: the request belongs to the revision the attachment made, not the one its sender last saw", () => {
+  // The dock attaches the image (a revision) and asks in the same tick, so the request still carries the earlier revision.
+  const attached = reviseEncounter({ ...newEncounter(), imagingAttachment: { uri: "file:///film.jpg", name: "film.jpg" } });
+  const asked = beginRequest(attached, { ...request, id: "req-xray", kind: "xray", revision: attached.revision - 1 });
+  const held = asked.requests.at(-1);
+  expect(held.revision).toBe(attached.revision);
+  // Its card is accepted (it was refused as late, and the answer hung on "Opening the radiograph…"), with the image it was asked about.
+  const answered = acceptCard(asked, patient, createCard(held));
+  expect(answered.cards.map(c => [c.kind, c.imagingSnapshot.imagingAttachment.uri])).toEqual([["xray", "file:///film.jpg"]]);
+  expect(finishRequest(answered, "req-xray", "complete").requests.at(-1).status).toBe("complete");
+});
+
+test("a request that names one patient on the roster is theirs; no name, or a name two share, still asks which patient", () => {
+  const roster = [{ id: "a", name: "Ganesan Muthu" }, { id: "b", name: "Siti Aminah" }, { id: "c", name: "Siti Nurhaliza" }, { id: "d", name: "Tan Mei Ling" }];
+  expect(namedPatient("Brief me on Ganesan Muthu", roster)?.id).toBe("a");
+  expect(namedPatient("brief me on ganesan muthu in bed 11", roster)?.id).toBe("a");
+  expect(namedPatient("Review Ganesan’s medicines", roster)?.id).toBe("a");
+  expect(namedPatient("Brief me on Siti Aminah", roster)?.id).toBe("b"); // the whole name settles a shared first name
+  expect(namedPatient("Brief me on Siti", roster)).toBeUndefined();
+  expect(namedPatient("Brief me on this patient", roster)).toBeUndefined();
+  expect(namedPatient("Which tan is this?", roster)).toBeUndefined(); // a three-letter part alone names nobody
+});
+
+test("one of the app's own suggested questions, word for word, is the kind it was offered as", () => {
+  const offered = [{ kind: "evidence", text: "Should Siti get steroids for this pneumonia?" }, { kind: "medication", text: "Check Siti’s medicines for interactions" }];
+  // The keyword rule alone would not decide this; a router that reads "steroids" as a medicines review is not asked.
+  expect(offeredAs("should siti get steroids for this pneumonia", offered)).toBe("evidence");
+  expect(offeredAs("Check Siti's medicines for interactions.", offered)).toBe("medication");
+  expect(offeredAs("Should Siti get antibiotics for this pneumonia?", offered)).toBeUndefined();
 });
 
 test("a note edit leaves the revision, the medication review and a pending amendment untouched", () => {

@@ -16,7 +16,7 @@ export type LeadState = {
   /** A clinician has recorded the allergy in this visit (the card shows its receipt instead of asking). */
   allergyConfirmed?: boolean;
   /** The X-ray card's image: the reference example, the clinician's own, an unsupported or empty sample, or none at all. */
-  image?: "reference" | "attached" | "read" | "unsupported" | "no-finding" | "none";
+  image?: "reference" | "attached" | "reading" | "read" | "unsupported" | "no-finding" | "none";
   note?: "none" | "draft" | "reviewed";
   prescription?: "created" | "failed" | "blocked" | "outside" | "ready";
   /** Connected: a receipt is the visit record's. Otherwise it is a sample on this phone, and the lead says so (receiptWords). */
@@ -37,6 +37,8 @@ export function medicinesConfirmed(entries: NonNullable<LeadState["medicines"]>)
 }
 
 const first = (patient: Patient) => patient.name.split(" ")[0]!;
+/** A recorded condition mid-sentence: an ordinary first word loses its capital ("Respiratory review"); an acronym and everything after it keep the record's casing ("COPD exacerbation", "Upper GI bleed"). */
+const inSentence = (condition: string) => condition.replace(/^[A-Z][a-z]+\b/, word => word.toLowerCase());
 
 /** The one-sentence lead above an answer; undefined when the card has nothing settled to summarise yet. None is model output. */
 export function leadFor(kind: Capability, patient: Patient, state: LeadState, prompt = ""): string | undefined {
@@ -47,7 +49,7 @@ export function leadFor(kind: Capability, patient: Patient, state: LeadState, pr
       const result = state.result ? ` A new ${testInSentence(state.result.test)} result needs acknowledging.` : "";
       // Only the abnormal is coloured (fever with a raised temperature), not every noun.
       if (patient.incomplete) return `${name} is here with ${patient.complaint.charAt(0).toLowerCase()}${patient.complaint.slice(1).replace(/\.$/, "")}, and most of the history is still missing.${result}`;
-      return emphasise(`${name} is ${patient.age} and here for a ${patient.subtitle.toLowerCase()}. ${patient.complaint}${result}`, patient);
+      return emphasise(`${name} is ${patient.age} and here for a ${inSentence(patient.subtitle)}. ${patient.complaint}${result}`, patient);
     }
     case "reasoning": return patient.incomplete ? "There isn’t enough history yet to weigh possibilities. Here’s what to collect first." : "Two possibilities are worth exploring. The record doesn’t confirm either of them.";
     case "medication": {
@@ -61,6 +63,7 @@ export function leadFor(kind: Capability, patient: Patient, state: LeadState, pr
     case "xray": return {
       reference: "Here’s a reference chest radiograph, not this patient’s, with its uploader’s description. It isn’t a model reading.",
       attached: "Your image is attached. Nothing has been read from it, so there are no findings.",
+      reading: undefined, // the card says it is saving or reading the image; "nothing has been read" would be untrue a moment later
       read: "The image model has described your image. It is unvalidated, so check it against the film.",
       unsupported: "This image is outside chest radiography, so no interpretation is available.",
       "no-finding": "This sample returned no finding result. That doesn’t mean the examination is normal.",

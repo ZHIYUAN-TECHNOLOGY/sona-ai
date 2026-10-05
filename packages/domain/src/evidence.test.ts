@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { ANSWER, BOTTOM_LINE, FOLLOW_UPS, STUDIES, authoredAnswer, curb65, curb65FromObservations, sourcedClaims, studyKind, quotedClaims } from "./evidence";
+import { ANSWER, BOTTOM_LINE, FOLLOW_UPS, STUDIES, authoredAnswer, curb65, curb65FromObservations, severityApplies, sourcedClaims, studyKind, quotedClaims } from "./evidence";
 import type { Patient } from "./types";
 
 const patient = (over: Partial<Patient>): Patient => ({ id: "X-1", encounterId: "visit-x", name: "Test Patient", initials: "TP", age: 70, sex: "Female", subtitle: "", time: "09:00", complaint: "", history: [], family: "", social: "", allergies: null, medicines: [], vitals: [], sources: [], incomplete: false, ...over });
@@ -33,6 +33,15 @@ test("CURB-65 keeps unrecorded or wrongly-united factors unknown and withholds t
   const r = curb65FromObservations([obs("diastolic", 58, "mmHg"), obs("urea", 45, "mg/dL")], 70);
   expect({ score: r.score, recorded: r.recorded, risk: r.risk }).toEqual({ score: 2, recorded: 2, risk: undefined });
   expect(r.factors.find(f => f.id === "u")?.point).toBeUndefined();
+});
+
+test("the pneumonia severity score belongs only where pneumonia is the subject: the question, its thread, or the visit's condition", () => {
+  const copd = ["Breathless for three days.", "COPD exacerbation", "COPD, two exacerbations this year"];
+  expect(severityApplies(["Is tranexamic acid helpful in upper GI bleeding?"], copd)).toBe(false);
+  expect(severityApplies(["When is an early invasive strategy indicated?"], ["Central chest pain.", "NSTEMI, day 2"])).toBe(false);
+  expect(severityApplies(["Should Amelia get steroids for this pneumonia?"], ["Cough for five days.", "Respiratory review"])).toBe(true);
+  expect(severityApplies(["What harms should I watch for?", "Steroids for CAP?"], copd)).toBe(true);
+  expect(severityApplies(["What antibiotic duration?"], ["Productive cough and fever.", "Pneumonia, day 2", null, undefined])).toBe(true);
 });
 
 test("a study's kind comes from PubMed's publication types, strongest design first", () => {

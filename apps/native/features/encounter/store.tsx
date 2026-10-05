@@ -85,8 +85,10 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     const last = stateRef.current[id]?.requests.at(-1);
     if (!amendmentId && last && isRepeat(last, kind, prompt)) return last.id;
     clearTimers();
-    const revision = stateRef.current[id]!.revision;
-    const req: RequestState = { id: `request-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, kind, prompt, patientId: id, encounterId: patient.encounterId, revision, status: "streaming" };
+    // The revision here is the last one drawn; beginRequest stamps the one the request lands on (an attachment sent with
+    // the question has revised the visit in this same tick), and `asked` is the request as the visit then holds it.
+    const req: RequestState = { id: `request-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, kind, prompt, patientId: id, encounterId: patient.encounterId, revision: stateRef.current[id]!.revision, status: "streaming" };
+    const asked = (current: Encounter) => current.requests.find(r => r.id === req.id) ?? req;
     setEncounters(prev => {
       const next = { ...beginRequest(prev[id]!, req), working: undefined }, operation = next.amendmentOperation; // clearTimers above stopped any in-place run
       if (operation && !["complete", "failed", "cancelled"].includes(operation.phase)) next.amendmentOperation = amendmentId === operation.id ? { ...operation, phase: kind === "medication" ? "reviewing" : "issuing", requestId: req.id } : { ...operation, phase: "cancelled", error: "A different request superseded the amendment. The earlier receipt is retained." };
@@ -99,7 +101,7 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
           if (activeRef.current !== id) return;
           setEncounters(prev => {
             const current = prev[id]!;
-            return { ...prev, [id]: sections === 1 ? acceptCard(current, patient, { ...createCard(req), sections: 1 }) : revealSections(current, req.id, 2) };
+            return { ...prev, [id]: sections === 1 ? acceptCard(current, patient, { ...createCard(asked(current)), sections: 1 }) : revealSections(current, req.id, 2) };
           });
         }, delay));
       }
@@ -109,7 +111,7 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
       if (activeRef.current !== id) return;
       setEncounters(prev => {
         const current = prev[id]!;
-        if (current.revision !== revision || current.requests.find(r => r.id === req.id)?.status !== "streaming") return prev;
+        if (current.revision !== asked(current).revision || asked(current).status !== "streaming") return prev;
         return { ...prev, [id]: reconcileAmendment(end(current), req.id) };
       });
     };
@@ -117,7 +119,8 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     const settle = (receipt?: ServerReceipt) => finish(current => {
       if (simulateInvalid) return finishRequest(current, req.id, "failed", "This response requested an unsupported component. The renderer kept your existing content. Turn off the invalid-component fixture and retry.");
       if (simulateFailure) return finishRequest(current, req.id, "failed", "The fixture stream was interrupted. Your completed results and edits are kept.");
-      current = acceptCard(current, patient, createCard(req));
+      const revision = current.revision; // the request's own: finish has just checked they match
+      current = acceptCard(current, patient, createCard(asked(current)));
       if (kind === "briefing" || kind === "xray" || kind === "prescription") current = revealSections(current, req.id, 3);
       if (kind === "medication") current = { ...current, medicationCheckedRevision: revision };
       if (kind === "prescription") {

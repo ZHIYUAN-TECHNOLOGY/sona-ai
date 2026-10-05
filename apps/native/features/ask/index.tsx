@@ -102,11 +102,14 @@ export function answerNow(question: string, answers: Answer[], live: boolean): R
   const rule = matchQuestion(question, answers);
   return rule ? { answer: rule } : live ? undefined : { notice: only(answers) };
 }
-/** Live mode: the model's answer to any question (ask.free: from the page's own data, else general knowledge, marked), or why not: it is starting or out of reach (ask again). */
+/** Live mode: the model's answer to any question (ask.free: from the page's own data, else general knowledge, marked; a clinical one from the evidence), or why not: it is starting or out of reach (ask again). */
 export async function answerFree(scope: Scope, question: string, answers: Answer[]): Promise<Reply> {
   try {
     const r = await api.ask.free({ scope, question, context: askContext(answers) });
-    if (r.source === "model") return { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model, general: "general" in r };
+    // A clinical question the literature answers (the model's own reading of it, not a word list) goes to the evidence, cited.
+    if (r.source === "model") return "evidence" in r && r.evidence ? EVIDENCE : { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model, general: "general" in r };
+    // The model's words did not keep to the page, so the server sent the page's own lines: shown as the rules' answer.
+    if ("spec" in r && r.spec) return { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true } };
     const waking = wakingOf(r);
     return waking ? { notice: startingReply(waking), again: true } : { notice: "unanswered" in r && r.unanswered ? "Sona couldn't answer that." : only(answers) };
   } catch {

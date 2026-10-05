@@ -136,6 +136,9 @@ test("the lab's own system posts a result with its shared secret: refused withou
   const failing = { ...context, announce: async () => { throw new Error("channel down"); } };
   const culture = await labFeed(failing, SECRET, new Request("https://sona.test/lab/results", { method: "POST", headers: { authorization: `Bearer ${SECRET}` }, body: JSON.stringify({ patientId: "SYN-2002", test: "Urine culture sensitivities", value: "No growth" }) }));
   expect([culture.status, (await culture.json() as { id: string }).id]).toEqual([201, "lab-2002-b2-result"]);
+  // A sender that fills every field sends an empty unit for a text result: accepted as a result with no unit.
+  const unitless = await post(`Bearer ${SECRET}`, { patientId: "SYN-2002", test: "Blood culture", value: "No growth at 48 h", unit: "" });
+  expect([unitless.status, await unitless.json()]).toEqual([201, expect.objectContaining({ test: "Blood culture", unit: null, flag: null })]);
 });
 
 test("a result for a sample the lab was still running fills that pending row, so the ward and the discharge stop waiting on it", async () => {

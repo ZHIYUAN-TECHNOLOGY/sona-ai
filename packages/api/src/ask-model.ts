@@ -36,7 +36,8 @@ Answer with JSON only, in exactly this shape:
 {"root":"f","elements":{"f":{"type":"AskColumn","props":{},"children":["f-0","f-1"]},"f-0":{"type":"AskLead","props":{"text":"<one short sentence that answers the question>"},"children":[]},"f-1":{"type":"AskRows","props":{"rows":[<rows>]},"children":[]}}}
 Rules:
 - <rows>: up to 8 of the page's rows that answer the question, most important first, each copied exactly as given (id, title, detail, tone, op). If no row answers it, leave out "f-1" and its child id.
-- If the data does not answer the question, answer it from general medical, hospital and everyday knowledge instead, in one to three short sentences, as {"general": "<text>"}. You have not seen this hospital's other records: never state a fact about a specific patient, bed, task or number there.`;
+- Write the lead in the page's own words, under 280 characters: apart from small joining words, every word and number in it must appear in the page's data or the question (a summary is the page's own lines, shortened).
+- If the data does not answer the question, answer it from general medical, hospital and everyday knowledge instead, in one to three short sentences, as {"general": "<text>", "evidence": <true or false>}. "evidence" is true only for a clinical question that published studies or guidelines answer (whether a treatment or test helps, a dose, a risk, a prognosis). You have not seen this hospital's other records: never state a fact about a specific patient, bed, task or number there.`;
 
 /** Words the lead must find in the data: a number or a capitalised word (a name, a bed) not opening a sentence. */
 const TOKEN = /[\p{L}\p{N}][\p{L}\p{N}+'’-]*(?:\.\d+)*/gu;
@@ -81,6 +82,16 @@ export function groundedSpec(spec: unknown, context: AskContext, question = ""):
 }
 
 /**
+ * What the page itself says, as one lead: its lines (each without the question it answers, "Who needs me now? …"),
+ * whole, for as many as a lead holds (280 characters); nothing when the page says nothing.
+ */
+function pageLines(context: AskContext) {
+  let text = "";
+  for (const line of context.lines.map(l => l.replace(/^[^?]*\?\s+/, ""))) { if (text.length + line.length + 1 > 280) break; text += `${text ? " " : ""}${line}`; }
+  return text ? checkAskSpec({ root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "AskLead", props: { text }, children: [] } } }) : null;
+}
+
+/**
  * Any question asked on a page, answered (the user lifted every content limit on 1 Oct). Gemma answers from the page's
  * own data first, as a checked spec (its rows, every claim found in the data); when the page doesn't answer it, the same
  * call answers from general knowledge as one lead line, marked `general` so the app shows it is not from the records.
@@ -95,8 +106,13 @@ export async function freeAnswer(baseten: Baseten, input: { scope: string; quest
     if (spec) return { source: "model" as const, model: BRAIN_MODEL, spec };
     const text = typeof read?.general === "string" ? read.general.trim().slice(0, 600) : "";
     const general = text && checkAskSpec({ root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "AskLead", props: { text }, children: [] } } });
-    if (general) return { source: "model" as const, model: BRAIN_MODEL, spec: general, general: true as const };
-    return { source: "fixture" as const, unanswered: true as const };
+    // `evidence`: Gemma read it as a clinical question the literature answers, so the app answers it from PubMed and the
+    // library with citations (the Evidence feature) and this uncited general answer is not what the clinician is shown.
+    if (general) return { source: "model" as const, model: BRAIN_MODEL, spec: general, general: true as const, ...read?.evidence === true && { evidence: true as const } };
+    // Gemma answered from the page and its words did not keep to it (the check above). The page's own lines are still
+    // true, so they answer, as the rules' (no model's name on them), rather than "Sona couldn't answer that".
+    const said = read?.elements ? pageLines(context) : undefined;
+    return { source: "fixture" as const, unanswered: true as const, ...said && { spec: said } };
   } catch { /* the box was starting or failed; it is woken for next time */ }
   return { source: "fixture" as const, ...wakingOf("brain") };
 }

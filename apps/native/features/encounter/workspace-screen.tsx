@@ -21,7 +21,7 @@ import { useTodayAnswers } from "@/features/ask/today";
 import { ThreadEntry, useTodayThread } from "@/features/ask/today-thread";
 import { answerOf, clearThread, type Entry, type Reply } from "@/features/ask/thread";
 import { isWatch } from "@sona-ai/domain/watch";
-import { capabilitySchema, routeInThread } from "./state";
+import { capabilitySchema, namedPatient, offeredAs, routeInThread } from "./state";
 import { carry, takeCarried } from "./carry";
 import { openSession } from "./navigation";
 import { useEncounter } from "./store";
@@ -57,7 +57,7 @@ const NO_ASIDES: Entry[] = [];
  * shows the same without the lead (it says that above), and `leave` ends Live before the card opens anything else.
  * `onSections` feeds the pinned section tabs (the thread's latest answer only).
  */
-function RequestAnswer({ req, card, revision, props, onRetry, lead = true, leave, onSections }: { req: RequestState; card?: ResponseCard; revision?: number; props?: FeatureProps; onRetry: () => void; lead?: boolean; leave?: () => void; onSections?: (list: AnswerSection[]) => void }) {
+function RequestAnswer({ req, card, revision, props, onRetry, lead = true, leave, onSections, newest = true }: { req: RequestState; card?: ResponseCard; revision?: number; props?: FeatureProps; onRetry: () => void; lead?: boolean; leave?: () => void; onSections?: (list: AnswerSection[]) => void; newest?: boolean }) {
   const away = <A extends unknown[]>(go: (...args: A) => void) => (...args: A) => { leave?.(); go(...args); };
   const answerPatient = card?.patientSnapshot ?? props?.patient;
   const body = card && props && <ClinicalResponseRenderer kind={card.kind} sections={card.sections} loading={req.status === "streaming"} featureProps={{ ...props, onOpen: away(props.onOpen), onRequest: away(props.onRequest), patient: card.patientSnapshot ?? props.patient, result: card, onSource: away(id => router.push({ pathname: "/source", params: { id, patientId: props.patient.id, cardId: card.id } })) }} />;
@@ -68,7 +68,9 @@ function RequestAnswer({ req, card, revision, props, onRetry, lead = true, leave
       <Reveal>{card.revision !== revision && <Notice>Earlier encounter revision {card.revision}. Its original context and sources are retained.</Notice>}{onSections ? <AnswerSections key={req.id} onChange={onSections}>{body}</AnswerSections> : body}</Reveal>
     </ResponseFrame>}
     {req.status === "failed" && <><Notice warning>{req.error}</Notice><Action secondary label="Retry request" onPress={away(onRetry)} /></>}
-    {req.status === "cancelled" && <Notice>Response stopped. Completed content and your edits are kept.</Notice>}
+    {/* Said under the stopped answer only until something else is asked: after that it is history, not news.
+        ponytail: any free answer in the visit counts as "something else" (they are listed after the cards, in no shared order); give both one order if a stop after one must still say so. */}
+    {req.status === "cancelled" && newest && <Notice>Response stopped. Completed content and your edits are kept.</Notice>}
   </>;
 }
 
@@ -179,6 +181,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const [asides, setAsides] = useState<Record<string, Entry[]>>({});
   const visitAsides = patient ? asides[patient.id] ?? NO_ASIDES : NO_ASIDES;
   const asideId = useRef(0);
+  const openId = useRef(patient?.id); openId.current = patient?.id;
   useEffect(() => { setTiles(false); }, [requests.length, visitAsides.length, patient?.id]);
   const steps = patient && latest && !active && !tiles ? nextSteps(latest.kind, encounter, patient, canPrescribe) : undefined;
   const server = useServerData(); // live mode: the top bar counts the server's tasks too
@@ -202,7 +205,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const act = (step: Step) => next.open ? next.hide(() => perform(step)) : perform(step);
 
   const open = (view: FocusView) => { if (!patient) { router.push({ pathname: "/patients", params: { view } }); return; } router.push(`/${view}`); };
-  const run = (kind: Capability, prompt = prompts[kind]) => { setNotice(undefined); if (!patient) { router.push({ pathname: "/patients", params: { next: kind, prompt } }); return; } const id = request(kind, prompt); Keyboard.dismiss(); return id; };
+  // With no visit open, a request that names one patient on the roster opens theirs with it; only an unnamed one asks which patient.
+  const run = (kind: Capability, prompt = prompts[kind]) => { setNotice(undefined); if (!patient) { const named = namedPatient(prompt, patients); if (named) openSession(named.id, { next: kind, prompt }); else router.push({ pathname: "/patients", params: { next: kind, prompt } }); return; } const id = request(kind, prompt); Keyboard.dismiss(); return id; };
   // Open a session at its latest answer rather than the top of the thread. Earlier answers can
   // still settle (images, reveals) just after mount, so the landing follows them for a moment.
   const landed = useRef<{ id?: string; at: number }>({ at: 0 });
@@ -231,6 +235,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     setAsides(a => ({ ...a, [pid]: entryId === undefined ? [...(a[pid] ?? []), { id, question }] : (a[pid] ?? []).map(e => (e.id === id ? { id, question } : e)) }));
     setTimeout(() => scroll.current?.scrollToEnd({ animated: !reducedMotion }), 60);
     const reply = await answerFree("visit", question, []);
+    // A clinical question for the literature is the visit's evidence card (this patient's, cited), not an aside; asked only if this visit is still the open one.
+    if ("evidence" in reply) { setAsides(a => ({ ...a, [pid]: (a[pid] ?? []).filter(e => e.id !== id) })); if (openId.current === pid) run("evidence", question); return reply; }
     setAsides(a => ({ ...a, [pid]: (a[pid] ?? []).map(e => (e.id === id ? { id, question, reply } : e)) }));
     return reply;
   };
@@ -244,6 +250,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   /** Which card answers a visit request: live mode asks Laya first (ask.route) for at most 2.5 s; keyword routing decides when it can't (no key, not covered, asleep or slow). */
   const route = async (prompt: string) => {
     const rest = () => { layaRestUntil.current = Date.now() + 60_000; return null; };
+    // One of the visit's own suggested questions, word for word, is the kind it was offered as (offeredAs): no router is asked.
+    const own = patient && offeredAs(prompt, capabilitySchema.options.map(kind => ({ kind, text: suggestionFor(kind, patient).text })));
+    if (own) return { kind: own, medicine: undefined };
     let timer: ReturnType<typeof setTimeout> | undefined;
     const picked = live && patient && Date.now() > layaRestUntil.current
       ? await Promise.race([
@@ -274,7 +283,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     // notice: live, the model answers it from Today's own data (ask.free), or says it is starting; demo mode says what Sona answers.
     if (!patient && pending.length) { setInput(""); void askForPatient(prompt); return; }
     // An evidence question (steroids, a guideline, a trial…) is answered on Today too, with no patient: a visit adds theirs.
-    if (!patient) { const routed = routeInThread(prompt); if (isWatch(prompt) || matchQuestion(prompt, todayAnswers) || !routed || routed === "evidence") { setInput(""); void today.ask(prompt); return; } }
+    // A visit request that names its patient ("Brief me on Ganesan Muthu in bed 11") is theirs, whatever day-wide word it also holds ("bed").
+    if (!patient) { const routed = routeInThread(prompt); if (isWatch(prompt) || !routed || routed === "evidence" || (!namedPatient(prompt, patients) && matchQuestion(prompt, todayAnswers))) { setInput(""); void today.ask(prompt); return; } }
     else if (pending.length) {
       // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
       const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
@@ -394,7 +404,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
         }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
           <Bubble text={req.prompt || prompts[req.kind]} />
           {/* Only the latest answer feeds the pinned tabs. */}
-          <RequestAnswer req={req} card={encounter?.cards.find(c => c.requestId === req.id)} revision={encounter?.revision} props={props} onRetry={() => run(req.kind, req.prompt)}
+          <RequestAnswer req={req} card={encounter?.cards.find(c => c.requestId === req.id)} revision={encounter?.revision} props={props} onRetry={() => run(req.kind, req.prompt)} newest={req.id === latest?.id && !visitAsides.length}
             onSections={req.id === latest?.id ? list => { setSections([...list]); setActiveTab(0); } : undefined} />
         </View>)}
         {visitAsides.map(e => <ThreadEntry key={`aside-${e.id}`} entry={e} fresh={e.id === visitAsides.at(-1)?.id} onAgain={() => void askAside(e.question, e.id)} />)}

@@ -1,5 +1,5 @@
 import { documents, encounters, observations, patients, provenance, pubmedArticles, pubmedSearches } from "@sona-ai/db/schema/clinical";
-import { STUDIES, authoredAnswer, curb65FromObservations, isRehearsed, pubmedUrl, quotedClaims, sourcedClaims, studyKind, type Claim, type ObservationRow, type Reference } from "@sona-ai/domain/evidence";
+import { STUDIES, authoredAnswer, curb65FromObservations, isRehearsed, pubmedUrl, quotedClaims, severityApplies, sourcedClaims, studyKind, type Claim, type ObservationRow, type Reference } from "@sona-ai/domain/evidence";
 import { ORPCError } from "@orpc/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -99,7 +99,7 @@ export type EvidenceStep = { type: "step"; step: "search" } | { type: "step"; st
  */
 async function* answer(context: Context & { hospitalId: string }, input: z.infer<typeof askInput>) {
   const { db, hospitalId } = context;
-  const [visit] = input.encounterId ? await db.select({ patientId: patients.id, name: patients.name, age: patients.age }).from(encounters).innerJoin(patients, eq(patients.id, encounters.patientId))
+  const [visit] = input.encounterId ? await db.select({ patientId: patients.id, name: patients.name, age: patients.age, complaint: patients.complaint, record: patients.record }).from(encounters).innerJoin(patients, eq(patients.id, encounters.patientId))
     .where(and(eq(encounters.id, input.encounterId), eq(encounters.hospitalId, hospitalId))) : [];
   if (input.encounterId && !visit) throw new ORPCError("NOT_FOUND", { message: `No encounter ${input.encounterId}` });
 
@@ -156,8 +156,11 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   // Each claim's proof: the sentence from each cited source that says it, checked word for word against that source.
   claims = quotedClaims(claims, read);
 
-  const rows = visit ? await db.select().from(observations).where(eq(observations.patientId, visit.patientId)).orderBy(asc(observations.observedAt)) : [];
-  const curb65 = visit ? curb65FromObservations(rows as ObservationRow[], visit.age) : null;
+  // The patient's CURB-65 only where pneumonia is the subject (severityApplies): the question, its thread, or the condition the visit records.
+  const record = visit?.record as { subtitle?: string; history?: string[] } | undefined;
+  const scored = visit && severityApplies([input.question, ...input.thread.map(t => t.question)], [visit.complaint, record?.subtitle, ...record?.history ?? []]) ? visit : undefined;
+  const rows = scored ? await db.select().from(observations).where(eq(observations.patientId, scored.patientId)).orderBy(asc(observations.observedAt)) : [];
+  const curb65 = scored ? curb65FromObservations(rows as ObservationRow[], scored.age) : null;
 
   await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId: input.encounterId ?? null, kind: "evidence-answer", output: { question: input.question, bottomLine, claims, general }, sourceIds: references.map(r => r.id), model: source, approvedBy: null });
   return { question: input.question, bottomLine, claims, enough: claims.length > 0, general, followUps, source, ...waking ? { waking } : {}, ...cutShort && { cutShort }, references, pubmed, ...found, curb65 };

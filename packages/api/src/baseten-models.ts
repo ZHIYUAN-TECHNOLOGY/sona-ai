@@ -88,8 +88,10 @@ Answer with JSON only: {"findings": ["<sentence>", ...]}`;
 const REASONING = `You help a hospital doctor think before examining a patient. Use ONLY the record and sources below.
 List 2 to 4 possibilities worth considering for the doctor's question: unranked, never stated as a diagnosis, never a treatment.
 For each, one sentence on what in the record points to it, citing the id of every source it rests on.
+A thin record still gets an answer: reason from what IS recorded (the complaint, the age and sex), cite the source that records it, and never read something missing as a negative finding.
+In "missing", name up to 4 things the record lacks that would tell the possibilities apart; an empty list when it lacks nothing.
 Never state a finding, test result or number the record does not contain.
-Answer with JSON only: {"possibilities": [{"title": "<2-5 words>", "why": "<one sentence>", "sources": ["<source id>"]}]}`;
+Answer with JSON only: {"possibilities": [{"title": "<2-5 words>", "why": "<one sentence>", "sources": ["<source id>"]}], "missing": ["<2-6 words>"]}`;
 
 const HUDDLE = `You write the three-line brief a charge nurse reads aloud at the ward huddle. FACTS are the ward's own count and are exact.
 Write exactly 3 short spoken lines: where the ward stands, which bed to start with and what holds it, and who owns the blockers (or how many have no owner).
@@ -339,12 +341,15 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
     },
 
     // Each possibility must cite a record source it was given; an uncited or verdict-worded one is dropped.
+    // A reply the checks emptied is `withheld`, so the card never says of a model that answered that it did not.
     async reasoning(input) {
+      let withheld = false;
       try {
         const { age, sex, complaint, history, allergies, medicines, vitals } = input.patient;
         const sources = (input.patient.sources ?? []).filter(s => s.kind === "record" || s.kind === "transcript");
         const facts = `Record: ${JSON.stringify({ age, sex, complaint, history, allergies, medicines, vitals })}\n\nSources:\n${sources.map(s => `[${s.id}] ${s.title}: ${s.excerpt}`).join("\n")}\n\nQuestion: ${input.question}`;
         const read = await brain(REASONING, facts, 600);
+        withheld = true;
         const ids = new Set(sources.map(s => s.id));
         const kept = (Array.isArray(read?.possibilities) ? read.possibilities : []).flatMap(p => {
           const title = text(p?.title, 60)?.replace(/:/g, ""), why = text(p?.why, 300);
@@ -352,9 +357,12 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
           return title && why && cites.length && !VERDICT.test(`${title} ${why}`) && onlyNumbersFrom(facts, title, why) ? [{ title, why, cites }] : [];
         }).slice(0, 4);
         // One possibility per line, "Title: why" (the app lists them); the cited sources once each.
-        if (kept.length) return { answer: kept.map(p => `${p.title}: ${p.why}`).join("\n"), sourceIds: unique(kept.flatMap(p => p.cites)), source: "model", model: BRAIN_MODEL };
+        // What an incomplete record lacks is its last line, under the same checks. Only there: the app shows that answer
+        // as written, and lists a whole record's lines as possibilities, where this line would read as one more.
+        const missing = input.patient.incomplete ? strings(read?.missing, 4).filter(m => !VERDICT.test(m) && onlyNumbersFrom(facts, m)) : [];
+        if (kept.length) return { answer: [...kept.map(p => `${p.title}: ${p.why}`), ...missing.length ? [`Not in the record: ${missing.join("; ")}`] : []].join("\n"), sourceIds: unique(kept.flatMap(p => p.cites)), source: "model", model: BRAIN_MODEL };
       } catch { /* falls back below */ }
-      return fallback.reasoning(input);
+      return { ...await fallback.reasoning(input), ...withheld && { withheld } };
     },
 
     // Gemma words the brief; every number in it must be one the rule counted.

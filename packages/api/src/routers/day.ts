@@ -44,7 +44,8 @@ export const listResults = async (db: Context["db"], hospitalId: string, where?:
   .where(and(eq(patients.hospitalId, hospitalId), where)).orderBy(desc(labResults.receivedAt)))
   .map(r => ({ ...r, critical: Boolean(r.flag?.startsWith("critical")) }));
 
-const resultInput = z.object({ patientId: z.string().min(1), test: z.string().trim().min(1), value: z.string().trim().min(1), unit: z.string().trim().min(1).optional() });
+// A result with no unit (a culture's text) is one: a sender that fills every field sends `unit: ""`, which means none, not a bad request.
+const resultInput = z.object({ patientId: z.string().min(1), test: z.string().trim().min(1), value: z.string().trim().min(1), unit: z.string().trim().optional().transform(unit => unit || undefined) });
 
 /**
  * A result arrives for one of the hospital's patients, flagged critical by rule when it is past a call-now limit.

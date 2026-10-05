@@ -23,6 +23,26 @@ export function routePrompt(prompt: string): Capability | null {
 export function routeInThread(prompt: string, last?: Capability): Capability | null {
   return routePrompt(prompt) ?? (last === "evidence" ? "evidence" : null);
 }
+// Words only: case, ASCII punctuation and the typographic block (’ “ – …) all read as spaces, so "Siti’s" and "siti's" are the same two words.
+const spoken = (text: string) => text.toLowerCase().replace(/[^a-z0-9À-῿぀-￿]+/g, " ").trim();
+/**
+ * The one patient on the roster a request names, so a request made with no visit open goes straight to theirs instead
+ * of asking "which patient?": the whole name, else a part of it nobody else on the roster shares ("Brief me on
+ * Ganesan"). Nobody when it names none, or more than one.
+ * ponytail: name parts of four letters or more, matched as whole words; a patient called "Rose" is named by "rose" in any sense.
+ */
+export function namedPatient<P extends { id: string; name: string }>(prompt: string, roster: P[]): P | undefined {
+  const said = ` ${spoken(prompt)} `;
+  const whole = roster.filter(p => said.includes(` ${spoken(p.name)} `));
+  const named = whole.length ? whole : roster.filter(p => spoken(p.name).split(" ").some(part => part.length >= 4 && said.includes(` ${part} `)));
+  return named.length === 1 ? named[0] : undefined;
+}
+/**
+ * The kind one of the app's own suggested questions was offered as, when a request is that question word for word
+ * (typed, dictated or spoken; case and punctuation aside): what Sona suggested means what Sona meant by it, whatever a
+ * router makes of its words ("Should Siti get steroids for this pneumonia?" is the evidence question, not a medicines review).
+ */
+export const offeredAs = <K extends string>(prompt: string, offered: { kind: K; text: string }[]): K | undefined => offered.find(o => spoken(o.text) === spoken(prompt))?.kind;
 export function acceptCard(encounter: Encounter, patient: Patient, payload: unknown): Encounter {
   const parsed = cardSchema.safeParse(payload);
   if (!parsed.success) return encounter;
@@ -42,8 +62,13 @@ export function isRepeat(last: Pick<RequestState, "id" | "kind" | "prompt" | "st
   return last.status === "streaming" || (Number.isFinite(at) && now - at < 2000);
 }
 
+/**
+ * A request belongs to the revision of the visit it lands on, not the one its sender last saw: an image attached and
+ * asked about in one send revises the visit and asks before the screen has drawn again, and a request stamped with the
+ * earlier revision could never settle (its card and its end are refused as late), so the answer hung on "Opening…".
+ */
 export function beginRequest(encounter: Encounter, request: RequestState): Encounter {
-  return { ...encounter, requests: [...encounter.requests.map(item => item.status === "streaming" ? { ...item, status: "cancelled" as const } : item), request] };
+  return { ...encounter, requests: [...encounter.requests.map(item => item.status === "streaming" ? { ...item, status: "cancelled" as const } : item), { ...request, revision: encounter.revision }] };
 }
 export function revealSections(encounter: Encounter, requestId: string, sections: number): Encounter {
   const request = encounter.requests.find(item => item.id === requestId);

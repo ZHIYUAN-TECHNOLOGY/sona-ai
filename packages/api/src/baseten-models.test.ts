@@ -288,12 +288,34 @@ test("reasoning keeps only possibilities citing a record source it was given, on
   ] })).reasoning({ patient: amelia, question: "What could explain this?" });
   expect(read).toEqual({ answer: "Pneumonia: Five days of cough with a temperature of 38.1 °C.\nAsthma flare: Childhood asthma is recorded.", sourceIds: ["history", "vitals"], ...fromModel });
   const stub = await stubModels.reasoning({ patient: amelia, question: "Why?" });
-  expect(await gemma("Probably pneumonia.").reasoning({ patient: amelia, question: "Why?" })).toEqual(stub);
-  // A verdict, and a number the record lacks: nothing left, so the sample answers.
+  // The model answered, and the checks kept none of it: the sample answers, marked `withheld`, so the card can say that
+  // and not that the model was silent.
+  expect(await gemma("Probably pneumonia.").reasoning({ patient: amelia, question: "Why?" })).toEqual({ ...stub, withheld: true });
+  // A verdict, and a number the record lacks: nothing left.
   expect(await gemma(JSON.stringify({ possibilities: [
     { title: "Pneumonia", why: "Most likely pneumonia given the cough.", sources: ["history"] },
     { title: "Sepsis", why: "A lactate of 4.2 points to it.", sources: ["vitals"] },
-  ] })).reasoning({ patient: amelia, question: "Why?" })).toEqual(stub);
+  ] })).reasoning({ patient: amelia, question: "Why?" })).toEqual({ ...stub, withheld: true });
+  // A model that never answered is not `withheld`.
+  const silent = basetenModels({ apiKey: "k", fetcher: fake({ [box("brain")]: () => new Response("down", { status: 500 }) }).fetcher });
+  expect(await silent.reasoning({ patient: amelia, question: "Why?" })).not.toHaveProperty("withheld");
+});
+
+test("reasoning on a sparse record reasons from what is recorded and ends with what the record lacks, under the same checks", async () => {
+  const daniel = { ...DEMO_PATIENTS[1]!, time: "09:30" };
+  const reply = JSON.stringify({ possibilities: [
+    { title: "Heart failure", why: "Breathlessness on exertion at 57 is recorded, with nothing yet to weigh against it.", sources: ["history"] },
+    { title: "COPD", why: "Breathlessness on exertion; the smoking history is not documented.", sources: ["history"] },
+  ], missing: ["Onset and duration", "Observations", "The most likely cause", "A lactate of 4.2"] });
+  const read = await gemma(reply).reasoning({ patient: daniel, question: "What possibilities should I consider?" });
+  expect(read).toMatchObject({ source: "model", sourceIds: ["history"] });
+  expect(read.answer.split("\n")).toEqual([
+    "Heart failure: Breathlessness on exertion at 57 is recorded, with nothing yet to weigh against it.",
+    "COPD: Breathlessness on exertion; the smoking history is not documented.",
+    "Not in the record: Onset and duration; Observations",
+  ]);
+  // A whole record's answer is its possibilities only: the app lists each line as one.
+  expect((await gemma(reply.replace(/57/g, "42")).reasoning({ patient: amelia, question: "Why?" })).answer).not.toContain("Not in the record");
 });
 
 test("the huddle brief is Gemma's words over the rule's numbers; a number the rule did not count brings the rule back", async () => {

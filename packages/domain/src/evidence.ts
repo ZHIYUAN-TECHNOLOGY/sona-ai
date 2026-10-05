@@ -150,6 +150,13 @@ function scored<F extends Factor>(factors: F[]) {
   return { factors, score, recorded, risk };
 }
 
+/**
+ * CURB-65 grades pneumonia and nothing else, so a patient's score belongs under an evidence answer only when what was
+ * asked (the question, or the thread it follows up) or the visit's recorded condition is pneumonia: under a tranexamic
+ * acid or an NSTEMI answer it read as that question's severity. The server and the card both ask this.
+ */
+export const severityApplies = (asked: string[], condition: (string | null | undefined)[]) => /pneumonia|\bCAP\b/i.test([...asked, ...condition].join("\n"));
+
 /** An observations row; structurally the `Observation` contract in @sona-ai/api. */
 export type ObservationRow = { kind: "confusion" | "urea" | "respiratory-rate" | "systolic" | "diastolic"; value: number; unit: string; sourceId: string };
 

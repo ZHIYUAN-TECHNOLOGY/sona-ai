@@ -117,8 +117,11 @@ test("any other question searches PubMed, never borrows the authored answer, and
   // The mock quotes each source's first sentence; the route keeps it because the abstract says it word for word.
   expect(r.claims).toEqual([{ text: expect.stringMatching(/^A randomised trial \(2015\) reports: Prednisone treatment for 7 days/), cites: [1], topic: "evidence", quotes: [{ n: 1, text: expect.stringMatching(/^Prednisone treatment for 7 days/) }] }]);
   expect(r.followUps).toEqual(["What do the guidelines recommend?", "What are the main harms?", "Does this change for severe cases?"]);
-  // Daniel has no chart readings: only age counts, and the band is withheld.
-  expect(r.curb65).toMatchObject({ recorded: 1, risk: undefined });
+  // Neither the question nor Daniel's visit (breathlessness) is pneumonia, so no pneumonia severity score comes with the answer.
+  expect(r.curb65).toBeNull();
+  // Following up a pneumonia question, it does. Daniel has no chart readings: only age counts, and the band is withheld.
+  const followUp = await api.evidence.ask({ encounterId: "visit-1086", question: "Does prednisone shorten time to stability?", thread: [{ question: "Steroids for pneumonia?", answer: "Not routinely." }] });
+  expect(followUp.curb65).toMatchObject({ recorded: 1, risk: undefined });
 });
 
 test("with a model configured the rehearsed question is searched and written like any other: PubMed is searched, the model writes from the abstracts, and nothing authored is used", async () => {

@@ -21,11 +21,17 @@ type AskElement = { type: string; props: Record<string, unknown>; children?: str
 export type AskSpec = { root: string; elements: Record<string, AskElement> };
 const specShape = z.object({ root: z.string(), elements: z.record(z.string(), z.looseObject({ type: z.string(), props: z.record(z.string(), z.unknown()), children: z.array(z.string()).optional() })) });
 
-/** A spec is shown only if it is a column of leaves, every element passes its own part's schema, and it stays small. */
+const MAX_ROWS = 12;
+/**
+ * A spec is shown only if it is a column of leaves, every element passes its own part's schema, and it stays small.
+ * A list longer than an answer may show is cut to its first 12 rows here, for every spec whoever wrote it (a rule or
+ * the model), rather than failing the whole answer: each answer ranks its rows, so those are the ones that matter.
+ */
 export function checkAskSpec(spec: unknown): AskSpec | null {
   const parsed = specShape.safeParse(spec);
   if (!parsed.success) return null;
   const value = parsed.data as AskSpec;
+  for (const [id, e] of Object.entries(value.elements)) if (e.type === "AskRows" && Array.isArray(e.props.rows) && e.props.rows.length > MAX_ROWS) value.elements[id] = { ...e, props: { ...e.props, rows: e.props.rows.slice(0, MAX_ROWS) } };
   const root = value.elements[value.root];
   const children = root?.children ?? [];
   if (!root || root.type !== "AskColumn" || !children.length || Object.keys(value.elements).length > 12) return null;

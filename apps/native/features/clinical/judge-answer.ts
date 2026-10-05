@@ -15,5 +15,7 @@ export function unanswered(judge: boolean, answer: { loading: boolean; data?: un
   if (answer.error) return { why: "failed", reason: answer.error };
   // Not asked (no visit, a section still closed) reads as a stub too: either way no model has answered.
   const waking = wakingOf(answer.data);
+  // The model answered and the server's checks kept none of it (`withheld`): said as that, never as silence.
+  if ((answer.data as { withheld?: unknown } | undefined)?.withheld) return { why: "stub", reason: "Sona's model answered, but nothing in its answer kept to the record" };
   return { why: "stub", reason: waking ? `Sona's model is starting, about ${waking} min` : "Sona's model did not answer" };
 }

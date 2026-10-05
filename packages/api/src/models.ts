@@ -38,7 +38,8 @@ export type EvidencePart = { bottomLine: string } | { claim: Claim };
 export type Models = {
   /** Brain (Gemma): what to know before seeing the patient. */
   briefing(input: { patient: Patient }): Answer<{ lines: string[] }>;
-  reasoning(input: { patient: Patient; question: string }): Answer<{ answer: string; sourceIds: string[] }>;
+  /** `withheld` (on a fixture): the model did answer, and nothing in its reply passed the checks (cited, unranked, no number the record lacks). */
+  reasoning(input: { patient: Patient; question: string }): Answer<{ answer: string; sourceIds: string[]; withheld?: boolean }>;
   /** X-ray box: never a validated read in this demo. */
   xrayRead(input: { image: Uint8Array; contentType: string }): Answer<{ findings: string[]; validated: false }>;
   /** Demo flow 6: findings beyond the question asked, each with a box on the image (a real model's reply goes through `readBoxes`). Never validated. */

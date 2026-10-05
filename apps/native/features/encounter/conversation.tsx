@@ -96,7 +96,7 @@ export function useVisitLead(req: RequestState | undefined, card: ResponseCard |
   return leadFor(req.kind, patient, {
     medicines: encounter?.medicationEntries ?? [],
     allergyConfirmed: Boolean(confirmedAllergy(encounter)),
-    image: scenario === "unsupported" ? "unsupported" : image?.imagingAttachment ? (xrayRead?.data?.source === "model" ? "read" : "attached") : scenario === "no-finding" ? "no-finding" : !image?.hideTeachingImage && teachingImage?.referenceSummary ? "reference" : "none",
+    image: scenario === "unsupported" ? "unsupported" : image?.imagingAttachment ? (xrayRead?.data?.source === "model" ? "read" : xrayRead?.loading ? "reading" : "attached") : scenario === "no-finding" ? "no-finding" : !image?.hideTeachingImage && teachingImage?.referenceSummary ? "reference" : "none",
     note: !encounter?.note ? "none" : encounter.noteReviewed ? "reviewed" : "draft",
     prescription: rx, live,
     tasks: { total: tasks.length, open: tasks.filter(t => !t.completed).length },

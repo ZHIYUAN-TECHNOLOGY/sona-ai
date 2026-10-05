@@ -22,9 +22,10 @@ import { openSession } from "./navigation";
 const TABS: { id: Tab; label: string }[] = [
   { id: "needs", label: "Needs you" }, { id: "continue", label: "Continue" }, { id: "mine", label: "My list" }, { id: "ward", label: "Ward 4B" }, { id: "clinic", label: "Clinic today" }, { id: "all", label: "All" },
 ];
-// The tab and search outlive the screen, so opening a visit and coming back finds Patients as it was left.
+// The tab outlives the screen, so opening a visit and coming back finds Patients on the list it was left on. A search
+// does not: it was for the patient just found, and left in the box it hid everyone else the next time the picker opened.
 // ponytail: one module-level slot for the session; a per-user store if Patients ever opens twice at once.
-const kept: { tab?: Tab; query: string } = { query: "" };
+const kept: { tab?: Tab } = {};
 // Judge build: the server's list leaves nobody out, since every row comes from it (rosterRows).
 const NOBODY: { id: string }[] = [];
 const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return (h ?? 0) * 60 + (m ?? 0); };
@@ -39,9 +40,8 @@ export function PatientScreen() {
   const { patients, patient, encounter, encounters, updateEncounter } = useEncounter();
   const { next, view, prompt, switch: switching, tab: startTab } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string; switch?: string; tab?: string }>();
   const [open, setOpen] = useState<string>();
-  const [query, keepQuery] = useState(kept.query);
+  const [query, setQuery] = useState("");
   const [tab, keepTab] = useState<Tab>(TABS.some(t => t.id === startTab) ? startTab as Tab : kept.tab ?? "needs");
-  const setQuery = (q: string) => { kept.query = q; keepQuery(q); };
   const setTab = (t: Tab) => { kept.tab = t; keepTab(t); };
   const [opened, setOpened] = useState<ReadonlySet<Group>>(new Set());
   const list = useRef<LegendListRef>(null);

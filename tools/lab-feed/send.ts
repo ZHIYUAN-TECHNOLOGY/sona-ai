@@ -9,18 +9,21 @@
  *
  *   LAB_FEED_SECRET=... bun tools/lab-feed/send.ts https://<the server>
  *   LAB_FEED_SECRET=... bun tools/lab-feed/send.ts http://localhost:3000 SYN-1042 Sodium 138 mmol/L
+ *   LAB_FEED_SECRET=... bun tools/lab-feed/send.ts http://localhost:3000 SYN-2002 "Urine culture sensitivities" "No growth"
  */
-const [server, patientId = "SYN-1086", test = "Potassium", value = "2.6", unit = "mmol/L"] = process.argv.slice(2);
+const [server, patientId = "SYN-1086", test, value, unit] = process.argv.slice(2);
+// The potassium's unit belongs to the default result only: a named test with no unit (a culture's text), or with "" for one, has none.
+const result = test ? { test, value, unit: unit || undefined } : { test: "Potassium", value: "2.6", unit: "mmol/L" };
 const secret = process.env.LAB_FEED_SECRET;
 if (!server || !secret) {
-  console.error("Usage: LAB_FEED_SECRET=... bun tools/lab-feed/send.ts <server URL> [patientId test value unit]");
+  console.error("Usage: LAB_FEED_SECRET=... bun tools/lab-feed/send.ts <server URL> [patientId [test value [unit]]]");
   process.exit(2);
 }
 
 const res = await fetch(new URL("/lab/results", server), {
   method: "POST",
   headers: { "content-type": "application/json", authorization: `Bearer ${secret}` },
-  body: JSON.stringify({ patientId, test, value, unit }),
+  body: JSON.stringify({ patientId, ...result }),
 });
 console.log(res.status, await res.text());
 if (!res.ok) process.exit(1);

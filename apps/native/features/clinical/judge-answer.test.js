@@ -29,3 +29,7 @@ test("the judge build never takes the server's stub for an answer, and says when
   expect(unanswered(true, { loading: false, data: { lines: ["x"] } })?.why).toBe("stub");
   expect(unanswered(true, { loading: false })?.why).toBe("stub");
 });
+
+test("an answer the server's checks withheld is said as that: the model answered, so it is never 'did not answer'", () => {
+  expect(unanswered(true, { loading: false, data: { ...stub, withheld: true } })).toEqual({ why: "stub", reason: "Sona's model answered, but nothing in its answer kept to the record" });
+});

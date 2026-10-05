@@ -22,7 +22,7 @@ import type { Patient } from "@/features/encounter/types";
 import { threadBefore, useLiveEvidence, type EvidenceStep, type ServerEvidence, type Turn } from "@/features/live/evidence-sync";
 import { wakingOf } from "@/features/live/waking";
 import { basis, calmTerms, fallbackNote, forPatient, searchedLine, sections, stepLines, strength, unanswered } from "./answer";
-import { authoredAnswer, authoredReferences, curb65, quotedClaims, type Claim, type Reference } from "./model";
+import { authoredAnswer, authoredReferences, curb65, quotedClaims, severityApplies, type Claim, type Reference } from "./model";
 
 /*
  * Evidence answer, OpenEvidence style (docs/evidence-answer-spec.md): short claims, each ending in
@@ -132,7 +132,8 @@ function Answer({ question, encounterId, answerKey, thread, patient, lead = fals
     </Surface></Animated.View>
     {shown && shown.references.length > 0 && <Animated.View entering={at(6)}><Sources references={shown.references} note={shown.note} focus={focus} /></Animated.View>}
     {data && !data.references.length && <Text selectable style={{ ...type.footnote, color: palette.amber }}>{data.pubmed === "unavailable" ? SOURCES_NOTE.unavailable : "Nothing on this in PubMed or your library"}</Text>}
-    {patient && <Animated.View entering={at(7)}><Severity patient={patient} server={data?.curb65 ?? undefined} /></Animated.View>}
+    {/* Only where pneumonia is the subject (severityApplies, as the server decides): the question, its thread, or the visit's recorded condition. */}
+    {patient && severityApplies([question, ...thread.map(t => t.question)], [patient.complaint, patient.subtitle, ...patient.history]) && <Animated.View entering={at(7)}><Severity patient={patient} server={data?.curb65 ?? undefined} /></Animated.View>}
     <Animated.View entering={at(7)}><QuestionList title="Related" questions={shown?.followUps.map(q => ({ key: q, text: q })) ?? []} onAsk={onAsk} /></Animated.View>
   </View>;
 }

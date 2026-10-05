@@ -33,6 +33,16 @@ test("the X-ray lead only mentions a reference radiograph when the card shows on
   expect(leadFor("xray", amelia, { image: "attached" })).toBe("Your image is attached. Nothing has been read from it, so there are no findings.");
   // Live mode, once the image model read it: says so, and that it is unvalidated; never "nothing has been read".
   expect(leadFor("xray", amelia, { image: "read" })).toMatch(/image model has described your image.*unvalidated/);
+  // While the image is being saved or read there is no lead (the card says which): "nothing has been read" is not said a moment before the reading.
+  expect(leadFor("xray", amelia, { image: "reading" })).toBeUndefined();
+});
+
+test("the briefing lead keeps the recorded condition's acronyms: only an ordinary first word loses its capital", () => {
+  const here = subtitle => plain(leadFor("briefing", { ...amelia, subtitle }, {})).match(/here for a ([^.]+)\./)[1];
+  expect(here("COPD exacerbation")).toBe("COPD exacerbation");
+  expect(here("Upper GI bleed")).toBe("upper GI bleed");
+  expect(here("NSTEMI, day 2")).toBe("NSTEMI, day 2");
+  expect(here("Respiratory review")).toBe("respiratory review");
 });
 
 test("the evidence lead never contradicts 'not enough evidence', and is hidden while the card is still searching", () => {
