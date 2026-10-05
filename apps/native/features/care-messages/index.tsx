@@ -6,7 +6,6 @@ import type { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { ErrorLine, TextLink, PressScale } from "@/components/sona/parts";
-import { router } from "expo-router";
 import { ThreadBubble } from "@/features/inbox/thread";
 import { Icon } from "@/components/sona/ui";
 import type { Patient } from "@/features/encounter/types";
@@ -19,13 +18,13 @@ import { refreshServerData } from "@/features/live/server-day";
  * Sona Care messages on the patient sheet, under the check-ins: the patient's thread with the care
  * team and a one-line reply (which closes their message tasks on My Day). Live mode only, for roles
  * that may read them; a quiet line while loading, when empty, or when the read failed (with Retry).
- * Bubbles match the inbox thread (who wrote it and when); "Open thread" goes there for the rest.
+ * Bubbles match the inbox thread (who wrote it and when); "Open thread" closes the sheet and goes there for the rest.
  * Only a doctor or a nurse replies (messages.reply); management reads.
  */
 type Message = Awaited<ReturnType<AppRouterClient["messages"]["list"]>>[number];
 const SHOWN = 4;
 
-export function CareMessages({ patient, entering }: { patient: Patient; entering?: ReturnType<typeof riseIn> }) {
+export function CareMessages({ patient, entering, onOpenThread }: { patient: Patient; entering?: ReturnType<typeof riseIn>; onOpenThread: () => void }) {
   const role = useRole();
   const { on: live } = useLive();
   const on = live && role.can("messages.list");
@@ -61,7 +60,7 @@ export function CareMessages({ patient, entering }: { patient: Patient; entering
       : <View style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(255,255,255,0.55)", padding: 14, gap: 10 }}>
       {/* The latest few; the whole thread and Sona's drafted reply are one tap away. */}
       {thread.slice(-SHOWN).map(m => <ThreadBubble key={m.id} message={m} reduced />)}
-      <TextLink label={thread.length > SHOWN ? `Open thread · ${thread.length} messages` : "Open thread"} onPress={() => router.push(`/inbox/${patient.id}`)} />
+      <TextLink label={thread.length > SHOWN ? `Open thread · ${thread.length} messages` : "Open thread"} onPress={onOpenThread} />
       {canReply && <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <TextInput value={text} onChangeText={setText} placeholder={`Reply to ${first}`} placeholderTextColor={palette.placeholder} maxLength={1000} editable={!busy} returnKeyType="send"
           onSubmitEditing={() => { if (text.trim()) void reply(); }} accessibilityLabel={`Reply to ${first} in Sona Care`}

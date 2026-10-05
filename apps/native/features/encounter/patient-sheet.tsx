@@ -116,7 +116,7 @@ function PatientCard({ patient, onGo }: { patient: Patient; onGo: (go: Go) => vo
     </Animated.View>
 
     <CheckInThread patient={patient} entering={rise(3)} />
-    <CareMessages patient={patient} entering={rise(3)} />
+    <CareMessages patient={patient} entering={rise(3)} onOpenThread={() => go({ to: `/inbox/${patient.id}` })} />
 
     <Animated.View entering={rise(3)} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 12 }}>
       {/* A sparse record (a ward patient's) shows only what it holds: no empty overline, no blank line. */}
