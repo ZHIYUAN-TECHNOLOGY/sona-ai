@@ -3,6 +3,7 @@ import { useEncounter } from "@/features/encounter/store";
 import type { Patient, Task } from "@/features/encounter/types";
 import { visitTasks } from "@/features/day/counts";
 import { api, errorText, useLive } from ".";
+import { keepSame } from "./keep-same";
 import type { ServerAppointment, ServerResult, ServerTask } from "./day";
 
 /**
@@ -35,7 +36,7 @@ export const serverDayError = (date: string) => dayErrors.get(date);
 /** Reads a date's appointments unless a read of it is in flight; a failure is kept as its reason (serverDayError) and can be read again. */
 export function readServerDay(date: string) {
   if (!dayReads.has(date)) dayReads.set(date, api.day.list({ date })
-    .then(rows => { days.set(date, rows); dayErrors.delete(date); }, e => { dayErrors.set(date, errorText(e)); })
+    .then(rows => { days.set(date, keepSame(days.get(date), rows)); dayErrors.delete(date); }, e => { dayErrors.set(date, errorText(e)); })
     .finally(() => { dayReads.delete(date); notify(); }));
   return dayReads.get(date)!;
 }
@@ -47,7 +48,7 @@ const unlessRefused = <T>(read: Promise<T[]>) => read.catch(e => (e as { code?: 
 export async function refreshServerData() {
   // Each read stands alone: one the role is refused never drops Today back to the demo data. A server without booking yet still serves My Day.
   const [tasks, results, bookings] = await Promise.all([unlessRefused(api.tasks.list()), unlessRefused(api.results.list()), api.bookings.list().catch(() => [])]);
-  snapshot = { tasks, results, bookings }; loadedAt = Date.now();
+  snapshot = keepSame(snapshot, { tasks, results, bookings }); loadedAt = Date.now();
   notify();
 }
 

@@ -17,6 +17,7 @@ import { DoneLine } from "@/features/bookings/parts";
 import { callBackNote, WARD_PHONE } from "@/features/check-ins/model";
 import type { DayItem } from "@/features/day/model";
 import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
+import { keepSame } from "@/features/live/keep-same";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
 import { refreshServerData } from "@/features/live/server-day";
@@ -47,7 +48,7 @@ const subscribers = new Set<() => void>();
 const subscribe = (l: () => void) => { subscribers.add(l); return () => { subscribers.delete(l); }; };
 function loadInbox(userId: string | undefined) {
   inflight ??= api.messages.inbox().then(inbox => ({ userId, inbox }), e => ({ ...shared, error: errorText(e) }))
-    .then(next => { shared = next; inflight = undefined; subscribers.forEach(s => s()); });
+    .then(next => { shared = keepSame(shared, next); inflight = undefined; subscribers.forEach(s => s()); });
   return inflight;
 }
 

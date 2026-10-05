@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useEncounter } from "@/features/encounter/store";
 import { api, JUDGE, useLive } from "@/features/live";
+import { keepSame } from "@/features/live/keep-same";
 import { completeServerTask, refreshServerData } from "@/features/live/server-day";
 import { fixtureCheckIns, fixtureReply, type CheckIn } from "./model";
 
@@ -16,7 +17,7 @@ const listeners = new Set<() => void>();
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 const set = (patch: Partial<Store>) => { store = { ...store, ...patch }; listeners.forEach(l => l()); };
 
-export async function refreshCheckIns() { set({ server: await api.checkIns.list() }); }
+export async function refreshCheckIns() { const server = keepSame(store.server, await api.checkIns.list()); if (server !== store.server) set({ server }); }
 
 export function useCheckIns(): CheckIn[] {
   const { on, wanted } = useLive();

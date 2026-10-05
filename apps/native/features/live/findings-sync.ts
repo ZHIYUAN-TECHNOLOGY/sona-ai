@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useEncounter } from "@/features/encounter/store";
 import { detectFixture, followUpTask, type Finding } from "@/features/findings/model";
 import { api, errorText, requestId, useLive } from ".";
+import { keepSame } from "./keep-same";
 import { useRole } from "./roles";
 import { refreshServerData } from "./server-day";
 
@@ -34,9 +35,9 @@ let reads: Record<string, FilmRead> = {};
 export async function refreshFindings(detect?: string, readOf = detect) {
   try {
     if (detect) await api.findings.detect({ encounterId: detect });
-    server = await (detect ? api.findings.list({}) : listing ??= api.findings.list({}).finally(() => { listing = undefined; }));
+    server = keepSame(server, await (detect ? api.findings.list({}) : listing ??= api.findings.list({}).finally(() => { listing = undefined; })));
   } finally {
-    if (readOf) await api.findings.status({ encounterId: readOf }).then(read => { reads = { ...reads, [readOf]: read }; }, () => {});
+    if (readOf) await api.findings.status({ encounterId: readOf }).then(read => { reads = keepSame(reads, { ...reads, [readOf]: read }); }, () => {});
     notify();
   }
 }
