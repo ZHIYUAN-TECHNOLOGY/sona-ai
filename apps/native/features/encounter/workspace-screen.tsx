@@ -424,8 +424,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
 
     {/* Everything passing under the dock blurs progressively and fades into the canvas (a frosted band as tall as the dock
         and its chip), so the bar's buttons always read over cards; at the end the page stops its last card above it. */}
-    <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 36 }} />
-    <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 36, experimental_backgroundImage: "linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,0.78) 45%, rgba(245,246,248,0.94) 100%)" }} />
+    <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 16 }} />
+    <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 16, experimental_backgroundImage: "linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,0.78) 45%, rgba(245,246,248,0.94) 100%)" }} />
     <VoiceDock
       backdrop={backdrop}
       onHeight={setDockH}

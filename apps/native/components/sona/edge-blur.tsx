@@ -17,7 +17,7 @@ const Native: ComponentType<Props> | undefined = requireOptionalNativeModule("Bl
 
 export function EdgeBlur({ edge, style }: { edge: "top" | "bottom"; style: ViewStyle }) {
   const { reducedTransparency } = useAccessibleEffects();
-  if (Native && !reducedTransparency) return <Native edge={edge} intensity={edge === "top" ? 40 : 30} startOffset={0.3} tint="systemUltraThinMaterialLight" tintColor="rgba(245,246,248,0.3)" style={{ ...style, pointerEvents: "none" } as ViewStyle} />;
+  if (Native && !reducedTransparency) return <Native edge={edge} intensity={20} startOffset={0.3} tint="systemUltraThinMaterialLight" tintColor="rgba(245,246,248,0.3)" style={{ ...style, pointerEvents: "none" } as ViewStyle} />;
   const solid = [palette.canvas, palette.canvas, "rgba(245,246,248,0)"] as const;
   return <LinearGradient pointerEvents="none" colors={edge === "top" ? solid : [solid[2], "rgba(245,246,248,0.9)", palette.canvas]} locations={edge === "top" ? [0, 0.62, 1] : [0, 0.5, 1]} style={style} />;
 }
