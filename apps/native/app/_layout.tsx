@@ -54,8 +54,8 @@ export default function RootLayout() {
     <Stack.Screen name="ward" options={{ title: "Ward" }} />
     <Stack.Screen name="audit" options={{ title: "Coding audit" }} />
     <Stack.Screen name="training" options={{ title: "Training data" }} />
-    <Stack.Screen name="discharge" options={{ headerShown: false, presentation: "modal" }} />
-    <Stack.Screen name="claim" options={{ headerShown: false, presentation: "modal" }} />
+    <Stack.Screen name="discharge" options={{ title: "Discharge" }} />
+    <Stack.Screen name="claim" options={{ title: "Guarantee letter" }} />
     <Stack.Screen name="history" options={{ ...closable, title: "Settings", presentation: "modal" }} />
     <Stack.Screen name="library-scan" options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade" }} />
     <Stack.Screen name="library-ocr" options={{ ...closable, title: "Read with OCR", presentation: "modal" }} />
