@@ -47,7 +47,8 @@ export function composeClinicalSpec(props: FeatureProps, kind: Capability, secti
   const noticeId = `${responseId}-context`;
   const sourceNodeId = `${responseId}-source`;
   const sourcePreference: Record<Capability, string> = { briefing: "history", reasoning: "history", xray: "xray", medication: "medication", prescription: "paracetamol-reference", followup: "history", note: "consultation", evidence: "history" };
-  const source = props.patient.sources.find(item => item.id === sourcePreference[kind]) ?? props.patient.sources.find(item => item.id === "history");
+  // An X-ray answer cites only a film source: the history is not where a reading of the attached image came from.
+  const source = props.patient.sources.find(item => item.id === sourcePreference[kind]) ?? (kind === "xray" ? undefined : props.patient.sources.find(item => item.id === "history"));
   const children: string[] = [];
   const elements: Spec["elements"] = {};
   const addClinical = () => {

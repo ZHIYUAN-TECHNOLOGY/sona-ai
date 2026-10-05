@@ -191,12 +191,13 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
   // The synthetic doctor directory Sona Care's Find a doctor reads.
   await db.insert(doctors).values(DOCTORS.map(d => ({ ...d, careTeam: d.careTeam ?? false, hospitalId: DEMO_HOSPITAL })))
     .onConflictDoUpdate({ target: doctors.id, set: { days: sql`excluded.days`, times: sql`excluded.times`, room: sql`excluded.room` } });
+  // The sample's reference chest film is not a source of anyone's hospital record: a patient's film is one attached to her visit.
   // The same records the app's fixtures show; the rest of each record (history, medicines, vitals, sources) is kept whole in `record`.
   // The ward's own view of each admitted patient (status, SBAR, predicted time) is kept in `record.ward`, a charted take-home list in `record.takeHome`.
   // Left out: sample mode's stand-in for the visit's rows, and the scripted consultation (no recording of the visit is saved, so the record lists none).
   await db.insert(patients).values([
     ...DEMO_PATIENTS.map(({ id, name, initials, age, sex, complaint, allergies, incomplete, encounterId: _, visit: __, ...record }) =>
-      ({ id, hospitalId: DEMO_HOSPITAL, name, initials, age, sex, complaint, allergies, incomplete, record: { ...record, sources: record.sources.filter(s => s.kind !== "transcript") } })),
+      ({ id, hospitalId: DEMO_HOSPITAL, name, initials, age, sex, complaint, allergies, incomplete, record: { ...record, sources: record.sources.filter(s => s.kind !== "transcript" && s.kind !== "image") } })),
     ...WARD.map(({ id, bed: { name, initials, status, predicted, waitingHours, sbar }, age, sex, chart: { allergies, obs, note: _, ...chart } }) => {
       const [temperature, pulse, respiratoryRate, spo2, systolic, diastolic] = obs;
       return { id, hospitalId: DEMO_HOSPITAL, name: name!, initials: initials!, age, sex, complaint: sbar!.s, allergies, record: {
