@@ -8,7 +8,7 @@ import { palette, type } from "@/components/sona/theme";
 import { SourceRef, type SourceKind } from "@/components/sona/sources";
 import { Action, glass, Notice, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { ErrorLine } from "@/components/sona/parts";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import type { FeatureProps, HistoryFact, Patient } from "@/features/encounter/types";
 import { Anchor, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { HistoryEditor } from "./history-editor";
@@ -73,15 +73,15 @@ function GapRow({ title, detail, updates, index, reduced }: { title: string; det
 }
 
 export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureProps) {
-  const { encounters } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounters[patient.id]);
   const { reducedMotion } = useAccessibleEffects();
   const layout = reducedMotion ? undefined : LAYOUT;
   const [open, setOpen] = useState<string[]>([]);
-  const facts = (encounters[patient.id]?.historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
+  const facts = (encounter?.historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
   const presentingSource = facts.findLast(fact => fact.category === "presenting")?.id ?? "history";
   const medicalSource = facts.findLast(fact => fact.category === "medical")?.id ?? "history";
   // Only an image the clinician attached to this visit can be reviewed from here.
-  const attached = Boolean(encounters[patient.id]?.imagingAttachment);
+  const attached = Boolean(encounter?.imagingAttachment);
   const toggle = (id: string) => setOpen(ids => ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id]);
   // One quiet provenance line replaces the section subtitle, the complaint quote and the sources caption.
   const provenance = patient.incomplete
@@ -91,7 +91,7 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
     ? [{ tone: "caution", text: "Not enough history yet to weigh possibilities" }, { tone: "info", text: "Collect onset, observations and background first" }, { tone: "caution", text: "Allergy and medicines are unknown" }]
     : [{ tone: "info", text: "Two unranked possibilities: pneumonia and an asthma contribution" }, { tone: "caution", text: "Chest examination and imaging are still needed" }, { tone: "good", text: "Long history of asthma; current control needs review" }];
   // Live mode: the server answers the question asked, above the authored possibilities it does not replace.
-  const question = encounters[patient.id]?.requests.find(r => r.id === result?.requestId)?.prompt || "What could explain these symptoms?";
+  const question = encounter?.requests.find(r => r.id === result?.requestId)?.prompt || "What could explain these symptoms?";
   const server = useLiveReasoning(patient.encounterId, result?.requestId, question);
   // A fixture's line is the same for every patient, so only a model's answer is highlighted here.
   const fromModel = server.live && Boolean(server.loading || server.error || (server.data && server.data.source !== "fixture"));

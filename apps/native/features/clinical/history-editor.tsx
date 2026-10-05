@@ -8,7 +8,7 @@ import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { palette, type, radius } from "@/components/sona/theme";
 import { SourceRef, useSourceScope, type SourceEntry } from "@/components/sona/sources";
 import { Action, Chip, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import type { Capability, FeatureProps, HistoryFact } from "@/features/encounter/types";
 import { useEncounterEdit } from "@/features/live/sync";
 import { Caption, Disclosure, haptic, IconDisc } from "./reasoning-parts";
@@ -35,12 +35,11 @@ function FieldLabel({ children }: { children: string }) { return <Text style={{ 
  * requests a refreshed `refresh` answer; this result keeps the history it was built from.
  */
 export function HistoryEditor({ patient, result, onSource, onRequest, refresh }: Pick<FeatureProps, "patient" | "result" | "onSource" | "onRequest"> & { refresh: Capability }) {
-  const { encounters, patient: activePatient, updateEncounter } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounters[patient.id]), activeId = useEncounterSelect(s => s.patient?.id), updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const { reducedMotion } = useAccessibleEffects();
   const edit = useEncounterEdit(patient);
   const scope = useSourceScope();
   const layout = reducedMotion ? undefined : LAYOUT;
-  const encounter = encounters[patient.id];
   const draft = encounter?.historyDraft;
   const [shown, setShown] = useState(!!draft);
   const [open, setOpen] = useState(false);
@@ -51,9 +50,9 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
   const facts = (encounter?.historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
   const last = facts.at(-1);
   useEffect(() => {
-    if (pendingRevision !== undefined && (activePatient?.id !== patient.id || (encounter?.revision ?? 0) > pendingRevision)) { setPendingRevision(undefined); return; }
+    if (pendingRevision !== undefined && (activeId !== patient.id || (encounter?.revision ?? 0) > pendingRevision)) { setPendingRevision(undefined); return; }
     if (pendingRevision !== undefined && encounter?.revision === pendingRevision) { setPendingRevision(undefined); onRequest(refresh); }
-  }, [activePatient?.id, patient.id, encounter?.revision, pendingRevision, onRequest, refresh]);
+  }, [activeId, patient.id, encounter?.revision, pendingRevision, onRequest, refresh]);
   const updateDraft = (change: Partial<NonNullable<typeof draft>>) => updateEncounter(value => ({ ...value, historyDraft: value.historyDraft ? { ...value.historyDraft, ...change } : undefined }));
   const start = () => { if (!draft) updateEncounter(value => ({ ...value, historyDraft: { category: "presenting", value: "", source: "", date: localDate(new Date()) } })); setOpen(true); };
   const save = () => {

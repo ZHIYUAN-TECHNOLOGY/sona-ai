@@ -9,7 +9,7 @@ import { SourceRef } from "@/components/sona/sources";
 import { Action, Expand, Icon, Notice, Surface } from "@/components/sona/ui";
 import { defaultMedications, parseRegimen } from "@/features/encounter/clinical-state";
 import { patients as baselinePatients } from "@/features/encounter/fixtures";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { useServerPatients } from "@/features/live/patients-sync";
 import { betaBlockerAlert, interactionSource, lookupInteractionPairs, type InteractionPair } from "./interaction-lookup";
@@ -24,10 +24,9 @@ const statusLabel: Record<InteractionPair["status"], string> = { alert: "Label-b
  * Fixture loaders appear only with demo controls on.
  */
 export function InteractionResults({ patient, onSource }: Pick<FeatureProps, "patient" | "onSource" | "onRequest">) {
-  const { encounters, updateEncounter, showDemoControls } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounters[patient.id]), updateEncounter = useEncounterSelect(s => s.updateEncounter), showDemoControls = useEncounterSelect(s => s.showDemoControls);
   const layout = useLayoutSpring();
   const reduced = useReduceMotionPreference();
-  const encounter = encounters[patient.id];
   const [sourceFailed, setSourceFailed] = useState(false);
   const [details, setDetails] = useState(false);
   const [fixtures, setFixtures] = useState(false);

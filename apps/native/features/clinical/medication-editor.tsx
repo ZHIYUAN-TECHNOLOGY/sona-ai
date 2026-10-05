@@ -6,7 +6,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, Surface } from "@/components/sona/ui";
 import { defaultMedications, parseRegimen, regimenLine } from "@/features/encounter/clinical-state";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import type { FeatureProps, MedicationEntry, Patient } from "@/features/encounter/types";
 import { useEncounterEdit } from "@/features/live/sync";
 import { ClinicalField } from "./controls";
@@ -20,10 +20,10 @@ import { MedicineThumb } from "./medicine-thumb";
  * Shown where it is needed: under the proposed row here, and inside the prescribe card's "Bounded regimen" blocker.
  */
 export function RegimenForm({ patient, onCancel }: { patient: Patient; onCancel?: () => void }) {
-  const { encounters } = useEncounter();
+  const proposedMedicine = useEncounterSelect(s => s.encounters[patient.id]?.proposedMedicine);
   const edit = useEncounterEdit(patient);
   const [draft, setDraft] = useState(() => {
-    const line = encounters[patient.id]?.proposedMedicine, saved = parseRegimen(line);
+    const line = proposedMedicine, saved = parseRegimen(line);
     // A bare medicine name saved before regimens were entered keeps its name; the rest is still to enter.
     return saved ? { medication: saved.medication, strength: saved.formulation, dose: saved.dose, route: saved.route, hours: saved.frequency.match(/\d+/)?.[0] ?? "", days: saved.duration.match(/\d+/)?.[0] ?? "" }
       : { medication: line?.includes("·") ? "" : line ?? "", strength: "", dose: "", route: "", hours: "", days: "" };
@@ -61,9 +61,8 @@ export function RegimenForm({ patient, onCancel }: { patient: Patient; onCancel?
  * empty until the clinician enters it. Review itself is requested from the next-step surface below.
  */
 export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "onRequest">) {
-  const { encounters, updateEncounter } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounters[patient.id]), updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const layout = useLayoutSpring();
-  const encounter = encounters[patient.id];
   const entries: MedicationEntry[] = encounter?.medicationEntries ?? defaultMedications(patient);
   const draft = encounter?.medicationDraft;
   const regimen = parseRegimen(encounter?.proposedMedicine);

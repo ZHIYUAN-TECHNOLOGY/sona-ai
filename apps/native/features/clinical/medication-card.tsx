@@ -7,7 +7,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, Expand, Label, Notice, Surface } from "@/components/sona/ui";
 import { allergyConfirmation, allergyLine, confirmedAllergy } from "@/features/day/counts";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
 import { useEncounterEdit } from "@/features/live/sync";
@@ -25,9 +25,8 @@ import { AlertRow, DisclosureButton, Footnote, haptic, StatusLine, TextLink, use
  */
 export function MedicationCard({ patient, result, onSource, onRequest, onOpen }: FeatureProps) {
   const [previewAlert, setPreviewAlert] = useState(false);
-  const { encounters } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounters[patient.id]);
   const layout = useLayoutSpring();
-  const encounter = encounters[patient.id];
   const live = !result || encounter?.cards.at(-1)?.id === result.id;
   const reviewed = encounter?.medicationCheckedRevision === encounter?.revision && encounter?.medicationCheckedRevision !== undefined;
   const busy = encounter?.requests.some(request => request.status === "streaming") ?? false;
@@ -84,10 +83,9 @@ export function MedicationCard({ patient, result, onSource, onRequest, onOpen }:
  * in live mode), so its receipt replaces the button and the flag leaves Today and Patients.
  */
 function AllergyRow({ patient, onSource }: Pick<FeatureProps, "patient" | "onSource">) {
-  const { encounters } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounters[patient.id]);
   const { user } = useLive();
   const edit = useEncounterEdit(patient);
-  const encounter = encounters[patient.id];
   const confirmed = confirmedAllergy(encounter);
   const confirm = () => {
     if (!encounter) return;

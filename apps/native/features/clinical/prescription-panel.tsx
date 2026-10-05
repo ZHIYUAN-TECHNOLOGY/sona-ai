@@ -7,7 +7,8 @@ import { palette, type } from "@/components/sona/theme";
 import { Action, Expand, Notice, SourceLink, Surface } from "@/components/sona/ui";
 import { getPrescriptionChecks, regimenOf } from "@/features/encounter/clinical-state";
 import { receiptWords } from "@/features/encounter/next-steps";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
+import { sameShallow } from "@/features/live/keep-same";
 import type { Encounter, FeatureProps, Regimen } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
 import { ClinicalChoice, ClinicalField } from "./controls";
@@ -38,10 +39,10 @@ function RegimenRows({ regimen }: { regimen: Regimen }) {
  * approval; missing inputs, stale review and failed checks still block.
  */
 export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen }: FeatureProps) {
-  const { encounters, patient: activePatient, updateEncounter, cancel, startAmendment, showDemoControls } = useEncounter();
+  const { patient: activePatient, updateEncounter, startAmendment, showDemoControls } = useEncounterSelect(s => ({ patient: s.patient, updateEncounter: s.updateEncounter, startAmendment: s.startAmendment, showDemoControls: s.showDemoControls }), sameShallow);
+  const encounter = useEncounterSelect(s => s.encounters[patient.id]);
   const layout = useLayoutSpring();
   const words = receiptWords(useLive().on);
-  const encounter = encounters[patient.id];
   // The latest answer is live: it follows the encounter as the card runs checks in place.
   const live = !result || encounter?.cards.at(-1)?.id === result.id;
   const prescription = live ? encounter?.prescription : result?.prescription;

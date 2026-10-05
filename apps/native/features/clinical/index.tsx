@@ -13,7 +13,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { VitalsCard } from "./vitals-card";
 import type { TimelineItem } from "@/components/sona/timeline-carousel";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import type { FeatureProps, Patient } from "@/features/encounter/types";
 import { HistoryEditor } from "./history-editor";
 import { unanswered } from "./judge-answer";
@@ -35,7 +35,7 @@ export { MedicationCard } from "./medication-card";
 function NewResult({ patient }: { patient: Patient }) {
   const server = useServerData();
   const { on: live, user } = useLive();
-  const { resultAcks, acknowledgeDemoResult } = useEncounter();
+  const resultAcks = useEncounterSelect(s => s.resultAcks), acknowledgeDemoResult = useEncounterSelect(s => s.acknowledgeDemoResult);
   const canAck = useRole().can("results.acknowledge");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -86,8 +86,8 @@ function useRecordedTimeline(encounterId: string) {
 }
 
 export function BriefingCard({ patient, result, onSource, onRequest }: FeatureProps) {
-  const { encounters } = useEncounter();
-  const facts = (encounters[patient.id]?.historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
+  const historyFacts = useEncounterSelect(s => s.encounters[patient.id]?.historyFacts);
+  const facts = (historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
   const sourceFor = (category: string) => facts.findLast(fact => fact.category === category)?.id ?? "history";
   const sections = result?.sections ?? 3;
   const allergy = confirmedAllergy({ historyFacts: facts });

@@ -9,7 +9,8 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { defaultMedications, getPrescriptionChecks, regimenLine, regimenOf } from "@/features/encounter/clinical-state";
 import { CONSEQUENCE, outsideCase, receiptWords } from "@/features/encounter/next-steps";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
+import { sameShallow } from "@/features/live/keep-same";
 import type { Patient, PrescriptionCheck, PrescriptionInputs } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
@@ -126,15 +127,14 @@ export function useCanPrescribe() {
 }
 
 export function PrescribeCard({ patient }: { patient: Patient }) {
-  const { encounters, updateEncounter, runInPlace: run, runErrors, showDemoControls } = useEncounter();
+  const { updateEncounter, runInPlace: run, showDemoControls } = useEncounterSelect(s => ({ updateEncounter: s.updateEncounter, runInPlace: s.runInPlace, showDemoControls: s.showDemoControls }), sameShallow);
+  const encounter = useEncounterSelect(s => s.encounters[patient.id]), serverError = useEncounterSelect(s => s.runErrors[patient.id]);
   const { reducedMotion } = useAccessibleEffects();
-  const encounter = encounters[patient.id];
   const [showPassed, setShowPassed] = useState(false);
   const checks = encounter ? getPrescriptionChecks(encounter, patient) : [];
   const resolving = useSettling(checks.filter(c => c.status === "blocked").map(c => c.id));
   const canPrescribe = useCanPrescribe();
   const { on: live } = useLive();
-  const serverError = runErrors[patient.id];
   // One haptic when an outcome lands here, whichever path ran it (the button or the next-step bar).
   const outcome = encounter?.prescription && `${encounter.prescription.id}:${encounter.prescription.status}`;
   const seen = useRef(outcome);
