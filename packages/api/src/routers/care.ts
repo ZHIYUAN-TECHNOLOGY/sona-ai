@@ -9,6 +9,7 @@ import { patientProcedure, protectedProcedure, publicProcedure, signedInProcedur
 import { checkInReplySchema, xrayUploadSchema } from "../contracts";
 import { listCheckIns, replyToCheckIn } from "./check-ins";
 import { clockOffsetOf } from "../clock";
+import { citedSources, leafletHits, passagesIn } from "../leaflets";
 import { stubModels } from "../models";
 import { recordText } from "./care-plan";
 import { loadEncounter } from "./encounter";
@@ -138,9 +139,13 @@ export const careRouter = {
    * answers nothing (source "fixture") and the app keeps its authored plan answers. A question that reports feeling
    * worse or names an emergency sign also reaches their care team, as it does in the live call: `careTeam` is the
    * flagged task (the call's `sona_care_team`) with Sona's line saying so (`line`, in the plan's language), there only
-   * once a task is made.
+   * once a task is made. General advice rests on the hospital's own patient leaflets when one fits (../leaflets): `sources`
+   * names the leaflets the answer used, by title; empty when it used none, or none could be found in time.
    */
   ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(500) })).handler(async ({ context, input }) => {
+    // The hospital's leaflets for the question are searched while her record is read. The search never fails the answer
+    // and is given PASSAGES_MS from here, so the gates below run when they did before, whatever it does.
+    const found = leafletHits(context.library, context.hospitalId, input.question);
     // Her visits and her record are real whether or not she has gone home; only the take-home plan waits for discharge.
     // A part that cannot be read never fails the answer (recordText): the gates below must still run.
     const { plan, text: record } = await recordText(context);
@@ -148,9 +153,12 @@ export const careRouter = {
     const tell = () => tellCareTeam(context, context.hospitalId, context.patientId, input.question).catch(error => { console.error("care team not told", error); return undefined; });
     const floor = callNow(input.question) || mayReport(input.question) ? tell() : undefined;
     const language = plan.language ?? "en";
-    const answer = await (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: record, language });
+    const passages = passagesIn(await found, language);
+    const { cites, ...answer } = await (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: record, language, passages });
     const told = await (floor ?? (answer.urgent ? tell() : undefined));
-    return told ? { ...answer, careTeam: { ...told, line: LINES[language].told } } : answer;
+    // Only a leaflet that was offered can be a source: a number Gemma made up names nothing.
+    const sources = citedSources(cites, passages);
+    return { ...answer, sources, ...told && { careTeam: { ...told, line: LINES[language].told } } };
   }),
 
   /**

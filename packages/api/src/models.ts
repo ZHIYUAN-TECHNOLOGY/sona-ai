@@ -9,6 +9,7 @@ import { SAMPLE_NOTE, type HandwrittenNote } from "@sona-ai/domain/scan";
 import type { Patient } from "@sona-ai/domain/types";
 import { huddle, type Bed, type Owner } from "@sona-ai/domain/ward";
 
+import type { Passage } from "./leaflets";
 import { ruleNote, type ConsultationLine, type ScribeDraft } from "./scribe-model";
 
 /**
@@ -91,8 +92,10 @@ export type Models = {
    * discharge plan and what the hospital recorded about them). `grounded` false means the answer is general knowledge,
    * not their record (the app marks it so); `from` names the part of the record; `urgent` puts the 999 line first.
    * The stub answers nothing, so the app's authored plan answers stay in charge.
+   * `passages`: the hospital's patient leaflets found for the question (./leaflets), which general advice rests on when
+   * one fits; `cites` the numbers of those the answer used, as the model wrote them (care.ask keeps only numbers offered).
    */
-  answerFromPlan(input: { question: string; plan: string; language: Language }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string }>;
+  answerFromPlan(input: { question: string; plan: string; language: Language; passages?: Passage[] }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string; cites?: number[] }>;
   /** After-discharge check-ins: worse or urgent replies become a flagged task (with the model's short symptom, when it read one). */
   classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent"; symptom?: string } & DecidedBy>;
   /** The care team's inbox: how soon a patient message needs a clinician (urgent, clinical, admin) and why, in a few words. */

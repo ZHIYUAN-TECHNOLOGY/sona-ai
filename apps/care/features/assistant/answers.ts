@@ -13,8 +13,11 @@ import "./strings";
  */
 export type PlanLike = Pick<Discharged, "medicines" | "leaflets">;
 export type Visit = { title: string; date: Date | string; why?: string; inDays?: number };
-/** `kind` picks the suggestion row's icon: a missed dose, a medicine, a visit. */
-export type Asked = { question: string; answer: string; source: string; kind: "dose" | "medicine" | "visit" };
+/**
+ * `kind` picks the suggestion row's icon: a missed dose, a medicine, a visit. `leaflet`: a second caption, on an answer
+ * that is from their record and also from one of the hospital's leaflets ("From the hospital's leaflet · Chest infection").
+ */
+export type Asked = { question: string; answer: string; source: string; leaflet?: string; kind: "dose" | "medicine" | "visit" };
 
 const MYT = 8 * 3600_000;
 /** "8:00 AM" ("8:00 PG", "上午8:00") from the plan's "HH:MM" (already Malaysia time). */
@@ -141,8 +144,8 @@ async function doctorsFor(q: string, find: Api["doctors"], condition: string | u
 
 /**
  * A model's care.ask answer as a reply. Any question gets its answer (no content limit): from their record (their plan,
- * and what the hospital recorded about them), it says which part; otherwise it is marked as a general answer, not from
- * their records. A warning sign is the 999 card.
+ * and what the hospital recorded about them), it says which part; from one of the hospital's leaflets, it names the
+ * leaflet; otherwise it is marked as a general answer, not from their records. A warning sign is the 999 card.
  */
 /**
  * The part of the record a model says its answer is from, in the patient's language. The model names it in English
@@ -157,8 +160,12 @@ function fromModel(a: PlanAnswer, lang: Lang): Exclude<Reply, { kind: "doctors" 
   if (!a.answer) return NONE;
   if (a.urgent) return CALL_999;
   const t = tFor(lang);
-  const source = a.grounded ? a.from ? t("ask.fromModel", { from: partOf(a.from, lang) }) : t("ask.record") : t("ask.general");
-  return { kind: "plan", asked: { question: "", answer: a.answer, source, kind: "medicine" } };
+  const record = a.grounded ? a.from ? t("ask.fromModel", { from: partOf(a.from, lang) }) : t("ask.record") : undefined;
+  // The hospital's leaflets the answer used (the server's `sources`, read loosely: older servers never send it), by title.
+  const titles = ((a as { sources?: { title: string }[] }).sources ?? []).map(s => s.title);
+  const leaflet = titles.length ? t("ask.leaflet", { title: listOf(titles, lang) }) : undefined;
+  // One caption says where the answer is from; an answer from their record and a leaflet says both. "General" is only what is from neither.
+  return { kind: "plan", asked: { question: "", answer: a.answer, source: record ?? leaflet ?? t("ask.general"), ...record && leaflet && { leaflet }, kind: "medicine" } };
 }
 
 /** An answer split into its lead sentence (shown bold) and the rest; "Dr." never ends a sentence. */

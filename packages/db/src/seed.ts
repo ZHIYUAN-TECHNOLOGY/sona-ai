@@ -2,7 +2,7 @@ import { hashPassword } from "better-auth/crypto";
 import { and, eq, ne, sql } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
-import type { MedChange } from "@sona-ai/domain/discharge";
+import { LANGUAGES, PATIENT_LEAFLETS, type MedChange } from "@sona-ai/domain/discharge";
 import { DOCTORS } from "@sona-ai/domain/doctors";
 import { WARD_FIXTURE, type Bed, type BlockerKind } from "@sona-ai/domain/ward";
 import { readFileSync } from "node:fs";
@@ -330,6 +330,25 @@ export async function seedTestStaff(db: AnyDb) {
     await credential(db, id, password);
     await db.insert(hospitalMembers).values({ userId: id, hospitalId: DEMO_HOSPITAL, role }).onConflictDoNothing();
   }
+}
+
+/** The library's own ingest (packages/retrieval's, which imports this package, so it comes in here as it does into the API's context). */
+type Ingest = (doc: { id: string; hospitalId: string; title: string; source: string; year: number; kind: "leaflet" }, text: string) => Promise<number>;
+/**
+ * The hospital's patient leaflets in its library: its general leaflets by condition (PATIENT_LEAFLETS, the ones a
+ * discharge picks from), one document per leaflet and language, stored and indexed as every library source is (`ingest`)
+ * and marked kind "leaflet", source "Patient leaflet": the only documents a Sona Care answer may read. Each is one
+ * section, headed by the diagnosis and holding the leaflet word for word. Safe to rerun: a document's id is its
+ * leaflet and language, so it is replaced, and no upload can take that id (library.ts refuses another's document).
+ * Run by packages/retrieval's seed-run.ts, where the library's ingest lives. Returns how many it stored.
+ * ponytail: a leaflet's language rides on its id (":en"), which is how an answer picks her language's copy
+ * (packages/api/src/leaflets.ts); give documents a language column with the next migration.
+ */
+export async function seedLeaflets(ingest: Ingest, hospitalId = DEMO_HOSPITAL) {
+  for (const leaflet of PATIENT_LEAFLETS) for (const { id: language, name } of LANGUAGES) {
+    await ingest({ id: `${hospitalId}:leaflet:${leaflet.id}:${language}`, hospitalId, title: leaflet.title[language], source: `Patient leaflet (${name})`, year: 2026, kind: "leaflet" }, `# ${leaflet.about}\n${leaflet.text[language]}`);
+  }
+  return PATIENT_LEAFLETS.length * LANGUAGES.length;
 }
 
 /** Rows of a reference file in the repo's data/ folder; `#` lines are provenance notes, quoted fields may hold commas. */

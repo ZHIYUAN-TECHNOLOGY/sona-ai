@@ -1,6 +1,7 @@
 import { basetenModels } from "@sona-ai/api/baseten-models";
 import { clockOffsetOf, shifted } from "@sona-ai/api/clock";
 import type { Context as ApiContext } from "@sona-ai/api/context";
+import { leafletHits, passagesIn } from "@sona-ai/api/leaflets";
 import { stubModels } from "@sona-ai/api/models";
 import { lastDischarge, recordText } from "@sona-ai/api/routers/care-plan";
 import { careLinkOf } from "@sona-ai/api/routers/hospital";
@@ -13,7 +14,7 @@ import { Agent, getAgentByName, type Connection } from "agents";
 import { withVoice, type VoiceTurnContext } from "agents/voice";
 import type { Context as HonoContext } from "hono";
 
-import { announcer, followUpAgents } from "../context";
+import { announcer, followUpAgents, libraryOf } from "../context";
 import { createAuth, getDb } from "../services";
 
 type Language = keyof typeof LINES;
@@ -29,7 +30,8 @@ type Language = keyof typeof LINES;
  * per sentence down). An answer sent with no audio (Sona's voice is starting, slow or unavailable) is read by the phone's
  * own voice, and so is a notice (Sona's line, then "listening"). Three more JSON events, which a client may ignore:
  * - `sona_say` {text, reason: "starting" | "slow" | "unavailable" | "notice", waking?}: a sentence sent with no audio, and why.
- * - `sona_turn` {grounded, urgent, source, model?, waking?, ear?}: how the answer went, after its last sentence (`ear`: who heard a spoken question).
+ * - `sona_turn` {grounded, urgent, sources, source, model?, waking?, ear?}: how the answer went, after its last sentence (`ear`: who heard
+ *   a spoken question; `sources`: the hospital's leaflets the answer used, by title, as care.ask gives them).
  * - `sona_care_team` {taskId, title}: what the patient reported reached their care team as a flagged task.
  */
 export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16", sampleRate: VOICE_RATE }) {
@@ -104,6 +106,9 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
     // Read before anything is awaited, while the last words heard are still this turn's.
     const ear = this.#heard.get(connection), heard = ear?.text === transcript ? ear.by : undefined;
     const { hospitalId, patientId } = patientOf(this.name);
+    // The hospital's leaflets for this question are searched while the context and her record are read (leafletHits:
+    // PASSAGES_MS at most, never failing the turn); Gemma is asked once they are in, the 999 line before that.
+    const found = leafletHits(libraryOf(getDb(), this.env), hospitalId, transcript);
     // A turn with no call started before it (a typed one) reads the record itself, once for the connection.
     const reading = this.#records.get(connection) ?? this.#read();
     this.#records.set(connection, reading);
@@ -111,10 +116,12 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
     // A record that could not be read is read again next turn; this turn is still answered, so its 999 and care-team checks run.
     if (!record) this.#records.delete(connection);
     if (record?.plan.status === "discharged") this.#discharged = record.plan.language;
+    const language = this.#language(connection);
     return answerTurn({
       question: transcript, heard, history: messages, signal, chat: this.#chat,
       plan: record?.text,
-      language: this.#language(connection),
+      passages: found.then(hits => passagesIn(hits, language)),
+      language,
       escalate: async () => {
         const told = await tellCareTeam(context, hospitalId, patientId, transcript);
         if (told) send(connection, { type: "sona_care_team", ...told });

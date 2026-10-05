@@ -65,11 +65,11 @@ export type Mail = {
 };
 
 /** A library document; hospitalId empty is the shared library, set is one hospital's own; ownerId set is one doctor's private source. */
-export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" };
+export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" | "leaflet" };
 export type Library = {
   /** Stores the document and its sections; re-ingesting the same ID replaces them. Returns the section count. */
   ingest(doc: LibraryDocument, text: string): Promise<number>;
-  /** Hybrid search over the shared library, the caller's hospital and the caller's own private sources. */
+  /** Hybrid search over the shared library, the caller's hospital and the caller's own private sources; with `patient`, over the hospital's patient leaflets alone. */
   search(input: SearchInput): Promise<RetrievalHit[]>;
   /** Re-embeds the shared library and the hospital's sources (after the embedding model changes). Returns the chunk count. */
   reindex(hospitalId: string): Promise<number>;
