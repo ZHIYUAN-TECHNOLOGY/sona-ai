@@ -16,7 +16,8 @@ import { IconRow, Section } from "@/components/sona/sections";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Chip, Expand, Glass, Icon, Insight, Notice, pillStyle, Reveal, Screen, SourceLink, Surface, surfaceStyle, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
+import { sameShallow } from "@/features/live/keep-same";
 import type { Encounter, FeatureProps } from "@/features/encounter/types";
 import { FindingsCard } from "@/features/findings";
 import { onImage } from "@/features/findings/model";
@@ -41,7 +42,7 @@ function haptic() { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().
  * then the one limit that travels with it. Tap the image to open the original.
  */
 export function XrayCard({ patient, onOpen, onRequest, result }: FeatureProps) {
-  const { encounter } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounter);
   const evidence = result?.imagingSnapshot ?? encounter;
   const sections = result?.sections ?? 3;
   const scenario = evidence?.imagingScenario ?? "reference";
@@ -242,7 +243,7 @@ function MenuPanel({ items, onClose }: { items: MenuItem[]; onClose: () => void 
 }
 
 export function XrayScreen() {
-  const { patient, encounter, updateEncounter, request, showDemoControls } = useEncounter();
+  const { patient, encounter, updateEncounter, request, showDemoControls } = useEncounterSelect(s => ({ patient: s.patient, encounter: s.encounter, updateEncounter: s.updateEncounter, request: s.request, showDemoControls: s.showDemoControls }), sameShallow);
   const { recordCardId, patientId: sourcePatientId } = useLocalSearchParams<{ recordCardId?: string; patientId?: string }>();
   const savedCard = recordCardId ? encounter?.cards.find(card => card.id === recordCardId && card.kind === "xray" && card.patientId === patient?.id && card.encounterId === patient?.encounterId) : undefined;
   const historical = Boolean(recordCardId);
