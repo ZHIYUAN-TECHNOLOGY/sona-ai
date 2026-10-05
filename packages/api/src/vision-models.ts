@@ -246,7 +246,10 @@ export function visionModels(look: Look, model: string, fallback: Models): Pick<
     // What is there, then where: each finding's box goes through readBoxes, which drops one in the wrong place or of
     // the wrong size for its kind. A finding whose box fails is left out rather than marked wrongly.
     async incidentalFindings(input) {
-      if (!input.image?.length || !input.contentType) return fallback.incidentalFindings(input); // nothing to read: the authored film
+      // Nothing was read (no film on the visit, or the read failed below): no findings, labelled as no model's. The stub's
+      // authored pair is never the answer here: it was stored as the patient's own findings and shown on her discharge and the ward.
+      const unread = { findings: [], validated: false as const, source: "fixture" as const };
+      if (!input.image?.length || !input.contentType) return unread;
       try {
         const image = { bytes: input.image, contentType: input.contentType };
         const seen = jsonIn((await look({ image, prompt: FINDINGS, prefill: '{"cardiomegaly": ', maxTokens: 80 })).text);
@@ -269,8 +272,8 @@ export function visionModels(look: Look, model: string, fallback: Models): Pick<
           return box ? readBoxes(JSON.stringify([{ label: ask.label.charAt(0).toUpperCase() + ask.label.slice(1), box_2d: box }]), box.every(n => n <= 1) ? 1 : 1000) : [];
         }));
         return { findings: found.flat() as DetectedFinding[], validated: false, source: "model", model };
-      } catch { /* the stub below, labelled fixture */ }
-      return fallback.incidentalFindings(input);
+      } catch { /* unread, labelled fixture */ }
+      return unread;
     },
 
     // Read, then sort: the transcription carries the doubted words (from the model's own token probabilities, since

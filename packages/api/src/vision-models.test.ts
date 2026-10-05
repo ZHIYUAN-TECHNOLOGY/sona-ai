@@ -75,13 +75,14 @@ test("extra findings: what is there first, then each box on its own, and a box i
   expect(asks.slice(1).map(a => a.prompt.match(/Query: Where is (.*)\?/)?.[1])).toEqual(["the heart", "the left pleural effusion", "the nodule in the right upper zone"]);
 });
 
-test("a clear film reads as nothing found by the model; no image is the authored reference film; a failed read is the stub's", async () => {
+test("a clear film reads as nothing found by the model; no image or a failed read is nothing found by no model, never the stub's authored findings", async () => {
   const clear = eyes(() => '{"cardiomegaly": false, "effusion": "none", "nodule": "none", "nodule_mm": 0}');
   expect(await clear.models.incidentalFindings({ patientId: "SYN-1042", image, contentType })).toEqual({ findings: [], validated: false, ...fromModel });
   expect(clear.asks).toHaveLength(1);
-  const authored = await stubModels.incidentalFindings({ patientId: "SYN-1042" });
-  expect(await clear.models.incidentalFindings({ patientId: "SYN-1042" })).toEqual(authored);
-  expect(await eyes(() => "The film is rotated.").models.incidentalFindings({ patientId: "SYN-1042", image, contentType })).toEqual(authored);
+  const unread = { findings: [], validated: false, source: "fixture" };
+  expect((await stubModels.incidentalFindings({ patientId: "SYN-1042" })).findings).toHaveLength(2);
+  expect(await clear.models.incidentalFindings({ patientId: "SYN-1042" })).toEqual(unread);
+  expect(await eyes(() => "The film is rotated.").models.incidentalFindings({ patientId: "SYN-1042", image, contentType })).toEqual(unread);
 });
 
 // The transcription as MedGemma's tokens (live, 1 Oct): "4mg" with a 7% "0" (40mg), "oedema" with "edema" at 35%.

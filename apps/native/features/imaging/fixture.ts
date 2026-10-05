@@ -1,4 +1,5 @@
 import type { ImageSource } from "expo-image";
+import { JUDGE } from "@/features/live";
 
 /** Add only an appropriately licensed, deidentified teaching image with provenance. */
 export type TeachingImage = {
@@ -11,7 +12,9 @@ export type TeachingImage = {
   referenceSummary?: string;
 };
 
-export const teachingImage: TeachingImage | undefined = {
+// The judge build has none: there every screen is a real patient's visit, where a reference film read as her X-ray
+// (its tile first on her card, with its source link). A patient's film is one attached to her visit.
+export const teachingImage: TeachingImage | undefined = JUDGE ? undefined : {
   id: "commons-normal-pa-2017",
   source: require("./assets/normal-pa-chest.jpg"),
   title: "PA chest · reference example",

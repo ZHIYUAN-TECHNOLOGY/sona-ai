@@ -338,7 +338,7 @@ export function XrayScreen() {
       <Action label={picking ? "Opening photo library…" : "Choose teaching image"} icon="photo.badge.plus" disabled={picking} onPress={pickImage} />
       {pickerError && <Notice warning>{pickerError}</Notice>}
     </Surface>
-    <Action label="Restore bundled reference" secondary onPress={() => updateEncounter(current => ({ ...current, hideTeachingImage: false }))} />
+    {teachingImage && <Action label="Restore bundled reference" secondary onPress={() => updateEncounter(current => ({ ...current, hideTeachingImage: false }))} />}
   </ViewerPage>;
 
   // The decision stays in view: what analysing does, then the button.

@@ -3,6 +3,7 @@ import type { QuickAction } from "@/components/sona/quick-actions";
 import { confirmedAllergy } from "@/features/day/counts";
 import { testInSentence, usableKeys, type PendingResult } from "@/features/day/model";
 import { useDay, useDayError, usePendingResult, useWard } from "@/features/day/use-counts";
+import { teachingImage } from "@/features/imaging/fixture";
 import { JUDGE } from "@/features/live";
 import { useLiveHandover } from "@/features/live/handover-sync";
 import { useRole } from "@/features/live/roles";
@@ -139,7 +140,7 @@ export function visitActions(patient: Patient, encounter: Encounter | undefined,
     { key: "consult", label: "Consultation", icon: "waveform", status: recording ? "Recording now" : lines ? `${lines} lines captured` : none, tone: recording ? "caution" : "calm", onPress: () => go("recording") },
     { key: "meds", label: "Medicines", icon: "pills", status: patient.incomplete ? "Ingredient unknown" : unconfirmed ? `${unconfirmed} unconfirmed` : "All confirmed", tone: patient.incomplete || unconfirmed ? "caution" : "calm", badge: unconfirmed, onPress: () => go("medication") },
     // Without an attachment the X-ray page shows only the bundled reference film, which is not this patient's (unless removed).
-    { key: "xray", label: "X-ray", icon: "photo", status: encounter?.imagingAttachment ? "Image attached" : patient.incomplete || encounter?.hideTeachingImage ? "No image" : "Reference image only", onPress: () => go("xray") },
+    { key: "xray", label: "X-ray", icon: "photo", status: encounter?.imagingAttachment ? "Image attached" : patient.incomplete || encounter?.hideTeachingImage || !teachingImage ? "No image" : "Reference image only", onPress: () => go("xray") },
     ...scan ? [{ key: "scan", label: "Scan note", icon: "doc.viewfinder", status: "Handwritten notes into the record", onPress: () => go("scan") }] : [],
   ];
 }
