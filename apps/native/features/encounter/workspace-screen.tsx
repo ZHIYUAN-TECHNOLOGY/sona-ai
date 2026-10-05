@@ -87,7 +87,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const patient = home ? undefined : patients.find(p => p.id === sessionId);
   const encounter = patient ? encounters[patient.id] : undefined;
   useServerEncounter(patient); // live mode: the visit opens on the server's record, not the fixture
-  const params = useLocalSearchParams<{ next?: string; prompt?: string; view?: string }>();
+  const params = useLocalSearchParams<{ next?: string; prompt?: string; view?: string; quiet?: string }>();
+  const navigation = useNavigation();
   const arrived = useRef(false);
   useFocusEffect(useCallback(() => {
     if (home) { leaveVisit(); return; }
@@ -98,9 +99,17 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     arrived.current = true;
     const next = capabilitySchema.safeParse(params.next);
     if (next.success) request(next.data, params.prompt);
+    // Arrived without a slide (under a closing sheet): later arrivals and the swipe back slide as usual.
+    if (params.quiet) router.setParams({ quiet: undefined });
     const view = params.view;
-    if (view === "recording" || view === "note" || view === "xray" || view === "tasks" || view === "scan" || view === "claim" || view === "discharge") setTimeout(() => router.push(`/${view}`), 320);
-  }, [home, sessionId, leaveVisit, selectPatient, request, params.next, params.prompt, params.view]));
+    if (!(view === "recording" || view === "note" || view === "xray" || view === "tasks" || view === "scan" || view === "claim" || view === "discharge")) return;
+    // The tool page opens once this visit's own transition has ended, never during it (on a 320 ms timer the two overlapped).
+    let opened = false;
+    const open = () => { if (opened) return; opened = true; stop(); router.push(`/${view}`); };
+    const stop = (navigation as unknown as { addListener: (event: "transitionEnd", run: () => void) => () => void }).addListener("transitionEnd", open);
+    // ponytail: a fallback in case the transition ended before this listened, so the tool page still opens.
+    setTimeout(open, 700);
+  }, [home, sessionId, leaveVisit, selectPatient, request, params.next, params.prompt, params.view, params.quiet, navigation]));
   const insets = useSafeAreaInsets();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const draftKey = patient?.id ?? "unassigned";
@@ -223,7 +232,6 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const backToTiles = !home && (requests.length > 0 || visitAsides.length > 0) && !tiles;
   const back = () => { if (backToTiles) { setTiles(true); scroll.current?.scrollTo({ y: 0, animated: false }); } else if (router.canGoBack()) router.back(); else router.replace("/"); };
   // Android's back does the same; iOS's edge swipe would leave the visit, so it waits until the tiles show.
-  const navigation = useNavigation();
   useEffect(() => { navigation.setOptions({ gestureEnabled: !backToTiles }); }, [backToTiles, navigation]);
   useEffect(() => { if (!backToTiles) return; const sub = BackHandler.addEventListener("hardwareBackPress", () => { back(); return true; }); return () => sub.remove(); }, [backToTiles]); // eslint-disable-line react-hooks/exhaustive-deps
   const nudge = home ? suggestion(todayAnswers) : undefined;

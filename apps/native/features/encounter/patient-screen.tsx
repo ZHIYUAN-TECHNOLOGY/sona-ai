@@ -15,9 +15,7 @@ import { needsYou } from "@/features/ask/answers";
 import { JUDGE } from "@/features/live";
 import { needLine, patientFlags, unconfirmedOf } from "@/features/day/counts";
 import { useDayError, useDayPatients, usePendingResult } from "@/features/day/use-counts";
-import { PatientSheet, type Go } from "./patient-sheet";
 import { useEncounter } from "./store";
-import { openSession } from "./navigation";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "needs", label: "Needs you" }, { id: "continue", label: "Continue" }, { id: "mine", label: "My list" }, { id: "ward", label: "Ward 4B" }, { id: "clinic", label: "Clinic today" }, { id: "all", label: "All" },
@@ -37,10 +35,10 @@ const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); 
  * virtualised list (Legend List), so a thousand rows stay smooth. Search spans everyone.
  */
 export function PatientScreen() {
-  const { patients, patient, encounter, encounters, updateEncounter } = useEncounter();
-  // `open`: a patient whose sheet is up on arrival (a flagged check-in on Today opens her thread there).
-  const { next, view, prompt, switch: switching, tab: startTab, open: arriving } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string; switch?: string; tab?: string; open?: string }>();
-  const [open, setOpen] = useState<string | undefined>(arriving);
+  const { patients, patient, encounters } = useEncounter();
+  const { next, view, prompt, switch: switching, tab: startTab } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string; switch?: string; tab?: string }>();
+  // A row's card is pushed inside this sheet, carrying what the sheet was opened to do (a question, a tool, a switch).
+  const open = (id: string) => router.push({ pathname: "/patients/[id]", params: { id, ...next && { next }, ...view && { view }, ...prompt && { prompt }, ...switching && { switch: switching } } });
   const [query, setQuery] = useState("");
   const [tab, keepTab] = useState<Tab>(TABS.some(t => t.id === startTab) ? startTab as Tab : kept.tab ?? "needs");
   const setTab = (t: Tab) => { kept.tab = t; keepTab(t); };
@@ -48,14 +46,6 @@ export function PatientScreen() {
   const list = useRef<LegendListRef>(null);
   const { census } = useContinueState();
   const { entries, toSign } = useContinue();
-  const select = (id: string, go: Go = {}) => {
-    // Choosing a patient opens their session (switching from a session replaces it); a pending
-    // question or tool page is carried along and runs once the visit is open.
-    const proceed = () => { router.back(); setTimeout(() => go.to ? router.push(go.to) : openSession(id, { next: go.next ?? next, prompt: go.next ? undefined : prompt, view: go.view ?? view }, switching === "1"), 250); };
-    if (id !== patient?.id && (encounter?.recording === "recording" || encounter?.recording === "paused")) {
-      Alert.alert("Stop this consultation?", "Stop the current playback before switching patients. Your transcript and note will be kept.", [{ text: "Keep this patient", style: "cancel" }, { text: "Stop & switch", onPress: () => { updateEncounter(current => ({ ...current, recording: "stopped" })); proceed(); } }]);
-    } else proceed();
-  };
 
   // Today's visits as rows: what needs attention leads, then who starts within the hour; the synthetic census joins when switched on in Settings.
   const now = new Date().getHours() * 60 + new Date().getMinutes();
@@ -111,12 +101,10 @@ export function PatientScreen() {
     </Press>;
     const r = item.row;
     return <ListRow title={r.name} badge={r.id === patient?.id ? <Text style={{ fontWeight: "500", color: palette.blue }}>  · current</Text> : undefined} detail={r.reason} tone={r.tone} initials={r.initials} trailing={r.where.replace(/^(Clinic|Bed) /, "")}
-      edges={{ first, last }} onPress={r.open ? () => setOpen(r.id) : JUDGE ? () => Alert.alert(r.name, "The hospital record has no visit for this patient.") : undefined} accessibilityHint={r.open ? "Shows the patient summary and actions" : undefined}
+      edges={{ first, last }} onPress={r.open ? () => open(r.id) : JUDGE ? () => Alert.alert(r.name, "The hospital record has no visit for this patient.") : undefined} accessibilityHint={r.open ? "Shows the patient summary and actions" : undefined}
       accessibilityLabel={`${r.name}, ${r.where}, ${r.reason}${r.open || others ? "" : ". Synthetic census row"}`} />;
-  }, [items, patient?.id, others]);
+  }, [items, patient?.id, others, open]);
 
-  // The sheet shows today's appointment time, as the row did: the judge build's roster carries no clock time of its own.
-  const picked = patients.find(p => p.id === open), chosen = picked && { ...picked, time: day.find(d => d.id === open)?.time ?? picked.time };
   // Opened to pick a visit for something (a question, a tool, a switch) it says so; from the sidebar it is the Patients page.
   const picking = Boolean(next || view || prompt || switching);
   const header = <View style={{ gap: 14, paddingBottom: 14 }}>
@@ -137,7 +125,6 @@ export function PatientScreen() {
       ListHeaderComponent={header} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }} contentContainerStyle={{ padding: 20, paddingBottom: 44 }}
       contentInsetAdjustmentBehavior="automatic" keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" />
     {tab === "all" && !query && <AtoZ rows={rows} items={items} list={list} />}
-    {chosen && <PatientSheet key={chosen.id} patient={chosen} onClose={() => setOpen(undefined)} onGo={go => select(chosen.id, go)} />}
   </>;
 }
 

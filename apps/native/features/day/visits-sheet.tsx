@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { ScrollView, View, useWindowDimensions } from "react-native";
 import Animated from "react-native-reanimated";
 import { riseIn } from "@/components/sona/motion";
@@ -6,7 +6,7 @@ import { List, ListRow } from "@/components/sona/list";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, useAccessibleEffects } from "@/components/sona/ui";
-import { openSession } from "@/features/encounter/navigation";
+import { openSessionFromSheet } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
 
 /** Route `/visits?ids=…`: the patients behind a grouped ruler pin, in time order. Picking one opens that visit. */
@@ -16,7 +16,8 @@ export function VisitsSheet() {
   const { height } = useWindowDimensions();
   const { reducedMotion } = useAccessibleEffects();
   const list = (ids ?? "").split(",").map(id => patients.find(p => p.id === id)).filter(p => p !== undefined).sort((a, b) => a.time.localeCompare(b.time));
-  const pick = (id: string) => { router.back(); setTimeout(() => openSession(id), 350); };
+  const sheet = useNavigation();
+  const pick = (id: string) => openSessionFromSheet(sheet, id);
   // The ruler's group can outlive its visits (a live day re-read, a stale link): say so calmly.
   if (!list.length) return <View style={{ paddingTop: 36, paddingBottom: 34, paddingHorizontal: 20, gap: 12 }}>
     <Text accessibilityRole="header" style={{ ...type.heading, color: palette.ink }}>No visits here now</Text>
