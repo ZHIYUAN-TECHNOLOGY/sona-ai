@@ -5,7 +5,7 @@ import { AppState, Keyboard } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { poke } from "@/components/sona/idle";
+import { poke, slide } from "@/components/sona/idle";
 import { palette } from "@/components/sona/theme";
 import { CloseButton, IconButton } from "@/components/sona/ui";
 import { CriticalAlert } from "@/features/critical";
@@ -32,7 +32,8 @@ function ActivityWatch() {
 
 export default function RootLayout() {
   // Every touch start is activity (./components/sona/idle): seen on the way down, never claimed, so the touch goes on as before.
-  return <GestureHandlerRootView style={{ flex: 1 }} onStartShouldSetResponderCapture={touched}><ActivityWatch /><KeyboardProvider><SafeAreaProvider><EncounterProvider><ScribePlayback /><StatusBar style="dark" /><Stack screenOptions={{ headerLeft: () => <IconButton name="chevron.left" label="Return to previous screen" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />, headerTransparent: true, headerStyle: { backgroundColor: "transparent" }, headerBlurEffect: "none", headerTintColor: palette.ink, headerShadowVisible: false, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: palette.canvas } }}>
+  // Every screen's and sheet's transition is reported too (`slide`): ambient motion holds its frame while one slides.
+  return <GestureHandlerRootView style={{ flex: 1 }} onStartShouldSetResponderCapture={touched}><ActivityWatch /><KeyboardProvider><SafeAreaProvider><EncounterProvider><ScribePlayback /><StatusBar style="dark" /><Stack screenListeners={{ transitionStart: e => { if (e.target) slide(e.target, true); }, transitionEnd: e => { if (e.target) slide(e.target, false); } }} screenOptions={{ headerLeft: () => <IconButton name="chevron.left" label="Return to previous screen" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />, headerTransparent: true, headerStyle: { backgroundColor: "transparent" }, headerBlurEffect: "none", headerTintColor: palette.ink, headerShadowVisible: false, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: palette.canvas } }}>
     {/* Today and a visit stop re-rendering while a visit covers them (`underVisit`); `quiet`: a visit placed under a closing sheet, whose slide down is then the one transition (both ./features/encounter/navigation). */}
     <Stack.Screen name="index" options={({ navigation, route }) => ({ headerShown: false, freezeOnBlur: underVisit(navigation.getState().routes, route.key) })} />
     <Stack.Screen name="session/[patientId]" options={({ navigation, route }) => ({ headerShown: false, freezeOnBlur: underVisit(navigation.getState().routes, route.key), animation: (route.params as { quiet?: string } | undefined)?.quiet ? "none" : "default" })} />

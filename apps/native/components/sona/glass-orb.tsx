@@ -1,7 +1,7 @@
 import { Canvas, Fill, Shader, Skia, type SkRuntimeEffect } from "@shopify/react-native-skia";
 import { useEffect, useRef } from "react";
 import { scheduleOnRN } from "react-native-worklets";
-import { useIdle } from "./idle";
+import { useIdle, useSliding } from "./idle";
 import { useVisible } from "./use-visible";
 import { useDerivedValue, useFrameCallback, useSharedValue, withTiming } from "react-native-reanimated";
 
@@ -69,20 +69,21 @@ export function GlassOrb({ size, energy, still = false }: { size: number; energy
     t.set(t.value + dt * (0.5 + 1.2 * level.value) * pace.value);
   }, false);
   const visible = useVisible();
-  const idle = useIdle();
+  const idle = useIdle(), sliding = useSliding();
   // Stop redrawing while hidden, backgrounded or under Reduce Motion (including when toggled live). At rest in the bar
   // (energy 0) on a screen left alone (./idle), the swirl slows to a stop over a second and the orb holds that frame, so
-  // the screen stops redrawing; listening or thinking keep it moving, and the next touch starts it again.
+  // the screen stops redrawing; listening or thinking keep it moving, and the next touch starts it again. While a screen or
+  // sheet slides (./idle) it holds its frame at once, whatever it was doing, and carries on after.
   const resting = idle && energy === 0;
   const restingNow = useRef(resting);
   restingNow.current = resting;
   // Stops the frames once the slow-down ends, unless a touch woke the orb in the meantime.
   const rest = () => { if (restingNow.current) frames.setActive(false); };
   useEffect(() => {
-    if (!visible || still) { frames.setActive(false); return; }
+    if (!visible || still || sliding) { frames.setActive(false); return; }
     if (!resting) { pace.set(withTiming(1, { duration: 400 })); frames.setActive(true); return; }
     pace.set(withTiming(0, { duration: 1000 }, done => { if (done) scheduleOnRN(rest); }));
-  }, [visible, still, resting, frames, pace]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [visible, still, sliding, resting, frames, pace]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => frames.setActive(false), [frames]);
   const uniforms = useDerivedValue(() => ({ res: [size, size], t: t.value, energy: level.value }));
   return <Canvas pointerEvents="none" style={{ width: size, height: size }}>
