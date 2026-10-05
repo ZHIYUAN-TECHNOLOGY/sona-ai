@@ -39,7 +39,11 @@ export function useServerEncounter(patient: Patient | undefined) {
       // demo admission, Amelia's, whichever of the two is open.
       const bed = beds.find(b => b.blockers.some(x => x.id.startsWith("adm-1042")) || b.admissionId === "adm-1042");
       const glReceived = JUDGE ? letterReceived(beds, patientId!) : !bed || !bed.blockers.some(x => x.kind === "gl");
-      updateEncounter(value => mergeSavedNote(mergeServerState(value, snapshot.state as ServerVisitState, claim, glReceived), saved?.sentences ?? []), false, patientId);
+      // A read that brings nothing new keeps the visit as it was, so the store leaves every screen alone (each mount re-reads).
+      updateEncounter(value => {
+        const next = mergeSavedNote(mergeServerState(value, snapshot.state as ServerVisitState, claim, glReceived), saved?.sentences ?? []);
+        return JSON.stringify(next) === JSON.stringify(value) ? value : next;
+      }, false, patientId);
     })().finally(() => { inflight.delete(encounterId); lastRead.set(encounterId, Date.now()); });
     inflight.set(encounterId, read);
     return read;
