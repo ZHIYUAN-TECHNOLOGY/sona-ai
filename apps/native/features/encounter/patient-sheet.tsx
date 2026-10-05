@@ -1,12 +1,10 @@
 import * as Haptics from "expo-haptics";
-import { router } from "expo-router";
+import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
-import { Keyboard, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Alert, Keyboard, Pressable, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { scheduleOnRN } from "react-native-worklets";
 import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { Press } from "@/components/sona/parts";
@@ -16,7 +14,7 @@ import { CareMessages } from "@/features/care-messages";
 import { CheckInThread } from "@/features/check-ins/thread";
 import { confirmedAllergy, patientFlags, unconfirmedOf, type Go } from "@/features/day/counts";
 import { testInSentence } from "@/features/day/model";
-import { usePendingResult } from "@/features/day/use-counts";
+import { useDayPatients, usePendingResult } from "@/features/day/use-counts";
 import { JUDGE } from "@/features/live";
 import { AccessTrail, useRole } from "@/features/live/roles";
 import { useServerEncounter } from "@/features/live/sync";
@@ -24,23 +22,42 @@ import { QuickActions } from "@/components/sona/quick-actions";
 import { visitActions } from "./quick-actions";
 import { PIN_LIMIT } from "@/features/patients/continue";
 import { pin, replaceOldest, unpin, useContinueState } from "@/features/patients/continue-store";
+import { openSessionFromSheet } from "./navigation";
 import { useEncounter } from "./store";
 import type { Patient } from "./types";
 
-/*
- * Patient sheet (after Must's leaderboard profile sheet): tapping a patient row slides this sheet
- * up (spring 0.42 s, damping 0.82) over the dimmed list, then its sections rise in top to bottom
- * (60 ms apart): who and when, Open visit, the keys (each saying what needs attention there and
- * opening its fix), then the visit at a glance. Drag down past 120 pt or flick to dismiss (spring back 0.35 s, 0.8).
+/**
+ * A patient's card, pushed inside the Patients sheet (app/patients): back returns to the list as it was left. Its
+ * actions leave the sheet and open the visit in one navigation (./navigation), carrying what the sheet was opened to
+ * do (a question, a tool, a switch from another visit).
  */
-export type { Go };
+export function PatientCardScreen() {
+  const { id, next, view, prompt, switch: switching } = useLocalSearchParams<{ id: string; next?: string; view?: string; prompt?: string; switch?: string }>();
+  const { patients, patient: current, encounter, updateEncounter } = useEncounter();
+  const day = useDayPatients(patients);
+  const sheet = useNavigation().getParent();
+  const picked = patients.find(p => p.id === id);
+  if (!picked || !sheet) return null;
+  // Today's appointment time, as the row showed it: the judge build's roster carries no clock time of its own.
+  const patient = { ...picked, time: day.find(d => d.id === id)?.time ?? picked.time };
+  const select = (go: Go) => {
+    // Switching from a session replaces it; a pending question or tool page runs once the visit is open.
+    const proceed = () => { if (go.to) { sheet.goBack(); router.push(go.to); } else openSessionFromSheet(sheet, patient.id, { next: go.next ?? next, prompt: go.next ? undefined : prompt, view: go.view ?? view }, switching === "1"); };
+    if (patient.id !== current?.id && (encounter?.recording === "recording" || encounter?.recording === "paused")) {
+      Alert.alert("Stop this consultation?", "Stop the current playback before switching patients. Your transcript and note will be kept.", [{ text: "Keep this patient", style: "cancel" }, { text: "Stop & switch", onPress: () => { updateEncounter(c => ({ ...c, recording: "stopped" })); proceed(); } }]);
+    } else proceed();
+  };
+  return <><Stack.Screen options={{ title: patient.name }} /><PatientCard patient={patient} onGo={select} /></>;
+}
 
-export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onClose: () => void; onGo: (go: Go) => void }) {
-  const [box, setBox] = useState(0);
+/**
+ * The card's sections rise in top to bottom (60 ms apart) as it arrives: who and when, Open visit, the keys (each saying
+ * what needs attention there and opening its fix), then the visit at a glance.
+ */
+function PatientCard({ patient, onGo }: { patient: Patient; onGo: (go: Go) => void }) {
   const { encounters } = useEncounter();
   const result = usePendingResult(patient.id); // the same result Today and Patients flag
   useServerEncounter(patient); // live mode: medicines and discharge as the server holds them
-  const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
   const encounter = encounters[patient.id];
@@ -64,81 +81,63 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
   // The judge build's records can hold no medicines list at all: an empty one is left out, not counted as "Medicines: 0".
   const summary = [patient.history[0], JUDGE && !patient.medicines.length ? "" : `Medicines: ${patient.medicines.length}`].filter(Boolean).join(" · ");
 
-  const y = useSharedValue(height), drag = useSharedValue(0);
-  // Opened from a search, the list's keyboard would stay up over the sheet (the list keeps it through a row's tap, so the
-  // tap lands): it goes as the sheet arrives. The reply box inside raises its own when tapped.
+  // Opened from a search, the list's keyboard would stay up over the card (the list keeps it through a row's tap, so the
+  // tap lands): it goes as the card arrives. The reply box inside raises its own when tapped.
   useEffect(() => { Keyboard.dismiss(); }, []);
-  useEffect(() => { y.set(reducedMotion ? withTiming(0, { duration: 200 }) : withSpring(0, { duration: 420, dampingRatio: 0.82 })); }, [reducedMotion, y]);
-  const close = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); y.set(withTiming(height, { duration: 260 })); setTimeout(onClose, 240); };
   const go = (target: Go) => { if (process.env.EXPO_OS === "ios") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); onGo(target); };
-  const pan = Gesture.Pan().activeOffsetY(10).onUpdate(e => { drag.set(Math.max(0, e.translationY)); })
-    .onEnd(e => { if (drag.value > 120 || e.velocityY > 600) scheduleOnRN(close); else drag.set(withSpring(0, { duration: 350, dampingRatio: 0.8 })); });
-  const sheet = useAnimatedStyle(() => ({ transform: [{ translateY: y.value + drag.value }] }));
-  const dim = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - (y.value + drag.value) / height) }));
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 140 + i * 60, distance: 25 + i * 5, duration: 420 });
 
-  // The sheet stops below the list header so its back button never shows through.
-  return <View style={StyleSheet.absoluteFill} onLayout={e => setBox(e.nativeEvent.layout.height)}>
-    <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(20,28,40,0.3)" }, dim]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Close patient" onPress={close} style={StyleSheet.absoluteFill} />
+  // Keyboard-aware so the Sona Care reply box stays above the keyboard while the doctor types.
+  return <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" style={{ flex: 1, backgroundColor: palette.canvas }}
+    contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 16) + 20, gap: 18 }} showsVerticalScrollIndicator={false}>
+    <Animated.View entering={rise(0)} style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+      <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: patient.incomplete ? "rgba(196,120,20,0.16)" : "rgba(36,91,204,0.14)", alignItems: "center", justifyContent: "center" }}>
+        <Text style={{ ...type.heading, fontWeight: "700", color: patient.incomplete ? palette.amber : palette.blue }}>{patient.initials}</Text>
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{patient.name}</Text>
+        <Text style={{ ...type.footnote, color: palette.muted }}>{[patient.age, patient.sex, patient.id].filter(part => part != null && part !== "").join(" · ")}</Text>
+      </View>
+      <View style={{ alignItems: "flex-end", gap: 2 }}>
+        <Text style={{ ...type.heading, color: palette.ink, fontVariant: ["tabular-nums"] }}>{patient.time}</Text>
+        <Text style={{ ...type.caption, fontWeight: "600", color: started ? palette.blue : minutes < -10 ? palette.amber : palette.muted }}>{when}</Text>
+      </View>
     </Animated.View>
-    <GestureDetector gesture={pan}>
-      <Animated.View accessibilityViewIsModal onAccessibilityEscape={close} style={[{ position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: box ? box - 72 : height * 0.6, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: "continuous", backgroundColor: palette.canvas, boxShadow: "0 -8px 30px rgba(24,32,48,0.14)", paddingBottom: Math.max(insets.bottom, 16) }, sheet]}>
-        {/* The grabber is the sheet's Close, so VoiceOver finds it inside the sheet (the backdrop is outside the modal region). */}
-        <Pressable accessibilityRole="button" accessibilityLabel="Close patient" onPress={close} hitSlop={{ top: 10, bottom: 18, left: 40, right: 40 }} style={{ alignSelf: "center", marginTop: 10 }}><View style={{ width: 38, height: 5, borderRadius: 3, backgroundColor: "rgba(20,28,40,0.18)" }} /></Pressable>
-        {/* Keyboard-aware so the Sona Care reply box stays above the keyboard while the doctor types. */}
-        <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingTop: 18, gap: 18 }} showsVerticalScrollIndicator={false}>
-          <Animated.View entering={rise(0)} style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: patient.incomplete ? "rgba(196,120,20,0.16)" : "rgba(36,91,204,0.14)", alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ ...type.heading, fontWeight: "700", color: patient.incomplete ? palette.amber : palette.blue }}>{patient.initials}</Text>
-            </View>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{patient.name}</Text>
-              <Text style={{ ...type.footnote, color: palette.muted }}>{[patient.age, patient.sex, patient.id].filter(part => part != null && part !== "").join(" · ")}</Text>
-            </View>
-            <View style={{ alignItems: "flex-end", gap: 2 }}>
-              <Text style={{ ...type.heading, color: palette.ink, fontVariant: ["tabular-nums"] }}>{patient.time}</Text>
-              <Text style={{ ...type.caption, fontWeight: "600", color: started ? palette.blue : minutes < -10 ? palette.amber : palette.muted }}>{when}</Text>
-            </View>
-          </Animated.View>
 
-          {/* Who, the main action, then the keys (each with what needs attention there); everything below is context. */}
-          <Animated.View entering={rise(1)}><Action label={started ? "Continue visit" : "Open visit"} icon="arrow.right" accessibilityLabel={`${started ? "Continue" : "Open"} visit with ${patient.name}`} onPress={() => go({})} /></Animated.View>
-          <Animated.View entering={rise(1)}><PinControl patient={patient} /></Animated.View>
-          <Animated.View entering={rise(2)}>
-            <QuickActions animate={false} actions={[...keys,
-              { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) },
-              ...visit.filter(a => a.key === "scan")]} />
-          </Animated.View>
+    {/* Who, the main action, then the keys (each with what needs attention there); everything below is context. */}
+    <Animated.View entering={rise(1)}><Action label={started ? "Continue visit" : "Open visit"} icon="arrow.right" accessibilityLabel={`${started ? "Continue" : "Open"} visit with ${patient.name}`} onPress={() => go({})} /></Animated.View>
+    <Animated.View entering={rise(1)}><PinControl patient={patient} /></Animated.View>
+    <Animated.View entering={rise(2)}>
+      <QuickActions animate={false} actions={[...keys,
+        { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) },
+        ...visit.filter(a => a.key === "scan")]} />
+    </Animated.View>
 
-          <CheckInThread patient={patient} entering={rise(3)} />
-          <CareMessages patient={patient} entering={rise(3)} />
+    <CheckInThread patient={patient} entering={rise(3)} />
+    <CareMessages patient={patient} entering={rise(3)} />
 
-          <Animated.View entering={rise(3)} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 12 }}>
-            {/* A sparse record (a ward patient's) shows only what it holds: no empty overline, no blank line. */}
-            {(patient.subtitle || patient.complaint) && <View style={{ gap: 3 }}>
-              {patient.subtitle ? <Text style={{ ...type.overline, color: palette.muted }}>{patient.subtitle}</Text> : null}
-              {patient.complaint ? <Text style={{ ...type.callout, color: palette.ink }}>{patient.complaint}</Text> : null}
-            </View>}
-            {patient.vitals.length > 0 ? <View style={{ flexDirection: "row", gap: 8 }}>
-              {patient.vitals.map(v => { const raised = v.label === "Temp" && parseFloat(v.value) >= 37.8; return <View key={v.label} style={{ flex: 1, borderRadius: radius.control, padding: 10, gap: 2, backgroundColor: raised ? "rgba(196,120,20,0.10)" : "rgba(20,28,40,0.04)" }}>
-                <Text style={{ ...type.caption, color: palette.muted }}>{v.label}</Text>
-                <Text style={{ ...type.headline, color: raised ? palette.amber : palette.ink, fontVariant: ["tabular-nums"] }}>{v.value}</Text>
-              </View>; })}
-            </View> : <Text style={{ ...type.footnote, color: palette.muted }}>No observations recorded yet.</Text>}
-            {summary ? <Text style={{ ...type.footnote, color: palette.muted }}>{summary}</Text> : null}
-          </Animated.View>
+    <Animated.View entering={rise(3)} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 12 }}>
+      {/* A sparse record (a ward patient's) shows only what it holds: no empty overline, no blank line. */}
+      {(patient.subtitle || patient.complaint) && <View style={{ gap: 3 }}>
+        {patient.subtitle ? <Text style={{ ...type.overline, color: palette.muted }}>{patient.subtitle}</Text> : null}
+        {patient.complaint ? <Text style={{ ...type.callout, color: palette.ink }}>{patient.complaint}</Text> : null}
+      </View>}
+      {patient.vitals.length > 0 ? <View style={{ flexDirection: "row", gap: 8 }}>
+        {patient.vitals.map(v => { const raised = v.label === "Temp" && parseFloat(v.value) >= 37.8; return <View key={v.label} style={{ flex: 1, borderRadius: radius.control, padding: 10, gap: 2, backgroundColor: raised ? "rgba(196,120,20,0.10)" : "rgba(20,28,40,0.04)" }}>
+          <Text style={{ ...type.caption, color: palette.muted }}>{v.label}</Text>
+          <Text style={{ ...type.headline, color: raised ? palette.amber : palette.ink, fontVariant: ["tabular-nums"] }}>{v.value}</Text>
+        </View>; })}
+      </View> : <Text style={{ ...type.footnote, color: palette.muted }}>No observations recorded yet.</Text>}
+      {summary ? <Text style={{ ...type.footnote, color: palette.muted }}>{summary}</Text> : null}
+    </Animated.View>
 
-          <Pressable accessibilityRole="link" onPress={() => { onClose(); router.push({ pathname: "/source", params: { id: "history", patientId: patient.id } }); }} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, justifyContent: "center" }}>
-            <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>
-          </Pressable>
+    <Pressable accessibilityRole="link" onPress={() => router.push({ pathname: "/source", params: { id: "history", patientId: patient.id } })} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, justifyContent: "center" }}>
+      <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>
+    </Pressable>
 
-          {/* PDPA: who opened this record (doctors and management, live mode). */}
-          <AccessTrail patientId={patient.id} encounterId={patient.encounterId} entering={rise(4)} />
-        </KeyboardAwareScrollView>
-      </Animated.View>
-    </GestureDetector>
-  </View>;
+    {/* PDPA: who opened this record (doctors and management, live mode). */}
+    <AccessTrail patientId={patient.id} encounterId={patient.encounterId} entering={rise(4)} />
+  </KeyboardAwareScrollView>;
 }
 
 /**

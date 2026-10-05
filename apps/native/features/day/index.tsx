@@ -302,7 +302,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const onOpen = (id: string | undefined, target: DayItem["open"]) => {
     if (!id) return;
     if (target.view === "messages") { router.push({ pathname: "/inbox/[patientId]", params: { patientId: id } }); return; }
-    if (target.view === "check-in") { router.push({ pathname: "/patients", params: { open: id } }); return; }
+    if (target.view === "check-in") { router.push({ pathname: "/patients/[id]", params: { id } }); return; }
     open(id, target);
   };
   const { encounters } = useEncounter();
