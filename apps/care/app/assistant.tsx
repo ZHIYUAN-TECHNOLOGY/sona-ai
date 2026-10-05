@@ -89,7 +89,7 @@ export default function Assistant() {
     // Asked (typed, or a suggestion tapped while typing): the keyboard goes down, or it covers the answer and leaves only its chips in view.
     Keyboard.dismiss();
     const requestId = newRequestId();
-    const say = (r: Reply) => AccessibilityInfo.announceForAccessibility(r.kind === "plan" ? `${spoken(r, lang)} ${r.asked.source}` : spoken(r, lang));
+    const say = (r: Reply) => AccessibilityInfo.announceForAccessibility(r.kind === "plan" ? [spoken(r, lang), r.asked.source, r.asked.leaflet].filter(Boolean).join(" ") : spoken(r, lang));
     // The 999 card never waits for the network. The question still goes to the server, which tells the care team; once the
     // task is made, Sona's line saying so takes the place of the offer to send it. Everything else shows its status line while the call runs.
     if (urgent(question)) {
@@ -221,10 +221,9 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
         <Text selectable style={{ fontSize: 17, lineHeight: 26, letterSpacing: -0.3, color: palette.ink }}>
           <Text style={{ fontWeight: "700" }}>{bold}</Text>{more ? `${lang === "zh" ? "" : " "}${more}` : ""}
         </Text>
-        {r.kind === "plan" && <View accessible accessibilityLabel={r.asked.source} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Icon name="doc" color={palette.faint} size={14} />
-          <Text style={{ ...type.footnote, color: palette.faint }}>{r.asked.source}</Text>
-        </View>}
+        {r.kind === "plan" && <Caption text={r.asked.source} />}
+        {/* From their record and one of the hospital's leaflets: the leaflet is named too. */}
+        {r.kind === "plan" && r.asked.leaflet && <Caption text={r.asked.leaflet} />}
         {/* Answered without the model while it starts: say so, so asking again later makes sense. */}
         {r.kind !== "doctors" && r.waking ? <Text style={{ ...type.footnote, color: palette.faint }}>{startingLine(r.waking, lang)}</Text> : null}
         {r.kind === "doctors" && <View style={{ gap: 8 }}>
@@ -245,6 +244,14 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
         </View>
         {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error, lang)}</Text>}
       </Animated.View>}
+  </View>;
+}
+
+/** Where an answer is from, under it: their record (and which part), one of the hospital's leaflets by name, or general knowledge. */
+function Caption({ text }: { text: string }) {
+  return <View accessible accessibilityLabel={text} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+    <Icon name="doc" color={palette.faint} size={14} />
+    <Text style={{ ...type.footnote, color: palette.faint, flexShrink: 1 }}>{text}</Text>
   </View>;
 }
 

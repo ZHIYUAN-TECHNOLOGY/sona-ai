@@ -54,11 +54,11 @@ test("each sentence is handed on as soon as Gemma finishes it, after the flags l
   const rest: string[] = [];
   for await (const p of parts) if (p.type === "text-delta") rest.push(p.text);
   expect(rest).toEqual(["It is for 2 more days."]);
-  expect(summaries).toEqual([{ grounded: true, urgent: false, source: "model", model: "gemma-test" }]);
+  expect(summaries).toEqual([{ grounded: true, urgent: false, sources: [], source: "model", model: "gemma-test" }]);
   // A spoken question names its ear beside Gemma; a typed one (above) names none.
   const heard = turnOf({ question: "After breakfast or dinner?", chat: gemma(["Hello there, Amelia."]).chat, heard: { source: "model", model: "asr-test" } });
   await spoken(heard.turn);
-  expect(heard.summaries).toEqual([{ grounded: true, urgent: false, source: "model", model: "gemma-test", ear: { source: "model", model: "asr-test" } }]);
+  expect(heard.summaries).toEqual([{ grounded: true, urgent: false, sources: [], source: "model", model: "gemma-test", ear: { source: "model", model: "asr-test" } }]);
   expect(log.messages.map(m => m.role)).toEqual(["system", "user", "assistant", "user"]);
   expect(log.messages[0]!.content).toContain("Azithromycin (changed): Now a tablet once a day");
   expect(log.messages.at(-1)!.content).toBe("After breakfast or dinner?");
@@ -118,7 +118,7 @@ test("'I've let your care team know' is said once, by Sona when a task exists: G
 test("honest when there is no answer: Gemma starting (with its minutes), a reply with no words; a patient still in hospital is answered too; a reply without flags still counts", async () => {
   const starting = turnOf({ question: "Bila saya makan ubat?", language: "ms", chat: async () => ({ waking: 12 }) });
   expect(await spoken(starting.turn)).toEqual([LINES.ms.starting(12)]);
-  expect(starting.summaries).toEqual([{ grounded: false, urgent: false, source: "fixture", waking: 12 }]);
+  expect(starting.summaries).toEqual([{ grounded: false, urgent: false, sources: [], source: "fixture", waking: 12 }]);
   const notSaid = turnOf({ question: "Can I fly next week?", chat: gemma(['{"triage":"fine","inPlan":false}']).chat });
   expect(await spoken(notSaid.turn)).toEqual([LINES.en.unavailable]);
   expect(notSaid.summaries[0]!.grounded).toBe(false);

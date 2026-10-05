@@ -15,7 +15,7 @@ export type Embedder = (texts: string[], as: "query" | "document") => Promise<nu
 /** Relevance score per passage for the query, higher is better (bge-reranker-v2-m3 in box ②). */
 export type Reranker = (query: string, passages: string[]) => Promise<number[]>;
 
-export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" };
+export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" | "leaflet" };
 
 const DIMS = 768;
 
@@ -100,7 +100,7 @@ const RRF_K = 60;
 const POOL = 50;
 const RERANK_POOL = 20; // the reranker sees the fused top 20 (the largest k)
 
-type Row = { id: string; document_id: string; source_id: string; section: string; text: string; source: string; year: number };
+type Row = { id: string; document_id: string; source_id: string; section: string; text: string; source: string; year: number; title: string };
 
 /**
  * How a search was really made, carried on its hits: `retrieval` is "keywords" when the embedder failed and keywords
@@ -113,13 +113,19 @@ export type SearchReport = { retrieval: "hybrid" | "keywords"; ranked?: boolean 
  * Hybrid search: full-text and cosine vector search fused by reciprocal rank, then optionally reranked. When the
  * embedder fails or is slow, keywords answer alone; a stand-in vector from another model would rank at random. When
  * the reranker fails, the fused order stands. Neither fails the search, and both are reported (SearchReport).
+ * A patient's search (`patient`: Sona Care's answers) reads her own hospital's patient leaflets (kind "leaflet") and
+ * nothing else: never the shared library, a guideline or a doctor's own source. Every other search leaves the leaflets
+ * out, so the clinicians' evidence reads what it read before they were there.
  */
 export async function search(db: AnyDb, input: z.input<typeof searchInputSchema>, embedder: Embedder, reranker?: Reranker): Promise<RetrievalHit[] & SearchReport> {
-  const { query, hospitalId, userId, k } = searchInputSchema.parse(input);
-  const cols = sql`c.id, c.document_id, c.source_id, c.section, c.text, d.source, d.year`;
+  const { query, hospitalId, userId, k, patient } = searchInputSchema.parse(input);
+  const cols = sql`c.id, c.document_id, c.source_id, c.section, c.text, d.source, d.year, d.title`;
   // ponytail: scoped in the query, not by row-level security; add RLS policies when the Worker sets a per-request hospital.
   // A doctor's private sources are searched for that doctor only; with no caller, only shared ones.
-  const from = sql`chunks c join documents d on d.id = c.document_id where (c.hospital_id is null or c.hospital_id = ${hospitalId}) and (d.owner_id is null or d.owner_id = ${userId ?? null})`;
+  const scope = patient
+    ? sql`c.hospital_id = ${hospitalId} and d.hospital_id = ${hospitalId} and d.owner_id is null and d.kind = 'leaflet'`
+    : sql`(c.hospital_id is null or c.hospital_id = ${hospitalId}) and (d.owner_id is null or d.owner_id = ${userId ?? null}) and d.kind <> 'leaflet'`;
+  const from = sql`chunks c join documents d on d.id = c.document_id where ${scope}`;
   // OR the query's lexemes so a natural question matches any of its terms.
   const tsq = sql`replace(plainto_tsquery('english', ${query})::text, '&', '|')::tsquery`;
   // The question is embedded while the keyword half runs, so the model's round trip is not added to it.
@@ -138,7 +144,9 @@ export async function search(db: AnyDb, input: z.input<typeof searchInputSchema>
     });
   }
   let ranked = [...fused.values()].sort((a, b) => b.score - a.score), reranked: boolean | undefined;
-  if (reranker && ranked.length) {
+  // ponytail: a patient's search is not reranked: the reranker shares box ② with a call's ears and voice and is given 8 s,
+  // far past what an answer waits for its leaflets (packages/api/src/leaflets.ts). Rerank them once it has its own box.
+  if (reranker && ranked.length && !patient) {
     ranked = ranked.slice(0, RERANK_POOL);
     const scores = await reranker(query, ranked.map(r => r.row.text)).catch(() => undefined);
     reranked = scores?.length === ranked.length;
@@ -146,7 +154,7 @@ export async function search(db: AnyDb, input: z.input<typeof searchInputSchema>
   }
   const hits = ranked.slice(0, k).map(({ row, score }) => ({
     chunkId: row.id, documentId: row.document_id, sourceId: row.source_id, text: row.text, score,
-    tags: { source: row.source, year: row.year, section: row.section },
+    tags: { source: row.source, year: row.year, section: row.section, title: row.title },
   }));
   // ponytail: the report rides on the array (it does not survive JSON), because `Library.search` is typed as hits alone
   // in packages/api's context; give it a `{ hits, ...report }` result when that type can change with its callers.

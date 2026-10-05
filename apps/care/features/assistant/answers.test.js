@@ -95,6 +95,18 @@ test("any question goes to the model first; a plan question's authored answer on
   expect(await answer("Can I drink coffee?", asks, api(modelSays({ answer: "Call 999 now.", grounded: false, urgent: true })))).toEqual({ kind: "none", urgent: true });
 });
 
+test("an answer that used one of the hospital's leaflets names it; from her record too, both captions show; general is only what is from neither", async () => {
+  const captions = async (lang, reply) => { const { asked } = await answer("Bila?", [], api(modelSays({ answer: "Esok.", urgent: false, ...reply })), undefined, lang); return [asked.source, asked.leaflet]; };
+  const chest = { title: "Chest infection", kind: "leaflet" }, home = { title: "Going home from hospital", kind: "leaflet" };
+  expect(await captions("en", { grounded: false, sources: [chest] })).toEqual(["From the hospital's leaflet · Chest infection", undefined]);
+  expect(await captions("ms", { grounded: false, sources: [{ title: "Jangkitan paru-paru", kind: "leaflet" }] })).toEqual(["Daripada risalah hospital · Jangkitan paru-paru", undefined]);
+  expect(await captions("zh", { grounded: false, sources: [{ title: "肺部感染", kind: "leaflet" }] })).toEqual(["来自医院的说明单 · 肺部感染", undefined]);
+  expect(await captions("en", { grounded: true, from: "medicines", sources: [chest, home] })).toEqual(["From your record · medicines", "From the hospital's leaflet · Chest infection and Going home from hospital"]);
+  // No leaflet used (or a server from before leaflets): the captions are as they were.
+  expect(await captions("en", { grounded: false, sources: [] })).toEqual(["General answer · not from your records", undefined]);
+  expect(await captions("en", { grounded: true })).toEqual(["From your record", undefined]);
+});
+
 test("while the model starts, the fallback reply says how long, in the patient's language", async () => {
   const asks = suggestions(plan, visit, "Cetirizine");
   const starting = minutes => async () => ({ answer: "", grounded: false, urgent: false, source: "fixture", waking: minutes });

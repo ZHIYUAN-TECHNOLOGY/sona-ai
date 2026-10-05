@@ -9,7 +9,7 @@ import type { EncounterStore } from "@sona-ai/api/context";
 import type { Watches } from "@sona-ai/api/watches";
 import { workersEmbedder } from "@sona-ai/api/workers-models";
 import { hosted } from "@sona-ai/api/sagemaker";
-import { ingest, reindex, search, stubEmbedder } from "@sona-ai/retrieval/retrieval";
+import { ingest, reindex, search, stubEmbedder, type Reranker } from "@sona-ai/retrieval/retrieval";
 
 import { ENV } from "./env.server";
 import { getDb } from "./services";
@@ -28,11 +28,6 @@ export async function createContext({ context }: CreateContextOptions): Promise<
   });
   // The hosted models once a Baseten key is set; without one every model answer stays a labelled fixture.
   const baseten = hosted(ENV);
-  const reranker = baseten && basetenReranker(baseten);
-  // EmbeddingGemma on Workers AI; the hashed stub only where the Worker has no AI binding. Switching between them
-  // needs one `library.reindex`, since stored vectors from the other one do not compare.
-  const ai = (context.env as Env).AI;
-  const embedder = ai ? workersEmbedder(ai) : stubEmbedder;
   return {
     db,
     session,
@@ -44,16 +39,26 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     publicUrl: ENV.BETTER_AUTH_URL,
     mail: mailOf(context.env as Env),
     announce: announcer(context.env as Env),
-    library: {
-      ingest: (doc, text) => ingest(db, doc, text, embedder),
-      search: input => search(db, input, embedder, reranker),
-      reindex: hospitalId => reindex(db, embedder, hospitalId),
-    },
+    library: libraryOf(db, context.env as Env, baseten && basetenReranker(baseten)),
     // Staging only: Sona Care's sign-in shows the seeded demo phone and its fixed code.
     demoSignIn: ENV.DEMO_SIGN_IN === "1",
     followUps: followUpAgents(context.env as Env),
     watches: watchAgents(context.env as Env),
     waitUntil: promise => context.executionCtx.waitUntil(promise),
+  };
+}
+
+/**
+ * The retrieval library over `db`, for the routes and for Sona Care's voice agents (which search the hospital's patient
+ * leaflets, and those are never reranked). EmbeddingGemma on Workers AI; the hashed stub only where the Worker has no AI
+ * binding. Switching between them needs one `library.reindex`, since stored vectors from the other one do not compare.
+ */
+export function libraryOf(db: ApiContext["db"], env: Env, reranker?: Reranker): NonNullable<ApiContext["library"]> {
+  const embedder = env.AI ? workersEmbedder(env.AI) : stubEmbedder;
+  return {
+    ingest: (doc, text) => ingest(db, doc, text, embedder),
+    search: input => search(db, input, embedder, reranker),
+    reindex: hospitalId => reindex(db, embedder, hospitalId),
   };
 }
 

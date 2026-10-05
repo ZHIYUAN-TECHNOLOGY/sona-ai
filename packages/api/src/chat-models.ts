@@ -2,6 +2,7 @@ import { readReply } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
 import { triageByRules } from "@sona-ai/domain/messages";
 
+import { leafletsText, unnumbered } from "./leaflets";
 import type { Models } from "./models";
 
 /**
@@ -31,14 +32,17 @@ Answer with JSON only: {"label": "fine" | "worse" | "urgent", "symptom": "<2-5 E
 - fine: better, or the same with no new concern.
 If unsure between two labels, choose the more serious one.`;
 
+// Kept in step with the call's prompt (VOICE in voice-agent/answer.ts): the same rules, there as spoken words.
 const ANSWER = `You are Sona Care, a hospital's assistant for its patients, answering one patient. Answer whatever they ask: their own care, any other health or medicine question, or anything else. For anything about them (their medicines, doses, visits, conditions, allergies, results, what their doctor noted, what they told us), use their record below: it is what the hospital has recorded about them.
 Rules:
 - Use plain, kind words at a reading age of about 12. At most 3 short sentences. Answer in the language the patient wrote in (Malay, English or Chinese; mixed Malay-English is fine).
 - Facts about them (a result, a number, a date, a medicine, a diagnosis) come only from their record, in plain words: never invent one, and never give a new diagnosis or say what a result means for them beyond the record's own words. If they ask for such a fact and their record lacks it, say it is not in their record and suggest asking their care team.
-- General health advice is always yours to give, also about their own condition: how to recover, what to eat, what to watch for. Give it from general knowledge; never answer such a question with only "ask your care team".
-- Set "grounded" to true when your answer comes from their record, false when it comes from general knowledge.
+- General health advice is always yours to give, also about their own condition: how to recover, what to eat, what to watch for. When one of the hospital's general leaflets below fits the question, give the advice from it and say it is from the hospital's leaflet. When none fits, give it from general knowledge and say it is general advice. Never answer such a question with only "ask your care team".
+- A general leaflet is advice for any patient: never take a fact about this patient (their medicine, dose, date or diagnosis) from a leaflet.
+- Set "grounded" to true when your answer uses their record, false when it comes only from a general leaflet or general knowledge.
+- Set "cites" to the numbers of the general leaflets your answer used, [] when it used none. Never write a leaflet's number in the answer itself.
 - If they describe an emergency sign (chest pain, severe breathlessness, confusion, fainting, coughing blood), set "urgent" to true and tell them to call 999 now.
-Answer with JSON only: {"answer": "<text>", "grounded": true|false, "urgent": true|false, "from": "<which part of the record: medicines, leaflet, warning signs, follow-up, visits, history, allergies, results, note, check-ins or doses; empty if not from the record>"}.`;
+Answer with JSON only: {"answer": "<text>", "grounded": true|false, "urgent": true|false, "from": "<which part of the record: medicines, leaflet, warning signs, follow-up, visits, history, allergies, results, note, check-ins or doses; empty if not from the record>", "cites": [<leaflet numbers>]}.`;
 
 const INBOX = `You triage a patient's message to their hospital care team so the most urgent is read first.
 The message may be in Malay, English, Chinese or a mix. Judge only what the patient says.
@@ -82,11 +86,13 @@ export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Mo
 
     async answerFromPlan(input) {
       try {
-        const read = await chat(`${ANSWER}\n\nPatient's record:\n${input.plan}`, `Patient's question (answer in the same language as the question; if unclear, ${LANGUAGE_NAME[input.language]}): ${input.question}`);
-        if (read && typeof read.answer === "string" && read.answer.trim()) {
+        // Her record first and the leaflets after it, each under its own heading, as a call's chat has them (voice-agent/answer.ts).
+        const read = await chat(`${ANSWER}\n\nPatient's record:\n${input.plan}\n\n${leafletsText(input.passages)}`, `Patient's question (answer in the same language as the question; if unclear, ${LANGUAGE_NAME[input.language]}): ${input.question}`);
+        if (read && typeof read.answer === "string" && unnumbered(read.answer).trim()) {
           return {
-            answer: read.answer.trim().slice(0, 800), grounded: read.grounded === true, urgent: read.urgent === true,
+            answer: unnumbered(read.answer).trim().slice(0, 800), grounded: read.grounded === true, urgent: read.urgent === true,
             ...typeof read.from === "string" && read.from.trim() ? { from: read.from.trim().slice(0, 40) } : {},
+            ...Array.isArray(read.cites) && { cites: read.cites.filter((n): n is number => typeof n === "number") },
             source: "model", model,
           };
         }

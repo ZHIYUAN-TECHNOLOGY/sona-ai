@@ -7,7 +7,7 @@ import "@/lib/strings";
  */
 addStrings({
   en: {
-    "ask.plan": "From your discharge plan", "ask.from": "From your {name} instructions", "ask.fromModel": "From your record · {from}", "ask.record": "From your record", "ask.general": "General answer · not from your records",
+    "ask.plan": "From your discharge plan", "ask.from": "From your {name} instructions", "ask.fromModel": "From your record · {from}", "ask.record": "From your record", "ask.general": "General answer · not from your records", "ask.leaflet": "From the hospital's leaflet · {title}",
     "ask.part.medicines": "medicines", "ask.part.leaflet": "leaflet", "ask.part.warning-signs": "warning signs", "ask.part.follow-up": "follow-up",
     "ask.part.visits": "visits", "ask.part.history": "history", "ask.part.allergies": "allergies", "ask.part.results": "results", "ask.part.note": "doctor's note", "ask.part.check-ins": "check-ins", "ask.part.doses": "doses taken",
     "ask.planSays": "Your plan says: {text}", "ask.never": "Never take two doses at once to make up for one.",
@@ -53,7 +53,7 @@ addStrings({
     "mic.stop": "Stop recording", "mic.recording": "Recording, {time}", "mic.transcribing": "Transcribing", "mic.reading": "Reading what you said", "mic.speak": "Speak", "mic.stopHint": "Or just stop talking", "mic.hint": "Speak in Malay, English or Chinese", "mic.finishing": "Finishing…",
   },
   ms: {
-    "ask.plan": "Daripada pelan discaj anda", "ask.from": "Daripada arahan {name} anda", "ask.fromModel": "Daripada rekod anda · {from}", "ask.record": "Daripada rekod anda", "ask.general": "Jawapan umum · bukan daripada rekod anda",
+    "ask.plan": "Daripada pelan discaj anda", "ask.from": "Daripada arahan {name} anda", "ask.fromModel": "Daripada rekod anda · {from}", "ask.record": "Daripada rekod anda", "ask.general": "Jawapan umum · bukan daripada rekod anda", "ask.leaflet": "Daripada risalah hospital · {title}",
     "ask.part.medicines": "ubat", "ask.part.leaflet": "risalah", "ask.part.warning-signs": "tanda amaran", "ask.part.follow-up": "rawatan susulan",
     "ask.part.visits": "lawatan", "ask.part.history": "sejarah kesihatan", "ask.part.allergies": "alahan", "ask.part.results": "keputusan ujian", "ask.part.note": "nota doktor", "ask.part.check-ins": "semakan", "ask.part.doses": "dos yang diambil",
     "ask.planSays": "Pelan anda menyatakan: {text}", "ask.never": "Jangan sesekali ambil dua dos sekali gus untuk menggantikan dos yang terlepas.",
@@ -99,7 +99,7 @@ addStrings({
     "mic.stop": "Berhenti merakam", "mic.recording": "Merakam, {time}", "mic.transcribing": "Menukar suara kepada teks", "mic.reading": "Sedang membaca apa yang anda kata", "mic.speak": "Cakap", "mic.stopHint": "Atau berhenti bercakap sahaja", "mic.hint": "Cakap dalam Bahasa Melayu, Inggeris atau Cina", "mic.finishing": "Menyiapkan…",
   },
   zh: {
-    "ask.plan": "来自您的出院计划", "ask.from": "来自{name}的用药说明", "ask.fromModel": "来自您的病历 · {from}", "ask.record": "来自您的病历", "ask.general": "一般回答 · 并非来自您的病历",
+    "ask.plan": "来自您的出院计划", "ask.from": "来自{name}的用药说明", "ask.fromModel": "来自您的病历 · {from}", "ask.record": "来自您的病历", "ask.general": "一般回答 · 并非来自您的病历", "ask.leaflet": "来自医院的说明单 · {title}",
     "ask.part.medicines": "药物", "ask.part.leaflet": "说明单", "ask.part.warning-signs": "警示症状", "ask.part.follow-up": "复诊",
     "ask.part.visits": "预约", "ask.part.history": "病史", "ask.part.allergies": "过敏", "ask.part.results": "检查结果", "ask.part.note": "医生记录", "ask.part.check-ins": "回访", "ask.part.doses": "服药记录",
     "ask.planSays": "您的计划写着：{text}", "ask.never": "千万不要一次吃两份来补漏掉的那一次。",

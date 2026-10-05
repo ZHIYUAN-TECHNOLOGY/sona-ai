@@ -7,8 +7,11 @@ import { z } from "zod";
 export const icdCodeSchema = z.object({ code: z.string().regex(/^[A-Z]\d{2}(\.\d{1,2})?$/), label: z.string().min(1) });
 export type IcdCode = z.infer<typeof icdCodeSchema>;
 
-/** Retrieval is always scoped to the caller's hospital (row-level security enforces it underneath). */
-export const searchInputSchema = z.object({ query: z.string().trim().min(1).max(500), hospitalId: z.string().min(1), userId: z.string().min(1).optional(), k: z.number().int().min(1).max(20).default(5) });
+/**
+ * Retrieval is always scoped to the caller's hospital (row-level security enforces it underneath). `patient`: the search
+ * is for a patient's answer (Sona Care), so it reads that hospital's patient leaflets and nothing else in the library.
+ */
+export const searchInputSchema = z.object({ query: z.string().trim().min(1).max(500), hospitalId: z.string().min(1), userId: z.string().min(1).optional(), k: z.number().int().min(1).max(20).default(5), patient: z.boolean().optional() });
 export type SearchInput = z.infer<typeof searchInputSchema>;
 
 /** A consequential action (discharge, sending a claim): replay-safe by requestId, and never without an approver. */
@@ -24,7 +27,7 @@ export type DrugLookup = z.infer<typeof drugLookupSchema>;
 
 export const retrievalHitSchema = z.object({
   chunkId: z.string().min(1), documentId: z.string().min(1), sourceId: z.string().min(1), text: z.string(), score: z.number(),
-  tags: z.object({ source: z.string().min(1), year: z.number().int(), section: z.string().min(1) }),
+  tags: z.object({ source: z.string().min(1), year: z.number().int(), section: z.string().min(1), title: z.string().optional() }),
 });
 export type RetrievalHit = z.infer<typeof retrievalHitSchema>;
 

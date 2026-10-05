@@ -184,11 +184,14 @@ export const drugs = pgTable("drugs", {
 /**
  * Retrieval library. hospital_id empty = the shared public library; set = one hospital's own documents.
  * owner_id set = one doctor's private source (only they see or cite it); empty = the whole hospital's.
+ * kind "leaflet" = one of the hospital's patient leaflets, the only kind a Sona Care answer may read (packages/retrieval's
+ * search). No upload can set it (routers/library.ts), so a guideline never becomes one. `kind` is a plain text column,
+ * so the new value needed no migration.
  */
 export const documents = pgTable("documents", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id"), title: text("title").notNull(), source: text("source").notNull(),
   year: integer("year").notNull(), license: text("license"), uploadedBy: text("uploaded_by"), createdAt: created(),
-  ownerId: text("owner_id"), kind: text("kind", { enum: ["text", "pdf", "pubmed"] }).default("text").notNull(),
+  ownerId: text("owner_id"), kind: text("kind", { enum: ["text", "pdf", "pubmed", "leaflet"] }).default("text").notNull(),
 });
 
 export const chunks = pgTable("chunks", {

@@ -4,6 +4,7 @@ import type { Language } from "@sona-ai/domain/discharge";
 import { BRAIN_MODEL, EMERGENCY, answered, boxes, wakingOf, type Baseten } from "../baseten-models";
 import { deltas } from "../sse";
 import { LANGUAGE_NAME, jsonIn } from "../chat-models";
+import { citedSources, leafletsText, unnumbered, type Passage, type Source } from "../leaflets";
 
 /**
  * One answer turn of Sona Care's live voice (withVoice's onTurn). The patient's own record (recordText), the conversation
@@ -24,7 +25,11 @@ export type ChatStream = (messages: ChatMessage[], signal: AbortSignal) => Promi
  * transcriber's own answer, passed in as `heard`; a typed question has none). The voice is not here: each sentence is
  * spoken after it is handed on, so only the speaker knows (a sentence with no model voice is told by `sona_say`).
  */
-export type TurnSummary = { grounded: boolean; urgent: boolean; source: "model" | "fixture"; model?: string; waking?: number; ear?: Heard };
+export type TurnSummary = {
+  grounded: boolean; urgent: boolean; source: "model" | "fixture"; model?: string; waking?: number; ear?: Heard;
+  /** The hospital's leaflets the answer used, by title (care.ask's `sources`); empty when it used none, or none were found in time. */
+  sources: Source[];
+};
 /** Who turned the patient's speech into `question`: the ASR model, or a fixture when none did. */
 export type Heard = { source: "model"; model: string } | { source: "fixture" };
 
@@ -34,6 +39,11 @@ export type AnswerTurn = {
   history: { role: "user" | "assistant"; content: string }[];
   /** Her record as Gemma reads it (care-plan's recordText, the text care.ask reads); none when it could not be read. */
   plan?: string;
+  /**
+   * The hospital's leaflets for this question (../leaflets), found or still being found: Gemma is asked once they are
+   * in, which leafletHits bounds (PASSAGES_MS). The 999 line and the care team wait for neither. None: no library.
+   */
+  passages?: Passage[] | Promise<Passage[]>;
   /** The language of Sona's own lines, and Gemma's when it cannot tell the patient's. */
   language: Language;
   /** None: no hosted model. */
@@ -87,17 +97,20 @@ const URGENT_MS_ZH = /sakit dada|dada (sakit|sesak|ketat)|sesak nafas|susah (nak
 /** The keyword floor for the 999 line: broad on purpose, since the line says "if this is happening now". */
 export const callNow = (text: string) => URGENT.test(text) || URGENT_MS_ZH.test(text) || readReply(text) === "urgent";
 
+// Kept in step with the typed answer's prompt (ANSWER in ../chat-models.ts): the same rules, here as spoken words.
 const VOICE = `You are Sona Care, a hospital's assistant for its patients, talking with one patient by voice. Answer whatever they ask: their own care, any other health or medicine question, or anything else. For anything about them (their medicines, doses, visits, conditions, allergies, results, what their doctor noted, what they told us), use their record below: it is what the hospital has recorded about them.
 Begin every reply with one line of JSON, then the words to say on the next line:
-{"triage": "fine" | "worse" | "urgent", "inPlan": true | false}
+{"triage": "fine" | "worse" | "urgent", "inPlan": true | false, "cites": [<leaflet numbers>]}
 - triage is about how the patient says they feel: "urgent" for an emergency sign (chest pain, severe breathlessness, confusion, fainting, coughing blood), "worse" if a symptom came back or got worse or a new problem started, otherwise "fine" (a question is fine).
-- inPlan is true when your answer comes from their record.
+- inPlan is true when your answer uses their record, false when it comes only from a general leaflet or general knowledge.
+- cites is the numbers of the hospital's general leaflets your answer used, [] when it used none. The numbers belong in this line only: never say one.
 The words to say:
 - Plain and kind, at a reading age of about 12, at most 3 short sentences. The first has at most 10 words: it is spoken while you write the rest. No lists, symbols or markdown: they are read aloud.
 - In the language the patient spoke (Malay, English or Chinese).
 - If urgent, tell them to call 999 now.
 - Facts about them (a result, a number, a date, a medicine, a diagnosis) come only from their record: never invent one, and never give a new diagnosis or say what a result means for them beyond the record's own words. If they ask for such a fact and their record lacks it, say it is not in their record and suggest asking their care team.
-- General health advice is always yours to give, also about their own condition: how to recover, what to eat, what to watch for. Give it from general knowledge; never answer such a question with only "ask your care team".`;
+- General health advice is always yours to give, also about their own condition: how to recover, what to eat, what to watch for. When one of the hospital's general leaflets below fits the question, give the advice from it and say it is from the hospital's leaflet. When none fits, give it from general knowledge and say it is general advice. Never answer such a question with only "ask your care team".
+- A general leaflet is advice for any patient: never take a fact about this patient (their medicine, dose, date or diagnosis) from a leaflet.`;
 
 /**
  * Sona's "told your care team" line, in every language: only a made task says it (the end of answerTurn), never Gemma.
@@ -106,10 +119,12 @@ The words to say:
 const TOLD = Object.values(LINES).map(l => l.told);
 
 /**
- * The chat for one turn: her record in the system message; the conversation strictly alternating, as chat templates
- * require (an interrupted turn leaves two patient lines in a row); Sona's told line left out, so Gemma does not echo it.
+ * The chat for one turn: her record in the system message, then the hospital's leaflets for this question under their
+ * own heading (after the record, which is the same every turn of a call: a prefix box ① has already read); the
+ * conversation strictly alternating, as chat templates require (an interrupted turn leaves two patient lines in a row);
+ * Sona's told line left out, so Gemma does not echo it.
  */
-export function messagesFor(turn: Pick<AnswerTurn, "question" | "history" | "plan" | "language">): ChatMessage[] {
+export function messagesFor(turn: Pick<AnswerTurn, "question" | "history" | "plan" | "language"> & { passages?: Passage[] }): ChatMessage[] {
   const said: ChatMessage[] = [];
   for (const m of [...turn.history, { role: "user" as const, content: turn.question }]) {
     const last = said.at(-1), content = m.role === "assistant" ? TOLD.reduce((c, t) => c.split(t).join(""), m.content).trim() : m.content;
@@ -117,10 +132,10 @@ export function messagesFor(turn: Pick<AnswerTurn, "question" | "history" | "pla
     else if (last || m.role === "user") said.push({ role: m.role, content });
   }
   // Malaysians mix languages in one sentence, so a mixed question gets the patient's own app language.
-  return [{ role: "system", content: `${VOICE}\nWhen they mix languages, or you cannot tell, answer in ${LANGUAGE_NAME[turn.language]}.\n\nPatient's record:\n${turn.plan ?? "None could be read."}` }, ...said];
+  return [{ role: "system", content: `${VOICE}\nWhen they mix languages, or you cannot tell, answer in ${LANGUAGE_NAME[turn.language]}.\n\nPatient's record:\n${turn.plan ?? "None could be read."}\n\n${leafletsText(turn.passages)}` }, ...said];
 }
 
-type Flags = { triage?: unknown; inPlan?: unknown };
+type Flags = { triage?: unknown; inPlan?: unknown; cites?: unknown };
 /**
  * The flags line heading Gemma's reply and the words after it: undefined while the line is still coming, null flags
  * when the reply has none (its first words are words). Gemma sometimes fences the JSON; the fence goes with it.
@@ -136,9 +151,9 @@ export function flagsOf(text: string, final = false): [Flags | null, string] | u
 const ABBREVIATION = /\b(dr|mr|mrs|ms|dato|datin|datuk|puan|encik|e\.g|i\.e|etc|vs|no|tab|caps)\.$/i;
 /** As the SDK's sentence chunker (and Sona Care's karaoke, which follows it) counts: a shorter sentence joins the next. */
 const MIN_SENTENCE = 10;
-/** What is read aloud: no markdown, list marks or stray fence ticks, and an end mark, so the next sentence is cut there too. */
+/** What is read aloud: no markdown, list marks, stray fence ticks or leaflet numbers, and an end mark, so the next sentence is cut there too. */
 function clean(s: string) {
-  const t = s.replace(/[*_#`>]+/g, "").replace(/^\s*[-•]\s*/gm, "").replace(/\s+/g, " ").trim();
+  const t = unnumbered(s).replace(/[*_#`>]+/g, "").replace(/^\s*[-•]\s*/gm, "").replace(/\s+/g, " ").trim();
   return !t || /[.!?。！？]$/.test(t) ? t : `${t}${/[㐀-鿿]/.test(t) ? "。" : "."}`;
 }
 /**
@@ -171,8 +186,8 @@ function within(promise: Promise<boolean>, ms: number) {
 }
 
 export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
-  const lines = LINES[turn.language], summary: TurnSummary = { grounded: false, urgent: false, source: "fixture", ...turn.heard && { ear: turn.heard } };
-  let told: Promise<boolean> | undefined, said = false;
+  const lines = LINES[turn.language], summary: TurnSummary = { grounded: false, urgent: false, source: "fixture", sources: [], ...turn.heard && { ear: turn.heard } };
+  let told: Promise<boolean> | undefined, said = false, passages: Passage[] = [];
   const escalate = (label: "worse" | "urgent") => { told ??= turn.escalate(label).catch(() => false); };
   function* say(text: string): Generator<Part> {
     said = true;
@@ -190,8 +205,10 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
     yield* say(sentence);
   }
 
-  // Gemma is asked before anything is said, so its reply is already coming while the 999 line is spoken.
-  const reply = turn.chat ? turn.chat(messagesFor(turn), turn.signal) : undefined;
+  // Gemma is asked before anything is said, so its reply is already coming while the 999 line is spoken: at once, or as
+  // soon as the leaflets still being found are in (never past PASSAGES_MS; a search that failed offers none).
+  const ask = (found: Passage[] = []) => { passages = found; return turn.chat!(messagesFor({ ...turn, passages }), turn.signal); };
+  const reply = !turn.chat ? undefined : turn.passages instanceof Promise ? turn.passages.then(ask, () => ask()) : ask(turn.passages);
   // The keyword floors: the 999 line waits for no model; the narrow urgent words always reach the care team.
   if (callNow(turn.question)) yield* urgentFirst();
   if (readReply(turn.question) === "urgent") escalate("urgent");
@@ -211,6 +228,8 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
           if (!head) continue;
           [flags, text] = head;
           summary.grounded = flags?.inPlan !== false;
+          // Only a leaflet that was offered can be a source: a number Gemma made up names nothing.
+          summary.sources = citedSources(flags?.cites, passages);
           if (flags?.triage === "urgent") yield* urgentFirst();
           if (flags?.triage === "urgent" || flags?.triage === "worse") escalate(flags.triage);
         }

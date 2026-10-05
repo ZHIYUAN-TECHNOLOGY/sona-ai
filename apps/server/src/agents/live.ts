@@ -1,6 +1,7 @@
 import { EMERGENCY, basetenModels } from "@sona-ai/api/baseten-models";
 import { clockOffsetOf, shifted } from "@sona-ai/api/clock";
 import type { Context as ApiContext } from "@sona-ai/api/context";
+import { leafletHits, passagesIn } from "@sona-ai/api/leaflets";
 import { stubModels } from "@sona-ai/api/models";
 import { lastDischarge, recordText } from "@sona-ai/api/routers/care-plan";
 import { LINES, answerTurn, basetenChat, callNow, type TurnSummary } from "@sona-ai/api/voice-agent/answer";
@@ -11,7 +12,7 @@ import { awsOf, hosted, sagemakerLive, type HostingEnv, type LiveLink } from "@s
 import { Agent, type Connection } from "agents";
 import { withVoiceInput } from "agents/voice";
 
-import { announcer, followUpAgents } from "../context";
+import { announcer, followUpAgents, libraryOf } from "../context";
 import { getDb } from "../services";
 import { patientOf } from "./voice";
 
@@ -226,6 +227,8 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
       const parts = answerTurn({
         question, history, signal, chat: this.#chat,
         plan: call.plan,
+        // The hospital's leaflets for this question, as on the three-model call (PASSAGES_MS at most; the 999 line does not wait).
+        passages: leafletHits(libraryOf(getDb(), this.env), patientOf(this.name).hospitalId, question).then(hits => passagesIn(hits, call.language)),
         language: call.language,
         escalate: () => reported ?? this.#careTeam(connection, question),
         done: summary => { call.summary = summary; },

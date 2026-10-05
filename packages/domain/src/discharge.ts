@@ -61,42 +61,43 @@ export type PlanRecord = Partial<Pick<Patient, "id" | "name" | "complaint" | "hi
   bed?: string; ward?: { waitingHours?: number; sbar?: { s: string; b: string; a: string; r: string } };
   takeHome?: MedChange[]; visit?: VisitFacts;
 };
-type Condition = { id: string; match: RegExp; diagnosis: string; leaflet: Record<Language, string> };
+/** `title`: the condition in its leaflet's own words, the name the leaflet goes by in the hospital's library (PATIENT_LEAFLETS). */
+type Condition = { id: string; match: RegExp; diagnosis: string; title: Record<Language, string>; leaflet: Record<Language, string> };
 
 // ponytail: condition rules over the record's own words stand in for draft_discharge (delivery plan, Discharge)
 // when no model answers: they name the diagnosis and pick a general leaflet. They never write a medicine or a dose.
 const CONDITIONS: Condition[] = [
-  { id: "pyelonephritis", match: /pyelonephritis|kidney infection/i, diagnosis: "Acute pyelonephritis",
+  { id: "pyelonephritis", match: /pyelonephritis|kidney infection/i, diagnosis: "Acute pyelonephritis", title: { ms: "Jangkitan buah pinggang", en: "Kidney infection", zh: "肾脏感染" },
     leaflet: {
       ms: "Anda dirawat kerana jangkitan buah pinggang. Habiskan semua tablet antibiotik walaupun sudah berasa sihat, dan minum banyak air. Datang semula segera jika demam kembali, sakit belakang atau muntah berterusan.",
       en: "You were treated for a kidney infection. Finish every antibiotic tablet, even when you feel better, and drink plenty of water. Come back straight away if the fever returns, you have back pain or you keep vomiting.",
       zh: "您因肾脏感染接受了治疗。即使感觉好转，也请吃完所有抗生素，并多喝水。如再次发烧、腰背疼痛或持续呕吐，请立即回院。",
     } },
-  { id: "appendicitis", match: /appendic/i, diagnosis: "Acute appendicitis, laparoscopic appendicectomy",
+  { id: "appendicitis", match: /appendic/i, diagnosis: "Acute appendicitis, laparoscopic appendicectomy", title: { ms: "Pembedahan membuang apendiks", en: "Keyhole surgery to remove your appendix", zh: "阑尾切除手术" },
     leaflet: {
       ms: "Anda telah menjalani pembedahan lubang kunci untuk membuang apendiks. Ambil paracetamol dan ibuprofen untuk sakit, pastikan luka kering selama 2 hari dan elakkan mengangkat barang berat selama 2 minggu. Datang semula segera jika demam, sakit perut bertambah teruk atau luka merah dan berair.",
       en: "You had keyhole surgery to remove your appendix. Take paracetamol and ibuprofen for pain, keep the wounds dry for 2 days and avoid heavy lifting for 2 weeks. Come back straight away if you have a fever, worsening tummy pain or a red, leaking wound.",
       zh: "您接受了腹腔镜阑尾切除手术。疼痛时服用扑热息痛和布洛芬，伤口保持干燥两天，两周内避免提重物。如发烧、腹痛加剧或伤口红肿渗液，请立即回院。",
     } },
-  { id: "cellulitis", match: /cellulitis/i, diagnosis: "Cellulitis of the leg",
+  { id: "cellulitis", match: /cellulitis/i, diagnosis: "Cellulitis of the leg", title: { ms: "Jangkitan kulit pada kaki", en: "Skin infection of the leg", zh: "腿部皮肤感染" },
     leaflet: {
       ms: "Anda dirawat kerana jangkitan kulit pada kaki. Makan antibiotik empat kali sehari selama 5 hari lagi dan tinggikan kaki semasa berehat. Datang semula segera jika kemerahan merebak, demam atau kaki menjadi sangat sakit.",
       en: "You were treated for a skin infection of your leg. Take the antibiotic four times a day for 5 more days and keep your leg raised when resting. Come back straight away if the redness spreads, you get a fever or the leg becomes very painful.",
       zh: "您因腿部皮肤感染接受了治疗。请每天服用四次抗生素，再服五天，休息时把腿抬高。如红肿扩散、发烧或腿部剧痛，请立即回院。",
     } },
-  { id: "pneumonia", match: /pneumonia|chest infection/i, diagnosis: "Community-acquired pneumonia",
+  { id: "pneumonia", match: /pneumonia|chest infection/i, diagnosis: "Community-acquired pneumonia", title: { ms: "Jangkitan paru-paru", en: "Chest infection", zh: "肺部感染" },
     leaflet: {
       ms: "Anda dirawat kerana jangkitan paru-paru. Habiskan kursus antibiotik seperti yang diarahkan. Datang semula segera jika sukar bernafas, bibir menjadi biru, atau demam kembali.",
       en: "You were treated for a chest infection. Finish your antibiotic course as prescribed. Come back straight away if breathing gets harder, your lips turn blue, or the fever returns.",
       zh: "您因肺部感染接受了治疗。请按医嘱服完抗生素。如呼吸更困难、嘴唇发紫或再次发烧，请立即回院。",
     } },
-  { id: "heart-failure", match: /heart failure/i, diagnosis: "Acute decompensated heart failure",
+  { id: "heart-failure", match: /heart failure/i, diagnosis: "Acute decompensated heart failure", title: { ms: "Kegagalan jantung", en: "Heart failure", zh: "心力衰竭" },
     leaflet: {
       ms: "Anda dirawat kerana kegagalan jantung (air di paru-paru). Makan pil air setiap pagi, timbang berat badan setiap hari dan ikut had minuman anda. Datang semula segera jika berat naik 2 kg dalam 3 hari, buku lali bengkak atau sesak nafas ketika berbaring.",
       en: "You were treated for heart failure (fluid on the lungs). Take your water tablet every morning, weigh yourself daily and keep to your fluid limit. Come back straight away if your weight goes up by 2 kg in 3 days, your ankles swell or you are breathless lying flat.",
       zh: "您因心力衰竭（肺部积液）接受了治疗。请每天早上服用利尿药，每天称体重，并遵守饮水限制。如三天内体重增加两公斤、脚踝肿胀或平躺时气喘，请立即回院。",
     } },
-  { id: "stroke", match: /stroke/i, diagnosis: "Ischaemic stroke, medically stable",
+  { id: "stroke", match: /stroke/i, diagnosis: "Ischaemic stroke, medically stable", title: { ms: "Strok", en: "Stroke", zh: "中风" },
     leaflet: {
       ms: "Anda dirawat kerana strok. Makan ubat pencair darah dan ubat kolesterol setiap hari dan hadiri temujanji pemulihan. Hubungi 999 segera jika muka senget, lengan atau kaki menjadi lemah, atau percakapan berubah.",
       en: "You were treated for a stroke. Take your blood thinner and cholesterol tablet every day and keep your rehabilitation appointments. Call 999 straight away if your face droops, an arm or leg goes weak, or your speech changes.",
@@ -108,6 +109,17 @@ const GENERIC_LEAFLET: Record<Language, string> = {
   en: "Your care team will go through your diagnosis and medicines with you before you leave. Take your medicines as listed on your take-home sheet. Come back straight away if you feel worse, have a fever or find it hard to breathe.",
   zh: "出院前，医护团队会向您说明诊断和药物。请按出院用药单服药。如感觉更差、发烧或呼吸困难，请立即回院。",
 };
+
+/**
+ * The hospital's general patient leaflets as its library holds them (the seed ingests each as a document of kind
+ * "leaflet", one per language), so Sona Care's general advice can rest on them and name them. `text` is the leaflet
+ * above, word for word: nothing clinical is written here. `about` is the rule's diagnosis, which the search reads too
+ * (a patient asks about "pneumonia"; her leaflet says "chest infection").
+ */
+export const PATIENT_LEAFLETS: { id: string; about: string; title: Record<Language, string>; text: Record<Language, string> }[] = [
+  ...CONDITIONS.map(c => ({ id: c.id, about: c.diagnosis, title: c.title, text: c.leaflet })),
+  { id: "going-home", about: "Discharge from hospital", title: { ms: "Pulang dari hospital", en: "Going home from hospital", zh: "出院回家" }, text: GENERIC_LEAFLET },
+];
 
 const sentence = (text: string) => { const t = text.trim(); return !t || /[.!?]$/.test(t) ? t : `${t}.`; };
 const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
