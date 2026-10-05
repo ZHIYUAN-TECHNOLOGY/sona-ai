@@ -115,10 +115,12 @@ function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: n
   return <View accessible={false} style={{ height: 116, overflow: "hidden", marginHorizontal: -4, borderRadius: radius.control }}>
     <GestureDetector gesture={pan}>
       <Animated.View style={[{ position: "absolute", left: 4, top: 0, bottom: 0, width: xOf(to) + 1 }, ruler]}>
-        {ticks.map(m => { const hour = m % 60 === 0; return <View key={m} style={{ position: "absolute", left: xOf(m), bottom: 18, alignItems: "center", width: 1 }}>
-          <View style={{ width: 1.5, height: hour ? 16 : m % 15 === 0 ? 10 : 6, borderRadius: 1, backgroundColor: hour ? "rgba(20,28,40,0.3)" : m % 15 === 0 ? "rgba(20,28,40,0.16)" : "rgba(20,28,40,0.08)" }} />
-          {hour && <Text style={{ ...type.caption, position: "absolute", top: 20, width: 40, textAlign: "center", fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{clock(m)}</Text>}
-        </View>; })}
+        {/* 289 ticks: an hour's is a tick with its label under it; the others are one view each, placed where the hour's
+            column centres its tick (1.5 pt wide in a 1 pt column: 0.25 pt left of the minute), half the views to mount. */}
+        {ticks.map(m => m % 60 === 0 ? <View key={m} style={{ position: "absolute", left: xOf(m), bottom: 18, alignItems: "center", width: 1 }}>
+          <View style={{ width: 1.5, height: 16, borderRadius: 1, backgroundColor: "rgba(20,28,40,0.3)" }} />
+          <Text style={{ ...type.caption, position: "absolute", top: 20, width: 40, textAlign: "center", fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{clock(m)}</Text>
+        </View> : <View key={m} style={{ position: "absolute", left: xOf(m) - 0.25, bottom: 18, width: 1.5, height: m % 15 === 0 ? 10 : 6, borderRadius: 1, backgroundColor: m % 15 === 0 ? "rgba(20,28,40,0.16)" : "rgba(20,28,40,0.08)" }} />)}
         {/* Now: only the line scrolls with the ruler; its time pill lives in its own lane above. */}
         {now !== undefined && <View pointerEvents="none" style={{ position: "absolute", left: xOf(now) - 1, top: LANE_PIN - 4, width: 2, height: 116 - 18 - (LANE_PIN - 4), borderRadius: 1, backgroundColor: palette.blue, opacity: 0.5 }} />}
         {groupVisits(visits, pinMinutes).map(group => { const first = group[0]!; const incomplete = group.some(v => v.p.incomplete); const tone = TONE_PIN[incomplete ? "open" : "done"];

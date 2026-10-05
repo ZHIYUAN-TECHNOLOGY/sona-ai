@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { StyleSheet, useWindowDimensions } from "react-native";
 import Animated, { cancelAnimation, Easing, type SharedValue, useDerivedValue, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { useReduceMotionPreference } from "./accessibility";
-import { useIdle } from "./idle";
+import { useIdle, useSliding } from "./idle";
 import { useVisible } from "./use-visible";
 
 // Soft light pools: ice blue, teal and periwinkle replace Monogram's pastel pink wash.
@@ -25,16 +25,17 @@ export function AmbientWash({ quiet = false, thinking = false }: { quiet?: boole
   const { width, height } = useWindowDimensions();
   const reduced = useReduceMotionPreference();
   const visible = useVisible();
-  const idle = useIdle();
+  const idle = useIdle(), sliding = useSliding();
   const drift = useSharedValue(0), pulse = useSharedValue(0);
   // Skia redraws the full-screen wash whenever drift changes, and every frame it changes iOS recomposites the blur and
   // glass above it. So the sway stops while nobody can see it, and comes to rest where it is once the screen is left
-  // alone (./idle); the next touch carries it on from there toward the far side, with no jump.
+  // alone (./idle) or while a screen or sheet slides (it holds that frame); the next touch, or the slide's end, carries it
+  // on from there toward the far side, with no jump.
   useEffect(() => {
     if (reduced) { drift.set(0); return; }
-    if (!visible || idle) { cancelAnimation(drift); return; }
+    if (!visible || idle || sliding) { cancelAnimation(drift); return; }
     drift.set(withRepeat(withTiming(drift.value < 0.5 ? 1 : 0, { duration: 9000, easing: Easing.inOut(Easing.sin) }), -1, true));
-  }, [reduced, visible, idle, drift]);
+  }, [reduced, visible, idle, sliding, drift]);
   useEffect(() => {
     if (!visible) { cancelAnimation(pulse); return; }
     pulse.set(thinking ? (reduced ? 0.5 : withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.sin) }), -1, true)) : withTiming(0, { duration: 350 }));
