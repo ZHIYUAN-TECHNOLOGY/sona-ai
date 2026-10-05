@@ -15,7 +15,8 @@ import { Action, Chip, Expand, glass, Icon, Insight, Notice, RoundAction, Screen
 import { Section as AnswerSection } from "@/components/sona/sections";
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { palette, type, radius } from "@/components/sona/theme";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
+import { sameShallow } from "@/features/live/keep-same";
 import type { Encounter, FeatureProps, Patient, Task } from "@/features/encounter/types";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
@@ -31,7 +32,7 @@ import { changeReceipt, createTaskOnce, dayFromToday, dueRuler, friendlyDate, lo
  * and the latest tasks as read-only rows. Every path leads to the tasks screen, where edits happen.
  */
 export function FollowupCard({ patient, onOpen, onSource }: FeatureProps) {
-  const { encounter } = useEncounter();
+  const encounter = useEncounterSelect(s => s.encounter);
   const { reducedMotion } = useAccessibleEffects();
   const tasksOf = useVisitTasks();
   const created = encounter ? tasksOf(patient) : [];
@@ -89,7 +90,7 @@ function SessionNote() {
 
 /** One quiet line: who wrote it, its source at the revision it was taken from, and (with `local`) the simulation note. */
 function TaskOrigin({ value, local = false }: { value: Pick<Task, "sourceId" | "sourceRevision" | "provenance" | "sourceSnapshot"> & { id?: string; operationId?: string }; local?: boolean }) {
-  const { patient } = useEncounter();
+  const patient = useEncounterSelect(s => s.patient);
   const source = value.sourceSnapshot ?? patient?.sources.find(item => item.id === value.sourceId);
   const origin = value.provenance === "clinician" ? "Clinician-entered details" : value.provenance === "fixture" ? "Authored sample proposal" : "Origin not recorded";
   const label = source ? `${source.title}${value.sourceRevision ? ` · revision ${value.sourceRevision}` : ""}` : "";
@@ -343,7 +344,7 @@ type TaskChange = { owner?: string; due?: string };
  * its row. What this role can't do comes back locked (`locked`) or absent (`change`).
  */
 function useTaskEdits() {
-  const { updateEncounter } = useEncounter();
+  const updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const server = useServerData();
   const role = useRole();
   const [receipts, setReceipts] = useState<Record<string, Receipt>>({});
@@ -373,7 +374,7 @@ function TaskRow({ task, patient: of, name, disabled, locked = false, reopenable
   task: Task; patient?: Patient; name?: string; disabled: boolean; locked?: boolean; reopenable?: boolean; receipt?: Receipt; onToggle: () => void; onChange?: (change: TaskChange) => void;
 }) {
   const { reducedMotion } = useAccessibleEffects();
-  const { patient: current } = useEncounter();
+  const current = useEncounterSelect(s => s.patient);
   const { why } = useRole();
   const patient = of ?? current;
   const [completing, setCompleting] = useState(false);
@@ -479,7 +480,7 @@ function Section({ title, count }: { title: string; count: number }) {
 
 /** One card per visit with follow-ups: open count and the next few, tap to work on that visit. */
 function VisitFollowUps({ except }: { except?: string }) {
-  const { patients, selectPatient } = useEncounter();
+  const patients = useEncounterSelect(s => s.patients), selectPatient = useEncounterSelect(s => s.selectPatient);
   const tasksOf = useVisitTasks();
   return <>{patients.filter(p => p.id !== except && tasksOf(p).length).map(p => {
     const pending = tasksOf(p).filter(task => !task.completed);
@@ -514,7 +515,7 @@ function LockedNote({ edits }: { edits: ReturnType<typeof useTaskEdits> }) {
  * (not by patient), each completable and changeable in place, and a one-tap way to add one for a visit.
  */
 function AllFollowUps() {
-  const { patients, selectPatient } = useEncounter();
+  const patients = useEncounterSelect(s => s.patients), selectPatient = useEncounterSelect(s => s.selectPatient);
   const { reducedMotion } = useAccessibleEffects();
   const tasksOf = useVisitTasks();
   const edits = useTaskEdits();
@@ -541,7 +542,7 @@ function AllFollowUps() {
 
 /** Tasks in the Sona dock: what's overdue across today's visits, with the most overdue one to mark done after a review. */
 function TasksSona({ children }: { children: ReactNode }) {
-  const { patients } = useEncounter();
+  const patients = useEncounterSelect(s => s.patients);
   const tasksOf = useVisitTasks();
   const { on: live } = useLive();
   const lines = patients.flatMap(p => tasksOf(p).filter(t => !t.completed).map(t => ({ id: t.id, patientId: p.id, patientName: p.name, title: t.title, owner: t.owner, due: t.due, group: dueGroup(t.due) })));
@@ -549,7 +550,7 @@ function TasksSona({ children }: { children: ReactNode }) {
 }
 
 export function TasksScreen() {
-  const { patient, patients, encounter, updateEncounter, simulateFailure } = useEncounter();
+  const { patient, patients, encounter, updateEncounter, simulateFailure } = useEncounterSelect(s => ({ patient: s.patient, patients: s.patients, encounter: s.encounter, updateEncounter: s.updateEncounter, simulateFailure: s.simulateFailure }), sameShallow);
   const { reducedMotion } = useAccessibleEffects();
   const tasksOf = useVisitTasks();
   const edits = useTaskEdits();
