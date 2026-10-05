@@ -9,7 +9,7 @@ const REGIMEN_FIELDS = ["medication", "formulation", "dose", "unit", "route", "f
 export const capabilitySchema = z.enum(["briefing", "reasoning", "xray", "medication", "prescription", "followup", "note", "evidence"]);
 export const cardSchema = z.object({ id: z.string(), kind: capabilitySchema, requestId: z.string(), patientId: z.string(), encounterId: z.string(), revision: z.number().int().positive(), sections: z.number().int().min(1).max(3).optional() });
 export function routePrompt(prompt: string): Capability | null {
-  if (/steroid|evidence|guideline|trial|should .+ (get|have|receive)/i.test(prompt)) return "evidence";
+  if (/steroid|evidence|guideline|trial|first.?line|should .+ (get|have|receive)/i.test(prompt)) return "evidence";
   if (/prescrib|prescription|regimen|treatment plan/i.test(prompt)) return "prescription";
   if (/interact|medicat|drug|allerg/i.test(prompt)) return "medication";
   if (/x.?ray|image|radiograph/i.test(prompt)) return "xray";

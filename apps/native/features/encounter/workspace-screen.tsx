@@ -21,7 +21,7 @@ import { useTodayAnswers } from "@/features/ask/today";
 import { ThreadEntry, useTodayThread } from "@/features/ask/today-thread";
 import { answerOf, clearThread, type Entry, type Reply } from "@/features/ask/thread";
 import { isWatch } from "@sona-ai/domain/watch";
-import { capabilitySchema, namedPatient, offeredAs, routeInThread } from "./state";
+import { capabilitySchema, namedPatient, offeredAs, routeInThread, routePrompt } from "./state";
 import { carry, takeCarried } from "./carry";
 import { openSession } from "./navigation";
 import { useEncounter } from "./store";
@@ -253,6 +253,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     // One of the visit's own suggested questions, word for word, is the kind it was offered as (offeredAs): no router is asked.
     const own = patient && offeredAs(prompt, capabilitySchema.options.map(kind => ({ kind, text: suggestionFor(kind, patient).text })));
     if (own) return { kind: own, medicine: undefined };
+    // A question in the literature's own words (guideline, trial, first line) is evidence, whatever medicine it names: Laya sent
+    // "Is amoxicillin first line for community-acquired pneumonia?" to the medicine list.
+    if (routePrompt(prompt) === "evidence") return { kind: "evidence" as const, medicine: undefined };
     let timer: ReturnType<typeof setTimeout> | undefined;
     const picked = live && patient && Date.now() > layaRestUntil.current
       ? await Promise.race([

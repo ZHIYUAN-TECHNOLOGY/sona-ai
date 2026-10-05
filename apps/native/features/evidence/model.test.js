@@ -18,6 +18,7 @@ test("an unrecorded factor stays unknown and withholds the risk band", () => {
 test("evidence questions route to the evidence answer", () => {
   expect(routePrompt("Should Amelia get steroids for her pneumonia?")).toBe("evidence");
   expect(routePrompt("What does the guideline say?")).toBe("evidence");
+  expect(routePrompt("Is amoxicillin first line for community-acquired pneumonia?")).toBe("evidence");
   expect(routePrompt("Run the prescribing simulation")).toBe("prescription");
   expect(STUDIES.map(pubmedUrl)).toEqual(["https://pubmed.ncbi.nlm.nih.gov/31573350/", "https://pubmed.ncbi.nlm.nih.gov/25608756/", "https://pubmed.ncbi.nlm.nih.gov/36942789/"]);
 });
