@@ -30,7 +30,7 @@ const STEP_MS = 900;
 
 /**
  * The server has no OCR route yet (a PDF without text is refused), so the judge build has no way in: the rows that
- * lead here are hidden (./add-source-sheet). Opened anyway, it says so and shows nothing of the sample.
+ * lead here are hidden (./add-source). Opened anyway, it says so and shows nothing of the sample.
  */
 export function OcrReviewScreen() {
   return !JUDGE ? <SampleReview /> : <Screen><Notice>Sona can't read scanned pages yet. Upload a PDF with text, or paste the text.</Notice></Screen>;

@@ -56,10 +56,10 @@ export default function RootLayout() {
     <Stack.Screen name="training" options={{ title: "Training data" }} />
     <Stack.Screen name="discharge" options={{ title: "Discharge" }} />
     <Stack.Screen name="claim" options={{ title: "Guarantee letter" }} />
-    <Stack.Screen name="history" options={{ ...closable, title: "Settings", presentation: "modal" }} />
+    <Stack.Screen name="history" options={{ title: "Settings" }} />
     <Stack.Screen name="library-scan" options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade" }} />
-    <Stack.Screen name="library-ocr" options={{ ...closable, title: "Read with OCR", presentation: "modal" }} />
+    <Stack.Screen name="library-ocr" options={{ title: "Read with OCR" }} />
     <Stack.Screen name="library-scanned" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
-    <Stack.Screen name="library-add" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
+    <Stack.Screen name="library-add" options={{ title: "Add a source" }} />
   </Stack><LiveUpdates /><CriticalAlert /></EncounterProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
 }
