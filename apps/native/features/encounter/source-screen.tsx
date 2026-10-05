@@ -5,9 +5,15 @@ import { MarkedText } from "@/components/sona/marked-text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, Body, Card, Notice, Screen, SourceLink } from "@/components/sona/ui";
 import { useEncounter } from "./store";
+import type { Patient } from "./types";
 
 /** Clinical text with its key terms and out-of-range measurements coloured, as on the cards that cite it. */
 const Marked = ({ text }: { text: string }) => <MarkedText text={text} style={{ color: palette.ink, ...type.body }} />;
+
+/** A patient's whole history: complaint, past history, family, social, allergies, medicines and each dated fact. Also unfolds on the patient card. */
+export function HistoryFacts({ patient }: { patient: Patient }) {
+  return <><Marked text={patient.complaint} /><Marked text={patient.history.join(". ")} /><Body>Family: {patient.family}</Body><Body>Social: {patient.social}</Body><Body>Allergies: {patient.allergies ?? "Unknown"}</Body><Body>{patient.medicines.join("\n")}</Body>{patient.sources.filter(s => (s.id.startsWith("fact-") || s.id.startsWith("history-"))).map(s => <Body key={s.id}>{s.date} · {s.excerpt}</Body>)}</>;
+}
 
 export function SourceScreen() {
   const { id, patientId, cardId, revision, taskId } = useLocalSearchParams<{ id: string; patientId: string; cardId?: string; revision?: string; taskId?: string }>();
@@ -23,7 +29,7 @@ export function SourceScreen() {
   return <Screen>{source ? <>
     {result && result.revision !== encounter?.revision && <Notice>Retained evidence for revision {result.revision}. The current encounter is revision {encounter?.revision}. Later corrections have not overwritten this version.</Notice>}
     <Card label={source.kind} title={source.title}><Body muted>{source.date}</Body><Marked text={source.excerpt} />{source.url && <SourceLink label="Open original reference" onPress={openOriginal} />}{linkError && <><Notice warning>The original reference could not be opened. Its recorded excerpt remains available.</Notice><Action label="Retry opening reference" secondary onPress={openOriginal} /></>}</Card>
-    {id === "history" && patient && <Card title="Context in this version"><Marked text={patient.complaint} /><Marked text={patient.history.join(". ")} /><Body>Family: {patient.family}</Body><Body>Social: {patient.social}</Body><Body>Allergies: {patient.allergies ?? "Unknown"}</Body><Body>{patient.medicines.join("\n")}</Body>{patient.sources.filter(s => (s.id.startsWith("fact-") || s.id.startsWith("history-"))).map(s => <Body key={s.id}>{s.date} · {s.excerpt}</Body>)}</Card>}
+    {id === "history" && patient && <Card title="Context in this version"><HistoryFacts patient={patient} /></Card>}
     {id === "consultation" && !!transcript?.length && <Card title={result ? `Transcript at revision ${result.revision}` : "Current transcript"}>{transcript.map(line => <Body key={line.id}>{line.speaker}: {line.original}{line.corrected && !line.englishReviewed ? " · Interpretation needs review" : ""}{line.englishReviewed ? `\nConfirmed English: ${line.english}` : ""}</Body>)}</Card>}
     <Notice>{source.synthetic ? "Authored demonstration source. It supports this UI fixture, not a validated clinical recommendation." : source.kind === "image" ? "Teaching material. This asset is not a radiograph of the fictional patient." : "General reference, summarised for the demonstration. Applying it to this fictional encounter is illustrative, not a validated model result."}</Notice>
   </> : <Card title="Source unavailable"><Body>The referenced evidence is not included in this encounter. No supporting source has been inferred.</Body></Card>}</Screen>;
