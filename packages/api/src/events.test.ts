@@ -16,7 +16,8 @@ test("a write names its topic and visit; a read announces nothing", () => {
   expect(changeFor(["claim", "send"], { encounterId: "visit-1042", requestId: "r" })).toEqual({ topic: "claim", encounterId: "visit-1042" });
   expect(changeFor(["results", "acknowledge"], { resultId: "lab-1" })).toEqual({ topic: "results" });
   expect(changeFor(["ward", "assignOwner"], { blockerId: "b", owner: "Nurse" })).toEqual({ topic: "ward" });
-  for (const read of [["claim", "status"], ["tasks", "list"], ["encounter", "get"], ["ward", "beds"], ["evidence", "ask"], ["patients", "list"], ["findings", "list"]])
+  for (const read of [["claim", "status"], ["tasks", "list"], ["encounter", "get"], ["ward", "beds"], ["evidence", "ask"], ["patients", "list"], ["findings", "list"],
+    ["encounter", "timeline"], ["discharge", "plan"]])
     expect(changeFor(read, { encounterId: "visit-1042" })).toBeUndefined();
 });
 

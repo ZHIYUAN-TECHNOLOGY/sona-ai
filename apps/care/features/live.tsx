@@ -17,21 +17,31 @@ import { sendQuestions } from "./questions";
  * the socket opens and whenever the app returns to the foreground. Mounted once at the root.
  */
 const PING_MS = 25_000, MAX_BACKOFF_MS = 30_000;
+/** Changes heard this close together are re-read once: one save in Sona Pro can announce several topics. */
+export const COALESCE_MS = 200;
 
 /**
- * What each topic the server announces (packages/api/src/events.ts) changes on the patient's screens. A topic
- * not listed re-reads everything; the echo of a dose or push token from this phone re-reads nothing.
+ * What each topic the server announces (packages/api/src/events.ts) changes on the patient's screens. The echo of a
+ * dose taken on this phone re-reads nothing; the demo clock moving re-reads everything.
  */
 const TOUCHES: Record<string, QueryKey[]> = {
   messages: [orpc.care.messages.key()],
-  // A flagged reply booked in is a visit on the Schedule.
-  checkIns: [orpc.care.checkIns.key(), orpc.care.followUps.key()],
+  // A flagged reply booked in is a visit on the Schedule and a slot taken; a warning sign adds Sona's call-999 line to the thread.
+  checkIns: [orpc.care.checkIns.key(), orpc.care.followUps.key(), orpc.care.doctors.key(), orpc.care.messages.key()],
   // Confirmed: a visit on the Schedule and the slot taken; declined: a note in the thread.
   bookings: [orpc.care.bookings.key(), orpc.care.followUps.key(), orpc.care.doctors.key(), orpc.care.messages.key()],
   // An X-ray follow-up put on a booked visit.
   findings: [orpc.care.followUps.key()],
+  training: [orpc.care.trainingConsent.key()],
   doses: [], push: [],
 };
+/**
+ * Any other topic is a clinician's write on her visit (the Worker sends her only changes naming her or her visit), and
+ * that can change only the visit's record: when she went home, her plan, medicines and leaflet, her visits and check-ins.
+ * Messages, bookings, slots and consent are written only under the topics above (packages/api/src/routers), so a
+ * discharge or a note no longer re-reads the thread, the directory and the rest.
+ */
+const VISIT: QueryKey[] = [orpc.care.me.key(), orpc.care.discharge.key(), orpc.care.followUps.key(), orpc.care.checkIns.key()];
 
 /** A joined patient's live session (its own function, so a test can drive it); returns its stop. */
 export function startLive() {
@@ -42,11 +52,18 @@ export function startLive() {
   // Sends what the server is missing; each part swallows its own failure and runs again on the next open or foreground.
   const send = () => Promise.all([syncTaken().catch(() => {}), sendQuestions()]);
   const catchUp = () => Promise.all([readClock(), send()]);
+  // What the changes heard in this window re-read (each key once; `everything` for the demo clock), sent when it closes.
+  let held = new Map<string, QueryKey>(), everything = false, window: ReturnType<typeof setTimeout> | undefined;
+  const flush = () => {
+    const keys = [...held.values()], all = everything;
+    held = new Map(); everything = false; window = undefined;
+    const reads = all ? [queryClient.invalidateQueries()] : keys.map(queryKey => queryClient.invalidateQueries({ queryKey }));
+    return Promise.all([...reads, send()]);
+  };
   const reread = async (topic: string | undefined) => {
-    if (topic === "demo") await readClock();
-    const touched = topic ? TOUCHES[topic] : undefined;
-    const reads = touched ? touched.map(queryKey => queryClient.invalidateQueries({ queryKey })) : [queryClient.invalidateQueries()];
-    await Promise.all([...reads, send()]);
+    if (topic === "demo") { await readClock(); everything = true; }
+    else for (const key of (topic && TOUCHES[topic]) || VISIT) held.set(JSON.stringify(key), key);
+    window ??= setTimeout(() => { void flush(); }, COALESCE_MS);
   };
   void catchUp();
   // Back in the foreground (React Query's focus, which utils/orpc ties to the app's state).
@@ -83,7 +100,7 @@ export function startLive() {
     ws.onerror = () => { /* onclose follows and schedules the retry */ };
   };
   void connect();
-  return () => { stopped = true; unfocus(); clearInterval(ping); clearTimeout(retry); socket?.close(); };
+  return () => { stopped = true; unfocus(); clearInterval(ping); clearTimeout(retry); clearTimeout(window); socket?.close(); };
 }
 
 export function LiveUpdates() {
