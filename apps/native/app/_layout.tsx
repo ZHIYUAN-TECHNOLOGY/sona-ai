@@ -1,4 +1,4 @@
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { AppState, Keyboard } from "react-native";
@@ -7,7 +7,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { poke, slide } from "@/components/sona/idle";
 import { palette } from "@/components/sona/theme";
-import { CloseButton, IconButton } from "@/components/sona/ui";
+import { BackButton, CloseButton } from "@/components/sona/ui";
 import { CriticalAlert } from "@/features/critical";
 import { LiveUpdates } from "@/features/live/channel";
 import { underVisit } from "@/features/encounter/navigation";
@@ -33,7 +33,7 @@ function ActivityWatch() {
 export default function RootLayout() {
   // Every touch start is activity (./components/sona/idle): seen on the way down, never claimed, so the touch goes on as before.
   // Every screen's and sheet's transition is reported too (`slide`): ambient motion holds its frame while one slides.
-  return <GestureHandlerRootView style={{ flex: 1 }} onStartShouldSetResponderCapture={touched}><ActivityWatch /><KeyboardProvider><SafeAreaProvider><EncounterProvider><ScribePlayback /><StatusBar style="dark" /><Stack screenListeners={{ transitionStart: e => { if (e.target) slide(e.target, true); }, transitionEnd: e => { if (e.target) slide(e.target, false); } }} screenOptions={{ headerLeft: () => <IconButton name="chevron.left" label="Return to previous screen" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />, headerTransparent: true, headerStyle: { backgroundColor: "transparent" }, headerBlurEffect: "none", headerTintColor: palette.ink, headerShadowVisible: false, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: palette.canvas } }}>
+  return <GestureHandlerRootView style={{ flex: 1 }} onStartShouldSetResponderCapture={touched}><ActivityWatch /><KeyboardProvider><SafeAreaProvider><EncounterProvider><ScribePlayback /><StatusBar style="dark" /><Stack screenListeners={{ transitionStart: e => { if (e.target) slide(e.target, true); }, transitionEnd: e => { if (e.target) slide(e.target, false); } }} screenOptions={{ headerLeft: () => <BackButton />, headerTransparent: true, headerStyle: { backgroundColor: "transparent" }, headerBlurEffect: "none", headerTintColor: palette.ink, headerShadowVisible: false, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: palette.canvas } }}>
     {/* Today and a visit stop re-rendering while a visit covers them (`underVisit`); `quiet`: a visit placed under a closing sheet, whose slide down is then the one transition (both ./features/encounter/navigation). */}
     <Stack.Screen name="index" options={({ navigation, route }) => ({ headerShown: false, freezeOnBlur: underVisit(navigation.getState().routes, route.key) })} />
     <Stack.Screen name="session/[patientId]" options={({ navigation, route }) => ({ headerShown: false, freezeOnBlur: underVisit(navigation.getState().routes, route.key), animation: (route.params as { quiet?: string } | undefined)?.quiet ? "none" : "default" })} />
@@ -42,10 +42,10 @@ export default function RootLayout() {
     <Stack.Screen name="visits" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
     <Stack.Screen name="sources" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
     <Stack.Screen name="about-data" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
-    <Stack.Screen name="recording" options={{ ...closable, title: "Consultation", presentation: "modal" }} />
+    <Stack.Screen name="recording" options={{ title: "Consultation" }} />
     <Stack.Screen name="note" options={{ title: "Consultation note" }} />
-    <Stack.Screen name="xray" options={{ ...closable, title: "Chest X-ray", presentation: "modal" }} />
-    <Stack.Screen name="scan" options={{ ...closable, title: "Scan a note", presentation: "modal" }} />
+    <Stack.Screen name="xray" options={{ title: "Chest X-ray" }} />
+    <Stack.Screen name="scan" options={{ title: "Scan a note" }} />
     <Stack.Screen name="tasks" options={{ title: "Follow-up tasks" }} />
     <Stack.Screen name="view/[id]" options={{ title: "" }} />
     <Stack.Screen name="inbox/index" options={{ title: "Messages" }} />

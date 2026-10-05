@@ -8,7 +8,7 @@ import { SampleLabel } from "@/components/sona/model-answer";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Chip, CloseButton, Expand, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, BackButton, Chip, Expand, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounterSelect } from "@/features/encounter/store";
 import { sameShallow } from "@/features/live/keep-same";
 import type { TranscriptLine } from "@/features/encounter/types";
@@ -221,7 +221,7 @@ function LiveRecording() {
     : "Captions as heard, part by part. Tap one to correct a word; Sona marks who said what when it drafts the note.";
 
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}><Screen>
-    <Stack.Screen options={{ headerRight: () => <CloseButton label={active || paused ? "Minimize to encounter" : "Return to encounter"} /> }} />
+    <Stack.Screen options={{ headerLeft: () => <BackButton label={active || paused ? "Minimize to encounter" : "Return to encounter"} /> }} />
     {/* Who, then one honesty line: the words are the speech model's, and the audio does not stay. */}
     <View style={{ gap: 4 }}>
       <Text selectable style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{patient.name} · {patient.id}</Text>
@@ -331,8 +331,8 @@ function ScriptedRecording() {
   const minimizeLabel = active || paused ? "Minimize to encounter" : "Return to encounter";
 
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}><Screen>
-    {/* Close (minimize) is the header's one control; playback keeps running from the encounter shell. */}
-    <Stack.Screen options={{ headerRight: () => <CloseButton label={minimizeLabel} /> }} />
+    {/* Back (minimize) is the header's one control; playback keeps running from the encounter shell. */}
+    <Stack.Screen options={{ headerLeft: () => <BackButton label={minimizeLabel} /> }} />
     {/* Who, then one quiet honesty line: a sample (links to About data) with no microphone or audio. */}
     <View style={{ gap: 4 }}>
       <Text selectable style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{patient.name} · {patient.id}</Text>

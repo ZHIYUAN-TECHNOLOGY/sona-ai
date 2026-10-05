@@ -79,6 +79,10 @@ export function GlassButton({ label, onPress, size = 50, onGlass = false, childr
     </Animated.View>}
   </Pressable>;
 }
+/** A pushed page's back chevron, on the left (`label`: what going back does, e.g. the consultation's "Minimize to encounter"). */
+export function BackButton({ label = "Return to previous screen" }: { label?: string }) {
+  return <IconButton name="chevron.left" label={label} onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />;
+}
 /** A modal's or sheet's one close control, on the right (pushed pages get the back chevron on the left). */
 export function CloseButton({ label = "Close" }: { label?: string }) {
   return <IconButton name="xmark" label={label} onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />;
