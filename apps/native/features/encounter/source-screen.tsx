@@ -10,7 +10,7 @@ import { useEncounter } from "./store";
 const Marked = ({ text }: { text: string }) => <MarkedText text={text} style={{ color: palette.ink, ...type.body }} />;
 
 export function SourceScreen() {
-  const { id, patientId, cardId, revision, taskId, quote } = useLocalSearchParams<{ id: string; patientId: string; cardId?: string; revision?: string; taskId?: string; quote?: string }>();
+  const { id, patientId, cardId, revision, taskId } = useLocalSearchParams<{ id: string; patientId: string; cardId?: string; revision?: string; taskId?: string }>();
   const { patients, encounters } = useEncounter();
   const [linkError, setLinkError] = useState(false);
   useEffect(() => { setLinkError(false); }, [id, patientId, cardId]);
@@ -20,8 +20,6 @@ export function SourceScreen() {
   const patient = result?.patientSnapshot ?? currentPatient, source = taskSource ?? (revision && Number(revision) !== encounter?.revision && !result ? undefined : patient?.sources.find(s => s.id === id));
   const transcript = result?.transcriptSnapshot ?? encounter?.transcript;
   const openOriginal = async () => { if (!source?.url) return; try { await Linking.openURL(source.url); setLinkError(false); } catch { setLinkError(true); } };
-  // A note sentence cited by a letter (the guarantee letter's appeal): shown exactly as the note says it.
-  if (quote) return <Screen><Card label="Consultation note" title="From the note"><Body>“{quote}”</Body></Card><Notice>The sentence this point cites, as written in the note.</Notice></Screen>;
   return <Screen>{source ? <>
     {result && result.revision !== encounter?.revision && <Notice>Retained evidence for revision {result.revision}. The current encounter is revision {encounter?.revision}. Later corrections have not overwritten this version.</Notice>}
     <Card label={source.kind} title={source.title}><Body muted>{source.date}</Body><Marked text={source.excerpt} />{source.url && <SourceLink label="Open original reference" onPress={openOriginal} />}{linkError && <><Notice warning>The original reference could not be opened. Its recorded excerpt remains available.</Notice><Action label="Retry opening reference" secondary onPress={openOriginal} /></>}</Card>
