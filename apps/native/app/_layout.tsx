@@ -10,6 +10,7 @@ import { palette } from "@/components/sona/theme";
 import { CloseButton, IconButton } from "@/components/sona/ui";
 import { CriticalAlert } from "@/features/critical";
 import { LiveUpdates } from "@/features/live/channel";
+import { underVisit } from "@/features/encounter/navigation";
 import { EncounterProvider } from "@/features/encounter/store";
 import { ScribePlayback } from "@/features/scribe";
 
@@ -32,9 +33,9 @@ function ActivityWatch() {
 export default function RootLayout() {
   // Every touch start is activity (./components/sona/idle): seen on the way down, never claimed, so the touch goes on as before.
   return <GestureHandlerRootView style={{ flex: 1 }} onStartShouldSetResponderCapture={touched}><ActivityWatch /><KeyboardProvider><SafeAreaProvider><EncounterProvider><ScribePlayback /><StatusBar style="dark" /><Stack screenOptions={{ headerLeft: () => <IconButton name="chevron.left" label="Return to previous screen" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />, headerTransparent: true, headerStyle: { backgroundColor: "transparent" }, headerBlurEffect: "none", headerTintColor: palette.ink, headerShadowVisible: false, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: palette.canvas } }}>
-    <Stack.Screen name="index" options={{ headerShown: false }} />
-    {/* `quiet`: placed under a closing sheet, whose slide down is then the one transition (./features/encounter/navigation). */}
-    <Stack.Screen name="session/[patientId]" options={({ route }) => ({ headerShown: false, animation: (route.params as { quiet?: string } | undefined)?.quiet ? "none" : "default" })} />
+    {/* Today and a visit stop re-rendering while a visit covers them (`underVisit`); `quiet`: a visit placed under a closing sheet, whose slide down is then the one transition (both ./features/encounter/navigation). */}
+    <Stack.Screen name="index" options={({ navigation, route }) => ({ headerShown: false, freezeOnBlur: underVisit(navigation.getState().routes, route.key) })} />
+    <Stack.Screen name="session/[patientId]" options={({ navigation, route }) => ({ headerShown: false, freezeOnBlur: underVisit(navigation.getState().routes, route.key), animation: (route.params as { quiet?: string } | undefined)?.quiet ? "none" : "default" })} />
     <Stack.Screen name="patients" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: [0.75, 1], sheetGrabberVisible: true }} />
     <Stack.Screen name="source" options={{ ...closable, title: "Source detail", presentation: "formSheet", sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true }} />
     <Stack.Screen name="visits" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />

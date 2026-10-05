@@ -76,7 +76,9 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const { on: live, user } = useLive();
   const updateEncounter = useCallback((update: (current: Encounter) => Encounter, revise = false, patientId?: string) => {
     const id = patientId ?? activeRef.current; if (!id || !rosterRef.current.some(p => p.id === id)) return;
-    setEncounters(prev => { const next = update(prev[id]!); return { ...prev, [id]: revise ? reviseEncounter(next) : next }; });
+    // An update that changes nothing (it returned the visit as it was) leaves the store as it was: every screen reads it, so
+    // a new map re-rendered them all, the visit under the consultation recorder and Today under that included.
+    setEncounters(prev => { const next = update(prev[id]!); return next === prev[id] && !revise ? prev : { ...prev, [id]: revise ? reviseEncounter(next) : next }; });
   }, []);
   const request = useCallback((kind: Capability, prompt = "", amendmentId?: string) => {
     const id = activeRef.current; const base = rosterRef.current.find(p => p.id === id); const patient = base ? effectivePatient(base, stateRef.current[base.id]) : undefined;

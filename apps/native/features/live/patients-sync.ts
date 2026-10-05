@@ -21,6 +21,9 @@ function readPatients(userId: string) {
   const settle = (next: Omit<Read, "userId">) => {
     if (reading !== userId) return;
     reading = undefined;
+    // An unchanged answer keeps the records already held: a new object re-rendered every screen that reads the visit
+    // store, each time Patients (or anything else reading them) opened.
+    if (held.userId === userId && !held.error && !next.error && JSON.stringify(held.records) === JSON.stringify(next.records)) return;
     // A failed re-read keeps the records already read for this account, beside the reason it failed.
     held = { userId, records: held.userId === userId ? held.records : undefined, ...next };
     listeners.forEach(l => l());

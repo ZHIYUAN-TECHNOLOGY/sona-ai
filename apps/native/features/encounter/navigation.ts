@@ -14,6 +14,15 @@ export function openSession(patientId: string, params: { next?: string; prompt?:
 }
 
 /**
+ * Whether a visit is pushed somewhere over this screen (`key`). Its every write (start, stop, each cut of a consultation)
+ * re-rendered all of them, Today under the visit included (Stop: 5 screen renders and 194 ms of JS at once on the
+ * simulator; 3 with the covered ones left alone). The native stack freezes only screens neither on top nor just under it (the
+ * swipe back shows that one) nor modal, so a frozen one here sits under an opaque visit and is never seen.
+ */
+export const underVisit = (routes: readonly { key: string; name: string }[], key: string) =>
+  routes.slice(routes.findIndex(r => r.key === key) + 1).some(r => r.name === "session/[patientId]");
+
+/**
  * Leaves a sheet (`sheet`: its screen's navigation) for a visit in one navigation: the sheet slides down over the visit,
  * which is already in place, rather than closing on a timer while the visit pushes in behind it.
  */
