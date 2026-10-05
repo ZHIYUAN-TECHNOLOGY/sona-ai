@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
 import { JUDGE, useLive } from "@/features/live";
 import { useDemoOffset } from "@/features/live/demo-clock";
 import { useFindings } from "@/features/live/findings-sync";
+import { sameJSON } from "@/features/live/keep-same";
 import { useServerData, useServerDay, useServerDayError } from "@/features/live/server-day";
 import { useServerBeds, useWardFailure } from "@/features/live/ward-sync";
 import { dayVisits } from "@/features/patients/record";
@@ -44,7 +45,7 @@ export const useDayPatients = (patients: Patient[]) => useDay(patients) ?? [];
 export function usePendingResult(patientId?: string) {
   const server = useServerData();
   const { on } = useLive();
-  const { resultAcks } = useEncounter();
+  const resultAcks = useEncounterSelect(s => s.resultAcks);
   const offset = useDemoOffset();
   // Live mode before the server's results arrive: nothing yet, never the demo's fixture.
   if (on && !server) return undefined;
@@ -61,15 +62,16 @@ export function usePendingResult(patientId?: string) {
  * which reads again); beds from an earlier read stay.
  */
 export function useWard() {
-  const { patients, encounters } = useEncounter();
   const { findings, live } = useFindings();
+  // Demo mode's beds re-render their reader only when a bed changes, not on every write to any visit; live mode reads none here.
+  const demo = useEncounterSelect(s => live ? undefined : wardBeds(s.patients, s.encounters), sameJSON);
   const [attempt, setAttempt] = useState(0);
   // One stable key: the read re-runs when it changes, so a fresh array each render would read without end.
   const key = useMemo(() => [findings, attempt], [findings, attempt]);
   const server = useServerBeds(key);
   const failure = useWardFailure("beds");
   const retry = () => setAttempt(a => a + 1);
-  return live ? { beds: server ?? [], loading: !server && !failure, failure, retry } : { beds: withFindingBlockers(wardBeds(patients, encounters), findings), loading: false, failure: undefined, retry };
+  return live ? { beds: server ?? [], loading: !server && !failure, failure, retry } : { beds: withFindingBlockers(demo ?? [], findings), loading: false, failure: undefined, retry };
 }
 
 /** Every bed (see useWard). */
@@ -77,12 +79,12 @@ export const useWardBeds = () => useWard().beds;
 
 /** The patients who need you, each with the most urgent reason. */
 export function useNeedsYou() {
-  const { patients, encounters } = useEncounter();
-  return needsYou(patients, encounters, usePendingResult());
+  const result = usePendingResult();
+  return useEncounterSelect(s => needsYou(s.patients, s.encounters, result), sameJSON);
 }
 
 /** Open follow-ups: one visit's, or every visit's (the Tasks page's list, server tasks included in live mode). */
 export function useOpenTasks(patient?: Patient) {
-  const { patients, encounters } = useEncounter();
-  return openTaskCount(patient ? [patient] : patients, encounters, useServerData());
+  const server = useServerData();
+  return useEncounterSelect(s => openTaskCount(patient ? [patient] : s.patients, s.encounters, server));
 }

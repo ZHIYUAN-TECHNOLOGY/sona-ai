@@ -7,7 +7,7 @@ const list = name => async () => { reads[name]++; return []; };
 const day = { down: true, reads: 0 };
 const dayList = async () => { day.reads++; if (day.down) throw new Error("Network request failed"); return [{ id: "appt-1" }]; };
 mock.module("@/features/live", () => ({ api: { tasks: { list: list("tasks") }, results: { list: list("results") }, bookings: { list: list("bookings") }, day: { list: dayList } }, errorText: e => e.message, useLive: () => ({}) }));
-mock.module("@/features/encounter/store", () => ({ useEncounter: () => ({}) }));
+mock.module("@/features/encounter/store", () => ({ useEncounterSelect: () => ({}), sameVisits: () => () => true }));
 const { loadServerData, readServerDay, refreshServerData, serverDayCount, serverDayError, serverSnapshot } = await import("./server-day");
 
 test("Today's widgets mounting at once share one read; a write still reads anew", async () => {

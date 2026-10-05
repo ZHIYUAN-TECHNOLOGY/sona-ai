@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import { detectFixture, followUpTask, type Finding } from "@/features/findings/model";
 import { api, errorText, requestId, useLive } from ".";
 import { keepSame } from "./keep-same";
@@ -44,7 +44,7 @@ export async function refreshFindings(detect?: string, readOf = detect) {
 
 export function useFindings() {
   const { on, wanted } = useLive();
-  const { patient, updateEncounter } = useEncounter();
+  const patientId = useEncounterSelect(s => s.patient?.id), updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const fixtureRows = useSyncExternalStore(subscribe, () => fixture);
   const serverRows = useSyncExternalStore(subscribe, () => server);
   const filmReads = useSyncExternalStore(subscribe, () => reads);
@@ -66,7 +66,7 @@ export function useFindings() {
     const task = followUpTask(f);
     if (!task) return setError("No routine follow-up needed");
     // updateEncounter writes to the open visit, so the task lands only on the finding's own patient.
-    if (patient?.id !== f.patientId) return setError(`Open ${f.patientName} to track this follow-up`);
+    if (patientId !== f.patientId) return setError(`Open ${f.patientName} to track this follow-up`);
     updateEncounter(e => (e.tasks.some(t => t.id === task.id) ? e : { ...e, tasks: [...e.tasks, task] }));
     fixture = fixture.map(x => (x.id === f.id ? { ...x, status: "tracked" as const, taskId: task.id, owner: task.owner } : x));
     notify();

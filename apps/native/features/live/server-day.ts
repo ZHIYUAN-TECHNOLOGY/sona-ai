@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { useEncounter } from "@/features/encounter/store";
+import { sameVisits, useEncounterSelect } from "@/features/encounter/store";
 import type { Patient, Task } from "@/features/encounter/types";
 import { visitTasks } from "@/features/day/counts";
 import { api, errorText, useLive } from ".";
@@ -73,7 +73,8 @@ export function useServerData() {
 /** A visit's tasks: the ones made on this device, plus the server's for its encounter in live mode. */
 export function useVisitTasks() {
   const server = useServerData();
-  const { encounters } = useEncounter();
+  // visitTasks reads each visit's tasks alone: a write to anything else in a visit keeps the map held, whose tasks are the same.
+  const encounters = useEncounterSelect(s => s.encounters, sameVisits("tasks"));
   return (patient: Patient): Task[] => visitTasks(patient, encounters, server);
 }
 

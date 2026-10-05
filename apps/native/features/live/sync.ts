@@ -1,6 +1,6 @@
 import type { EncounterEdit } from "@sona-ai/api/contracts";
 import { useCallback, useEffect, useState } from "react";
-import { useEncounter } from "@/features/encounter/store";
+import { useEncounterSelect } from "@/features/encounter/store";
 import type { Encounter, Patient } from "@/features/encounter/types";
 import { letterReceived } from "@/features/patients/record";
 import { api, errorText, JUDGE, useLive } from ".";
@@ -21,7 +21,7 @@ const SHARED_MS = 2500;
 
 export function useServerEncounter(patient: Patient | undefined) {
   const { on } = useLive();
-  const { updateEncounter } = useEncounter();
+  const updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const encounterId = patient?.encounterId, patientId = patient?.id;
   /** `force` skips the shared-read window (after a refusal the screen needs the server as it is now). */
   const refresh = useCallback(async (force = false) => {
@@ -53,8 +53,7 @@ export function useServerEncounter(patient: Patient | undefined) {
   // Live updates: re-read as soon as the server says this visit changed (a claim decided, a discharge, an edit elsewhere).
   useLiveChanges(["visit"], () => { void refresh(true).catch(() => {}); }, encounterId);
   // While the claim is with the insurer, keep checking so the guarantee letter clears on whichever screen is open.
-  const { encounters } = useEncounter();
-  const status = patient ? encounters[patient.id]?.claim?.status : undefined;
+  const status = useEncounterSelect(s => patientId ? s.encounters[patientId]?.claim?.status : undefined);
   const waiting = on && (status === "sent" || status === "appealed");
   useEffect(() => {
     if (!waiting) return;
@@ -80,7 +79,7 @@ export function useEncounterEdit(patient: Patient) {
   const { on } = useLive();
   // Only a doctor edits the visit record (encounter.edit); screens hide their edit controls otherwise.
   const allowed = useRole().can("encounter.edit");
-  const { updateEncounter } = useEncounter();
+  const updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const save = (fields: EditFields, apply: (value: Encounter) => Encounter, onSaved?: () => void) => {

@@ -1,9 +1,10 @@
 import * as SecureStore from "expo-secure-store";
-import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, use, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AppState } from "react-native";
 import type { Ack } from "@/features/day/counts";
 import { refreshPendingResult } from "@/features/day/model";
 import { errorText, JUDGE, useLive } from "@/features/live";
+import { keepSame } from "@/features/live/keep-same";
 import { useServerPatients } from "@/features/live/patients-sync";
 import { serverRoster } from "@/features/patients/record";
 import { amendOnServer, pushAndReview, simulateOnServer } from "@/features/live/prescribing-sync";
@@ -30,6 +31,9 @@ type Store = {
 };
 const DEMO_CONTROLS_KEY = "sona.demoControls";
 const Context = createContext<Store | null>(null);
+/** The store as last rendered, for slice reads (useEncounterSelect): one object for the app's life, so it never re-renders a reader itself. */
+type Handle = { store: Store; subscribe: (listener: () => void) => () => void; notify: () => void };
+const Slices = createContext<Handle | null>(null);
 // The judge build starts with no visits: each one starts when the server's roster brings its patient (withRoster), never from a fixture.
 const firstEncounters = () => JUDGE ? {} : initialEncounters();
 export function EncounterProvider({ children }: { children: ReactNode }) {
@@ -175,8 +179,38 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const acknowledgeDemoResult = useCallback((key: string, by: string) => setResultAcks(acks => acks[key] ? acks : { ...acks, [key]: { at: new Date().toISOString(), by } }), []);
   const reset = useCallback(() => { cancel(); setEncounters(firstEncounters()); setPatientId(undefined); activeRef.current = undefined; setSimulateFailure(false); setSimulateInvalid(false); setResultAcks({}); }, [cancel]);
   // Sample visits take the server's record in live mode and keep the demo schedule's clock times; the judge build's roster is already the server's.
-  const currentPatients = roster.map(p => effectivePatient(!JUDGE && server?.[p.id] ? { ...p, ...server[p.id], time: p.time } : p, encounters[p.id]));
+  // Each record is rebuilt on every write; one that reads the same keeps the object held, and the list too while every
+  // record is held, so a slice read of them (useEncounterSelect) changes only when a record did.
+  const held = useRef<Patient[]>([]);
+  const built = roster.map(p => keepSame(held.current.find(h => h.id === p.id), effectivePatient(!JUDGE && server?.[p.id] ? { ...p, ...server[p.id], time: p.time } : p, encounters[p.id])));
+  const currentPatients = held.current = built.length === held.current.length && built.every((p, i) => p === held.current[i]) ? held.current : built;
   const patient = currentPatients.find(p => p.id === patientId);
-  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, runInPlace, runErrors, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset, resultAcks, acknowledgeDemoResult }}>{children}</Context>;
+  const value: Store = { patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, runInPlace, runErrors, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset, resultAcks, acknowledgeDemoResult };
+  const handle = useRef<Handle>(null);
+  if (!handle.current) { const listeners = new Set<() => void>(); handle.current = { store: value, subscribe: l => { listeners.add(l); return () => { listeners.delete(l); }; }, notify: () => listeners.forEach(l => l()) }; }
+  // Set while rendering, as stateRef above, so a slice reader rendering in this same pass already reads this write; the
+  // others hear of it once it is committed, before the frame is drawn, and re-render only if their slice changed.
+  handle.current.store = value;
+  useLayoutEffect(() => handle.current!.notify());
+  return <Slices value={handle.current}><Context value={value}>{children}</Context></Slices>;
 }
 export function useEncounter() { const value = use(Context); if (!value) throw new Error("EncounterProvider is required"); return value; }
+
+/**
+ * One slice of the store. useEncounter re-renders its reader on every write to any visit (a visit opening wrote 9 or 10
+ * times, re-rendering ~30 readers each time); this re-renders only when the slice changes: by identity, or `same` for
+ * a value derived afresh on each read (sameJSON). The store's maps and records keep unchanged entries, so a slice of
+ * them is held as it was.
+ */
+export function useEncounterSelect<T>(select: (store: Store) => T, same: (a: T, b: T) => boolean = Object.is): T {
+  const handle = use(Slices); if (!handle) throw new Error("EncounterProvider is required");
+  const last = useRef<{ value: T }>(null);
+  return useSyncExternalStore(handle.subscribe, () => {
+    const next = select(handle.store);
+    if (!last.current || !same(last.current.value, next)) last.current = { value: next };
+    return last.current.value;
+  });
+}
+/** For a reader of these fields of each visit alone: two maps of visits holding the same ones (each by identity) read the same. */
+export const sameVisits = (...fields: (keyof Encounter)[]) => (a: Record<string, Encounter | undefined>, b: Record<string, Encounter | undefined>) =>
+  Object.keys(a).length === Object.keys(b).length && Object.keys(b).every(id => fields.every(f => a[id]?.[f] === b[id]?.[f]));
