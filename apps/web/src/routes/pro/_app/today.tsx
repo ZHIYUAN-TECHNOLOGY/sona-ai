@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { type Column, DataTable, PersonCell, RowAction } from "@/components/data-table";
+import { type Column, DataTable, PersonCell, RowAction, TableToolbar } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow, SearchField, StatCard, StatRow, Tabs } from "@/components/primitives";
@@ -151,7 +151,7 @@ function Page() {
               <DataTable
                 loading={day.isPending}
                 toolbar={
-                  <>
+                  <TableToolbar end={<SearchField label="Search today's visits" placeholder="Search visits" value={query} onChange={e => setQuery(e.target.value)} />}>
                     <Tabs<Filter>
                       label="Filter visits"
                       value={filter}
@@ -163,8 +163,7 @@ function Page() {
                         { id: "incomplete", label: "Incomplete", count: incomplete.length },
                       ]}
                     />
-                    <SearchField label="Search today's visits" placeholder="Search visits" value={query} onChange={e => setQuery(e.target.value)} />
-                  </>
+                  </TableToolbar>
                 }
                 columns={columns}
                 rows={shown}
