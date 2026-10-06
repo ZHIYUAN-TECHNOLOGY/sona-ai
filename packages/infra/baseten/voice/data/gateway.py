@@ -47,7 +47,11 @@ wait_for(voice, "http://127.0.0.1:8002/health", "Voice server")
 diar = None
 if os.path.exists("/opt/diar/bin/python") and os.path.isdir(f"{MODELS}/diar"):
     diar = subprocess.Popen(["/opt/diar/bin/python", os.path.join(HERE, "diar_server.py")])
-    wait_for(diar, "http://127.0.0.1:8004/health", "Diarization server")
+    try:
+        wait_for(diar, "http://127.0.0.1:8004/health", "Diarization server")
+    except SystemExit:  # a diarizer that will not start must not keep the box from hearing and speaking
+        print("the diarization server did not start: speech is only written down", flush=True)
+        diar = None
 
 reranker = CrossEncoder(f"{MODELS}/rerank", device="cuda", model_kwargs={"torch_dtype": torch.float16})
 torch.cuda.empty_cache()

@@ -31,8 +31,8 @@ build_commands:
   - python3 -m virtualenv /opt/diar && /opt/diar/bin/pip install --no-cache-dir torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128
   - >-
     /opt/diar/bin/pip install --no-cache-dir "transformers @ git+https://github.com/huggingface/transformers@d28b79377cdf2a36549bb4b163f1956a70d07926"
-    soundfile numpy fastapi uvicorn python-multipart
-  - /opt/diar/bin/python -c "import soundfile, python_multipart, torch, transformers.models.nemotron3_diarization; print('diar deps ok, torch', torch.__version__)"
+    librosa soundfile numpy fastapi uvicorn python-multipart
+  - /opt/diar/bin/python -c "import librosa, soundfile, python_multipart, torch, transformers.models.nemotron3_diarization; print('diar deps ok, torch', torch.__version__)"
 weights:
   - source: "hf://zhiyuantechnology/sona-qwen3-asr-manglish@d62584cd390628614b899ca12aa25fdd39e27fd0"
     mount_location: /app/models/asr

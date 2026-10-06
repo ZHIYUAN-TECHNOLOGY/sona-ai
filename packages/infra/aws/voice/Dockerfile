@@ -14,8 +14,8 @@ RUN printf 'torch==2.8.0\ntorchaudio==2.8.0\ntorchcodec==0.7.0\n' > /tmp/tts-pin
 RUN /opt/tts/bin/python -c "import flash_attn, torch, nanovllm_voxcpm.models.voxcpm2.server; print('voice deps ok, torch', torch.__version__)"
 RUN python3 -m virtualenv /opt/diar && /opt/diar/bin/pip install --no-cache-dir torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128
 RUN /opt/diar/bin/pip install --no-cache-dir "transformers @ git+https://github.com/huggingface/transformers@d28b79377cdf2a36549bb4b163f1956a70d07926" \
-    soundfile numpy fastapi uvicorn python-multipart
-RUN /opt/diar/bin/python -c "import soundfile, python_multipart, torch, transformers.models.nemotron3_diarization; print('diar deps ok, torch', torch.__version__)"
+    librosa soundfile numpy fastapi uvicorn python-multipart
+RUN /opt/diar/bin/python -c "import librosa, soundfile, python_multipart, torch, transformers.models.nemotron3_diarization; print('diar deps ok, torch', torch.__version__)"
 COPY data /app/data
 ENV MODELS=/opt/ml/model PORT=8080 VLLM_LOGGING_LEVEL=WARNING VLLM_MAX_AUDIO_DECODE_DURATION_S=3900 VLLM_MAX_AUDIO_CLIP_FILESIZE_MB=120
 ENTRYPOINT ["python3", "/app/data/gateway.py"]
