@@ -31,3 +31,6 @@
 .pt-labs h3 { margin: 0 0 var(--space-1); font-size: 1rem; }
 .pt-labs p { margin: 0; }
 .pt-more { display: inline-flex; align-items: center; min-height: var(--tap); color: var(--blue); font-weight: 600; }
+/* A long allergy stays one short line inside its card; the full text is in the title. */
+.pt-allergy { display: block; min-width: 0; }
+.pt-allergy > * { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }

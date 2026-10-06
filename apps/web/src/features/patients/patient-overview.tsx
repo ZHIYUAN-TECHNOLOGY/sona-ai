@@ -34,15 +34,20 @@ export function PatientOverview({ patientId, role }: { patientId: string; role: 
   const canRead = can(role, "encounter.get");
   return (
     <>
-      <PageHeader title={patient.name} lead={`${patient.age} · ${patient.sex} · ${patient.subtitle}`}>
-        <StatusChip patient={patient} />
-        {canRead && patient.encounterId ? (
-          // The visit page reads encounterId from the URL itself.
-          <Link to="/pro/visit" search={{ encounterId: patient.encounterId }} className="pt-open">
-            Open the visit
-          </Link>
-        ) : null}
-      </PageHeader>
+      <PageHeader
+        breadcrumb={[{ label: "Patients", to: "/pro/patients" }, { label: patient.name }]}
+        title={patient.name}
+        lead={`${patient.age} · ${patient.sex} · ${patient.subtitle}`}
+        status={<StatusChip patient={patient} />}
+        actions={
+          canRead && patient.encounterId ? (
+            // The visit page reads encounterId from the URL itself.
+            <Link to="/pro/visit" search={{ encounterId: patient.encounterId }} className="btn">
+              Open the visit
+            </Link>
+          ) : undefined
+        }
+      />
       {canRead ? (
         <Clinical patient={patient} />
       ) : (
@@ -109,7 +114,7 @@ function Clinical({ patient }: { patient: PatientRow }) {
           <RightRail label="Results, medicines and doses">
             <PatientResults patientId={patient.id} />
             <Card title="Medicines">
-              {patient.allergies ? <Chip tone="urgent">Allergy: {patient.allergies}</Chip> : null}
+              {patient.allergies ? <span className="pt-allergy" title={`Allergy: ${patient.allergies}`}><Chip tone="urgent">Allergy: {patient.allergies}</Chip></span> : null}
               <List items={patient.medicines} empty="No medicines on record." />
             </Card>
             {patient.takeHome?.length ? (
