@@ -153,7 +153,7 @@ export function StatCard({ title, value, unit, caption, chip, tone = "neutral", 
   );
 }
 
-/** A part of a lead line that needs the eye: a tone dot and coloured text, e.g. `<Signal tone="soon">7 blocked</Signal>`. */
+/** A part of a lead line that needs the eye, in its tone's colour, e.g. `<Signal tone="soon">7 blocked</Signal>`. */
 export function Signal({ tone = "info", children }: { tone?: Tone; children: ReactNode }) {
   return <span className="signal" data-tone={tone}>{children}</span>;
 }

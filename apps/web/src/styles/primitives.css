@@ -58,9 +58,9 @@
 .stat[data-feature] { background: linear-gradient(160deg, var(--blue-wash), var(--surface) 85%); }
 .stat-head { display: flex; align-items: center; gap: var(--space-2); min-height: 32px; }
 .stat-title { flex: 1; min-width: 0; margin: 0; font-size: var(--text-body); font-weight: 500; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.stat-body { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); margin-top: auto; min-width: 0; }
+.stat-body { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-1) var(--space-3); margin-top: auto; min-width: 0; }
 .stat-value { display: flex; align-items: baseline; min-width: 0; margin: 0; font-size: var(--text-stat); line-height: 1; font-weight: 500; letter-spacing: var(--track-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.stat-unit { min-width: 0; margin-left: var(--space-1); font-size: var(--text-body); letter-spacing: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.stat-unit { min-width: 0; margin-left: var(--space-1); font-size: var(--text-body); line-height: 1.4; letter-spacing: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
 .stat-caption { margin: 0; font-size: var(--text-small); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stat-body .chip { flex: none; margin: 0 0 var(--space-1) auto; }
 .stat-arc { flex: none; width: 64px; }
@@ -75,8 +75,7 @@
 .stat .icon-btn { position: relative; z-index: 1; }
 
 /* Signal: the part of a lead line that needs the eye. */
-.signal { color: var(--tone); font-weight: 600; white-space: nowrap; }
-.signal::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: currentColor; vertical-align: middle; transform: translateY(-1px); }
+.signal { color: var(--tone); font-weight: 600; }
 
 /* Tabs */
 .tabs { display: flex; gap: var(--space-5); overflow-x: auto; }

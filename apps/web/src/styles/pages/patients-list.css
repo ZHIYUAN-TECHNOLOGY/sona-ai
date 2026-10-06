@@ -1,11 +1,6 @@
 /* Patients list: only what the shared table, tabs and cards do not already give. */
 .ptl-calm { color: var(--muted); }
 .ptl-card td:last-child { white-space: nowrap; }
-/* Five tabs and the search share one line beside the rail on a laptop: the search gives way, then drops under the tabs, so the last tab is never cut. */
-.ptl-card .table-toolbar-row { flex-wrap: wrap; }
-.ptl-card .table-toolbar-start { flex: none; max-width: 100%; }
-.ptl-card .table-toolbar-end { flex: 1 1 9rem; min-width: 9rem; justify-content: flex-end; }
-.ptl-card .search-field { flex: 0 1 15rem; }
 /* The name and ID read in full: the reason column takes what is left. */
 .ptl-card th:first-child { width: 13.5rem; }
 /* Reason: the diagnosis, then the complaint underneath in full (two lines). */
