@@ -139,3 +139,21 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 .pro .page-actions .btn { min-height: var(--pill-h); padding: 0 var(--space-5); }
 .pro .page-actions .icon-btn { width: var(--pill-h); height: var(--pill-h); padding: 0; }
 .stat-head { min-height: 32px; }
+
+/* Stat: value and unit share one baseline; the value row sits at the same height across a StatRow. */
+.stat-title, .stat-caption { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.stat-body { margin-top: auto; min-width: 0; }
+.stat-value { display: flex; align-items: baseline; min-width: 0; white-space: nowrap; }
+.stat-unit { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* Shared utilities */
+.num { font-variant-numeric: tabular-nums; }
+.section-label { margin: 0; font-size: var(--text-overline); font-weight: 600; letter-spacing: var(--track-overline); text-transform: uppercase; color: var(--muted); }
+.detail-list { display: grid; margin: 0; }
+.detail-list > div { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-top: 1px solid var(--hairline); }
+.detail-list > div:first-child { border-top: 0; }
+.detail-list dt { font-size: var(--text-small); color: var(--muted); }
+.detail-list dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.select { height: var(--field-h); max-width: 100%; padding: 0 var(--space-4); border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--fill-field); color: var(--ink); font: inherit; cursor: pointer; }
+.select:hover { border-color: var(--line); }
+.select:focus-visible { outline: 0; background: var(--surface); border-color: var(--blue); }
+.select:disabled { cursor: default; opacity: 0.5; }

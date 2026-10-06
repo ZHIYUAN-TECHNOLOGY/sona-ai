@@ -1,4 +1,4 @@
-import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type KeyboardEvent, type ReactNode } from "react";
+import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
 
 import { Avatar } from "./avatar";
@@ -134,9 +134,9 @@ export function StatCard({ title, value, unit, caption, chip, tone = "neutral", 
         {chip ? <Chip tone={tone}>{chip}</Chip> : <span />}
         {action ? <IconButton icon="arrow-up-right" label={label} size="sm" {...target} /> : null}
       </div>
-      <h3 className="stat-title">{title}</h3>
+      <h3 className="stat-title" title={title}>{title}</h3>
       <div className="stat-body">
-        <p className="stat-value">{value}{unit ? <span className="stat-unit">{unit}</span> : null}</p>
+        <p className="stat-value"><span>{value}</span>{unit ? <span className="stat-unit" title={typeof unit === "string" ? unit : undefined}>{unit}</span> : null}</p>
         {done === undefined ? null : (
           <svg className="stat-arc" viewBox="0 0 100 56" role="img" aria-label={`${Math.round(done)}%`}>
             <path d="M8 50 A42 42 0 0 1 92 50" pathLength={100} />
@@ -150,6 +150,30 @@ export function StatCard({ title, value, unit, caption, chip, tone = "neutral", 
 }
 
 /** A row of stat cards; wraps on narrow widths. */
+/** A 40px grey icon tile: the leading of a `ListRow` or a table cell for a file or document. */
+export function FileTile({ icon = "file" }: { icon?: IconName }) {
+  return <span className="list-tile"><Icon name={icon} size={20} /></span>;
+}
+
+/** Label/value rows for a rail card: muted label column, value column, hairline dividers. */
+export function DetailList({ items }: { items: { label: string; value: ReactNode }[] }) {
+  return (
+    <dl className="detail-list">
+      {items.map((item) => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}
+    </dl>
+  );
+}
+
+/** Overline heading for a section of a document card. */
+export function SectionLabel({ children }: { children: ReactNode }) {
+  return <h4 className="section-label">{children}</h4>;
+}
+
+/** Native select in `SearchField`'s look. `label` is its accessible name. */
+export function Select({ label, className, children, ...rest }: SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
+  return <select className={`select${className ? ` ${className}` : ""}`} aria-label={label} {...rest}>{children}</select>;
+}
+
 export function StatRow({ children }: { children: ReactNode }) {
   return <div className="stat-row">{children}</div>;
 }

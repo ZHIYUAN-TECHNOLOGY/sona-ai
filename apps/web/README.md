@@ -307,3 +307,14 @@ Empty `points` draws the chart's own empty state.
 - Loading is `Skeleton` or `DataTable loading`. Empty and refused are `EmptyState` in plain words.
 - Page-only styles go in `src/styles/pages/<page>.css`, using tokens.
 - Do not edit: anything in `src/components/`, any `src/styles/*.css` outside `src/styles/pages/`, or `src/nav.ts`. If a shared piece is missing something, say so in your report.
+
+### Shared additions (design-system fixes)
+
+- `DataTable`: the table scrolls sideways inside its card (`.table-scroll`) and is never wider than it. `PersonCell` keeps name and caption on one line each with an ellipsis (full text in `title`). The action column is as narrow as its content.
+- `TextCell` (`data-table.tsx`): long cell text, two lines then an ellipsis.
+- `TableToolbar({ children, end })`: pass it as `DataTable`'s `toolbar`; `children` (tabs, filters) sit left, `end` (`SearchField`, icon buttons) right, wrapping under 900px.
+- `StatCard`: value and `unit` share one baseline, the unit shrinks with an ellipsis; title and caption clamp to two lines; value rows align across a `StatRow`.
+- `InsightCard` `next`: `onAct`, or a full target (`to`, `params`, `search`, or `href`); `pending` shows the action as busy.
+- `FileTile({ icon })`, `DetailList({ items: [{ label, value }] })`, `SectionLabel`, `Select({ label })` in `primitives.tsx`; `.num` for tabular numerals.
+- Icons: `info`, `phone`, `upload`, `image`, `trash`, `refresh`, `external`.
+- Token `--sona-bar-clearance` (176px): bottom padding of the Pro scroll area, so the last card clears the Sona bar.
