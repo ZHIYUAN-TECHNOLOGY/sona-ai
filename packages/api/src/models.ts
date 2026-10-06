@@ -42,6 +42,18 @@ export type EvidenceAnswer = { claims: Claim[]; followUps: string[]; general?: s
 /** A part of an evidence answer, as soon as it is written: its bottom line, or one claim. */
 export type EvidencePart = { bottomLine: string } | { claim: Claim };
 
+export type VisitSummaryInput = {
+  sections: { id: string; text: string }[];
+  prescriptions: { name: string; detail?: string; change?: "new" | "changed" | "stopped"; from?: string }[];
+  followUps: string[];
+};
+/** What changed at the visit, one short line each: medicines started, stopped or changed, and new follow-ups. */
+export const changesOf = ({ prescriptions, followUps }: VisitSummaryInput) => [
+  ...prescriptions.flatMap(p => p.change === "new" ? [`Started ${p.name}`] : p.change === "stopped" ? [`Stopped ${p.name}`]
+    : p.change === "changed" ? [`Changed ${p.name}${p.from ? ` (was ${p.from})` : ""}`] : []),
+  ...followUps.map(f => `Follow-up: ${f}`),
+];
+
 export type Models = {
   /** Brain (Gemma): what to know before seeing the patient. */
   /** `visitPrep` is what the patient shared from Sona Care before the visit (visitPrepBlock), when they shared anything. */
@@ -54,6 +66,8 @@ export type Models = {
   incidentalFindings(input: { patientId: string; image?: Uint8Array; contentType?: string }): Answer<{ findings: DetectedFinding[]; validated: false }>;
   /** `summary` is the full text; `lines` the three-line summary when a model wrote it (the app shows the plan's own lines otherwise). */
   draftDischarge(input: { patient: Patient; language: Language }): Answer<{ summary: string; leaflet: string; lines?: { diagnosis: string; course: string; plan: string } }>;
+  /** After-visit summary in plain words for the patient, from the saved note; `whatChanged` is always rule-built (changesOf). A clinician approves it before the patient reads it. */
+  draftVisitSummary(input: VisitSummaryInput): Answer<{ text: string; whatChanged: string[] }>;
   /** `candidates`: WHO ICD-10 table hits for the note (the route looks them up for a hosted model; the stub's rules need none). */
   suggestCodes(input: { sentences: Sentence[]; candidates?: { code: string; label: string }[] }): Answer<{ codes: Code[] }>;
   /**
@@ -166,6 +180,9 @@ export const stubModels: Models = {
   ] : [] }),
   // The patient's own plan (authored for Amelia, rule-built from the record for anyone else), as a model would draft it.
   draftDischarge: ({ patient, language }) => { const plan = planFor(patient); return fixture({ summary: plan.full, leaflet: plan.leaflet[language] }); },
+  // The note's own sentences, then what changed: nothing is reworded, so every sentence has its source.
+  draftVisitSummary: input => { const whatChanged = changesOf(input); return fixture({ whatChanged,
+    text: [...input.sections.map(s => s.text.trim()).filter(Boolean), ...whatChanged].map(t => /[.!?]$/.test(t) ? t : `${t}.`).join(" ") }); },
   // ponytail: keyword rules stand in for OpenMed extraction; each code cites the first sentence that names it, and a note naming none gets none.
   suggestCodes: ({ sentences }) => fixture({ codes: CODE_RULES.flatMap(([re, code]) => {
     const evidence = sentences.find(s => re.test(s.text))?.id;

@@ -6,7 +6,7 @@ import { huddle } from "@sona-ai/domain/ward";
 
 import { LANGUAGE_NAME, chatModels, jsonIn } from "./chat-models";
 import { partialEvidence } from "./evidence-stream";
-import { stubModels, type EvidenceAnswer, type EvidenceInput, type EvidencePart, type Models, type Origin } from "./models";
+import { changesOf, stubModels, type EvidenceAnswer, type EvidenceInput, type EvidencePart, type Models, type Origin } from "./models";
 import { deltas } from "./sse";
 import { piiModels } from "./pii-model";
 import { scribeModels } from "./scribe-model";
@@ -120,6 +120,9 @@ Rules:
 - Mention only the codes listed. Never add a number, date, test, finding or treatment that a sentence or code does not state.
 - Quote only words the note sentences or the denial contain.`;
 
+const VISIT_SUMMARY = `You write an after-visit summary for the patient, in plain words, for a clinician to approve before the patient reads it.
+Use only what the visit's note, prescriptions and follow-ups say. Add no advice of your own. Write every number exactly as written.
+Reply with JSON only: {"summary": "..."}`;
 const DISCHARGE = `You draft a hospital discharge from the patient's record, for the doctor to check before signing.
 Use ONLY the record below. Never add a diagnosis, result, dose, duration or number it does not state.
 The take-home medicines are fixed: list exactly their names in "medicines", and name no other medicine in "plan" or "leaflet".
@@ -430,6 +433,17 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
         }
       } catch { /* the rules below */ }
       return fallback.draftAppeal(input);
+    },
+
+    // The model words the summary; what changed is the rules' list, and a number the visit never gave sends it back to the fixture.
+    async draftVisitSummary(input) {
+      try {
+        const facts = JSON.stringify(input);
+        const read = await brain(VISIT_SUMMARY, `Visit: ${facts}`, 600);
+        const summary = text(read?.summary, 1200);
+        if (summary && onlyNumbersFrom(facts, summary)) return { text: summary, whatChanged: changesOf(input), source: "model", model: BRAIN_MODEL };
+      } catch { /* the note's own sentences below */ }
+      return fallback.draftVisitSummary(input);
     },
 
     // The take-home list is the plan's (reconciled by rules), so the model words it and never changes it.

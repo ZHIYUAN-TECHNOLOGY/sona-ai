@@ -296,6 +296,13 @@ const gemma = (reply: string) => basetenModels({ apiKey: "k", fetcher: fake({ [b
 const amelia = { ...DEMO_PATIENTS[0]!, time: "09:00" };
 const fromModel = { source: "model", model: BRAIN_MODEL };
 
+test("the visit summary is the model's words with the rules' changes; a number the visit never gave falls back to the fixture", async () => {
+  const visit = { sections: [{ id: "s1", text: "Chest infection. Start amoxicillin 500 mg." }], prescriptions: [{ name: "Amoxicillin", detail: "500 mg", change: "new" as const }], followUps: [] };
+  expect(await gemma(JSON.stringify({ summary: "You have a chest infection. Take amoxicillin 500 mg." })).draftVisitSummary(visit))
+    .toEqual({ text: "You have a chest infection. Take amoxicillin 500 mg.", whatChanged: ["Started Amoxicillin"], ...fromModel } as never);
+  expect((await gemma(JSON.stringify({ summary: "Take amoxicillin 250 mg." })).draftVisitSummary(visit)).source).toBe("fixture");
+});
+
 test("reasoning keeps only possibilities citing a record source it was given, one per line, unranked", async () => {
   const read = await gemma(JSON.stringify({ possibilities: [
     { title: "Pneumonia", why: "Five days of cough with a temperature of 38.1 °C.", sources: ["history", "vitals"] },
