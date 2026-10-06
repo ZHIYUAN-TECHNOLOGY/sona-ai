@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-import { PageHeader } from "@/components/page";
+import { EmptyState, PageHeader } from "@/components/page";
+import { Card, Chip, ListCard, ListRow } from "@/components/primitives";
+import { RightRail } from "@/components/rail";
 import { Call } from "@/features/care-ask/call";
 import { Listen } from "@/features/care-ask/listen";
 import { authClient } from "@/lib/auth-client";
@@ -24,7 +26,7 @@ async function answer(question: string): Promise<ReactNode> {
     <>
       <p>{res.answer}</p>
       {res.careTeam?.line ? <p>{res.careTeam.line}</p> : null}
-      {res.source === "fixture" ? <p className="sona-turn-note">Sample answer.</p> : null}
+      {res.source === "fixture" ? <Chip tone="neutral">Sample answer</Chip> : null}
       {res.grounded ? <p className="sona-turn-note">From your record.</p> : null}
       {res.sources?.length ? <p className="sona-turn-note">From: {res.sources.map(s => s.title).join(", ")}</p> : null}
       <Listen text={spoken} />
@@ -32,17 +34,34 @@ async function answer(question: string): Promise<ReactNode> {
   );
 }
 
-function Page() {
+function Body({ call }: { call?: Parameters<Parameters<typeof Call>[0]["children"]>[0] }) {
   const ask = useSonaAsk(answer);
+  return (
+    <div className="ask-page" data-call={call?.open ? "on" : "off"}>
+      <PageHeader title="Ask Sona" lead="Ask anything. Type, or talk to Sona." actions={call?.open ? undefined : call?.button} />
+      {call?.open ? call.stage : null}
+      <Card className="ask-welcome">
+        <EmptyState icon="sparkle" title="What would you like to know?">
+          <p>Tap a question, or type your own in the bar below.</p>
+          <ul className="ask-chips" aria-label="Suggested questions">
+            {SUGGESTED.map(q => <li key={q}><button type="button" className="ask-chip" onClick={() => ask(q)}>{q}</button></li>)}
+          </ul>
+        </EmptyState>
+      </Card>
+      <RightRail label="More from Sona">
+        {call?.open ? call.transcript : null}
+        <div className="ask-more">
+          <ListCard title="Things people ask">
+            {SUGGESTED.map(q => <ListRow key={q} icon="message" title={q} onClick={() => ask(q)} />)}
+          </ListCard>
+        </div>
+      </RightRail>
+    </div>
+  );
+}
+
+function Page() {
   // The Worker refuses a call whose path is not the signed-in account's own id.
   const userId = authClient.useSession().data?.user.id;
-  return (
-    <>
-      {userId ? <Call instance={userId} /> : null}
-      <PageHeader title="Ask Sona" lead="Ask anything. Type or speak in the bar below, or tap a question." />
-      <ul className="ask-chips" aria-label="Suggested questions">
-        {SUGGESTED.map(q => <li key={q}><button type="button" className="ask-chip" onClick={() => ask(q)}>{q}</button></li>)}
-      </ul>
-    </>
-  );
+  return userId ? <Call instance={userId}>{call => <Body call={call} />}</Call> : <Body />;
 }
