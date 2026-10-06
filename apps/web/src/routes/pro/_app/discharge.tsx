@@ -5,9 +5,10 @@ import { useState } from "react";
 
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader, PatientStrip } from "@/components/page";
-import { Button, Card, Chip, ListCard, ListRow } from "@/components/primitives";
+import { Button, Card, Chip, ListCard, ListRow, Signal, StatCard, StatRow } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
-import { blockersOf, Loaded, oneParam, Origin, PatientPicker, say, usePatient } from "@/features/discharge/shared";
+import { countOf, dischargeRank, standings } from "@/features/discharge/rank";
+import { blockersOf, Loaded, type Mark, oneParam, Origin, PatientPicker, say, usePatient } from "@/features/discharge/shared";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/discharge-plan.css";
 
@@ -15,11 +16,43 @@ export const Route = createFileRoute("/pro/_app/discharge")({ validateSearch: on
 
 function Page() {
   const { encounterId } = Route.useSearch();
-  if (encounterId) return <Visit key={encounterId} encounterId={encounterId} />;
+  return encounterId ? <Visit key={encounterId} encounterId={encounterId} /> : <Chooser />;
+}
+
+type Group = "fit" | "blocked";
+const openPlan = (p: { encounterId: string }) => <Link to="/pro/discharge" search={{ encounterId: p.encounterId }}>Open plan</Link>;
+
+/** No visit chosen: who can go home and who is held, from the ward's beds, ranked so the nearest to leaving lead. */
+function Chooser() {
+  const beds = useQuery(orpc.ward.beds.queryOptions());
+  const [group, setGroup] = useState<Group>();
+  const by = standings(beds.data ?? []);
+  const fit = countOf(by, "fit");
+  const blocked = countOf(by, "blocked");
+  const toggle = (g: Group) => () => setGroup(now => (now === g ? undefined : g));
+  const mark = (id: string): Mark | undefined => {
+    const s = by.get(id);
+    if (!s) return undefined;
+    const why = s.kind === "blocked" ? `waiting on ${s.blockers.map(b => b.label).join(", ")}` : s.kind === "fit" ? "nothing is holding it" : s.kind === "watch" ? "being watched" : "not fit to go yet";
+    return { rank: dischargeRank(s), reason: `${s.bed} · ${why}`, chip: s.kind === "fit" ? <Chip tone="done">Ready to go</Chip> : s.kind === "blocked" ? <Chip tone="soon">Blocked</Chip> : undefined };
+  };
+
   return (
     <>
-      <PageHeader title="Discharge" lead="Choose a patient to see what is holding their bed." />
-      <PatientPicker link={p => <Link to="/pro/discharge" search={{ encounterId: p.encounterId }}>Open plan</Link>} />
+      <PageHeader title="Discharge"
+        lead={beds.isPending ? "Reading the ward…" : !beds.data ? "The ward could not be read, so this list is not ranked. Open a plan to see what is holding the bed."
+          : fit + blocked === 0 ? "Nobody is fit to go home yet."
+          : <>{fit ? <Signal tone="done">{fit} ready to go</Signal> : "Nobody is ready to go"} · {blocked ? <Signal tone="soon">{blocked} fit but blocked</Signal> : "nobody is blocked"}</>}
+        actions={beds.data ? <Button to="/pro/ward" icon="bed">Open the ward</Button> : undefined} />
+      {beds.data ? (
+        <StatRow>
+          <StatCard title="Ready to go" value={fit} caption="Fit, with nothing holding the bed" chip={fit ? "Approve next" : undefined} tone="done" onSelect={toggle("fit")} selected={group === "fit"} />
+          <StatCard title="Blocked" value={blocked} caption="Fit, but something holds the bed" chip={blocked ? "Clear first" : undefined} tone="soon" onSelect={toggle("blocked")} selected={group === "blocked"} />
+          <StatCard title="On the ward" value={by.size} caption="Admitted patients with a bed" />
+        </StatRow>
+      ) : null}
+      <PatientPicker link={openPlan} mark={mark} only={group ? id => by.get(id)?.kind === group : undefined}
+        title={group === "fit" ? "Ready to go" : group === "blocked" ? "Blocked" : "Patients, nearest to going home first"} />
     </>
   );
 }
@@ -56,7 +89,7 @@ function Visit({ encounterId }: { encounterId: string }) {
   const act = () => approve.mutate({ encounterId, requestId: crypto.randomUUID(), approvedBy: me.name });
   const lead = !plan.data ? undefined
     : approve.isSuccess ? `Discharge approved for ${bed}.`
-    : waits.length ? `${things(waits.length)} still hold${waits.length === 1 ? "s" : ""} ${bed}. Clear ${waits.length === 1 ? "it" : "them"} before you approve.`
+    : waits.length ? <><Signal tone="soon">{things(waits.length)} still hold{waits.length === 1 ? "s" : ""} {bed}</Signal>. Clear {waits.length === 1 ? "it" : "them"} before you approve.</>
     : mayApprove ? `Nothing is holding ${bed}. Review the summary, then approve.`
     : `Nothing is holding ${bed}. Only a doctor can approve a discharge.`;
 
