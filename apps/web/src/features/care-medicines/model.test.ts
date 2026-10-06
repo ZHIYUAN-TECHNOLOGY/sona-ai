@@ -1,7 +1,7 @@
 // @ts-expect-error apps/web has no bun types yet (no new dependencies in this change); add @types/bun and drop this line.
 import { expect, test } from "bun:test";
 
-import { dosesToday, langOf, nextDose, partOf, weekTaken } from "./model";
+import { dosesToday, langOf, nextDose, partOf, weekDots, weekTaken } from "./model";
 
 const meds = [{ name: "Amoxicillin", line: "500 mg", take: "1 capsule", at: ["08:00", "20:00"] }];
 const out = "2026-10-01T04:00:00.000Z"; // noon in Malaysia
@@ -17,4 +17,11 @@ test("today, next dose and the week follow the plan and what was taken", () => {
   expect(week.at(-1)).toMatchObject({ y: 1, due: 1 });
   expect(partOf(new Date(morning.split("@")[1]!))).toBe("Morning");
   expect([langOf("ms-MY"), langOf("zh-Hans"), langOf("fr"), langOf(undefined)]).toEqual(["ms", "zh", "en", "en"]);
+});
+
+test("weekDots marks each dose done, missed or upcoming", () => {
+  const days = weekDots(meds, out, [], now, "en");
+  expect(days.length).toBe(7);
+  expect(days[6]!.dots.map(d => d.state)).toEqual(["upcoming", "upcoming"]);
+  expect(days[5]!.dots.map(d => d.state)).toEqual(["missed", "missed"]);
 });
