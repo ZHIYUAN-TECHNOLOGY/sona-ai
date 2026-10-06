@@ -3,23 +3,26 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { DataTable, type Column } from "@/components/data-table";
+import { Icon } from "@/components/icon";
+import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
+import { RightRail, WithRail } from "@/components/rail";
 import { Button, Card, Chip, Field } from "@/components/primitives";
 import { blockersOf, Loaded, oneParam, Origin, PatientPicker, say } from "@/features/discharge/shared";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/discharge.css";
+import "@/styles/pages/guarantee-letter.css";
 
 export const Route = createFileRoute("/pro/_app/guarantee-letter")({ validateSearch: oneParam("encounterId"), component: Page });
 
 function Page() {
   const { encounterId } = Route.useSearch();
-  return (
+  return encounterId ? <Letter key={encounterId} encounterId={encounterId} /> : (
     <>
-      <PageHeader title="Guarantee letter" lead={encounterId ? <Link to="/pro/guarantee-letter">All patients</Link> : undefined} />
-      {encounterId ? <Letter key={encounterId} encounterId={encounterId} /> : (
-        <PatientPicker lead="Choose a patient to see their guarantee letter."
-          link={p => <Link to="/pro/guarantee-letter" search={{ encounterId: p.encounterId }}>Open letter</Link>} />
-      )}
+      <PageHeader title="Guarantee letter" lead="Choose a patient to see where their insurer claim stands." />
+      <PatientPicker lead="Choose a patient to see their guarantee letter."
+        link={p => <Link to="/pro/guarantee-letter" search={{ encounterId: p.encounterId }}>Open letter</Link>} />
     </>
   );
 }
@@ -29,6 +32,33 @@ const STEPS = ["Drafted", "Sent", "Decided"] as const;
 const progress = (status: string) =>
   status === "draft" ? { at: 0, end: "Approved or denied" } : status === "sent" || status === "queried" ? { at: 1, end: status === "queried" ? "Insurer has a question" : "Approved or denied" }
     : { at: 2, end: status === "approved" ? "Approved" : status === "denied" ? "Denied" : status === "appealed" ? "Denied, appeal sent" : status };
+
+const day = (iso?: string) => (iso ? new Date(iso).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" }) : undefined);
+const CRUMBS = [{ label: "Guarantee letters", to: "/pro/guarantee-letter" as const }, { label: "This letter" }];
+
+type Claim = { status: string; approvedAt?: string; appealedAt?: string; denial?: { code: string } };
+type Step = { label: string; state: "done" | "current" | "denied" | "blocked" | "todo"; detail?: string };
+
+/** The stepper's rows, from `progress()`. A denied letter grows a fourth step, the appeal. */
+function stepsOf(s: Claim): Step[] {
+  const { at, end } = progress(s.status);
+  const lost = s.status === "denied" || s.status === "appealed";
+  const steps: Step[] = STEPS.map((step, i) => ({
+    label: i === 2 ? (s.status === "appealed" ? "Denied" : end) : step,
+    state: i === 2 && lost ? "denied" : i === 2 && s.status === "queried" ? "blocked" : i < at || s.status === "approved" ? "done" : i === at ? "current" : "todo",
+    detail: i === 0 && at === 0 ? "Not sent yet" : i === 1 && at === 1 ? "Waiting for the insurer" : i === 2 && s.status === "approved" ? day(s.approvedAt) : undefined,
+  }));
+  if (lost) steps.push(s.status === "appealed" ? { label: "Appeal sent", state: "done", detail: day(s.appealedAt) } : { label: "Appeal", state: "current", detail: "Draft to review" });
+  return steps;
+}
+
+const leadOf = (s: Claim) =>
+  s.status === "draft" ? "Not sent yet. Check the codes, then send the letter to the insurer."
+    : s.status === "sent" ? "Sent. The insurer has not decided yet."
+    : s.status === "queried" ? "The insurer has a question before it decides."
+    : s.status === "approved" ? `Approved${s.approvedAt ? ` on ${day(s.approvedAt)}` : ""}. Nothing left to do.`
+    : s.status === "denied" ? `Denied${s.denial ? ` (${s.denial.code})` : ""}. An appeal draft is ready to review.`
+    : s.status === "appealed" ? `Denied, and the appeal went${s.appealedAt ? ` on ${day(s.appealedAt)}` : ""}. The insurer has not answered yet.` : s.status;
 
 function Letter({ encounterId }: { encounterId: string }) {
   const { me } = Route.useRouteContext();
@@ -41,66 +71,74 @@ function Letter({ encounterId }: { encounterId: string }) {
   const send = useMutation(orpc.claim.send.mutationOptions({ onSuccess: refresh }));
   const mayChange = can(me.role, "claim.update");
   const maySend = can(me.role, "claim.send");
+  const mayAppeal = can(me.role, "claim.appeal");
+  const sendNow = () => send.mutate({ encounterId, requestId: crypto.randomUUID(), approvedBy: me.name });
+  const cited = codes.data?.codes ?? [];
+  const evidence = cited.slice(0, 4).map(c => ({ icon: "file" as const, text: `${c.code} ${c.label}` }));
+  const sources = cited.length || undefined;
+
+  const s = status.data;
+  if (!s) return <><PageHeader title="Guarantee letter" breadcrumb={CRUMBS} /><Loaded query={status}>{() => null}</Loaded></>;
+  const draft = s.status === "draft";
+  const blockers = send.error ? blockersOf(send.error) : [];
+  const reviewUrl = s.reviewUrl;
+
+  const insight = send.error ? <InsightCard tone="urgent" label="Not sent" lead={say(send.error)} sources={blockers.length || undefined}
+      evidence={blockers.map(b => ({ icon: "alert" as const, text: b.detail ? `${b.label}: ${b.detail}` : b.label }))} />
+    : s.query ? <InsightCard tone="soon" label="Insurer's question" lead={s.query} evidence={evidence} sources={sources}
+      next={reviewUrl ? { label: "Open the insurer's page", step: "Answer there", onAct: () => window.open(reviewUrl, "_blank", "noopener") } : undefined} />
+    : s.denial ? <InsightCard tone={s.status === "denied" ? "urgent" : "info"} label={`Denial reason · ${s.denial.code}`} lead={`${s.denial.reason}${s.denial.note ? ` ${s.denial.note}` : ""}`}
+      evidence={evidence} sources={sources}
+      next={s.status === "denied" && mayAppeal ? { label: "Review the appeal draft", step: "Edit, then send", onAct: () => document.getElementById("gl-appeal")?.scrollIntoView({ behavior: "smooth" }) } : undefined} />
+    : <InsightCard tone={s.status === "approved" ? "done" : "info"} label="Next step" evidence={evidence} sources={sources}
+      lead={draft ? (maySend ? `${cited.length} ${cited.length === 1 ? "code is" : "codes are"} ready. Sending the letter is the next step.` : "Only a doctor can send this letter.") : leadOf(s)}
+      next={draft && maySend ? { label: "Send to insurer", step: "Accepts the codes", onAct: sendNow } : undefined} />;
+
+  const columns: Column<(typeof cited)[number]>[] = [
+    { key: "code", header: "Code", cell: c => <span className="gl-code">{c.code}</span> },
+    { key: "title", header: "Title", cell: c => <span className="gl-title">{c.label}{c.inTable === false ? <Chip tone="soon" icon="alert">Not in the ICD-10 table</Chip> : null}</span> },
+    { key: "cite", header: "Cited from the note", cell: c => <span className="gl-cite">{codes.data?.sentences.find(x => x.id === c.evidence)?.text ?? c.evidence}</span> },
+    { key: "kind", header: "Kind", cell: c => <span className="gl-muted">{c.kind}</span> },
+  ];
 
   return (
-    <Loaded query={status}>
-      {s => {
-        const { at, end } = progress(s.status);
-        return (
-          <div className="dc-stack">
-            <ol className="dc-steps" aria-label="Claim status">
-              {STEPS.map((step, i) => (
-                <li key={step}><Chip tone={i < at || s.status === "approved" ? "done" : i === at ? (s.status === "denied" ? "urgent" : "info") : "neutral"}>{i === 2 ? end : step}</Chip></li>
-              ))}
-            </ol>
-            {s.query ? <p className="dc-refused">The insurer asks: {s.query}</p> : null}
-            {s.denial ? <p className="dc-refused">Denied ({s.denial.code}): {s.denial.reason}{s.denial.note ? ` ${s.denial.note}` : ""}</p> : null}
-            <Card title="Suggested codes">
-              <Loaded query={codes} empty="No codes suggested.">
-                {c => (
-                  <>
-                    <div className="dc-row"><Origin source={c.source} /><span className="dc-muted">Each code cites the note. You decide.</span></div>
-                    {c.codes.length ? (
-                      <ul className="dc-list">
-                        {c.codes.map(code => (
-                          <li key={code.code}>
-                            <span>
-                              <strong>{code.code}</strong> {code.label} <Chip>{code.kind}</Chip>
-                              <blockquote className="dc-quote">{c.sentences.find(x => x.id === code.evidence)?.text ?? code.evidence}</blockquote>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : <p className="dc-muted">The note has nothing to code yet.</p>}
-                  </>
-                )}
-              </Loaded>
-              {s.status === "draft" && mayChange ? (
-                <div className="dc-row">
-                  <span className="dc-muted">Change the codes by adding to the note:</span>
-                  <Button pending={fix.isPending} onClick={() => fix.mutate({ encounterId, organismConfirmed: true })}>Confirm the organism</Button>
-                  <Button pending={fix.isPending} onClick={() => fix.mutate({ encounterId, ivReasonAdded: true })}>Add the reason for IV treatment</Button>
-                </div>
-              ) : null}
-              {fix.error ? <p className="dc-refused">{say(fix.error)}</p> : null}
-            </Card>
-            {s.status === "draft" ? (
-              <div className="dc-row">
-                <Button variant="primary" pending={send.isPending} disabled={!maySend} onClick={() => send.mutate({ encounterId, requestId: crypto.randomUUID(), approvedBy: me.name })}>
-                  Accept codes and send
-                </Button>
-                {maySend ? null : <span className="dc-muted">Only a doctor can send a claim.</span>}
-              </div>
-            ) : null}
-            {send.error ? (
-              <div className="dc-refused" role="alert">{say(send.error)}<ul>{blockersOf(send.error).map(b => <li key={b.label}>{b.label}{b.detail ? `: ${b.detail}` : ""}</li>)}</ul></div>
-            ) : null}
-            {s.status === "denied" ? can(me.role, "claim.appeal") ? <Appeal encounterId={encounterId} approvedBy={me.name} onSent={refresh} />
-              : <p className="dc-muted">Your role cannot appeal a denied guarantee letter.</p> : null}
-          </div>
-        );
-      }}
-    </Loaded>
+    <>
+      <PageHeader title="Guarantee letter" breadcrumb={CRUMBS} lead={leadOf(s)}
+        actions={draft && maySend ? <Button variant="primary" icon="arrow-right" pending={send.isPending} onClick={sendNow}>Accept codes and send</Button> : undefined} />
+      <WithRail rail={<RightRail label="What to decide">{insight}</RightRail>}>
+        <Card title="Claim status">
+          <ol className="gl-steps">
+            {stepsOf(s).map((step, i) => (
+              <li key={step.label} className="gl-step" data-state={step.state} aria-current={step.state === "current" ? "step" : undefined}>
+                <span className="gl-mark">{step.state === "done" ? <Icon name="check" size={16} label="Done" /> : i + 1}</span>
+                <span className="gl-step-label">{step.label}</span>
+                {step.detail ? <span className="gl-step-detail">{step.detail}</span> : null}
+              </li>
+            ))}
+          </ol>
+        </Card>
+        <Card title="Suggested codes">
+          <Loaded query={codes} empty="No codes suggested.">
+            {c => (
+              <>
+                <div className="gl-row"><Origin source={c.source} /><p className="gl-muted">Each code cites the note. You decide.</p></div>
+                <DataTable columns={columns} rows={c.codes} rowKey={code => code.code} empty={<p className="gl-muted">The note has nothing to code yet.</p>} />
+              </>
+            )}
+          </Loaded>
+          {draft && mayChange ? (
+            <div className="gl-row">
+              <p className="gl-muted">Change the codes by adding to the note:</p>
+              <Button size="sm" variant="secondary" pending={fix.isPending} onClick={() => fix.mutate({ encounterId, organismConfirmed: true })}>Confirm the organism</Button>
+              <Button size="sm" variant="secondary" pending={fix.isPending} onClick={() => fix.mutate({ encounterId, ivReasonAdded: true })}>Add the reason for IV treatment</Button>
+            </div>
+          ) : null}
+          {fix.error ? <p className="gl-error" role="alert">{say(fix.error)}</p> : null}
+        </Card>
+        {s.status === "denied" ? mayAppeal ? <Appeal encounterId={encounterId} approvedBy={me.name} onSent={refresh} />
+          : <Card title="Appeal"><p className="gl-muted">Your role cannot appeal a denied guarantee letter.</p></Card> : null}
+      </WithRail>
+    </>
   );
 }
 
@@ -109,31 +147,31 @@ function Appeal({ encounterId, approvedBy, onSent }: { encounterId: string; appr
   const [edited, setEdited] = useState<NonNullable<typeof draft.data>["letter"]>();
   const appeal = useMutation(orpc.claim.appeal.mutationOptions({ onSuccess: onSent }));
   return (
-    <Card title="Appeal">
+    <div id="gl-appeal"><Card title="Appeal letter">
       <Loaded query={draft}>
         {d => {
           const letter = edited ?? d.letter;
           return (
-            <div className="dc-stack">
-              <div className="dc-row"><Origin source={d.source} /><span className="dc-muted">A proposal. Review and edit, then send.</span></div>
-              <Field label="Opening">{control => <textarea {...control} className="dc-text" value={letter.opening} onChange={e => setEdited({ ...letter, opening: e.target.value })} />}</Field>
+            <div className="gl-doc-body">
+              <div className="gl-row"><Chip tone="soon" variant="outline">Draft</Chip><Origin source={d.source} /><p className="gl-muted">Not sent. Review and edit each part, then send.</p></div>
+              <Field label="Opening">{control => <textarea {...control} className="gl-text" value={letter.opening} onChange={e => setEdited({ ...letter, opening: e.target.value })} />}</Field>
               {letter.points.map((p, i) => (
                 <Field key={p.evidenceSentenceId + i} label={`Point ${i + 1}`} hint={`From the note: ${d.sentences.find(x => x.id === p.evidenceSentenceId)?.text ?? ""}`}>
-                  {control => <textarea {...control} className="dc-text" value={p.claim}
+                  {control => <textarea {...control} className="gl-text" value={p.claim}
                     onChange={e => setEdited({ ...letter, points: letter.points.map((q, j) => (j === i ? { ...q, claim: e.target.value } : q)) })} />}
                 </Field>
               ))}
-              <Field label="Closing">{control => <textarea {...control} className="dc-text" value={letter.closing} onChange={e => setEdited({ ...letter, closing: e.target.value })} />}</Field>
-              <div className="dc-row">
-                <Button variant="primary" pending={appeal.isPending} disabled={!letter.points.length}
+              <Field label="Closing">{control => <textarea {...control} className="gl-text" value={letter.closing} onChange={e => setEdited({ ...letter, closing: e.target.value })} />}</Field>
+              <div className="gl-doc-foot">
+                <Button variant="primary" icon="arrow-right" pending={appeal.isPending} disabled={!letter.points.length}
                   onClick={() => appeal.mutate({ encounterId, requestId: crypto.randomUUID(), approvedBy, letter })}>Send appeal</Button>
-                {letter.points.length ? null : <span className="dc-muted">No point is grounded in the note, so there is nothing to send.</span>}
+                {letter.points.length ? null : <span className="gl-muted">No point is grounded in the note, so there is nothing to send.</span>}
               </div>
-              {appeal.error ? <p className="dc-refused" role="alert">{say(appeal.error)}</p> : null}
+              {appeal.error ? <p className="gl-error" role="alert">{say(appeal.error)}</p> : null}
             </div>
           );
         }}
       </Loaded>
-    </Card>
+    </Card></div>
   );
 }

@@ -1,0 +1,28 @@
+/* Guarantee letter: the claim stepper, the codes table cells and the appeal document. Tokens only. */
+.gl-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--space-3); }
+.gl-step { position: relative; display: grid; gap: var(--space-1); align-content: start; min-width: 0; color: var(--muted); }
+.gl-step::after { content: ""; position: absolute; top: 14px; left: 36px; right: 0; height: 1px; background: var(--hairline); }
+.gl-step:last-child::after { display: none; }
+.gl-mark { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--hairline); background: var(--surface); font-size: var(--text-small); font-variant-numeric: tabular-nums; }
+.gl-step-label { color: var(--ink); font-weight: 500; }
+.gl-step-detail { font-size: var(--text-small); }
+.gl-step[data-state="done"] .gl-mark { background: var(--green-wash); border-color: transparent; color: var(--green); }
+.gl-step[data-state="current"] .gl-mark { background: var(--blue); border-color: var(--blue); color: var(--surface); }
+.gl-step[data-state="current"] .gl-step-label { color: var(--blue); font-weight: 600; }
+.gl-step[data-state="denied"] .gl-mark { background: var(--red-wash); border-color: transparent; color: var(--red); }
+.gl-step[data-state="denied"] .gl-step-label { color: var(--red); font-weight: 600; }
+.gl-step[data-state="blocked"] .gl-mark { background: var(--amber-wash); border-color: transparent; color: var(--amber); }
+
+.gl-code { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.gl-title { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.gl-cite { display: block; white-space: normal; min-width: 14rem; max-width: 30rem; color: var(--muted); line-height: var(--line-body); }
+.gl-muted { color: var(--muted); font-size: var(--text-small); margin: 0; }
+.gl-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-block: var(--space-3); }
+.gl-error { color: var(--red); font-size: var(--text-small); margin: var(--space-3) 0 0; }
+
+.gl-doc-body { display: grid; gap: var(--space-4); max-width: 44rem; }
+.gl-text { width: 100%; min-height: 5.5rem; resize: vertical; padding: var(--space-3); border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--fill-field); color: var(--ink); font: inherit; line-height: var(--line-body); }
+.gl-text:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.gl-doc-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--hairline); }
+
+@media (max-width: 720px) { .gl-steps { grid-auto-flow: row; } .gl-step::after { display: none; } }
