@@ -53,7 +53,7 @@ function Visit({ encounterId }: { encounterId: string }) {
   const bed = plan.data?.plan.bed || "the bed";
   const clear = !!plan.data && waits.length === 0;
   const canAct = clear && mayApprove && !approve.isSuccess;
-  const act = () => approve.mutate({ encounterId, requestId: crypto.randomUUID(), approvedBy: me.name });
+  const act = () => approve.mutate({ encounterId, requestId: crypto.randomUUID(), approvedBy: me.userId });
   const lead = !plan.data ? undefined
     : approve.isSuccess ? `Discharge approved for ${bed}.`
     : waits.length ? `${things(waits.length)} still hold${waits.length === 1 ? "s" : ""} ${bed}. Clear ${waits.length === 1 ? "it" : "them"} before you approve.`

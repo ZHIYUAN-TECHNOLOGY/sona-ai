@@ -71,7 +71,7 @@ function Letter({ encounterId }: { encounterId: string }) {
   const mayChange = can(me.role, "claim.update");
   const maySend = can(me.role, "claim.send");
   const mayAppeal = can(me.role, "claim.appeal");
-  const sendNow = () => send.mutate({ encounterId, requestId: crypto.randomUUID(), approvedBy: me.name });
+  const sendNow = () => send.mutate({ encounterId, requestId: crypto.randomUUID(), approvedBy: me.userId });
   const cited = codes.data?.codes ?? [];
   const count = (n: number) => `${n} code${n === 1 ? "" : "s"}`;
   const offTable = cited.filter(c => c.inTable === false).length;
@@ -143,7 +143,7 @@ function Letter({ encounterId }: { encounterId: string }) {
           ) : null}
           {fix.error ? <p className="gl-error" role="alert">{say(fix.error)}</p> : null}
         </Card></div>
-        {s.status === "denied" ? mayAppeal ? <Appeal encounterId={encounterId} approvedBy={me.name} onSent={refresh} />
+        {s.status === "denied" ? mayAppeal ? <Appeal encounterId={encounterId} approvedBy={me.userId} onSent={refresh} />
           : <Card title="Appeal"><p className="gl-muted">Your role cannot appeal a denied guarantee letter.</p></Card> : null}
       </WithRail>
     </>
