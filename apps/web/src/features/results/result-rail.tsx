@@ -56,7 +56,7 @@ export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }
       : { icon: "user" as const, text: allowed ? "Waiting for a doctor to acknowledge" : `Only a doctor can acknowledge. Tell the doctor on call${row.critical ? " now" : ""}.` },
   ];
   return (
-    <RightRail label="Selected result">
+    <RightRail label="Selected result" id="result-rail">
       <Card>
         <div className="results-detail-head">
           <Avatar name={row.patientName} size="lg" />

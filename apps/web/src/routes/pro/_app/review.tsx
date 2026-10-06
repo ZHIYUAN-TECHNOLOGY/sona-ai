@@ -166,7 +166,7 @@ function Page() {
                     <Avatar name={open.name} size="sm" />
                     <strong>{open.name}</strong>
                     <span className="msg-meta">{open.caption.replace("Reply · ", "Waiting ")}</span>
-                    <Link to="/pro/messages" className="rv-link">Open in Messages</Link>
+                    <Link to="/pro/messages" search={{ patient: open.t.patientId }} className="rv-link">Open in Messages</Link>
                   </header>
                   {!open.draft || open.draft.isPending ? <p className="msg-meta">Sona is drafting…</p> : null}
                   {open.draft?.error ? <p className="msg-error" role="alert">No draft: {open.draft.error.message}</p> : null}

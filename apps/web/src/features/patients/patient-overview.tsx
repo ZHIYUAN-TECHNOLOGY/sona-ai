@@ -88,7 +88,7 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
         actions={
           canRead ? (
             <>
-              <Button to="/pro/messages" icon="message" variant="secondary">Message</Button>
+              <Button to="/pro/messages" search={{ patient: patient.id }} icon="message" variant="secondary">Message</Button>
               {/* The visit page reads encounterId from the URL itself. */}
               {visit ? <Button {...visit} variant="primary" icon="arrow-right">Open the visit</Button> : null}
             </>

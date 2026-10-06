@@ -9,7 +9,7 @@ import { DataTable, PersonCell, RowAction, TableToolbar, type Column } from "@/c
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
 import { Card, Chip, ListCard, ListRow, SearchField, StatCard, StatRow, Tabs } from "@/components/primitives";
-import { RightRail, WithRail } from "@/components/rail";
+import { revealRail, RightRail, WithRail } from "@/components/rail";
 import { Loaded } from "@/features/ward/state";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/ward.css";
@@ -85,7 +85,7 @@ function Page() {
       {assign.error && <p className="ward-error" role="alert">Could not assign the owner: {assign.error.message}</p>}
       {unassign.error && <p className="ward-error" role="alert">Could not clear the owner: {unassign.error.message}</p>}
       <WithRail rail={(
-        <RightRail label="Huddle brief, bed detail and forecast">
+        <RightRail label="Huddle brief, bed detail and forecast" id="ward-rail">
           {brief?.lines?.[0] && (
             <InsightCard label={sample ? "Sona AI · sample brief" : "Sona AI"} title="Huddle brief" lead={brief.lines[0]} sources={blocked.length + (forecast.data?.timeline.length ?? 0)}
               evidence={brief.lines.slice(1).map(text => ({ icon: "bed" as const, text }))}
@@ -142,7 +142,7 @@ function Page() {
                   ]} />
                 </TableToolbar>
               )}
-              rowAction={b => <RowAction onClick={() => setPicked(b.bed)}>{b.blockers.length ? "Review" : "Open"}</RowAction>} />
+              rowAction={b => <RowAction onClick={() => { setPicked(b.bed); revealRail("ward-rail"); }}>{b.blockers.length ? "Review" : "Open"}</RowAction>} />
           )}
         </Loaded>
       </WithRail>

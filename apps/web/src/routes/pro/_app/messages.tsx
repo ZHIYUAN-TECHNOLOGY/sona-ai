@@ -13,7 +13,11 @@ import { orpc } from "@/lib/orpc";
 
 import "@/styles/pages/messages.css";
 
-export const Route = createFileRoute("/pro/_app/messages")({ component: Page });
+export const Route = createFileRoute("/pro/_app/messages")({
+  // `patient` opens that patient's thread, so "Message" from a record or a check-in lands on the right conversation.
+  validateSearch: (search: Record<string, unknown>): { patient?: string } => typeof search.patient === "string" && search.patient ? { patient: search.patient } : {},
+  component: Page,
+});
 
 /** The page's one Sona panel: the drafted reply with why and what it stands on, sent only by the clinician who has read it. */
 function ReplyPanel({ patientId, name, waiting }: { patientId: string; name: string; waiting: boolean }) {
@@ -68,7 +72,8 @@ function Page() {
   const oldest = waiting.reduce<(typeof waiting)[number] | undefined>((a, t) => (!a || new Date(t.waitingSince!) < new Date(a.waitingSince!) ? t : a), undefined);
   const needle = q.trim().toLowerCase();
   const visible = (filter === "waiting" ? waiting : threads).filter(t => !needle || `${t.name} ${t.lastText ?? ""}`.toLowerCase().includes(needle));
-  const selected = visible.find(t => t.patientId === picked) ?? visible[0];
+  const { patient } = Route.useSearch();
+  const selected = visible.find(t => t.patientId === (picked ?? patient)) ?? visible[0];
   const lead = [`${unread} unread`, `${waiting.length} waiting for a reply`, oldest ? `oldest ${ago(oldest.waitingSince!, now)}` : null].filter(Boolean).join(" · ");
 
   return (
