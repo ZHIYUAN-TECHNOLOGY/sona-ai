@@ -5,7 +5,7 @@ import "@/styles/pages/patients.css";
 import "@/styles/pages/patients-list.css";
 
 export const Route = createFileRoute("/pro/_app/patients")({
-  // The tab lives in the URL so a stat card's corner link can filter the list.
+  // The tab lives in the URL so a filtered list can be linked to and survives a reload.
   validateSearch: (search: Record<string, unknown>): { tab?: PatientTab } =>
     PATIENT_TABS.includes(search.tab as PatientTab) && search.tab !== "all" ? { tab: search.tab as PatientTab } : {},
   component: Page,
