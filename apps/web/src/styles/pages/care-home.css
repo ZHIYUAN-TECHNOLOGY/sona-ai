@@ -1,0 +1,15 @@
+/* Sona Care home: one column, the next step first, red only on the call card. */
+.care-home { display: flex; flex-direction: column; gap: var(--space-4); max-width: 640px; }
+.care-home p { margin: 0; }
+
+.care-home-lead { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--space-5); background: var(--blue-wash); border: 1px solid var(--line); border-radius: var(--radius-card); }
+.care-home-lead h2 { margin: 0; font-size: var(--text-title); line-height: 1.25; }
+.care-home-overline { color: var(--blue); font-weight: 600; }
+
+/* Links that are the card's action: a full 48 px target. */
+.care-home a.btn { display: inline-flex; align-items: center; min-height: var(--tap); text-decoration: none; }
+.care-home-link { display: inline-flex; align-items: center; align-self: flex-start; min-height: var(--tap); color: var(--blue); font-weight: 600; }
+
+.care-home-call { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--space-5); background: var(--red-wash); border: 1px solid var(--red); border-radius: var(--radius-card); }
+.care-home-call h2 { margin: 0; font-size: var(--text-heading); color: var(--red); }
+.care-home-call ul { margin: 0; padding-left: var(--space-5); }
