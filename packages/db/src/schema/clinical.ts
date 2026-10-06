@@ -287,6 +287,22 @@ export const careLinks = pgTable("care_links", {
   userId: text("user_id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(), linkedAt: created(),
 });
 
+/** One numbered source of a patient-facing summary: the note sentence, prescription or follow-up a line came from. */
+export type SummarySource = { n: number; kind: "note" | "prescription" | "follow-up"; ref: string; text: string };
+/** An automatic check on something a patient will read. */
+export type SummaryCheck = { id: string; label: string; ok: boolean; detail?: string };
+
+/** The after-visit summary a patient reads in Sona Care, only once a clinician approved it (`approvedText` may be their edit). */
+export const visitSummaries = pgTable("visit_summaries", {
+  id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(),
+  encounterId: text("encounter_id").notNull().references(() => encounters.id),
+  text: text("text").notNull(), whatChanged: jsonb("what_changed").$type<string[]>().notNull(),
+  sources: jsonb("sources").$type<SummarySource[]>().notNull(), checks: jsonb("checks").$type<SummaryCheck[]>().notNull(),
+  status: text("status", { enum: ["draft", "approved", "dismissed"] }).default("draft").notNull(),
+  origin: text("origin", { enum: ["fixture", "model"] }).notNull(),
+  approvedBy: text("approved_by"), approvedAt: timestamp("approved_at"), approvedText: text("approved_text"), createdAt: timestamp("created_at").notNull(),
+}, t => [index("visit_summaries_hospital").on(t.hospitalId, t.status, t.createdAt), index("visit_summaries_patient").on(t.patientId, t.status)]);
+
 /** Messages between a patient (Sona Care) and their care team; a patient's message raises a task for the team. */
 export const careMessages = pgTable("care_messages", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(),
