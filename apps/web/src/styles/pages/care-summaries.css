@@ -3,8 +3,15 @@
 
 /* Several visits: the list on the left, the open summary on the right. One visit: the summary takes the page. */
 .vs-split { display: grid; gap: var(--space-4); align-items: start; }
-.vs-split[data-several] { grid-template-columns: minmax(280px, 22rem) minmax(0, 1fr); }
+.vs-split[data-several] { grid-template-columns: minmax(260px, 20rem) minmax(0, 1fr); }
+.vs-split[data-several] .vs-full { grid-column: 1 / -1; }
 .vs-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-4); align-items: start; min-width: 0; }
+
+/* A change is a sentence to read, not a label: rows wrap instead of cutting off. */
+.vs-page .list-title, .vs-page .list-caption { white-space: normal; overflow: visible; }
+.vs-page .list-title { font-weight: 500; line-height: 1.4; }
+.vs-page .list-caption { font-size: max(15px, var(--text-small)); line-height: 1.4; }
+.vs-page .list-row { padding-block: var(--space-3); }
 
 .vs-full p { margin: 0; line-height: 1.6; max-width: 62ch; }
 .vs-full .vs-approved { color: var(--muted); font-size: max(15px, 0.9em); }
