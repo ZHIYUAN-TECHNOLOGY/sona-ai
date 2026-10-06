@@ -1,0 +1,21 @@
+/* The page frame every page sits in: sidebar, main column with an optional right rail, Sona bar at the bottom. */
+.frame { display: grid; grid-template-columns: 240px minmax(0, 1fr); height: 100vh; }
+.frame-side { display: flex; flex-direction: column; gap: var(--space-5); padding: var(--space-5) var(--space-3); border-right: 1px solid var(--line); overflow-y: auto; }
+.frame-brand { padding: 0 var(--space-3); font-size: var(--text-heading); font-weight: 600; letter-spacing: -0.3px; }
+.frame-group { display: flex; flex-direction: column; gap: 2px; }
+.frame-group-label { padding: 0 var(--space-3) var(--space-1); font-size: var(--text-overline); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); }
+.frame-link { display: flex; align-items: center; min-height: var(--tap); padding: 0 var(--space-3); border-radius: var(--radius-control); color: var(--ink); text-decoration: none; transition: background var(--quick) var(--ease); }
+.frame-link:hover { background: rgb(29 31 35 / 0.05); }
+.frame-link[aria-current="page"] { background: var(--blue-wash); color: var(--blue); font-weight: 600; }
+.frame-who { margin-top: auto; padding: 0 var(--space-3); font-size: var(--text-small); color: var(--muted); }
+.frame-main { position: relative; display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.frame-scroll { flex: 1; overflow-y: auto; padding: var(--space-5) var(--space-6) 120px; }
+.frame-page { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5); }
+.frame-bar { position: absolute; left: 0; right: 0; bottom: var(--space-4); display: flex; justify-content: center; padding: 0 var(--space-6); pointer-events: none; }
+.frame-bar > * { pointer-events: auto; }
+
+.page-header h1 { margin: 0; font-size: var(--text-display); line-height: 35px; letter-spacing: -0.6px; font-weight: 600; }
+.page-header p { margin: var(--space-1) 0 0; color: var(--muted); }
+.empty { padding: var(--space-6); border: 1px dashed var(--line); border-radius: var(--radius-card); color: var(--muted); text-align: center; }
+
+@media (max-width: 860px) { .frame { grid-template-columns: minmax(0, 1fr); } .frame-side { display: none; } .frame-scroll { padding-inline: var(--space-4); } }
