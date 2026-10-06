@@ -1,5 +1,7 @@
-import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes } from "react";
+import { useId, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
+
+import { EASE_OUT, gsap, moves, useGSAP } from "@/lib/motion";
 
 import { Avatar } from "./avatar";
 import { Icon, type IconName } from "./icon";
@@ -109,6 +111,18 @@ export function Card({ title, action, className, children }: { title?: string; a
   );
 }
 
+/** A whole number that counts to its value when it first shows and whenever it changes. */
+function Count({ to }: { to: number }) {
+  const el = useRef<HTMLSpanElement>(null);
+  const shown = useRef(0);
+  useGSAP(() => {
+    const from = { n: shown.current };
+    shown.current = to;
+    if (moves() && el.current) gsap.to(from, { n: to, duration: 0.7, ease: EASE_OUT, onUpdate: () => { el.current!.textContent = String(Math.round(from.n)); } });
+  }, { dependencies: [to] });
+  return <span ref={el}>{to}</span>;
+}
+
 type StatCardProps = {
   title: string;
   value: ReactNode;
@@ -138,7 +152,7 @@ export function StatCard({ title, value, unit, caption, chip, tone = "neutral", 
         {action ? <IconButton icon="arrow-up-right" label={label} size="sm" {...target} /> : null}
       </div>
       <div className="stat-body">
-        <p className="stat-value"><span>{value}</span>{unit ? <span className="stat-unit" title={typeof unit === "string" ? unit : undefined}>{unit}</span> : null}</p>
+        <p className="stat-value">{typeof value === "number" ? <Count to={value} /> : <span>{value}</span>}{unit ? <span className="stat-unit" title={typeof unit === "string" ? unit : undefined}>{unit}</span> : null}</p>
         {chip ? <Chip tone={tone}>{chip}</Chip> : null}
         {done === undefined ? null : (
           <svg className="stat-arc" viewBox="0 0 100 56" role="img" aria-label={`${Math.round(done)}%`}>

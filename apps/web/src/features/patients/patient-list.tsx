@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { SegmentBar } from "@/components/charts";
 import { DataTable, type Column, PersonCell, RowAction, TableToolbar, TextCell } from "@/components/data-table";
 import type { IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
@@ -113,6 +114,9 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
   const count = (t: PatientTab) => all.filter(inTab[t]).length;
   const stat = (t: PatientTab) => (isPending ? <Skeleton width={56} height={40} /> : count(t));
   const rows = filterPatients(all.filter(inTab[tab]), query);
+  // Each patient in exactly one state for the chart, in the order the list is ranked.
+  const mix = { watch: 0, fit: 0, incomplete: 0, rest: 0 };
+  for (const p of all) mix[inTab.watch(p) ? "watch" : inTab.fit(p) ? "fit" : inTab.incomplete(p) ? "incomplete" : "rest"]++;
   const current = Math.min(page, Math.max(1, Math.ceil(rows.length / PAGE_SIZE)));
   const [from, to] = pageRange(current, PAGE_SIZE, rows.length);
   const insight = firstToSee(all);
@@ -174,6 +178,14 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
             <RightRail label="Who to see first">
               <InsightCard label={insight.label} title={insight.title} lead={insight.lead} tone={insight.tone} evidence={insight.evidence}
                 next={{ label: "Open", step: insight.step, onAct: () => open(insight.patient) }} />
+              <Card title="Patients by state">
+                <SegmentBar label="Patients by state" segments={[
+                  { label: "On watch", value: mix.watch, tone: "amber" },
+                  { label: "Fit to go", value: mix.fit, tone: "green" },
+                  { label: "Record incomplete", value: mix.incomplete, tone: "blue" },
+                  { label: "Stable", value: mix.rest, tone: "neutral" },
+                ]} />
+              </Card>
             </RightRail>
           }
         >

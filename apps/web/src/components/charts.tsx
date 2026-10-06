@@ -1,4 +1,6 @@
-import { useId, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
+import { useId, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
+
+import { useReveal } from "@/lib/motion";
 
 import { bandXs, linePath, nearest, pointXs, scale, ticks, yDomain, type Point } from "./chart-scale";
 import "../styles/components.css";
@@ -31,6 +33,11 @@ type FrameProps = ChartProps & { height: number; domain: [number, number]; xs: n
 function ChartFrame({ points, label, unit, height, description, goal, showValues, describe, domain, xs, ys, children }: FrameProps) {
   const id = useId();
   const [active, setActive] = useState<number | null>(null);
+  // Marks draw in when the data arrives: bars grow from the baseline, the line draws left to right, dots follow.
+  const figure = useRef<HTMLElement>(null);
+  useReveal(figure, ".chart-bar", { scaleY: 0, transformOrigin: "50% 100%" }, points.length);
+  useReveal(figure, ".chart-line", { strokeDashoffset: 1, duration: 0.9 }, points.length);
+  useReveal(figure, ".chart-dot, .chart-halo", { opacity: 0, delay: 0.3 }, points.length);
   if (points.length === 0) {
     return (
       <figure className="chart" aria-label={label}>
@@ -60,7 +67,7 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
   const ax = active === null ? 0 : xs[active] ?? 0;
   const ay = active === null ? 0 : ys[active] ?? 0;
   return (
-    <figure className="chart">
+    <figure className="chart" ref={figure}>
       <svg
         viewBox={`0 0 ${W} ${height}`} role="img" aria-label={label} aria-describedby={`${id}-d`} tabIndex={0}
         onPointerMove={onMove} onPointerLeave={() => setActive(null)}
@@ -124,7 +131,7 @@ export function LineChart({ height = 200, band, ...props }: ChartProps & { band?
   return (
     <ChartFrame {...props} height={height} domain={domain} xs={xs} ys={ys}>
       {band ? <rect className="chart-band" x={LEFT} width={RIGHT - LEFT} y={y(band.high)} height={y(band.low) - y(band.high)} /> : null}
-      <path className="chart-line" d={linePath(xs, ys)} />
+      <path className="chart-line" d={linePath(xs, ys)} pathLength={1} />
       {last >= 0 ? <circle className="chart-halo" cx={xs[last]} cy={ys[last]} r={10} /> : null}
       {points.map((p, i) => (
         <circle key={i} className="chart-dot" data-last={i === last ? "" : undefined} data-out={band && (p.y < band.low || p.y > band.high) ? "" : undefined} cx={xs[i]} cy={ys[i]} r={4} />
@@ -160,5 +167,55 @@ export function Sparkline({ values, label, tone = "neutral", width = 96, height 
       <path d={linePath(xs, ys)} />
       <circle cx={xs.at(-1)} cy={ys.at(-1)} r={3} />
     </svg>
+  );
+}
+
+/** A state's chart fill: the status colours' chart shades (tokens.css), or the neutral rest. */
+export type ChartTone = "red" | "amber" | "green" | "blue" | "neutral";
+export type Segment = { label: string; value: number; tone: ChartTone };
+
+/**
+ * How a whole splits into states: one bar cut in proportion, with every state named and counted under it, so no
+ * state is told by colour alone. Empty states leave the bar but stay in the list. `label` names the figure.
+ */
+export function SegmentBar({ label, segments }: { label: string; segments: Segment[] }) {
+  const figure = useRef<HTMLElement>(null);
+  const total = segments.reduce((sum, s) => sum + s.value, 0);
+  useReveal(figure, ".seg", { scaleX: 0, transformOrigin: "0% 50%" }, total);
+  return (
+    <figure className="chart seg-chart" ref={figure} aria-label={label}>
+      <div className="seg-bar" aria-hidden="true">
+        {segments.map(s => (s.value > 0 ? <span key={s.label} className="seg" data-chart-tone={s.tone} style={{ flexGrow: s.value }} title={`${s.label}: ${s.value} of ${total}`} /> : null))}
+      </div>
+      <dl className="seg-legend">
+        {segments.map(s => (
+          <div key={s.label} data-empty={s.value === 0 ? "" : undefined}>
+            <dt><span className="seg-key" data-chart-tone={s.tone} />{s.label}</dt>
+            <dd className="num">{s.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </figure>
+  );
+}
+
+/** Ranked amounts with long names: one row each, the name, a bar to the largest, the number. Pass rows largest first. */
+export function BarList({ label, rows, tone = "blue", unit }: { label: string; rows: { label: string; value: number }[]; tone?: ChartTone; unit?: string }) {
+  const figure = useRef<HTMLElement>(null);
+  useReveal(figure, ".bar-fill", { scaleX: 0, transformOrigin: "0% 50%" }, rows.length);
+  const max = Math.max(...rows.map(r => r.value), 1);
+  if (rows.length === 0) return <figure className="chart" aria-label={label}><p className="chart-empty">No data yet</p></figure>;
+  return (
+    <figure className="chart" ref={figure} aria-label={label}>
+      <ol className="bar-list">
+        {rows.map(r => (
+          <li key={r.label}>
+            <span className="bar-name" title={r.label}>{r.label}</span>
+            <span className="bar-track" aria-hidden="true"><span className="bar-fill" data-chart-tone={tone} style={{ width: `${(r.value / max) * 100}%` }} /></span>
+            <span className="bar-value num">{r.value}{unit ? ` ${unit}` : ""}</span>
+          </li>
+        ))}
+      </ol>
+    </figure>
   );
 }

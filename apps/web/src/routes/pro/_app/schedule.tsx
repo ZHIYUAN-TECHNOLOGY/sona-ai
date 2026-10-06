@@ -2,6 +2,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { BarChart } from "@/components/charts";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, IconButton, Signal, StatCard, StatRow } from "@/components/primitives";
@@ -120,6 +121,10 @@ function Page() {
                 <span>{slots.data?.doctor.name} is free at this time.</span>
               </div>
             ) : <p className="today-quiet">Select a visit or an open slot to see it here.</p>}
+          </Card>
+          <Card title="Visits by day">
+            <BarChart label="Visits booked each day this week" unit="visits" height={160} showValues
+              points={days.map((d, i) => ({ x: new Date(d).toLocaleDateString("en-GB", { weekday: "short" }), y: perDay[i] ?? 0 }))} />
           </Card>
           </RightRail>
         )}

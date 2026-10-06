@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { BarChart } from "@/components/charts";
+import { BarChart, BarList, SegmentBar } from "@/components/charts";
 import { DataTable, PersonCell, RowAction, TableToolbar, type Column } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
@@ -55,6 +55,14 @@ function Page() {
 
   const occupied = all.filter(b => b.name).length;
   const groups: Record<Tab, BedRow[]> = { all, blocked, unowned: noOwner, watch: all.filter(b => b.status === "watch"), free: all.filter(b => !b.name) };
+  // One pass for the charts: each bed in exactly one state, and how many beds wait on each kind of blocker.
+  const states = { unowned: 0, blocked: 0, watch: 0, clear: 0, free: 0 };
+  const waits = new Map<string, number>();
+  for (const b of all) {
+    states[!b.name ? "free" : unownedOn(b, owners) > 0 ? "unowned" : b.blockers.length ? "blocked" : b.status === "watch" ? "watch" : "clear"]++;
+    for (const x of b.blockers) waits.set(x.label, (waits.get(x.label) ?? 0) + 1);
+  }
+  const holding = [...waits].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
   const q = search.trim().toLowerCase();
   const rows = groups[tab].filter(b => !q || `${b.bed} ${b.name ?? ""} ${b.blockers.map(x => x.label).join(" ")}`.toLowerCase().includes(q));
   const bed = all.find(b => b.bed === picked) ?? all[0];
@@ -89,12 +97,28 @@ function Page() {
         ) : "Loading the ward…"}
         status={mayAssign ? undefined : "Your role can see the ward but cannot assign blocker owners."} />
       {beds.data ? (
+        <>
         <StatRow>
           <StatCard title="Beds occupied" value={occupied} unit={`of ${all.length}`} progress={all.length ? occupied / all.length : 0} feature onSelect={() => setTab("all")} selected={tab === "all"} />
           <StatCard title="Blocked" value={blocked.length} unit="beds" caption={blocked.length ? `Waiting on ${blocked.flatMap(b => b.blockers).length} things` : "No bed is blocked"} chip={blocked.length ? "Needs action" : undefined} tone="soon" onSelect={() => setTab("blocked")} selected={tab === "blocked"} />
           <StatCard title="No owner" value={unowned} caption={unowned ? `Blocker${s(unowned)} on ${noOwner.length} bed${s(noOwner.length)}` : "Every blocker has an owner"} chip={unowned ? "Assign owner" : undefined} tone="urgent" onSelect={() => setTab("unowned")} selected={tab === "unowned"} />
           <StatCard title="Free" value={groups.free.length} unit="now" caption={forecast.data ? `${forecast.data.today.count} due for discharge today` : undefined} onSelect={() => setTab("free")} selected={tab === "free"} />
         </StatRow>
+        <div className="chart-row">
+          <Card title="Beds by state">
+            <SegmentBar label="Beds by state" segments={[
+              { label: "Blocked, no owner", value: states.unowned, tone: "red" },
+              { label: "Blocked, owned", value: states.blocked, tone: "amber" },
+              { label: "On watch only", value: states.watch, tone: "blue" },
+              { label: "Nothing blocking", value: states.clear, tone: "green" },
+              { label: "Free", value: states.free, tone: "neutral" },
+            ]} />
+          </Card>
+          <Card title="What beds are waiting on">
+            {holding.length ? <BarList label="Beds waiting on each blocker" rows={holding} tone="amber" unit="beds" /> : <p className="ward-muted">Nothing is holding a bed.</p>}
+          </Card>
+        </div>
+        </>
       ) : null}
       <WithRail rail={(
         <RightRail label="Bed detail, huddle brief and forecast">

@@ -124,3 +124,35 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
   .row-action { padding: 0 var(--space-3); gap: var(--space-1); }
   .cell-person { min-width: 132px; }
 }
+
+/* Chart fills: the status colours' chart shades (checked for colour-blind separation), each always named beside its mark. */
+[data-chart-tone="red"] { --fill: var(--chart-red); }
+[data-chart-tone="amber"] { --fill: var(--chart-amber); }
+[data-chart-tone="green"] { --fill: var(--chart-green); }
+[data-chart-tone="blue"] { --fill: var(--chart-blue); }
+[data-chart-tone="neutral"] { --fill: var(--chart-neutral); }
+.chart-line { stroke-dasharray: 1; }
+/* Segment bar: 2px of surface between fills, 4px ends; every state named and counted underneath. */
+.seg-chart { display: grid; gap: var(--space-3); }
+.seg-bar { display: flex; gap: 2px; height: 12px; }
+.seg { min-width: 4px; border-radius: 2px; background: var(--fill); }
+.seg:first-child { border-radius: 4px 2px 2px 4px; }
+.seg:last-child { border-radius: 2px 4px 4px 2px; }
+.seg:only-child { border-radius: 4px; }
+.seg-legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin: 0; }
+.seg-legend > div { display: flex; align-items: baseline; gap: var(--space-2); }
+.seg-legend dt { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-small); color: var(--muted); }
+.seg-legend dd { margin: 0; font-weight: 600; }
+.seg-legend [data-empty] dd { font-weight: 400; color: var(--muted); }
+.seg-key { flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--fill); }
+/* Bar list: name, bar to the largest, number. */
+.bar-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.bar-list li { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); }
+.bar-name { font-size: var(--text-small); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { display: block; height: 8px; border-radius: 4px; background: var(--fill-selected); }
+.bar-fill { display: block; height: 100%; min-width: 4px; border-radius: 4px; background: var(--fill); }
+.bar-value { font-weight: 600; }
+/* A row of chart cards under the stats. */
+.chart-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--gap-card); }
+.chart-row .card { gap: var(--space-3); padding-block: var(--space-5); }
+.chart-row .card-title { font-size: var(--text-body); font-weight: 500; color: var(--muted); letter-spacing: 0; }

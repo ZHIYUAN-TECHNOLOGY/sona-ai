@@ -86,6 +86,12 @@ All colour values differ between Pro and Care; the names and meanings do not.
 - `--on-ai`: text on the gradient. `--on-ai-soft`: secondary text on the gradient.
 - `--ai-row`: a row or tile fill on the gradient.
 
+**Glass and dithering (Sona Pro)**
+
+- The canvas carries still colour fields (blue, lilac, teal); cards are content glass over it: `--glass-surface` and the rim, sheen and blue lift in `--shadow-card`. The shared `Card`, `StatCard`, `PatientStrip`, `EmptyState` and tables already use them; a page's own card-like block sets `background: var(--glass-surface); box-shadow: var(--shadow-card)`.
+- Dithering is the accent, about a tenth of the screen: the glint on the feature stat and Sona's panel, the dotted glint on the primary button, and the glow in the Sona bar. Do not add halftone to a page.
+- `--chart-red`, `--chart-amber`, `--chart-green`, `--chart-blue`, `--chart-neutral`: chart fills for a state (the status colours' chart shades, checked for colour-blind separation). Text never wears them.
+
 **Fills and lines**
 
 - `--canvas-deep`: the shell behind the Pro frame, one step darker than `--canvas`.
@@ -97,11 +103,12 @@ All colour values differ between Pro and Care; the names and meanings do not.
 
 **Radii**
 
-- `--radius-control` 14px: buttons that are not pills, inputs, small tiles.
-- `--radius-group` 20px: grouped blocks inside a card.
-- `--radius-card`: cards (Pro 28px / Care 24px).
-- `--radius-shell` 28px: the frame shell.
-- `--radius-pill` 999px: pills, chips, badges.
+- Corners are slightly rounded everywhere (owner's call, 6 Oct): nothing is a full pill except avatars.
+- `--radius-control` 8px: inputs, icon buttons, small tiles.
+- `--radius-group` 12px: grouped blocks inside a card.
+- `--radius-card` 16px: cards and the Sona bar.
+- `--radius-shell` 20px: the frame shell.
+- `--radius-pill` 8px: buttons, chips, badges, tabs' counts (the name is historical).
 
 **Type sizes**
 
@@ -135,7 +142,7 @@ All colour values differ between Pro and Care; the names and meanings do not.
 **Motion**
 
 - `--ease`: the one easing curve. `--quick` 160ms: hover and press. `--slow` 240ms: reveal and expand. `--settle` 380ms: layout moves.
-- `--press` 0.98: scale of a pressed control.
+- `--press` 0.96: scale of a pressed control.
 - Reduced motion is handled globally. Do not add your own media query for it.
 
 **Focus**
@@ -279,13 +286,22 @@ const columns: Column<Patient>[] = [
 - `BarChart(props: ChartProps)`. `height` defaults to 200.
 - `Sparkline({ values, label, tone = "neutral", width = 96, height = 28 }: { values: number[]; label: string; tone?: "amber" | "neutral"; width?: number; height?: number })`. A trend in a table cell or stat.
 
-Empty `points` draws the chart's own empty state.
+- `SegmentBar({ label, segments }: { label: string; segments: { label: string; value: number; tone: "red" | "amber" | "green" | "blue" | "neutral" }[] })`. How a whole splits into states: one bar cut in proportion, every state named and counted under it. Each item must be in exactly one segment.
+- `BarList({ label, rows, tone = "blue", unit }: { label: string; rows: { label: string; value: number }[]; tone?: ChartTone; unit?: string })`. Ranked amounts with long names; pass rows largest first, five at most.
+- A row of chart cards under the stats: `<div className="chart-row"><Card title="...">...</Card></div>`.
+
+Empty `points` draws the chart's own empty state. Charts draw in when their data arrives. Real counts only.
 
 ```tsx
 <LineChart label="Haemoglobin" unit={series.unit} points={series.points} band={series.range} describe={(p) => `${p.y} on ${p.x}`} />
 <BarChart label="Visits per day" points={visits} showValues />
 <Sparkline label="Heart rate trend" values={vitals.map((v) => v.hr)} tone={rising ? "amber" : "neutral"} />
 ```
+
+### `@/lib/motion` (GSAP)
+
+- Motion that CSS transitions cannot do goes through GSAP: `import { gsap, useGSAP, useReveal, moves, EASE_OUT } from "@/lib/motion"`. `useReveal(scope, selector, from, key)` plays marks in once per `key`. Check `moves()` (false under Reduce Motion) before any tween, always pass a `scope`, and never run a tween that loops: motion happens on arrival and on change, then rests.
+- Already in place, do not repeat: each page's blocks rise in a beat apart (`Frame`), a `StatCard` number counts to its value, charts draw in.
 
 ### `@/components/rail`
 
