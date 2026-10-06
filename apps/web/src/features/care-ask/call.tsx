@@ -1,23 +1,21 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import { Button } from "@/components/primitives";
+import { Button, Card } from "@/components/primitives";
 import { resample } from "@/lib/wav";
 
 import { browserSay } from "./listen";
 import { agentUrl, encode, gate, hello, parse, quiet, RATE, reduce, rms, step, toPcm16, type ClientMessage, type ServerEvent, type Talk } from "./protocol";
 
 type Phase = "off" | "connecting" | "on" | "reconnecting" | "mic" | "failed";
-const STATE: Record<Talk["status"], string> = { idle: "Connecting…", listening: "Sona is listening. Speak when you are ready.", thinking: "Sona is thinking…", speaking: "Sona is speaking. You can talk over her." };
-const NOTE: Partial<Record<Phase, string>> = {
-  off: "Talk with Sona out loud. Your microphone is on only during the call.",
-  mic: "Sona can't hear you. Allow the microphone in your browser, then try again.",
-  failed: "The call ended. Please try again in a moment.",
-};
+const STATE: Record<Talk["status"], string> = { idle: "Connecting…", listening: "Listening…", thinking: "Sona is thinking…", speaking: "Sona is speaking" };
+const HINT: Record<Talk["status"], string> = { idle: "One moment.", listening: "Speak when you are ready.", thinking: "One moment.", speaking: "You can talk over her." };
+const STOPPED: Partial<Record<Phase, string>> = { mic: "Mic blocked: allow it in your browser", failed: "The call ended. Please try again." };
+type Parts = { open: boolean; button: ReactNode; stage: ReactNode; transcript: ReactNode };
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const lang = () => (navigator.language.startsWith("zh") ? "zh" : navigator.language.startsWith("ms") ? "ms" : "en");
 
 /** The live voice call, as the phone runs it (apps/care/lib/live-voice/session.ts) with the browser's audio. */
-export function Call({ instance }: { instance: string }) {
+export function Call({ instance, children }: { instance: string; children: (parts: Parts) => ReactNode }) {
   const [phase, setPhase] = useState<Phase>("off");
   const [talk, setTalk] = useState(quiet);
   const end = useRef<(() => void) | null>(null);
@@ -129,23 +127,37 @@ export function Call({ instance }: { instance: string }) {
   }
 
   const live = phase === "connecting" || phase === "on" || phase === "reconnecting";
-  return (
-    <section className="ask-call" aria-label="Voice call with Sona">
-      {live ? (
-        <>
-          <p className="ask-call-state" role="status">{phase === "reconnecting" ? "The connection dropped. Reconnecting…" : phase === "connecting" ? "Connecting…" : STATE[talk.status]}</p>
-          <div aria-live="polite">
-            {talk.heard ? <p className="ask-call-line"><span>You</span>{talk.heard}</p> : null}
-            {talk.said ? <p className="ask-call-line"><span>Sona</span>{talk.said}</p> : null}
+  const mood = phase === "on" ? talk.status : phase;
+  const status = STOPPED[phase] ?? (phase === "reconnecting" ? "The connection dropped. Reconnecting…" : phase === "connecting" ? "Connecting…" : STATE[talk.status]);
+  const caption = talk.said || talk.heard;
+  return children({
+    open: phase !== "off",
+    button: <Button variant="primary" icon="mic" className="ask-pill" onClick={start}>Talk to Sona</Button>,
+    stage: (
+      <section className="ask-stage" data-mood={mood} aria-label="Voice call with Sona">
+        <p className="ask-stage-status" role={live ? "status" : "alert"}><span className="ask-stage-dot" aria-hidden="true" />{status}</p>
+        <div className="ask-orb" aria-hidden="true"><span>S</span></div>
+        <p className="ask-stage-hint">{live ? (phase === "on" ? HINT[talk.status] : "Your microphone is on only during the call.") : "Nothing is being recorded."}</p>
+        <p className="ask-caption" aria-live="polite">{caption || (live ? "What you and Sona say will show here." : "The call is not connected.")}</p>
+        <div className="ask-dock">
+          {live ? <Button className="ask-pill ask-end" icon="phone" onClick={() => end.current?.()}>End call</Button> : (
+            <>
+              <Button variant="primary" icon="refresh" className="ask-pill" onClick={start}>Try again</Button>
+              <Button className="ask-pill ask-close" onClick={() => setPhase("off")}>Close</Button>
+            </>
+          )}
+        </div>
+      </section>
+    ),
+    transcript: (
+      <Card title="This call">
+        {talk.heard || talk.said ? (
+          <div className="ask-lines">
+            {talk.heard ? <p className="ask-line"><span>You</span>{talk.heard}</p> : null}
+            {talk.said ? <p className="ask-line"><span>Sona</span>{talk.said}</p> : null}
           </div>
-          <Button onClick={() => end.current?.()}>End call</Button>
-        </>
-      ) : (
-        <>
-          <p className="ask-call-note" role={phase === "off" ? undefined : "alert"}>{NOTE[phase]}</p>
-          <Button variant="primary" onClick={start}>{phase === "off" ? "Start a voice call" : "Try the call again"}</Button>
-        </>
-      )}
-    </section>
-  );
+        ) : <p className="ask-quiet">What Sona hears and says will show here.</p>}
+      </Card>
+    ),
+  });
 }

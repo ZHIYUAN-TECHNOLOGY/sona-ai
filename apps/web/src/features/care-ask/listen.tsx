@@ -48,5 +48,5 @@ export function Listen({ text }: { text: string }) {
     setOn(false);
   }
 
-  return <Button className="ask-listen" onClick={toggle} aria-pressed={on}>{on ? "Stop" : "Listen"}</Button>;
+  return <Button className="ask-pill ask-listen" icon={on ? "x" : "activity"} onClick={toggle} aria-pressed={on}>{on ? "Stop" : "Listen"}</Button>;
 }
