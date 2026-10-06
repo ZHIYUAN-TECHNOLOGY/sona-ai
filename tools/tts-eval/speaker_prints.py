@@ -51,6 +51,12 @@ for m in models:
         low = sorted((min(ps)[0], a, min(ps)[1], min(ps)[2]) for a, ps in pairs[m][arm].items() if min(ps)[0] < floor)
         report.setdefault(arm, {})[m] = {"mean": round(float(cs.mean()), 3), "p5": round(float(np.quantile(cs, .05)), 3), "min": round(float(cs.min()), 3), "low_answers": [list(l) for l in low]}
         print(f"  {arm:12} mean {cs.mean():.3f}  p5 {np.quantile(cs, .05):.3f}  min {cs.min():.3f}  answers with a low pair: {len(low)} of {len(pairs[m][arm])}  {[l[1] for l in low]}")
+print("\nbetween languages: how alike two sentences of answers in different languages are (mean of the two models)")
+for arm in arms:
+    mine = [(stem[:2], r) for (a, stem), r in rows.items() if a == arm]
+    cs = [np.mean([float(u[m] @ v[m]) for m in models]) for (k, u), (l, v) in itertools.combinations(mine, 2) if k != l]
+    same = [np.mean([float(u[m] @ v[m]) for m in models]) for (k, u), (l, v) in itertools.combinations(mine, 2) if k == l]
+    print(f"  {arm:12} across languages {np.mean(cs):.3f}   within a language {np.mean(same):.3f}")
 print("\npitch over voiced frames")
 for arm in arms:
     p = {stem: r["pitch"] for (a, stem), r in rows.items() if a == arm}

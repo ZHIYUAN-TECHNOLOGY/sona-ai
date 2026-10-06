@@ -21,9 +21,11 @@ from voxcpm import VoxCPM
 DATA = Path.home() / "zyt/data/sona-tts"
 ANCHOR = DATA / "kore/audio/family_048_00.wav"
 arm = sys.argv[1]
-assert arm in ("none", "none2", "ref", "seed", "reflang", "seedreflang"), "unknown arm"
+assert arm in ("none", "none2", "ref", "seed", "reflang", "seedreflang", "seedanchors"), "unknown arm"
 anchor = str(sys.argv[2] if len(sys.argv) > 2 else ANCHOR) if arm == "ref" else None
 by_lang = {lang: ref["audio"] for lang, ref in json.load(open(DATA / "clone_refs.json")).items()} if "reflang" in arm else {}
+# `seedanchors`: the seed, and whatever three clips are in the box's anchors folder (to try another three, anchors.py).
+if arm == "seedanchors": by_lang = {lang: str(Path(__file__).parents[2] / f"packages/infra/baseten/voice/data/anchors/{lang}.wav") for lang in ("en", "ms", "zh")}
 out = DATA / "speaker" / arm; out.mkdir(parents=True, exist_ok=True)
 model = VoxCPM.from_pretrained(str(DATA / "full/step1000"), load_denoiser=False, optimize=False, device="mps")
 answers = json.load(open(Path(__file__).parent / "scripts/answers.json"))
