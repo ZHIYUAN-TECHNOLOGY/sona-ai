@@ -43,12 +43,12 @@ export function ReplyForm({ lang, pending, error, onSend }: Props) {
 
   return (
     <form className="reply" onSubmit={e => { e.preventDefault(); if (text.trim()) onSend(text.trim()); }}>
-      <Field label="Your reply" hint="Check the words before you send." error={error ?? micError}>
-        {control => <textarea {...control} rows={3} maxLength={1000} value={text} onChange={e => setText(e.target.value)} placeholder="Tell us how you feel today." />}
+      <Field label="Your answer" hint="Check the words before you send." error={error ?? micError}>
+        {control => <textarea {...control} rows={4} maxLength={1000} value={text} onChange={e => setText(e.target.value)} placeholder="Tell us how you feel today." />}
       </Field>
       <div className="reply-actions">
-        <Button variant="primary" type="submit" pending={pending} disabled={!text.trim()}>Send to my care team</Button>
         <Button
+          icon="mic"
           className={recording ? "reply-recording" : undefined}
           pending={transcribe.isPending}
           aria-pressed={recording}
@@ -60,7 +60,9 @@ export function ReplyForm({ lang, pending, error, onSend }: Props) {
         >
           {recording ? "Listening… let go when done" : transcribe.isPending ? "Writing your words…" : "Say it instead (hold)"}
         </Button>
+        <Button variant="primary" icon="send" type="submit" pending={pending} disabled={!text.trim()}>Send</Button>
       </div>
+      <p className="reply-note">Your care team sees your answer.</p>
     </form>
   );
 }
