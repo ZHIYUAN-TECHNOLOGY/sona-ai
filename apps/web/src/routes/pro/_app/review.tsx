@@ -41,7 +41,7 @@ function Page() {
   const [dismissed, setDismissed] = useState<readonly string[]>([]);
   const waiting = (inbox.data?.threads ?? []).filter(t => !t.handled && !dismissed.includes(t.patientId));
   // ponytail: one draft call per waiting thread, in parallel (the server keeps each answer); page it if queues grow long.
-  const drafts = useQueries({ queries: waiting.map(t => orpc.messages.draft.queryOptions({ input: { patientId: t.patientId } })) });
+  const drafts = useQueries({ queries: waiting.map(t => orpc.messages.draft.queryOptions({ input: { patientId: t.patientId }, enabled: allowed })) });
 
   const header = <PageHeader title="Review queue" lead="Approve what a patient will read. Nothing is sent until you approve it." />;
   if (!allowed && !canSummaries) return <>{header}<EmptyState>Only a doctor or a nurse reviews what a patient will read.</EmptyState></>;
