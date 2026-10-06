@@ -88,9 +88,8 @@ function Page() {
           feature
           title="Visits started"
           value={day.data ? earlier.length : "–"}
-          unit={day.data ? `of ${visits.length}` : undefined}
           progress={visits.length ? earlier.length / visits.length : 0}
-          caption={day.data ? (upcoming.length ? `${upcoming.length} still to come` : "None left today") : "Loading"}
+          caption={day.data ? `of ${visits.length} today · ${upcoming.length ? `${upcoming.length} still to come` : "none left"}` : "Loading"}
         />
         <StatCard
           title="Records incomplete"
@@ -164,7 +163,7 @@ function Page() {
                         { id: "incomplete", label: "Incomplete", count: incomplete.length },
                       ]}
                     />
-                    <SearchField label="Search today's visits" placeholder="Search patient or reason" value={query} onChange={e => setQuery(e.target.value)} />
+                    <SearchField label="Search today's visits" placeholder="Search visits" value={query} onChange={e => setQuery(e.target.value)} />
                   </>
                 }
                 columns={columns}

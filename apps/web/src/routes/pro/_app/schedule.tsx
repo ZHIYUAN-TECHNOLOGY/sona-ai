@@ -102,7 +102,7 @@ function Page() {
             ) : picked?.slot ? (
               <div className="week-detail">
                 <b>{whenOf(picked.slot)}</b>
-                <span>{slots.data?.doctor.name} is free. Patients book this slot from Sona Care.</span>
+                <span>{slots.data?.doctor.name} is free at this time.</span>
               </div>
             ) : <p className="today-quiet">Select a visit or an open slot to see it here.</p>}
           </Card>
