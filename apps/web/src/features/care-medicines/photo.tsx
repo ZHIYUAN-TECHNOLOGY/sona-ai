@@ -107,7 +107,7 @@ export function MedicinePhoto() {
           <div className="med-drop" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) readFile(f); }}>
             <Icon name="upload" size={24} />
             <span>Drop a photo here, or</span>
-            <label className="btn btn-primary med-file">Choose a photo<input type="file" accept="image/*" onChange={onFile} /></label>
+            <label className="btn btn-secondary med-file">Choose a photo<input type="file" accept="image/*" onChange={onFile} /></label>
             <Button onClick={() => void openCamera()}>Use the camera</Button>
           </div>
         </>}

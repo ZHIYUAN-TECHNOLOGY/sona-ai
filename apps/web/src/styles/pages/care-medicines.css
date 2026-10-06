@@ -40,3 +40,12 @@
 /* Nothing to show yet: one centred card, as on Check-ins. */
 .meds-alone { width: min(100%, 640px); margin-inline: auto; }
 .meds-alone .empty .btn { align-self: center; margin-top: var(--space-2); }
+
+/* Marking a dose: the question sits on the row; the result is said once, calmly. */
+.med-due { flex-wrap: wrap; justify-content: flex-end; }
+.med-ask { font-size: 17px; color: var(--ink); }
+.med-status { margin: 0; }
+.med-status:empty { display: none; }
+.med-saved { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted); }
+.med-status .med-note { display: block; }
+.med-week i[data-state="missed"], .med-legend i[data-state="missed"] { background: var(--amber-wash); }
