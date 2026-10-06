@@ -1,0 +1,25 @@
+/* Visit tools: clinical reasoning and the handwritten-note scan. */
+.vt-answer { margin: 0 0 var(--space-3); white-space: pre-wrap; color: var(--ink); }
+.vt-answer mark { background: var(--amber-wash); color: var(--ink); border-radius: 4px; padding: 0 2px; outline: 1px solid var(--amber, currentColor); }
+.vt-origin { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin: 0 0 var(--space-3); color: var(--muted); font-size: 0.875rem; }
+.vt-sources { margin: 0 0 var(--space-3); padding-left: var(--space-4); color: var(--muted); font-size: 0.875rem; }
+.vt-footer { margin: 0; color: var(--muted); font-size: 0.875rem; }
+.vt-done { margin: var(--space-3) 0 0; color: var(--ink); font-weight: 600; }
+
+.vt-capture { margin-top: var(--space-3); }
+.vt-file { position: relative; display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--space-4); border-radius: 999px; background: var(--ink); color: var(--surface, #fff); font-weight: 600; cursor: pointer; }
+.vt-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.vt-file:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
+.vt-camera { display: grid; gap: var(--space-3); justify-items: start; margin-top: var(--space-3); }
+.vt-camera video, .vt-photo { width: 100%; max-height: 60vh; object-fit: contain; border-radius: var(--radius-sm, 8px); background: var(--ink); }
+
+.vt-review { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
+.vt-reading h3 { margin: var(--space-3) 0 var(--space-2); font-size: 0.875rem; font-weight: 600; color: var(--ink); }
+.vt-item { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); align-items: start; margin-bottom: var(--space-3); font-size: 0.875rem; color: var(--muted); }
+.vt-item > input { width: 18px; height: 18px; margin-top: 2px; }
+.vt-item > span { display: grid; gap: var(--space-1, 4px); min-width: 0; }
+.vt-item textarea, .vt-item span input { width: 100%; min-width: 0; font: inherit; color: var(--ink); padding: var(--space-2); border: 1px solid var(--line, #d9d9d9); border-radius: var(--radius-sm, 8px); background: transparent; }
+.vt-fields { display: grid; gap: var(--space-2); }
+.vt-scan { margin-top: var(--space-4); }
+/* Photo beside the reading once the main column has the room. */
+@media (min-width: 1100px) { .vt-review { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } .vt-photo { position: sticky; top: var(--space-4); } }
