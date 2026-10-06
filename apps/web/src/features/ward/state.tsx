@@ -15,7 +15,21 @@ export function Loaded<T>({ query, what, empty, children }: { query: Q<T[]>; wha
 /** Today as the hospital writes a due date (YYYY-MM-DD, Malaysia). */
 export const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
 
-export type TaskFilter = "mine" | "all" | "overdue";
+type BedLike = { status: string; blockers: { id: string }[] };
+
+/** How many of a bed's blockers nobody owns yet. `owners` is keyed by blocker id. */
+export const unownedOn = (bed: BedLike, owners: ReadonlyMap<string, unknown>) => bed.blockers.filter(x => !owners.has(x.id)).length;
+
+/** Beds that need someone first: a blocker without an owner, then blocked, then watched. Ties keep the server's order. */
+export const rankBeds = <T extends BedLike>(beds: T[], owners: ReadonlyMap<string, unknown>) => {
+  const need = (b: T) => unownedOn(b, owners) > 0 ? 3 : b.blockers.length > 0 ? 2 : b.status === "watch" ? 1 : 0;
+  return [...beds].sort((a, b) => need(b) - need(a));
+};
+
+/** A bed's forecast as a phrase: a time or a day reads "Free 11:00"; anything else ("Awaiting rehab") stands alone. */
+export const freeBy = (predicted: string) => /^(\d|now|tomorrow|in |once )/i.test(predicted) ? `Free ${predicted[0]!.toLowerCase()}${predicted.slice(1)}` : predicted;
+
+export type TaskFilter ="mine" | "all" | "overdue";
 type TaskLike = { owner: string; due: string | null; completed: boolean };
 
 /** Overdue: open, dated, and the date has passed. ISO dates compare as strings. */

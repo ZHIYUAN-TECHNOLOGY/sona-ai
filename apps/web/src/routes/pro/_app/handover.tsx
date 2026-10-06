@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { EmptyState, PageHeader } from "@/components/page";
-import { Avatar, Button, Card, Chip, Field, Select, Skeleton, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Avatar, Button, Card, Chip, Field, Select, Signal, Skeleton, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/handover.css";
@@ -30,6 +30,8 @@ function Page() {
   const all = cards.data ?? [];
   const cardIds = all.filter(c => !held.has(c.id) && !done.has(c.id)).map(c => c.id);
   const watch = all.filter(c => c.priority === "watch");
+  // Watch patients in this handover, named beside the button.
+  const going = watch.filter(c => cardIds.includes(c.id));
   const [tab, setTab] = useState<State>("all");
   const shown = tab === "all" ? all : all.filter(c => (c.priority === "watch") === (tab === "watch"));
   const n = (count: number) => `${count} patient${count === 1 ? "" : "s"}`;
@@ -42,27 +44,26 @@ function Page() {
   return (
     <>
       <PageHeader title="Handover"
-        status={mayAccept && all.length > 0 && !toUser && cardIds.length > 0 ? <span className="ho-muted">Choose who takes over first</span> : undefined}
-        lead={cards.data ? `${n(all.length)} to hand over · ${watch.length} need${watch.length === 1 ? "s" : ""} watching · ${done.size} handed over` : "The patients you hand to the next shift."}
-        actions={mayAccept && all.length > 0 && (
-          <Button variant="primary" icon="swap" pending={accept.isPending} disabled={!toUser || cardIds.length === 0}
-            onClick={() => accept.mutate({ requestId, cardIds, toUser })}>
-            {done.size > 0 && cardIds.length === 0 ? "Handover recorded" : `Record handover of ${n(cardIds.length)}`}
-          </Button>
-        )} />
-      {cards.data && all.length > 0 && (
+        lead={cards.data ? (
+          <>
+            {n(cardIds.length)} to hand over ·{" "}
+            {watch.length ? <Signal tone="soon">{watch.length} need{watch.length === 1 ? "s" : ""} watching</Signal> : "all stable"}
+            {done.size ? <> · <Signal tone="done">{done.size} handed over</Signal></> : null}
+          </>
+        ) : "The patients you hand to the next shift."} />
+      {cards.data && all.length > 0 ? (
         <StatRow>
-          <StatCard title="To hand over" value={cardIds.length} unit={`of ${all.length}`} caption={held.size ? `${held.size} held back` : done.size ? "Nobody left" : "Everyone on your list"} />
-          <StatCard title="Need watching" value={watch.length} chip={watch.length ? "Watch" : undefined} tone="soon" caption={watch.map(c => c.name).join(", ") || "All stable"} />
-          <StatCard title="Handed over" value={done.size} tone="done" caption={accept.data ? `To ${receiver?.name ?? "your colleague"}` : "Not recorded yet"} />
+          <StatCard title="To hand over" value={cardIds.length} unit={`of ${all.length}`} caption={held.size ? `${held.size} held back` : done.size ? `${done.size} handed over` : "Everyone on your list"} onSelect={() => setTab("all")} selected={tab === "all"} />
+          <StatCard title="Need watching" value={watch.length} chip={watch.length ? "Watch" : undefined} tone="soon" caption={watch.length ? "Read these first" : "Nobody on watch"} onSelect={() => setTab("watch")} selected={tab === "watch"} />
+          <StatCard title="Stable" value={all.length - watch.length} caption="Not on watch" onSelect={() => setTab("stable")} selected={tab === "stable"} />
         </StatRow>
-      )}
+      ) : null}
       <WithRail rail={
         <RightRail label="Hand over">
           <Card title="Hand over to">
             {!mayAccept ? <p className="ho-muted">Your role can read the handover but cannot accept one.</p> : (
               <div className="ho-form">
-                <Field label="Receiving clinician" hint={cardIds.length ? `${n(cardIds.length)} ticked. Untick a patient to hold them back.` : "Nobody left to hand over. Tick a held patient to hand them over."} error={(accept.error ?? receivers.error)?.message}>
+                <Field label="Receiving clinician" hint={!cardIds.length ? "Nobody left to hand over. Tick a held patient to hand them over." : toUser ? "Untick a patient to hold them back." : "Choose who takes over first."} error={(accept.error ?? receivers.error)?.message}>
                   {control => (
                     <Select label="Receiving clinician" {...control} value={toUser} onChange={e => setToUser(e.target.value)}>
                       <option value="" disabled>{receivers.isPending ? "Loading colleagues…" : receivers.data?.length ? "Choose a colleague" : "No colleague has signed in yet"}</option>
@@ -70,9 +71,27 @@ function Page() {
                     </Select>
                   )}
                 </Field>
-                {accept.data
-                  ? <div className="ho-done" role="status"><Chip tone="done" icon="check">Handed over</Chip><span>{n(accept.data.cardIds.length)} to {receiver?.name ?? "your colleague"}.</span></div>
-                  : <p className="ho-muted">Review each patient, pick who takes over, then record the handover.</p>}
+                {/* What the button will record, beside it. */}
+                {cardIds.length > 0 ? (
+                  <dl className="ho-review">
+                    <dt>Handing over</dt><dd>{n(cardIds.length)}</dd>
+                    <dt>On watch</dt><dd>{going.length ? going.map(c => c.name).join(", ") : "Nobody"}</dd>
+                    {held.size > 0 ? <><dt>Held back</dt><dd>{n(held.size)}, staying with you</dd></> : null}
+                  </dl>
+                ) : null}
+                {cardIds.length > 0 || !accept.data ? (
+                  <Button variant="primary" icon="swap" pending={accept.isPending} disabled={!toUser || cardIds.length === 0}
+                    onClick={() => accept.mutate({ requestId, cardIds, toUser })}>
+                    Hand over {n(cardIds.length)}
+                  </Button>
+                ) : null}
+                {accept.data ? (
+                  <div className="ho-done" role="status">
+                    <Chip tone="done" icon="check">Handed over</Chip>
+                    <span>{n(accept.data.cardIds.length)} to {receiver?.name ?? "your colleague"}.{held.size ? ` ${n(held.size)} held back: tick them to hand over too.` : ""}</span>
+                    {held.size ? null : <Button to="/pro/today" icon="arrow-right">Back to Today</Button>}
+                  </div>
+                ) : null}
               </div>
             )}
           </Card>
