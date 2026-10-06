@@ -34,9 +34,9 @@ function Page() {
   // A blocker's owner lives in its blocker-owner task.
   const tasks = useQuery(orpc.tasks.list.queryOptions());
   const owners = new Map((tasks.data ?? []).filter(t => t.kind === "blocker-owner" && t.sourceId).map(t => [t.sourceId!, t.owner]));
-  const assign = useMutation(orpc.ward.assignOwner.mutationOptions({
-    onSuccess: () => Promise.all([orpc.tasks.list.key(), orpc.ward.forecast.key(), orpc.ward.huddle.key()].map(queryKey => queryClient.invalidateQueries({ queryKey }))),
-  }));
+  const refreshOwners = () => Promise.all([orpc.tasks.list.key(), orpc.ward.forecast.key(), orpc.ward.huddle.key()].map(queryKey => queryClient.invalidateQueries({ queryKey })));
+  const assign = useMutation(orpc.ward.assignOwner.mutationOptions({ onSuccess: refreshOwners }));
+  const unassign = useMutation(orpc.ward.unassignOwner.mutationOptions({ onSuccess: refreshOwners }));
 
   type BedRow = NonNullable<typeof beds.data>[number];
   const blocked = (beds.data ?? []).filter(b => b.blockers.length > 0);
@@ -83,6 +83,7 @@ function Page() {
         </StatRow>
       )}
       {assign.error && <p className="ward-error" role="alert">Could not assign the owner: {assign.error.message}</p>}
+      {unassign.error && <p className="ward-error" role="alert">Could not clear the owner: {unassign.error.message}</p>}
       <WithRail rail={(
         <RightRail label="Huddle brief, bed detail and forecast">
           {brief?.lines?.[0] && (
@@ -103,9 +104,9 @@ function Page() {
                     <li key={x.id} className="ward-stack">
                       <span className="ward-blocker"><Chip tone="soon">{x.label}</Chip><span className="ward-muted">{x.detail}</span></span>
                       {mayAssign ? (
-                        <select className="ward-control" aria-label={`Owner for ${bed.bed}: ${x.label}`} value={owners.get(x.id) ?? ""} disabled={assign.isPending}
-                          onChange={e => assign.mutate({ blockerId: x.id, owner: e.target.value as Owner })}>
-                          <option value="" disabled>Assign owner</option>
+                        <select className="ward-control" aria-label={`Owner for ${bed.bed}: ${x.label}`} value={owners.get(x.id) ?? ""} disabled={assign.isPending || unassign.isPending}
+                          onChange={e => e.target.value ? assign.mutate({ blockerId: x.id, owner: e.target.value as Owner }) : unassign.mutate({ blockerId: x.id })}>
+                          {owners.has(x.id) ? <option value="">No owner</option> : <option value="" disabled>Assign owner</option>}
                           {OWNERS.map(o => <option key={o} value={o}>{o}</option>)}
                         </select>
                       ) : <span className="ward-muted">Owner: {owners.get(x.id) ?? "none yet"}</span>}
