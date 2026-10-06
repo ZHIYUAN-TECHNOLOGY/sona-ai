@@ -63,11 +63,8 @@ function Page() {
 
   const urgent = waiting.filter(t => t.label === "urgent").length;
   const flagged = items.filter(s => failingOf(s.checks).length);
-  const sampleSummary = items.find(s => s.origin === "fixture");
-  const sampleReply = waiting.find((_, i) => drafts[i]?.data && drafts[i].data.source !== "model");
   const samples = items.filter(s => s.origin === "fixture").length + drafts.filter(d => d.data && d.data.source !== "model").length;
   const firstId = items[0] ? summaryId(items[0].id) : replyId(waiting[0]!.patientId);
-  const firstSampleId = sampleSummary ? summaryId(sampleSummary.id) : sampleReply ? replyId(sampleReply.patientId) : firstId;
   const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
   return (
     <>
@@ -76,29 +73,13 @@ function Page() {
         <InsightCard
           tone={urgent ? "urgent" : "info"}
           lead={`${count(total, "item waits", "items wait")} for review: ${count(items.length, "after-visit summary", "after-visit summaries")}, ${count(waiting.length, "drafted reply", "drafted replies")}${urgent ? ` (${urgent} urgent)` : ""}`}
-          next={{ label: "Start with the first", onAct: () => jump(firstId) }}
+          evidence={[
+            ...(flagged.length ? [{ text: `${count(flagged.length, "summary has", "summaries have")} a check to look at before sending` }] : []),
+            ...(samples ? [{ text: `${count(samples, "draft is a sample", "drafts are samples")}, not a model's: read closely` }] : []),
+          ]}
+          next={flagged.length ? { label: "Go to the first flagged summary", onAct: () => jump(summaryId(flagged[0]!.id)) } : { label: "Start with the first", onAct: () => jump(firstId) }}
           sources={total}
         />
-        {flagged.length
-          ? (
-            <InsightCard
-              tone="soon"
-              lead={`${count(flagged.length, "summary has", "summaries have")} a check to look at before sending`}
-              next={{ label: "Go to the first one", onAct: () => jump(summaryId(flagged[0]!.id)) }}
-              sources={flagged.length}
-            />
-          )
-          : null}
-        {samples
-          ? (
-            <InsightCard
-              tone="soon"
-              lead={`${count(samples, "draft is a sample", "drafts are samples")}, not a model's: read closely`}
-              next={{ label: "Read the first sample", onAct: () => jump(firstSampleId) }}
-              sources={samples}
-            />
-          )
-          : null}
       </InsightRow>
       {errors}
       {doneLines}
