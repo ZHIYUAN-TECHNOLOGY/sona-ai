@@ -94,11 +94,6 @@ export function useSonaAsk(handler?: SonaHandler): (question: string) => void {
   return sona.ask;
 }
 
-/** Whether Sona is still working on an answer for this page. */
-export function useSonaThinking(): boolean {
-  return use(ThreadContext).some(turn => turn.state === "pending");
-}
-
 /** The thread, in the page: each question with its answer, "thinking" or what went wrong. Nothing when empty. */
 export function SonaAnswers() {
   const turns = use(ThreadContext);

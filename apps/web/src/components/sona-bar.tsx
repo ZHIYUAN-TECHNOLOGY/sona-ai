@@ -1,11 +1,13 @@
 import { type FormEvent, type KeyboardEvent, useRef, useState } from "react";
 
+import { EASE_OUT, gsap, moves, useGSAP } from "@/lib/motion";
+
 import { client } from "@/lib/orpc";
 import { type Recording, startRecording } from "@/lib/recorder";
 import { plain, useSonaAsk } from "@/lib/sona";
 import { toBase64, WAV_HEADER, WAV_RATE } from "@/lib/wav";
 
-import { type GlowMode, SonaGlow } from "./sona-glow";
+import { SonaGlow } from "./sona-glow";
 import "@/styles/sona-bar.css";
 
 type Phase = "idle" | "listening" | "transcribing";
@@ -13,6 +15,34 @@ const STATUS: Record<Phase, string> = { idle: "", listening: "Listening. Let go 
 const MIN_WAV = WAV_HEADER + WAV_RATE * 2 * 0.3; // under 0.3 s is a slip, not speech
 const LANGUAGES = ["en", "ms", "zh"] as const;
 const isHoldKey = (event: KeyboardEvent) => event.key === " " || event.key === "Enter";
+
+// What the resting bar invites, one line at a time, and the questions offered when it opens: the same ones.
+const ASK = {
+  pro: { name: "Ask Sona", questions: ["What needs me first?", "Which beds are blocked?", "What is due today?"] },
+  care: { name: "Ask Sona anything", questions: ["When is my next visit?", "What medicines do I take today?", "What should I watch for at home?"] },
+};
+
+/**
+ * The resting bar's placeholder: each line arrives letter by letter out of a blur, rests, and leaves the same way
+ * for the next. It only plays while the bar is at rest and empty. Reduce Motion: the first line, still.
+ */
+function SonaHint({ lines }: { lines: string[] }) {
+  const el = useRef<HTMLSpanElement>(null);
+  const [index, setIndex] = useState(0);
+  useGSAP(() => {
+    if (!moves()) return;
+    const letters = el.current!.children;
+    gsap.timeline()
+      .from(letters, { opacity: 0, y: 10, filter: "blur(12px)", duration: 0.4, ease: EASE_OUT, stagger: 0.025 })
+      .to(letters, { opacity: 0, y: -10, filter: "blur(12px)", duration: 0.3, ease: "power2.in", stagger: { each: 0.015, from: "end" } }, "+=2.4")
+      .call(() => setIndex(i => (i + 1) % lines.length));
+  }, { dependencies: [index], revertOnUpdate: true });
+  return (
+    <span ref={el} className="sona-bar-hint" aria-hidden="true">
+      {[...lines[index]!].map((letter, i) => <span key={i}>{letter === " " ? "\u00A0" : letter}</span>)}
+    </span>
+  );
+}
 
 const micIcon = (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -25,7 +55,11 @@ const sendIcon = (
   </svg>
 );
 
-/** The Sona bar under every page: type, or hold the mic. What you said fills the box to check before sending; answers land in the page. */
+/**
+ * The Sona bar under every page: type, or hold the mic. What you said fills the box to check before sending; answers
+ * land in the page. At rest it is one row with a placeholder that cycles through things to ask; in use (focused, or
+ * holding a draft) it opens a second row that offers those questions, one press each.
+ */
 export function SonaBar({ app }: { app: "pro" | "care" }) {
   const ask = useSonaAsk();
   const [text, setText] = useState("");
@@ -92,49 +126,64 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
     setText("");
   }
 
-  const glow: GlowMode = phase === "listening" ? "listening" : phase === "transcribing" ? "thinking" : focused || question ? "awake" : "rest";
+  const { name, questions } = ASK[app];
+  const open = focused || question.length > 0;
+  const resting = !open && phase === "idle";
 
   return (
     <form
       ref={bar}
       className="sona-bar glass"
       data-phase={phase}
+      data-open={open || undefined}
       onSubmit={send}
       onFocus={() => setFocused(true)}
       onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
     >
-      <SonaGlow app={app} mode={glow} level={level} />
+      <SonaGlow app={app} listening={phase === "listening"} level={level} />
       <p className="sona-bar-status" data-error={error ? "" : undefined} aria-live="polite">{error || STATUS[phase]}</p>
-      <input
-        ref={input}
-        className="sona-bar-input"
-        aria-label="Ask Sona"
-        placeholder={app === "pro" ? "Ask Sona" : "Ask Sona anything"}
-        value={text}
-        onChange={event => setText(event.target.value)}
-        maxLength={500}
-        enterKeyHint="send"
-        autoComplete="off"
-      />
-      <button
-        type="button"
-        className="sona-bar-button sona-bar-mic"
-        aria-label="Hold to speak"
-        aria-pressed={phase === "listening"}
-        disabled={phase === "transcribing"}
-        onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); begin(); }}
-        onPointerUp={end}
-        onPointerCancel={end}
-        onBlur={end}
-        onContextMenu={event => event.preventDefault()}
-        onKeyDown={event => { if (isHoldKey(event)) { event.preventDefault(); if (!event.repeat) begin(); } }}
-        onKeyUp={event => { if (isHoldKey(event)) { event.preventDefault(); void end(); } }}
-      >
-        {micIcon}
-      </button>
-      <button type="submit" className="sona-bar-button sona-bar-send" aria-label="Send to Sona" disabled={!canSend}>
-        {sendIcon}
-      </button>
+      <div className="sona-bar-row">
+        <div className="sona-bar-field">
+          <input
+            ref={input}
+            className="sona-bar-input"
+            aria-label={name}
+            placeholder={resting ? undefined : name}
+            value={text}
+            onChange={event => setText(event.target.value)}
+            maxLength={500}
+            enterKeyHint="send"
+            autoComplete="off"
+          />
+          {resting ? <SonaHint lines={[name, ...questions]} /> : null}
+        </div>
+        <button
+          type="button"
+          className="sona-bar-button sona-bar-mic"
+          aria-label="Hold to speak"
+          aria-pressed={phase === "listening"}
+          disabled={phase === "transcribing"}
+          onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); begin(); }}
+          onPointerUp={end}
+          onPointerCancel={end}
+          onBlur={end}
+          onContextMenu={event => event.preventDefault()}
+          onKeyDown={event => { if (isHoldKey(event)) { event.preventDefault(); if (!event.repeat) begin(); } }}
+          onKeyUp={event => { if (isHoldKey(event)) { event.preventDefault(); void end(); } }}
+        >
+          {micIcon}
+        </button>
+        <button type="submit" className="sona-bar-button sona-bar-send" aria-label="Send to Sona" disabled={!canSend}>
+          {sendIcon}
+        </button>
+      </div>
+      <div className="sona-bar-more" inert={!open}>
+        <div className="sona-bar-asks">
+          {questions.map(q => (
+            <button key={q} type="button" className="sona-bar-ask" onClick={() => { setError(""); ask(q); setText(""); input.current?.focus(); }}>{q}</button>
+          ))}
+        </div>
+      </div>
     </form>
   );
 }

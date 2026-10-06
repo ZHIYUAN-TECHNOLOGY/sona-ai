@@ -301,7 +301,7 @@ Empty `points` draws the chart's own empty state. Charts draw in when their data
 
 ### `@/lib/motion` (GSAP)
 
-- Motion that CSS transitions cannot do goes through GSAP: `import { gsap, useGSAP, useReveal, moves, EASE_OUT } from "@/lib/motion"`. `useReveal(scope, selector, from, key)` plays marks in once per `key`. Check `moves()` (false under Reduce Motion) before any tween, always pass a `scope`, and never run a tween that loops: motion happens on arrival and on change, then rests.
+- Motion that CSS transitions cannot do goes through GSAP: `import { gsap, useGSAP, useReveal, moves, EASE_OUT } from "@/lib/motion"`. `useReveal(scope, selector, from, key)` plays marks in once per `key`. Check `moves()` (false under Reduce Motion) before any tween, always pass a `scope`, and never run a tween that loops: motion happens on arrival and on change, then rests (the one exception is the resting Sona bar's cycling placeholder).
 - Already in place, do not repeat: each page's blocks rise in a beat apart (`Frame`), a `StatCard` number counts to its value, charts draw in.
 
 ### `@/components/rail`
@@ -316,7 +316,7 @@ Empty `points` draws the chart's own empty state. Charts draw in when their data
 ### Frame, Sona bar and navigation (already mounted, do not render)
 
 - `Frame({ app, brand, groups, who, name, instead })` from `@/components/frame` and `SonaBar({ app }: { app: "pro" | "care" })` from `@/components/sona-bar` are drawn by the `_app` layout.
-- `SonaGlow` (`@/components/sona-glow`) is the dithered glow inside the Sona bar, drawn by `SonaBar` in both apps: still at rest, waving while the bar is in use, blooming with the voice, a sweeping beam while Sona thinks. It is the frame's one moving halftone; do not add another.
+- `SonaGlow` (`@/components/sona-glow`) is the dithered glow inside the Sona bar, drawn by `SonaBar` in both apps. It appears only while the mic hears: dots rise from the bar's bottom edge and bloom with the voice, and the bar's edge glows with it. It is the frame's one moving halftone; do not add another. The bar itself rests as one row whose placeholder cycles through things to ask, and opens a second row of those questions when focused or holding a draft.
 - `@/nav`: `NavItem = { to: string; label: string; icon: IconName; count?: number; needs?: string }`, `NavGroup = { label: string; items: NavItem[] }`, `PRO_NAV`, `CARE_NAV`, `navFor(role, groups = PRO_NAV): NavGroup[]`.
 
 ## Page recipe
