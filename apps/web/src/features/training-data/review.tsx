@@ -37,6 +37,7 @@ export function Review() {
   const c = s?.counts;
   const total = c ? STATUSES.reduce((n, k) => n + c[k], 0) : 0;
   const stat = (n: number | undefined) => n ?? <Skeleton width={48} height={28} />;
+  const unit = (text: string) => (s ? text : undefined); // no unit beside a loading number
 
   const needle = q.trim().toLowerCase();
   const all = samples.data ?? [];
@@ -77,17 +78,17 @@ export function Review() {
         <DataTable columns={columns} rows={rows} rowKey={r => r.id} loading={samples.isPending}
           selectedKey={open?.id} onRowOpen={r => setOpenId(r.id === openId ? undefined : r.id)} rowAction={actions}
           toolbar={(
-            <div className="lib-toolbar">
+            <>
               <Tabs label="Samples by status" tabs={tabs} value={tab} onChange={setTab} />
-              <SearchField label="Search samples" placeholder="Search samples" value={q} onChange={e => setQ(e.target.value)} />
-            </div>
+              <SearchField className="td-search" label="Search samples" placeholder="Search samples" value={q} onChange={e => setQ(e.target.value)} />
+            </>
           )}
           empty={(
-            <EmptyState icon="database" title={needle ? "No samples match" : s && !s.contributes ? "No samples are taken" : tab === "all" ? "No samples yet" : `No ${LABEL[tab].toLowerCase()} samples`}>
+            <EmptyState icon="database" title={needle ? "No samples match" : s && !s.contributes ? "No samples are taken" : tab === "all" ? "No samples yet" : tab === "pending" ? "Nothing to review" : `No ${LABEL[tab].toLowerCase()} samples`}>
               {needle ? "Try a different search." : s && !s.contributes ? "Turn on contributing to start collecting de-identified samples." : "Samples appear here once they are de-identified."}
             </EmptyState>
           )}
-          count={samples.data ? <span className="lib-num">Showing {rows.length} of {all.length} {all.length === 1 ? "sample" : "samples"}</span> : undefined} />
+          count={all.length ? <span className="lib-num">Showing {rows.length} of {all.length} {all.length === 1 ? "sample" : "samples"}</span> : undefined} />
       )}
     </Card>
   );
@@ -95,17 +96,17 @@ export function Review() {
   return (
     <>
       <PageHeader title="Training data" lead={lead} actions={s && (
-        <label className="td-switch">
+        <label className="td-switch" data-on={s.contributes || undefined}>
           <input type="checkbox" role="switch" checked={s.contributes} disabled={contribute.isPending} onChange={e => contribute.mutate({ contributes: e.target.checked })} />
           {s.contributes ? "Contributing" : "Not contributing"}
         </label>
       )} />
       {status.isError ? <EmptyState icon="database" title="The status could not be shown">{messageOf(status.error)}</EmptyState> : (
         <StatRow>
-          <StatCard title="To review" value={stat(c?.pending)} unit="samples" chip={c?.pending ? "Needs review" : undefined} tone="soon" caption="Waiting for a decision" />
-          <StatCard title="Approved" value={stat(c?.approved)} unit={c ? `of ${total}` : undefined} progress={total ? (c?.approved ?? 0) / total : undefined} caption="Cleared to contribute" />
-          <StatCard title="Blocked" value={stat(c?.blocked)} unit="samples" chip={c?.blocked ? "Patient details" : undefined} tone="urgent" caption={c ? `${c.excluded} excluded, ${c.withdrawn} withdrawn` : undefined} />
-          <StatCard title="Ready for next dataset" value={stat(s?.ready)} unit="rows" caption={!s ? undefined : s.lastDataset ? `Last dataset: version ${s.lastDataset.version}, ${s.lastDataset.rows} rows` : "No dataset exported yet"} />
+          <StatCard title="To review" value={stat(c?.pending)} unit={unit("samples")} chip={c?.pending ? "Needs review" : undefined} tone="soon" caption="Waiting for a decision" />
+          <StatCard title="Approved" value={stat(c?.approved)} unit={unit(total ? `of ${total}` : "samples")} progress={total ? (c?.approved ?? 0) / total : undefined} caption="Cleared to contribute" />
+          <StatCard title="Blocked" value={stat(c?.blocked)} unit={unit("samples")} chip={c?.blocked ? "Patient details" : undefined} tone="urgent" caption={c ? `${c.excluded} excluded, ${c.withdrawn} withdrawn` : undefined} />
+          <StatCard title="Ready for next dataset" value={stat(s?.ready)} unit={unit("rows")} caption={!s ? undefined : s.lastDataset ? `Last dataset: version ${s.lastDataset.version}, ${s.lastDataset.rows} rows` : "No dataset exported yet"} />
         </StatRow>
       )}
       {open ? (
