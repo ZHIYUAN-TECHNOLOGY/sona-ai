@@ -1,7 +1,14 @@
 // @ts-expect-error apps/web has no bun types yet (no new dependencies in this change); add @types/bun and drop this line.
 import { expect, test } from "bun:test";
 
-import { SENDING, addSending, rollBack, settle, stateOf } from "./thread";
+import { SENDING, addSending, dayOf, rollBack, settle, stateOf } from "./thread";
+
+test("dayOf names today and yesterday, and dates anything older", () => {
+  const now = new Date(2026, 9, 6, 0, 30);
+  expect(dayOf(new Date(2026, 9, 6, 0, 5), now)).toBe("Today");
+  expect(dayOf(new Date(2026, 9, 5, 23, 55), now)).toBe("Yesterday");
+  expect(dayOf(new Date(2026, 9, 1, 12), now)).not.toMatch(/Today|Yesterday/);
+});
 
 const at = new Date(0);
 const mine = (id: string, seenAt: Date | null = null) => ({ id, from: "patient", text: id, createdAt: at, seenAt });
