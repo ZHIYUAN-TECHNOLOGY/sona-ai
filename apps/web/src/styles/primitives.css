@@ -140,9 +140,9 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 .pro .page-actions .icon-btn { width: var(--pill-h); height: var(--pill-h); padding: 0; }
 .stat-head { min-height: 32px; }
 /* A card with no chip and no corner action has no head; beside cards that have one it reserves the head's height so titles line up. */
-.stat { padding-block: var(--space-6); }
+.stat { padding-block: var(--space-5); }
 .stat-title { margin-top: 0; }
-.stat-row:has(.stat-head) .stat:not(:has(.stat-head)) { padding-top: calc(var(--space-6) + 32px + var(--space-2)); }
+.stat-row:has(.stat-head) .stat:not(:has(.stat-head)) { padding-top: calc(var(--space-5) + 32px + var(--space-2)); }
 
 /* Stat: value and unit share one baseline; the value row sits at the same height across a StatRow. */
 .stat-title, .stat-caption { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }

@@ -1,4 +1,5 @@
-import { refusal } from "@sona-ai/api/roles";
+import { can, refusal } from "@sona-ai/api/roles";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useLocation } from "@tanstack/react-router";
 
 import { Frame } from "@/components/frame";
@@ -20,6 +21,19 @@ function ProFrame() {
   const { me } = Route.useRouteContext();
   const pathname = useLocation({ select: location => location.pathname });
   const groups = navFor(me.role);
+  // Sidebar badges: the same queries the pages run, so the cache is shared; a role only asks for what it may read.
+  const inbox = useQuery(orpc.messages.inbox.queryOptions({ enabled: can(me.role, "messages.list") }));
+  const summaries = useQuery(orpc.review.list.queryOptions({ enabled: can(me.role, "review.list") }));
+  const results = useQuery(orpc.results.list.queryOptions({ input: {}, enabled: can(me.role, "results.list") }));
+  const tasks = useQuery(orpc.tasks.list.queryOptions({ enabled: can(me.role, "tasks.list") }));
+  const waiting = (inbox.data?.threads ?? []).filter(t => !t.handled).length;
+  const counts: Record<string, number> = {
+    "/pro/messages": waiting,
+    "/pro/review": waiting + (summaries.data?.length ?? 0),
+    "/pro/results": (results.data ?? []).filter(r => !r.acknowledgedAt).length,
+    "/pro/tasks": (tasks.data ?? []).filter(t => !t.completed).length,
+  };
+  const counted = groups.map(group => ({ ...group, items: group.items.map(item => (counts[item.to] ? { ...item, count: counts[item.to] } : item)) }));
   // A page the sidebar hides from this role is refused here too, however it was reached (a typed address, an old link).
   const here = PRO_NAV.flatMap(group => group.items).find(item => pathname === item.to || pathname.startsWith(`${item.to}/`));
   const refused = here?.needs && !groups.some(group => group.items.includes(here));
@@ -27,7 +41,7 @@ function ProFrame() {
     <Frame
       app="pro"
       brand="Sona Pro"
-      groups={groups}
+      groups={counted}
       name={me.name}
       who={me.label}
       instead={refused ? (
