@@ -9,7 +9,7 @@ import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, StatCard, StatRow } from "@/components/primitives";
 import { langOf } from "@/features/care-medicines/model";
 import { Explain } from "@/features/care-results/explain";
-import { REVIEWING, countsOf, dateOf, plural, statusOf, trendOf, valueOf, type Result } from "@/features/care-results/model";
+import { REVIEWING, countsOf, dateOf, improvedOf, isFlagged, plainOf, plural, statusOf, trendOf, valueOf, type Result } from "@/features/care-results/model";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-results.css";
 
@@ -21,7 +21,7 @@ const lang = langOf(typeof navigator === "undefined" ? undefined : navigator.lan
 function StatusCell({ r }: { r: Result }) {
   if (!r.released) return <Chip tone="amber">Being checked</Chip>;
   const status = statusOf(r.flag);
-  return status === "Normal" ? <>Normal</> : <Chip tone="amber">{status === "Check" ? "Needs attention" : status}</Chip>;
+  return status === "Normal" ? <>Normal</> : <Chip tone="amber">{status === "Check" ? "Needs a look" : status}</Chip>;
 }
 
 function Page() {
@@ -45,7 +45,7 @@ function Page() {
     );
 
   const { seen, inRange, attention, waiting } = countsOf(results);
-  const first = attention[0] ?? results.find((r) => r.released) ?? results[0];
+  const first = attention.find((r) => results.find((o) => o.released && o.test === r.test)?.id === r.id) ?? attention[0] ?? results.find((r) => r.released) ?? results[0];
   const picked = results.find((r) => r.id === openId) ?? first;
   const trends = new Map(results.map((r) => [r.id, trendOf(results, r.test, lang)]));
   const trend = picked ? trends.get(picked.id) ?? [] : [];
@@ -65,32 +65,39 @@ function Page() {
       },
     });
 
-  const leadLine = [
-    seen ? `${plural(seen, "result")} your doctor has seen` : "Your doctor has not seen your results yet",
-    attention.length ? `${attention.length} ${attention.length === 1 ? "needs" : "need"} attention` : undefined,
-  ].filter(Boolean).join(" · ");
+  const improved = improvedOf(results);
+  // An older flagged value that a newer in-range one replaced no longer needs a look.
+  const open = attention.filter((r) => !improved.some((i) => i.test === r.test));
+  const need = open.length;
+  const needLine = `${need} ${need === 1 ? "needs" : "need"} a look.`;
+  const leadLine = !seen ? "Your doctor has not seen your results yet."
+    : `${plural(seen, "result")} your doctor has seen. ${need ? needLine : "All in the usual range."}`;
+  const flagged = picked?.released ? isFlagged(picked.flag) : false;
 
   return (
     <div className="res-page">
-      <PageHeader title="Results" lead={leadLine} actions={<Button variant="primary" to="/care/ask">Ask Sona about my results</Button>} />
+      <PageHeader title="Results" lead={leadLine} />
 
       <div className="res-top">
         <InsightCard
-          label="Summary"
-          title="Your latest results"
-          tone={attention.length ? "soon" : "info"}
+          label="Sona"
+          title="What your results mean"
+          tone={need ? "soon" : "info"}
           lead={
             !seen ? REVIEWING
-              : attention.length ? `${inRange} of ${seen} are in the normal range. ${plural(attention.length, "result")} ${attention.length === 1 ? "needs" : "need"} attention.`
-                : `All ${plural(seen, "result")} are in the normal range.`
+              : need ? `${inRange} of ${seen} are in the usual range. ${needLine}`
+                : `All ${plural(seen, "result")} are in the usual range.`
           }
-          evidence={attention.slice(0, 3).map((r) => ({ text: `${r.test} was ${valueOf(r)} on ${dateOf(r.at, lang)}` }))}
-          next={attention[0] && attention[0].id !== picked?.id ? { label: "See this result", onAct: () => setOpenId(attention[0]?.id) } : undefined}
+          evidence={[
+            ...open.slice(0, 3).map((r) => ({ text: `${r.test}: ${plainOf(r.flag).toLowerCase()} (${valueOf(r)}, ${dateOf(r.at, lang)})` })),
+            ...improved.slice(0, 2).map((r) => ({ text: `${r.test}: back in the usual range (${valueOf(r)}, ${dateOf(r.at, lang)})` })),
+          ]}
+          next={open[0] && open[0].id !== picked?.id ? { label: `See ${open[0].test}`, onAct: () => setOpenId(open[0]?.id) } : undefined}
         />
         <StatRow>
-          <StatCard title="In range" value={inRange} caption={`of ${plural(seen, "result")}`} />
-          <StatCard title="Need attention" value={attention.length} tone={attention.length ? "amber" : "neutral"} chip={attention.length ? "Talk to your doctor" : undefined} />
-          <StatCard title="Being checked" value={waiting} caption="Shown after your doctor has seen them" />
+          {need ? <StatCard title="Need a look" value={need} tone="amber" caption={`of ${plural(seen, "result")}`} /> : null}
+          {inRange ? <StatCard title="In range" value={inRange} caption={`of ${plural(seen, "result")}`} /> : null}
+          {waiting ? <StatCard title="Being checked" value={waiting} caption="Results appear after your doctor has seen them." /> : null}
         </StatRow>
       </div>
 
@@ -114,9 +121,14 @@ function Page() {
               {picked.released ? (
                 <>
                   <p className="res-big"><span>{picked.value}</span>{picked.unit ? <small> {picked.unit}</small> : null}</p>
-                  <p className="res-meta"><StatusCell r={picked} /><span className="res-muted">{dateOf(picked.at, lang)}</span></p>
+                  <p className="res-meta">{flagged ? <Chip tone="amber">{plainOf(picked.flag)}</Chip> : <span>{plainOf(picked.flag)}</span>}<span className="res-muted">{dateOf(picked.at, lang)}</span></p>
                   {trend.length ? <LineChart points={trend} label={`Your ${picked.test} results over time`} unit={picked.unit} height={160} /> : null}
+                  <h3 className="res-h">What this means</h3>
                   <Explain key={picked.id} resultId={picked.id} lang={lang} />
+                  <div className="res-next">
+                    <span className="res-muted">Suggested next step</span>
+                    {flagged ? <Button to="/care/messages" icon="message">Message your care team</Button> : <Button to="/care/ask" icon="sparkle">Ask Sona about this result</Button>}
+                  </div>
                 </>
               ) : (
                 <p className="res-note">{REVIEWING}</p>

@@ -4,12 +4,12 @@
 
 /* The summary beside the three stat cards; they stack on a narrow screen. */
 .res-top { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--gap-card); align-items: stretch; }
-.res-top .stat-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.res-top .stat-row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
 @media (max-width: 1100px) {
   .res-top, .res-page .with-rail { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) {
-  .res-top .stat-row { grid-template-columns: minmax(0, 1fr); }
+  .res-top .stat-row { grid-auto-flow: row; }
 }
 
 .res-page table { font-size: max(16px, var(--text-body)); }
@@ -26,8 +26,15 @@
 .res-explain { display: grid; gap: var(--space-3); justify-items: start; }
 .res-explain .btn { min-height: 48px; font-size: 17px; }
 .res-answer { white-space: pre-wrap; }
-.res-ask a { display: inline-flex; align-items: center; min-height: 48px; color: var(--blue); font-weight: 600; }
+.res-h { margin: 0; font-size: var(--text-heading); font-weight: 600; color: var(--ink); }
+.res-next { display: grid; gap: var(--space-2); justify-items: start; padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.res-next .btn { min-height: 48px; font-size: 17px; }
 
 /* Nothing to show yet: one centred card, as on Check-ins. */
 .res-alone { width: min(100%, 640px); margin-inline: auto; }
 .res-alone .empty .btn { align-self: center; margin-top: var(--space-2); }
+
+/* Shared small text is lifted to the Care minimum of 15px; the hint keeps its first letter clear of the toolbar edge. */
+.res-page .stat-caption, .res-page .table-count { font-size: max(15px, var(--text-small)); }
+.res-page .table-toolbar-start { padding-inline-start: var(--space-2); }
+.res-page .stat-caption { display: block; overflow: visible; white-space: normal; -webkit-line-clamp: unset; }

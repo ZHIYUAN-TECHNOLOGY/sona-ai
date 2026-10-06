@@ -1,3 +1,4 @@
+import * as model from "./model";
 // @ts-expect-error apps/web has no bun types yet (no new dependencies in this change); add @types/bun and drop this line.
 import { expect, test } from "bun:test";
 
@@ -34,4 +35,11 @@ test("the lead is the newest result, amber when it is under review or flagged", 
   expect(leadOf(rows)).toEqual({ text: "Your newest result: Haemoglobin was 11.8 g/dL on 4 Oct 2026.", tone: "soon", openId: "c" });
   expect(leadOf(rows.slice(2))?.tone).toBe("info");
   expect(isFlagged("Normal")).toBe(false);
+});
+
+test("improvedOf: newest in range after an earlier flagged value of the same test", () => {
+  const r = (id: string, t: string, flag?: string) => ({ id, test: t, at: "2026-10-01", released: true as const, value: "1", flag });
+  const out = model.improvedOf([r("a", "K", "normal"), r("b", "K", "high"), r("c", "Na", "low"), r("d", "Na", "normal"), r("e", "Hb")]);
+  expect(out.map((x) => x.id)).toEqual(["a"]);
+  expect(model.plainOf("H")).toBe("Above the usual range");
 });

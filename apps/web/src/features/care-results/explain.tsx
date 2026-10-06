@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 
 import { Button, Chip } from "@/components/primitives";
 import { orpc } from "@/lib/orpc";
@@ -29,12 +28,11 @@ export function Explain({ resultId, lang }: { resultId: string; lang: "en" | "ms
         </>
       ) : (
         <>
-          <Button variant="primary" pending={q.isFetching} onClick={ask}>What this result means</Button>
+          <Button variant="primary" pending={q.isFetching} onClick={ask}>Explain this result</Button>
           {q.isFetching ? <p className="res-muted">Sona is reading your result…</p> : null}
           {q.isError && !q.isFetching ? <p className="res-note">Sona can't explain this result right now. Please try again in a minute.</p> : null}
         </>
       )}
-      <p className="res-ask"><Link to="/care/ask">Ask about this result</Link></p>
     </div>
   );
 }
