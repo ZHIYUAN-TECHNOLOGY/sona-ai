@@ -301,8 +301,19 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
         form.append("model", ASR_MODEL);
         form.append("file", new Blob([input.audio], { type: "audio/wav" }), "speech.wav");
         // No language: Manglish switches language mid-sentence, and the fine-tuned model detects it.
+        if (input.voices) {
+          form.append("diarize", "1");
+          if (input.voices.memory) form.append("memory", input.voices.memory);
+        }
         const out = await call("voice", "/v1/audio/transcriptions", form);
-        return { text: String(out?.text ?? "").trim(), source: "model", model: ASR_MODEL };
+        // The box's segments are another program's JSON: a malformed one is dropped, so the app never draws a voice that is not one.
+        const segments = (input.voices && Array.isArray(out?.segments) ? out.segments as any[] : []).flatMap(s =>
+          Number.isInteger(s?.voice) && s.voice >= 1 && s.voice <= 8 && Number.isFinite(s.from) && Number.isFinite(s.to) && typeof s.text === "string" && s.text.trim()
+            ? [{ voice: s.voice as number, from: s.from as number, to: s.to as number, text: (s.text as string).trim() }] : []);
+        return {
+          text: String(out?.text ?? "").trim(), ...segments.length ? { segments } : {},
+          ...input.voices && typeof out?.memory === "string" ? { memory: out.memory as string } : {}, source: "model", model: ASR_MODEL,
+        };
       } catch { return fallback.transcribe(input); }
     },
 

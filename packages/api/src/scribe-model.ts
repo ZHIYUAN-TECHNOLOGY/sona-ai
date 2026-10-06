@@ -10,30 +10,34 @@ import type { Models } from "./models";
  * (the unsure ones say so), and every statement must cite the sentences it rests on and name only numbers, doses and
  * medicines the transcript has. A statement that fails is dropped and counted, so the app can say so; a draft with
  * nothing left is the stub's, labelled fixture.
+ * Where the speech box numbered the voices, the model names each voice once, from everything it said, instead of guessing
+ * sentence by sentence: one person cannot be the clinician in one sentence and the patient in the next.
  */
-export type Speaker = "clinician" | "patient";
-/** A consultation line as the app sends it: the words heard, and who said them once the clinician has confirmed it. */
-export type ConsultationLine = { text: string; speaker?: Speaker };
+export type Speaker = "clinician" | "patient" | "family" | "nurse" | "interpreter" | "other";
+/** A consultation line as the app sends it: the words heard, the voice the speech box numbered it as, and who said them once the clinician has confirmed it. */
+export type ConsultationLine = { text: string; speaker?: Speaker; voice?: number };
 /** One turn of who said what; `sure` is false where the speaker is a guess, and there is no `speaker` where nobody has judged it. */
-export type Turn = { text: string; speaker?: Speaker; sure: boolean };
-/** The draft in the app's four note sections, the dialogue as turns, and how many statements the rule checks dropped. */
-export type ScribeDraft = { sections: NoteSections; turns: Turn[]; dropped: number };
+export type Turn = { text: string; speaker?: Speaker; voice?: number; sure: boolean };
+/** The draft in the app's four note sections, the dialogue as turns, how many statements the rule checks dropped, and who each numbered voice was read as. */
+export type ScribeDraft = { sections: NoteSections; turns: Turn[]; dropped: number; voices?: { voice: number; speaker?: Speaker; sure: boolean }[] };
 
-const LABEL: Record<Speaker, string> = { clinician: "Clinician", patient: "Patient" };
+const LABEL: Record<Speaker, string> = { clinician: "Clinician", patient: "Patient", family: "Family", nurse: "Nurse", interpreter: "Interpreter", other: "Other" };
 
 /** The captured words as they are, with no model reading them: the dialogue in the history section (as the app's own draft does), the rest left to the clinician. */
 export function ruleNote(lines: ConsultationLine[]): ScribeDraft {
-  const said = lines.map(l => ({ text: l.text.trim(), ...l.speaker ? { speaker: l.speaker } : {} })).filter(l => l.text);
+  const said = lines.map(l => ({ text: l.text.trim(), ...l.speaker ? { speaker: l.speaker } : {}, ...l.voice ? { voice: l.voice } : {} })).filter(l => l.text);
+  // A voice nobody has named is still worth telling apart from the others.
+  const by = (l: ConsultationLine) => l.speaker ? `${LABEL[l.speaker]}: ` : l.voice ? `Voice ${l.voice}: ` : "";
   return {
-    sections: { subjective: said.map(l => l.speaker ? `${LABEL[l.speaker]}: ${l.text}` : l.text).join("\n"), objective: "", assessment: "", plan: "" },
+    sections: { subjective: said.map(l => by(l) + l.text).join("\n"), objective: "", assessment: "", plan: "" },
     turns: said.map(l => ({ ...l, sure: Boolean(l.speaker) })),
     dropped: 0,
   };
 }
 
-/** The transcript as sentences (numbered from 1 in the prompt), each keeping the speaker its line was confirmed as. */
+/** The transcript as sentences (numbered from 1 in the prompt), each keeping its line's voice and the speaker its line was confirmed as. */
 export function sentencesOf(lines: ConsultationLine[]) {
-  return lines.flatMap(l => l.text.split(/(?<=[.!?])\s+|(?<=[。！？])/).map(s => s.trim()).filter(Boolean).map(text => ({ text, speaker: l.speaker })));
+  return lines.flatMap(l => l.text.split(/(?<=[.!?])\s+|(?<=[。！？])/).map(s => s.trim()).filter(Boolean).map(text => ({ text, speaker: l.speaker, voice: l.voice })));
 }
 
 // Number words in English and Malay (and the prescription shorthands), so "lima hari", "five days" and "5 days" agree.
@@ -103,12 +107,21 @@ export function onlyFromTranscript(statement: string, transcript: string, listed
     && medicinesIn(statement, listed).every(m => said.includes(m) || said.includes(m.replace(/e?s$/, "")));
 }
 
-const SCRIBE = `You are a hospital doctor's scribe. From the transcript of a consultation, draft the doctor's note for them to check and edit before saving.
-The transcript is numbered sentences from speech recognition. It may mix English, Malay and Chinese (Manglish) and may contain recognition errors. A sentence marked (clinician) or (patient) has a confirmed speaker.
+const LETTERS: Record<string, Speaker> = { C: "clinician", P: "patient", F: "family", N: "nurse", I: "interpreter", O: "other" };
+const READING = /(\d+)\s*([CPFNIO])(\?)?/gi;
+/** The scribe's instructions. Without numbered voices they are as they were; with them the model names each voice once and reads sentence by sentence only where there is no voice. */
+const scribe = (voiced: boolean) => `You are a hospital doctor's scribe. From the transcript of a consultation, draft the doctor's note for them to check and edit before saving.
+The transcript is numbered sentences from speech recognition. It may mix English, Malay and Chinese (Manglish) and may contain recognition errors. ${voiced
+  ? "A sentence marked (voice 2) was said by that voice, and one voice is one person throughout. A role beside it or alone, as in (voice 2, patient) or (clinician), is a confirmed speaker."
+  : "A sentence marked (clinician) or (patient) has a confirmed speaker."}
 Answer with compact JSON only, in exactly this shape:
-{"speakers": "1C 2C 3P 4C? ...", "history": ["<statement> [3, 5]", ...], "examination": [...], "assessment": [...], "plan": [...], "medicines": ["<medicine>", ...]}
+{${voiced ? `"voices": "1C 2P 3F? 4N", "speakers": "7C 8P? ..."` : `"speakers": "1C 2C 3P 4C? ..."`}, "history": ["<statement> [3, 5]", ...], "examination": [...], "assessment": [...], "plan": [...], "medicines": ["<medicine>", ...]}
 Rules:
-- speakers: every sentence number in order, each followed by C (clinician) or P (patient), and ? when it could be either. Judge each sentence on its own: a question to the patient, an examination step, an explanation or advice is C; the patient's own symptoms, history, medicines and answers are P.
+${voiced
+  ? `- voices: every voice number in the transcript, each followed by C (clinician), P (patient), F (family member or companion), N (nurse), I (interpreter) or O (other), and ? when unsure. Judge a voice by everything it says: the one who asks, examines, explains and advises is C; the one whose own symptoms, history and medicines they are is P; one who speaks about the patient is F; one who repeats what was said in another language is I.
+- speakers: only the sentences that have no voice, each number followed by one of the same letters, and ? when unsure; "" when every sentence has a voice.
+- When a family member, nurse or interpreter gives a fact, the statement says who: "Daughter reports two missed doses", "Nurse measured BP 150/90".`
+  : `- speakers: every sentence number in order, each followed by C (clinician) or P (patient), and ? when it could be either. Judge each sentence on its own: a question to the patient, an examination step, an explanation or advice is C; the patient's own symptoms, history, medicines and answers are P.`}
 - history, examination, assessment, plan: short clinical statements in English, each ending with the numbers of the sentences it rests on in brackets.
 - history: the complaint and its course, relevant past, family and social history, current medicines and allergies.
 - examination: only findings and measurements said aloud in the consultation; [] if none.
@@ -132,12 +145,16 @@ export function citedStatement(value: unknown) {
 export function checkDraft(read: Record<string, unknown> | undefined, sentences: ReturnType<typeof sentencesOf>): ScribeDraft | undefined {
   if (!read) return undefined;
   const transcript = sentences.map(s => s.text).join(" ");
-  // Who said what ("1C 2P 3C? ..."): a confirmed speaker stands; otherwise the model's reading, for sentences that exist.
-  const who: (Speaker | undefined)[] = sentences.map(s => s.speaker), sure = sentences.map(s => Boolean(s.speaker));
-  for (const [, n, letter, unsure] of String(read.speakers ?? "").matchAll(/(\d+)\s*([CP])(\?)?/gi)) {
+  // Who each voice is ("1C 2P 3F?"): every sentence of a voice gets the one role.
+  const roles = new Map<number, { speaker: Speaker; sure: boolean }>();
+  for (const [, n, letter, unsure] of String(read.voices ?? "").matchAll(READING)) roles.set(Number(n), { speaker: LETTERS[letter!.toUpperCase()]!, sure: !unsure });
+  // Who said what: a confirmed speaker stands; then the voice's role; then, for a sentence with no voice, the model's own reading of it ("1C 2P 3C? ...").
+  const who: (Speaker | undefined)[] = sentences.map(s => s.speaker ?? roles.get(s.voice ?? 0)?.speaker);
+  const sure = sentences.map(s => Boolean(s.speaker) || (roles.get(s.voice ?? 0)?.sure ?? false));
+  for (const [, n, letter, unsure] of String(read.speakers ?? "").matchAll(READING)) {
     const i = Number(n) - 1;
-    if (!sentences[i] || sentences[i]!.speaker) continue;
-    who[i] = letter!.toUpperCase() === "C" ? "clinician" : "patient";
+    if (!sentences[i] || sentences[i]!.speaker || sentences[i]!.voice) continue;
+    who[i] = LETTERS[letter!.toUpperCase()];
     sure[i] = !unsure;
   }
   const listed = Array.isArray(read.medicines) ? read.medicines.filter((m): m is string => typeof m === "string") : [];
@@ -147,8 +164,8 @@ export function checkDraft(read: Record<string, unknown> | undefined, sentences:
     const statements = (Array.isArray(read[key]) ? read[key] as unknown[] : []).flatMap(s => {
       const { text: said, cites } = citedStatement(s);
       const rests = cites.filter(n => n <= sentences.length);
-      // An assessment or plan is the clinician's own: one resting only on what the patient said is not.
-      const clinicians = key !== "assessment" && key !== "plan" || rests.some(n => who[n - 1] !== "patient");
+      // An assessment or plan is the clinician's own: one resting only on what the patient or their family said is not.
+      const clinicians = key !== "assessment" && key !== "plan" || rests.some(n => who[n - 1] !== "patient" && who[n - 1] !== "family");
       if (said && rests.length && clinicians && onlyFromTranscript(said, transcript, listed)) return [said.replace(/([^.!?])$/, "$1.")];
       dropped++;
       return [];
@@ -157,14 +174,16 @@ export function checkDraft(read: Record<string, unknown> | undefined, sentences:
     sections[section] = statements.join("\n");
   }
   if (!kept) return undefined;
-  // Consecutive sentences with the same reading make one turn.
+  // Consecutive sentences of the same voice with the same reading make one turn.
   const turns: Turn[] = [];
   sentences.forEach((s, i) => {
     const last = turns.at(-1);
-    if (last && last.speaker === who[i] && last.sure === sure[i]) last.text += ` ${s.text}`;
-    else turns.push({ text: s.text, ...who[i] ? { speaker: who[i] } : {}, sure: sure[i]! });
+    if (last && last.speaker === who[i] && last.voice === s.voice && last.sure === sure[i]) last.text += ` ${s.text}`;
+    else turns.push({ text: s.text, ...who[i] ? { speaker: who[i] } : {}, ...s.voice ? { voice: s.voice } : {}, sure: sure[i]! });
   });
-  return { sections, turns, dropped };
+  // The voices the transcript has, each with the model's role for it or none; a voice the model made up is not among them.
+  const voices = [...new Set(sentences.flatMap(s => s.voice ? [s.voice] : []))].sort((a, b) => a - b).map(voice => ({ voice, ...roles.get(voice) ?? { sure: false } }));
+  return { sections, turns, dropped, ...voices.length ? { voices } : {} };
 }
 
 /** box ①'s call (baseten-models `boxes().call`): a cold box throws at once, a failure throws too. */
@@ -177,8 +196,9 @@ export function scribeModels(call: Call, model: string, fallback: Models): Pick<
     async draftNote(input) {
       try {
         const sentences = sentencesOf(input.lines);
-        const transcript = sentences.map((s, i) => `[${i + 1}] ${s.speaker ? `(${s.speaker}) ` : ""}${s.text}`).join("\n");
-        const messages = [{ role: "system", content: SCRIBE }, { role: "user", content: `Transcript:\n${transcript}` }];
+        const mark = (s: typeof sentences[number]) => [s.voice ? `voice ${s.voice}` : "", s.speaker ?? ""].filter(Boolean).join(", ");
+        const transcript = sentences.map((s, i) => `[${i + 1}] ${mark(s) ? `(${mark(s)}) ` : ""}${s.text}`).join("\n");
+        const messages = [{ role: "system", content: scribe(sentences.some(s => s.voice)) }, { role: "user", content: `Transcript:\n${transcript}` }];
         const out = await call("brain", "/v1/chat/completions", JSON.stringify({ model, messages, temperature: 0.1, max_tokens: 2400 }), "application/json", SCRIBE_MS);
         const draft = checkDraft(jsonIn(out?.choices?.[0]?.message?.content), sentences);
         if (draft) return { ...draft, source: "model", model };

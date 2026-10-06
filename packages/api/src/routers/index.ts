@@ -118,9 +118,9 @@ export const appRouter = {
    * reason the dock shows (the stub has no ears).
    */
   voice: {
-    transcribe: protectedProcedure.input(z.object({ audio: z.string().min(16).max(MAX_AUDIO_BASE64), language: z.enum(["en", "ms", "zh"]).optional() }))
+    transcribe: protectedProcedure.input(z.object({ audio: z.string().min(16).max(MAX_AUDIO_BASE64), language: z.enum(["en", "ms", "zh"]).optional(), voices: z.object({ memory: z.string().max(1_000_000).optional() }).optional() }))
       .handler(async ({ context, input }) => {
-        const heard = await (context.models ?? stubModels).transcribe({ audio: Uint8Array.from(atob(input.audio), c => c.charCodeAt(0)), language: input.language });
+        const heard = await (context.models ?? stubModels).transcribe({ audio: Uint8Array.from(atob(input.audio), c => c.charCodeAt(0)), language: input.language, voices: input.voices });
         if (heard.source === "fixture") throw new ORPCError("PRECONDITION_FAILED", {
           message: heard.waking ? `The speech model is starting (about ${heard.waking} min). Try again then, or type.`
             : context.models ? "The speech model is starting. Try again in a minute, or type." : "Speaking to Sona isn't switched on yet. Type instead.",
