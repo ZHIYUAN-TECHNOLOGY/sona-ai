@@ -167,6 +167,14 @@ export function StatCard({ title, value, unit, caption, chip, tone = "neutral", 
   );
 }
 
+/**
+ * A state in a row or a detail line: a tone dot and the word, lighter than a `Chip`. Every state wears its meaning's
+ * colour (done or safe green, next or waiting blue, soon amber, must-not-miss red); neutral is for "nothing to say".
+ */
+export function Status({ tone = "neutral", children }: { tone?: Tone | "neutral"; children: ReactNode }) {
+  return <span className="status" data-tone={tone}>{children}</span>;
+}
+
 /** A part of a lead line that needs the eye, in its tone's colour, e.g. `<Signal tone="soon">7 blocked</Signal>`. */
 export function Signal({ tone = "info", children }: { tone?: Tone; children: ReactNode }) {
   return <span className="signal" data-tone={tone}>{children}</span>;

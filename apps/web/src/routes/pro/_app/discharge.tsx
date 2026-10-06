@@ -6,7 +6,7 @@ import { useState } from "react";
 import { SegmentBar } from "@/components/charts";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader, PatientStrip } from "@/components/page";
-import { Button, Card, Chip, ListCard, ListRow, Signal, StatCard, StatRow } from "@/components/primitives";
+import { Button, Card, Chip, ListCard, ListRow, Signal, StatCard, StatRow, Status } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { countOf, dischargeRank, standings } from "@/features/discharge/rank";
 import { blockersOf, Loaded, type Mark, oneParam, Origin, PatientPicker, say, usePatient } from "@/features/discharge/shared";
@@ -36,7 +36,7 @@ function Chooser() {
     const s = by.get(id);
     if (!s) return undefined;
     const why = s.kind === "blocked" ? `waiting on ${s.blockers.map(b => b.label).join(", ")}` : s.kind === "fit" ? "nothing is holding it" : s.kind === "watch" ? "being watched" : "not fit to go yet";
-    return { rank: dischargeRank(s), reason: `${s.bed} · ${why}`, chip: s.kind === "fit" ? <Chip tone="done">Ready to go</Chip> : s.kind === "blocked" ? <Chip tone="soon">Blocked</Chip> : undefined };
+    return { rank: dischargeRank(s), reason: `${s.bed} · ${why}`, chip: s.kind === "fit" ? <Chip tone="done">Ready to go</Chip> : s.kind === "blocked" ? <Chip tone="soon">Blocked</Chip> : s.kind === "watch" ? <Status tone="info">On watch</Status> : <Status>Not fit yet</Status> };
   };
 
   return (

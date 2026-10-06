@@ -6,7 +6,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type Column, DataTable, PersonCell, RowAction, TableToolbar } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Chip, ListCard, ListRow, SearchField, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, ListCard, ListRow, SearchField, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { BookingRequests } from "@/features/today/booking-requests";
 import { dateKey, hourOf, longLabel, timeOf } from "@/features/today/time";
@@ -71,7 +71,7 @@ function Page() {
       key: "status", header: "Status", cell: v =>
         v.incomplete ? <Chip tone="soon">Record incomplete</Chip>
           : v.id === next?.id ? <Chip tone="info">Next</Chip>
-            : <span className="today-quiet">{at(v) < now ? "Earlier" : "Later"}</span>,
+            : at(v) < now ? <Status tone="done">Earlier</Status> : <Status tone="info">Later</Status>,
     },
   ];
 

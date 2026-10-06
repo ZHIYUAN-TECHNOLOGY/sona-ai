@@ -7,7 +7,7 @@ import { SegmentBar } from "@/components/charts";
 import { TableToolbar, TextCell, DataTable, PersonCell, type Column } from "@/components/data-table";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Chip, Field, SearchField, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, Field, SearchField, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { dueLabel, groupTasks, matchesTask, rankTasks, sourceOf, type TaskTab } from "@/features/tasks/state";
 import { isOverdue, today } from "@/features/ward/state";
@@ -77,7 +77,7 @@ function Page() {
       key: "due", header: "Due", align: "right", sort: (a, b) => (a.due ?? "9").localeCompare(b.due ?? "9"),
       cell: t => t.completed ? <span className="tasks-due"><Chip tone="done" icon="check">Done</Chip></span>
         : isOverdue(t, on) ? <span className="tasks-due" data-overdue>{dueLabel(t.due, on)}<Chip tone="urgent">Overdue</Chip></span>
-        : <span className="tasks-due">{dueLabel(t.due, on)}</span>,
+        : <span className="tasks-due">{t.due === on ? <Status tone="soon">{dueLabel(t.due, on)}</Status> : t.due ? <Status tone="info">{dueLabel(t.due, on)}</Status> : dueLabel(t.due, on)}</span>,
     },
   ];
 
@@ -115,7 +115,7 @@ function Page() {
               </dl>
               <div className="tasks-actions">
                 {markDone(task, "primary")}
-                {task.encounterId ? <Button size="sm" variant="secondary" to="/pro/visit" search={{ encounterId: task.encounterId }}>Open visit</Button> : null}
+                {task.encounterId && can(me.role, "encounter.get") ? <Button size="sm" variant="secondary" to="/pro/visit" search={{ encounterId: task.encounterId }}>Open visit</Button> : null}
               </div>
               {settled.includes(task.id) ? (
                 <p className="tasks-muted" role="status">Marked done. {nextOpen ? <button type="button" className="tasks-next" onClick={() => setPicked(nextOpen.id)}>Review the next task</button> : "Nothing else is open here."}</p>

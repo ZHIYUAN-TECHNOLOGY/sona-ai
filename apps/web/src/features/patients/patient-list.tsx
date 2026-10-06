@@ -7,7 +7,7 @@ import { DataTable, type Column, PersonCell, RowAction, TableToolbar, TextCell }
 import type { IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Card, Chip, Pager, pageRange, SearchField, Signal, Skeleton, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Card, Chip, Pager, pageRange, SearchField, Signal, Skeleton, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { type client, orpc } from "@/lib/orpc";
 
@@ -43,7 +43,7 @@ function ListStatus({ patient }: { patient: PatientRow }) {
   const hours = status === "fit" ? patient.ward?.waitingHours : undefined;
   if (hours) return <span className="ptl-status"><StatusChip patient={patient} /><span className="ptl-calm">{plural(hours, "hour")} waiting</span></span>;
   if (status === "watch" || status === "fit" || (!status && patient.incomplete)) return <StatusChip patient={patient} />;
-  return <span className="ptl-calm">{status === "stable" ? "Stable" : "Not on a ward"}</span>;
+  return status === "stable" ? <Status tone="done">Stable</Status> : <Status>Not on a ward</Status>;
 }
 
 const statusRank = (p: PatientRow) => ["watch", "fit", "stable"].indexOf(p.ward?.status ?? "") + (p.ward ? 0 : p.incomplete ? 3 : 5);
@@ -157,7 +157,6 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
             />
           </TableToolbar>
         }
-        count={isPending ? <Skeleton width={140} /> : rows.length ? `Showing ${from}-${to} of ${rows.length}` : "None shown"}
         footer={<Pager page={current} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} noun="patients" />}
       />
     </Card>
@@ -183,7 +182,7 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
                   { label: "On watch", value: mix.watch, tone: "amber" },
                   { label: "Fit to go", value: mix.fit, tone: "green" },
                   { label: "Record incomplete", value: mix.incomplete, tone: "blue" },
-                  { label: "Stable", value: mix.rest, tone: "neutral" },
+                  { label: "Everyone else", value: mix.rest, tone: "neutral" },
                 ]} />
               </Card>
             </RightRail>

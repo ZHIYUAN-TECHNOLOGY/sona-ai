@@ -59,7 +59,7 @@ All tokens are custom properties in `src/styles/tokens.css`, set on `.pro` and `
 
 - Pages use tokens only. No inline hex, no new colours, no raw pixel radii or shadows.
 - Colour carries meaning only: red must-not-miss, amber soon or blocked, green done or safe, blue the next step.
-- A calm state ("Stable", "Routine", "Seen") is plain `--muted` text, not a chip. A chip is for a state that needs the eye.
+- Every state is colour-coded by its meaning (owner's call, 6 Oct): a state that needs the eye is a `Chip`; a calm one ("Stable", "Earlier", "Being watched") is a `Status`, a tone dot and the word. Plain grey is for a state with nothing to say ("Free", "Not on a ward").
 
 Values marked "Pro / Care" differ between the apps. Everything else is shared.
 
@@ -192,6 +192,7 @@ Types: `Tone = "info" | "urgent" | "soon" | "done"` (blue, red, amber, green). `
 - `Card({ title, action, className, children }: { title?: string; action?: CornerAction; className?: string; children: ReactNode })`. The white surface. `action` is a corner arrow link.
 - `StatRow({ children }: { children: ReactNode })`. A row of stat cards.
 - `StatCard({ title, value, unit, caption, chip, tone = "neutral", action, feature, progress, onSelect, selected }: { title: string; value: ReactNode; unit?: string; caption?: ReactNode; chip?: ReactNode; tone?: ChipTone; action?: CornerAction; feature?: boolean; progress?: number; onSelect?: () => void; selected?: boolean })`. A compact glance tile: title, number, one-line caption. `chip` (two or three words) sits beside the number in `tone`. `feature` marks the one highlighted stat in a row. `progress` is 0 to 1 and draws an arc. `onSelect` makes the whole card a button that filters the list below; `selected` marks the filter in use.
+- `Status({ tone = "neutral", children }: { tone?: Tone | "neutral"; children: ReactNode })`. A calm state in a row: a tone dot and the word.
 - `Signal({ tone = "info", children }: { tone?: Tone; children: ReactNode })`. Inline text in its tone's colour, for the part of a `PageHeader` lead that needs the eye.
 - `Tabs<T extends string>({ tabs, value, onChange, label }: { tabs: TabItem<T>[]; value: T; onChange: (id: T) => void; label: string })`. Controlled tab list with arrow keys. The selected tab is `value`.
 - `tabForKey<T extends string>(ids: T[], current: T, key: string): T | undefined`. The tab an arrow key moves to. `Tabs` uses it; pages rarely need it.
@@ -337,7 +338,7 @@ Empty `points` draws the chart's own empty state. Charts draw in when their data
 
 - The frame wraps the page in `.frame-page` (a column, `--gap-card` between children on Pro, left-aligned, max width `--page-max`). Do not add your own outer wrapper, max width or page padding.
 - Pro pages get bottom padding for the Sona bar from the frame (`.frame-scroll`, 128px). Do not add your own.
-- Navigation comes from `nav.ts`. `needs` hides an entry the role cannot use. `count` draws a badge when above zero, but nothing supplies it yet: do not expect or fake badges.
+- Navigation comes from `nav.ts`. `needs` names the permission the page's own job needs (not just one it can read), so a role never sees a page it can open but not use; a list means any one is enough. A link to another page is shown only when the role may open it (`can(me.role, ...)`). `count` draws a badge when above zero, but nothing supplies it yet: do not expect or fake badges.
 - Loading is `Skeleton` or `DataTable loading`. Empty and refused are `EmptyState` in plain words.
 - Page-only styles go in `src/styles/pages/<page>.css`, using tokens.
 - Do not edit: anything in `src/components/`, any `src/styles/*.css` outside `src/styles/pages/`, or `src/nav.ts`. If a shared piece is missing something, say so in your report.

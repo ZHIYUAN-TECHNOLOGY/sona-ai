@@ -74,6 +74,9 @@
 .stat-select:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
 .stat .icon-btn { position: relative; z-index: 1; }
 
+/* Status: a state as a tone dot and a word. */
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: 500; color: var(--tone); white-space: nowrap; }
+.status::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 /* Signal: the part of a lead line that needs the eye. */
 .signal { color: var(--tone); font-weight: 600; }
 

@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { EmptyState, PageHeader } from "@/components/page";
-import { Avatar, Button, Card, Chip, Field, Select, Signal, Skeleton, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Avatar, Button, Card, Chip, Field, Select, Signal, Skeleton, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/handover.css";
@@ -128,7 +128,7 @@ function Page() {
                     </div>
                     {done.has(c.id) ? <Chip tone="done" icon="check">Handed over</Chip>
                       : c.priority === "watch" ? <Chip tone="soon">Watch</Chip>
-                      : <span className="ho-muted">{held.has(c.id) ? "Held back" : "Stable"}</span>}
+                      : held.has(c.id) ? <Status tone="soon">Held back</Status> : <Status tone="done">Stable</Status>}
                   </div>
                   <details className="ho-more" open={(c.priority === "watch") !== flipped.has(c.id)}>
                     <summary onClick={e => { e.preventDefault(); setFlipped(prev => flip(prev, c.id)); }}>{c.situation}</summary>

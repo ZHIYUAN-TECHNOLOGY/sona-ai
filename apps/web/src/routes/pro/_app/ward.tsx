@@ -8,7 +8,7 @@ import { BarChart, BarList, SegmentBar } from "@/components/charts";
 import { DataTable, PersonCell, RowAction, TableToolbar, type Column } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
-import { Button, Card, Chip, ListCard, ListRow, SearchField, Select, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, ListCard, ListRow, SearchField, Select, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { freeBy, Loaded, rankBeds, unownedOn } from "@/features/ward/state";
 import { orpc } from "@/lib/orpc";
@@ -71,7 +71,7 @@ function Page() {
   const assigned = assign.isSuccess && bed?.blockers.some(x => x.id === assign.variables.blockerId) ? assign.variables.owner : undefined;
   const ownerLine = (b: BedRow) => {
     const open = unownedOn(b, owners);
-    if (open === 0) return <span className="ward-muted">Owner: {[...new Set(b.blockers.map(x => owners.get(x.id)))].join(", ")}</span>;
+    if (open === 0) return <Status tone="soon">Owner: {[...new Set(b.blockers.map(x => owners.get(x.id)))].join(", ")}</Status>;
     return <span className="ward-unowned">{open === b.blockers.length ? "No owner yet" : `${open} of ${b.blockers.length} without an owner`}</span>;
   };
 
@@ -79,7 +79,7 @@ function Page() {
     { key: "bed", header: "Bed", cell: b => <span className="ward-bed"><strong>{b.bed}</strong>{b.predicted ? <span className="ward-muted">{freeBy(b.predicted)}</span> : null}</span>, sort: (x, y) => x.bed.localeCompare(y.bed, undefined, { numeric: true }) },
     { key: "patient", header: "Patient", cell: b => b.name ? <PersonCell name={b.name} detail={b.meta} /> : <span className="ward-muted">No patient</span> },
     {
-      key: "waits", header: "Waiting on", cell: b => b.blockers.length === 0 ? <span className="ward-muted">{b.status === "watch" ? "Being watched" : b.name ? "Nothing blocking" : "Free"}</span> : (
+      key: "waits", header: "Waiting on", cell: b => b.blockers.length === 0 ? (b.status === "watch" ? <Status tone="info">Being watched</Status> : b.name ? <Status tone="done">Nothing blocking</Status> : <Status>Free</Status>) : (
         <span className="ward-waits"><span>{b.blockers.map(x => x.label).join(", ")}</span>{ownerLine(b)}</span>
       ),
     },
