@@ -48,7 +48,7 @@ export function usePreloadVisit(patientId: string | undefined) {
 export const underVisit = (routes: readonly { key: string; name: string }[], key: string) =>
   routes.slice(routes.findIndex(r => r.key === key) + 1).some(r => r.name === "session/[patientId]");
 
-type Stacked = { getState: () => { routes: readonly { name: string; params?: object }[] } | undefined };
+type Stacked = { getState: () => { routes: readonly { name: string; key?: string; params?: object }[] } | undefined };
 
 /**
  * Goes back to a page already open under this one (`name`, a route of the stack `navigation` belongs to; `patientId`: only
@@ -73,6 +73,23 @@ export function backTo(navigation: Stacked, name: string, patientId?: string) {
 export function openPage(navigation: Stacked, path: "/recording" | "/note" | "/tasks" | "/handover") {
   if (!backTo(navigation, path.slice(1))) router.push(path);
 }
+
+/**
+ * Patients, opened for `params` (a tab, a question, a tool page): back to the Patients page already open under this one,
+ * with these params in place of its old ones, else pushed (`replace`: in place of this page). Handover's Wrap up, reached
+ * from a patient's card, pushed a second Patients over the first, and back walked through both.
+ */
+export function openPatients(navigation: Stacked & { dispatch: (action: { type: string; payload?: object; source?: string }) => void }, params: Record<string, string> = {}, replace = false) {
+  const routes = navigation.getState()?.routes ?? [];
+  const below = routes.slice(0, -1).findLast(r => r.name === "patients/index");
+  if (!below) return replace ? router.replace({ pathname: "/patients", params }) : router.push({ pathname: "/patients", params });
+  navigation.dispatch({ type: "REPLACE_PARAMS", payload: { params }, source: below.key });
+  backTo(navigation, "patients/index");
+}
+
+/** Today's lab results, newest first (Today's Results key and its "See all"). */
+export const RESULTS = "/results";
+export const openResults = () => router.push(RESULTS);
 
 /**
  * A patient's card (a page) opens the visit over itself, so back returns to the card. Switching from a visit (its patient

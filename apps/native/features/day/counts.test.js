@@ -3,7 +3,7 @@ import { EMPTY_DISCHARGE, dischargeChecks, planFor } from "@sona-ai/domain/disch
 import { newEncounter, patients } from "@/features/encounter/fixtures";
 import { fixtureFindings } from "@/features/findings/model";
 import { wardBeds } from "@/features/ward/model";
-import { allergyConfirmation, allergyLine, needLine, needsYou, openTaskCount, patientFlags, patientResult, pendingResult, receiptLine, resultKey, resultLine, withFindingBlockers } from "./counts";
+import { allergyConfirmation, allergyLine, flagTone, needLine, needsYou, openTaskCount, patientFlags, patientResult, pendingResult, receiptLine, resultKey, resultLine, todaysResults, withFindingBlockers } from "./counts";
 import { PENDING_RESULT } from "./model";
 
 const row = (over = {}) => ({ id: "lab-1", patientId: "SYN-1086", patientName: "Daniel Rahman", test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low", receivedAt: new Date("2026-09-30T00:00:00Z"), acknowledgedBy: null, acknowledgedAt: null, acknowledgedByName: null, critical: false, ...over });
@@ -40,6 +40,26 @@ test("live: the server's acknowledgement is the one that counts, with who and wh
   expect(patientResult("SYN-1086", bothDone, {}, now)).toMatchObject({ result: { id: "lab-2" }, ack: { by: "Dr Aisyah" } });
   expect(receiptLine({ at: new Date(2026, 8, 30, 10, 14).toISOString(), by: "Dr Lim" }, new Date(2026, 8, 30, 12))).toBe("Acknowledged 10:14 by Dr Lim");
   expect(receiptLine({ at: new Date(2026, 8, 29, 10, 14).toISOString(), by: "Dr Lim" }, new Date(2026, 8, 30, 12))).toBe("Acknowledged 29 Sep 10:14 by Dr Lim");
+});
+
+test("the Results page: waiting results first, then today's acknowledged ones, each newest first; older acknowledged ones are history", () => {
+  const now = new Date("2026-09-30T05:00:00Z");
+  const results = [
+    row({ id: "old", receivedAt: new Date("2026-09-29T01:00:00Z"), acknowledgedAt: new Date("2026-09-29T02:00:00Z"), acknowledgedByName: "Dr Tan" }),
+    row({ id: "acked", receivedAt: new Date("2026-09-30T04:00:00Z"), acknowledgedAt: new Date("2026-09-30T04:10:00Z"), acknowledgedByName: "Dr Lim" }),
+    row({ id: "low", receivedAt: new Date("2026-09-30T01:00:00Z") }),
+    row({ id: "critical", flag: "critical low", value: "2.6", receivedAt: new Date("2026-09-30T02:00:00Z") }),
+    row({ id: "yesterday", receivedAt: new Date("2026-09-29T03:00:00Z") }),
+  ];
+  const rows = todaysResults({ tasks: [], results }, {}, now);
+  expect(rows.map(r => r.key)).toEqual(["critical", "low", "yesterday", "acked"]);
+  expect(rows[0]).toMatchObject({ name: "Daniel Rahman", value: "2.6 mmol/L", flag: "critical low" });
+  expect(rows[3].ack).toEqual({ at: "2026-09-30T04:10:00.000Z", by: "Dr Lim" });
+  // Demo: the fixture, acknowledged here.
+  const at = new Date(2026, 8, 30, 12);
+  expect(todaysResults(undefined, {}, at)).toMatchObject([{ patientId: "SYN-1086", flag: "Low", value: "3.1 mmol/L" }]);
+  expect(todaysResults(undefined, { [resultKey(PENDING_RESULT)]: { at: at.toISOString(), by: "Dr Lim" } }, at)[0].ack.by).toBe("Dr Lim");
+  expect(["critical high", "Low", "high", "", "New"].map(flagTone)).toEqual(["urgent", "soon", "soon", undefined, undefined]);
 });
 
 test("the allergy flag clears once a clinician confirms it, and a discharge leaves only a waiting result", () => {

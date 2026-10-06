@@ -3,7 +3,7 @@ import { expect, mock, test } from "bun:test";
 // The navigation calls, in the order they were made.
 const calls = [];
 mock.module("expo-router", () => ({ router: { push: to => calls.push(["push", to]), replace: to => calls.push(["replace", to]), dismiss: n => calls.push(["back", n]) }, useFocusEffect: () => {}, useNavigation: () => ({}) }));
-const { backTo, openPage, openSession, openSessionFromSheet, openVisitFromCard, underVisit } = await import("./navigation");
+const { backTo, openPage, openPatients, openSession, openSessionFromSheet, openVisitFromCard, underVisit } = await import("./navigation");
 const sheet = { goBack: () => calls.push(["close sheet"]) };
 
 test("a sheet's pick closes it and opens the visit in the same moment, placed under the sheet without its own slide", () => {
@@ -49,4 +49,15 @@ test("the note's Open consultation returns to the consultation under it, and ope
   const visits = on("index", { name: "session/[patientId]", params: { patientId: "A" } }, "inbox/index", "inbox/[patientId]");
   expect([backTo(visits, "session/[patientId]", "B"), backTo(visits, "session/[patientId]", "A")]).toEqual([false, true]);
   expect(calls).toEqual([["back", 2]]);
+});
+
+test("Wrap up over a card returns to the Patients page under it, on the tab asked for; with none open it pushes one", () => {
+  const on = (...names) => ({ getState: () => ({ routes: names.map((name, i) => ({ name, key: `${name}-${i}` })) }), dispatch: a => calls.push(["params", a.source, a.payload.params]) });
+  calls.length = 0;
+  openPatients(on("index", "patients/index", "patients/[id]", "handover"), { tab: "continue" });
+  expect(calls).toEqual([["params", "patients/index-1", { tab: "continue" }], ["back", 2]]);
+  calls.length = 0;
+  openPatients(on("index", "session/[patientId]", "handover"), { tab: "continue" });
+  openPatients(on("index", "xray"), { view: "xray" }, true);
+  expect(calls).toEqual([["push", { pathname: "/patients", params: { tab: "continue" } }], ["replace", { pathname: "/patients", params: { view: "xray" } }]]);
 });
