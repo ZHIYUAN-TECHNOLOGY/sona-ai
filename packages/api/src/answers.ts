@@ -10,7 +10,7 @@ import type { Origin } from "./models";
  * off now is not read as one it gave now. Otherwise `ask` runs and its answer is logged with the input's key (SHA-256
  * of its JSON), as every AI output is. A fixture is never reused, so a model that was off or starting is asked again.
  */
-export async function answerOnce<T extends Origin>(db: Context["db"], encounterId: string | null, kind: string, input: unknown, ask: () => Promise<T>, sourceIds: (answer: T) => string[]): Promise<T> {
+export async function answerOnce<T extends Origin>(db: Context["db"], encounterId: string | null, kind: string, input: unknown, ask: () => Promise<T>, sourceIds: (answer: T) => string[], keep: (answer: T) => boolean = () => true): Promise<T> {
   const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(input)));
   const inputKey = [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, "0")).join("");
   const [stored] = await db.select({ output: provenance.output, model: provenance.model, createdAt: provenance.createdAt }).from(provenance)
@@ -19,7 +19,8 @@ export async function answerOnce<T extends Origin>(db: Context["db"], encounterI
   if (stored) return { ...(stored.output as object), source: "model", model: stored.model, storedAt: stored.createdAt } as T;
   const answer = await ask();
   const { source: _, model: __, waking: ___, ...output } = answer as T & { model?: string; waking?: number };
-  await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId, kind, output, sourceIds: sourceIds(answer), model: answer.source === "model" ? answer.model : "fixture", approvedBy: null, inputKey });
+  // An answer not worth keeping (codes for a note that yielded none) is asked afresh next time instead of reused.
+  if (keep(answer)) await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId, kind, output, sourceIds: sourceIds(answer), model: answer.source === "model" ? answer.model : "fixture", approvedBy: null, inputKey });
   return answer;
 }
 
