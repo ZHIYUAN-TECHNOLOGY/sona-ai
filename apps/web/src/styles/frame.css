@@ -57,7 +57,9 @@
 .pro .frame-out:disabled { opacity: 0.4; cursor: default; }
 .pro .frame-out-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .pro .frame-scroll { padding: var(--space-5) var(--space-5) var(--sona-bar-clearance); }
-.pro .frame-page { max-width: 1320px; gap: var(--gap-card); }
+/* The page starts at the sidebar (not centred), and the Sona bar sits over the page column, not the window. */
+.pro .frame-page { max-width: var(--page-max); margin-inline: 0; gap: var(--gap-card); }
+.pro .frame-bar { padding-right: max(var(--space-6), calc(100% - var(--page-max) - var(--space-4))); }
 .pro .page-header h1 { font-size: var(--text-page); line-height: 1.15; letter-spacing: var(--track-display); font-weight: 500; }
 @media (max-height: 800px) { .pro .frame-link { min-height: 30px; } .pro .frame-groups { gap: var(--space-2); } }
 /* Icon rail: labels leave the layout but stay for screen readers; group labels become hairlines. */

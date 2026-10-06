@@ -114,7 +114,7 @@ type StatCardProps = {
   value: ReactNode;
   unit?: string;
   caption?: ReactNode;
-  /** Overline chip text and its tone. */
+  /** Chip beside the number and its tone: a state that needs the eye. Two or three words. */
   chip?: ReactNode;
   tone?: ChipTone;
   /** Corner arrow link; `label` is its accessible name. */
@@ -123,22 +123,23 @@ type StatCardProps = {
   feature?: boolean;
   /** 0 to 1: draws a progress arc. */
   progress?: number;
+  /** Makes the whole card a button, to filter the list below to this stat. `selected` marks the filter in use. */
+  onSelect?: () => void;
+  selected?: boolean;
 };
 
-export function StatCard({ title, value, unit, caption, chip, tone = "neutral", action, feature, progress }: StatCardProps) {
+export function StatCard({ title, value, unit, caption, chip, tone = "neutral", action, feature, progress, onSelect, selected }: StatCardProps) {
   const done = progress === undefined ? undefined : Math.min(1, Math.max(0, progress)) * 100;
   const { label, ...target } = action ?? { label: "" };
   return (
-    <section className="stat" data-feature={feature || undefined}>
-      {chip || action ? (
-        <div className="stat-head">
-          {chip ? <Chip tone={tone}>{chip}</Chip> : <span />}
-          {action ? <IconButton icon="arrow-up-right" label={label} size="sm" {...target} /> : null}
-        </div>
-      ) : null}
-      <h3 className="stat-title" title={title}>{title}</h3>
+    <section className="stat" data-feature={feature || undefined} data-selected={selected || undefined}>
+      <div className="stat-head">
+        <h3 className="stat-title" title={title}>{title}</h3>
+        {action ? <IconButton icon="arrow-up-right" label={label} size="sm" {...target} /> : null}
+      </div>
       <div className="stat-body">
         <p className="stat-value"><span>{value}</span>{unit ? <span className="stat-unit" title={typeof unit === "string" ? unit : undefined}>{unit}</span> : null}</p>
+        {chip ? <Chip tone={tone}>{chip}</Chip> : null}
         {done === undefined ? null : (
           <svg className="stat-arc" viewBox="0 0 100 56" role="img" aria-label={`${Math.round(done)}%`}>
             <path d="M8 50 A42 42 0 0 1 92 50" pathLength={100} />
@@ -147,8 +148,14 @@ export function StatCard({ title, value, unit, caption, chip, tone = "neutral", 
         )}
       </div>
       {caption ? <p className="stat-caption">{caption}</p> : null}
+      {onSelect ? <button type="button" className="stat-select" aria-pressed={Boolean(selected)} aria-label={`Show ${title}`} onClick={onSelect} /> : null}
     </section>
   );
+}
+
+/** A part of a lead line that needs the eye: a tone dot and coloured text, e.g. `<Signal tone="soon">7 blocked</Signal>`. */
+export function Signal({ tone = "info", children }: { tone?: Tone; children: ReactNode }) {
+  return <span className="signal" data-tone={tone}>{children}</span>;
 }
 
 /** A row of stat cards; wraps on narrow widths. */
