@@ -1,0 +1,11 @@
+/* Audit: the tabs and search share the table's toolbar; the rail shows one finding. */
+.au-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; }
+.au-toolbar > :last-child:not(:first-child) { flex: 0 1 280px; min-width: 0; }
+.au-gap { display: grid; gap: var(--space-1); min-width: 0; }
+.au-muted { color: var(--muted); font-size: var(--text-small); }
+.au-code { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.au-facts { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0; font-size: var(--text-body); }
+.au-facts dt { color: var(--muted); }
+.au-facts dd { margin: 0; color: var(--ink); text-align: right; }
+.au-note { margin: 0; color: var(--muted); font-size: var(--text-small); }
+.au-note[role="alert"] { color: var(--red); }
