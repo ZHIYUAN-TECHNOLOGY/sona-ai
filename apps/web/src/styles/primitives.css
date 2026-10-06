@@ -122,22 +122,22 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 
 /* Visual repair against the reference (looked at, not guessed). */
 /* Chips: uppercase and tracked; a neutral chip is an outline, not a grey fill. */
-.pro .chip { font-size: var(--text-overline); line-height: 1; letter-spacing: var(--track-overline); text-transform: uppercase; white-space: nowrap; }
-.pro .chip[data-tone="neutral"]:not([data-variant="solid"]) { background: transparent; border-color: var(--line); color: var(--muted); }
+:is(.pro, .care) .chip { font-size: var(--text-overline); line-height: 1; letter-spacing: var(--track-overline); text-transform: uppercase; white-space: nowrap; }
+:is(.pro, .care) .chip[data-tone="neutral"]:not([data-variant="solid"]) { background: transparent; border-color: var(--line); color: var(--muted); }
 /* A quiet button keeps a hairline: its fill alone disappears on the canvas. */
 .btn-quiet { border-color: var(--line); }
 /* Stat card: ink title at title size, lighter numeral, card padding. */
 .stat { padding: var(--pad-card); }
 .stat-title { font-size: var(--text-title); font-weight: 500; letter-spacing: var(--track-tight); color: var(--ink); }
 .stat-value { font-weight: 500; }
-.pro .card-title { font-weight: 500; }
+:is(.pro, .care) .card-title { font-weight: 500; }
 /* Empty state: a quiet white card, not a dashed box (frame.css's older rule). */
-.pro .empty { border: 0; background: var(--surface); border-radius: var(--radius-card); }
+:is(.pro, .care) .empty { border: 0; background: var(--surface); border-radius: var(--radius-card); }
 /* frame.css adds a top margin to the subtitle on top of the header's own gap. */
-.pro .page-header p { margin: 0; }
+:is(.pro, .care) .page-header p { margin: 0; }
 /* Header actions are the tall pills; a stat head keeps its height without a corner arrow. */
-.pro .page-actions .btn { min-height: var(--pill-h); padding: 0 var(--space-5); }
-.pro .page-actions .icon-btn { width: var(--pill-h); height: var(--pill-h); padding: 0; }
+:is(.pro, .care) .page-actions .btn { min-height: var(--pill-h); padding: 0 var(--space-5); }
+:is(.pro, .care) .page-actions .icon-btn { width: var(--pill-h); height: var(--pill-h); padding: 0; }
 .stat-head { min-height: 32px; }
 /* A card with no chip and no corner action has no head; beside cards that have one it reserves the head's height so titles line up. */
 .stat { padding-block: var(--space-5); }
@@ -161,3 +161,8 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 .select:hover { border-color: var(--line); }
 .select:focus-visible { outline: 0; background: var(--surface); border-color: var(--blue); }
 .select:disabled { cursor: default; opacity: 0.5; }
+/* Links in Care cards are never browser blue: blue, medium weight, underlined on hover only. `.link` gives the same anywhere, in both apps. */
+.link, .care :is(.card, .list-card, .insight, .detail-list, .empty) a:not([class]) { color: var(--blue); font-weight: 500; text-decoration: none; border-radius: 4px; }
+:is(.link, .care :is(.card, .list-card, .insight, .detail-list, .empty) a:not([class])):hover { text-decoration: underline; text-underline-offset: 3px; }
+:is(.link, .care :is(.card, .list-card, .insight, .detail-list, .empty) a:not([class])):focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+.care .insight a:not([class]) { color: var(--on-ai); text-decoration: underline; text-underline-offset: 3px; }

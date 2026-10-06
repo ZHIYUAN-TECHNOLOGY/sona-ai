@@ -1,3 +1,4 @@
+import { Icon } from "@/components/icon";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
@@ -46,7 +47,7 @@ function SignIn() {
 
   return <main className="care sign-in">
     <section className="glass halftone sign-in-card">
-      <div className="sign-in-brand">Sona Care</div>
+      <div className="sign-in-brand"><span className="sign-in-brand-tile"><Icon name="activity" size={22} /></span>Sona Care</div>
       {sentTo ? <>
         <h1>Enter your code</h1>
         <p>We sent a 6-digit code to {sentTo}.</p>

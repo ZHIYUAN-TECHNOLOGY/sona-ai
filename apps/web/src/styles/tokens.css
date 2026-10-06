@@ -73,3 +73,5 @@ button, input, textarea, select { font: inherit; color: inherit; }
   --radius-card: 28px; --text-overline: 12px; --text-title: 21px;
 }
 .icon { flex: none; display: block; }
+/* Sona Care on the shared shell: patient sizes. Small text never under 15px, fields and pills at the 48px tap size. */
+.care { --radius-card: 28px; --text-small: 15px; --text-overline: 13px; --field-h: 48px; --chip-h: 30px; --avatar-sm: 36px; --side-width: 264px; }

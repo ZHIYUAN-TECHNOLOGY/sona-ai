@@ -1,3 +1,4 @@
+import { Icon } from "@/components/icon";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
@@ -41,7 +42,7 @@ function Join() {
 
   return <main className="care sign-in">
     <section className="glass halftone sign-in-card">
-      <div className="sign-in-brand">Sona Care</div>
+      <div className="sign-in-brand"><span className="sign-in-brand-tile"><Icon name="activity" size={22} /></span>Sona Care</div>
       <h1>Join your care plan</h1>
       <p>Enter the code on your discharge paper. The ward can give you a new one.</p>
       <form onSubmit={submit}>
