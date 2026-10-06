@@ -349,7 +349,7 @@ export function VoiceDock(props: Props) {
   // The page is the shell: Sona Live is its voice, so the page stays where it is (and reads, scrolls and answers) while it listens.
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
     {/* Sona Live keeps the wave low (about a quarter of the screen) so the page above it keeps the room. */}
-    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open ? LIVE_CREST : undefined} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
+    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open ? LIVE_CREST : undefined} reducedMotion={reducedMotion} thinking={talk.open && talk.phase === "thinking"} onUnavailable={() => setVeilFailed(true)} />}
     {/* Frosted focus layer: a static blur crossfaded by opacity. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT_CSS }]}>
       <Frost solid={reducedTransparency} />

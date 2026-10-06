@@ -252,9 +252,11 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
   // Sona on Today: a question about the day (typed, dictated, the dock's ✦ suggestion or Sona Live) joins Today's thread,
   // shown in place of the dashboard; a clinical question opens the patient picker (run) and runs once a visit is chosen.
   const today = useTodayThread(todayAnswers);
+  // Sona Live open on Today (and how to close it): the page turns to its conversation from the first tap, as it does once asked.
+  const [closeLive, setCloseLive] = useState<() => void>();
   const thread = home ? today.entries : [], newest = thread.at(-1);
   // The canvas holds a conversation (a visit's requests or Today's thread) rather than the dashboard.
-  const talking = ((requests.length > 0 || visitAsides.length > 0) && !tiles) || thread.length > 0;
+  const talking = ((requests.length > 0 || visitAsides.length > 0) && !tiles) || thread.length > 0 || Boolean(home && closeLive);
   // The latest answer's section tabs pin under the top bar, whose frosted band then reaches under them.
   const tabbed = talking && !home && sections.length >= 2 && !active;
   const backToTiles = !home && (requests.length > 0 || visitAsides.length > 0) && !tiles;
@@ -377,7 +379,7 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
   // The page's top bar.
   const bar = { patient, inEncounter: !home, openTasks, onMenu: openDrawer,
     // Today with a conversation: Back returns to the day's dashboard (the menu stays one tap away there).
-    onBack: home ? (thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined) : back, onPatient: () => openPatients(navigation, { switch: "1" }), onTasks: () => router.push("/tasks"),
+    onBack: home ? (thread.length || closeLive ? () => { closeLive?.(); clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined) : back, onPatient: () => openPatients(navigation, { switch: "1" }), onTasks: () => router.push("/tasks"),
   };
   const visitLive: LiveAdapter | undefined = patient && props && {
     scope: patient.name.split(" ")[0] ?? patient.name,
@@ -405,7 +407,7 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
   // The dock's height (bar, chip, notices, Live's draft), measured: the page's end clears it. 130 until it has laid out.
   const [dockH, setDockH] = useState(130);
   // On Today, a spoken question joins Today's thread as a typed one does: the page is the shell, and Live its voice.
-  const todayLive: LiveAdapter = { scope: "Today", ask: async question => { await (pending.length ? askForPatient(question) : today.ask(question)); return { shown: true }; } };
+  const todayAdapter: LiveAdapter = { scope: "Today", onOpenChange: (open, end) => setCloseLive(open ? () => end : undefined), ask: async question => { await (pending.length ? askForPatient(question) : today.ask(question)); return { shown: true }; } };
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
   // Live mode records the room (scribe/live-recorder); the demo plays its sample consultation.
@@ -465,7 +467,7 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
     <VoiceDock
       backdrop={backdrop}
       onHeight={setDockH}
-      sonaLive={patient ? visitLive : todayLive}
+      sonaLive={patient ? visitLive : todayAdapter}
       quiet={Boolean(steps)}
       thinking={routingNow ? "Reading your request…" : thinking}
       activity={active ? (phase === "thinking" ? "searching" : activities[active.kind]) : justDone ? "done" : undefined}

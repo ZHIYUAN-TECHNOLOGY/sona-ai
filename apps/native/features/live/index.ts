@@ -42,9 +42,12 @@ export function useLive() {
 
 export const api = client;
 export const requestId = () => `app-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+/** expo/fetch's own failure (the network dropped, or the server was never reached): its text names native files and lines. */
+export const lostConnection = (e: unknown) => String((e as { message?: unknown } | undefined)?.message ?? "").startsWith("fetch failed");
 /** The server's message, plus what is still open when it refused (claim criteria or discharge blockers). */
 export function errorText(e: unknown) {
   if (!e || typeof e !== "object") return "The server did not answer";
+  if (lostConnection(e)) return "Sona lost the connection. Try again.";
   const { message, data } = e as { message?: unknown; data?: { open?: string[]; blockers?: { label: string }[] } };
   const open = data?.open?.length ? data.open : data?.blockers?.map(b => b.label);
   return `${typeof message === "string" ? message : "The server refused"}${open?.length ? `: ${open.join(", ").toLowerCase()} still open` : ""}`;

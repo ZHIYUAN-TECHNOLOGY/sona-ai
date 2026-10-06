@@ -14,7 +14,8 @@ import { follow, HISTORY, pushHistory, STEP_MS } from "./veil-signal";
  * the edge swells and glides a little further while a band of light climbs the curtains. The live
  * voice lifts the crest, raises its lobes and ripples it, deepens and saturates the aurora, hangs
  * dithered columns of its last ~1.7 s from the crest (newest at the centre) and pulses a thin line
- * under it.
+ * under it. While Sona thinks the cloud calms and gathers into one dithered beam that sweeps side to side (centred
+ * and still with Reduce Motion), its curtains following it.
  *
  * The cloud edge and the aurora are adapted from "Voice Blob" by @mehdi_made (MIT licence):
  * value noise, an edge folded into billowed lobes, a vaporous rim and an fbm colour field that
@@ -39,6 +40,10 @@ uniform float exit;     // 0..1 while sinking back into the mic: softens the sha
 uniform float loud;     // 0..1 smoothed mic loudness (80 ms attack, 350 ms release)
 uniform float hist[24]; // loudness history, newest first: the centre column, older ones toward the edges
 uniform float still;    // 1 with Reduce Motion: nothing moves with the voice, loudness only changes opacity
+uniform float think;    // 0..1 while Sona thinks: the crest gathers into one beam that sweeps side to side
+
+// Where the thinking beam is, across the width (0..1): a sweep every ~4 s, held at the centre with Reduce Motion.
+float beamX() { return 0.5 + 0.3 * sin(time * 1.5) * (1.0 - still); }
 
 // Loudness history at column f (0 = centre, 23 = edge), interpolated. Runtime effects may only index
 // uniform arrays with loop indices, hence the loop.
@@ -100,6 +105,10 @@ float2 horizon(float x) {
   float ripple = 0.7 * sin(k1) + 0.3 * sin(k2);
   h += move * (16.0 + 5.0 * ripple * s);
   dh += move * 5.0 * ((18.2 * cos(k1) + 12.3 * cos(k2)) * s + ripple * cs);
+  // Thinking: the lobes flatten and one beam rises where the sweep is.
+  float u = (nx - beamX()) / 0.1, g = 90.0 * think * exp(-u * u);
+  h = mix(h, h * 0.35, think) + g;
+  dh = mix(dh, dh * 0.35, think) - g * 2.0 * u / 0.1;
   // While exiting, the corners widen and the walls slope gently, so the narrowing glass
   // becomes a soft bell rather than a pointed cone.
   float off = x - size.x * 0.5, inset = spread * (size.x * 0.5 + 30.0) - abs(off);
@@ -113,6 +122,8 @@ float curtain(float x, float above, float column) {
   float nx = x / size.x;
   float folds = 0.5 + 0.5 * sin(nx * 18.0 + sin(nx * 5.0 + time * 0.3) * 2.2 + time * 0.18);
   folds = pow(max(folds, 0.0), 1.6);
+  float u = (nx - beamX()) / 0.14;
+  folds *= mix(1.0, 1.6 * exp(-u * u), think);
   float reachUp = 38.0 + 30.0 * (0.5 + 0.5 * sin(nx * 4.0 - time * 0.21)) + 28.0 * voice + 34.0 * column * (1.0 - still);
   return folds * exp(-above / reachUp) * smoothstep(0.0, 8.0, above + 2.0);
 }
@@ -249,14 +260,15 @@ function blurred(image: SkImage, width: number, height: number, radius: number) 
 
 export type VeilState = "idle" | "listening" | "flood";
 
-export function LiquidVeil({ backdrop, state, armed = false, words = 0, voiceLevel, crest = 0.5, reducedMotion, onUnavailable }: { backdrop: RefObject<View | null>; state: VeilState; /** Finger is down on the mic: capture early so the veil is ready. */ armed?: boolean; words?: number; /** Live voice loudness 0..1 (UI thread): lifts and ripples the crest, deepens the aurora, drives the columns and the voice line. */ voiceLevel?: SharedValue<number>; /** How high the listening crest rests, as a fraction of the screen height from the bottom (mid-screen by default); a full-screen page can keep it lower. */ crest?: number; reducedMotion: boolean; onUnavailable: () => void }) {
+export function LiquidVeil({ backdrop, state, armed = false, words = 0, voiceLevel, crest = 0.5, reducedMotion, thinking = false, onUnavailable }: { backdrop: RefObject<View | null>; state: VeilState; /** Finger is down on the mic: capture early so the veil is ready. */ armed?: boolean; words?: number; /** Live voice loudness 0..1 (UI thread): lifts and ripples the crest, deepens the aurora, drives the columns and the voice line. */ voiceLevel?: SharedValue<number>; /** How high the listening crest rests, as a fraction of the screen height from the bottom (mid-screen by default); a full-screen page can keep it lower. */ crest?: number; reducedMotion: boolean; /** Sona is working out the reply: the beam sweeps. */ thinking?: boolean; onUnavailable: () => void }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const restY = height - Math.max(insets.bottom, 12) - 78;
   const [layers, setLayers] = useState<{ soft: SkImage; heavy: SkImage } | null>(null);
   const level = useSharedValue(0), spread = useSharedValue(0), time = useSharedValue(0), breath = useSharedValue(0);
   const voice = useSharedValue(0), phase = useSharedValue(0), flare = useSharedValue(10);
-  const exit = useSharedValue(0);
+  const exit = useSharedValue(0), think = useSharedValue(0);
+  useEffect(() => { think.set(withTiming(thinking ? 1 : 0, { duration: 500, easing: EASE_IN_OUT })); }, [thinking]);
   const lastGust = useRef(0);
   // The voice, smoothed on the UI thread (80 ms attack, 350 ms release), and a column of it every 70 ms.
   const loud = useSharedValue(0), history = useSharedValue<number[]>(Array(HISTORY).fill(0)), sinceStep = useSharedValue(0);
@@ -333,9 +345,9 @@ export function LiquidVeil({ backdrop, state, armed = false, words = 0, voiceLev
     flare.set(0); flare.set(withTiming(2.2, { duration: 2200, easing: Easing.linear }));
   }, [words, state, reducedMotion]);
   useEffect(() => { if (state === "idle" && !armed) { const t = setTimeout(() => setLayers(null), 480); return () => clearTimeout(t); } }, [state, armed]);
-  useEffect(() => () => { [level, spread, time, breath, voice, phase, flare, exit, loud].forEach(v => cancelAnimation(v)); }, []);
+  useEffect(() => () => { [level, spread, time, breath, voice, phase, flare, exit, loud, think].forEach(v => cancelAnimation(v)); }, []);
 
-  const uniforms = useDerivedValue(() => ({ size: [width, height], base: restY, crestY: height * (1 - crest), level: level.value, spread: spread.value, time: time.value, breath: breath.value, voice: voice.value, phase: phase.value, flare: flare.value, exit: exit.value, loud: loud.get(), hist: history.get(), still: reducedMotion ? 1 : 0 }));
+  const uniforms = useDerivedValue(() => ({ size: [width, height], base: restY, crestY: height * (1 - crest), level: level.value, spread: spread.value, time: time.value, breath: breath.value, voice: voice.value, phase: phase.value, flare: flare.value, exit: exit.value, loud: loud.get(), hist: history.get(), still: reducedMotion ? 1 : 0, think: think.value }));
   if (!layers) return null;
   return <Canvas pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Fill>

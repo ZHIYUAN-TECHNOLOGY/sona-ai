@@ -14,7 +14,7 @@ import { draftText, opened, sampleAt, step, wordsOf, type Phase, type Step, type
 /** What Live hears back: the page shows the answer in its own conversation (`shown`), or Live says a quiet notice. */
 export type LiveReply = { shown: true } | { notice: string };
 /** A page's voice: whom it is about ("Amelia", "Today", "Ward 4B") and how it asks a question into the page. */
-export type LiveAdapter = { scope: string; ask: (question: string) => Promise<LiveReply>; onOpenChange?: (open: boolean) => void };
+export type LiveAdapter = { scope: string; ask: (question: string) => Promise<LiveReply>; onOpenChange?: (open: boolean, end: () => void) => void };
 
 
 /** The dock's microphone as Sona Live uses it (features/live/voice-input). */
@@ -92,13 +92,13 @@ export function useSonaLive(adapter: LiveAdapter | undefined, mic: Mic, owner: R
     session.current += 1; played.current = false;
     // Chunks recorded before this opening (one still being read for the last) stay out of its draft.
     apply(opened(session.current, live ? mic.latest() : 0));
-    latest.current.onOpenChange?.(true);
+    latest.current.onOpenChange?.(true, end);
   };
   // Stable, so the page (memoised) doesn't re-render with the dock's ten level readings a second.
   const end = useCallback(() => {
     if (!now.current) return;
     now.current = undefined; setTalk(undefined);
-    latest.current?.onOpenChange?.(false);
+    latest.current?.onOpenChange?.(false, end);
   }, []);
   // Leaving the page (tasks, messages, another patient, back) ends Live, so the mic never listens from another page.
   useFocusEffect(useCallback(() => () => end(), [])); // eslint-disable-line react-hooks/exhaustive-deps

@@ -2,7 +2,7 @@ import { AudioModule, IOSOutputFormat, RecordingPresets, setAudioModeAsync, useA
 import { File } from "expo-file-system";
 import { base64, partialDue, PARTIAL_MS, wavSoFar } from "@sona-ai/domain/partial-wav";
 import { useEffect, useRef, useState } from "react";
-import { api, errorText } from ".";
+import { api, errorText, lostConnection } from ".";
 import { MAX_MS, SPEECH_DB, turnEnd } from "./turn";
 
 /**
@@ -28,6 +28,15 @@ export type How = "hold" | "tap" | "live";
 
 const forget = (uri: string | null) => { try { if (uri) new File(uri).delete(); } catch { /* already gone */ } };
 const OPENING = "Sona can't open the microphone right now. Type instead, or try again.";
+/** Read a recording on the server; a dropped connection is tried twice more (0.5 s, then 1.5 s later) before it counts. */
+async function transcribe(uri: string) {
+  const audio = await new File(uri).base64();
+  for (const wait of [500, 1500]) {
+    try { return (await api.voice.transcribe({ audio })).text.trim(); }
+    catch (e) { if (!lostConnection(e)) throw e; await new Promise(r => setTimeout(r, wait)); }
+  }
+  return (await api.voice.transcribe({ audio })).text.trim();
+}
 
 export function useVoiceInput({ onHeard, onError, onWords }: {
   /** A recording's final reading, by recording (Live: chunk) number; a Live chunk with nothing said is "". */
@@ -65,7 +74,7 @@ export function useVoiceInput({ onHeard, onError, onWords }: {
   const read = (uri: string | null, chunk: number, said: boolean) => {
     unread.current++; setReading(true);
     reads.current = reads.current.then(async () => {
-      try { handlers.current.onHeard(said && uri ? (await api.voice.transcribe({ audio: await new File(uri).base64() })).text.trim() : "", "live", chunk); }
+      try { handlers.current.onHeard(said && uri ? await transcribe(uri) : "", "live", chunk); }
       catch (e) { handlers.current.onError(errorText(e), chunk); }
       finally { forget(uri); if (!--unread.current) setReading(false); }
     }).catch(e => console.warn("voice: chunk not read", e));
@@ -86,9 +95,9 @@ export function useVoiceInput({ onHeard, onError, onWords }: {
       if (!send || !uri || !spoke.current) { forget(uri); set("idle"); return; }
       set("reading");
       try {
-        const { text } = await api.voice.transcribe({ audio: await new File(uri).base64() });
+        const text = await transcribe(uri);
         set("idle");
-        if (text.trim()) handlers.current.onHeard(text.trim(), how.current, turn.current);
+        if (text) handlers.current.onHeard(text, how.current, turn.current);
         else handlers.current.onError("Sona didn't catch that. Try again, or type.");
       } catch (e) {
         set("idle");
