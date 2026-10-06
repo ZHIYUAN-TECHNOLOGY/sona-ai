@@ -31,17 +31,20 @@ function Page() {
   const [tick, setTick] = useState(() => Date.now());
   useEffect(() => { const id = setInterval(() => setTick(Date.now()), 60_000); return () => clearInterval(id); }, []);
 
-  if (plan.isPending || takenQuery.isPending || clock.isPending)
-    return <><PageHeader title="Medicines" /><EmptyState>Getting your medicines…</EmptyState></>;
+  const alone = (body: React.ReactNode) => <><PageHeader title="Medicines" lead="What to take and when, once you are home." /><Card className="meds-alone">{body}</Card></>;
+  if (plan.isPending || takenQuery.isPending || clock.isPending) return alone(<EmptyState icon="pill" title="Getting your medicines…" />);
   if (plan.isError || takenQuery.isError || clock.isError)
-    return (
-      <><PageHeader title="Medicines" />
-        <EmptyState>We couldn't open your medicines. Check your connection and try again.
-          <Button onClick={() => { void plan.refetch(); void takenQuery.refetch(); void clock.refetch(); }}>Try again</Button>
-        </EmptyState></>
+    return alone(
+      <EmptyState icon="info" title="We couldn't open your medicines" action={<Button onClick={() => { void plan.refetch(); void takenQuery.refetch(); void clock.refetch(); }}>Try again</Button>}>
+        Check your connection and try again.
+      </EmptyState>,
     );
   if (plan.data.status !== "discharged")
-    return <><PageHeader title="Medicines" /><EmptyState>Your medicines show here once you go home. Your care team gives them to you on the ward for now.</EmptyState></>;
+    return alone(
+      <EmptyState icon="pill" title="Your medicines show here once you go home" action={<Button to="/care/ask">Ask Sona about your medicines</Button>}>
+        Your care team gives them to you on the ward for now.
+      </EmptyState>,
+    );
 
   const now = new Date(tick + clock.data.offsetMs);
   const { medicines, dischargedAt } = plan.data;

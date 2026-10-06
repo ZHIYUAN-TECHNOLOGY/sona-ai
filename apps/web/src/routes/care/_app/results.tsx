@@ -28,17 +28,21 @@ function Page() {
   const list = useQuery(orpc.care.results.list.queryOptions({ input: { lang } }));
   const [openId, setOpenId] = useState<string>();
 
-  if (list.isPending) return <div className="res-page"><PageHeader title="Results" /><EmptyState>Getting your results…</EmptyState></div>;
+  const alone = (body: React.ReactNode) => <div className="res-page"><PageHeader title="Results" lead="Your test results, in plain words." /><Card className="res-alone">{body}</Card></div>;
+  if (list.isPending) return alone(<EmptyState icon="flask" title="Getting your results…" />);
   if (list.isError)
-    return (
-      <div className="res-page"><PageHeader title="Results" />
-        <EmptyState title="We couldn't open your results" action={<Button onClick={() => { void list.refetch(); }}>Try again</Button>}>
-          Check your connection and try again.
-        </EmptyState></div>
+    return alone(
+      <EmptyState icon="info" title="We couldn't open your results" action={<Button onClick={() => { void list.refetch(); }}>Try again</Button>}>
+        Check your connection and try again.
+      </EmptyState>,
     );
   const results: Result[] = list.data;
   if (!results.length)
-    return <div className="res-page"><PageHeader title="Results" /><EmptyState title="No results yet" icon="flask">Results appear here after your doctor has seen them.</EmptyState></div>;
+    return alone(
+      <EmptyState icon="flask" title="No results yet" action={<Button to="/care/ask">Ask Sona a question</Button>}>
+        Results appear here after your doctor has seen them.
+      </EmptyState>,
+    );
 
   const { seen, inRange, attention, waiting } = countsOf(results);
   const first = attention[0] ?? results.find((r) => r.released) ?? results[0];

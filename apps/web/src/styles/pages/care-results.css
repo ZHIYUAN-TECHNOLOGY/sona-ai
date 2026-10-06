@@ -27,3 +27,7 @@
 .res-explain .btn { min-height: 48px; font-size: 17px; }
 .res-answer { white-space: pre-wrap; }
 .res-ask a { display: inline-flex; align-items: center; min-height: 48px; color: var(--blue); font-weight: 600; }
+
+/* Nothing to show yet: one centred card, as on Check-ins. */
+.res-alone { width: min(100%, 640px); margin-inline: auto; }
+.res-alone .empty .btn { align-self: center; margin-top: var(--space-2); }

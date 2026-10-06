@@ -27,12 +27,12 @@ function Page() {
   const ask = <Button variant="primary" className="no-print" to="/care/ask">Ask Sona about my plan</Button>;
   const empty = (lead: string, body: ReactNode) => <>
     <PageHeader title="Discharge plan" lead={lead} actions={ask} />
-    <Card>{body}</Card>
+    <Card className="dp-alone">{body}</Card>
   </>;
 
   if (plan.isPending) return empty("Getting your plan…", <EmptyState icon="clipboard" title="Getting your plan…" />);
   if (plan.isError) return empty("We could not open your plan.", <EmptyState icon="alert" title="We could not open your plan" action={<Button onClick={() => { void plan.refetch(); }}>Try again</Button>}>{plan.error.message}</EmptyState>);
-  if (plan.data.status !== "discharged") return empty("You do not have a discharge plan yet.", <EmptyState icon="bed" title="No discharge plan yet">Your plan shows here when you go home from hospital. It will list your medicines, your follow-up visits and the warning signs to watch for.</EmptyState>);
+  if (plan.data.status !== "discharged") return empty("You do not have a discharge plan yet.", <EmptyState icon="clipboard" title="No discharge plan yet" action={<Button to="/care/follow-ups">See your follow-ups</Button>}>Your plan shows here when you go home from hospital. It will list your medicines, your follow-up visits and the warning signs to watch for.</EmptyState>);
 
   const p = plan.data;
   const now = new Date(Date.now() + (clock.data?.offsetMs ?? 0));
