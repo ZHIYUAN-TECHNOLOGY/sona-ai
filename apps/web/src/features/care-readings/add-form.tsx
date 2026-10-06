@@ -4,20 +4,20 @@ import { useState, type FormEvent } from "react";
 import { Button, Field } from "@/components/primitives";
 import { orpc } from "@/lib/orpc";
 
-import { KIND_ORDER, KINDS, parseReading, withReading, type Kind, type NewReading, type ReadingList } from "./readings";
+import { KIND_ORDER, KINDS, parseReading, valueWords, withReading, type Kind, type NewReading, type ReadingList } from "./readings";
 
 /** The one list every part of the page reads: the longest window the server keeps, cut down in the browser. */
 export const listOptions = () => orpc.care.readings.list.queryOptions({ input: { days: 90 } });
 
 /** Add a reading in place. It shows in the page at once and is taken back if the server refuses it. */
-export function AddForm() {
+export function AddForm({ initialKind = "blood_pressure" }: { initialKind?: Kind }) {
   const qc = useQueryClient();
-  const [kind, setKind] = useState<Kind>("blood_pressure");
+  const [kind, setKind] = useState<Kind>(initialKind);
   const [value, setValue] = useState("");
   const [value2, setValue2] = useState("");
   const [time, setTime] = useState("");
   const [error, setError] = useState<string>();
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState("");
   const bp = kind === "blood_pressure", { label, unit } = KINDS[kind];
 
   const add = useMutation(orpc.care.readings.add.mutationOptions({
@@ -35,7 +35,11 @@ export function AddForm() {
       // The server's own plain-words reason, under the field.
       setError(e.message || "We couldn't save that reading. Please try again.");
     },
-    onSuccess: () => { setValue(""); setValue2(""); setTime(""); setSaved(true); },
+    onSuccess: (_data, variables) => {
+      const r = variables as NewReading;
+      setValue(""); setValue2(""); setTime("");
+      setSaved(`Saved. ${KINDS[r.kind].label} ${valueWords(KINDS[r.kind], r)}.`);
+    },
     onSettled: () => Promise.all([
       qc.invalidateQueries({ queryKey: orpc.care.readings.list.key() }),
       qc.invalidateQueries({ queryKey: orpc.care.visitPrep.get.key() }),
@@ -44,13 +48,13 @@ export function AddForm() {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    setSaved(false);
+    setSaved("");
     const parsed = parseReading(kind, value, value2, time);
     if ("error" in parsed) return setError(parsed.error);
     setError(undefined);
     add.mutate(parsed.input);
   };
-  const pick = (k: Kind) => { setKind(k); setError(undefined); setSaved(false); };
+  const pick = (k: Kind) => { setKind(k); setError(undefined); setSaved(""); };
 
   return (
     <form className="card rd-form" id="rd-add" onSubmit={submit} aria-labelledby="rd-add-title">
@@ -75,7 +79,7 @@ export function AddForm() {
       </div>
       <div className="rd-actions">
         <Button type="submit" variant="primary" pending={add.isPending}>Save reading</Button>
-        <span role="status">{saved && !add.isPending ? "Saved." : ""}</span>
+        <span role="status">{add.isPending ? "" : saved}</span>
       </div>
     </form>
   );
