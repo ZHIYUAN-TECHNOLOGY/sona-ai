@@ -1,39 +1,35 @@
-.visit-note, .visit-orders { display: grid; gap: var(--space-4); }
-.visit-section { display: grid; gap: var(--space-2); margin-bottom: var(--space-3); }
-.visit-section textarea, .visit-note textarea, .visit-orders input { width: 100%; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm, 8px); padding: var(--space-2); resize: vertical; }
-.visit-section textarea[readonly] { background: var(--canvas); }
-.visit-proposal { display: flex; gap: var(--space-3); align-items: flex-start; justify-content: space-between; background: var(--blue-wash); border-radius: var(--radius-sm, 8px); padding: var(--space-2) var(--space-3); }
-.visit-proposal p { margin: 0; white-space: pre-wrap; }
-.visit-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-3); }
-.visit-muted { color: var(--muted); font-size: var(--text-sm, 0.875rem); }
-.visit-refused { color: var(--ink); background: var(--amber-wash); border-radius: var(--radius-sm, 8px); padding: var(--space-2) var(--space-3); margin-top: var(--space-3); }
-.visit-refused ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }
-.visit-checks { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: var(--space-2); }
-.visit-checks li { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2); align-items: start; font-size: var(--text-sm, 0.875rem); }
-.visit-pick { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
-.visit-pick li > * { display: flex; gap: var(--space-3); align-items: center; min-height: var(--tap); padding: var(--space-2) var(--space-3); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm, 8px); color: var(--ink); text-decoration: none; }
-.visit-pick li > div { color: var(--muted); }
-/* Section headings read as overlines; the note is a document, not a form. */
-.visit-section label { font-size: var(--text-xs, 0.75rem); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.visit-section textarea { border-color: transparent; background: var(--canvas); line-height: 1.5; }
-.visit-section textarea:hover, .visit-section textarea:focus { border-color: var(--line); background: var(--surface); }
-.visit-status { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin: 0 0 var(--space-4); }
-.visit-header-slot { display: contents; }
+/* /pro/visit: the note, the medicine order beside it, and today's visits when none is open. Tokens only. */
+.visit-note, .visit-orders { display: grid; gap: var(--gap-card); }
+.visit-muted { color: var(--muted); font-size: var(--text-small); }
 .visit-num { font-variant-numeric: tabular-nums; }
-.visit-checks li { grid-template-columns: 4.5rem 1fr; }
-#visit-orders { scroll-margin-top: var(--space-6); }
+.visit-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-3); }
+.visit-refused { color: var(--ink); background: var(--amber-wash); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+.visit-refused ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }
+.visit-header-slot { display: contents; }
+/* Nothing to save: a muted ink pill, clearly resting rather than broken. */
+.visit-header-slot .btn-primary:disabled, .visit-note .btn-primary:disabled { background: var(--ink); color: var(--surface); border-color: transparent; opacity: 0.38; cursor: default; }
+
+/* Today's visits: the visit kind as a sentence, with what needs the eye beside it. */
+.visit-table-title { margin: 0; font-size: var(--text-body); font-weight: 600; color: var(--ink); }
+.visit-kind { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 
 /* Patient strip: the allergen alone, the full text in the title. */
 .visit-allergy { display: inline-flex; max-width: 16rem; min-width: 0; }
 .visit-allergy > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: none; }
 
-/* Note fields: white, hairline, grow with the text, no resize handle. */
-.visit-section textarea, .visit-note textarea { background: var(--surface); border-color: var(--line); resize: none; field-sizing: content; min-height: 4.5rem; line-height: 1.5; }
-.visit-section textarea[readonly] { background: var(--canvas); }
-.visit-section textarea:focus, .visit-note textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
+/* The note is a document: overline headings, white hairline fields that grow with the text. */
+.visit-status { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin: 0 0 var(--space-4); }
+.visit-section { display: grid; gap: var(--space-2); margin-bottom: var(--space-3); }
+.visit-section label { font-size: var(--text-overline); font-weight: 600; letter-spacing: var(--track-overline); text-transform: uppercase; color: var(--muted); }
+.visit-note textarea, .visit-orders input { width: 100%; font: inherit; line-height: var(--line-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); }
+.visit-note textarea { resize: none; field-sizing: content; min-height: 4.5rem; }
+.visit-note textarea[readonly] { background: var(--canvas); }
+.visit-note textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
+.visit-proposal { display: flex; gap: var(--space-3); align-items: flex-start; justify-content: space-between; background: var(--blue-wash); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); }
+.visit-proposal p { margin: 0; white-space: pre-wrap; }
 
-/* Nothing to save: a muted ink pill, clearly resting rather than broken. */
-.visit-header-slot .btn-primary:disabled, .visit-note .btn-primary:disabled { background: var(--ink); color: var(--surface); border-color: transparent; opacity: 0.38; cursor: default; }
-
-.visit-table-title { margin: 0; font-size: var(--text-body); font-weight: 600; color: var(--ink); }
-.visit-flag { color: var(--muted); font-size: 13px; }
+/* The order: each check beside the decision, and the rarely used amendment behind one tap. */
+.visit-checks { list-style: none; margin: var(--space-3) 0 0; padding: var(--space-3) 0 0; border-top: 1px solid var(--hairline); display: grid; gap: var(--space-2); }
+.visit-checks li { display: grid; grid-template-columns: 4.5rem 1fr; gap: var(--space-2); align-items: start; font-size: var(--text-small); }
+.visit-amend summary { padding: var(--space-2) 0; cursor: pointer; font-weight: 600; }
+.visit-amend button { margin-top: var(--space-3); }

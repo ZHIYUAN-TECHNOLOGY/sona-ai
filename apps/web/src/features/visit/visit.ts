@@ -35,6 +35,12 @@ export function orderChecks(snapshot: { revision: number; state: object }, patie
   return getPrescriptionChecks(visit, effectivePatient({ time: "", ...patient, sources: patient.sources ?? [] }, visit));
 }
 
+/** The visit to open next: the earliest that has a record and has not started, else the latest that has one. */
+export function nextVisit<V extends { patientId: string; startsAt: string | Date }>(visits: V[], hasRecord: (patientId: string) => boolean, now = Date.now()): V | undefined {
+  const open = visits.filter(v => hasRecord(v.patientId)).sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt));
+  return open.find(v => +new Date(v.startsAt) >= now) ?? open.at(-1);
+}
+
 /** The server's words for a refusal, with the checks it names as still open. */
 export function refusal(error: unknown): { message: string; open: string[] } {
   const e = error as { message?: string; data?: { open?: string[] } } | null;
