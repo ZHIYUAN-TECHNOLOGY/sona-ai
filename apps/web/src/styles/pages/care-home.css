@@ -1,15 +1,16 @@
-/* Sona Care home: one column, the next step first, red only on the call card. */
-.care-home { display: flex; flex-direction: column; gap: var(--space-4); max-width: 640px; }
+/* Sona Care home: numbers, then three columns (next step, medicines, coming up); red only on the call card. */
+.care-home { display: flex; flex-direction: column; gap: var(--gap-card); }
+.care-home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--gap-card); align-items: start; }
+.care-home-quiet { color: var(--muted); white-space: nowrap; }
+.care-home-act { color: var(--blue); font-weight: 600; white-space: nowrap; }
+.care-home-over { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); }
+.care-home-over > span { white-space: normal; overflow-wrap: anywhere; }
+/* Patients read this: nothing on the page under the small size. */
+.care-home .chip.chip.chip, .care-home .stat-caption, .care-home .list-caption, .care-home .insight-overline, .care-home .insight-label { font-size: var(--text-small); }
+.care-home-clip { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.care-home .list > li > .empty { border: 0; }
+
 .care-home p { margin: 0; }
-
-.care-home-lead { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--space-5); background: var(--blue-wash); border: 1px solid var(--line); border-radius: var(--radius-card); }
-.care-home-lead h2 { margin: 0; font-size: var(--text-title); line-height: 1.25; }
-.care-home-overline { color: var(--blue); font-weight: 600; }
-
-/* Links that are the card's action: a full 48 px target. */
-.care-home a.btn { display: inline-flex; align-items: center; min-height: var(--tap); text-decoration: none; }
-.care-home-link { display: inline-flex; align-items: center; align-self: flex-start; min-height: var(--tap); color: var(--blue); font-weight: 600; }
-
 .care-home-call { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--space-5); background: var(--red-wash); border: 1px solid var(--red); border-radius: var(--radius-card); }
 .care-home-call h2 { margin: 0; font-size: var(--text-heading); color: var(--red); }
 .care-home-call ul { margin: 0; padding-left: var(--space-5); }

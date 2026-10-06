@@ -1,7 +1,7 @@
 // @ts-ignore -- apps/web has no Bun types installed; drop this line once @types/bun is a devDependency.
 import { expect, test } from "bun:test";
 
-import { dosesToday, langOf, nextStep } from "./model";
+import { dosesToday, langOf, nextStep, partOfDay } from "./model";
 
 const now = new Date("2026-10-06T09:00:00+08:00");
 const dose = (h: number, taken = false) => {
@@ -24,4 +24,11 @@ test("nextStep: dose due, then check-in, then visit", () => {
 
 test("dosesToday is empty before discharge", () => {
   expect(dosesToday([{ name: "Med", line: "x" }], undefined, [], now)).toEqual([]);
+});
+
+test("the greeting follows the clock in Malaysia", () => {
+  expect(partOfDay(new Date("2026-10-06T09:00:00+08:00"))).toBe("morning");
+  expect(partOfDay(new Date("2026-10-06T12:00:00+08:00"))).toBe("afternoon");
+  expect(partOfDay(new Date("2026-10-06T18:00:00+08:00"))).toBe("evening");
+  expect(partOfDay(new Date("2026-10-06T00:30:00+08:00"))).toBe("morning");
 });
