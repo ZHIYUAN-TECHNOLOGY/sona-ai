@@ -111,5 +111,11 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .table-toolbar-start { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
 .table-toolbar-end { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
 .table-toolbar > .search-field { margin-left: auto; }
-@media (max-width: 900px) { .table-toolbar-row { flex-wrap: wrap; } .table-toolbar-end { margin-left: 0; } }
+@media (max-width: 1360px) { .table-toolbar-row { flex-wrap: wrap; } .table-toolbar-end { margin-left: 0; } }
 .insight-act[data-pending] { opacity: 0.6; pointer-events: none; cursor: progress; }
+/* Beside a rail on a laptop the table has about 620px: tighter cells so every column and the row action stay in view. */
+@media (max-width: 1360px) {
+  .pro .table th, .pro .table td { padding-inline: var(--space-2); }
+  .row-action { padding: 0 var(--space-3); gap: var(--space-1); }
+  .cell-person { min-width: 132px; }
+}
