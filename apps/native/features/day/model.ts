@@ -39,6 +39,8 @@ const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); 
 /** Minutes from `now` to a clock time, taking the nearer side of midnight (00:15 is 30 min after 23:45, not a day before). */
 const until = (hhmm: string, now: number) => ((minutes(hhmm) - now + 720) % 1440 + 1440) % 1440 - 720;
 const ago = (from: number, now: number) => { const d = Math.max(0, now - from); return d < 60 ? `${d} min` : `${Math.floor(d / 60)} h`; };
+/** How long a result has waited, at `now` (minutes into the day): "2 h", "25 min". */
+export const resultAge = (result: Pick<PendingResult, "receivedAt">, now: number) => ago(minutes(result.receivedAt), now);
 
 /**
  * Two stores' visits read the same on Today: what rankDay and the home keys (homeActions) read of each, whether it has
@@ -57,7 +59,7 @@ export function rankDay(patients: Patient[], encounters: Record<string, Encounte
   const resultPatient = result && patients.find(p => p.id === result.patientId);
   if (result && resultPatient && !reviewed.has("result")) items.push({
     id: "result", kind: "result", title: `${result.flag} ${testInSentence(result.test)} · ${resultPatient.name}`, detail: `${result.test} ${result.value}`,
-    reason: `${result.flag} result · ${ago(minutes(result.receivedAt), now)} · no action yet`, tone: "urgent", score: 100, patientId: resultPatient.id, open: { next: "briefing" },
+    reason: `${result.flag} result · ${resultAge(result, now)} · no action yet`, tone: "urgent", score: 100, patientId: resultPatient.id, open: { next: "briefing" },
   });
   for (const patient of patients) {
     const encounter = encounters[patient.id];

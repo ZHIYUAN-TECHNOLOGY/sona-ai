@@ -343,7 +343,7 @@ type TaskChange = { owner?: string; due?: string };
  * (the server keeps no reopen), device tasks in their visit's store. Each change leaves a receipt on
  * its row. What this role can't do comes back locked (`locked`) or absent (`change`).
  */
-function useTaskEdits() {
+export function useTaskEdits() {
   const updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const server = useServerData();
   const role = useRole();

@@ -8,6 +8,7 @@ import { Icon } from "@/components/sona/ui";
 import { useOpenAudit } from "@/features/audit";
 import { useInboxSummary } from "@/features/inbox";
 import { useLive } from "@/features/live";
+import { DemoTimeLine, useDemoOffset } from "@/features/live/demo-clock";
 import { RolePill, useRole } from "@/features/live/roles";
 import { useLiveHandover } from "@/features/live/handover-sync";
 import { useTrainingStatus } from "@/features/training";
@@ -89,6 +90,7 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
   const training = useTrainingStatus();
   const handover = useLiveHandover(open);
   const handoverCount = handover.live ? handover.cards?.length : patients.length + 3;
+  const demoOffset = useDemoOffset();
 
   const all: { title?: string; items: Item[] }[] = [
     // Home: the day's dashboard, from anywhere in Today (a conversation there steps aside).
@@ -142,6 +144,8 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
             <BrandIcon name="settings" size={24} color={palette.muted} />
           </Pressable>
         </View>
+        {/* The demo clock, a presenter's tool (live mode only), out of Today: one tap time-lapses the hospital to a check-in day. */}
+        <View style={{ paddingHorizontal: 14 }}><DemoTimeLine now={new Date(Date.now() + demoOffset)} /></View>
         <Divider />
         {groups.map(group => <View key={group.title ?? "today"}>
           {group.title && <Group title={group.title} />}
