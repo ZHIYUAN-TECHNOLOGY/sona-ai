@@ -119,3 +119,19 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 @keyframes skeleton { 50% { opacity: 0.45; } }
 .pager { display: flex; align-items: center; gap: var(--space-2); }
 .pager-count { margin: 0 auto 0 0; font-size: var(--text-small); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Visual repair against the reference (looked at, not guessed). */
+/* Chips: uppercase and tracked; a neutral chip is an outline, not a grey fill. */
+.pro .chip { font-size: var(--text-overline); line-height: 1; letter-spacing: var(--track-overline); text-transform: uppercase; white-space: nowrap; }
+.pro .chip[data-tone="neutral"]:not([data-variant="solid"]) { background: transparent; border-color: var(--line); color: var(--muted); }
+/* A quiet button keeps a hairline: its fill alone disappears on the canvas. */
+.btn-quiet { border-color: var(--line); }
+/* Stat card: ink title at title size, lighter numeral, card padding. */
+.stat { padding: var(--pad-card); }
+.stat-title { font-size: var(--text-title); font-weight: 500; letter-spacing: var(--track-tight); color: var(--ink); }
+.stat-value { font-weight: 500; }
+.pro .card-title { font-weight: 500; }
+/* Empty state: a quiet white card, not a dashed box (frame.css's older rule). */
+.pro .empty { border: 0; background: var(--surface); border-radius: var(--radius-card); }
+/* frame.css adds a top margin to the subtitle on top of the header's own gap. */
+.pro .page-header p { margin: 0; }
