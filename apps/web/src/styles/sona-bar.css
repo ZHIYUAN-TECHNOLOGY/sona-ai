@@ -58,7 +58,8 @@
 /* In use the bar lifts: a deeper shadow, and the focus ring. */
 .pro .sona-bar[data-open] { box-shadow: 0 12px 40px rgb(29 31 35 / 0.16); }
 .pro .sona-bar:focus-within { outline: 0; box-shadow: var(--focus-ring), 0 12px 40px rgb(29 31 35 / 0.16); }
-.pro .sona-bar[data-phase="listening"] .sona-bar-mic { background: var(--ink); color: var(--surface); }
+/* Held, the mic stays ink under the pointer (the hover fill would hide its white icon). */
+.pro .sona-bar[data-phase="listening"] .sona-bar-mic:not(:disabled) { background: var(--ink); color: var(--surface); }
 .pro .sona-bar[data-phase="listening"] { box-shadow: 0 0 0 1px var(--blue), 0 0 calc(16px + var(--level) * 36px) rgb(36 91 204 / calc(0.18 + var(--level) * 0.3)); }
 .pro .sona-bar-input { min-height: 40px; font-size: 14px; }
 .pro .sona-bar-hint { font-size: 14px; }
