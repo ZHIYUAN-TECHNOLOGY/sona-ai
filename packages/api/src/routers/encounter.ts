@@ -7,9 +7,10 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { encounterEditSchema, recordReviewSchema, type EncounterEdit, type RecordReview } from "../contracts";
-import type { Context } from "../context";
+import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
 import { stubModels, type Origin } from "../models";
+import { visitPrepBlock } from "./care-readings";
 
 /**
  * Encounter state on the server. Postgres holds the snapshot and is the arbiter of revisions: every
@@ -117,7 +118,7 @@ export async function timelineOf(db: Db, hospitalId: string, encounterId: string
   const rounds = Map.groupBy(chart, o => o.observedAt.getTime());
   const RECEIPT: Record<string, string> = { prescription: "Prescription approved", claim: "Guarantee letter request sent", appeal: "Appeal sent to the insurer" };
   const events: (TimelineEvent | false | null | undefined)[] = [
-    ...[...rounds].map(([time, readings]) => ({ id: `observations-${time}`, at: new Date(time), title: "Observations", detail: readings.map(reading).join(" · ") })),
+    ...[...rounds].map(([time, readings]) => ({ id: `observations-${time}`, at: new Date(time), title: readings[0]?.source === "patient" ? "Home readings (patient-reported)" : "Observations", detail: readings.map(reading).join(" · ") })),
     ...labs.map(l => l.flag === "pending" ? { id: l.id, at: l.receivedAt, title: `${l.test} sent to the lab`, detail: "Result pending" }
       : { id: l.id, at: l.receivedAt, title: [l.test, l.value, l.unit].filter(Boolean).join(" "), detail: l.flag ? sentenceCase(l.flag) : undefined }),
     ...saved.map(n => ({ id: n.id, at: n.createdAt, title: n.revision === 1 ? "Note saved" : "Note updated", detail: n.sentences[0]?.text })),
@@ -193,7 +194,7 @@ export const encounterRouter = {
   /** What to know before seeing the patient, read from their own record (a labelled fixture until Gemma is on). */
   briefing: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { patient } = await visitOf(context.db, context.hospitalId, input.encounterId);
-    const answer = await (context.models ?? stubModels).briefing({ patient });
+    const answer = await (context.models ?? stubModels).briefing({ patient, visitPrep: await visitPrepBlock(context.db, context.hospitalId, patient.id, clockOf(context)) });
     return logAnswer(context.db, input.encounterId, "briefing", answer, recordSources(patient));
   }),
   /** The briefing's timeline: the dated events the record holds for this visit's patient (timelineOf). */

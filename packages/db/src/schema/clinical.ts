@@ -130,6 +130,8 @@ export const insurerCriteria = pgTable("insurer_criteria", {
 export const observations = pgTable("observations", {
   id: text("id").primaryKey(), patientId: text("patient_id").notNull(), kind: text("kind").notNull(), value: real("value").notNull(),
   unit: text("unit").notNull(), sourceId: text("source_id").notNull(), observedAt: timestamp("observed_at").defaultNow().notNull(),
+  /** Who took it: "clinical" on the ward, "patient" for a home reading from Sona Care, so the two are never confused. */
+  source: text("source").$type<"clinical" | "patient">().default("clinical").notNull(),
 });
 
 export const labResults = pgTable("lab_results", {
@@ -155,6 +157,8 @@ export const appointments = pgTable("appointments", {
   bookedAt: timestamp("booked_at"),
   /** The directory doctor it is with (Book in with a doctor, a confirmed booking), so it holds only that doctor's slot. */
   doctorId: text("doctor_id"),
+  /** What the patient prepared for this visit in Sona Care: up to three questions, and whether their last 7 days of home readings are shared. */
+  prep: jsonb("prep").$type<{ questions: string[]; shareReadings: boolean }>(),
 }, t => [index("appointments_hospital").on(t.hospitalId, t.startsAt), index("appointments_patient").on(t.patientId)]);
 
 export const handoverAcceptances = pgTable("handover_acceptances", {

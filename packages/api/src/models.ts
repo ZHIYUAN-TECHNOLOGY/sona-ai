@@ -44,7 +44,8 @@ export type EvidencePart = { bottomLine: string } | { claim: Claim };
 
 export type Models = {
   /** Brain (Gemma): what to know before seeing the patient. */
-  briefing(input: { patient: Patient }): Answer<{ lines: string[] }>;
+  /** `visitPrep` is what the patient shared from Sona Care before the visit (visitPrepBlock), when they shared anything. */
+  briefing(input: { patient: Patient; visitPrep?: string }): Answer<{ lines: string[] }>;
   /** `withheld` (on a fixture): the model did answer, and nothing in its reply passed the checks (cited, unranked, no number the record lacks). */
   reasoning(input: { patient: Patient; question: string }): Answer<{ answer: string; sourceIds: string[]; withheld?: boolean }>;
   /** X-ray box: never a validated read in this demo. */
@@ -138,10 +139,11 @@ const firstSentence = (text: string) => text.trim().split(/(?<=[.!?])\s+/)[0] ??
 
 /** The app's authored content, served until the models come off hold. Nothing here reads its input the way a model would. */
 export const stubModels: Models = {
-  briefing: ({ patient }) => fixture({ lines: [
+  briefing: ({ patient, visitPrep }) => fixture({ lines: [
     patient.complaint,
     patient.allergies ? `Allergy recorded: ${patient.allergies.split(" — ")[0]}.` : "No allergy recorded; confirm before prescribing.",
     ...(patient.incomplete ? ["History is incomplete: onset, observations, allergies and medicines are still missing."] : []),
+    ...(visitPrep?.split("\n") ?? []),
   ] }),
   reasoning: () => fixture({ answer: "Sample reasoning only: community-acquired pneumonia is the leading working diagnosis; confirm with a chest X-ray and CURB-65.", sourceIds: [] }),
   xrayRead: () => fixture({ findings: ["Findings unavailable: no model has read this image."], validated: false }),
