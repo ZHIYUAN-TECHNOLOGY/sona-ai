@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { Button, Card } from "@/components/primitives";
+import { EmptyState } from "@/components/page";
+import { Button, Chip, Skeleton } from "@/components/primitives";
 import { orpc } from "@/lib/orpc";
 
-import { daysAfter, hospitalTime } from "./rules";
+import { daysAfter, hospitalTime, offsetText } from "./rules";
+import { Section } from "./section";
 
 // ponytail: the four jumps the page was asked for; the API also has "day-1" (the morning dose) and
 // "next" (needs a visit, so it belongs on a visit page).
@@ -26,19 +28,29 @@ export function DemoClock() {
   const pick = (to: Jump) => { jump.reset(); setChoice(to); };
 
   return (
-    <Card title="Demo clock">
-      {status.isPending ? <p className="settings-muted">Reading the clock…</p>
-        : status.isError || !s || !now ? <p className="settings-muted" role="alert">The demo clock couldn't be read. {status.error?.message}</p>
+    <Section
+      title="Demo clock"
+      description="Moves the synthetic demo hospital's clock for everyone, in Sona Pro and Sona Care, not just for you."
+      aside={<Chip>Demo only</Chip>}
+    >
+      {status.isPending ? <Skeleton height={48} />
+        : status.isError || !s || !now ? <EmptyState icon="clock" title="The demo clock couldn't be read"><span role="alert">{status.error?.message}</span></EmptyState>
         : (
           <>
-            <p className="settings-lead">
-              {hospitalTime(now)}
-              {s.offsetMs ? ` · demo time${s.dischargedAt ? `, day ${daysAfter(new Date(s.dischargedAt), now)} after discharge` : ""}` : " · real time"}
+            <p>
+              The hospital's clock reads <strong className="settings-lead">{hospitalTime(now)}</strong>, {offsetText(s.offsetMs)}
+              {s.offsetMs && s.dischargedAt ? ` (day ${daysAfter(new Date(s.dischargedAt), now)} after discharge)` : ""}.
             </p>
-            <div className="settings-actions">
-              {JUMPS.map(to => (
-                <Button key={to} disabled={!s.available.includes(to) || jump.isPending} aria-pressed={choice === to} onClick={() => pick(to)}>{label(to)}</Button>
-              ))}
+            <div className="settings-row">
+              <span className="settings-label" id="demo-jump">Jump to</span>
+              <div className="settings-jumps">
+                <div className="settings-segment" role="group" aria-labelledby="demo-jump">
+                  {JUMPS.filter(to => to !== "now").map(to => (
+                    <button key={to} type="button" disabled={!s.available.includes(to) || jump.isPending} aria-pressed={choice === to} onClick={() => pick(to)}>{label(to)}</button>
+                  ))}
+                </div>
+                <Button variant="secondary" disabled={!s.available.includes("now") || jump.isPending} aria-pressed={choice === "now"} onClick={() => pick("now")}>Back to now</Button>
+              </div>
             </div>
             {choice ? (
               <div className="settings-review">
@@ -56,9 +68,6 @@ export function DemoClock() {
             {s.dischargedAt ? null : <p className="settings-muted">Discharge a patient first; the jumps count from their discharge.</p>}
           </>
         )}
-      <p className="settings-muted">
-        Synthetic demo hospital only. This moves the hospital's clock for everyone, in Sona Pro and Sona Care, not just for you.
-      </p>
-    </Card>
+    </Section>
   );
 }

@@ -3,10 +3,13 @@ import { MAX_WATCHES, parseWatch } from "@sona-ai/domain/watch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 
-import { Button, Card, Field } from "@/components/primitives";
+import { Icon } from "@/components/icon";
+import { EmptyState } from "@/components/page";
+import { Button, Field, Skeleton } from "@/components/primitives";
 import { orpc } from "@/lib/orpc";
 
 import { hospitalTime, hourLabel } from "./rules";
+import { Section } from "./section";
 
 type Spec = { root: string; elements: Record<string, { type: string; props: Record<string, unknown>; children?: string[] }> };
 /** A watch's latest answer, read loosely: the ask bar's answer plus when it was asked. */
@@ -57,25 +60,25 @@ export function Watches({ role }: { role: Role }) {
   };
 
   return (
-    <Card title="Watches">
-      <p className="settings-muted">Questions Sona asks once a day and answers on Today. A watch only reads; it never changes a record.</p>
-      {list.isPending ? <p className="settings-muted">Reading your watches…</p>
-        : list.isError ? <p className="settings-muted" role="alert">Your watches couldn't be read. {list.error.message}</p>
-        : watches.length === 0 ? <p className="settings-muted">You have no watches yet.</p>
+    <Section title="Watches" description="Questions Sona asks once a day and answers on Today. A watch only reads; it never changes a record.">
+      {list.isPending ? <Skeleton height={48} />
+        : list.isError ? <EmptyState icon="clock" title="Your watches couldn't be read"><span role="alert">{list.error.message}</span></EmptyState>
+        : watches.length === 0 ? <EmptyState icon="clock" title="No watches yet">Start one below and Sona asks it every day.</EmptyState>
         : (
           <ul className="settings-watches">
             {watches.map(watch => (
               <li key={watch.id}>
-                <div className="settings-watch-head">
-                  <div>
-                    <p className="settings-lead">{watch.question}</p>
-                    <p className="settings-muted">Daily at {hourLabel(watch.hour)}{watch.last ? ` · asked ${hospitalTime(new Date(watch.last.at))}` : ""}</p>
-                  </div>
-                  {can(role, "watches.remove") ? (
-                    <Button pending={remove.isPending && remove.variables?.watchId === watch.id} onClick={() => remove.mutate({ watchId: watch.id })}>Stop watching</Button>
-                  ) : null}
+                <span className="settings-watch-icon"><Icon name="clock" size={18} /></span>
+                <div className="settings-watch-body">
+                  <p className="settings-lead">{watch.question}</p>
+                  <p className="settings-muted">Daily at {hourLabel(watch.hour)}{watch.last ? ` · asked ${hospitalTime(new Date(watch.last.at))}` : ""}</p>
+                  <Latest last={watch.last as unknown as Last} hour={watch.hour} />
                 </div>
-                <Latest last={watch.last as unknown as Last} hour={watch.hour} />
+                {can(role, "watches.remove") ? (
+                  <Button size="sm" variant="secondary" aria-label={`Stop watching: ${watch.question}`} pending={remove.isPending && remove.variables?.watchId === watch.id} onClick={() => remove.mutate({ watchId: watch.id })}>
+                    {remove.isPending && remove.variables?.watchId === watch.id ? "Stopping…" : "Stop watching"}
+                  </Button>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -88,17 +91,17 @@ export function Watches({ role }: { role: Role }) {
             <Field label="Start a watch" hint="Say what to ask and when, such as “Every morning at 7, who has a potassium result above 5?”" error={create.isError ? create.error.message : undefined}>
               {control => <input {...control} value={text} maxLength={500} onChange={event => { create.reset(); setText(event.target.value); }} />}
             </Field>
-            {draft?.question ? (
-              <div className="settings-review">
-                <p className="settings-lead">{draft.question}</p>
-                <p>Every day at {hourLabel(draft.hour)} · from the hospital's lab results and open tasks</p>
-                <div className="settings-actions">
-                  <Button type="submit" variant="primary" pending={create.isPending}>{create.isPending ? "Starting…" : "Start watching"}</Button>
-                </div>
-              </div>
-            ) : null}
+            <div className="settings-submit">
+              {draft?.question ? (
+                <p aria-live="polite">
+                  <span className="settings-lead">{draft.question}</span>
+                  <span className="settings-muted"> Every day at {hourLabel(draft.hour)} · from the hospital's lab results and open tasks</span>
+                </p>
+              ) : <p className="settings-muted">Sona shows what it will ask before the watch starts.</p>}
+              <Button type="submit" variant="primary" disabled={!draft?.question} pending={create.isPending}>{create.isPending ? "Starting…" : "Start watching"}</Button>
+            </div>
           </form>
         )}
-    </Card>
+    </Section>
   );
 }
