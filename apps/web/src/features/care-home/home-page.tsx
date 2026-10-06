@@ -18,9 +18,9 @@ const shortDay = (d: Date) => d.toLocaleDateString(lang, { day: "numeric", month
 /** Rail: the places a patient goes from here; static, so built once. */
 const MORE = (
   <ListCard title="More for you">
-    <ListRow to="/care/ask" icon="sparkle" title="Ask Sona" caption="Ask a question in your own words" />
-    <ListRow to="/care/discharge-plan" icon="clipboard" title="Your discharge plan" caption="What to do at home, step by step" />
-    <ListRow to="/care/medicines" icon="pill" title="All medicines" caption="What each one is for and how to take it" />
+    <ListRow to="/care/ask" icon="sparkle" title="Ask Sona" caption="Ask in your own words" />
+    <ListRow to="/care/discharge-plan" icon="clipboard" title="Your discharge plan" caption="Your steps at home" />
+    <ListRow to="/care/medicines" icon="pill" title="All medicines" caption="What to take and why" />
   </ListCard>
 );
 
