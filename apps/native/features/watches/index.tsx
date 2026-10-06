@@ -4,7 +4,7 @@ import { Caption, DisclosureButton, TextLink } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, radius, type } from "@/components/sona/theme";
 import { Action, Icon, Notice, Surface } from "@/components/sona/ui";
-import { AnswerView, openTab, useRunOp } from "@/features/ask";
+import { AnswerView, useRunOp } from "@/features/ask";
 import type { Answer } from "@/features/ask/answers";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
@@ -43,7 +43,7 @@ const asAnswer = (watch: Watch, last: Extract<Watch["last"], { source: "model" }
 
 /** A watch's latest answer, as any Sona answer reads; or, plainly, why there is none yet. */
 function Latest({ watch }: { watch: Watch }) {
-  const run = useRunOp(() => {}, openTab);
+  const run = useRunOp(() => {});
   const { last } = watch;
   if (!last) return <Caption>First answer at {hourLabel(watch.hour)}.</Caption>;
   if (last.source !== "model") {

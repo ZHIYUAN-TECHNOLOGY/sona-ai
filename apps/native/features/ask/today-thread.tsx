@@ -14,7 +14,7 @@ import { Bubble } from "@/features/encounter/sona-live";
 import { useLive } from "@/features/live";
 import { WatchProposal } from "@/features/watches";
 import { isWatch, parseWatch } from "@sona-ai/domain/watch";
-import { AnswerView, KeepRow, answerFree, answerNow, openTab, useRunOp } from ".";
+import { AnswerView, KeepRow, answerFree, answerNow, useRunOp } from ".";
 import { leadOf, withoutLead, type Answer } from "./answers";
 import { EVIDENCE, askThread, replyTo, useThread, type Entry } from "./thread";
 
@@ -56,7 +56,7 @@ export function useTodayThread(answers: Answer[]) {
  * sidebar; or Sona thinking, or a notice (Ask again when that may work). `fresh` (the page's newest) inks the lead in and
  * has VoiceOver read the answer as it lands, spoken or typed alike.
  */
-export function ThreadEntry({ entry, fresh = false, onAgain, onEvidence, onOnce, onTab = openTab, leave = stay }: { entry: Entry; fresh?: boolean; onAgain?: () => void; /** A proposed watch's question, answered once instead. */ onOnce?: (question: string) => void; /** An evidence answer's follow-up, asked as evidence in the same conversation. */ onEvidence?: (question: string) => void; /** A page's own tabs (Ward's filters); Today opens Patients or the ward. */ onTab?: (tab: string) => void; /** What steps aside before an op runs (a page's conversation, to show the page). */ leave?: () => void }) {
+export function ThreadEntry({ entry, fresh = false, onAgain, onEvidence, onOnce, onTab, leave = stay }: { entry: Entry; fresh?: boolean; onAgain?: () => void; /** A proposed watch's question, answered once instead. */ onOnce?: (question: string) => void; /** An evidence answer's follow-up, asked as evidence in the same conversation. */ onEvidence?: (question: string) => void; /** A page's own tabs (Ward's filters); Today opens Patients or the ward. */ onTab?: (tab: string) => void; /** What steps aside before an op runs (a page's conversation, to show the page). */ leave?: () => void }) {
   const run = useRunOp(leave, onTab);
   const reduced = useReduceMotionPreference();
   const { reply } = entry;

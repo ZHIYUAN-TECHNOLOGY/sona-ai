@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, Insight, Screen } from "@/components/sona/ui";
-import { AnswerView, openTab, useRunOp } from ".";
+import { AnswerView, useRunOp } from ".";
 import { isSaved, removeView, saveView, useSaved } from "./saved";
 import { useTodayAnswers } from "./today";
 
@@ -15,7 +15,7 @@ export function SavedViewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const answer = useTodayAnswers().find(a => a.id === id);
   const saved = useSaved();
-  const run = useRunOp(() => {}, openTab);
+  const run = useRunOp(() => {});
   if (!answer) return <Screen><Insight eyebrow="Sona view">This view isn’t available</Insight><Action label="Back" secondary onPress={() => router.back()} /></Screen>;
   const kept = isSaved(saved, answer.id);
   return <Screen>

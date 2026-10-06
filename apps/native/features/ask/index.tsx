@@ -1,6 +1,6 @@
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
 import * as Haptics from "expo-haptics";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { usePreventRemove } from "expo-router/react-navigation";
 import { createContext, use, useRef, useState, type ReactNode } from "react";
 import { ScrollView, View } from "react-native";
@@ -16,7 +16,7 @@ import { VoiceDock } from "@/features/encounter/voice-dock";
 import type { LiveAdapter } from "@/features/encounter/sona-live";
 import type { Attachment } from "@/components/sona/attachments-menu";
 import { carry } from "@/features/encounter/carry";
-import { openSession } from "@/features/encounter/navigation";
+import { openPatients, openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
 import { api, useLive } from "@/features/live";
 import { startingReply, wakingOf } from "@/features/live/waking";
@@ -72,18 +72,19 @@ const { registry } = defineRegistry(askCatalog, {
  */
 export function useRunOp(leave: () => void, onTab?: (tab: string) => void) {
   const { updateEncounter } = useEncounter();
+  const navigation = useNavigation();
   return (op: string) => {
     const [kind, ...rest] = op.split(":");
     const arg = rest.join(":");
     if (kind === "open") { leave(); setTimeout(() => openSession(arg), 250); }
     else if (kind === "go") { leave(); setTimeout(() => router.push(arg as never), 250); }
-    else if (kind === "tab") { leave(); onTab?.(arg); }
+    else if (kind === "tab") { leave(); if (onTab) onTab(arg); else openTab(navigation, arg); }
     else if (kind === "task-done") { const [patientId, taskId] = rest; if (patientId && taskId) updateEncounter(current => ({ ...current, tasks: current.tasks.map(t => t.id === taskId ? { ...t, completed: true } : t) }), false, patientId); }
   };
 }
 
-/** Where a day-wide answer's page action leads: a Patients tab, or the ward filtered. */
-export const openTab = (tab: string) => tab === "blocked" ? router.push({ pathname: "/ward", params: { filter: "blocked" } }) : router.push({ pathname: "/patients", params: { tab } });
+/** Where a day-wide answer's page action leads by default: a Patients tab (the Patients page under this one, if open), or the ward filtered. */
+const openTab = (navigation: Parameters<typeof openPatients>[0], tab: string) => tab === "blocked" ? router.push({ pathname: "/ward", params: { filter: "blocked" } }) : openPatients(navigation, { tab });
 
 /** An answer as a view from the ask catalogue, with its question and its label (rule-based, or the model that drafted it); nothing renders if the spec fails the checks. */
 export function AnswerView({ answer, run, question = true, model }: { answer: Answer; run: (op: string) => void; question?: boolean; model?: string }) {
