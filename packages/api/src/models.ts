@@ -28,6 +28,8 @@ export type Origin = { source: "fixture"; waking?: number } | { source: "model";
  */
 export type DecidedBy = { decidedBy?: "model" | "rules" };
 type Answer<T> = Promise<T & Origin>;
+/** One stretch of a part said by one voice. `voice` counts from 1 in order of first speaking; the same person keeps the number across a visit's parts while `memory` is handed back. `from`/`to`: seconds into this part. */
+export type VoiceSegment = { voice: number; from: number; to: number; text: string };
 
 /**
  * `from` and `pmid`: a PubMed study's journal and PMID, so the prompt can name them (the stub reads neither).
@@ -79,8 +81,10 @@ export type Models = {
    */
   streamEvidence?(input: EvidenceInput): AsyncGenerator<EvidencePart, Awaited<Answer<EvidenceAnswer>>>;
   huddleBrief(input: { beds: Bed[]; owners: Record<string, Owner | undefined> }): Answer<{ lines: string[] }>;
-  /** Sona Care: the patient's speech as text (Malay, English, Chinese or mixed). The stub has no ears: it returns no text. */
-  transcribe(input: { audio: Uint8Array; language?: Language }): Answer<{ text: string; language?: string }>;
+  /** Sona Care: the patient's speech as text (Malay, English, Chinese or mixed). The stub has no ears: it returns no text.
+   * With `voices` the speech box also says who spoke when: the part as voice-numbered segments, and its memory of the voices to hand back with the visit's next part. */
+  transcribe(input: { audio: Uint8Array; language?: Language; voices?: { memory?: string } }):
+    Answer<{ text: string; language?: string; segments?: VoiceSegment[]; memory?: string }>;
   /**
    * Sona Care: a sentence or two read aloud in Sona's own voice (VoxCPM2 fine-tuned on a Malaysian nurse's voice,
    * docs/tts-training.md), in whichever of Malay, English or Chinese it is written. `audio` is the box's MP3 (or WAV)

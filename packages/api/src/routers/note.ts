@@ -15,7 +15,7 @@ import { captureNoteEdit } from "./training";
  */
 export const noteDraftSchema = z.object({
   encounterId: z.string().min(1),
-  lines: z.array(z.object({ text: z.string().trim().min(1).max(4000), speaker: z.enum(["clinician", "patient"]).optional() })).min(1).max(600)
+  lines: z.array(z.object({ text: z.string().trim().min(1).max(4000), speaker: z.enum(["clinician", "patient", "family", "nurse", "interpreter", "other"]).optional(), voice: z.number().int().min(1).max(8).optional() })).min(1).max(600)
     .refine(lines => lines.reduce((n, l) => n + l.text.length, 0) <= 40_000, "This consultation is too long to draft in one go"),
 });
 
