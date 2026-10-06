@@ -1,0 +1,28 @@
+/* Sona Care · Visit summaries. Blue is the next step; nothing here is an alarm, so no red and no amber. */
+.vs-page { display: grid; gap: var(--space-5); max-width: 44rem; font-size: max(17px, var(--text-md, 17px)); }
+
+.vs-open { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg, 16px); padding: var(--space-5); scroll-margin-top: var(--space-4); }
+.vs-open h2, .vs-others h2 { margin: 0 0 var(--space-3); font-size: 1.25em; }
+.vs-open h3 { margin: var(--space-5) 0 var(--space-2); font-size: 1em; }
+.vs-open p { margin: 0 0 var(--space-3); line-height: 1.6; max-width: 62ch; }
+
+.vs-changes { list-style: none; margin: 0; padding: 0; }
+.vs-changes li { display: flex; gap: var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-top: 1px solid var(--line); line-height: 1.5; }
+.vs-changes li::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--blue); }
+
+.vs-open .vs-approved { margin-top: var(--space-4); color: var(--muted); }
+.vs-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+.vs-actions .btn { min-height: max(48px, var(--tap, 48px)); display: inline-flex; align-items: center; }
+
+.vs-others ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.vs-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); min-height: max(48px, var(--tap, 48px)); padding: var(--space-3) var(--space-2); border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+.vs-row:hover { background: var(--blue-wash); }
+.vs-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.vs-muted { color: var(--muted); }
+
+/* "Download PDF" is the browser's print: only the open summary goes on the page. */
+@media print {
+  .frame-side, .frame-bar, .vs-actions, .vs-page > :not(.vs-open) { display: none !important; }
+  .vs-page { max-width: none; }
+  .vs-open { border: 0; padding: 0; }
+}
