@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent, type KeyboardEvent } from "react";
+import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
 import { Button } from "@/components/primitives";
 import { client, orpc } from "@/lib/orpc";
@@ -10,9 +10,10 @@ const newRequestId = () => `web-${Date.now()}-${Math.random().toString(36).slice
 type Draft = { text: string; requestId: string };
 
 /** Write to the care team. The message shows at once; if sending fails it is taken back and the words return here. */
-export function Composer() {
+export function Composer({ status }: { status?: string | null }) {
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
+  const box = useRef<HTMLTextAreaElement>(null);
   // One ID per message text, so a retry after a dropped connection is not sent twice (as the phone app does).
   const [attempt, setAttempt] = useState<Draft>({ text: "", requestId: newRequestId() });
   const key = orpc.care.messages.list.queryKey();
@@ -37,6 +38,7 @@ export function Composer() {
 
   const go = () => {
     const words = text.trim();
+    box.current?.focus();
     if (!words || send.isPending) return;
     const requestId = words === attempt.text ? attempt.requestId : newRequestId();
     setAttempt({ text: words, requestId });
@@ -47,10 +49,22 @@ export function Composer() {
 
   return (
     <form className="cm-composer" onSubmit={onSubmit}>
-      <label className="cm-sr" htmlFor="cm-text">Write to your care team</label>
-      <textarea id="cm-text" rows={2} maxLength={1000} placeholder="Write to your care team…" value={text} onChange={e => setText(e.target.value)} onKeyDown={onKeyDown} />
-      <Button type="submit" variant="primary" pending={send.isPending} disabled={!text.trim()}>Send</Button>
-      {send.isError ? <p className="cm-error" role="alert">Not sent. Your words are still here. Try again.</p> : null}
+      <div className="cm-compose-top">
+        <label className="cm-label" htmlFor="cm-text">Write a message</label>
+        <p className="cm-status" role="status">{send.isError ? null : status}</p>
+      </div>
+      <div className="cm-compose-row">
+        {/* Grows with the words (CSS field-sizing); older browsers keep two rows and scroll. */}
+        <textarea ref={box} id="cm-text" aria-describedby="cm-hint" rows={2} maxLength={1000} placeholder="How are you feeling? What do you want to ask?" value={text} onChange={e => setText(e.target.value)} onKeyDown={onKeyDown} />
+        <Button type="submit" variant="primary" icon="send" pending={send.isPending} disabled={!text.trim()}>Send</Button>
+      </div>
+      <p id="cm-hint" className="cm-hint">Enter sends. Shift + Enter starts a new line.</p>
+      {send.isError ? (
+        <p className="cm-error" role="alert">
+          Not sent. Your words are back in the box.
+          <Button onClick={go} disabled={!text.trim()}>Try again</Button>
+        </p>
+      ) : null}
     </form>
   );
 }

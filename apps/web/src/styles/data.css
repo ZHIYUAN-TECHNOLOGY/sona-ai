@@ -1,5 +1,5 @@
 /* Data table, AI insight panel and charts. Loaded after components.css, whose older
-   table/chart/insight rules it overrides. Pro-only looks sit under .pro. */
+   table/chart/insight rules it overrides. Pro-only looks sit under :is(.pro, .care). */
 
 /* Data table */
 .table-toolbar, .table-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-3) var(--space-4); }
@@ -26,17 +26,17 @@
 .row-action:hover { background: var(--fill-hover); }
 .row-action:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
 tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
-.pro .table th { height: 44px; font-size: var(--text-overline); letter-spacing: var(--track-overline); text-transform: uppercase; border-bottom-color: var(--hairline); }
-.pro .table td { height: 71px; border-bottom-color: var(--hairline); }
+:is(.pro, .care) .table th { height: 44px; font-size: var(--text-overline); letter-spacing: var(--track-overline); text-transform: uppercase; border-bottom-color: var(--hairline); }
+:is(.pro, .care) .table td { height: 71px; border-bottom-color: var(--hairline); }
 /* Sort buttons do not inherit type from the header cell by default. */
 .table-sort { font: inherit; letter-spacing: inherit; text-transform: inherit; }
 .row-action { text-decoration: none; white-space: nowrap; }
 /* Pro: the table sits in a borderless white card; hairlines stop short of its edge. */
-.pro .table-wrap { padding: var(--space-3) var(--space-3) var(--space-2); border: 0; border-radius: var(--radius-card); }
-.pro .table th, .pro .table td { padding-inline: var(--space-3); }
-.pro .table th { font-weight: 500; }
-.pro :is(.table-toolbar, .table-foot) { padding-inline: var(--space-3); border-color: var(--hairline); }
-.pro .cell-person-name + .cell-muted { line-height: 1.3; }
+:is(.pro, .care) .table-wrap { padding: var(--space-3) var(--space-3) var(--space-2); border: 0; border-radius: var(--radius-card); }
+:is(.pro, .care) .table th, :is(.pro, .care) .table td { padding-inline: var(--space-3); }
+:is(.pro, .care) .table th { font-weight: 500; }
+:is(.pro, .care) :is(.table-toolbar, .table-foot) { padding-inline: var(--space-3); border-color: var(--hairline); }
+:is(.pro, .care) .cell-person-name + .cell-muted { line-height: 1.3; }
 
 /* Insight card: plain parts everywhere, the AI gradient panel in Pro */
 .insight-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); }
@@ -53,19 +53,19 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .insight-overline { display: block; font-size: var(--text-overline); font-weight: 600; letter-spacing: var(--track-overline); text-transform: uppercase; color: var(--muted); }
 /* White text on every stop of the gradient is at least 4.8:1. The translucent --ai-row is
    used for hairlines only: as a fill behind text it would drop white below AA. */
-.pro .insight { background: var(--ai-gradient); border: 0; color: var(--on-ai); backdrop-filter: none; }
-.pro .insight::before, .pro .insight-lead::before { display: none; }
-.pro .insight :is(.insight-meta, .insight-foot, .insight-overline, .insight-detail, .insight-detail summary) { color: var(--on-ai); }
-.pro .insight-label, .pro .insight .insight-act { background: var(--on-ai); color: var(--navy); border-color: transparent; }
-.pro .insight .insight-act { border-radius: var(--radius-pill); }
-.pro .insight .insight-act:is(:hover, :active) { background: var(--on-ai-soft); color: var(--navy); }
-.pro .insight-title { font-size: var(--text-display); }
-.pro .insight-step { font-weight: 600; }
-.pro .insight-overline { margin-bottom: var(--space-1); }
-.pro .insight-evidence li { border-top-color: var(--ai-row); }
-.pro .insight-evidence svg { color: var(--on-ai-soft); }
-.pro .insight-next { padding-top: var(--space-4); border-top: 1px solid var(--ai-row); }
-.pro .insight :focus-visible { outline: 2px solid var(--on-ai); outline-offset: 2px; box-shadow: none; }
+:is(.pro, .care) .insight { background: var(--ai-gradient); border: 0; color: var(--on-ai); backdrop-filter: none; }
+:is(.pro, .care) .insight::before, .care .insight::after, :is(.pro, .care) .insight-lead::before { display: none; }
+:is(.pro, .care) .insight :is(.insight-meta, .insight-foot, .insight-overline, .insight-detail, .insight-detail summary) { color: var(--on-ai); }
+:is(.pro, .care) .insight-label, :is(.pro, .care) .insight .insight-act { background: var(--on-ai); color: var(--navy); border-color: transparent; }
+:is(.pro, .care) .insight .insight-act { border-radius: var(--radius-pill); }
+:is(.pro, .care) .insight .insight-act:is(:hover, :active) { background: var(--on-ai-soft); color: var(--navy); }
+:is(.pro, .care) .insight-title { font-size: var(--text-display); }
+:is(.pro, .care) .insight-step { font-weight: 600; }
+:is(.pro, .care) .insight-overline { margin-bottom: var(--space-1); }
+:is(.pro, .care) .insight-evidence li { border-top-color: var(--ai-row); }
+:is(.pro, .care) .insight-evidence svg { color: var(--on-ai-soft); }
+:is(.pro, .care) .insight-next { padding-top: var(--space-4); border-top: 1px solid var(--ai-row); }
+:is(.pro, .care) .insight :focus-visible { outline: 2px solid var(--on-ai); outline-offset: 2px; box-shadow: none; }
 
 /* Charts */
 .chart { position: relative; }
@@ -103,7 +103,7 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .table-scroll > .table { width: 100%; table-layout: auto; }
 .table th { white-space: nowrap; }
 /* Inside a Card the card's padding is the only frame: the toolbar starts where any card's content starts. */
-.card > .table-wrap, .pro .card > .table-wrap { padding: 0; }
+.card > .table-wrap, :is(.pro, .care) .card > .table-wrap { padding: 0; }
 .card > .table-wrap > .table-toolbar { padding: 0 0 var(--space-3); }
 .table .table-action { width: 1%; white-space: nowrap; padding-left: 0; }
 .cell-person { display: flex; min-width: 150px; max-width: 220px; }
@@ -120,7 +120,7 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .insight-act[data-pending] { opacity: 0.6; pointer-events: none; cursor: progress; }
 /* Beside a rail on a laptop the table has about 620px: tighter cells so every column and the row action stay in view. */
 @media (max-width: 1480px) {
-  .pro .table th, .pro .table td { padding-inline: var(--space-2); }
+  :is(.pro, .care) .table th, :is(.pro, .care) .table td { padding-inline: var(--space-2); }
   .row-action { padding: 0 var(--space-3); gap: var(--space-1); }
   .cell-person { min-width: 132px; }
 }

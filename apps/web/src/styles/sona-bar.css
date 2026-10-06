@@ -54,20 +54,25 @@
 .sona-turn[data-state="error"] .sona-turn-a { color: var(--amber); }
 
 /* Sona Pro: a floating glass pill in the shell's language. The send button is ink, like the active sidebar item. */
-.pro .sona-bar { width: min(640px, 100%); padding: 6px 6px 6px var(--space-4); border-radius: var(--radius-card); box-shadow: 0 8px 28px rgb(29 31 35 / 0.1), 0 1px 2px rgb(29 31 35 / 0.06); transition: box-shadow var(--quick) var(--ease); }
+:is(.pro, .care) .sona-bar { width: min(640px, 100%); padding: 6px 6px 6px var(--space-4); border-radius: var(--radius-card); box-shadow: 0 8px 28px rgb(29 31 35 / 0.1), 0 1px 2px rgb(29 31 35 / 0.06); transition: box-shadow var(--quick) var(--ease); }
 /* In use the bar lifts: a deeper shadow, and the focus ring. */
-.pro .sona-bar[data-open] { box-shadow: 0 12px 40px rgb(29 31 35 / 0.16); }
-.pro .sona-bar:focus-within { outline: 0; box-shadow: var(--focus-ring), 0 12px 40px rgb(29 31 35 / 0.16); }
+:is(.pro, .care) .sona-bar[data-open] { box-shadow: 0 12px 40px rgb(29 31 35 / 0.16); }
+:is(.pro, .care) .sona-bar:focus-within { outline: 0; box-shadow: var(--focus-ring), 0 12px 40px rgb(29 31 35 / 0.16); }
 /* Listening, the mic stays ink under the pointer (the hover fill would hide its white icon). */
-.pro .sona-bar[data-phase="listening"] .sona-bar-mic:not(:disabled) { background: var(--ink); color: var(--surface); }
-.pro .sona-bar[data-phase="listening"] { box-shadow: 0 0 0 1px var(--blue), 0 0 calc(16px + var(--level) * 36px) rgb(36 91 204 / calc(0.18 + var(--level) * 0.3)); }
-.pro .sona-bar-input { min-height: 40px; font-size: 14px; }
-.pro .sona-bar-hint { font-size: 14px; }
-.pro .sona-bar-button { width: 40px; height: 40px; transition: background var(--quick) var(--ease), color var(--quick) var(--ease), opacity var(--quick) var(--ease), transform var(--quick) var(--ease); }
-.pro .sona-bar-button:active:not(:disabled) { transform: scale(var(--press)); }
-.pro .sona-bar-button:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
-.pro .sona-bar-mic:hover:not(:disabled) { background: var(--fill-hover); }
-.pro .sona-bar-send { background: var(--ink); }
-.pro .sona-bar-status { font-size: 12px; }
-.pro .sona-turn { border-color: var(--hairline); border-radius: var(--radius-card); }
-@media (prefers-reduced-motion: reduce) { .pro .sona-bar, .pro .sona-bar-button { transition: none; } .pro .sona-bar-button:active:not(:disabled) { transform: none; } }
+:is(.pro, .care) .sona-bar[data-phase="listening"] .sona-bar-mic:not(:disabled) { background: var(--ink); color: var(--surface); }
+:is(.pro, .care) .sona-bar[data-phase="listening"] { box-shadow: 0 0 0 1px var(--blue), 0 0 calc(16px + var(--level) * 36px) rgb(36 91 204 / calc(0.18 + var(--level) * 0.3)); }
+:is(.pro, .care) .sona-bar-input { min-height: 40px; font-size: 14px; }
+:is(.pro, .care) .sona-bar-hint { font-size: 14px; }
+:is(.pro, .care) .sona-bar-button { width: 40px; height: 40px; transition: background var(--quick) var(--ease), color var(--quick) var(--ease), opacity var(--quick) var(--ease), transform var(--quick) var(--ease); }
+:is(.pro, .care) .sona-bar-button:active:not(:disabled) { transform: scale(var(--press)); }
+:is(.pro, .care) .sona-bar-button:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+:is(.pro, .care) .sona-bar-mic:hover:not(:disabled) { background: var(--fill-hover); }
+:is(.pro, .care) .sona-bar-send { background: var(--ink); }
+:is(.pro, .care) .sona-bar-status { font-size: 12px; }
+:is(.pro, .care) .sona-turn { border-color: var(--hairline); border-radius: var(--radius-card); }
+@media (prefers-reduced-motion: reduce) { :is(.pro, .care) .sona-bar, :is(.pro, .care) .sona-bar-button { transition: none; } :is(.pro, .care) .sona-bar-button:active:not(:disabled) { transform: none; } }
+/* Sona Care: a larger bar for patients. */
+.care .sona-bar-input { min-height: var(--tap); font-size: var(--text-body); }
+.care .sona-bar-button { width: var(--tap); height: var(--tap); }
+.care .sona-bar-status { font-size: var(--text-small); }
+.care .sona-bar-hint { font-size: var(--text-body); }

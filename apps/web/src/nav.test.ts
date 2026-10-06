@@ -7,7 +7,7 @@ const pages = (role: Parameters<typeof navFor>[0]) => navFor(role).flatMap(group
 
 test("a role is only shown the pages whose job it can do", () => {
   expect(pages("bed-manager")).toEqual(["tasks", "ward", "settings"]);
-  expect(pages("nurse")).toEqual(["today", "schedule", "tasks", "patients", "visit", "results", "xray", "messages", "review", "ward", "handover", "discharge", "library", "settings"]);
+  expect(pages("nurse")).toEqual(["today", "schedule", "tasks", "patients", "visit", "results", "xray", "evidence", "messages", "review", "ward", "handover", "check-ins", "discharge", "library", "settings"]);
   expect(pages("management")).not.toContain("review");
   expect(pages("management")).toContain("training-data");
   expect(pages("doctor")).not.toContain("training-data");

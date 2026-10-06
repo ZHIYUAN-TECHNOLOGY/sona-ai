@@ -1,0 +1,41 @@
+/* Sona Care discharge plan: three columns (plain words, the document, warning signs). */
+.dp-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--gap-card); align-items: start; }
+.dp-col { display: flex; flex-direction: column; gap: var(--gap-card); min-width: 0; }
+/* One column: the rail (warning first) goes above the document so the warning stays in view. */
+@media (max-width: 1180px) { .dp-grid { grid-template-columns: minmax(0, 1fr); } .dp-grid > .dp-col { order: -1; } }
+@media (max-width: 760px) { .dp-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.card.dp-doc { display: flex; flex-direction: column; gap: var(--space-5); }
+.dp-doc section { display: flex; flex-direction: column; gap: var(--space-3); }
+.dp-doc section + section { padding-top: var(--space-5); border-top: 1px solid var(--hairline); }
+.dp-doc p, .dp-warn p, .dp-warn li { margin: 0; font-size: var(--text-body); line-height: var(--line-body); color: var(--ink); }
+.dp-doc .list { margin: 0; padding: 0; list-style: none; }
+.dp-doc .list-row { min-height: 48px; }
+.dp-grid > .card { min-width: 0; }
+.dp-doc .list-text { min-width: 0; }
+.dp-doc .list-title, .dp-doc .list-caption { white-space: normal; overflow: visible; }
+.dp-doc .dp-muted, .dp-dose { color: var(--muted); }
+.dp-dose { font-weight: 400; }
+.dp-leaflet { white-space: pre-line; }
+.dp-doc p { max-width: 70ch; }
+.dp-foot { display: flex; }
+
+/* The one red block on the page: call the hospital now. */
+.card.dp-warn { display: flex; flex-direction: column; gap: var(--space-4); background: var(--red-wash); }
+.dp-warn-head { display: flex; align-items: center; gap: var(--space-3); }
+.dp-warn-head svg { flex: none; color: var(--red); }
+.dp-warn h2 { margin: 0; font-size: var(--text-panel); line-height: 1.25; color: var(--ink); }
+.dp-warn ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-3); }
+.dp-warn li { display: flex; gap: var(--space-3); align-items: flex-start; font-weight: 600; }
+.dp-warn li svg { flex: none; margin-top: 3px; color: var(--red); }
+.dp-call { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--space-2); min-height: 48px; padding: 0 var(--space-5); border-radius: var(--radius-pill); background: var(--red); color: var(--surface); font-size: var(--text-body); font-weight: 600; text-decoration: none; }
+.dp-call:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+@media print {
+  .frame-side, .frame-bar, .no-print { display: none !important; }
+  .dp-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Nothing to show yet: one centred card, as on Check-ins. */
+.dp-alone { width: min(100%, 640px); margin-inline: auto; }
+.dp-alone .empty .btn { align-self: center; margin-top: var(--space-2); }

@@ -39,3 +39,32 @@ export function trendOf(results: Result[], test: string, lang = "en"): Point[] {
   }).reverse();
   return points.length >= 2 ? points : [];
 }
+
+export type Status = "Normal" | "Above" | "Below" | "Check";
+
+// ponytail: reads the free-text flag by its first word (high/above, low/below); a coded flag from the lab feed would replace this.
+export const statusOf = (flag: string | undefined): Status =>
+  !isFlagged(flag) ? "Normal" : /^\s*(h|hi|high|above)\b/i.test(flag ?? "") ? "Above" : /^\s*(l|lo|low|below)\b/i.test(flag ?? "") ? "Below" : "Check";
+
+/** Counts for the header, the summary and the stat cards. Only released results count as seen. */
+export function countsOf(results: Result[]): { seen: number; inRange: number; attention: Released[]; waiting: number } {
+  const seen = results.filter((r): r is Released => r.released);
+  const attention = seen.filter((r) => isFlagged(r.flag));
+  return { seen: seen.length, inRange: seen.length - attention.length, attention, waiting: results.length - seen.length };
+}
+
+export const plural = (n: number, one: string): string => `${n} ${one}${n === 1 ? "" : "s"}`;
+
+/** The status in the patient's words, for the detail rail and the summary. */
+export const plainOf = (flag: string | undefined): string =>
+  ({ Normal: "In the usual range", Above: "Above the usual range", Below: "Below the usual range", Check: "Needs a look" })[statusOf(flag)];
+
+/** The newest result of each test that is in range after an earlier flagged one. `results` is newest first. */
+export function improvedOf(results: Result[]): Released[] {
+  const done = new Set<string>();
+  return results.flatMap((r) => {
+    if (!r.released || done.has(r.test)) return [];
+    done.add(r.test);
+    return !isFlagged(r.flag) && results.some((o) => o.released && o.test === r.test && o.id !== r.id && isFlagged(o.flag)) ? [r] : [];
+  });
+}

@@ -133,7 +133,7 @@ All colour values differ between Pro and Care; the names and meanings do not.
 - `--tap` (Pro 36px / Care 48px): smallest target for a custom control.
 - `--pill-h` 48px: large pill button. `--field-h` 44px: fields. `--chip-h` 26px: chips. `--row-h` 64px: table and list rows.
 - `--avatar-sm` 28px, `--avatar-md` 40px, `--avatar-lg` 56px: avatar sizes; match a custom leading tile to these.
-- `--side-width` 220px, `--rail-width` 68px: frame navigation widths. `--page-max` 1440px: the Pro page column. Read-only facts for layout maths.
+- `--side-width` 220px, `--rail-width` 68px: frame navigation widths. `--page-max` 1560px: the page column. Read-only facts for layout maths.
 
 **Shadows**
 
@@ -353,3 +353,15 @@ Empty `points` draws the chart's own empty state. Charts draw in when their data
 - `FileTile({ icon })`, `DetailList({ items: [{ label, value }] })`, `SectionLabel`, `Select({ label })` in `primitives.tsx`; `.num` for tabular numerals.
 - Icons: `info`, `phone`, `upload`, `image`, `trash`, `refresh`, `external`.
 - Token `--sona-bar-clearance` (176px): bottom padding of the Pro scroll area, so the last card clears the Sona bar.
+
+## Care
+
+Sona Care (`/care`) sits on the same shell and shared components as Sona Pro. Page agents can rely on:
+
+- The frame: one rounded container on `--canvas-deep`, sidebar with brand tile, group labels, 48px icon + label rows, the current page as a solid `--blue` pill, `count` badges on nav items, and the patient's letter avatar, name, hospital and icon sign-out at the foot. Icon rail under 1100px, no sidebar under 860px. Every item fits at 1280x720.
+- Every shared component (`PageHeader`, `Button`, `Chip`, `StatCard`/`StatRow`, `InsightCard`, `Card`, `Tabs`, `SearchField`, `DataTable` + `TableToolbar`, `ListCard`/`ListRow`, `DetailList`, `Select`, `EmptyState`, `Skeleton`, charts) takes Pro's refined rules: they are written as `:is(.pro, .care)`, so one rule serves both apps at the same specificity.
+- Care's sizes come from tokens, not page CSS: `--text-body` 17px, `--text-small` 15px, `--text-overline` 13px, `--tap` and `--field-h` 48px, `--chip-h` 30px, `--radius-card` 28px. Do not set a font size under 15px on a Care page.
+- Links: a plain `<a>` (no class) inside `.card`, `.list-card`, `.detail-list` or `.empty` is blue, medium weight, underlined on hover, with the focus ring. Anywhere else, or on an `<a>` that carries a class, add `className="link"`.
+- Red (`--red`, `tone="red"`) is only for "call the hospital now". Use amber or neutral for everything else, allergies included.
+- The Sona bar ("Ask Sona anything") floats over the page foot; `.frame-scroll` already leaves `--sona-bar-clearance` for it.
+- Sign-in and join share `sign-in.css`: brand tile, centred card, pill fields and a blue pill to go on.

@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 
 import { Button, Card, Chip, Field } from "@/components/primitives";
+import { Icon } from "@/components/icon";
 import { client, orpc } from "@/lib/orpc";
 
 /**
@@ -52,7 +53,9 @@ export function MedicinePhoto() {
   function onFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    if (file) readFile(file);
+  }
+  function readFile(file: File) {
     const reader = new FileReader();
     reader.onload = () => void read(String(reader.result));
     reader.onerror = () => setStep({ kind: "choose", error: "We couldn't read that photo. Try again." });
@@ -96,14 +99,16 @@ export function MedicinePhoto() {
   }
 
   return (
-    <Card title="Add a medicine from a photo">
+    <Card title="Check a medicine by photo">
       <div className="med-photo" aria-live="polite">
         {step.kind === "choose" && <>
           <p>Photograph the medicine box or the letter. We read it, you check it, and your care team confirms it.</p>
           {step.error && <p role="alert" className="med-note">{step.error}</p>}
-          <div className="med-actions">
-            <Button variant="primary" onClick={() => void openCamera()}>Take photo</Button>
-            <label className="btn btn-quiet med-file">Choose a photo<input type="file" accept="image/*" capture="environment" onChange={onFile} /></label>
+          <div className="med-drop" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) readFile(f); }}>
+            <Icon name="upload" size={24} />
+            <span>Drop a photo here, or</span>
+            <label className="btn btn-secondary med-file">Choose a photo<input type="file" accept="image/*" onChange={onFile} /></label>
+            <Button onClick={() => void openCamera()}>Use the camera</Button>
           </div>
         </>}
         {step.kind === "camera" && <>
@@ -113,8 +118,9 @@ export function MedicinePhoto() {
             <Button onClick={() => setStep({ kind: "choose" })}>Cancel</Button>
           </div>
         </>}
-        {step.kind === "reading" && <p>Reading your photo…</p>}
+        {step.kind === "reading" && <><p>Reading your photo…</p><progress className="med-progress" aria-label="Reading your photo" /></>}
         {step.kind === "read" && <>
+          {step.sample && <p><Chip>Sample, not a reading of your photo</Chip></p>}
           {step.note ? <p className="med-note">{step.note}</p> : <p><Chip tone="soon">We read</Chip> <strong>{medLine(step.reading)}</strong></p>}
           <p>Check it against the box. Correct anything that is wrong.</p>
           {FIELDS.map(([k, label]) => (

@@ -22,6 +22,7 @@ export const PRO_NAV: NavGroup[] = [
     { to: "/pro/visit", icon: "clipboard", label: "Visit", needs: "encounter.get" },
     { to: "/pro/results", icon: "flask", label: "Results", needs: "results.list" },
     { to: "/pro/xray", icon: "scan", label: "X-ray", needs: "xray.read" },
+    { to: "/pro/evidence", icon: "sparkle", label: "Evidence", needs: "evidence.ask" },
   ] },
   { label: "Inbox", items: [
     { to: "/pro/messages", icon: "message", label: "Messages", needs: "messages.list" },
@@ -30,6 +31,7 @@ export const PRO_NAV: NavGroup[] = [
   { label: "Ward", items: [
     { to: "/pro/ward", icon: "bed", label: "Ward", needs: "ward.beds" },
     { to: "/pro/handover", icon: "swap", label: "Handover", needs: "handover.list" },
+    { to: "/pro/check-ins", icon: "check", label: "Check-ins", needs: "checkIns.list" },
     { to: "/pro/discharge", icon: "sign-out", label: "Discharge", needs: "discharge.plan" },
   ] },
   { label: "Hospital", items: [

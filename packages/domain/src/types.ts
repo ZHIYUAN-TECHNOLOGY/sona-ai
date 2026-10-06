@@ -10,7 +10,8 @@ export type Patient = {
   allergies: string | null; medicines: string[]; vitals: { label: string; value: string }[];
   sources: Source[]; incomplete: boolean;
 };
-export type TranscriptLine = { id: string; speaker: string; original: string; english: string; corrected?: boolean; englishReviewed?: boolean };
+/** `voice`: which numbered voice said it (1, 2, 3… as the speech model told them apart), kept when the doctor renames the speaker. */
+export type TranscriptLine = { id: string; speaker: string; voice?: number; original: string; english: string; corrected?: boolean; englishReviewed?: boolean };
 export type HistoryFact = { id: string; category: "medical" | "family" | "social" | "allergy" | "presenting"; value: string; source: string; date: string; revision: number };
 /** `change` and `from` mark a proposal read from a scanned note (./scan), waiting for the doctor to confirm it. */
 export type MedicationEntry = { id: string; name: string; ingredient: string; formulation: string; confirmed: boolean; change?: "new" | "changed" | "stopped"; from?: string };

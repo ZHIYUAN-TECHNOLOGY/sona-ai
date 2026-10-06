@@ -36,9 +36,9 @@ function Page() {
   // A blocker's owner lives in its blocker-owner task.
   const tasks = useQuery(orpc.tasks.list.queryOptions());
   const owners = new Map((tasks.data ?? []).filter(t => t.kind === "blocker-owner" && t.sourceId).map(t => [t.sourceId!, t.owner]));
-  const assign = useMutation(orpc.ward.assignOwner.mutationOptions({
-    onSuccess: () => Promise.all([orpc.tasks.list.key(), orpc.ward.forecast.key(), orpc.ward.huddle.key()].map(queryKey => queryClient.invalidateQueries({ queryKey }))),
-  }));
+  const refreshOwners = () => Promise.all([orpc.tasks.list.key(), orpc.ward.forecast.key(), orpc.ward.huddle.key()].map(queryKey => queryClient.invalidateQueries({ queryKey })));
+  const assign = useMutation(orpc.ward.assignOwner.mutationOptions({ onSuccess: refreshOwners }));
+  const unassign = useMutation(orpc.ward.unassignOwner.mutationOptions({ onSuccess: refreshOwners }));
 
   type BedRow = NonNullable<typeof beds.data>[number];
   // Ranked so the beds that need someone come first; every tab and the detail card follow this order.
@@ -135,9 +135,9 @@ function Page() {
                     <li key={x.id} className="ward-blocker">
                       <span className="ward-waits"><strong>{x.label}</strong><span className="ward-muted">{x.detail}</span></span>
                       {mayAssign ? (
-                        <Select className="ward-owner" label={`Owner for ${bed.bed}: ${x.label}`} value={owners.get(x.id) ?? ""} disabled={assign.isPending}
-                          onChange={e => assign.mutate({ blockerId: x.id, owner: e.target.value as Owner })}>
-                          <option value="" disabled>Assign owner</option>
+                        <Select className="ward-owner" label={`Owner for ${bed.bed}: ${x.label}`} value={owners.get(x.id) ?? ""} disabled={assign.isPending || unassign.isPending}
+                          onChange={e => e.target.value ? assign.mutate({ blockerId: x.id, owner: e.target.value as Owner }) : unassign.mutate({ blockerId: x.id })}>
+                          {owners.has(x.id) ? <option value="">No owner</option> : <option value="" disabled>Assign owner</option>}
                           {OWNERS.map(o => <option key={o} value={o}>{o}</option>)}
                         </Select>
                       ) : <span className="ward-muted">Owner: {owners.get(x.id) ?? "none yet"}</span>}
@@ -146,6 +146,7 @@ function Page() {
                 </ul>
               )}
               {assign.error ? <p className="ward-error" role="alert">Could not assign the owner: {assign.error.message}</p> : null}
+              {unassign.error ? <p className="ward-error" role="alert">Could not clear the owner: {unassign.error.message}</p> : null}
               {assigned ? <p className="ward-done" role="status"><Chip tone="done" icon="check">Owner assigned</Chip> {assigned} now has it as a task.</p> : null}
               {nextBed ? <Button variant="secondary" size="sm" icon="arrow-right" onClick={() => setPicked(nextBed.bed)}>Next: {nextBed.bed}, {unownedOn(nextBed, owners)} without an owner</Button> : null}
             </Card>

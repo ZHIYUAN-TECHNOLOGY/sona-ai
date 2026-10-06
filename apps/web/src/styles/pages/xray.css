@@ -40,3 +40,5 @@
 /* A wrapper that only scopes a rule. The header holds "Read for findings"; the suggested step here is text only. */
 .xr-wrap { display: contents; }
 .xr-step-only .insight-act { display: none; }
+.xr-review { display: grid; gap: var(--space-1); }
+.xr-review p { margin: 0; }

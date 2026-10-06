@@ -14,6 +14,10 @@ import "@/styles/pages/xray.css";
 
 export const Route = createFileRoute("/pro/_app/xray")({ component: Page });
 
+/** The follow-up test as the API writes it on the visit (findings.ts testOf). */
+const testOf = (action?: string | null) => action?.split(/,| at /)[0]?.trim() || "follow-up test";
+const when = (at: Date | string) => new Date(at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" });
+
 function Page() {
   const { me } = Route.useRouteContext();
   const mayUpload = can(me.role, "xray.upload");
@@ -29,7 +33,7 @@ function Page() {
 
   const read = useQuery({ ...orpc.xray.read.queryOptions({ input: { encounterId } }), enabled: Boolean(encounterId), retry: false });
   const findings = useQuery({ ...orpc.findings.list.queryOptions({ input: { encounterId } }), enabled: Boolean(encounterId) });
-  const refresh = () => Promise.all([orpc.xray.read.key(), orpc.findings.list.key()].map(queryKey => queryClient.invalidateQueries({ queryKey })));
+  const refresh = () => Promise.all([orpc.xray.read.key(), orpc.findings.list.key(), orpc.findings.status.key()].map(queryKey => queryClient.invalidateQueries({ queryKey })));
   const upload = useMutation({
     mutationFn: async (file: Blob) => {
       const { key } = await client.xray.upload({ encounterId, contentType: file.type || "image/jpeg", dataBase64: await toBase64(file) });
@@ -63,6 +67,17 @@ function Page() {
   const mayDecide = can(me.role, "findings.track");
   const track = useMutation(orpc.findings.track.mutationOptions({ onSuccess: refresh }));
   const dismiss = useMutation(orpc.findings.dismiss.mutationOptions({ onSuccess: () => { setDismissing(undefined); return refresh(); } }));
+  // Who read this film for findings, and when (findings.status is per visit, not per finding).
+  const origin = useQuery({ ...orpc.findings.status.queryOptions({ input: { encounterId } }), enabled: Boolean(encounterId) });
+  const mayAdd = can(me.role, "findings.addToVisit");
+  const timeline = useQuery({ ...orpc.encounter.timeline.queryOptions({ input: { encounterId } }), enabled: Boolean(encounterId) && mayAdd });
+  // ponytail: no staff procedure lists a patient's visits, so the next visit is the first timeline event dated ahead
+  // (only appointments are); addToVisit refuses any id that is not this patient's visit. Use a visits list when one exists.
+  const visit = (timeline.data ?? []).find(e => !e.id.startsWith("recall:") && +new Date(e.at) > Date.now());
+  const [adding, setAdding] = useState<string>();
+  const addToVisit = useMutation(orpc.findings.addToVisit.mutationOptions({
+    onSuccess: () => { setAdding(undefined); return Promise.all([refresh(), ...[orpc.encounter.timeline.key(), orpc.tasks.list.key()].map(queryKey => queryClient.invalidateQueries({ queryKey }))]); },
+  }));
   // The finding being dismissed and the reason typed so far: the server keeps the reason on record.
   const [dismissing, setDismissing] = useState<{ id: string; reason: string }>();
   const [over, setOver] = useState(false);
@@ -114,6 +129,7 @@ function Page() {
       {data && (
         <Card title="Your decision">
           <div className="xr-decide" ref={decision}>
+            {origin.data && <p className="xr-note">Read for findings by {"model" in origin.data ? origin.data.model : origin.data.source === "fixture" ? "the sample reader" : "an unrecorded reader"} · {when(origin.data.readAt)} · {origin.data.found} found</p>}
             {!onImage.length && <p className="xr-note">No findings to decide on yet. {mayDetect ? "Read the image for findings, then track or dismiss each one here." : "A doctor reads the image for findings."}</p>}
             {onImage.map((f, i) => (
               <div key={f.id} className="xr-finding">
@@ -138,9 +154,22 @@ function Page() {
                       <Button size="sm" icon="edit" onClick={() => setDismissing({ id: f.id, reason: "" })}>Dismiss</Button>
                     </div>
                   )}
+                {mayAdd && visit && f.status !== "dismissed" && (
+                  f.dueAt && +new Date(f.dueAt) === +new Date(visit.at) ? <p className="xr-done"><Icon name="check" size={16} /> {testOf(f.action)} added to the visit on {when(visit.at)}</p>
+                  : adding === f.id ? (
+                    <div className="xr-review">
+                      <p className="xr-note">Will be added to the {visit.title.toLowerCase()} on {when(visit.at)}, tracked, and shown in the patient's Sona Care as:</p>
+                      <p><strong>{testOf(f.action)}</strong> · {f.label}</p>
+                      <div className="xr-actions">
+                        <Button size="sm" variant="primary" icon="check" pending={addToVisit.isPending} onClick={() => addToVisit.mutate({ findingId: f.id, appointmentId: visit.id })}>Add to the visit</Button>
+                        <Button size="sm" onClick={() => setAdding(undefined)}>Cancel</Button>
+                      </div>
+                    </div>
+                  ) : <Button size="sm" icon="plus" onClick={() => setAdding(f.id)}>Add to the visit</Button>
+                )}
               </div>
             ))}
-            {(track.isError || dismiss.isError) && <p className="xr-error" role="alert">{messageOf(track.error ?? dismiss.error)}</p>}
+            {(track.isError || dismiss.isError || addToVisit.isError) && <p className="xr-error" role="alert">{messageOf(track.error ?? dismiss.error ?? addToVisit.error)}</p>}
           </div>
         </Card>
       )}
