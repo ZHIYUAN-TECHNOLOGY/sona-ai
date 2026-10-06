@@ -13,3 +13,12 @@
 .visit-pick { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
 .visit-pick li > * { display: flex; gap: var(--space-3); align-items: center; min-height: var(--tap); padding: var(--space-2) var(--space-3); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm, 8px); color: var(--ink); text-decoration: none; }
 .visit-pick li > div { color: var(--muted); }
+/* Section headings read as overlines; the note is a document, not a form. */
+.visit-section label { font-size: var(--text-xs, 0.75rem); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.visit-section textarea { border-color: transparent; background: var(--canvas); line-height: 1.5; }
+.visit-section textarea:hover, .visit-section textarea:focus { border-color: var(--line); background: var(--surface); }
+.visit-status { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin: 0 0 var(--space-4); }
+.visit-header-slot { display: contents; }
+.visit-num { font-variant-numeric: tabular-nums; }
+.visit-checks li { grid-template-columns: 4.5rem 1fr; }
+#visit-orders { scroll-margin-top: var(--space-6); }
