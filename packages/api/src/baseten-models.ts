@@ -106,12 +106,11 @@ Rules:
 - If the label is urgent, tell them to call 999 or go to the nearest emergency department now.
 Answer with JSON only: {"text": "<reply>"}`;
 
-const CODING = `You code a hospital admission note for the insurer in WHO ICD-10. Pick from the candidates. Only when no candidate is the exact code for a stated condition, write the WHO ICD-10 code you are sure of (it is checked against the WHO table).
+const CODING = `You code a hospital admission note for the insurer in WHO ICD-10. Pick from the candidates: for every stated condition give the closest candidate. Only when that candidate is not the exact code, add the exact WHO ICD-10 code as well (it is checked against the WHO table and dropped if the table lacks it).
 Code only what a note sentence states the patient has: skip anything negated, ruled out, only suspected, or in the family history.
 One Principal code (the main reason for admission), other diagnoses Secondary, a procedure Procedure. Cite the id of the one sentence that states each,
 and copy the exact words in it that name the condition. Choose the candidate whose meaning matches those words most exactly: a named condition, not a general one.
-For a code that is not among the candidates, also give its WHO title as "label".
-Answer with JSON only: {"codes": [{"code": "<candidate code>", "kind": "Principal" | "Secondary" | "Procedure", "evidence": "<sentence id>", "stated": "<the exact words>", "label": "<WHO title, only for a code not among the candidates>"}]}`;
+Answer with JSON only: {"codes": [{"code": "<candidate code>", "kind": "Principal" | "Secondary" | "Procedure", "evidence": "<sentence id>", "stated": "<the exact words>"}]}`;
 
 const APPEAL = `You draft a hospital's appeal to an insurer that denied a final guarantee letter, for the doctor to check and edit before sending.
 Use ONLY the note sentences and codes below. Calm and factual; answer the denial reason.
@@ -402,10 +401,11 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
           // Gemma numbers the sentences as often as it names them ("3" for "assessment"): then the words it copied find the sentence.
           const candidate = candidates.get(c?.code) ?? (who ? candidates.get(who) : undefined), sentence = citedSentence(c?.evidence, input.sentences) ?? citedSentence(c?.stated, input.sentences);
           // A code outside the candidates is the model's own knowledge (N10 for "pyelonephritis", which no label search finds):
-          // kept only when its copied words are in the sentence, with the title the model gives; the route names it from the
-          // WHO table when the table has it, and flags it "not in table" when not (staging's table is a 279-code subset).
+          // kept without a label only when its copied words are in the sentence; the route keeps it only if the WHO table has
+          // it (a title the model writes is not trusted: on 6 Oct it called N13.9 "Unspecified pyelonephritis"). The closest
+          // candidate the prompt also asks for stays, so a code the table lacks never leaves the condition uncoded.
           if (!candidate && who && sentence && namedIn(sentence.text, c?.stated) && !codes.some(x => x.code === who))
-            codes.push({ code: who, label: typeof c?.label === "string" ? c.label.trim().slice(0, 80) : "", kind: c.kind === "Principal" && !codes.some(x => x.kind === "Principal") ? "Principal" : "Secondary", evidence: sentence.id });
+            codes.push({ code: who, label: "", kind: c.kind === "Principal" && !codes.some(x => x.kind === "Principal") ? "Principal" : "Secondary", evidence: sentence.id });
           if (!candidate || !sentence || codes.some(x => x.code === candidate.code)) continue;
           if (!statedIn(sentence.text, candidate.label) && !namedIn(sentence.text, c?.stated)) continue;
           // Only a rule's procedure is a procedure; one Principal at most.
