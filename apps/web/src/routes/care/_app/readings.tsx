@@ -39,14 +39,21 @@ function Page() {
 
   const all = list.data.series;
   // "Now" is the browser's time plus the hospital's demo clock offset, as on Follow-ups.
-  const shown = since(all, Date.now() + (clock.data?.offsetMs ?? 0) - days * DAY);
+  const now = Date.now() + (clock.data?.offsetMs ?? 0);
+  const shown = since(all, now - days * DAY);
+  // "today 5:32 pm" for a reading taken today, the full date otherwise.
+  const timeOf = (at: Date) => whenWords(new Date(at), lang).split(", ").at(-1)!;
+  const when = (at: Date) => (new Date(at).toDateString() === new Date(now).toDateString() ? `today ${timeOf(at)}` : whenWords(new Date(at), lang));
   const log = shown.flatMap(s => s.points.map(p => ({ s, p }))).sort((a, b) => +new Date(b.p.at) - +new Date(a.p.at));
   // The measure on the chart: the one picked, else the first one logged.
   const main = all.find(s => s.kind === picked) ?? all[0];
   const points = shown.find(s => s.kind === main?.kind)?.points ?? [];
+  // Under the line: the day, or the time when a day has more than one reading.
+  const days_ = points.map(p => dayWords(new Date(p.at), lang).replace(/^[^ ]+ /, ""));
+  const xOf = (i: number) => (days_.indexOf(days_[i]!) !== days_.lastIndexOf(days_[i]!) ? timeOf(points[i]!.at) : days_[i]!);
   const chart = (name: string, ys: (number | undefined)[]) => (
     <LineChart height={220} showValues unit={main?.unit} label={`${name}, last ${days} days`}
-      points={points.flatMap((p, i) => (ys[i] == null ? [] : [{ x: dayWords(new Date(p.at), lang).replace(/^[^ ]+ /, ""), y: ys[i]! }]))} />
+      points={points.flatMap((_, i) => (ys[i] == null ? [] : [{ x: xOf(i), y: ys[i]! }]))} />
   );
 
   return (
@@ -56,7 +63,7 @@ function Page() {
         <StatRow>
           {all.slice(0, 4).map(s => {
             const p = s.points.at(-1)!;
-            return <StatCard key={s.kind} title={s.label} value={`${p.value}${p.value2 != null ? `/${p.value2}` : ""}`} unit={s.unit} caption={whenWords(new Date(p.at), lang)} />;
+            return <StatCard key={s.kind} title={s.label} value={`${p.value}${p.value2 != null ? `/${p.value2}` : ""}`} unit={s.unit} caption={when(p.at)} />;
           })}
         </StatRow>
       ) : null}
@@ -96,7 +103,7 @@ function Page() {
               <ul className="rd-log">
                 {log.map(({ s, p }) => (
                   <li key={p.id}>
-                    <span className="rd-calm">{whenWords(new Date(p.at), lang)}</span>
+                    <span className="rd-calm">{when(p.at)}</span>
                     <span>{s.label} <strong>{valueWords(s, p)}</strong></span>
                   </li>
                 ))}
