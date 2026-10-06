@@ -1,0 +1,20 @@
+/* Sona Care, Results: 17 px body, 48 px targets, amber for "being reviewed" and "seen by your care team", no red. */
+.res-page { font-size: max(17px, var(--text-body)); line-height: 1.5; }
+.res-list { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.res-card { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-5); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); }
+.res-card[data-waiting] { border-left: 6px solid var(--amber); }
+.res-card p { margin: 0; }
+
+.res-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-4); width: 100%; min-height: max(48px, var(--tap)); padding: 0; font: inherit; color: var(--ink); text-align: left; background: none; border: 0; border-radius: var(--radius-control); }
+button.res-head { cursor: pointer; align-items: center; }
+button.res-head:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.res-test { flex: 1 1 10em; font-size: var(--text-heading); font-weight: 600; }
+.res-value { font-size: var(--text-title); font-weight: 600; font-variant-numeric: tabular-nums; }
+.res-muted { color: var(--muted); }
+.res-note { color: var(--ink); background: var(--amber-wash); padding: var(--space-3); border-radius: var(--radius-control); }
+
+.res-detail { display: grid; gap: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.res-explain { display: grid; gap: var(--space-3); justify-items: start; }
+.res-explain .btn { min-height: 48px; font-size: 17px; }
+.res-answer { white-space: pre-wrap; }
+.res-ask a { display: inline-flex; align-items: center; min-height: 48px; color: var(--blue); font-weight: 600; }
