@@ -171,7 +171,7 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   // The patient's CURB-65 only where pneumonia is the subject (severityApplies): the question, its thread, or the condition the visit records.
   const record = visit?.record as { subtitle?: string; history?: string[] } | undefined;
   const scored = visit && severityApplies([input.question, ...input.thread.map(t => t.question)], [visit.complaint, record?.subtitle, ...record?.history ?? []]) ? visit : undefined;
-  const rows = scored ? await db.select().from(observations).where(eq(observations.patientId, scored.patientId)).orderBy(asc(observations.observedAt)) : [];
+  const rows = scored ? await db.select().from(observations).where(and(eq(observations.patientId, scored.patientId), eq(observations.source, "clinical"))).orderBy(asc(observations.observedAt)) : [];
   const curb65 = scored ? curb65FromObservations(rows as ObservationRow[], scored.age) : null;
 
   await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId: input.encounterId ?? null, kind: "evidence-answer", output: { question: input.question, bottomLine, claims, general, ...patientPoints.length && { patientPoints } }, sourceIds: references.map(r => r.id), model: source, approvedBy: null });

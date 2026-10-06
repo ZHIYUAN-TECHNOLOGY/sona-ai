@@ -31,7 +31,8 @@ export async function handoverCards(db: Context["db"], hospitalId: string, now: 
   // A result still pending at the lab (it holds a bed on the ward) has nothing to act on yet.
   const [visits, obs, labs, open, appts, found] = await Promise.all([
     db.select().from(encounters).where(eq(encounters.hospitalId, hospitalId)),
-    db.select().from(observations).where(inArray(observations.patientId, ids)),
+    // Ward observations only: a patient's home readings are theirs, not the shift's.
+    db.select().from(observations).where(and(inArray(observations.patientId, ids), eq(observations.source, "clinical"))),
     db.select({ lab: labResults, by: user.name }).from(labResults).leftJoin(user, eq(user.id, labResults.acknowledgedBy)).where(and(inArray(labResults.patientId, ids), isNotNull(labResults.flag), ne(labResults.flag, "pending"))),
     db.select().from(tasks).where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.completed, false))),
     db.select().from(appointments).where(eq(appointments.hospitalId, hospitalId)),
