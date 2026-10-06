@@ -7,9 +7,9 @@ import { browserSay } from "./listen";
 import { agentUrl, encode, gate, hello, parse, quiet, RATE, reduce, rms, step, toPcm16, type ClientMessage, type ServerEvent, type Talk } from "./protocol";
 
 type Phase = "off" | "connecting" | "on" | "reconnecting" | "mic" | "failed";
-const STATE: Record<Talk["status"], string> = { idle: "Connecting…", listening: "Listening…", thinking: "Sona is thinking…", speaking: "Sona is speaking" };
+const STATE: Record<Talk["status"], string> = { idle: "Connecting…", listening: "Listening", thinking: "Sona is thinking…", speaking: "Sona is speaking" };
 const HINT: Record<Talk["status"], string> = { idle: "One moment.", listening: "Speak when you are ready.", thinking: "One moment.", speaking: "You can talk over her." };
-const STOPPED: Partial<Record<Phase, string>> = { mic: "Mic blocked: allow it in your browser", failed: "The call ended. Please try again." };
+const STOPPED: Partial<Record<Phase, string>> = { mic: "Microphone blocked. Allow it in your browser, then try again.", failed: "The call ended. Please try again." };
 type Parts = { open: boolean; button: ReactNode; stage: ReactNode; transcript: ReactNode };
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const lang = () => (navigator.language.startsWith("zh") ? "zh" : navigator.language.startsWith("ms") ? "ms" : "en");
