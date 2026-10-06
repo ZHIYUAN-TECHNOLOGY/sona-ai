@@ -1,0 +1,37 @@
+/* /pro/xray: the image viewer and the clinician's decision. Tokens only. */
+.xr-viewer { display: grid; gap: var(--space-4); min-width: 0; }
+.xr-bar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
+.xr-bar > :first-child { flex: 0 1 22rem; min-width: 0; }
+.xr-bar select { width: 100%; }
+.xr-zoom { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); font-size: var(--text-small); }
+.xr-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* The dark neutral stage the film sits on. */
+.xr-stage { --xr-fit: calc(56vh - 2 * var(--space-4)); position: relative; display: grid; place-items: center; min-height: 340px; padding: var(--space-4); border-radius: var(--radius-group); background: var(--ink); color: var(--surface); overflow: hidden; }
+.xr-scroll { max-width: 100%; max-height: var(--xr-fit); overflow: auto; border-radius: var(--radius-control); }
+/* ponytail: at fit size a film wider than the stage letterboxes inside its box, so drawn boxes drift; size the wrapper from naturalWidth if that shows up. */
+.xr-image { position: relative; width: fit-content; margin: 0 auto; }
+.xr-image img { display: block; height: var(--xr-fit); max-width: 100%; object-fit: contain; border-radius: var(--radius-control); }
+.xr-image[style] img { width: 100%; height: auto; }
+.xr-video { display: block; max-width: 100%; max-height: var(--xr-fit); border-radius: var(--radius-control); }
+.xr-box { position: absolute; border: 2px solid var(--blue); border-radius: var(--space-1); }
+.xr-box span { position: absolute; top: 0; left: 0; padding: 0 var(--space-1); background: var(--blue); color: var(--surface); font-size: var(--text-small); }
+
+.xr-drop { display: grid; justify-items: center; gap: var(--space-2); align-self: stretch; justify-self: stretch; align-content: center; padding: var(--space-6); border: 1.5px dashed color-mix(in srgb, var(--surface) 35%, transparent); border-radius: var(--radius-control); text-align: center; transition: border-color var(--quick) var(--ease), background var(--quick) var(--ease); }
+.xr-drop strong { font-size: var(--text-panel); font-weight: 600; }
+.xr-drop span { color: color-mix(in srgb, var(--surface) 70%, transparent); font-size: var(--text-small); }
+.xr-stage[data-over] .xr-drop { border-color: var(--surface); background: color-mix(in srgb, var(--surface) 8%, transparent); }
+.xr-progress { position: absolute; inset: auto var(--space-4) var(--space-4) auto; margin: 0; padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink); font-size: var(--text-small); }
+
+.xr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.xr-actions > * { flex: 0 0 auto; }
+.xr-error { display: flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--red); font-size: var(--text-small); }
+.xr-note { margin: 0; color: var(--muted); font-size: var(--text-small); }
+.xr-done { display: flex; align-items: center; gap: var(--space-1); margin: 0; color: var(--green); font-size: var(--text-small); }
+.xr-num { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; margin-right: var(--space-2); border-radius: var(--radius-pill); background: var(--blue-wash); color: var(--blue); font-size: var(--text-small); font-weight: 600; }
+
+.xr-decide, .xr-finding, .xr-finding form { display: grid; gap: var(--space-3); }
+.xr-finding { padding-bottom: var(--space-3); border-bottom: 1px solid var(--line); }
+.xr-finding:last-of-type { padding-bottom: 0; border-bottom: 0; }
+.xr-finding > p:first-child { display: flex; align-items: center; margin: 0; font-weight: 600; }
+.xr-finding input { width: 100%; }
