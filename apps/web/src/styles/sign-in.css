@@ -20,3 +20,18 @@
 .sign-in-confirm { padding: var(--space-3); border-radius: var(--radius-group); background: var(--blue-wash); color: var(--ink); }
 .sign-in-card p.sign-in-confirm { color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { .sign-in-card button { transition: none; } }
+
+/* Sona Pro: the shell's language. Pale canvas, brand tile, pill fields and an ink pill to sign in. */
+.pro.sign-in { background: var(--canvas-deep); font-size: 14px; }
+.pro .sign-in-card { max-width: 400px; padding: var(--space-6); border-radius: var(--radius-shell); }
+.pro .sign-in-brand { display: flex; align-items: center; gap: var(--space-3); font-size: 17px; letter-spacing: var(--track-tight); color: var(--ink); }
+.sign-in-brand-tile { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-control); background: var(--blue); color: var(--surface); }
+.pro .sign-in-card h1 { font-size: var(--text-page); line-height: 1.15; font-weight: 500; letter-spacing: var(--track-display); }
+.pro .sign-in-card label { font-size: 13px; font-weight: 500; color: var(--muted); }
+.pro .sign-in-card input { min-height: 44px; padding: 0 var(--space-4); border-color: var(--line); border-radius: var(--radius-pill); transition: border-color var(--quick) var(--ease), box-shadow var(--quick) var(--ease); }
+.pro .sign-in-card input:hover { border-color: var(--muted); }
+.pro .sign-in-card button { min-height: 44px; border-radius: var(--radius-pill); transition: opacity var(--quick) var(--ease), transform var(--quick) var(--ease); }
+.pro .sign-in-card button:active:not(:disabled) { transform: scale(var(--press)); }
+.pro .sign-in-card :is(input, button):focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+.pro .sign-in-error { font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .pro .sign-in-card input, .pro .sign-in-card button { transition: none; } .pro .sign-in-card button:active:not(:disabled) { transform: none; } }

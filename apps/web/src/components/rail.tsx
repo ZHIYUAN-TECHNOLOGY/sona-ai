@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import "../styles/components.css";
+import "../styles/primitives.css";
 
 /** The aside beside the main column. `label` names the landmark. */
 export function RightRail({ label, children }: { label: string; children: ReactNode }) {

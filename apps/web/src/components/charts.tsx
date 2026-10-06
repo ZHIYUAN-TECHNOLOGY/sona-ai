@@ -1,22 +1,36 @@
-import type { ReactNode } from "react";
+import { useId, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 
-import { bandXs, linePath, pointXs, scale, yDomain, type Point } from "./chart-scale";
+import { bandXs, linePath, nearest, pointXs, scale, ticks, yDomain, type Point } from "./chart-scale";
 import "../styles/components.css";
+import "../styles/data.css";
 
 const W = 600;
 const LEFT = 44;
 const RIGHT = W - 16;
-const TOP = 12;
+const TOP = 24;
 const BOTTOM = 28;
 
-type ChartProps = { points: Point[]; label: string; unit?: string; height?: number };
+type ChartProps = {
+  points: Point[];
+  label: string;
+  unit?: string;
+  height?: number;
+  /** A longer description for screen readers. */
+  description?: string;
+  /** A dashed target line. */
+  goal?: { value: number; label?: string };
+  /** Print each value above its mark. */
+  showValues?: boolean;
+  /** One line that interprets a point, shown in its tooltip. */
+  describe?: (point: Point, index: number) => string;
+};
 
-/** The shared shell: axis ends, x labels, and the values as a hidden table for screen readers. */
-function ChartFrame({
-  points, label, unit, height, domain, xs, children,
-}: Required<Pick<ChartProps, "points" | "label" | "height">> & {
-  unit?: string; domain: [number, number]; xs: number[]; children: ReactNode;
-}) {
+type FrameProps = ChartProps & { height: number; domain: [number, number]; xs: number[]; ys: number[]; children: ReactNode };
+
+/** The shared shell: gridlines, labels, goal line, tooltip, and the values as a hidden table. */
+function ChartFrame({ points, label, unit, height, description, goal, showValues, describe, domain, xs, ys, children }: FrameProps) {
+  const id = useId();
+  const [active, setActive] = useState<number | null>(null);
   if (points.length === 0) {
     return (
       <figure className="chart" aria-label={label}>
@@ -24,16 +38,48 @@ function ChartFrame({
       </figure>
     );
   }
-  const floor = height - BOTTOM;
+  const y = scale(domain, [height - BOTTOM, TOP]);
   const last = points.length - 1;
+  const suffix = unit ? ` ${unit}` : "";
+  const onMove = (e: PointerEvent<SVGSVGElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    setActive(nearest(xs, ((e.clientX - box.left) / box.width) * W));
+  };
+  const onKey = (e: KeyboardEvent) => {
+    const at = active ?? last;
+    if (e.key === "ArrowLeft") setActive(Math.max(at - 1, 0));
+    else if (e.key === "ArrowRight") setActive(Math.min(at + 1, last));
+    else if (e.key === "Home") setActive(0);
+    else if (e.key === "End") setActive(last);
+    else if (e.key === "Escape") setActive(null);
+    else return;
+    e.preventDefault();
+  };
+  const shown = active === null ? undefined : points[active];
+  const ax = active === null ? 0 : xs[active] ?? 0;
+  const ay = active === null ? 0 : ys[active] ?? 0;
   return (
     <figure className="chart">
-      <svg viewBox={`0 0 ${W} ${height}`} role="img" aria-label={label}>
-        <line className="chart-grid" x1={LEFT} x2={RIGHT} y1={TOP} y2={TOP} />
-        <line className="chart-grid" x1={LEFT} x2={RIGHT} y1={floor} y2={floor} />
-        <text x={LEFT - 8} y={TOP + 4} textAnchor="end">{domain[1]}{unit ? ` ${unit}` : ""}</text>
-        <text x={LEFT - 8} y={floor} textAnchor="end">{domain[0]}</text>
+      <svg
+        viewBox={`0 0 ${W} ${height}`} role="img" aria-label={label} aria-describedby={`${id}-d`} tabIndex={0}
+        onPointerMove={onMove} onPointerLeave={() => setActive(null)}
+        onFocus={() => setActive((a) => a ?? last)} onBlur={() => setActive(null)} onKeyDown={onKey}
+      >
+        {ticks(domain).map((t, i) => (
+          <g key={i}>
+            <line className="chart-grid" x1={LEFT} x2={RIGHT} y1={y(t)} y2={y(t)} />
+            <text x={LEFT - 8} y={y(t) + 4} textAnchor="end">{t}</text>
+          </g>
+        ))}
+        {goal ? (
+          <g>
+            <line className="chart-goal" x1={LEFT} x2={RIGHT} y1={y(goal.value)} y2={y(goal.value)} />
+            <text className="chart-goal-label" x={RIGHT} y={y(goal.value) - 6} textAnchor="end">{goal.label ?? `Goal ${goal.value}${suffix}`}</text>
+          </g>
+        ) : null}
         {children}
+        {showValues ? points.map((p, i) => <text key={i} className="chart-value" x={xs[i]} y={(ys[i] ?? 0) - 10} textAnchor="middle">{p.y}</text>) : null}
+        {shown ? <circle className="chart-active" cx={ax} cy={ay} r={7} /> : null}
         {points.map((p, i) =>
           // Every label up to 12 points; beyond that only the ends, so they never collide.
           points.length <= 12 || i === 0 || i === last ? (
@@ -41,13 +87,22 @@ function ChartFrame({
           ) : null,
         )}
       </svg>
+      {shown ? (
+        <div className="chart-tip" data-side={ax > W * 0.75 ? "end" : ax < W * 0.25 ? "start" : undefined} style={{ left: `${(ax / W) * 100}%`, top: `${(ay / height) * 100}%` }} aria-hidden="true">
+          <span className="chart-tip-over">{shown.x}</span>
+          <strong>{shown.y}{suffix}</strong>
+          {describe && active !== null ? <span>{describe(shown, active)}</span> : null}
+        </div>
+      ) : null}
+      <p id={`${id}-d`} className="visually-hidden">{description ?? `${points.length} values${unit ? ` in ${unit}` : ""}. Use the arrow keys to read each one.`}</p>
+      <p className="visually-hidden" aria-live="polite">{shown && active !== null ? `${shown.x}: ${shown.y}${suffix}${describe ? `. ${describe(shown, active)}` : ""}` : ""}</p>
       <table className="visually-hidden">
         <caption>{label}</caption>
         <tbody>
           {points.map((p, i) => (
             <tr key={i}>
               <th scope="row">{p.x}</th>
-              <td>{p.y}{unit ? ` ${unit}` : ""}</td>
+              <td>{p.y}{suffix}</td>
             </tr>
           ))}
         </tbody>
@@ -57,36 +112,52 @@ function ChartFrame({
 }
 
 /** A trend over time. `band` shades the normal range; points outside it turn amber. */
-export function LineChart({ points, label, unit, height = 200, band }: ChartProps & { band?: { low: number; high: number } }) {
+export function LineChart({ height = 200, band, ...props }: ChartProps & { band?: { low: number; high: number } }) {
+  const { points, goal } = props;
   const values = points.map((p) => p.y);
-  const domain = yDomain(band ? [...values, band.low, band.high] : values);
+  const domain = yDomain([...values, ...(band ? [band.low, band.high] : []), ...(goal ? [goal.value] : [])]);
   const y = scale(domain, [height - BOTTOM, TOP]);
   const xs = pointXs(points.length, LEFT, RIGHT);
   const ys = values.map(y);
+  const last = points.length - 1;
   return (
-    <ChartFrame points={points} label={label} unit={unit} height={height} domain={domain} xs={xs}>
+    <ChartFrame {...props} height={height} domain={domain} xs={xs} ys={ys}>
       {band ? <rect className="chart-band" x={LEFT} width={RIGHT - LEFT} y={y(band.high)} height={y(band.low) - y(band.high)} /> : null}
       <path className="chart-line" d={linePath(xs, ys)} />
+      {last >= 0 ? <circle className="chart-halo" cx={xs[last]} cy={ys[last]} r={10} /> : null}
       {points.map((p, i) => (
-        <circle key={i} className="chart-dot" data-out={band && (p.y < band.low || p.y > band.high) ? "" : undefined} cx={xs[i]} cy={ys[i]} r={3.5} />
+        <circle key={i} className="chart-dot" data-last={i === last ? "" : undefined} data-out={band && (p.y < band.low || p.y > band.high) ? "" : undefined} cx={xs[i]} cy={ys[i]} r={4} />
       ))}
     </ChartFrame>
   );
 }
 
 /** Amounts side by side. The scale always includes zero. */
-export function BarChart({ points, label, unit, height = 200 }: ChartProps) {
-  const domain = yDomain([0, ...points.map((p) => p.y)]);
+export function BarChart({ height = 200, ...props }: ChartProps) {
+  const { points, goal } = props;
+  const domain = yDomain([0, ...points.map((p) => p.y), ...(goal ? [goal.value] : [])]);
   const y = scale(domain, [height - BOTTOM, TOP]);
   const xs = bandXs(points.length, LEFT, RIGHT);
   const width = Math.round(((RIGHT - LEFT) / Math.max(points.length, 1)) * 0.6);
   const zero = y(0);
   return (
-    <ChartFrame points={points} label={label} unit={unit} height={height} domain={domain} xs={xs}>
-      {points.map((p, i) => {
-        const top = Math.min(y(p.y), zero);
-        return <rect key={i} className="chart-bar" x={(xs[i] ?? 0) - width / 2} y={top} width={width} height={Math.abs(y(p.y) - zero)} rx={3} />;
-      })}
+    <ChartFrame {...props} height={height} domain={domain} xs={xs} ys={points.map((p) => Math.min(y(p.y), zero))}>
+      {points.map((p, i) => (
+        <rect key={i} className="chart-bar" data-last={i === points.length - 1 ? "" : undefined} x={(xs[i] ?? 0) - width / 2} y={Math.min(y(p.y), zero)} width={width} height={Math.abs(y(p.y) - zero)} rx={4} />
+      ))}
     </ChartFrame>
+  );
+}
+
+/** A tiny trend with no axes, for a table cell or stat. Amber flags one to watch. */
+export function Sparkline({ values, label, tone = "neutral", width = 96, height = 28 }: { values: number[]; label: string; tone?: "amber" | "neutral"; width?: number; height?: number }) {
+  if (values.length === 0) return null;
+  const xs = pointXs(values.length, 4, width - 4);
+  const ys = values.map(scale(yDomain(values), [height - 4, 4]));
+  return (
+    <svg className="sparkline" data-tone={tone} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label={label}>
+      <path d={linePath(xs, ys)} />
+      <circle cx={xs.at(-1)} cy={ys.at(-1)} r={3} />
+    </svg>
   );
 }

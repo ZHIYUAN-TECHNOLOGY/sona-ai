@@ -28,7 +28,8 @@ function ProFrame() {
       app="pro"
       brand="Sona Pro"
       groups={groups}
-      who={`${me.name} · ${me.label}`}
+      name={me.name}
+      who={me.label}
       instead={refused ? (
         <>
           <PageHeader title={here.label} />

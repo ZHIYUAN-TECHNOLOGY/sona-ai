@@ -33,3 +33,14 @@ test("linePath builds a move then lines", () => {
   expect(linePath([50], [10])).toBe("M50 10");
   expect(linePath([0, 50], [10, 20])).toBe("M0 10 L50 20");
 });
+
+import { nearest, ticks } from "./chart-scale";
+
+test("ticks span the domain, ends included", () => {
+  expect(ticks([0, 9], 4)).toEqual([0, 3, 6, 9]);
+});
+
+test("nearest picks the closest x, and -1 for none", () => {
+  expect(nearest([10, 50, 90], 62)).toBe(1);
+  expect(nearest([], 5)).toBe(-1);
+});

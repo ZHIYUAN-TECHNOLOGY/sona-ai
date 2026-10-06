@@ -38,3 +38,15 @@ export function bandXs(n: number, left: number, right: number): number[] {
 export function linePath(xs: number[], ys: number[]): string {
   return xs.map((x, i) => `${i === 0 ? "M" : "L"}${x} ${ys[i] ?? 0}`).join(" ");
 }
+
+/** n evenly spaced values across the domain, ends included (the horizontal gridlines). */
+export function ticks([d0, d1]: [number, number], n = 4): number[] {
+  return Array.from({ length: n }, (_, i) => round(d0 + (i * (d1 - d0)) / (n - 1)));
+}
+
+/** Index of the x closest to the pointer; -1 for no points. */
+export function nearest(xs: number[], x: number): number {
+  let best = -1;
+  for (let i = 0; i < xs.length; i++) if (best < 0 || Math.abs(xs[i]! - x) < Math.abs(xs[best]! - x)) best = i;
+  return best;
+}
