@@ -1,17 +1,14 @@
 import { testInSentence } from "@sona-ai/domain/handover";
-import { GL_DENIED, SUGGESTED, bedKind, type Bed, type Owner } from "@sona-ai/domain/ward";
-import { defaultMedications } from "@/features/encounter/clinical-state";
+import { SUGGESTED, bedKind, type Bed, type Owner } from "@sona-ai/domain/ward";
 import { demoTime } from "@/features/encounter/fixtures";
-import type { Encounter, Patient, Task } from "@/features/encounter/types";
-import { friendlyDate } from "@/features/tasks/state";
+import type { Encounter, Patient } from "@/features/encounter/types";
 
 /**
- * "My day, ranked": today's visits, open follow-up tasks, a pending result and blockers found in
- * each visit, in one list ordered by urgency. Every item states why it sits where it does.
+ * Today's items from outside the record (Sona Care's check-ins, messages and booking requests), each scored for the one
+ * ranking (`needsYou` in ./counts, with the record's flags), and every one stating why it is there.
  *
- * ponytail: urgency is a transparent rule score over synthetic fixtures (results > blockers >
- * imminent visits > tasks). A model-ranked list replaces `score` when the backend exists; the
- * reason line stays mandatory so a ranking is never unexplained.
+ * ponytail: urgency is a transparent rule score over synthetic fixtures. A model-ranked list replaces `score` when the
+ * backend exists; the reason line stays mandatory so a ranking is never unexplained.
  */
 // Under a minute reads as just now, never "0 min".
 const waitedLine = (waited: string) => /^0\b/.test(waited) ? "Urgent message · just now" : `Urgent message · no reply for ${waited}`;
@@ -25,7 +22,7 @@ export type DayItem = {
 };
 
 /** The ranking rule: higher score first; on a tie the newer event leads (undated items keep their order after dated ones). */
-export const byUrgency = (a: DayItem, b: DayItem) => b.score - a.score || (b.at ?? 0) - (a.at ?? 0);
+export const byUrgency = (a: Pick<DayItem, "score" | "at">, b: Pick<DayItem, "score" | "at">) => b.score - a.score || (b.at ?? 0) - (a.at ?? 0);
 
 // A synthetic lab result that arrived after Daniel's intake and has not been acted on.
 // `last`: the same test's previous value for this patient, when there is one ("3.8 on 14 Sep").
@@ -36,66 +33,18 @@ export { testInSentence };
 export function refreshPendingResult(now = new Date()) { PENDING_RESULT.receivedAt = demoTime(-120, now); }
 
 const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return h! * 60 + m!; };
-/** Minutes from `now` to a clock time, taking the nearer side of midnight (00:15 is 30 min after 23:45, not a day before). */
-const until = (hhmm: string, now: number) => ((minutes(hhmm) - now + 720) % 1440 + 1440) % 1440 - 720;
 const ago = (from: number, now: number) => { const d = Math.max(0, now - from); return d < 60 ? `${d} min` : `${Math.floor(d / 60)} h`; };
 /** How long a result has waited, at `now` (minutes into the day): "2 h", "25 min". */
 export const resultAge = (result: Pick<PendingResult, "receivedAt">, now: number) => ago(minutes(result.receivedAt), now);
 
 /**
- * Two stores' visits read the same on Today: what rankDay and the home keys (homeActions) read of each, whether it has
+ * Two stores' visits read the same for the home keys: what homeActions reads of each, whether it has
  * started, its medicines and its tasks. Today sits under an open visit and re-rendered on each of its writes (an answer
  * streaming in writes 4 times); read through this, only when one of these changes. A new read of a visit there joins it here.
  */
 export const sameForToday = (a: Record<string, Encounter | undefined>, b: Record<string, Encounter | undefined>) =>
   Object.keys(a).length === Object.keys(b).length
   && Object.keys(b).every(id => a[id]?.requests.length === b[id]?.requests.length && a[id]?.medicationEntries === b[id]?.medicationEntries && a[id]?.tasks === b[id]?.tasks);
-
-/** `live` (live backend mode) replaces the fixture result and each visit's tasks with the server's. */
-export function rankDay(patients: Patient[], encounters: Record<string, Encounter | undefined>, now: number, reviewed: Set<string> = new Set(),
-  live?: { result: PendingResult | undefined; tasksOf: (patient: Patient) => Task[] }): DayItem[] {
-  const items: DayItem[] = [];
-  const result = live ? live.result : PENDING_RESULT;
-  const resultPatient = result && patients.find(p => p.id === result.patientId);
-  if (result && resultPatient && !reviewed.has("result")) items.push({
-    id: "result", kind: "result", title: `${result.flag} ${testInSentence(result.test)} · ${resultPatient.name}`, detail: `${result.test} ${result.value}`,
-    reason: `${result.flag} result · ${resultAge(result, now)} · no action yet`, tone: "urgent", score: 100, patientId: resultPatient.id, open: { next: "briefing" },
-  });
-  for (const patient of patients) {
-    const encounter = encounters[patient.id];
-    const start = until(patient.time, now);
-    if (!patient.incomplete) {
-      const unconfirmed = (encounter?.medicationEntries ?? defaultMedications(patient)).filter(entry => !entry.confirmed).length;
-      if (unconfirmed) items.push({
-        id: `blocker-${patient.id}`, kind: "blocker", title: `Confirm ${patient.name.split(" ")[0]}’s medicines`, detail: patient.medicines.join(" · "),
-        reason: `${unconfirmed} unconfirmed · blocks prescribing`, tone: "soon", score: 70, patientId: patient.id, open: { next: "medication" },
-      });
-    }
-    const started = Boolean(encounter?.requests.length);
-    items.push({
-      id: `visit-${patient.id}`, kind: "visit", title: `${patient.time} · ${patient.name}`, detail: patient.subtitle,
-      reason: started ? "In progress" : start < -10 ? `Running ${ago(minutes(patient.time), now)} late` : start <= 0 ? "Due now" : start <= 30 ? `Starts in ${start} min` : patient.incomplete ? "History incomplete · allow extra time" : `Starts at ${patient.time}`,
-      tone: !started && start <= 15 ? "soon" : "routine", score: started ? 40 : Math.max(20, 80 - Math.max(0, start)), patientId: patient.id, open: {},
-    });
-    for (const task of (live ? live.tasksOf(patient) : encounter?.tasks ?? []).filter(t => !t.completed)) items.push({
-      id: `task-${task.id}`, kind: "task", title: task.title, detail: `${patient.name} · ${task.owner || "Unassigned"}`,
-      reason: task.due ? `Due ${friendlyDate(task.due)}` : "No due date", tone: "routine", score: 30, patientId: patient.id, open: { view: "tasks" },
-    });
-  }
-  return items.sort(byUrgency);
-}
-
-/**
- * A final guarantee letter the insurer denied, read off the ward's beds (live or fixture): an amber row
- * ("GL denied · Amelia · appeal ready") above the medicine blockers, since the bed waits on it; it
- * opens the letter, where Sona's appeal waits to be checked and sent.
- */
-export function glDeniedItems(beds: { patientId?: string; name?: string; blockers: { kind: string; detail: string }[] }[]): DayItem[] {
-  return beds.filter(b => b.patientId && b.blockers.some(x => x.kind === "gl" && x.detail === GL_DENIED)).map(b => ({
-    id: `gl-denied-${b.patientId}`, kind: "claim" as const, title: `GL denied · ${(b.name ?? "Patient").split(" ")[0]} · appeal ready`, detail: "Final guarantee letter",
-    reason: "Insurer denied the final GL · check the appeal and send", tone: "soon" as const, score: 72, patientId: b.patientId, open: { view: "claim" },
-  }));
-}
 
 /** A patient's booking request from Sona Care, as the server lists it (see bookings.list). */
 export type BookingRequest = { id: string; patientId: string; doctorName: string; specialty: string; title: string | null; reason: string | null; createdAt: Date | string };
@@ -175,30 +124,6 @@ export function scheduleFor(offset: number, patients: Patient[], today: Date): S
     return { id: `d${offset}-${i}`, name, initials, reason, incomplete, time: `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}` };
   });
 }
-/** A past day lists what was seen; a future day lists what to prepare. */
-export function rankOtherDay(offset: number, visits: ScheduleVisit[]): DayItem[] {
-  return visits.map((v, i) => ({
-    id: `other-${v.id}`, kind: "visit" as const, title: `${v.time} · ${v.name}`, detail: v.reason,
-    reason: offset < 0 ? "Seen · note signed" : v.incomplete ? "Prepare · history to take" : "Prepare · review notes", tone: offset > 0 && v.incomplete ? "soon" as const : "routine" as const,
-    score: offset > 0 && v.incomplete ? 60 - i : 40 - i, patientId: v.patientId, open: {},
-  })).sort((a, b) => b.score - a.score);
-}
-
-/**
- * Snooze: the row sleeps an hour, then comes back by itself (Today's minute timer re-checks). Urgent rows
- * never sleep: they can't be snoozed, and one that turned urgent while asleep comes straight back.
- */
-export const SNOOZE_MS = 60 * 60_000;
-export const canSnooze = (item: Pick<DayItem, "tone">) => item.tone !== "urgent";
-/** Wake times (ms) by row ID. */
-export type Snoozed = Record<string, number>;
-export const snooze = (snoozed: Snoozed, item: DayItem, now: number): Snoozed => canSnooze(item) ? { ...snoozed, [item.id]: now + SNOOZE_MS } : snoozed;
-/** The rows awake now, and the ones still asleep (with when each wakes). */
-export function splitSnoozed(items: DayItem[], snoozed: Snoozed, now: number) {
-  const asleep = (item: DayItem) => canSnooze(item) && (snoozed[item.id] ?? 0) > now;
-  return { active: items.filter(item => !asleep(item)), later: items.filter(asleep).map(item => ({ item, wakes: snoozed[item.id]! })) };
-}
-
 /** What each home key opens, as a permission: a key whose page the role can't read is hidden, not left to refuse (a bed manager keeps the Ward). */
 const NEEDS: Record<string, string> = { patients: "encounter.get", results: "results.list", handover: "handover.list", messages: "messages.inbox" };
 export const usableKeys = <T extends { key: string }>(actions: T[], can: (path: string) => boolean) => actions.filter(a => !NEEDS[a.key] || can(NEEDS[a.key]!));

@@ -1,28 +1,8 @@
 import { expect, test } from "bun:test";
 import { can } from "@sona-ai/api/roles";
 import { WARD_FIXTURE } from "@/features/ward/model";
-import { canSnooze, ownersOf, SNOOZE_MS, snooze, splitSnoozed, unownedBlocked, usableKeys } from "./model";
+import { ownersOf, unownedBlocked, usableKeys } from "./model";
 
-const row = (id, tone) => ({ id, kind: "task", title: id, detail: "", reason: "", tone, score: 30, open: {} });
-
-test("a snoozed row sleeps an hour, then wakes by itself on the next minute tick", () => {
-  const task = row("task-1", "routine"), visit = row("visit-1", "soon");
-  const at = Date.parse("2026-09-30T02:00:00Z");
-  const snoozed = snooze({}, task, at);
-  expect(snoozed).toEqual({ "task-1": at + SNOOZE_MS });
-  const asleep = splitSnoozed([task, visit], snoozed, at + 59 * 60_000);
-  expect(asleep.active.map(i => i.id)).toEqual(["visit-1"]);
-  expect(asleep.later).toEqual([{ item: task, wakes: at + SNOOZE_MS }]);
-  expect(splitSnoozed([task, visit], snoozed, at + SNOOZE_MS).active.map(i => i.id)).toEqual(["task-1", "visit-1"]);
-});
-
-test("urgent rows can't be snoozed, and one that turned urgent while asleep comes straight back", () => {
-  const urgent = row("message-SYN-1", "urgent");
-  expect(canSnooze(urgent)).toBe(false);
-  expect(snooze({}, urgent, 0)).toEqual({});
-  const at = 1_000;
-  expect(splitSnoozed([urgent], { "message-SYN-1": at + SNOOZE_MS }, at)).toEqual({ active: [urgent], later: [] });
-});
 
 test("a bed manager keeps only the keys whose pages they can read; doctors and nurses keep every key", () => {
   const keys = ["patients", "results", "messages", "handover", "ward"].map(key => ({ key }));

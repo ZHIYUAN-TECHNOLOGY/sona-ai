@@ -2,8 +2,8 @@ import type { Patient, Task } from "@/features/encounter/types";
 import { rankByDue } from "@/features/tasks/counts";
 import { friendlyDate, localDate } from "@/features/tasks/state";
 import { SUGGESTED, bedKind, type Bed, type Owner } from "@/features/ward/model";
-import type { Flag, Go } from "./counts";
-import { resultAge, type PendingResult } from "./model";
+import type { Go, Need } from "./counts";
+import { resultAge, type DayItem, type PendingResult, type ScheduleVisit } from "./model";
 
 /**
  * Today's three sections under the home keys, from data the app already holds: who needs you (the header's own
@@ -19,14 +19,45 @@ const section = <T>(all: T[]): Section<T> => ({ rows: all.slice(0, MAX_ROWS), to
 
 /** A flag's action, named for where it goes in the visit. */
 const VERB: Record<string, string> = { briefing: "Review", medication: "Confirm", reasoning: "Take history", recording: "Record" };
-export type NeedRow = { id: string; patientId: string; who: string; reason: string; tone: RowTone; action: string; go: Go };
-/** The patients who need you, exactly as the header counts them; the waiting result says how long it has waited. */
-export function needRows(needs: { patient: Patient; flag: Flag }[], result: PendingResult | undefined, now: number): Section<NeedRow> {
-  return section(needs.map(({ patient, flag }) => ({
-    id: patient.id, patientId: patient.id, who: patient.name, go: flag.go, tone: flag.tone === "urgent" ? "urgent" : "soon",
-    reason: flag.go.next === "briefing" && result?.patientId === patient.id ? `${flag.label} · ${resultAge(result, now)}, no action` : flag.label,
-    action: VERB[flag.go.next ?? flag.go.view ?? ""] ?? "Open",
-  })));
+/**
+ * `item`: a check-in, message or booking, whose own actions (Call back, Reply, Confirm) sit under the row instead of
+ * `action`. The reason ends "+N more" when the patient has other reasons, reached by opening them.
+ */
+export type NeedRow = { id: string; patientId?: string; who: string; reason: string; tone: RowTone; action?: string; go: Go; item?: DayItem; result: boolean };
+/**
+ * The patients who need you, exactly as the header counts them, in its order; a waiting result says how long it has
+ * waited. "See all" goes to Results when every row past the first three is a result, else to Patients.
+ */
+export function needRows(needs: Need[], results: PendingResult[], now: number): Section<NeedRow> & { seeAll: "results" | "patients" } {
+  const rows = needs.map(({ id, who, patient, flag, all }): NeedRow => {
+    const result = flag.go.next === "briefing" ? results.find(r => r.patientId === id) : undefined;
+    const more = all.length - 1;
+    return {
+      id, patientId: patient?.id ?? flag.item?.patientId, who, go: flag.go, tone: flag.tone === "urgent" ? "urgent" : "soon", item: flag.item, result: Boolean(result),
+      reason: [result ? `${flag.label} · ${resultAge(result, now)}, no action` : flag.label, more ? `+${more} more` : ""].filter(Boolean).join(" · "),
+      action: flag.item ? undefined : VERB[flag.go.next ?? flag.go.view ?? ""] ?? "Open",
+    };
+  });
+  return { ...section(rows), seeAll: rows.slice(MAX_ROWS).every(r => r.result) ? "results" : "patients" };
+}
+
+/** Tasks Needs you now already lists (a flagged check-in's, a booking request's, an urgent message's), so Your tasks leaves them out. */
+export function shownInNeeds(needs: Need[]) {
+  const items = needs.flatMap(n => n.all.flatMap(f => f.item ? [f.item] : []));
+  const tasks = new Set(items.filter(i => i.kind === "check-in").map(i => i.id.replace(/^check-in-/, "")));
+  const messaged = new Set(items.filter(i => i.kind === "message").map(i => i.patientId));
+  // ponytail: a thread inside the inbox's 5 s Undo window reads handled, so its task can show here for those seconds.
+  return (task: { id: string }, patientId: string) => tasks.has(task.id) || task.id.startsWith("booking:") || (task.id.startsWith("message:") && messaged.has(patientId));
+}
+
+/** A visit on the day in view: today's open; another day's are the authored clinic list, read-only, seen or to prepare. */
+export type VisitRow = { id: string; patientId?: string; title: string; reason: string; tone: RowTone };
+export function visitRows(schedule: ScheduleVisit[], offset: number): VisitRow[] {
+  return [...schedule].sort((a, b) => a.time.localeCompare(b.time)).map(v => ({
+    id: v.id, patientId: v.patientId, title: `${v.time} · ${v.name}`, tone: offset >= 0 && v.incomplete ? "soon" : "calm",
+    // The reason already says what is missing ("History to complete"); amber marks it.
+    reason: offset < 0 ? `${v.reason} · seen` : v.reason,
+  }));
 }
 
 /**

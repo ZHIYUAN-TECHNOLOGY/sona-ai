@@ -10,7 +10,8 @@ export function useTodayAnswers(): Answer[] {
   const { patients } = useEncounter();
   const tasksOf = useVisitTasks();
   const { on: live } = useLive();
-  const needs = useNeedsYou().map(({ patient: p, flag }) => ({ id: p.id, title: p.name, detail: flag.label, tone: flag.tone === "urgent" ? "urgent" as const : "soon" as const, op: `open:${p.id}` }));
+  // Someone the app has no visit for (a Sona Care message from outside the roster) is listed but not opened.
+  const needs = useNeedsYou().map(({ id, who, patient, flag }) => ({ id, title: who, detail: flag.label, tone: flag.tone === "urgent" ? "urgent" as const : "soon" as const, ...patient ? { op: `open:${patient.id}` } : {} }));
   const tasks = patients.flatMap(p => tasksOf(p).filter(t => !t.completed).map(t => ({ id: t.id, patientId: p.id, patientName: p.name, title: t.title, owner: t.owner, due: t.due, group: dueGroup(t.due) })));
   return [needsYou(needs), overdue(tasks, !live), soonest(useWardBeds())];
 }

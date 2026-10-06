@@ -1,10 +1,10 @@
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import type { Encounter, HistoryFact, Patient, Task } from "@/features/encounter/types";
-import { newestResult, resultRow, serverTasks, type ServerResult, type ServerTask } from "@/features/live/day";
+import { resultRow, serverTasks, type ServerResult, type ServerTask } from "@/features/live/day";
 import { taskCounts } from "@/features/tasks/counts";
 import { localDate } from "@/features/tasks/state";
 import type { Bed } from "@/features/ward/model";
-import { PENDING_RESULT, testInSentence, type PendingResult } from "./model";
+import { PENDING_RESULT, byUrgency, testInSentence, type DayItem, type PendingResult } from "./model";
 
 /**
  * One source for every count the app shows twice: the result waiting on a doctor, who needs you,
@@ -18,11 +18,15 @@ type Server = { tasks: ServerTask[]; results: ServerResult[] } | undefined;
 export type Ack = { at: string; by: string };
 export const resultKey = (r: Pick<PendingResult, "id" | "patientId" | "test">) => r.id ?? `${r.patientId}:${r.test}`;
 
-/** The result waiting on a doctor: live, the server's newest unacknowledged one; demo, the fixture until it is acknowledged here. */
-export function pendingResult(server: Server, acks: Record<string, Ack>): PendingResult | undefined {
-  if (server) return newestResult(server.results);
-  return acks[resultKey(PENDING_RESULT)] ? undefined : PENDING_RESULT;
+/** Every result waiting on a doctor, each patient's newest, newest first: live, the server's unacknowledged ones; demo, the fixture until it is acknowledged here. */
+export function pendingResults(server: Server, acks: Record<string, Ack>): PendingResult[] {
+  if (!server) return acks[resultKey(PENDING_RESULT)] ? [] : [PENDING_RESULT];
+  const waiting = server.results.filter(r => !r.acknowledgedAt).sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());
+  return waiting.filter((r, i) => waiting.findIndex(x => x.patientId === r.patientId) === i).map(r => resultRow(r, server.results));
 }
+
+/** The result waiting on a doctor: the newest of `pendingResults`. */
+export const pendingResult = (server: Server, acks: Record<string, Ack>): PendingResult | undefined => pendingResults(server, acks)[0];
 
 /**
  * A patient's newest result for the briefing, with its acknowledgement once there is one. An acknowledged
@@ -79,7 +83,8 @@ export const resultLine = (r: PendingResult) => [`${r.test} ${r.value}`, r.flag.
 
 /** Where a flag leads: a question in the visit, a page in it, or another page. */
 export type Go = { next?: string; view?: string; to?: "/handover" | `/inbox/${string}` };
-export type Flag = { label: string; tone: "urgent" | "caution"; go: Go };
+/** `score`/`at`: its place in Today's one ranking (byUrgency); `item`: the check-in, message or booking it stands for, acted on in place. */
+export type Flag = { label: string; tone: "urgent" | "caution"; go: Go; score?: number; at?: number; item?: DayItem };
 
 /** The allergy a clinician recorded in this visit (the allergy row's Confirm, or a history correction); until one is, the record's allergy needs confirming. */
 export const confirmedAllergy = (encounter: Pick<Encounter, "historyFacts"> | undefined) => encounter?.historyFacts?.findLast(fact => fact.category === "allergy");
@@ -117,12 +122,38 @@ export function patientFlags(patient: Patient, unconfirmed: number, result: Pend
 
 export const unconfirmedOf = (patient: Patient, encounter: Encounter | undefined) => (encounter?.medicationEntries ?? defaultMedications(patient)).filter(m => !m.confirmed).length;
 
-/** The patients who need you (not the items): each with the most urgent reason, red ones first. */
-export function needsYou(patients: Patient[], encounters: Record<string, Encounter | undefined>, result: PendingResult | undefined) {
-  return patients.flatMap(patient => {
-    const [flag] = patientFlags(patient, unconfirmedOf(patient, encounters[patient.id]), result, encounters[patient.id]);
-    return flag ? [{ patient, flag }] : [];
-  }).sort((a, b) => Number(b.flag.tone === "urgent") - Number(a.flag.tone === "urgent"));
+/** A record flag's place in the ranking, by where it leads: the result as urgent as before, medicines and the allergy as the prescribing blocker. */
+const FLAG_SCORE: Record<string, number> = { briefing: 100, medication: 70 };
+const rank = (a: Flag, b: Flag) => byUrgency({ score: a.score ?? 50, at: a.at }, { score: b.score ?? 50, at: b.at });
+
+/** A check-in, message or booking as a flag: the patient's words or the request, then why and when ("breathless · Worse after discharge · replied 09:12"). */
+const itemFlag = (i: DayItem): Flag => {
+  // "Amelia: fever returned after discharge" → "Fever returned": the reason already says after discharge.
+  const words = (i.title.includes(": ") ? i.title.slice(i.title.indexOf(": ") + 2) : i.title).replace(/ after discharge$/, "");
+  return { label: `${words.charAt(0).toUpperCase()}${words.slice(1)} · ${i.reason}`, tone: i.tone === "urgent" ? "urgent" : "caution", go: i.open, score: i.score, at: i.at, item: i };
+};
+
+/** Who needs you: `patient` when the app knows them (else `who` is the name the item gives), their most urgent flag first in `all`. */
+export type Need = { id: string; who: string; patient?: Patient; flag: Flag; all: Flag[] };
+
+/**
+ * Today's one ranking: the patients who need you (not the items), each led by their most urgent reason, most urgent first.
+ * A patient's reasons are their record's flags (`results`: every result waiting, see pendingResults) and `items`: worse or
+ * urgent check-ins and problems told to Sona Care, urgent messages and booking requests (check-ins/model, ./model).
+ * Scores: urgent check-in 120, worse check-in and urgent message 105, result 100, booking 75, medicines and allergy 70,
+ * missing history 50; on a tie the newer leads, then the record's order.
+ */
+export function needsYou(patients: Patient[], encounters: Record<string, Encounter | undefined>, results: PendingResult[], items: DayItem[] = []): Need[] {
+  const byPatient = new Map<string, Flag[]>();
+  for (const patient of patients) {
+    const flags = patientFlags(patient, unconfirmedOf(patient, encounters[patient.id]), results.find(r => r.patientId === patient.id), encounters[patient.id]);
+    if (flags.length) byPatient.set(patient.id, flags.map(f => ({ ...f, score: FLAG_SCORE[f.go.next ?? ""] ?? 50 })));
+  }
+  for (const item of items) { const key = item.patientId ?? item.id; byPatient.set(key, [...byPatient.get(key) ?? [], itemFlag(item)]); }
+  return [...byPatient].map(([id, flags]) => {
+    const all = flags.sort(rank), patient = patients.find(p => p.id === id);
+    return { id, who: patient?.name ?? all[0]!.item!.title.split(":")[0]!, patient, flag: all[0]!, all };
+  }).sort((a, b) => rank(a.flag, b.flag));
 }
 
 /** "2 patients need you": the count is always of patients. */

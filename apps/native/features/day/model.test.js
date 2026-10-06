@@ -2,17 +2,16 @@ import { expect, test } from "bun:test";
 import { patients } from "@/features/encounter/fixtures";
 import { newEncounter } from "@/features/encounter/fixtures";
 import { wardBeds } from "@/features/ward/model";
-import { bookingItems, glDeniedItems, rankDay, sameForToday, testInSentence } from "./model";
+import { bookingItems, sameForToday, testInSentence } from "./model";
+import { blockedRows } from "./needs-you-model";
 
-test("a denied guarantee letter is an amber My Day row that opens the appeal, and it goes once the appeal is sent", () => {
+test("a denied guarantee letter holds Amelia's bed under Discharges blocked, which opens the appeal; it goes once the appeal is sent", () => {
   const denial = { code: "MED", reason: "Admission not medically necessary", at: "2026-09-26T02:00:00Z" };
   const claim = status => ({ organismConfirmed: true, ivReasonAdded: true, status, denial });
   const beds = status => wardBeds(patients, { "SYN-1042": { ...newEncounter(), claim: claim(status) } });
   expect(beds("denied").find(b => b.patientId === "SYN-1042")?.blockers[0]).toMatchObject({ kind: "gl", label: "Final guarantee letter", detail: "Denied, appeal drafted" });
-  expect(glDeniedItems(beds("denied"))).toEqual([{ id: "gl-denied-SYN-1042", kind: "claim", title: "GL denied · Amelia · appeal ready", detail: "Final guarantee letter",
-    reason: "Insurer denied the final GL · check the appeal and send", tone: "soon", score: 72, patientId: "SYN-1042", open: { view: "claim" } }]);
+  expect(blockedRows(beds("denied"), {}, () => true).rows.find(r => r.patientId === "SYN-1042")).toMatchObject({ action: "letter", label: "Final guarantee letter" });
   expect(beds("appealed").find(b => b.patientId === "SYN-1042")?.blockers[0].detail).toBe("Appeal sent · awaiting insurer");
-  expect(glDeniedItems(beds("appealed"))).toEqual([]);
 });
 
 test("a booking request is an amber row that says who asks for whom, and why it is there", () => {
@@ -21,25 +20,6 @@ test("a booking request is an amber row that says who asks for whom, and why it 
   expect(item).toMatchObject({ id: "booking-booking:SYN-1042:lim:1", kind: "booking", title: "Amelia asks to see Dr. Lim · Thu 10:30", tone: "soon", patientId: "SYN-1042", detail: "“still coughing” · Respiratory" });
   expect(item.reason).toBe("Asked in Sona Care 25 min ago · confirm or decline");
   expect(bookingItems([{ ...request, reason: null, title: null }], new Date("2026-09-28T05:00:00Z"))[0]).toMatchObject({ detail: "Dr. Lim Wei Jie · Respiratory", title: "Booking request · Dr. Lim Wei Jie" });
-});
-
-// Demo visits follow the clock; test from 30 minutes before the first one.
-const [h, m] = patients[0].time.split(":").map(Number);
-const before = h * 60 + m - 30;
-
-test("the unactioned result leads, then the prescribing blocker, and every item has a reason", () => {
-  const items = rankDay(patients, {}, before);
-  expect(items[0].kind).toBe("result");
-  expect(items[0].reason).toContain("no action");
-  expect(items[1].kind).toBe("blocker");
-  expect(items.every(item => item.reason.length > 0)).toBe(true);
-});
-
-test("a reviewed result drops out; confirmed medicines clear the blocker", () => {
-  const medicationEntries = [{ id: "medicine-0", name: "A", ingredient: "salbutamol", formulation: "inhaler", confirmed: true }, { id: "medicine-1", name: "B", ingredient: "cetirizine", formulation: "tablet", confirmed: true }];
-  const encounter = { revision: 1, cards: [], requests: [], note: "", noteReviewed: false, transcript: [], recording: "idle", recordingSeconds: 0, language: "english", tasks: [], medicationEntries };
-  const items = rankDay(patients, { "SYN-1042": encounter }, before, new Set(["result"]));
-  expect(items.some(item => item.kind === "result" || item.kind === "blocker")).toBe(false);
 });
 
 test("visits that would overlap share one pin; spaced visits stay apart", () => {
@@ -53,14 +33,15 @@ test("visits that would overlap share one pin; spaced visits stay apart", () => 
 });
 
 test("other days: weekends empty, past seen, future to prepare", () => {
-  const { scheduleFor, rankOtherDay } = require("./model");
+  const { scheduleFor } = require("./model");
+  const { visitRows } = require("./needs-you-model");
   const monday = new Date(2026, 8, 21); // a Monday
   expect(scheduleFor(-1, patients, monday)).toEqual([]); // Sunday
   const tuesday = scheduleFor(1, patients, monday);
   expect(tuesday.length).toBeGreaterThan(1);
   expect(tuesday.every(v => v.patientId === undefined)).toBe(true);
-  expect(rankOtherDay(-2, tuesday).every(i => i.reason.startsWith("Seen"))).toBe(true);
-  expect(rankOtherDay(1, tuesday).every(i => i.reason.startsWith("Prepare"))).toBe(true);
+  expect(visitRows(tuesday, -2).every(r => r.reason.endsWith("· seen"))).toBe(true);
+  expect(visitRows(tuesday, 1).map(r => r.tone)).toEqual([...tuesday].sort((a, b) => a.time.localeCompare(b.time)).map(v => v.incomplete ? "soon" : "calm"));
   expect(scheduleFor(0, patients, monday).map(v => v.patientId)).toEqual(patients.map(p => p.id));
 });
 

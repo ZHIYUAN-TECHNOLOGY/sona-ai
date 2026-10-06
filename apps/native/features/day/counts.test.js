@@ -14,8 +14,8 @@ test("demo: the fixture result waits until it is acknowledged here, then leaves 
   expect(pendingResult(undefined, {})).toBe(PENDING_RESULT);
   expect(pendingResult(undefined, acked)).toBeUndefined();
   // Patients are counted, not items: Amelia (allergy, medicines) and Daniel (the result, then missing history).
-  expect(needsYou(patients, encounters, PENDING_RESULT).map(n => [n.patient.id, n.flag.label])).toEqual([["SYN-1086", "Low potassium 3.1 mmol/L"], ["SYN-1042", "Penicillin allergy · confirm"]]);
-  expect(needsYou(patients, encounters, undefined).find(n => n.patient.id === "SYN-1086").flag.label).toBe("History incomplete");
+  expect(needsYou(patients, encounters, [PENDING_RESULT]).map(n => [n.id, n.flag.label])).toEqual([["SYN-1086", "Low potassium 3.1 mmol/L"], ["SYN-1042", "Penicillin allergy · confirm"]]);
+  expect(needsYou(patients, encounters, []).find(n => n.id === "SYN-1086").flag.label).toBe("History incomplete");
   expect(patientResult("SYN-1086", undefined, acked)).toEqual({ result: PENDING_RESULT, ack: acked[resultKey(PENDING_RESULT)] });
   expect(patientResult("SYN-1042", undefined, {})).toBeUndefined();
   expect(resultLine(PENDING_RESULT)).toBe("Potassium 3.1 mmol/L · low · last 3.8 on 14 Sep");
@@ -69,12 +69,12 @@ test("the allergy flag clears once a clinician confirms it, and a discharge leav
   expect(fact).toMatchObject({ category: "allergy", value: "Penicillin — reported rash", source: "Confirmed by Dr Lim", date: "2026-10-03 14:32", revision: 2 });
   expect([allergyLine(fact, new Date(2026, 9, 3, 18)), allergyLine(fact, new Date(2026, 9, 4, 9)), allergyLine({ date: "2026-10-03" }, at)])
     .toEqual(["Allergy confirmed · 14:32", "Allergy confirmed · 3 Oct 14:32", "Allergy confirmed · today"]);
-  const label = list => list.find(n => n.patient.id === "SYN-1042")?.flag.label;
+  const label = list => list.find(n => n.id === "SYN-1042")?.flag.label;
   const confirmed = { ...encounters, "SYN-1042": { ...newEncounter(), historyFacts: [fact] } };
-  expect(label(needsYou(patients, confirmed, undefined))).toBe("2 medicines unconfirmed");
+  expect(label(needsYou(patients, confirmed, []))).toBe("2 medicines unconfirmed");
   // Discharged: nothing left to do in the visit, so Amelia leaves; a result still waiting keeps Daniel.
   const discharged = { ...newEncounter(), discharge: { dischargedAt: at.toISOString() } };
-  expect(label(needsYou(patients, { ...encounters, "SYN-1042": discharged }, undefined))).toBeUndefined();
+  expect(label(needsYou(patients, { ...encounters, "SYN-1042": discharged }, []))).toBeUndefined();
   expect(patientFlags(daniel, 1, PENDING_RESULT, discharged).map(f => f.label)).toEqual(["Low potassium 3.1 mmol/L"]);
   // An allergy recorded for an incomplete history is no longer unknown.
   expect(patientFlags(daniel, 1, undefined, { ...newEncounter(), historyFacts: [{ ...fact, value: "No known allergies" }] }).map(f => f.label)).toEqual(["History incomplete"]);
