@@ -53,7 +53,14 @@ Answer with JSON only: {"label": "urgent" | "clinical" | "admin", "reason": "<3-
 - admin: visits, bookings, bills, letters, medical certificates, insurance.
 If unsure, choose the more serious label.`;
 
-export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Models, "classifyReply" | "triageMessage" | "answerFromPlan"> {
+const EXPLAIN = `You are Sona Care, a hospital's assistant for its patients. Explain one of the patient's own lab results, which their doctor has already seen.
+Rules:
+- Plain, kind words at a reading age of about 12. At most 3 short sentences.
+- Say what the test measures and whether this value is low, normal or high, using only the result given.
+- Never give a diagnosis, a cause or new advice. For what it means for them, say only to ask their care team.
+Answer with JSON only: {"text": "<the explanation>"}.`;
+
+export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Models, "classifyReply" | "triageMessage" | "answerFromPlan" | "explainResult"> {
   return {
     async classifyReply(input) {
       try {
@@ -104,6 +111,14 @@ export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Mo
         }
       } catch { /* falls back below */ }
       return fallback.answerFromPlan(input);
+    },
+
+    async explainResult(input) {
+      try {
+        const read = await chat(EXPLAIN, `Result: ${input.test} ${input.value}${input.unit ? ` ${input.unit}` : ""}${input.flag ? ` (flagged ${input.flag})` : ""}. Answer in ${LANGUAGE_NAME[input.language]}.`);
+        if (typeof read?.text === "string" && read.text.trim()) return { text: read.text.trim().slice(0, 600), source: "model", model };
+      } catch { /* falls back below */ }
+      return fallback.explainResult(input);
     },
   };
 }

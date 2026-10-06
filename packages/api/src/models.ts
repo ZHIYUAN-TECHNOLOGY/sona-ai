@@ -97,6 +97,12 @@ export type Models = {
    * one fits; `cites` the numbers of those the answer used, as the model wrote them (care.ask keeps only numbers offered).
    */
   answerFromPlan(input: { question: string; plan: string; language: Language; passages?: Passage[] }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string; cites?: number[] }>;
+  /**
+   * Sona Care: what one of the patient's own lab results means, in plain words in their language. Only asked for a
+   * result a doctor has acknowledged (care.results.explain). No diagnosis and no advice beyond "ask your care team".
+   * The stub says only what was measured and to ask the care team.
+   */
+  explainResult(input: { test: string; value: string; unit?: string; flag?: string; language: Language }): Answer<{ text: string }>;
   /** After-discharge check-ins: worse or urgent replies become a flagged task (with the model's short symptom, when it read one). */
   classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent"; symptom?: string } & DecidedBy>;
   /** The care team's inbox: how soon a patient message needs a clinician (urgent, clinical, admin) and why, in a few words. */
@@ -124,6 +130,12 @@ export type Models = {
    * who said what (unsure speakers marked). Every number, dose and medicine in the note is one the transcript has (./scribe-model).
    */
   draftNote(input: { lines: ConsultationLine[] }): Answer<ScribeDraft>;
+};
+
+const RESULT_LINE: Record<Language, (result: string) => string> = {
+  en: r => `Your result was ${r}. Your care team has seen it; ask them what it means for you.`,
+  ms: r => `Keputusan anda ialah ${r}. Pasukan penjagaan anda telah melihatnya; tanya mereka apa maksudnya untuk anda.`,
+  zh: r => `您的结果是 ${r}。您的医护团队已经看过；请向他们了解这对您意味着什么。`,
 };
 
 const fixture = <T>(value: T) => Promise.resolve({ ...value, source: "fixture" as const });
@@ -182,6 +194,8 @@ export const stubModels: Models = {
   // ponytail: full names, IC, phone, email and MRN by rule (packages/domain/training); on Baseten OpenMed's PII model adds first names and other people (./pii-model).
   deidentify: ({ text, known }) => fixture(deidentifyByRules(text, known)),
   answerFromPlan: () => fixture({ answer: "", grounded: false, urgent: false }),
+  // ponytail: a template naming the result, until a model explains it.
+  explainResult: ({ test, value, unit, language }) => fixture({ text: RESULT_LINE[language](`${test} ${value}${unit ? ` ${unit}` : ""}`) }),
   // ponytail: the stub has no eyes; it returns what the sample note says, whatever the photo. MedGemma reads
   // photos through the Baseten adapter (./vision-models), with the same shape.
   readHandwrittenNote: () => fixture(structuredClone(SAMPLE_NOTE)),
