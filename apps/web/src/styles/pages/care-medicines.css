@@ -1,23 +1,9 @@
 /* Sona Care, Medicines: 17 px body, 48 px targets, green taken, amber due soon, no red. */
-.med-lead, .med-photo, .med-doses, .med-list { font-size: max(17px, var(--text-md, 17px)); line-height: 1.5; }
-.med-lead { display: grid; gap: var(--space-2); padding: var(--space-5); margin-bottom: var(--space-4); border-radius: var(--radius-lg); border: 1px solid var(--line); border-left: 6px solid var(--blue); }
-.med-lead[data-tone="soon"] { border-left-color: var(--amber); background: var(--amber-wash); }
-.med-lead h2 { margin: 0; font-size: 28px; line-height: 1.2; }
-.med-lead p { margin: 0; }
-.med-lead .btn { justify-self: start; min-height: 56px; padding-inline: var(--space-5); font-size: 19px; }
-.med-eyebrow, .med-muted { color: var(--muted); }
+.med-muted { color: var(--muted); }
 .med-note { color: var(--ink); background: var(--amber-wash); padding: var(--space-3); border-radius: var(--radius-md); }
 
-.med-part h3 { margin: var(--space-3) 0 var(--space-1); font-size: 17px; color: var(--muted); }
-.med-doses, .med-list { list-style: none; margin: 0; padding: 0; }
-.med-doses li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); min-height: var(--tap, 48px); padding: var(--space-2) 0; border-top: 1px solid var(--line); }
-.med-time { min-width: 5.5em; font-variant-numeric: tabular-nums; font-weight: 600; }
-.med-what { flex: 1 1 12em; display: grid; }
-.med-doses .btn, .med-actions .btn, .med-photo .btn { min-height: 48px; font-size: 17px; }
+.med-actions .btn, .med-photo .btn { min-height: 48px; font-size: 17px; }
 
-.med-list li { padding: var(--space-3) 0; border-top: 1px solid var(--line); }
-.med-list li:first-child, .med-part:first-child .med-doses li:first-child { border-top: 0; }
-.med-list p { margin: 0 0 var(--space-1); }
 
 .med-photo { display: grid; gap: var(--space-3); }
 .med-photo p { margin: 0; }
@@ -27,3 +13,26 @@
 .med-file:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
 .med-video { width: 100%; max-width: 480px; border-radius: var(--radius-md); background: var(--ink); }
 .med-input { width: 100%; min-height: 48px; padding: 0 var(--space-3); font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); }
+.med-page, .med-photo { display: grid; gap: var(--space-4); font-size: max(17px, var(--text-md, 17px)); line-height: 1.5; }
+.med-page .list-row { min-height: 72px; flex-wrap: wrap; }
+.med-page .list-title, .med-page .list-caption { white-space: normal; }
+.med-page .list-title { font-size: 17px; }
+.med-page .list-caption { font-size: 15px; }
+.med-name { font-weight: 500; }
+.med-dose { color: var(--muted); font-weight: 400; }
+.med-taken { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--muted); }
+.med-due { display: inline-flex; align-items: center; gap: var(--space-3); }
+.med-due .btn { min-height: 48px; font-size: 17px; }
+.med-week { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-2); }
+.med-week li { display: grid; gap: var(--space-2); justify-items: center; align-content: start; padding: var(--space-3) var(--space-1); border-radius: var(--radius-md); border: 1px solid transparent; }
+.med-week li[data-today] { border-color: var(--line); }
+.med-week li[data-today] .med-day { font-weight: 600; color: var(--ink); }
+.med-day { color: var(--muted); font-size: 17px; }
+.med-dots { display: grid; gap: var(--space-2); justify-items: center; }
+.med-week i, .med-legend i { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); color: var(--surface); }
+.med-week i[data-state="done"], .med-legend i[data-state="done"] { background: var(--blue); border-color: var(--blue); }
+.med-week i[data-state="missed"], .med-legend i[data-state="missed"] { border-color: var(--amber); }
+.med-legend { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: var(--space-4) 0 0; color: var(--muted); font-size: 15px; }
+.med-legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
+.med-drop { display: grid; justify-items: center; gap: var(--space-3); padding: var(--space-5) var(--space-4); border: 2px dashed var(--line); border-radius: var(--radius-lg); color: var(--muted); text-align: center; }
+.med-progress { width: 100%; height: 8px; accent-color: var(--blue); }

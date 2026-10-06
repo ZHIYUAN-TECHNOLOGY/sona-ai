@@ -55,3 +55,15 @@ export function partOf(dueAt: Date): Part {
   const h = new Date(dueAt.getTime() + MYT).getUTCHours();
   return h < 12 ? "Morning" : h < 17 ? "Afternoon" : h < 21 ? "Evening" : "Night";
 }
+
+/** The last seven days through today: each dose done, missed (not marked in time) or still to come. */
+export function weekDots(meds: ScheduledMed[], dischargedAt: string, taken: string[], now: Date, lang: Lang) {
+  const today = dayOf(now), all = dosesOf(meds, new Date(dischargedAt), new Date((today + 1) * DAY - MYT - 1), new Set(taken));
+  const label = new Intl.DateTimeFormat(lang, { timeZone: TZ, weekday: "short" });
+  return Array.from({ length: 7 }, (_, i) => today - 6 + i).map(day => ({
+    x: label.format(new Date(day * DAY - MYT + DAY / 2)), today: day === today,
+    dots: all.filter(d => dayOf(d.dueAt) === day).map(d => ({
+      key: d.key, state: d.taken ? "done" as const : d.dueAt.getTime() > now.getTime() - MISSED_AFTER ? "upcoming" as const : "missed" as const,
+    })),
+  }));
+}
