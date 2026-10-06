@@ -1,6 +1,7 @@
 /* Care check-ins: the waiting question as the hero, what happens next beside it, the timeline below. */
 .check-ins { display: grid; gap: var(--gap-card); }
 .ci-alone { width: min(100%, 640px); margin-inline: auto; }
+.ci-alone .empty .btn { align-self: center; margin-top: var(--space-2); }
 .ci-top { display: grid; gap: var(--gap-card); align-items: start; }
 .ci-top-two { grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); }
 .ci-anchor { scroll-margin-top: var(--space-6); min-width: 0; }
