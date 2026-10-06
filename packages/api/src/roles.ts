@@ -35,6 +35,7 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "ward.assignOwner": [WARD, "assign a blocker owner"],
   "ward.forecast": [ALL, "see the bed forecast"],
   "patients.list": [ALL, "see the patient list"],
+  "patients.trends": [CLINICAL_READ, "see a patient's trends"],
   "day.list": [ALL, "see the day's visits"],
   "tasks.list": [ALL, "see tasks"],
   "tasks.complete": [CARE, "complete a task"],

@@ -1,9 +1,9 @@
 import { ORPCError } from "@orpc/server";
 import { user } from "@sona-ai/db/schema/auth";
-import { appointments, encounters, labResults, patients, tasks } from "@sona-ai/db/schema/clinical";
+import { appointments, encounters, labResults, observations, patients, tasks } from "@sona-ai/db/schema/clinical";
 import type { DemoPatient } from "@sona-ai/domain/demo-patients";
-import { criticalOf } from "@sona-ai/domain/critical";
-import { and, asc, desc, eq, gte, isNull, lt, sql } from "drizzle-orm";
+import { criticalOf, criticalWhy } from "@sona-ai/domain/critical";
+import { and, asc, desc, eq, gte, isNull, lt, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { taskCreateSchema } from "../contracts";
@@ -42,7 +42,8 @@ export const listResults = async (db: Context["db"], hospitalId: string, where?:
   acknowledgedByName: user.name,
 }).from(labResults).innerJoin(patients, eq(patients.id, labResults.patientId)).leftJoin(user, eq(user.id, labResults.acknowledgedBy))
   .where(and(eq(patients.hospitalId, hospitalId), where)).orderBy(desc(labResults.receivedAt)))
-  .map(r => ({ ...r, critical: Boolean(r.flag?.startsWith("critical")) }));
+  // `why` is the call-now rule's own reason, only when that rule is what set the stored flag (no reference ranges are held anywhere, so none are returned).
+  .map(r => ({ ...r, critical: Boolean(r.flag?.startsWith("critical")), why: r.flag && r.flag === criticalOf(r) ? criticalWhy(r) : undefined }));
 
 // A result with no unit (a culture's text) is one: a sender that fills every field sends `unit: ""`, which means none, not a bad request.
 const resultInput = z.object({ patientId: z.string().min(1), test: z.string().trim().min(1), value: z.string().trim().min(1), unit: z.string().trim().optional().transform(unit => unit || undefined) });
@@ -95,8 +96,9 @@ export async function labFeed(context: Pick<Context, "db" | "now" | "announce">,
 
 export const resultsRouter = {
   // A sample still at the lab ("pending") is a ward blocker, not a result to act on.
-  list: protectedProcedure.input(z.object({ unacknowledged: z.boolean().optional() }).optional()).handler(async ({ context: { db, hospitalId }, input }) =>
-    (await listResults(db, hospitalId, input?.unacknowledged ? isNull(labResults.acknowledgedAt) : undefined)).filter(r => r.flag !== "pending")),
+  list: protectedProcedure.input(z.object({ unacknowledged: z.boolean().optional(), patientId: z.string().min(1).optional() }).optional()).handler(async ({ context: { db, hospitalId }, input }) =>
+    (await listResults(db, hospitalId, and(input?.unacknowledged ? isNull(labResults.acknowledgedAt) : undefined, input?.patientId ? eq(labResults.patientId, input.patientId) : undefined)))
+      .filter(r => r.flag !== "pending")),
   /** A result entered from inside the app by a signed-in clinician (Settings' simulate button); the lab's own system posts through labFeed. */
   receive: protectedProcedure.input(resultInput).handler(({ context, input }) => receiveResult(context, context.hospitalId, input)),
   /** Records the first doctor to acknowledge a result; acknowledging it again returns that same record. */
@@ -138,4 +140,32 @@ export const patientsRouter = {
       id: p.id, encounterId: encounterId ?? "", name: p.name, initials: p.initials, age: p.age, sex: p.sex, complaint: p.complaint, allergies: p.allergies, incomplete: p.incomplete,
     }));
   }),
+  /** One patient's observation and lab series over the 12 months up to now (the demo clock), per kind and per test, oldest first; labs keep numeric values only. */
+  trends: protectedProcedure.input(z.object({ patientId: z.string().min(1) })).handler(async ({ context, input }) => {
+    const { db, hospitalId } = context;
+    const [patient] = await db.select({ id: patients.id }).from(patients).where(and(eq(patients.id, input.patientId), eq(patients.hospitalId, hospitalId)));
+    if (!patient) throw new ORPCError("NOT_FOUND", { message: `No patient ${input.patientId}` });
+    const now = clockOf(context);
+    const since = new Date(now);
+    since.setFullYear(since.getFullYear() - 1);
+    const [obs, labs] = await Promise.all([
+      db.select().from(observations).where(and(eq(observations.patientId, patient.id), gte(observations.observedAt, since), lte(observations.observedAt, now))).orderBy(asc(observations.observedAt)),
+      db.select().from(labResults).where(and(eq(labResults.patientId, patient.id), gte(labResults.receivedAt, since), lte(labResults.receivedAt, now))).orderBy(asc(labResults.receivedAt)),
+    ]);
+    return {
+      observations: series(obs, o => o.kind, o => o.unit, o => ({ at: o.observedAt, value: o.value })).map(({ name: kind, ...s }) => ({ kind, ...s })),
+      labs: series(labs.filter(l => l.value.trim() !== "" && Number.isFinite(Number(l.value))), l => l.test, l => l.unit, l => ({ at: l.receivedAt, value: Number(l.value), flag: l.flag })).map(({ name: test, ...s }) => ({ test, ...s })),
+    };
+  }),
 };
+
+/** Rows grouped into one series per name, in the order each name first appears; the unit is the first row's. */
+function series<R, P>(rows: R[], name: (r: R) => string, unit: (r: R) => string | null, point: (r: R) => P) {
+  const byName = new Map<string, { unit: string | null; points: P[] }>();
+  for (const r of rows) {
+    const s = byName.get(name(r)) ?? { unit: unit(r), points: [] };
+    byName.set(name(r), s);
+    s.points.push(point(r));
+  }
+  return [...byName].map(([n, s]) => ({ name: n, ...s }));
+}
