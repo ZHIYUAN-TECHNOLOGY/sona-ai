@@ -9,13 +9,12 @@ import { Chip, Icon, Insight, Tone, canvasImage, useAccessibleEffects } from "@/
 import { ErrorLine, Press } from "@/components/sona/parts";
 import { palette, type, radius } from "@/components/sona/theme";
 import { mostUrgent } from "@/components/sona/tone";
-import { GROUPS, letters, listItems, rosterRows, syntheticCensus, type Group, type Item, type Row, type View as Tab } from "@/features/patients/census";
+import { GROUPS, letters, listItems, rosterRows, syntheticCensus, withNeeds, type Group, type Item, type Row, type View as Tab } from "@/features/patients/census";
 import { useContinue, useContinueState } from "@/features/patients/continue-store";
 import { useServerCensus } from "@/features/patients/server-census";
-import { needsYou } from "@/features/ask/answers";
 import { JUDGE } from "@/features/live";
-import { needLine, patientFlags, unconfirmedOf } from "@/features/day/counts";
-import { useDayError, useDayPatients, usePendingResult } from "@/features/day/use-counts";
+import { needLine } from "@/features/day/counts";
+import { useDayError, useDayPatients, useNeedsYou } from "@/features/day/use-counts";
 import { useEncounter } from "./store";
 
 const TABS: { id: Tab; label: string }[] = [
@@ -63,24 +62,23 @@ export function PatientScreen() {
   const day = useDayPatients(patients);
   // Live mode: today's read failed, so the rows carry no appointment times and the count is not today's: say so, with Retry.
   const dayError = useDayError();
-  const result = usePendingResult(); // the result Today flags, so an acknowledged one stops showing here too
+  // Today's one ranking: who needs you, in its order, with the same top reason (withNeeds), so Today, Patients and Sona agree.
+  const ranked = useNeedsYou();
   const real: Row[] = patients.flatMap(p => {
     const visit = day.find(d => d.id === p.id);
-    const flags = patientFlags(p, unconfirmedOf(p, encounters[p.id]), result, encounters[p.id]);
     const answers = encounters[p.id]?.requests.length ?? 0;
     // Judge build: the roster is the whole hospital record, so only who needs you, is booked today or is being seen is
     // ranked from their visit; the rest keep the ward's row (rosterRows).
-    if (JUDGE && !flags.length && !visit && !answers) return [];
+    if (JUDGE && !ranked.some(n => n.id === p.id) && !visit && !answers) return [];
     const soon = Boolean(visit) && !answers && minutes(visit!.time) - now >= 0 && minutes(visit!.time) - now <= 60;
-    const [group, reason, tone]: [Group, string, Row["tone"]] = flags.length ? ["needs", flags[0]!.label, flags[0]!.tone === "urgent" ? "urgent" : "soon"]
-      : soon ? ["next", `Starts in ${minutes(visit!.time) - now} min`, "good"] : answers ? ["waiting", `In progress · ${answers} ${answers === 1 ? "answer" : "answers"}`, "calm"] : ["waiting", p.subtitle, "calm"];
+    const [group, reason, tone]: [Group, string, Row["tone"]] = soon ? ["next", `Starts in ${minutes(visit!.time) - now} min`, "good"] : answers ? ["waiting", `In progress · ${answers} ${answers === 1 ? "answer" : "answers"}`, "calm"] : ["waiting", p.subtitle, "calm"];
     return [{ id: p.id, name: p.name, initials: p.initials, where: visit?.time ?? "", group, reason, tone, mine: true, ward: false, clinic: Boolean(visit), open: true }];
   });
   // Connected: everyone else on the list is the hospital record's (the ward's patients, read from the server), never the synthetic census.
   const others = useServerCensus(JUDGE ? NOBODY : patients);
   const synthetic = useMemo(() => others ?? (census ? syntheticCensus(106) : []), [census, others]);
   // Judge build: one row per person on the record, opening the visit the server holds for them (the roster is exactly those).
-  const rows = useMemo(() => JUDGE ? rosterRows(real, others ?? [], new Set(patients.map(p => p.id))) : [...real, ...synthetic], [real, synthetic]); // eslint-disable-line react-hooks/exhaustive-deps
+  const rows = useMemo(() => withNeeds(JUDGE ? rosterRows(real, others ?? [], new Set(patients.map(p => p.id))) : [...real, ...synthetic], ranked), [real, synthetic, ranked]); // eslint-disable-line react-hooks/exhaustive-deps
   const count = (t: Tab) => t === "continue" ? entries.length : t === "needs" ? rows.filter(r => r.group === "needs").length : t === "all" ? rows.length : rows.filter(r => r[t]).length;
   const tabs = TABS.filter(t => t.id === "needs" || t.id === "all" || count(t.id) > 0);
 

@@ -1,5 +1,10 @@
 import { expect, test } from "bun:test";
-import { GROUPS, letters, listItems, rosterRows, serverRows, syntheticCensus } from "./census";
+import { GROUPS, letters, listItems, rosterRows, serverRows, syntheticCensus, withNeeds } from "./census";
+import { newEncounter, patients } from "@/features/encounter/fixtures";
+import { flaggedItems } from "@/features/check-ins/model";
+import { needsYou } from "@/features/day/counts";
+import { PENDING_RESULT, messageItems } from "@/features/day/model";
+import { needRows } from "@/features/day/needs-you-model";
 import { continueList, IDLE_MS, planPin, replacePin, whatIsLeft } from "./continue";
 
 test("connected, the rest of the list is the server's people at the server's beds: the visits opened here are left out, and each row says where the patient stands", () => {
@@ -110,4 +115,25 @@ test("the judge build's list is one row per person on the record: a visit that n
   ]);
   // Nothing read yet: no rows, never the visits alone.
   expect(rosterRows(visits, [], new Set())).toEqual([]);
+});
+
+test("Patients' Needs you lists exactly Today's Needs you now: same patients, order and top reason, with a worse check-in, a result and an urgent message", () => {
+  const replied = new Date(2026, 9, 6, 9, 12);
+  const checkIn = { id: "check-in:enc:2", patientId: "SYN-1042", encounterId: "enc", day: 2, replies: [{ id: "r1", text: "Saya sesak nafas bila jalan", label: "worse", receivedAt: replied, task: { id: "t-worse", title: "Amelia: breathless after discharge", completed: false } }] };
+  // From someone outside the roster: Today lists them, so Patients must too.
+  const message = { patientId: "SYN-2002", name: "Nurul Huda", label: "urgent", reason: "Fever", lastText: "Demam balik", lastAt: new Date(2026, 9, 6, 9, 20), waitingSince: replied, handled: false };
+  const encounters = Object.fromEntries(patients.map(p => [p.id, newEncounter()]));
+  const needs = needsYou(patients, encounters, [PENDING_RESULT], [...flaggedItems([checkIn]), ...messageItems([message], new Date(2026, 9, 6, 9, 30))]);
+  const today = needRows(needs, [PENDING_RESULT], 600);
+  // The page's own rows before the ranking: everyone waiting, in roster order.
+  const base = patients.map(p => ({ id: p.id, name: p.name, initials: p.initials, where: "", group: "waiting", reason: p.subtitle, tone: "calm", mine: true, ward: false, clinic: false, open: true }));
+  const listed = listItems(withNeeds(base, needs), "needs", new Set()).filter(i => i.kind === "row" && i.row.group === "needs").map(i => i.row);
+  expect(listed.length).toBe(today.total);
+  expect(listed.map(r => r.id)).toEqual(today.rows.map(r => r.patientId));
+  listed.forEach((r, i) => expect(today.rows[i].reason.startsWith(r.reason)).toBe(true));
+  expect(listed.map(r => [r.id, r.reason, r.open])).toEqual([
+    ["SYN-2002", "Demam balik · Urgent message · no reply for 18 min", false], // the outsider: listed, nothing to open here
+    ["SYN-1042", "Breathless · Worse after discharge · replied 09:12", true],
+    ["SYN-1086", "Low potassium 3.1 mmol/L", true],
+  ]);
 });

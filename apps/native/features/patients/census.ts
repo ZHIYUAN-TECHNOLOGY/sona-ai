@@ -4,11 +4,15 @@
  * and "All" is A–Z. Pure; the Patients screen renders `listItems` in one virtualised list.
  */
 import { bedKind, type Bed } from "@sona-ai/domain/ward";
+import type { Need } from "@/features/day/counts";
 
 export type Group = "needs" | "next" | "waiting" | "done";
 export type Tone = "urgent" | "soon" | "good" | "calm";
-/** One patient row. `open` is false for rows with no visit to open here: the synthetic census, and in connected mode the ward's other patients (serverRows). */
-export type Row = { id: string; name: string; initials: string; where: string; group: Group; reason: string; tone: Tone; mine: boolean; ward: boolean; clinic: boolean; open: boolean };
+/**
+ * One patient row. `open` is false for rows with no visit to open here: the synthetic census, and in connected mode the ward's other patients (serverRows).
+ * `rank`: the row's place in Today's one ranking (withNeeds), which orders "Needs you now".
+ */
+export type Row = { id: string; name: string; initials: string; where: string; group: Group; reason: string; tone: Tone; mine: boolean; ward: boolean; clinic: boolean; open: boolean; rank?: number };
 export type View = "needs" | "continue" | "mine" | "ward" | "clinic" | "all";
 export type Item =
   | { key: string; kind: "header"; title: string; count: number }
@@ -24,8 +28,22 @@ export const GROUPS: { id: Group; title: string; shown: number }[] = [
 ];
 const RANK: Record<Group, number> = { needs: 0, next: 1, waiting: 2, done: 3 };
 const TONE_RANK: Record<Tone, number> = { urgent: 0, soon: 1, good: 2, calm: 3 };
-/** Most urgent group first; inside a group, red before amber, then by time or bed (Bed 2 before Bed 12). */
-const byUrgency = (a: Row, b: Row) => RANK[a.group] - RANK[b.group] || TONE_RANK[a.tone] - TONE_RANK[b.tone] || a.where.localeCompare(b.where, undefined, { numeric: true });
+/** Most urgent group first; inside a group, Today's ranking, then red before amber, then by time or bed (Bed 2 before Bed 12). */
+const byUrgency = (a: Row, b: Row) => RANK[a.group] - RANK[b.group] || (a.rank ?? Infinity) - (b.rank ?? Infinity) || TONE_RANK[a.tone] - TONE_RANK[b.tone] || a.where.localeCompare(b.where, undefined, { numeric: true });
+
+/**
+ * Today's one ranking (day/counts needsYou) on the list: each patient who needs you joins "Needs you now" with their
+ * top reason, in Today's order, so the page counts and lists exactly who Today does. Someone the list has no row
+ * for (a Sona Care message from outside the roster) joins too, with nothing to open here.
+ */
+export function withNeeds(rows: Row[], needs: Need[]): Row[] {
+  const need = (n: Need, rank: number) => ({ group: "needs" as const, reason: n.flag.label, tone: n.flag.tone === "urgent" ? "urgent" as const : "soon" as const, rank });
+  const ranks = new Map(needs.map((n, i) => [n.id, i]));
+  return [
+    ...rows.map(r => { const i = ranks.get(r.id); return i === undefined ? r : { ...r, ...need(needs[i]!, i) }; }),
+    ...needs.flatMap((n, i) => rows.some(r => r.id === n.id) ? [] : [{ id: n.id, name: n.who, initials: n.who.split(" ").map(w => w[0]).join("").slice(0, 2), where: "", mine: false, ward: false, clinic: false, open: false, ...need(n, i) }]),
+  ];
+}
 
 /**
  * Connected mode's rows for everyone the hospital record holds beyond the visits this app opens
