@@ -28,8 +28,8 @@
 .sign-in-brand-tile { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-control); background: var(--blue); color: var(--surface); }
 .pro .sign-in-card h1 { font-size: var(--text-page); line-height: 1.15; font-weight: 500; letter-spacing: var(--track-display); }
 .pro .sign-in-card label { font-size: 13px; font-weight: 500; color: var(--muted); }
-.pro .sign-in-card input { min-height: 44px; padding: 0 var(--space-4); border-color: var(--hairline); border-radius: var(--radius-pill); transition: border-color var(--quick) var(--ease), box-shadow var(--quick) var(--ease); }
-.pro .sign-in-card input:hover { border-color: var(--line); }
+.pro .sign-in-card input { min-height: 44px; padding: 0 var(--space-4); border-color: var(--line); border-radius: var(--radius-pill); transition: border-color var(--quick) var(--ease), box-shadow var(--quick) var(--ease); }
+.pro .sign-in-card input:hover { border-color: var(--muted); }
 .pro .sign-in-card button { min-height: 44px; border-radius: var(--radius-pill); transition: opacity var(--quick) var(--ease), transform var(--quick) var(--ease); }
 .pro .sign-in-card button:active:not(:disabled) { transform: scale(var(--press)); }
 .pro .sign-in-card :is(input, button):focus-visible { outline: 0; box-shadow: var(--focus-ring); }

@@ -87,8 +87,8 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 .list-chevron { flex: none; color: var(--placeholder); }
 
 /* Main column (~69%) + right rail (~31%) */
-.with-rail { grid-template-columns: minmax(0, 69fr) minmax(0, 31fr); gap: var(--gap-card); }
-.with-rail-main, .rail { gap: var(--gap-card); }
+.with-rail { display: grid; grid-template-columns: minmax(0, 69fr) minmax(0, 31fr); gap: var(--gap-card); align-items: start; }
+.with-rail-main, .rail { display: flex; flex-direction: column; gap: var(--gap-card); min-width: 0; }
 @media (max-width: 1080px) { .with-rail { grid-template-columns: minmax(0, 1fr); } }
 
 /* Page header */
