@@ -4,10 +4,11 @@ import { useState } from "react";
 
 import { LineChart } from "@/components/charts";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, StatCard, StatRow } from "@/components/primitives";
+import { InsightCard } from "@/components/insight-card";
+import { Button, Card } from "@/components/primitives";
 import { browserLang, dayWords, whenWords } from "@/features/care-follow-ups/dates";
 import { AddForm, listOptions } from "@/features/care-readings/add-form";
-import { since, valueWords, type Kind } from "@/features/care-readings/readings";
+import { changeWords, rangeWords, since, valueWords, type Kind } from "@/features/care-readings/readings";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-readings.css";
 
@@ -16,6 +17,11 @@ export const Route = createFileRoute("/care/_app/readings")({ component: Page })
 const lang = browserLang();
 const DAY = 86_400_000;
 const WINDOWS = [7, 30, 90] as const;
+const LOG_CAP = 10;
+/** "up 9 since 5 Oct, 8:00 am"; when both readings share a time, "up 9 from the reading before"; with one reading, just its time. */
+const changeLine = (change: string | undefined, before: string, last: string) =>
+  !change ? last : before === last ? change.replace(/ since$/, " from the reading before") : `${change} ${before}`;
+const SHARE = { label: "Share readings before your visit", to: "/care/follow-ups" } as const;
 const toForm = () => {
   document.getElementById("rd-add")?.scrollIntoView({ behavior: "smooth" });
   document.querySelector<HTMLInputElement>("#rd-add .rd-value")?.focus({ preventScroll: true });
@@ -26,6 +32,7 @@ function Page() {
   const clock = useQuery(orpc.care.clock.queryOptions());
   const [days, setDays] = useState<(typeof WINDOWS)[number]>(7);
   const [picked, setPicked] = useState<Kind>();
+  const [showAll, setShowAll] = useState(false);
 
   if (list.isPending) return <><PageHeader title="Readings" /><EmptyState>Loading your readings…</EmptyState></>;
   if (list.isError) {
@@ -56,16 +63,21 @@ function Page() {
       points={points.flatMap((_, i) => (ys[i] == null ? [] : [{ x: xOf(i), y: ys[i]! }]))} />
   );
 
+  // The header and the Sona panel speak only from the numbers: the newest reading, this week's count and spread.
+  const newest = all.flatMap(s => s.points.map(p => ({ s, p }))).sort((a, b) => +new Date(b.p.at) - +new Date(a.p.at))[0];
+  const week = since(all, now - 7 * DAY);
+  const weekCount = week.reduce((n, s) => n + s.points.length, 0);
+  const weekMain = week.find(s => s.kind === main?.kind) ?? week[0];
+  const addedToday = newest ? new Date(newest.p.at).toDateString() === new Date(now).toDateString() : false;
+  const insight = weekCount === 0
+    ? "No readings in the last 7 days."
+    : `${weekCount} ${weekCount === 1 ? "reading" : "readings"} this week. ${weekMain ? rangeWords(weekMain, weekMain.points) : ""}`.trim();
+
   return (
     <div className="rd">
-      <PageHeader title="Readings" lead="Numbers you measure at home" actions={<Button variant="primary" onClick={toForm}>Add a reading</Button>} />
-      {all.length ? (
-        <StatRow>
-          {all.slice(0, 4).map(s => {
-            const p = s.points.at(-1)!;
-            return <StatCard key={s.kind} title={s.label} value={`${p.value}${p.value2 != null ? `/${p.value2}` : ""}`} unit={s.unit} caption={when(p.at)} />;
-          })}
-        </StatRow>
+      <PageHeader title="Readings" lead={newest ? `Your last reading: ${newest.s.label.toLowerCase()} ${valueWords(newest.s, newest.p)}, ${when(newest.p.at)}.` : "No readings yet. Add your first one."} />
+      {newest ? (
+        <InsightCard label="Sona" meta="From your numbers, not medical advice" lead={insight} next={addedToday ? SHARE : { label: "Add today's reading", onAct: toForm }} />
       ) : null}
 
       <div className="rd-body">
@@ -77,6 +89,20 @@ function Page() {
                 {WINDOWS.map(d => <button key={d} type="button" aria-pressed={d === days} onClick={() => setDays(d)}>{d} days</button>)}
               </div>
             </div>
+            {main ? <p className="rd-calm">Each dot is one {main.label.toLowerCase()} reading you added, oldest on the left.</p> : null}
+            {all.length ? (
+              <dl className="rd-stats">
+                {all.map(s => {
+                  const change = changeWords(s.points);
+                  return (
+                    <div key={s.kind}>
+                      <dt>{s.label}</dt>
+                      <dd><strong>{valueWords(s, s.points.at(-1)!)}</strong>{changeLine(change, when(s.points.at(-2)?.at ?? s.points.at(-1)!.at), when(s.points.at(-1)!.at))}</dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            ) : null}
             {all.length > 1 ? (
               <div className="rd-kinds" role="group" aria-label="Which reading to show">
                 {all.map(s => <button key={s.kind} type="button" aria-pressed={s.kind === main?.kind} onClick={() => setPicked(s.kind)}>{s.label}</button>)}
@@ -101,21 +127,22 @@ function Page() {
           {log.length ? (
             <Card title="Recent readings">
               <ul className="rd-log">
-                {log.map(({ s, p }) => (
+                {(showAll ? log : log.slice(0, LOG_CAP)).map(({ s, p }) => (
                   <li key={p.id}>
                     <span className="rd-calm">{when(p.at)}</span>
                     <span>{s.label} <strong>{valueWords(s, p)}</strong></span>
                   </li>
                 ))}
               </ul>
+              {log.length > LOG_CAP && !showAll ? <Button className="rd-more" onClick={() => setShowAll(true)}>Show all {log.length}</Button> : null}
             </Card>
           ) : null}
         </div>
 
         <div className="rd-rail">
-          <AddForm />
+          <AddForm initialKind={newest?.s.kind} />
           <Card>
-            <p className="rd-calm">Your care team sees the readings you choose to share before a visit. <Link to="/care/follow-ups" className="link">Choose what to share</Link></p>
+            <p className="rd-calm">Your care team sees the readings you choose to share before a visit.{addedToday ? null : <> <Link to="/care/follow-ups" className="link">Choose what to share</Link></>}</p>
           </Card>
         </div>
       </div>
