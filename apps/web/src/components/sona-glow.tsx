@@ -1,14 +1,13 @@
-import { type CSSProperties, type RefObject, useEffect, useRef } from "react";
+import { type RefObject, useEffect, useRef } from "react";
 
 import { useSonaThinking } from "@/lib/sona";
 
 /** What the bar is doing: at rest, in use (focused or holding a draft), hearing the mic, or working on it. */
 export type GlowMode = "rest" | "awake" | "listening" | "thinking";
 
-// The phone apps' voice glow (apps/care/lib/voice-glow.tsx), the same dithering in GLSL: dots on a 3px grid, ordered
-// (Bayer 8x8). Here it is a halo around the bar's pill instead of a rise from the screen's edge: four soft lobes wave
-// along the bar and bloom with `level`; while Sona thinks they gather into one beam that sweeps side to side. `on`
-// fades it in and out. `pad` is the room around the pill inside the canvas: sides, below, above.
+// The phone apps' voice glow (apps/care/lib/voice-glow.tsx), the same shader in GLSL, drawn inside the bar: dots on a
+// 3px grid, ordered (Bayer 8x8) dithering, rising from the bar's bottom edge. Four soft lobes wave along it and bloom
+// with `level`; while Sona thinks they gather into one beam that sweeps side to side. `on` fades it in and out.
 const FRAGMENT = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -16,7 +15,6 @@ precision highp float;
 precision mediump float;
 #endif
 uniform vec2 res;
-uniform vec3 pad;
 uniform float t, level, think, on, pitch;
 uniform vec3 deep, mid, hot;
 
@@ -41,20 +39,11 @@ void main() {
   vec2 q = gl_FragCoord.xy;
   vec2 idx = floor(q / pitch);
   vec2 cell = (idx + 0.5) * pitch;
-  // Distance from the pill's edge; under the bar there is less room, so the halo is squeezed there.
-  vec2 lo = pad.xy, hi = res - pad.xz;
-  vec2 mid2 = 0.5 * (lo + hi), size = 0.5 * (hi - lo);
-  vec2 away = abs(cell - mid2) - vec2(size.x - size.y, 0.0);
-  float d = length(max(away, 0.0)) - size.y;
-  // Nothing behind the bar itself but a rim, which its glass blurs into a faint tint: the text stays on white.
-  if (d < -2.0 * pitch) { gl_FragColor = vec4(0.0); return; }
-  d = max(d, 0.0);
-  d *= mix(1.0, pad.z / pad.y, clamp((mid2.y - cell.y) / size.y, 0.0, 1.0));
   float x = cell.x / res.x;
-  float b = (x - (0.5 + 0.3 * sin(t * 1.5))) / 0.11;
-  float shape = min(mix(lobes(x) * (0.2 + 0.8 * level), exp(-b * b), think), 1.0);
-  float reach = pad.z * (0.25 + 0.75 * shape) * on;
-  float I = clamp(1.0 - d / max(reach, 0.001), 0.0, 1.0);
+  float y = cell.y / res.y;
+  float b = (x - (0.5 + 0.34 * sin(t * 1.5))) / 0.11;
+  float h = (mix(lobes(x) * (0.2 + 0.8 * level), exp(-b * b), think) + 0.08) * on;
+  float I = clamp(1.0 - y / max(h, 0.001), 0.0, 1.0);
   I *= I * 0.85;
   if (I <= bayer8(idx)) { gl_FragColor = vec4(0.0); return; }
   vec3 col = I < 0.5 ? mix(hot, mid, I * 2.0) : mix(mid, deep, I * 2.0 - 1.0);
@@ -68,17 +57,14 @@ const PALETTE = {
   pro: { deep: [0.141, 0.357, 0.8], mid: [0.42, 0.46, 0.92], hot: [0.62, 0.76, 0.95] },
   care: { deep: [0.145, 0.388, 0.922], mid: [0.62, 0.52, 0.945], hot: [0.78, 0.68, 0.975] },
 };
-// Where each mode settles: how lit, how far the halo reaches, and whether the lobes gather into the beam.
+// Where each mode settles: how lit, how tall, and whether the lobes gather into the beam.
 const TARGET: Record<GlowMode, { on: number; level: number; think: number }> = {
-  rest: { on: 0.7, level: 0.5, think: 0 },
-  awake: { on: 1, level: 0.9, think: 0 },
-  listening: { on: 1, level: 0.9, think: 0 },
-  thinking: { on: 1, level: 0.9, think: 1 },
+  rest: { on: 0.8, level: 0.25, think: 0 },
+  awake: { on: 1, level: 0.65, think: 0 },
+  listening: { on: 1, level: 0.65, think: 0 },
+  thinking: { on: 1, level: 0.65, think: 1 },
 };
 const PITCH = 3;
-// Room for the halo around the bar, in CSS px. Below is the gap between the bar and the window's edge.
-const PAD = { side: 56, below: 16, above: 56 };
-const PLACE: CSSProperties = { left: -PAD.side, top: -PAD.above, width: `calc(100% + ${2 * PAD.side}px)`, height: `calc(100% + ${PAD.above + PAD.below}px)` };
 const EASE = 4; // per second: a mode change settles in about a second
 
 function compile(gl: WebGLRenderingContext) {
@@ -102,7 +88,7 @@ function compile(gl: WebGLRenderingContext) {
 }
 
 /**
- * The dithered glow around the Sona bar. It rests as a still, faint halo of dots; wakes and waves while the bar is in
+ * The dithered glow inside the Sona bar. It rests as a still, faint rise of dots; wakes and waves while the bar is in
  * use; blooms with the voice (`level`, 0 to 1, a ref because it moves many times a second); and gathers into a
  * sweeping beam while Sona works on an answer. Frames are drawn only while something moves: at rest it holds one.
  * Decoration only: without WebGL nothing is drawn.
@@ -125,7 +111,7 @@ export function SonaGlow({ app, mode, level }: { app: "pro" | "care"; mode: Glow
     gl.uniform3fv(uniform("deep"), palette.deep);
     gl.uniform3fv(uniform("mid"), palette.mid);
     gl.uniform3fv(uniform("hot"), palette.hot);
-    const at = { res: uniform("res"), pad: uniform("pad"), t: uniform("t"), level: uniform("level"), think: uniform("think"), on: uniform("on"), pitch: uniform("pitch") };
+    const at = { res: uniform("res"), t: uniform("t"), level: uniform("level"), think: uniform("think"), on: uniform("on"), pitch: uniform("pitch") };
 
     const still = matchMedia("(prefers-reduced-motion: reduce)");
     const now = { ...TARGET.rest, on: 0 };
@@ -164,7 +150,6 @@ export function SonaGlow({ app, mode, level }: { app: "pro" | "care"; mode: Glow
       el.height = Math.round(el.clientHeight * scale);
       gl.viewport(0, 0, el.width, el.height);
       gl.uniform2f(at.res, el.width, el.height);
-      gl.uniform3f(at.pad, PAD.side * scale, PAD.below * scale, PAD.above * scale);
       gl.uniform1f(at.pitch, PITCH * scale);
       start();
     });
@@ -181,5 +166,5 @@ export function SonaGlow({ app, mode, level }: { app: "pro" | "care"; mode: Glow
     wake.current?.();
   }, [shown]);
 
-  return <canvas ref={canvas} className="sona-glow" style={PLACE} aria-hidden="true" />;
+  return <canvas ref={canvas} className="sona-glow" aria-hidden="true" />;
 }

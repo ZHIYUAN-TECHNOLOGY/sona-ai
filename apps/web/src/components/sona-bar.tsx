@@ -95,9 +95,15 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
   const glow: GlowMode = phase === "listening" ? "listening" : phase === "transcribing" ? "thinking" : focused || question ? "awake" : "rest";
 
   return (
-    <div className="sona-dock" onFocus={() => setFocused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
-    <SonaGlow app={app} mode={glow} level={level} />
-    <form ref={bar} className="sona-bar glass" data-phase={phase} onSubmit={send}>
+    <form
+      ref={bar}
+      className="sona-bar glass"
+      data-phase={phase}
+      onSubmit={send}
+      onFocus={() => setFocused(true)}
+      onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
+    >
+      <SonaGlow app={app} mode={glow} level={level} />
       <p className="sona-bar-status" data-error={error ? "" : undefined} aria-live="polite">{error || STATUS[phase]}</p>
       <input
         ref={input}
@@ -130,6 +136,5 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
         {sendIcon}
       </button>
     </form>
-    </div>
   );
 }
