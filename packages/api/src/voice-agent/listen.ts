@@ -4,7 +4,7 @@ import type { Models } from "../models";
  * Sona Care's ears in a live call (apps/server/src/agents/voice.ts). The phone streams 16 kHz PCM16 mono; this
  * finds where the patient's turn ends by itself, then sends that turn as WAV to our fine-tuned Manglish ASR
  * (Models.transcribe, box ②). The ASR reads whole utterances, not a stream, so the end of a turn is found here by
- * loudness: speech, then about 0.7 s of quiet. It has the Agents SDK's Transcriber shape (agents/voice), so
+ * loudness: speech, then half a second of quiet. It has the Agents SDK's Transcriber shape (agents/voice), so
  * withVoice runs one session per call and turns each utterance into an answer turn.
  */
 
@@ -27,9 +27,12 @@ export type TurnOptions = {
   /** Quiet after speech at which the turn so far is given out early (0: never), so reading it can start before it ends. */
   earlyMs?: number;
 };
-const DEFAULTS: Required<TurnOptions> = { speechDb: -40, minSpeechMs: 300, quietMs: 700, maxMs: 30_000, earlyMs: 0 };
+// quietMs: the wait every answer starts with. 700 until 6 Oct, when the user found the call slow to answer; 500 is what
+// voice assistants wait. A patient cut off mid-pause is not lost: going on stops Sona, and both halves reach Gemma as one
+// patient line (answer.ts, messagesFor).
+const DEFAULTS: Required<TurnOptions> = { speechDb: -40, minSpeechMs: 300, quietMs: 500, maxMs: 30_000, earlyMs: 0 };
 /** The ear reads a turn from this much quiet on; the turn still ends at quietMs (SonaTranscriber). */
-const EARLY_MS = 300;
+const EARLY_MS = 200;
 
 export type TurnEvent = { type: "start" } | { type: "early"; pcm: Int16Array } | { type: "end"; pcm: Int16Array };
 
@@ -120,7 +123,7 @@ export class SonaTranscriber {
   ) {}
 
   createSession(hooks: SessionHooks = {}) {
-    // The turn is read from its first 300 ms of quiet, though it ends at 700: when nothing more is said, its words are
+    // The turn is read from its first 200 ms of quiet, though it ends at 500: when nothing more is said, its words are
     // ready, or nearly, as it ends (the ASR's half second came after the end before, 4 Oct). A patient who goes on
     // makes that reading a waste, and the turn is read again whole.
     const turns = new TurnDetector({ earlyMs: EARLY_MS, ...this.options });
