@@ -1,7 +1,17 @@
 // @ts-expect-error apps/web has no bun types yet (no new dependencies in this change); add @types/bun and drop this line.
 import { expect, test } from "bun:test";
 
-import { isFlagged, leadOf, numberOf, trendOf, type Result } from "./model";
+import { countsOf, isFlagged, leadOf, numberOf, statusOf, trendOf, type Result } from "./model";
+
+test("statusOf reads the flag; countsOf leaves waiting results out of seen", () => {
+  expect([statusOf(undefined), statusOf("normal"), statusOf("High"), statusOf("L"), statusOf("abnormal")]).toEqual(["Normal", "Normal", "Above", "Below", "Check"]);
+  const c = countsOf([
+    { id: "a", test: "K", at: "2026-01-02", released: true, value: "5.9", flag: "high" },
+    { id: "b", test: "Na", at: "2026-01-02", released: true, value: "140" },
+    { id: "c", test: "Hb", at: "2026-01-03", released: false },
+  ]);
+  expect([c.seen, c.inRange, c.attention.length, c.waiting]).toEqual([2, 1, 1, 1]);
+});
 
 const hb = (id: string, at: string, value: string, flag?: string): Result => ({ id, test: "Haemoglobin", at, released: true, value, unit: "g/dL", flag });
 const waiting: Result = { id: "w", test: "Potassium", at: "2026-10-05T02:00:00.000Z", released: false };
