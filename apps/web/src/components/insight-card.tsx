@@ -1,8 +1,8 @@
-import { Link, type LinkProps } from "@tanstack/react-router";
+import type { LinkProps } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { Icon, type IconName } from "./icon";
-import type { Tone } from "./primitives";
+import { Anchor, type Target, type Tone } from "./primitives";
 import "../styles/components.css";
 import "../styles/data.css";
 
@@ -10,7 +10,9 @@ type Next = {
   label: string;
   /** The suggested step, in one line, beside the action. */
   step?: string;
-} & ({ onAct: () => void } | { to: LinkProps["to"] });
+  /** Shows the action as busy and stops a second press. */
+  pending?: boolean;
+} & ({ onAct: () => void } | (Target & ({ to: LinkProps["to"] } | { href: string })));
 
 type Props = {
   /** One line that says where things stand. */
@@ -67,9 +69,9 @@ export function InsightCard({ lead, next, sources, tone = "info", children, labe
               {next.step}
             </p>
           ) : null}
-          {"to" in next
-            ? <Link className="btn btn-primary insight-act" to={next.to}>{next.label}</Link>
-            : <button type="button" className="btn btn-primary insight-act" onClick={next.onAct}>{next.label}</button>}
+          {"onAct" in next
+            ? <button type="button" className="btn btn-primary insight-act" onClick={next.onAct} disabled={next.pending} aria-busy={next.pending || undefined} data-pending={next.pending || undefined}>{next.label}</button>
+            : <Anchor className="btn btn-primary insight-act" to={next.to} search={next.search} params={next.params} href={next.href} aria-busy={next.pending || undefined} data-pending={next.pending || undefined}>{next.label}</Anchor>}
         </div>
       ) : null}
       {sources === undefined ? null : (

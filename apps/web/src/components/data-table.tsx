@@ -42,10 +42,25 @@ export function PersonCell({ name, detail, size = "md" }: { name: string; detail
     <span className="cell-person">
       <Avatar name={name} size={size} />
       <span className="cell-person-text">
-        <span className="cell-person-name">{name}</span>
-        {detail ? <span className="cell-muted">{detail}</span> : null}
+        <span className="cell-person-name" title={name}>{name}</span>
+        {detail ? <span className="cell-muted" title={typeof detail === "string" ? detail : undefined}>{detail}</span> : null}
       </span>
     </span>
+  );
+}
+
+/** Long text in a cell: at most two lines, then an ellipsis; full text in `title`. */
+export function TextCell({ children }: { children: ReactNode }) {
+  return <span className="cell-clamp" title={typeof children === "string" ? children : undefined}>{children}</span>;
+}
+
+/** The `toolbar` layout: `children` (tabs, filters) left, `end` (search, icon buttons) right; wraps under 900px. */
+export function TableToolbar({ children, end }: { children?: ReactNode; end?: ReactNode }) {
+  return (
+    <div className="table-toolbar-row">
+      <div className="table-toolbar-start">{children}</div>
+      {end ? <div className="table-toolbar-end">{end}</div> : null}
+    </div>
   );
 }
 
@@ -70,6 +85,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowOpen, rowAction, empt
   return (
     <div className="table-wrap">
       {toolbar ? <div className="table-toolbar">{toolbar}</div> : null}
+      <div className="table-scroll">
       <table className="table" aria-busy={loading ? true : undefined}>
         <thead>
           <tr>
@@ -86,7 +102,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowOpen, rowAction, empt
                 </th>
               );
             })}
-            {rowAction ? <th scope="col"><span className="visually-hidden">Action</span></th> : null}
+            {rowAction ? <th scope="col" className="table-action"><span className="visually-hidden">Action</span></th> : null}
           </tr>
         </thead>
         <tbody>
@@ -117,6 +133,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowOpen, rowAction, empt
           ))}
         </tbody>
       </table>
+      </div>
       {loading ? <p className="visually-hidden" role="status">Loading</p> : null}
       {count || footer ? (
         <div className="table-foot">
