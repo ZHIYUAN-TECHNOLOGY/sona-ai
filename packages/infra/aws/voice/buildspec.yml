@@ -1,4 +1,5 @@
-# Builds the image into ECR and copies the three pinned weight sets from Hugging Face to S3 as asr/, tts/ and rerank/.
+# Builds the image into ECR and copies the four pinned weight sets from Hugging Face to S3 as asr/, tts/, rerank/ and
+# diar/ (who spoke when; without it the box still starts and only writes speech down).
 # HF_TOKEN (two of the repos are private) comes from Parameter Store: /sona/hf-read-token.
 version: 0.2
 env:
@@ -8,8 +9,8 @@ phases:
   build:
     commands:
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR
-      - docker build -t $ECR/sona/voice:2 .
-      - docker push $ECR/sona/voice:2
+      - docker build -t $ECR/sona/voice:3 .
+      - docker push $ECR/sona/voice:3
       - pip install -q huggingface_hub
       - |
         python - <<'PY'
@@ -18,6 +19,8 @@ phases:
         d("zhiyuantechnology/sona-voxcpm2-malaysian", revision="bb2b950fe94f3901bf2bcb562e51a35216babee7", local_dir="/tmp/w/tts", ignore_patterns=[".*"])
         d("BAAI/bge-reranker-v2-m3", revision="953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e", local_dir="/tmp/w/rerank",
           allow_patterns=["*.json", "model.safetensors", "sentencepiece.bpe.model", "tokenizer*"])
+        d("nvidia/Nemotron-3-Diarization", revision="f667ed73aee57d40cc39428eb768b4fd87a0a29e", local_dir="/tmp/w/diar",
+          allow_patterns=["config.json", "model.safetensors", "processor_config.json"])
         PY
       - du -sh /tmp/w/*
       - aws s3 sync /tmp/w s3://$BUCKET/voice/1/ --only-show-errors --exclude ".cache/*" --exclude "*/.cache/*"
