@@ -3,12 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { InsightCard, InsightRow } from "@/components/insight-card";
+import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Avatar, Chip } from "@/components/primitives";
-import { RightRail, WithRail } from "@/components/rail";
-import { DraftChecks, DraftSources, ReplyEditor } from "@/features/messages/draft";
-import { ago, labelTone } from "@/features/messages/format";
+import { Chip, ListCard, ListRow, SearchField, Tabs } from "@/components/primitives";
+import { ReplyEditor } from "@/features/messages/draft";
+import { ago, triageBy } from "@/features/messages/format";
 import { Thread } from "@/features/messages/thread";
 import { orpc } from "@/lib/orpc";
 
@@ -16,24 +15,40 @@ import "@/styles/pages/messages.css";
 
 export const Route = createFileRoute("/pro/_app/messages")({ component: Page });
 
-/** The right rail: Sona's drafted reply with its sources, sent only by the clinician who has read it. */
-function ReplyRail({ patientId, waiting }: { patientId: string; waiting: boolean }) {
+/** The page's one Sona panel: the drafted reply with why and what it stands on, sent only by the clinician who has read it. */
+function ReplyPanel({ patientId, name, waiting }: { patientId: string; name: string; waiting: boolean }) {
   const draft = useQuery(orpc.messages.draft.queryOptions({ input: { patientId }, enabled: waiting }));
-  if (waiting && draft.isPending) return <p className="msg-meta">Sona is drafting…</p>;
   const d = draft.data ?? null;
+  const drafting = waiting && draft.isPending;
   return (
-    <>
-      {draft.error ? <p className="msg-error" role="alert">No draft: {draft.error.message}. Write the reply yourself.</p> : null}
-      {d ? <><DraftChecks draft={d} /><DraftSources draft={d} /></> : null}
-      <ReplyEditor key={d?.messageId ?? patientId} patientId={patientId} draft={d} />
-    </>
+    <InsightCard
+      label={d ? "Draft reply" : "Reply"}
+      meta={d && d.source !== "model" ? <Chip tone="amber">Sample</Chip> : undefined}
+      tone={d?.label === "urgent" ? "urgent" : "info"}
+      title={d ? `Sona drafted a reply to ${name}` : `Reply to ${name}`}
+      lead={drafting ? "Sona is drafting…" : d ? d.reason : draft.error ? `No draft: ${draft.error.message}. Write the reply yourself.` : waiting ? "No draft for this message. Write the reply yourself." : "Nothing is waiting here. You can still write."}
+      evidence={d
+        ? [
+            { text: "The patient's message" },
+            { text: <>Triage: {d.label} · {triageBy(d.triagedBy)}</> },
+            { text: d.source === "model" ? `Drafted by Sona (${d.model})` : d.waking ? "The model is waking; this is a rule-based sample draft" : "Rule-based sample draft, not a model's" },
+          ]
+        : undefined}
+      sources={d ? 2 : undefined}
+    >
+      {drafting ? null : <ReplyEditor key={d?.messageId ?? patientId} patientId={patientId} draft={d} />}
+    </InsightCard>
   );
 }
+
+type Filter = "waiting" | "all";
 
 function Page() {
   const { me } = Route.useRouteContext();
   const inbox = useQuery(orpc.messages.inbox.queryOptions());
   const [picked, setPicked] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [q, setQ] = useState("");
 
   if (!can(me.role, "messages.inbox")) return <><PageHeader title="Messages" /><EmptyState>Your role cannot see the care inbox.</EmptyState></>;
   if (inbox.isPending) return <><PageHeader title="Messages" /><EmptyState>Loading messages…</EmptyState></>;
@@ -43,55 +58,62 @@ function Page() {
   if (!threads.length) return <><PageHeader title="Messages" /><EmptyState>No patient messages yet. They arrive from Sona Care.</EmptyState></>;
 
   // Sorted by the server: waiting first, urgent first.
-  const selected = threads.find(t => t.patientId === picked) ?? threads[0]!;
   const waiting = threads.filter(t => !t.handled);
-  const urgent = waiting.filter(t => t.label === "urgent");
+  const unread = threads.reduce((n, t) => n + t.unread, 0);
   const oldest = waiting.reduce<(typeof waiting)[number] | undefined>((a, t) => (!a || new Date(t.waitingSince!) < new Date(a.waitingSince!) ? t : a), undefined);
-  const canReply = can(me.role, "messages.reply");
+  const needle = q.trim().toLowerCase();
+  const visible = (filter === "waiting" ? waiting : threads).filter(t => !needle || `${t.name} ${t.lastText ?? ""}`.toLowerCase().includes(needle));
+  const selected = visible.find(t => t.patientId === picked) ?? visible[0];
+  const lead = [`${unread} unread`, `${waiting.length} waiting for a reply`, oldest ? `oldest ${ago(oldest.waitingSince!, now)}` : null].filter(Boolean).join(" · ");
 
   return (
     <>
-      <PageHeader title="Messages" lead={`${waiting.length} waiting for a reply · ${threads.length} threads`} />
-      <InsightRow>
-        {urgent.length
-          ? <InsightCard tone="urgent" lead={`${urgent.length} urgent ${urgent.length === 1 ? "message is" : "messages are"} waiting: ${urgent[0]!.name} first`} sources={urgent.length} next={{ label: `Open ${urgent[0]!.name}`, onAct: () => setPicked(urgent[0]!.patientId) }} />
-          : <InsightCard tone="done" lead="No urgent messages are waiting" sources={threads.length} />}
-        {oldest
-          ? <InsightCard tone="soon" lead={`${oldest.name} has waited longest: ${ago(oldest.waitingSince!, now)}`} sources={1} next={{ label: "Open the thread", onAct: () => setPicked(oldest.patientId) }} />
-          : null}
-      </InsightRow>
-      <WithRail
-        rail={(
-          <RightRail label="Reply">
-            {canReply
-              ? <ReplyRail key={selected.patientId} patientId={selected.patientId} waiting={!selected.handled} />
-              : <p className="msg-meta">Only a doctor or a nurse replies.</p>}
-          </RightRail>
-        )}
-      >
-        <div className="msg-panes">
-          <nav className="msg-list" aria-label="Threads">
-            {threads.map(t => (
-              <button key={t.patientId} type="button" className="msg-row" aria-current={t.patientId === selected.patientId ? "true" : undefined} onClick={() => setPicked(t.patientId)}>
-                <Avatar name={t.name} />
-                <span className="msg-row-body">
-                  <span className="msg-row-top">
-                    <strong>{t.name}</strong>
-                    {t.unread ? <span className="msg-unread" aria-label={`${t.unread} unread`}>{t.unread}</span> : null}
-                    <span className="msg-meta">{ago(t.lastAt, now)}</span>
-                  </span>
-                  <span className="msg-row-text">{t.lastFrom === "patient" ? "" : "Care team: "}{t.lastPhoto ? `Photo · ${t.lastPhoto}` : t.lastText}</span>
-                  <span className="msg-row-top">
-                    {t.handled ? <Chip tone="done">Handled</Chip> : <Chip tone={labelTone(t.label)}>{t.label ?? "waiting"}</Chip>}
-                    {t.bed ? <span className="msg-meta">Bed {t.bed}</span> : null}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </nav>
-          <Thread key={selected.patientId} patientId={selected.patientId} canResolve={can(me.role, "messages.resolveMedicinePhoto")} />
+      <PageHeader title="Messages" lead={lead} />
+      <div className="msg-panes">
+        <div className="msg-inbox">
+          <Tabs label="Threads" value={filter} onChange={setFilter} tabs={[{ id: "all", label: "All", count: threads.length }, { id: "waiting", label: "Waiting", count: waiting.length }]} />
+          <SearchField label="Search patients or messages" placeholder="Search patients or messages" value={q} onChange={e => setQ(e.target.value)} />
+          {visible.length
+            ? (
+              <ListCard>
+                {visible.map(t => (
+                  <ListRow
+                    key={t.patientId}
+                    avatar={t.name}
+                    selected={t.patientId === selected?.patientId}
+                    onClick={() => setPicked(t.patientId)}
+                    title={(
+                      <span className="msg-title">
+                        <strong>{t.name}</strong>
+                        {t.unread ? <span className="msg-unread" role="img" aria-label={`${t.unread} unread`} /> : null}
+                        <span className="msg-meta">{ago(t.lastAt, now)}</span>
+                      </span>
+                    )}
+                    caption={(
+                      <span className="msg-preview">
+                        <span className="msg-row-text">{t.lastFrom === "patient" ? "" : "Care team: "}{t.lastPhoto ? `Photo · ${t.lastPhoto}` : t.lastText}</span>
+                        {!t.handled && t.label === "urgent" ? <Chip tone="urgent">Urgent</Chip> : null}
+                      </span>
+                    )}
+                  />
+                ))}
+              </ListCard>
+            )
+            : <EmptyState>{needle ? "No thread matches that search." : "No one is waiting for a reply."}</EmptyState>}
         </div>
-      </WithRail>
+        {selected
+          ? (
+            <>
+              <Thread key={selected.patientId} patientId={selected.patientId} canResolve={can(me.role, "messages.resolveMedicinePhoto")} />
+              <aside className="msg-reply" aria-label="Reply">
+                {can(me.role, "messages.reply")
+                  ? <ReplyPanel key={selected.patientId} patientId={selected.patientId} name={selected.name} waiting={!selected.handled} />
+                  : <p className="msg-meta">Only a doctor or a nurse replies.</p>}
+              </aside>
+            </>
+          )
+          : null}
+      </div>
     </>
   );
 }
