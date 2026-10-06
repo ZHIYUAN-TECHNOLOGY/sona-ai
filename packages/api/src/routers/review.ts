@@ -109,6 +109,7 @@ export const careVisitSummariesRouter = {
     const rows = await context.db.select().from(visitSummaries)
       .where(and(eq(visitSummaries.patientId, context.patientId), eq(visitSummaries.hospitalId, context.hospitalId), eq(visitSummaries.status, "approved")))
       .orderBy(desc(visitSummaries.approvedAt));
-    return rows.map(r => ({ id: r.id, at: r.approvedAt!, text: r.approvedText ?? r.text, whatChanged: r.whatChanged }));
+    // `at` is when the note was written (the visit), not when the summary was approved: the patient reads it as the visit's date.
+    return rows.map(r => ({ id: r.id, at: r.createdAt, text: r.approvedText ?? r.text, whatChanged: r.whatChanged }));
   }),
 };
