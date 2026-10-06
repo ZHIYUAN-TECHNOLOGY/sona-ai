@@ -48,7 +48,12 @@ function Page() {
 
   return (
     <div className="vs-page">
-      <PageHeader title="Visit summaries" lead={LEAD} actions={<Button variant="primary" icon="message" to="/care/messages">Message your care team</Button>} />
+      <PageHeader title="Visit summaries" lead={LEAD} actions={
+        <>
+          <Button variant="secondary" icon="download" onClick={() => window.print()}>Download PDF</Button>
+          <Button variant="primary" icon="message" to="/care/messages">Message your care team</Button>
+        </>
+      } />
       <div className="vs-split" data-several={several || undefined}>
         {several ? (
           <ListCard title="Your visits">

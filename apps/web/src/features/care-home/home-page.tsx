@@ -19,7 +19,7 @@ const dayOf = (d: Date) => d.toLocaleDateString(lang, { weekday: "long", day: "n
 const shortDay = (d: Date) => d.toLocaleDateString(lang, { day: "numeric", month: "short", timeZone: MALAYSIA });
 /** A row title with a small chip above it that says what kind of thing it is. */
 function Over({ chip, tone = "neutral", children }: { chip: string; tone?: ChipTone; children: ReactNode }) {
-  return <span className="care-home-over"><Chip tone={tone}>{chip}</Chip><span>{children}</span></span>;
+  return <span className="care-home-over"><span>{children}</span>{tone === "neutral" ? null : <Chip tone={tone}>{chip}</Chip>}</span>;
 }
 
 export function CareHome({ firstName }: { firstName: string }) {
@@ -140,7 +140,7 @@ export function CareHome({ firstName }: { firstName: string }) {
           ) : null}
           {lastMessage ? (
             <ListRow to="/care/messages" icon="message" title={<Over chip="Message">{lastMessage.from === "patient" ? "You wrote" : "From your care team"}</Over>}
-              caption={<span className="care-home-clip">{lastMessage.text}</span>} trailing={<span className="care-home-act">{lastMessage.from === "patient" ? "View" : "Reply"}</span>} />
+              caption={lastMessage.text} trailing={<span className="care-home-act">{lastMessage.from === "patient" ? "View" : "Reply"}</span>} />
           ) : null}
           {!visit && !waiting && !lastAnswered && !nextCheckIn && !lastMessage ? (
             <li><EmptyState icon="calendar" title="Nothing coming up">Visits, check-ins and messages show here.</EmptyState></li>

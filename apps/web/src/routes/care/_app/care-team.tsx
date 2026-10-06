@@ -27,7 +27,7 @@ function Page() {
           <RightRail label="How to reach us">
             <Card title="How to reach us">
               {hospital ? <p className="ct-hospital">{hospital}</p> : null}
-              <p className="ct-note">Write to your care team in Messages. They reply within a few hours.</p>
+              <p className="ct-note">Write to your care team in Messages.</p>
             </Card>
             <section className="ct-urgent" aria-labelledby="ct-urgent-title">
               <h2 id="ct-urgent-title">In an emergency</h2>
