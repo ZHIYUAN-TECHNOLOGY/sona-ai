@@ -1,7 +1,7 @@
 .ward-stack { display: grid; gap: var(--space-2); }
 .ward-blocker { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .ward-waits { display: flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
-.ward-waits > :first-child { display: block; max-width: 15ch; overflow: hidden; text-overflow: ellipsis; }
+.ward-waits > :first-child { display: block; max-width: 20ch; overflow: hidden; text-overflow: ellipsis; }
 .ward-bed { display: grid; white-space: nowrap; max-width: 17ch; }
 .ward-bed > * { overflow: hidden; text-overflow: ellipsis; }
 .ward-owners { display: block; max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

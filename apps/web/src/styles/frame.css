@@ -121,9 +121,9 @@
 
 /* Atmosphere: a faint blue wash and a corner of halftone behind the page, so glass has something to sit on.
    It stays put while the page scrolls over it. */
-:is(.pro, .care).frame { background: radial-gradient(60rem 30rem at 0% 0%, color-mix(in srgb, var(--blue) 16%, transparent), transparent 70%), var(--canvas-deep); }
-:is(.pro, .care).frame > .frame-main { background: radial-gradient(52rem 24rem at 100% 0%, color-mix(in srgb, var(--blue) 9%, transparent), transparent 72%), var(--canvas); }
-:is(.pro, .care) .frame-main::before { content: ""; position: absolute; inset: 0 0 auto auto; width: min(46rem, 70%); height: 15rem; pointer-events: none; color: var(--blue); background-image: var(--dither); background-size: var(--dither-size); opacity: 0.2; mask-image: radial-gradient(100% 100% at 100% 0%, #000, transparent 68%); -webkit-mask-image: radial-gradient(100% 100% at 100% 0%, #000, transparent 68%); }
+:is(.pro, .care).frame { background: radial-gradient(60rem 32rem at 0% 0%, color-mix(in srgb, var(--blue) 24%, transparent), transparent 70%), radial-gradient(40rem 26rem at 0% 100%, rgb(150 112 255 / 0.14), transparent 70%), var(--canvas-deep); }
+:is(.pro, .care).frame > .frame-main { background: radial-gradient(56rem 26rem at 100% 0%, color-mix(in srgb, var(--blue) 17%, transparent), transparent 72%), radial-gradient(44rem 30rem at 0% 100%, rgb(150 112 255 / 0.1), transparent 70%), radial-gradient(36rem 24rem at 60% 55%, color-mix(in srgb, var(--blue) 6%, transparent), transparent 70%), var(--canvas); }
+:is(.pro, .care) .frame-main::before { content: ""; position: absolute; inset: 0 0 auto auto; width: min(52rem, 78%); height: 18rem; pointer-events: none; color: var(--blue); background-image: var(--dither); background-size: var(--dither-size); opacity: 0.3; mask-image: radial-gradient(100% 100% at 100% 0%, #000, transparent 68%); -webkit-mask-image: radial-gradient(100% 100% at 100% 0%, #000, transparent 68%); }
 :is(.pro, .care) .frame-scroll { position: relative; }
 /* The sidebar is glass over the shell's wash. */
 :is(.pro, .care).frame > .frame-side { background: var(--glass-float); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }

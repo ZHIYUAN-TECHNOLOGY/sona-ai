@@ -7,6 +7,7 @@ import { useState } from "react";
 import { LineChart } from "@/components/charts";
 import type { IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
+import { Marked } from "@/components/marked";
 import { EmptyState, PageHeader, PatientStrip } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
@@ -158,10 +159,10 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
             ) : null}
           <Card title="History">
             <dl className="po-history">
-              <div><dt>Presenting complaint</dt><dd>{patient.complaint || "Not recorded."}</dd></div>
-              <div><dt>Medical history</dt><dd>{patient.history?.length ? patient.history.join(", ") : "None recorded."}</dd></div>
-              <div><dt>Family history</dt><dd>{patient.family || "None recorded."}</dd></div>
-              <div><dt>Social history</dt><dd>{patient.social || "None recorded."}</dd></div>
+              <div><dt>Presenting complaint</dt><dd><Marked text={patient.complaint || "Not recorded."} /></dd></div>
+              <div><dt>Medical history</dt><dd><Marked text={patient.history?.length ? patient.history.join(", ") : "None recorded."} /></dd></div>
+              <div><dt>Family history</dt><dd><Marked text={patient.family || "None recorded."} /></dd></div>
+              <div><dt>Social history</dt><dd><Marked text={patient.social || "None recorded."} /></dd></div>
             </dl>
           </Card>
           </WithRail>

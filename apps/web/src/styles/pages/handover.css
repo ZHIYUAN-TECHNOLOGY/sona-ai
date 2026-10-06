@@ -30,3 +30,7 @@
 .ho-more dd li::before { content: ""; position: absolute; left: 0; top: 0.6em; inline-size: 0.25rem; block-size: 0.25rem; border-radius: 50%; background: var(--muted); }
 .ho-more summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .ho-more[open] summary { font-weight: 600; }
+/* Toolbar for the rows in view: tick all, the watch list only, open or fold all; the colour key sits at the end. */
+.ho-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin: 0 calc(var(--pad-card) * -1) var(--space-2); padding: var(--space-2) var(--pad-card); border-block: 1px solid var(--hairline); background: color-mix(in srgb, var(--fill-field) 55%, transparent); }
+.ho-bulk-pick { display: inline-flex; align-items: center; gap: var(--space-3); margin-right: var(--space-2); font-size: var(--text-small); font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; }
+.ho-bulk .mark-key { margin-left: auto; }
