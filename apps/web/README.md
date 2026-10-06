@@ -299,6 +299,7 @@ Empty `points` draws the chart's own empty state.
 ### Frame, Sona bar and navigation (already mounted, do not render)
 
 - `Frame({ app, brand, groups, who, name, instead })` from `@/components/frame` and `SonaBar({ app }: { app: "pro" | "care" })` from `@/components/sona-bar` are drawn by the `_app` layout.
+- `SonaGlow` (`@/components/sona-glow`) is the dithered halo around the Sona bar, drawn by `SonaBar` in both apps: still at rest, waving while the bar is in use, blooming with the voice, a sweeping beam while Sona thinks. It is the frame's one moving halftone; do not add another.
 - `@/nav`: `NavItem = { to: string; label: string; icon: IconName; count?: number; needs?: string }`, `NavGroup = { label: string; items: NavItem[] }`, `PRO_NAV`, `CARE_NAV`, `navFor(role, groups = PRO_NAV): NavGroup[]`.
 
 ## Page recipe

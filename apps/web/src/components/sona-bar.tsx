@@ -5,6 +5,7 @@ import { type Recording, startRecording } from "@/lib/recorder";
 import { plain, useSonaAsk } from "@/lib/sona";
 import { toBase64, WAV_HEADER, WAV_RATE } from "@/lib/wav";
 
+import { type GlowMode, SonaGlow } from "./sona-glow";
 import "@/styles/sona-bar.css";
 
 type Phase = "idle" | "listening" | "transcribing";
@@ -30,7 +31,9 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState("");
+  const [focused, setFocused] = useState(false);
   const bar = useRef<HTMLFormElement>(null);
+  const level = useRef(0);
   const input = useRef<HTMLInputElement>(null);
   const recording = useRef<Promise<Recording> | null>(null);
   const busy = useRef(false);
@@ -42,8 +45,11 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
     if (recording.current || busy.current) return;
     setError("");
     setPhase("listening");
-    // The level moves a CSS variable, not state: it changes many times a second.
-    const started = startRecording(level => bar.current?.style.setProperty("--level", level.toFixed(2)));
+    // The level moves a CSS variable and a ref (the glow reads it), not state: it changes many times a second.
+    const started = startRecording(heard => {
+      level.current = heard;
+      bar.current?.style.setProperty("--level", heard.toFixed(2));
+    });
     recording.current = started;
     // Refused or no microphone while still holding: say so at once rather than on release.
     started.catch(e => {
@@ -86,7 +92,11 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
     setText("");
   }
 
+  const glow: GlowMode = phase === "listening" ? "listening" : phase === "transcribing" ? "thinking" : focused || question ? "awake" : "rest";
+
   return (
+    <div className="sona-dock" onFocus={() => setFocused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
+    <SonaGlow app={app} mode={glow} level={level} />
     <form ref={bar} className="sona-bar glass" data-phase={phase} onSubmit={send}>
       <p className="sona-bar-status" data-error={error ? "" : undefined} aria-live="polite">{error || STATUS[phase]}</p>
       <input
@@ -120,5 +130,6 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
         {sendIcon}
       </button>
     </form>
+    </div>
   );
 }
