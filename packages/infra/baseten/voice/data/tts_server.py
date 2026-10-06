@@ -54,8 +54,10 @@ class Speak(BaseModel):
     cfg_value: float = 2.0  # the settings the round-4 listening test was rated on (docs/tts-training.md)
 
 
+# A line may run to 1,500 steps (4 minutes of sound; a part is a sentence or two): the engine's own 2,000, with the
+# reference clip and the words before it, is over the 2,048 this box gives a line, and it refuses the request.
 def said(s: Speak):
-    return voice.generate(target_text=s.text, cfg_value=s.cfg_value, ref_audio_latents=anchors[lang_of(s.text)], seed=SEED)
+    return voice.generate(target_text=s.text, cfg_value=s.cfg_value, ref_audio_latents=anchors[lang_of(s.text)], seed=SEED, max_generate_length=1500)
 
 
 # MP3, not WAV: about 90 kbps against 768 for 48 kHz WAV (49 KB instead of 420 for 4.5 s), so a part crosses from the

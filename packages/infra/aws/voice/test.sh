@@ -2,10 +2,11 @@
 # Box ② on SageMaker, Malaysia: bring the endpoint up on one L4, try its jobs (write down speech, say who said what
 # across two parts, speak a line, rerank), and take it down again so nothing is left billing.
 # Usage: AWS_PROFILE=sona bash test.sh <speech.wav> [more.wav ...]   (image and weights come from buildspec.yml)
+# N=<name> tries it under another endpoint name, so an endpoint someone is using (sona-voice) is neither replaced nor deleted.
 set -u
 export AWS_DEFAULT_REGION=ap-southeast-5 AWS_SDK_UA_APP_ID=AWSSkill-SageMaker
 A=$(aws sts get-caller-identity --query Account --output text); B="sona-ai-models-${A}-apse5"
-N=sona-voice; TYPE=${TYPE:-ml.g6.2xlarge}; OUT=${OUT:-/tmp/sona-voice-test}; mkdir -p "$OUT"
+export N=${N:-sona-voice}; TYPE=${TYPE:-ml.g6.2xlarge}; OUT=${OUT:-/tmp/sona-voice-test}; mkdir -p "$OUT"
 down() {
   # An endpoint cannot be deleted while it is Creating: wait for it to settle (InService or Failed) first.
   until [ "$(aws sagemaker describe-endpoint --endpoint-name $N --query EndpointStatus --output text 2>/dev/null)" != Creating ]; do sleep 15; done
@@ -33,9 +34,9 @@ echo "endpoint $S on $TYPE after $(( ($(date +%s) - T0) / 60 )) min"
 [ "$S" = InService ] || { aws logs tail /aws/sagemaker/Endpoints/$N --since 1h 2>/dev/null | grep -vE 'Warning|deprecated' | tail -30 | cut -c1-260; exit 1; }
 call() {  # call <content-type> <body file> <out file>: seconds taken
   python3 - "$@" <<'PY'
-import subprocess, sys, time
+import os, subprocess, sys, time
 t = time.time()
-r = subprocess.run(["aws", "sagemaker-runtime", "invoke-endpoint", "--endpoint-name", "sona-voice", "--content-type", sys.argv[1], "--body", "fileb://" + sys.argv[2], sys.argv[3]], capture_output=True, text=True)
+r = subprocess.run(["aws", "sagemaker-runtime", "invoke-endpoint", "--endpoint-name", os.environ["N"], "--content-type", sys.argv[1], "--body", "fileb://" + sys.argv[2], sys.argv[3]], capture_output=True, text=True)
 print(f"{time.time() - t:.1f} s" if r.returncode == 0 else "FAILED " + r.stderr.strip()[-300:])
 PY
 }
