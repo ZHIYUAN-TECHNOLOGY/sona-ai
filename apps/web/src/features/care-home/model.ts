@@ -43,3 +43,9 @@ export function nextStep<C extends CheckIn, V extends Visit>(doses: DayDose[], c
 
 /** "today", "tomorrow", "in 5 days". */
 export const inDaysWords = (n: number) => (n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`);
+
+/** "morning" before noon, "afternoon" before 6 pm, else "evening": by the hospital's clock in Malaysia. */
+export const partOfDay = (now: Date) => {
+  const hour = (now.getUTCHours() + 8) % 24;
+  return hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+};
