@@ -1,0 +1,15 @@
+/* Review queue: the after-visit summary card. Reply cards reuse messages.css. */
+.rv-h { margin: var(--space-3) 0 var(--space-1); color: var(--muted); font-size: var(--text-sm); font-weight: 600; }
+.rv-text { margin: 0; white-space: pre-wrap; }
+.rv-text a { color: var(--blue); font-weight: 600; text-decoration: none; }
+.rv-text a:hover, .rv-text a:focus-visible { text-decoration: underline; }
+.rv-list { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); }
+.rv-changed, .rv-sources { margin: 0; padding-left: var(--space-4); font-size: var(--text-sm); }
+.rv-sources { color: var(--muted); }
+.rv-sources li { padding: 2px var(--space-1); border-radius: var(--radius-sm); }
+.rv-sources li[aria-current] { background: var(--blue-wash); color: var(--ink); }
+.rv-confirm { padding: var(--space-3); border-radius: var(--radius-sm); background: var(--tone-wash); }
+.rv-confirm p { margin: 0 0 var(--space-2); }
+.rv-done { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.rv-done > li { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--tone-wash); }
+.rv-done .rv-list { margin: var(--space-2) 0 0; }
