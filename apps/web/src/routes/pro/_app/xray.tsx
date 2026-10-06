@@ -3,12 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
-import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Chip, Field } from "@/components/primitives";
+import { Icon } from "@/components/icon";
+import { InsightCard } from "@/components/insight-card";
+import { PageHeader } from "@/components/page";
+import { Button, Card, Chip, Field, ListCard, ListRow, Skeleton } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { boxStyle, messageOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
-import "@/styles/pages/library.css";
+import "@/styles/pages/xray.css";
 
 export const Route = createFileRoute("/pro/_app/xray")({ component: Page });
 
@@ -57,65 +59,151 @@ function Page() {
   const all = findings.data ?? [];
   const onImage = data ? all.filter(f => f.imageKey === data.key && f.status !== "dismissed") : [];
 
+  const mayDetect = can(me.role, "findings.detect");
+  const mayDecide = can(me.role, "findings.track");
+  const track = useMutation(orpc.findings.track.mutationOptions({ onSuccess: refresh }));
+  const dismiss = useMutation(orpc.findings.dismiss.mutationOptions({ onSuccess: () => { setDismissing(undefined); return refresh(); } }));
+  // The finding being dismissed and the reason typed so far: the server keeps the reason on record.
+  const [dismissing, setDismissing] = useState<{ id: string; reason: string }>();
+  const [over, setOver] = useState(false);
+  const picker = useRef<HTMLInputElement>(null);
+  const decision = useRef<HTMLDivElement>(null);
+  const take = (file?: Blob | null) => { if (file && encounterId && mayUpload) upload.mutate(file); };
+
+  // Anything the server does not mark as read by the model (a fixture, a waking model) is shown as a sample.
+  const sample = Boolean(data) && data?.source !== "model";
+  const open = onImage.filter(f => f.status === "open");
+  const hasImage = Boolean(data);
+  const lead = !encounterId ? "No patient chosen yet. Choose one to see or add a chest X-ray."
+    : upload.isPending ? "Sending the image to be read…"
+    : read.isPending ? "Looking for this visit's X-ray…"
+    : !data ? "No image yet for this visit."
+    : open.length ? `Draft ready to review: ${open.length} finding${open.length === 1 ? "" : "s"} waiting for your decision.`
+    : "Draft ready to review. It is not a validated read: check it against the image.";
+
   return (
     <>
-      <PageHeader title="X-ray" lead="Add a film and see what the image model describes. Not a validated read." />
-      <div className="lib-form">
-        <Field label="Patient">{c => (
-          <select {...c} style={{ maxWidth: "22rem" }} value={encounterId} onChange={e => { setEncounterId(e.target.value); setZoom(1); upload.reset(); detect.reset(); }}>
-            <option value="">{patients.isPending ? "Loading patients…" : "Choose a patient"}</option>
-            {patients.data?.map(p => <option key={p.encounterId} value={p.encounterId}>{p.name}</option>)}
-          </select>
-        )}</Field>
-        {patients.isError && <p className="lib-error" role="alert">{messageOf(patients.error)}</p>}
-        {encounterId && (mayUpload ? (
-          <div className="lib-row">
-            <input type="file" accept="image/*" capture="environment" aria-label="Choose or take an X-ray image" disabled={upload.isPending}
-              onChange={e => { const file = e.target.files?.[0]; if (file) upload.mutate(file); e.target.value = ""; }} />
-            {stream ? <><Button variant="primary" pending={upload.isPending} onClick={snap}>Take picture</Button><Button onClick={() => setStream(undefined)}>Close camera</Button></>
-              : <Button onClick={openCamera}>Use webcam</Button>}
-            {upload.isPending && <span className="lib-note" role="status">Sending the image…</span>}
-          </div>
-        ) : <p className="lib-note">Only doctors can add an X-ray. You can see the latest read.</p>)}
-        {cameraError && <p className="lib-error" role="alert">{cameraError}</p>}
-        {upload.isError && <p className="lib-error" role="alert">{messageOf(upload.error)}</p>}
-      </div>
-      {stream && <video ref={video} className="xray-video" autoPlay playsInline muted />}
-
-      {!encounterId ? <EmptyState>Choose a patient to see or add an X-ray.</EmptyState>
-        : read.isPending ? <EmptyState>Reading the image…</EmptyState>
-        : read.isError || !data ? <EmptyState>{messageOf(read.error)}</EmptyState>
-        : (
-          <WithRail rail={
-            <RightRail label="Findings">
-              <div className="lib-row">
-                <Chip tone="soon">Not a validated read</Chip>
-                {data.source === "fixture" && <Chip>Sample, not read from this image</Chip>}
+      <PageHeader title="X-ray" lead={lead} actions={
+        hasImage && mayDetect
+          ? <Button variant="primary" icon="scan" pending={detect.isPending} onClick={() => detect.mutate({ encounterId })}>Read for findings</Button>
+          : mayUpload && <Button variant="primary" icon="plus" disabled={!encounterId} pending={upload.isPending} onClick={() => picker.current?.click()}>Add X-ray</Button>
+      } />
+      <WithRail rail={
+        <RightRail label="Sona's read">
+          <InsightCard label={sample ? "Sona · sample" : "Sona draft"}
+            title={!data ? "No read yet" : sample ? "Sample read, not from this image" : "Chest X-ray draft read"}
+            lead={!data ? (encounterId && read.isError ? messageOf(read.error) : "Sona drafts a read as soon as an image is added. You confirm or change it.")
+              : data.findings[0] ?? "Nothing described on this image."}
+            evidence={data ? [
+              ...data.findings.slice(1, 4).map(text => ({ icon: "scan" as const, text })),
+              { icon: "shield-check" as const, text: "Not validated: not a radiologist's report or a diagnosis." },
+            ] : undefined}
+            sources={data ? 1 + onImage.length : undefined}
+            next={!data ? undefined : open.length
+              ? { label: "Review findings", step: "Check each finding against the image, then track or dismiss it.", onAct: () => decision.current?.querySelector("button")?.focus() }
+              : mayDetect ? { label: "Read for findings", step: "Have the image read for findings that must not be missed.", onAct: () => detect.mutate({ encounterId }) } : undefined} />
+          {detect.isError && <p className="xr-error" role="alert">{messageOf(detect.error)}</p>}
+          {data && (
+            <Card title="Your decision">
+              <div className="xr-decide" ref={decision}>
+                {!onImage.length && <p className="xr-note">No findings to decide on yet. {mayDetect ? "Read the image for findings, then track or dismiss each one here." : "A doctor reads the image for findings."}</p>}
+                {onImage.map((f, i) => (
+                  <div key={f.id} className="xr-finding">
+                    <p><span className="xr-num">{i + 1}</span>{f.label}</p>
+                    {f.status === "tracked" ? <p className="xr-done"><Icon name="check" size={16} /> Tracked for follow-up</p>
+                      : !mayDecide ? <p className="xr-note">Waiting for a doctor's decision.</p>
+                      : dismissing?.id === f.id ? (
+                        <form onSubmit={e => { e.preventDefault(); dismiss.mutate({ findingId: f.id, reason: dismissing.reason }); }}>
+                          <Field label="Why dismiss it? Kept on record.">{c => <input {...c} autoFocus required maxLength={500} value={dismissing.reason} onChange={e => setDismissing({ id: f.id, reason: e.target.value })} />}</Field>
+                          <div className="xr-actions">
+                            <Button size="sm" variant="danger" type="submit" pending={dismiss.isPending} disabled={!dismissing.reason.trim()}>Dismiss finding</Button>
+                            <Button size="sm" onClick={() => setDismissing(undefined)}>Keep it</Button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="xr-actions">
+                          <Button size="sm" variant="secondary" icon="check" pending={track.isPending && track.variables?.findingId === f.id} onClick={() => track.mutate({ findingId: f.id, requestId: crypto.randomUUID() })}>Confirm and track</Button>
+                          <Button size="sm" icon="edit" onClick={() => setDismissing({ id: f.id, reason: "" })}>Dismiss</Button>
+                        </div>
+                      )}
+                  </div>
+                ))}
+                {(track.isError || dismiss.isError) && <p className="xr-error" role="alert">{messageOf(track.error ?? dismiss.error)}</p>}
               </div>
-              <p className="lib-note">Unvalidated: not a radiologist's report or a diagnosis. Check it against the image.</p>
-              {data.findings.length ? <ul className="xray-findings">{data.findings.map((f, i) => <li key={i}>{f}</li>)}</ul> : <p>Nothing described.</p>}
-              {onImage.length > 0 && <ol className="xray-findings">{onImage.map(f => <li key={f.id}>{f.label} <span className="lib-note">{f.location.zone}</span></li>)}</ol>}
-              {all.length > onImage.length && <p className="lib-note">{all.length - onImage.length} other finding(s) on this visit were not read from this image, so they are not drawn on it.</p>}
-              {can(me.role, "findings.detect") && <Button pending={detect.isPending} onClick={() => detect.mutate({ encounterId })}>Read this image for findings</Button>}
-              {detect.isError && <p className="lib-error" role="alert">{messageOf(detect.error)}</p>}
-            </RightRail>
-          }>
-            {shown ? (
-              <>
-                <div className="lib-row lib-form">
-                  <label className="lib-row">Zoom <input type="range" min={1} max={4} step={0.25} value={zoom} onChange={e => setZoom(Number(e.target.value))} /></label>
-                  <Button disabled={zoom === 1} onClick={() => setZoom(1)}>Reset</Button>
-                </div>
-                <div className="xray-stage">
-                  <div className="xray-image" style={{ transform: `scale(${zoom})` }}>
-                    <img src={shown} alt="Uploaded X-ray" />
-                    {onImage.map((f, i) => f.location.box && <div key={f.id} className="xray-box" style={boxStyle(f.location.box)}><span>{i + 1}</span></div>)}
+            </Card>
+          )}
+        </RightRail>
+      }>
+        <Card className="xr-viewer">
+          <div className="xr-bar">
+            <Field label="Patient">{c => (
+              <select {...c} value={encounterId} onChange={e => { setEncounterId(e.target.value); setZoom(1); setStream(undefined); setDismissing(undefined); upload.reset(); detect.reset(); }}>
+                <option value="">{patients.isPending ? "Loading patients…" : "Choose a patient"}</option>
+                {patients.data?.map(p => <option key={p.encounterId} value={p.encounterId}>{p.name}</option>)}
+              </select>
+            )}</Field>
+            {shown && (
+              <label className="xr-zoom">Zoom
+                <input type="range" min={1} max={4} step={0.25} value={zoom} onChange={e => setZoom(Number(e.target.value))} />
+              </label>
+            )}
+          </div>
+          {patients.isError && <p className="xr-error" role="alert">{messageOf(patients.error)}</p>}
+          <input ref={picker} className="xr-file" type="file" accept="image/*" aria-label="Choose an X-ray image" tabIndex={-1} disabled={upload.isPending}
+            onChange={e => { take(e.target.files?.[0]); e.target.value = ""; }} />
+          <div className="xr-stage" data-over={over || undefined}
+            onDragOver={e => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
+            onDrop={e => { e.preventDefault(); setOver(false); take(e.dataTransfer.files[0]); }}>
+            {stream ? <video ref={video} className="xr-video" autoPlay playsInline muted />
+              : shown ? (
+                <div className="xr-scroll">
+                  <div className="xr-image" style={zoom > 1 ? { width: `${zoom * 100}%` } : undefined}>
+                    <img src={shown} alt="Chest X-ray added for this visit" />
+                    {onImage.map((f, i) => f.location.box && <div key={f.id} className="xr-box" style={boxStyle(f.location.box)}><span>{i + 1}</span></div>)}
                   </div>
                 </div>
-              </>
-            ) : <EmptyState>This visit has an X-ray, but it was added elsewhere and cannot be shown here yet. Add it again from this browser to see it.</EmptyState>}
-          </WithRail>
+              ) : (
+                <div className="xr-drop">
+                  <Icon name="scan" size={32} />
+                  {encounterId && read.isPending ? <Skeleton width={220} height={18} /> : (
+                    <>
+                      <strong>{!encounterId ? "Choose a patient first" : hasImage ? "This visit's X-ray was added elsewhere" : mayUpload ? "Drop a chest X-ray here" : "No X-ray for this visit yet"}</strong>
+                      <span>{!encounterId ? "Then drop a chest X-ray here or choose a file."
+                        : hasImage ? "It cannot be shown in this browser yet. Add it again here to see it."
+                        : mayUpload ? "Or choose a file, or take a picture. PNG or JPEG."
+                        : "Only doctors can add an X-ray."}</span>
+                    </>
+                  )}
+                </div>
+              )}
+            {upload.isPending && <p className="xr-progress" role="status">Sending the image…</p>}
+          </div>
+          {upload.isError && <p className="xr-error" role="alert"><Icon name="alert" size={16} /> The image was not accepted: {messageOf(upload.error)}</p>}
+          {cameraError && <p className="xr-error" role="alert">{cameraError}</p>}
+          {encounterId && mayUpload && (
+            <div className="xr-actions">
+              {stream ? <><Button size="sm" variant="secondary" pending={upload.isPending} onClick={snap}>Take picture</Button><Button size="sm" onClick={() => setStream(undefined)}>Close camera</Button></>
+                : <>
+                  <Button size="sm" variant="secondary" icon="file" disabled={upload.isPending} onClick={() => picker.current?.click()}>{hasImage ? "Replace image" : "Choose file"}</Button>
+                  <Button size="sm" onClick={openCamera}>Use webcam</Button>
+                  {shown && <Button size="sm" icon="x" onClick={() => { setSent(undefined); setZoom(1); }}>Remove from view</Button>}
+                </>}
+            </div>
+          )}
+        </Card>
+        {data && (
+          <ListCard title="What the draft describes">
+            {data.findings.map((f, i) => <ListRow key={`d${i}`} icon="scan" title={f} caption="Draft wording. Check it against the image." />)}
+            {onImage.map((f, i) => (
+              <ListRow key={f.id} leading={<span className="xr-num">{i + 1}</span>} title={f.label}
+                caption={[f.location.zone, f.sizeMm ? `${f.sizeMm} mm` : null, f.status === "tracked" ? "Tracked" : "Possible, not confirmed"].filter(Boolean).join(" · ")}
+                trailing={f.kind === "nodule" && f.status === "open" ? <Chip tone="urgent" icon="alert">Must not miss</Chip> : undefined} />
+            ))}
+            {!data.findings.length && !onImage.length && <ListRow icon="check" title="Nothing described" caption="The draft names no findings on this image." />}
+            {all.length > onImage.length && <ListRow icon="file" title={`${all.length - onImage.length} other finding(s) on this visit`} caption="Not read from this image, so not drawn on it." />}
+          </ListCard>
         )}
+      </WithRail>
     </>
   );
 }
