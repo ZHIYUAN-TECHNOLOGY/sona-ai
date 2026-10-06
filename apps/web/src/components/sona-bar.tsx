@@ -1,4 +1,4 @@
-import { type FormEvent, type KeyboardEvent, useRef, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 
 import { EASE_OUT, gsap, moves, useGSAP } from "@/lib/motion";
 
@@ -11,10 +11,9 @@ import { SonaGlow } from "./sona-glow";
 import "@/styles/sona-bar.css";
 
 type Phase = "idle" | "listening" | "transcribing";
-const STATUS: Record<Phase, string> = { idle: "", listening: "Listening. Let go when you're done.", transcribing: "Writing down what you said…" };
+const STATUS: Record<Phase, string> = { idle: "", listening: "Listening. Tap the mic when you're done.", transcribing: "Writing down what you said…" };
 const MIN_WAV = WAV_HEADER + WAV_RATE * 2 * 0.3; // under 0.3 s is a slip, not speech
 const LANGUAGES = ["en", "ms", "zh"] as const;
-const isHoldKey = (event: KeyboardEvent) => event.key === " " || event.key === "Enter";
 
 // What the resting bar invites, one line at a time, and the questions offered when it opens: the same ones.
 const ASK = {
@@ -56,7 +55,7 @@ const sendIcon = (
 );
 
 /**
- * The Sona bar under every page: type, or hold the mic. What you said fills the box to check before sending; answers
+ * The Sona bar under every page: type, or tap the mic, speak, and tap it again. What you said fills the box to check before sending; answers
  * land in the page. At rest it is one row with a placeholder that cycles through things to ask; in use (focused, or
  * holding a draft) it opens a second row that offers those questions, one press each.
  */
@@ -85,7 +84,7 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
       bar.current?.style.setProperty("--level", heard.toFixed(2));
     });
     recording.current = started;
-    // Refused or no microphone while still holding: say so at once rather than on release.
+    // Refused or no microphone: say so at once rather than when the mic is tapped again.
     started.catch(e => {
       if (recording.current !== started) return;
       recording.current = null;
@@ -102,7 +101,7 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
     setPhase("transcribing");
     try {
       const wav = await (await started).stop();
-      if (wav.length < MIN_WAV) throw new Error("Hold the mic while you speak, then let go.");
+      if (wav.length < MIN_WAV) throw new Error("Sona didn't hear anything. Tap the mic, speak, then tap it again.");
       const language = LANGUAGES.find(code => navigator.language.toLowerCase().startsWith(code));
       const said = { audio: toBase64(wav), language };
       const heard = await (app === "pro" ? client.voice.transcribe(said) : client.care.transcribe(said));
@@ -160,16 +159,10 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
         <button
           type="button"
           className="sona-bar-button sona-bar-mic"
-          aria-label="Hold to speak"
+          aria-label={phase === "listening" ? "Stop listening" : "Speak to Sona"}
           aria-pressed={phase === "listening"}
           disabled={phase === "transcribing"}
-          onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); begin(); }}
-          onPointerUp={end}
-          onPointerCancel={end}
-          onBlur={end}
-          onContextMenu={event => event.preventDefault()}
-          onKeyDown={event => { if (isHoldKey(event)) { event.preventDefault(); if (!event.repeat) begin(); } }}
-          onKeyUp={event => { if (isHoldKey(event)) { event.preventDefault(); void end(); } }}
+          onClick={() => (phase === "listening" ? void end() : begin())}
         >
           {micIcon}
         </button>
