@@ -6,7 +6,7 @@ import { Icon } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow, StatCard, StatRow } from "@/components/primitives";
-import { browserLang, currentCheckIn, dayWords, daysSince, firstSentence, leadOf, nextOf } from "@/features/care-plan/model";
+import { browserLang, currentCheckIn, dayWords, daysSince, firstSentence, nextCheckIn, stepOf } from "@/features/care-plan/model";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-discharge-plan.css";
 
@@ -14,6 +14,8 @@ export const Route = createFileRoute("/care/_app/discharge-plan")({ component: P
 
 const GROUPS = [["new", "blue", "New"], ["changed", "amber", "Changed"], ["continue", "neutral", "Keep taking"], ["stopped", "neutral", "Stopped: do not take"]] as const;
 const VISIT = { "due-soon": ["soon", "Due soon"], upcoming: ["neutral", "Coming up"], attended: ["done", "Done"], missed: ["soon", "Missed"] } as const;
+const weekDay = (at: Date | string) => new Date(at).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+const longDay = (at: Date | string) => new Date(at).toLocaleDateString(undefined, { day: "numeric", month: "long" });
 const shortDay = (at: Date | string) => new Date(at).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
 function Page() {
@@ -24,9 +26,8 @@ function Page() {
   const checkIns = useQuery(orpc.care.checkIns.list.queryOptions());
   const clock = useQuery(orpc.care.clock.queryOptions());
 
-  const ask = <Button variant="primary" className="no-print" to="/care/ask">Ask Sona about my plan</Button>;
   const empty = (lead: string, body: ReactNode) => <>
-    <PageHeader title="Discharge plan" lead={lead} actions={ask} />
+    <PageHeader title="Discharge plan" lead={lead} />
     <Card className="dp-alone">{body}</Card>
   </>;
 
@@ -40,39 +41,23 @@ function Page() {
   const sample = Boolean(leaflet && "source" in leaflet && leaflet.source === "fixture");
   const active = [...p.medicines.new, ...p.medicines.changed, ...p.medicines.continue].filter(m => !m.finished);
   const nextVisit = visits.data?.find(v => v.status === "due-soon" || v.status === "upcoming");
-  const lead = leadOf({ checkInWaiting: Boolean(checkIns.data && currentCheckIn(checkIns.data)), visits: visits.data ?? [], meds: active });
-  const next = nextOf(lead);
+  const step = stepOf({ checkInWaiting: Boolean(checkIns.data && currentCheckIn(checkIns.data)), nextCheckInAt: checkIns.data ? nextCheckIn(checkIns.data)?.dueAt : undefined, visits: visits.data ?? [], meds: active, now });
   const medWords = `${active.length} ${active.length === 1 ? "medicine" : "medicines"} to take`;
 
   return (
     <>
       <PageHeader
         title="Discharge plan"
-        lead={`You went home on ${dayWords(p.dischargedAt)}. You have ${medWords}${nextVisit ? `, and your next visit is on ${dayWords(nextVisit.date)}` : ""}.`}
-        actions={<><Button className="no-print" icon="download" onClick={() => window.print()}>Download PDF</Button>{ask}</>}
+        lead={[`You went home on ${longDay(p.dischargedAt)}.`, active.length ? `${medWords}.` : "", nextVisit ? `Next visit: ${weekDay(nextVisit.date)}.` : ""].filter(Boolean).join(" ")}
+        actions={<><Button className="no-print" icon="download" onClick={() => window.print()}>Download PDF</Button><Button variant="primary" className="no-print" to="/care/ask">Ask Sona about my plan</Button></>}
       />
-      <StatRow>
-        <StatCard title="Medicines to take" value={active.length} caption={p.medicines.stopped.length ? `${p.medicines.stopped.length} stopped` : "As your plan says"} action={{ to: "/care/medicines", label: "See medicines" }} />
-        {nextVisit && <StatCard title="Next follow-up" value={shortDay(nextVisit.date)} caption={nextVisit.title} action={{ to: "/care/follow-ups", label: "See follow-ups" }} />}
-        {clock.data && <StatCard title="Days since you went home" value={daysSince(p.dischargedAt, now)} caption={`Since ${shortDay(p.dischargedAt)}`} />}
-      </StatRow>
+      {active.length || nextVisit || clock.data ? <StatRow>
+        {active.length ? <StatCard title="Medicines to take" value={active.length} caption={p.medicines.stopped.length ? `${p.medicines.stopped.length} stopped` : "As your plan says"} /> : null}
+        {nextVisit ? <StatCard title="Next follow-up" value={shortDay(nextVisit.date)} caption={nextVisit.title} /> : null}
+        {clock.data ? <StatCard title="Days since you went home" value={daysSince(p.dischargedAt, now)} caption={`Since ${shortDay(p.dischargedAt)}`} /> : null}
+      </StatRow> : null}
 
       <div className="dp-grid">
-        <div className="dp-col">
-          <InsightCard
-            label="In plain words"
-            meta={sample ? "Sample leaflet" : undefined}
-            title="Your plan in plain words"
-            lead={leaflet ? firstSentence(leaflet.text) : "Your care team has not written a summary yet."}
-            evidence={[
-              { icon: "pill" as const, text: medWords },
-              ...(nextVisit ? [{ icon: "calendar" as const, text: `${nextVisit.title} on ${dayWords(nextVisit.date)}` }] : []),
-              ...(p.warningSigns.length ? [{ icon: "alert" as const, text: `${p.warningSigns.length} warning ${p.warningSigns.length === 1 ? "sign" : "signs"} to watch for` }] : []),
-            ]}
-            next={next ? { ...next, step: `${lead.title}. ${lead.text}` } : undefined}
-          />
-        </div>
-
         <Card className="dp-doc">
           <section>
             <h2 className="section-label">What happened</h2>
@@ -109,20 +94,20 @@ function Page() {
                 trailing={<Chip tone={VISIT[v.status][0]}>{VISIT[v.status][1]}</Chip>}
               />)}
             </ul>
-            {Boolean(visits.data?.length) && <div className="dp-foot no-print"><Button to="/care/follow-ups" icon="calendar">See all follow-ups</Button></div>}
+            {visits.data?.length && step?.to !== "/care/follow-ups" ? <div className="dp-foot no-print"><Button to="/care/follow-ups" icon="calendar">See all follow-ups</Button></div> : null}
           </section>
 
-          {p.checkIns.length > 0 && <section>
-            <h2 className="section-label">Things to do</h2>
+          {p.checkIns.length > 0 ? <section>
+            <h2 className="section-label">Sona will check on you</h2>
             <ul className="list">
               {p.checkIns.map(c => <ListRow
                 key={String(c.date)}
-                leading={<span className="list-tile dp-tile-done"><Icon name="check" size={20} /></span>}
-                title="Answer your check-in"
-                caption={`${dayWords(c.date)}. Your care team asks how you are.`}
+                icon="message"
+                title={dayWords(c.date)}
+                caption="A short check-in about how you are."
               />)}
             </ul>
-          </section>}
+          </section> : null}
         </Card>
 
         <div className="dp-col">
@@ -134,9 +119,20 @@ function Page() {
             <p>If you cannot reach the hospital, call 999.</p>
             <a className="dp-call no-print" href="tel:999"><Icon name="phone" size={20} />Call 999</a>
           </Card>
+          <InsightCard
+            label="In plain words"
+            title="Your plan in plain words"
+            lead={leaflet && !sample ? firstSentence(leaflet.text) : `Your plan has ${medWords}${nextVisit ? " and a visit to keep" : ""}.`}
+            evidence={[
+              { icon: "pill" as const, text: medWords },
+              ...(nextVisit ? [{ icon: "calendar" as const, text: `${nextVisit.title} on ${dayWords(nextVisit.date)}` }] : []),
+              ...(p.warningSigns.length ? [{ icon: "alert" as const, text: `${p.warningSigns.length} warning ${p.warningSigns.length === 1 ? "sign" : "signs"} to watch for` }] : []),
+            ]}
+            next={step}
+          />
           <div className="no-print">
             <ListCard title="Stay in touch">
-              <ListRow icon="check" title="Check-ins" caption="Tell your care team how you are" to="/care/check-ins" />
+              {step?.to === "/care/check-ins" ? null : <ListRow icon="check" title="Check-ins" caption="Tell your care team how you are" to="/care/check-ins" />}
               <ListRow icon="message" title="Messages" caption="Write to your care team" to="/care/messages" />
             </ListCard>
           </div>
