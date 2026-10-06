@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { EmptyState } from "@/components/page";
-import { Chip, ListCard, ListRow, Skeleton } from "@/components/primitives";
+import { Card, Chip, ListRow, SearchField, Skeleton } from "@/components/primitives";
 import "@/styles/pages/discharge-plan.css";
 import { orpc } from "@/lib/orpc";
 
@@ -32,21 +32,32 @@ export function Loaded<T>({ query, empty, children }: { query: { data?: T; error
   return <>{children(query.data)}</>;
 }
 
-/** No visit chosen yet: the hospital's patients, each a link back to this page with its visit (or patient) id. */
-export function PatientPicker({ link, lead }: { link: (p: { id: string; encounterId: string }) => ReactNode; lead: string }) {
+/** The patient a visit belongs to, from the patients list the picker already loads. */
+export function usePatient(encounterId: string) {
+  return useQuery(orpc.patients.list.queryOptions()).data?.find(p => p.encounterId === encounterId);
+}
+
+/** No visit chosen yet: the hospital's patients, searchable by name. Each row is the link `link` returns, stretched over the row. */
+export function PatientPicker({ link, lead }: { link: (p: { id: string; encounterId: string }) => ReactNode; lead?: string }) {
   const patients = useQuery(orpc.patients.list.queryOptions());
+  const [q, setQ] = useState("");
   return (
     <Loaded query={patients} empty="No patients to show.">
-      {rows => (
-        <>
-          <p className="dp-note dp-pick-lead">{lead}</p>
-          <ListCard title="Patients">
-            {rows.map(p => (
-              <ListRow key={p.encounterId} avatar={p.name} title={p.name} caption={p.subtitle} trailing={link(p)} />
-            ))}
-          </ListCard>
-        </>
-      )}
+      {rows => {
+        const shown = rows.filter(p => p.name.toLowerCase().includes(q.trim().toLowerCase()));
+        return (
+          <Card title="Patients" className="list-card dp-pick">
+            <div className="dp-pick-head">
+              <SearchField label="Search patients by name" placeholder="Search by name" value={q} onChange={e => setQ(e.target.value)} />
+              {lead ? <p>{lead}</p> : null}
+            </div>
+            <ul className="list">
+              {shown.map(p => <ListRow key={p.encounterId} avatar={p.name} title={p.name} caption={p.subtitle} trailing={link(p)} />)}
+              {shown.length ? null : <li className="dp-note dp-pick-none">No patient is named “{q.trim()}”.</li>}
+            </ul>
+          </Card>
+        );
+      }}
     </Loaded>
   );
 }

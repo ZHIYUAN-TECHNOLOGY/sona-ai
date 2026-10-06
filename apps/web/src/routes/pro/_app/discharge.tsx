@@ -4,10 +4,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { InsightCard } from "@/components/insight-card";
-import { PageHeader } from "@/components/page";
-import { Button, Card, Chip, ListCard, ListRow, StatCard, StatRow } from "@/components/primitives";
+import { PageHeader, PatientStrip } from "@/components/page";
+import { Button, Card, Chip, ListCard, ListRow } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
-import { blockersOf, Loaded, oneParam, Origin, PatientPicker, say } from "@/features/discharge/shared";
+import { blockersOf, Loaded, oneParam, Origin, PatientPicker, say, usePatient } from "@/features/discharge/shared";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/discharge-plan.css";
 
@@ -19,8 +19,7 @@ function Page() {
   return (
     <>
       <PageHeader title="Discharge" lead="Choose a patient to see what is holding their bed." />
-      <PatientPicker lead="Each plan lists what still blocks the discharge."
-        link={p => <Link to="/pro/discharge" search={{ encounterId: p.encounterId }}>Open plan</Link>} />
+      <PatientPicker link={p => <Link to="/pro/discharge" search={{ encounterId: p.encounterId }}>Open plan</Link>} />
     </>
   );
 }
@@ -48,6 +47,7 @@ function Visit({ encounterId }: { encounterId: string }) {
   const confirmMeds = useMutation(orpc.discharge.update.mutationOptions({ onSuccess: refresh }));
   const approve = useMutation(orpc.discharge.request.mutationOptions({ onSuccess: refresh }));
   const mayApprove = can(me.role, "discharge.request");
+  const patient = usePatient(encounterId);
 
   const waits = plan.data?.waits ?? [];
   const bed = plan.data?.plan.bed || "the bed";
@@ -62,7 +62,7 @@ function Visit({ encounterId }: { encounterId: string }) {
 
   return (
     <>
-      <PageHeader title="Discharge plan" breadcrumb={[{ label: "Discharge", to: "/pro/discharge" }, { label: "Plan" }]} lead={lead}
+      <PageHeader title="Discharge plan" breadcrumb={[{ label: "Discharge", to: "/pro/discharge" }, { label: patient?.name ?? "Plan" }]} lead={lead}
         actions={
           <Button variant="primary" icon="check" pending={approve.isPending} disabled={!canAct} onClick={act}>
             {approve.isSuccess ? "Discharge approved" : "Approve discharge"}
@@ -71,22 +71,18 @@ function Visit({ encounterId }: { encounterId: string }) {
       <Loaded query={plan}>
         {({ plan: p }) => (
           <>
-            <StatRow>
-              <StatCard title="Blockers" value={waits.length} chip={waits.length ? "Holding the bed" : undefined} tone="soon"
-                caption={waits.length ? "Each must clear before approval" : "Nothing left to clear"} />
-              <StatCard title="Take-home medicines" value={p.meds.length} caption={p.meds.length ? "Confirm before the patient leaves" : "None recorded"} />
-            </StatRow>
+            {patient ? <PatientStrip name={patient.name} meta={patient.subtitle} chips={p.bed ? <Chip>{p.bed}</Chip> : undefined} /> : null}
             <WithRail rail={
               <RightRail label="Sona insight">
                 <InsightCard label="Sona insight" title={clear ? "Ready to approve" : "Not ready yet"} sources={waits.length || 1}
                   lead={clear ? `No pending results, referrals or letters are holding ${bed}.` : `${things(waits.length)} to clear before ${bed} can be released.`}
                   evidence={waits.map(w => ({ icon: "clock" as const, text: w.label }))}
-                  next={canAct ? { label: "Approve discharge", step: "You decide. Sona checks the conditions again when you approve.", onAct: act } : undefined} />
+                  next={canAct ? { label: "Review the summary draft", step: "Read the draft first, then approve at the top. Sona checks the conditions again when you do.", onAct: () => document.getElementById("dp-summary")?.scrollIntoView({ behavior: "smooth" }) } : undefined} />
               </RightRail>
             }>
               <div className="dp-stack">
                 {approve.error ? <Card title="Not approved"><Refused error={approve.error} /></Card> : null}
-                <ListCard title="Readiness">
+                <ListCard title={`Readiness: ${waits.length} blocker${waits.length === 1 ? "" : "s"} · ${p.meds.length} take-home medicine${p.meds.length === 1 ? "" : "s"}`}>
                   {waits.length
                     ? waits.map(w => <ListRow key={w.id} icon="clock" title={w.label} caption={w.detail} trailing={<Chip tone="soon">Blocking</Chip>} />)
                     : <ListRow icon="check" title={<span className="dp-note">No pending results, referrals or letters are holding this bed.</span>} />}
@@ -111,7 +107,7 @@ function Visit({ encounterId }: { encounterId: string }) {
                       ) : null}
                       {confirmMeds.error ? <Refused error={confirmMeds.error} /> : null}
                     </section>
-                    <section>
+                    <section id="dp-summary">
                       <h2 className="dp-over">Discharge summary <Chip variant="outline">Draft</Chip></h2>
                       {can(me.role, "discharge.draft") ? (
                         <Loaded query={draft}>
