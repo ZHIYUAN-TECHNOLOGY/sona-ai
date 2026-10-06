@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { EmptyState, PageHeader } from "@/components/page";
-import { Anchor, Avatar, Button, Card, Chip, DetailList } from "@/components/primitives";
+import { Anchor, Avatar, Button, Card } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-team.css";
@@ -26,7 +26,7 @@ function Page() {
         rail={
           <RightRail label="How to reach us">
             <Card title="How to reach us">
-              {hospital ? <DetailList items={[{ label: "Hospital", value: hospital }]} /> : null}
+              {hospital ? <p className="ct-hospital">{hospital}</p> : null}
               <p className="ct-note">Write to your care team in Messages. They reply within a few hours.</p>
             </Card>
             <section className="ct-urgent" aria-labelledby="ct-urgent-title">
@@ -58,12 +58,8 @@ function Page() {
                     </div>
                   </div>
                   <p className="ct-about">{d.about}</p>
-                  {d.tags.length ? (
-                    <ul className="ct-tags" aria-label="Ask about">
-                      {d.tags.map(t => <li key={t}><Chip>{t}</Chip></li>)}
-                    </ul>
-                  ) : null}
-                  {d.languages.length ? <p className="ct-role">Speaks {d.languages.join(", ")}</p> : null}
+                  {d.tags.length ? <p className="ct-role">Ask about: {d.tags.join(", ")}.</p> : null}
+                  {d.languages.length ? <p className="ct-role">Speaks {d.languages.join(", ")}.</p> : null}
                   <Anchor className="link ct-action" to="/care/messages" aria-label={`Message ${d.name}`}>Message</Anchor>
                 </Card>
               </li>
