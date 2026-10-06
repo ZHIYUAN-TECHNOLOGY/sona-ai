@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { EmptyState, PageHeader } from "@/components/page";
@@ -54,6 +54,7 @@ function Page() {
               {hospital ? <p className="ct-hospital">{hospital}</p> : null}
               <p className="ct-note">Write to your care team in Messages. One message reaches the whole team.</p>
             </Card>
+            <YourData />
           </RightRail>
         }
       >
@@ -94,5 +95,37 @@ function Page() {
         )}
       </WithRail>
     </>
+  );
+}
+
+/** The patient's own choice (off until they switch it on): saved on change, put back if the save fails. */
+function YourData() {
+  const queryClient = useQueryClient();
+  const queryKey = orpc.care.trainingConsent.queryKey();
+  const consent = useQuery(orpc.care.trainingConsent.queryOptions());
+  const save = useMutation(orpc.care.setTrainingConsent.mutationOptions({
+    onMutate: async ({ consented }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const before = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, { consented, at: new Date() });
+      return { before };
+    },
+    onError: (_error, _input, kept) => queryClient.setQueryData(queryKey, kept?.before),
+    onSettled: () => queryClient.invalidateQueries({ queryKey }),
+  }));
+  const on = consent.data?.consented ?? false;
+  return (
+    <Card title="Your data" className="ct-data">
+      <p>You can let your check-in replies and your doctor's corrected notes about you, with your name and details removed, help improve Sona. Off unless you switch it on. Saying no changes nothing about your care.</p>
+      <label className="ct-switch">
+        <input type="checkbox" role="switch" checked={on} disabled={!consent.data || save.isPending} onChange={e => save.mutate({ consented: e.target.checked })} />
+        <span>Share to help improve Sona</span>
+      </label>
+      <p aria-live="polite">
+        {consent.isError ? "We could not load your choice. Try again later." : !consent.data ? "Loading your choice…"
+          : on ? "Your data is used for training, with your name and details removed." : "Your data is not used for training."}
+      </p>
+      {save.isError && <p role="alert">That was not saved, so your choice is unchanged. Try again.</p>}
+    </Card>
   );
 }

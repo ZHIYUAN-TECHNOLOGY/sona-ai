@@ -18,3 +18,6 @@
 .ct-urgent { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--pad-card); border-radius: var(--radius-card); background: var(--red-wash); font-size: var(--text-body); line-height: var(--line-body); }
 .ct-urgent h2 { margin: 0; color: var(--red); font-size: var(--text-title); }
 .ct-urgent p { margin: 0; }
+.ct-data p { margin: 0 0 var(--space-2); font-size: max(17px, 1rem); }
+.ct-switch { display: flex; align-items: center; gap: var(--space-2); min-height: 48px; margin-bottom: var(--space-2); font-size: max(17px, 1rem); font-weight: 600; cursor: pointer; }
+.ct-switch input { width: 28px; height: 28px; margin: 0; flex: none; accent-color: var(--green); }
