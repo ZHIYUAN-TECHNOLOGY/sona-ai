@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
+import { Avatar } from "@/components/avatar";
 import { EmptyState } from "@/components/page";
 import { Button, Chip } from "@/components/primitives";
 import { type client, orpc } from "@/lib/orpc";
 
-import { clock, labelTone, triageBy } from "./format";
+import { clock, triageBy } from "./format";
 
 type Message = Awaited<ReturnType<typeof client.messages.thread>>["messages"][number];
 
@@ -46,27 +47,46 @@ function MedicinePhoto({ message, canResolve }: { message: Message; canResolve: 
   );
 }
 
+/** "Today", or the weekday and date, for the separators between days of a thread. */
+const dayOf = (at: Date | string) => {
+  const d = new Date(at);
+  return d.toDateString() === new Date().toDateString() ? "Today" : d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+};
+const timeOf = (at: Date | string) => new Date(at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
 export function Thread({ patientId, canResolve }: { patientId: string; canResolve: boolean }) {
   const thread = useQuery(orpc.messages.thread.queryOptions({ input: { patientId } }));
-  if (thread.isPending) return <EmptyState>Loading messages…</EmptyState>;
-  if (thread.error) return <EmptyState>Could not open this thread: {thread.error.message}</EmptyState>;
+  if (thread.isPending) return <section className="msg-thread"><EmptyState>Loading messages…</EmptyState></section>;
+  if (thread.error) return <section className="msg-thread"><EmptyState>Could not open this thread: {thread.error.message}</EmptyState></section>;
   const { patient, messages } = thread.data;
+  // The newest unanswered message carries the triage the header states.
+  const open = messages.findLast(m => m.unanswered);
+  const bed = patient.bed ? (/^bed/i.test(patient.bed) ? patient.bed : `Bed ${patient.bed}`) : null;
+  const triage = open ? `${open.triage ? `Triage: ${open.triage}` : "Not triaged: read it first"} · ${triageBy(open.triagedBy)}` : "Nothing waiting";
   return (
     <section className="msg-thread" aria-label={`Messages with ${patient.name}`}>
-      <h2>{patient.name}{patient.bed ? <span className="msg-meta"> · Bed {patient.bed}</span> : null}</h2>
+      <header className="msg-thread-head">
+        <Avatar name={patient.name} />
+        <div>
+          <h2>{patient.name}</h2>
+          <p className="msg-meta">{[bed, triage].filter(Boolean).join(" · ")}</p>
+        </div>
+      </header>
       {messages.length ? null : <EmptyState>No messages yet.</EmptyState>}
       <ol>
-        {messages.map(m => (
-          <li key={m.id} className={m.from === "patient" ? "msg msg-in" : "msg msg-out"}>
-            <p className="msg-meta">
-              {m.rule ? "Sona · automatic safety message" : m.author} · {clock(m.createdAt)}
-              {m.unanswered ? <> <Chip tone={labelTone(m.triage === "urgent" || m.triage === "admin" ? m.triage : "clinical")}>{m.triage ?? "not triaged"}</Chip></> : null}
-            </p>
-            <p>{m.text}</p>
-            <MedicinePhoto message={m} canResolve={canResolve} />
-            {m.unanswered ? <p className="msg-meta">{m.triageReason ?? "Not triaged: read it first"} · {triageBy(m.triagedBy)}</p> : null}
-            {m.from === "patient" && m.seenAt ? <p className="msg-meta">Seen by care team</p> : null}
-          </li>
+        {messages.map((m, i) => (
+          <Fragment key={m.id}>
+            {i === 0 || dayOf(messages[i - 1]!.createdAt) !== dayOf(m.createdAt) ? <li className="msg-day">{dayOf(m.createdAt)}</li> : null}
+            <li className={m.from === "patient" ? "msg msg-in" : "msg msg-out"}>
+              <p>{m.text}</p>
+              <MedicinePhoto message={m} canResolve={canResolve} />
+              {m.unanswered && m.triageReason ? <p className="msg-meta">{m.triageReason}</p> : null}
+              <p className="msg-meta">
+                {m.rule ? "Sona · automatic safety message" : m.author} · <time dateTime={new Date(m.createdAt).toISOString()}>{timeOf(m.createdAt)}</time>
+                {m.from === "patient" && m.seenAt ? " · Seen by care team" : null}
+              </p>
+            </li>
+          </Fragment>
         ))}
       </ol>
     </section>

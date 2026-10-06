@@ -1,7 +1,7 @@
 import { can } from "@sona-ai/api/roles";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
@@ -20,7 +20,11 @@ function ReplyPanel({ patientId, name, waiting }: { patientId: string; name: str
   const draft = useQuery(orpc.messages.draft.queryOptions({ input: { patientId }, enabled: waiting }));
   const d = draft.data ?? null;
   const drafting = waiting && draft.isPending;
+  // InsightCard folds its children under "Details"; a reply must be in view, so this page keeps it open (the summary is hidden in messages.css).
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => { panel.current?.querySelector("details")?.setAttribute("open", ""); });
   return (
+    <div ref={panel}>
     <InsightCard
       label={d ? "Draft reply" : "Reply"}
       meta={d && d.source !== "model" ? <Chip tone="amber">Sample</Chip> : undefined}
@@ -38,6 +42,7 @@ function ReplyPanel({ patientId, name, waiting }: { patientId: string; name: str
     >
       {drafting ? null : <ReplyEditor key={d?.messageId ?? patientId} patientId={patientId} draft={d} />}
     </InsightCard>
+    </div>
   );
 }
 
@@ -55,7 +60,7 @@ function Page() {
   if (inbox.error) return <><PageHeader title="Messages" /><EmptyState>Could not load the inbox: {inbox.error.message}</EmptyState></>;
 
   const { threads, now } = inbox.data;
-  if (!threads.length) return <><PageHeader title="Messages" /><EmptyState>No patient messages yet. They arrive from Sona Care.</EmptyState></>;
+  if (!threads.length) return <><PageHeader title="Messages" lead="0 unread · 0 waiting for a reply" /><section className="msg-thread"><EmptyState>No patient messages yet. They arrive from Sona Care.</EmptyState></section></>;
 
   // Sorted by the server: waiting first, urgent first.
   const waiting = threads.filter(t => !t.handled);
@@ -72,7 +77,7 @@ function Page() {
       <div className="msg-panes">
         <div className="msg-inbox">
           <Tabs label="Threads" value={filter} onChange={setFilter} tabs={[{ id: "all", label: "All", count: threads.length }, { id: "waiting", label: "Waiting", count: waiting.length }]} />
-          <SearchField label="Search patients or messages" placeholder="Search patients or messages" value={q} onChange={e => setQ(e.target.value)} />
+          <SearchField label="Search patients or messages" placeholder="Search messages" value={q} onChange={e => setQ(e.target.value)} />
           {visible.length
             ? (
               <ListCard>
@@ -108,11 +113,11 @@ function Page() {
               <aside className="msg-reply" aria-label="Reply">
                 {can(me.role, "messages.reply")
                   ? <ReplyPanel key={selected.patientId} patientId={selected.patientId} name={selected.name} waiting={!selected.handled} />
-                  : <p className="msg-meta">Only a doctor or a nurse replies.</p>}
+                  : <section className="msg-thread"><p className="msg-meta">Only a doctor or a nurse replies.</p></section>}
               </aside>
             </>
           )
-          : null}
+          : <section className="msg-thread msg-none"><EmptyState>No thread selected. Pick one from the inbox, or clear the search.</EmptyState></section>}
       </div>
     </>
   );
