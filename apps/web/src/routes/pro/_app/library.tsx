@@ -4,9 +4,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { type Column, DataTable } from "@/components/data-table";
-import { InsightCard, InsightRow } from "@/components/insight-card";
+import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Chip, Field } from "@/components/primitives";
+import { Button, Card, Field, SearchField, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { messageOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
@@ -18,11 +18,18 @@ type Doc = Awaited<ReturnType<typeof client.library.list>>[number];
 type Preview = Awaited<ReturnType<typeof client.library.previewArticle>>;
 const KIND = { text: "Text", pdf: "PDF", pubmed: "Article" } as const;
 
+type Scope = "all" | "hospital" | "me";
+const who = (d: Doc) => (d.scope === "hospital" ? "Whole hospital" : "Only you");
+
 const columns: Column<Doc>[] = [
-  { key: "title", header: "Title", cell: d => <><strong>{d.title}</strong><div className="lib-note">{d.source} · {d.sections} sections</div></>, sort: (a, b) => a.title.localeCompare(b.title) },
-  { key: "kind", header: "Kind", cell: d => <Chip>{KIND[d.kind]}</Chip>, sort: (a, b) => a.kind.localeCompare(b.kind) },
-  { key: "year", header: "Year", cell: d => d.year, sort: (a, b) => a.year - b.year, align: "right" },
-  { key: "by", header: "Added by", cell: d => <>{d.uploadedBy ?? "Sona"}<div className="lib-note">{d.scope === "hospital" ? "Whole hospital" : "Only you"}</div></> },
+  { key: "title", header: "Source", cell: d => (
+    <div className="lib-title">
+      <span className="lib-file" aria-hidden><Icon name={d.kind === "pubmed" ? "book" : "file"} size={18} /></span>
+      <div><strong>{d.title}</strong><div className="lib-note">{d.source} · {KIND[d.kind]} · {d.sections} sections</div></div>
+    </div>
+  ), sort: (a, b) => a.title.localeCompare(b.title) },
+  { key: "by", header: "Added by", cell: d => <>{d.uploadedBy ?? "Sona"}<div className="lib-note">{who(d)}</div></> },
+  { key: "year", header: "Year", cell: d => <span className="lib-num">{d.year}</span>, sort: (a, b) => a.year - b.year, align: "right" },
 ];
 
 function Page() {
@@ -34,42 +41,76 @@ function Page() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: orpc.library.list.key() });
   const [search, setSearch] = useState("");
   const [confirming, setConfirming] = useState<string>();
+  const [tab, setTab] = useState<Scope>("all");
+  const [openId, setOpenId] = useState<string>();
   const remove = useMutation(orpc.library.remove.mutationOptions({ onSuccess: () => { setConfirming(undefined); return refresh(); } }));
 
   const docs = list.data ?? [];
   const q = search.trim().toLowerCase();
-  const rows = q ? docs.filter(d => `${d.title} ${d.source} ${d.year} ${KIND[d.kind]} ${d.uploadedBy ?? ""}`.toLowerCase().includes(q)) : docs;
+  const inTab = tab === "all" ? docs : docs.filter(d => d.scope === tab);
+  const rows = q ? inTab.filter(d => `${d.title} ${d.source} ${d.year} ${KIND[d.kind]} ${d.uploadedBy ?? ""}`.toLowerCase().includes(q)) : inTab;
+  const open = docs.find(d => d.id === openId);
   const shared = docs.filter(d => d.scope === "hospital").length;
   const oldest = docs.reduce<Doc | undefined>((o, d) => (!o || d.year < o.year ? d : o), undefined);
 
   return (
     <>
-      <PageHeader title="Library" lead="The sources Sona answers from." />
+      <PageHeader title="Library" lead={list.data ? `${docs.length} source${docs.length === 1 ? "" : "s"} Sona answers from · ${shared} shared with the whole hospital` : "The sources Sona answers from."} />
       {docs.length > 0 && (
-        <InsightRow>
-          <InsightCard lead={`${docs.length} source${docs.length === 1 ? "" : "s"}: ${shared} for the whole hospital, ${docs.length - shared} only yours.`} sources={docs.length} />
-          {oldest && <InsightCard tone="soon" lead={`Oldest source is from ${oldest.year}: ${oldest.title}. Check it is still current.`} sources={1} />}
-        </InsightRow>
+        <StatRow>
+          <StatCard title="Sources" value={docs.length} caption="Sona answers from these" feature />
+          <StatCard title="Whole hospital" value={shared} unit={`of ${docs.length}`} progress={shared / docs.length} />
+          <StatCard title="Only you" value={docs.length - shared} caption="Private to your account" />
+          {oldest && (new Date().getFullYear() - oldest.year >= 5
+            ? <StatCard title="Oldest source" value={oldest.year} caption={oldest.title} chip="Check it is current" tone="soon" />
+            : <StatCard title="Oldest source" value={oldest.year} caption={oldest.title} />)}
+        </StatRow>
       )}
       <WithRail rail={
-        <RightRail label="Add a source">
-          {mayAdd ? <AddSource onAdded={refresh} /> : <p className="lib-note">Your role cannot add to the library. Ask a doctor or management.</p>}
+        <RightRail label="Source detail and adding">
+          {open && (
+            <Card title="Selected source">
+              <strong>{open.title}</strong>
+              <dl className="lib-detail">
+                <dt>Published by</dt><dd>{open.source}</dd>
+                <dt>Kind</dt><dd>{KIND[open.kind]}</dd>
+                <dt>Year</dt><dd>{open.year}</dd>
+                <dt>Sections</dt><dd>{open.sections}</dd>
+                <dt>Added by</dt><dd>{open.uploadedBy ?? "Sona"}</dd>
+                <dt>Who can use it</dt><dd>{who(open)}</dd>
+              </dl>
+            </Card>
+          )}
+          <Card title="Add a source">
+            {mayAdd ? <AddSource onAdded={refresh} /> : <p className="lib-note">Your role cannot add to the library. Ask a doctor or management.</p>}
+          </Card>
         </RightRail>
       }>
-        <input className="lib-search" type="search" placeholder="Search title, kind, year or who added it" aria-label="Search the library" value={search} onChange={e => setSearch(e.target.value)} />
-        {list.isPending ? <EmptyState>Loading the library…</EmptyState>
-          : list.isError ? <EmptyState>The library could not be shown: {messageOf(list.error)}</EmptyState>
-          : (
-            <DataTable columns={columns} rows={rows} rowKey={d => d.id}
-              empty={q ? `Nothing in the library matches "${search}".` : "No sources yet. Add the first one on the right."}
+        <Card>
+          {list.isError ? <EmptyState icon="alert" title="The library could not be shown">{messageOf(list.error)}</EmptyState> : (
+            <DataTable columns={columns} rows={rows} rowKey={d => d.id} loading={list.isPending}
+              selectedKey={openId} onRowOpen={d => setOpenId(d.id)}
+              count={`Showing ${rows.length} of ${docs.length}`}
+              toolbar={
+                <div className="lib-toolbar">
+                  <Tabs label="Who can use the source" value={tab} onChange={setTab} tabs={[
+                    { id: "all", label: "All", count: docs.length },
+                    { id: "hospital", label: "Whole hospital", count: shared },
+                    { id: "me", label: "Only you", count: docs.length - shared },
+                  ]} />
+                  <SearchField label="Search the library" placeholder="Search title, kind, year or who added it" value={search} onChange={e => setSearch(e.target.value)} />
+                </div>
+              }
+              empty={<EmptyState icon="book" title={q ? `Nothing matches "${search}"` : "No sources here yet"}>{q ? "Try a title, a year or a name." : "Add the first one on the right."}</EmptyState>}
               rowAction={mayRemove ? d => confirming === d.id ? (
                 <span className="lib-row">
-                  <Button variant="danger" pending={remove.isPending} onClick={() => remove.mutate({ documentId: d.id })}>Remove for good</Button>
-                  <Button onClick={() => setConfirming(undefined)}>Keep</Button>
+                  <Button variant="danger" size="sm" pending={remove.isPending} onClick={e => { e.stopPropagation(); remove.mutate({ documentId: d.id }); }}>Remove for good</Button>
+                  <Button size="sm" onClick={e => { e.stopPropagation(); setConfirming(undefined); }}>Keep</Button>
                   {remove.isError && <span className="lib-error" role="alert">{messageOf(remove.error)}</span>}
                 </span>
-              ) : <Button onClick={() => { remove.reset(); setConfirming(d.id); }}>Remove</Button> : undefined} />
+              ) : <Button size="sm" onClick={e => { e.stopPropagation(); remove.reset(); setConfirming(d.id); }}>Remove</Button> : undefined} />
           )}
+        </Card>
       </WithRail>
     </>
   );

@@ -16,3 +16,12 @@
 .xray-box { position: absolute; border: 2px solid var(--blue); background: var(--blue-wash); opacity: 0.6; }
 .xray-box span { position: absolute; top: 0; left: 0; padding: 0 var(--space-1); background: var(--blue); color: var(--surface); font-size: var(--text-sm, 0.875rem); }
 .xray-findings { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-4); }
+
+.lib-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.lib-toolbar > :last-child { flex: 0 1 320px; }
+.lib-title { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.lib-file { flex: none; display: grid; place-items: center; width: var(--avatar-md); height: var(--avatar-md); border-radius: var(--radius-control); background: var(--fill-selected); color: var(--muted); }
+.lib-num { font-variant-numeric: tabular-nums; }
+.lib-detail { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: var(--space-4) 0 0; font-size: var(--text-small); }
+.lib-detail dt { color: var(--muted); }
+.lib-detail dd { margin: 0; text-align: right; }
