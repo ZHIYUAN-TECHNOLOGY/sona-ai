@@ -3,7 +3,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 
 import { EmptyState } from "@/components/page";
-import { Button, Card, Chip, Field } from "@/components/primitives";
+import { Button, Card, Chip, Field, Skeleton } from "@/components/primitives";
 import { orpc } from "@/lib/orpc";
 
 import { refusal, toLines, toRows } from "./visit";
@@ -24,7 +24,7 @@ export function Note({ encounterId, canWrite, canDraft, actions }: { encounterId
     },
   }));
 
-  if (note.isPending) return <EmptyState>Loading the note…</EmptyState>;
+  if (note.isPending) return <Card title="Clinical note"><div className="visit-section"><Skeleton height={72} /><Skeleton height={72} /></div></Card>;
   if (note.isError) return <EmptyState>{refusal(note.error).message}</EmptyState>;
 
   const rows = toRows(note.data.sentences);

@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
-import { Button, Card, Chip, Field, ListCard, ListRow, Select, Skeleton } from "@/components/primitives";
+import { Button, Card, Chip, Field, ListCard, ListRow, Select, Signal, Skeleton } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { boxStyle, messageOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
@@ -74,67 +74,92 @@ function Page() {
   const sample = Boolean(data) && data?.source !== "model";
   const open = onImage.filter(f => f.status === "open");
   const hasImage = Boolean(data);
-  const lead = !encounterId ? "No patient chosen yet. Choose one to see or add a chest X-ray."
+  const lead = !encounterId ? "Choose a patient to see or add a chest X-ray."
     : upload.isPending ? "Sending the image to be read…"
     : read.isPending ? "Looking for this visit's X-ray…"
     : !data ? "No image yet for this visit."
-    : open.length ? `Draft ready to review: ${open.length} finding${open.length === 1 ? "" : "s"} waiting for your decision.`
-    : "Draft ready to review. It is not a validated read: check it against the image.";
+    : (
+      <>
+        {sample ? <Signal tone="soon">Sample read, not from this image</Signal> : "Draft read ready"}
+        {" · "}
+        {open.length
+          ? <Signal tone={open.some(f => f.kind === "nodule") ? "urgent" : "soon"}>{open.length} finding{open.length === 1 ? "" : "s"} waiting for your decision</Signal>
+          : "not validated, check it against the image"}
+      </>
+    );
+
+  // Sona's read: the draft wording and what it rests on.
+  const insight = (
+    <>
+      {/* The header already reads the image: that suggested step is text only. */}
+      <div className={data && !open.length ? "xr-wrap xr-step-only" : "xr-wrap"}>
+      <InsightCard label={sample ? "Sona · sample" : "Sona draft"}
+        title={!data ? (encounterId && read.isPending ? "Looking for a read" : "No read yet") : sample ? "Sample read, not from this image" : "Chest X-ray draft read"}
+        lead={!data ? (encounterId && read.isError ? messageOf(read.error) : "Sona drafts a read as soon as an image is added. You confirm or change it.")
+          : data.findings[0] ?? "Nothing described on this image."}
+        evidence={data ? [
+          ...data.findings.slice(1, 4).map(text => ({ icon: "scan" as const, text })),
+          { icon: "shield-check" as const, text: "Not validated: not a radiologist's report or a diagnosis." },
+        ] : undefined}
+        sources={data ? 1 + onImage.length : undefined}
+        next={!data ? undefined : open.length
+          ? { label: "Review findings", step: "Check each finding against the image, then track or dismiss it.", onAct: () => decision.current?.querySelector("button")?.focus() }
+          : mayDetect ? { label: "Read for findings", step: "Have the image read for findings that must not be missed.", onAct: () => detect.mutate({ encounterId }) } : undefined} />
+      </div>
+    </>
+  );
+  // The decision, one finding at a time, each with its evidence beside the buttons.
+  const decide = (
+    <>
+      {data && (
+        <Card title="Your decision">
+          <div className="xr-decide" ref={decision}>
+            {!onImage.length && <p className="xr-note">No findings to decide on yet. {mayDetect ? "Read the image for findings, then track or dismiss each one here." : "A doctor reads the image for findings."}</p>}
+            {onImage.map((f, i) => (
+              <div key={f.id} className="xr-finding">
+                <p><span className="xr-num">{i + 1}</span>{f.label}</p>
+                <p className="xr-note xr-evidence">
+                  {[f.location.zone, f.sizeMm ? `${f.sizeMm} mm` : null, f.status === "tracked" ? null : "Possible, not confirmed"].filter(Boolean).join(" · ")}
+                  {f.kind === "nodule" && f.status === "open" ? <Chip tone="urgent" icon="alert">Must not miss</Chip> : null}
+                </p>
+                {f.status === "tracked" ? <p className="xr-done"><Icon name="check" size={16} /> Tracked for follow-up</p>
+                  : !mayDecide ? <p className="xr-note">Waiting for a doctor's decision.</p>
+                  : dismissing?.id === f.id ? (
+                    <form onSubmit={e => { e.preventDefault(); dismiss.mutate({ findingId: f.id, reason: dismissing.reason }); }}>
+                      <Field label="Why dismiss it? Kept on record.">{c => <input {...c} autoFocus required maxLength={500} value={dismissing.reason} onChange={e => setDismissing({ id: f.id, reason: e.target.value })} />}</Field>
+                      <div className="xr-actions">
+                        <Button size="sm" variant="danger" type="submit" pending={dismiss.isPending} disabled={!dismissing.reason.trim()}>Dismiss finding</Button>
+                        <Button size="sm" onClick={() => setDismissing(undefined)}>Keep it</Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="xr-actions">
+                      <Button size="sm" variant="secondary" icon="check" pending={track.isPending && track.variables?.findingId === f.id} onClick={() => track.mutate({ findingId: f.id, requestId: crypto.randomUUID() })}>Confirm and track</Button>
+                      <Button size="sm" icon="edit" onClick={() => setDismissing({ id: f.id, reason: "" })}>Dismiss</Button>
+                    </div>
+                  )}
+              </div>
+            ))}
+            {(track.isError || dismiss.isError) && <p className="xr-error" role="alert">{messageOf(track.error ?? dismiss.error)}</p>}
+          </div>
+        </Card>
+      )}
+    </>
+  );
 
   return (
     <>
       <PageHeader title="X-ray" lead={lead} actions={
         hasImage && mayDetect
           ? <Button variant="primary" icon="scan" pending={detect.isPending} onClick={() => detect.mutate({ encounterId })}>Read for findings</Button>
-          : mayUpload && <Button variant="primary" icon="plus" disabled={!encounterId} pending={upload.isPending} onClick={() => picker.current?.click()}>Add X-ray</Button>
+          : mayUpload && encounterId && <Button variant="primary" icon="plus" pending={upload.isPending} onClick={() => picker.current?.click()}>Add X-ray</Button>
       } />
       <WithRail rail={
         <RightRail label="Sona's read">
-          {/* The header already reads the image: that suggested step is text only. */}
-          <div className={data && !open.length ? "xr-wrap xr-step-only" : "xr-wrap"}>
-          <InsightCard label={sample ? "Sona · sample" : "Sona draft"}
-            title={!data ? "No read yet" : sample ? "Sample read, not from this image" : "Chest X-ray draft read"}
-            lead={!data ? (encounterId && read.isError ? messageOf(read.error) : "Sona drafts a read as soon as an image is added. You confirm or change it.")
-              : data.findings[0] ?? "Nothing described on this image."}
-            evidence={data ? [
-              ...data.findings.slice(1, 4).map(text => ({ icon: "scan" as const, text })),
-              { icon: "shield-check" as const, text: "Not validated: not a radiologist's report or a diagnosis." },
-            ] : undefined}
-            sources={data ? 1 + onImage.length : undefined}
-            next={!data ? undefined : open.length
-              ? { label: "Review findings", step: "Check each finding against the image, then track or dismiss it.", onAct: () => decision.current?.querySelector("button")?.focus() }
-              : mayDetect ? { label: "Read for findings", step: "Have the image read for findings that must not be missed.", onAct: () => detect.mutate({ encounterId }) } : undefined} />
-          </div>
+          {open.length ? decide : null}
+          {insight}
           {detect.isError && <p className="xr-error" role="alert">{messageOf(detect.error)}</p>}
-          {data && (
-            <Card title="Your decision">
-              <div className="xr-decide" ref={decision}>
-                {!onImage.length && <p className="xr-note">No findings to decide on yet. {mayDetect ? "Read the image for findings, then track or dismiss each one here." : "A doctor reads the image for findings."}</p>}
-                {onImage.map((f, i) => (
-                  <div key={f.id} className="xr-finding">
-                    <p><span className="xr-num">{i + 1}</span>{f.label}</p>
-                    {f.status === "tracked" ? <p className="xr-done"><Icon name="check" size={16} /> Tracked for follow-up</p>
-                      : !mayDecide ? <p className="xr-note">Waiting for a doctor's decision.</p>
-                      : dismissing?.id === f.id ? (
-                        <form onSubmit={e => { e.preventDefault(); dismiss.mutate({ findingId: f.id, reason: dismissing.reason }); }}>
-                          <Field label="Why dismiss it? Kept on record.">{c => <input {...c} autoFocus required maxLength={500} value={dismissing.reason} onChange={e => setDismissing({ id: f.id, reason: e.target.value })} />}</Field>
-                          <div className="xr-actions">
-                            <Button size="sm" variant="danger" type="submit" pending={dismiss.isPending} disabled={!dismissing.reason.trim()}>Dismiss finding</Button>
-                            <Button size="sm" onClick={() => setDismissing(undefined)}>Keep it</Button>
-                          </div>
-                        </form>
-                      ) : (
-                        <div className="xr-actions">
-                          <Button size="sm" variant="secondary" icon="check" pending={track.isPending && track.variables?.findingId === f.id} onClick={() => track.mutate({ findingId: f.id, requestId: crypto.randomUUID() })}>Confirm and track</Button>
-                          <Button size="sm" icon="edit" onClick={() => setDismissing({ id: f.id, reason: "" })}>Dismiss</Button>
-                        </div>
-                      )}
-                  </div>
-                ))}
-                {(track.isError || dismiss.isError) && <p className="xr-error" role="alert">{messageOf(track.error ?? dismiss.error)}</p>}
-              </div>
-            </Card>
-          )}
+          {open.length ? null : decide}
         </RightRail>
       }>
         <Card className="xr-viewer">
@@ -194,18 +219,12 @@ function Page() {
             </div>
           )}
         </Card>
-        {data && (
-          <ListCard title="What the draft describes">
-            {data.findings.map((f, i) => <ListRow key={`d${i}`} icon="scan" title={f} caption="Draft wording. Check it against the image." />)}
-            {onImage.map((f, i) => (
-              <ListRow key={f.id} leading={<span className="xr-num">{i + 1}</span>} title={f.label}
-                caption={[f.location.zone, f.sizeMm ? `${f.sizeMm} mm` : null, f.status === "tracked" ? "Tracked" : "Possible, not confirmed"].filter(Boolean).join(" · ")}
-                trailing={f.kind === "nodule" && f.status === "open" ? <Chip tone="urgent" icon="alert">Must not miss</Chip> : undefined} />
-            ))}
-            {!data.findings.length && !onImage.length && <ListRow icon="check" title="Nothing described" caption="The draft names no findings on this image." />}
-            {all.length > onImage.length && <ListRow icon="file" title={`${all.length - onImage.length} other finding(s) on this visit`} caption="Not read from this image, so not drawn on it." />}
+        {data && (data.findings.length > 4 || all.length > onImage.length) ? (
+          <ListCard title="More from the draft">
+            {data.findings.slice(4).map((f, i) => <ListRow key={`d${i}`} icon="scan" title={f} />)}
+            {all.length > onImage.length ? <ListRow icon="file" title={`${all.length - onImage.length} other finding(s) on this visit`} caption="Not read from this image, so not drawn on it." /> : null}
           </ListCard>
-        )}
+        ) : null}
       </WithRail>
     </>
   );
