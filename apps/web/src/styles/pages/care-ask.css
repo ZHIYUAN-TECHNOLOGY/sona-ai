@@ -26,6 +26,10 @@
 .ask-chip:hover { border-color: var(--blue); background: var(--blue-wash); }
 .ask-chip:focus-visible, .ask-pill:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .ask-chip:active { transform: scale(0.98); }
+/* The rail list stays inside its column: questions wrap instead of running off the right edge. */
+.ask-page > .rail { grid-template-columns: minmax(0, 1fr); }
+.ask-more { min-width: 0; }
+.ask-more .list-title { white-space: normal; }
 .ask-more .list-row { min-height: max(48px, var(--tap)); font-size: max(17px, 1em); }
 
 .btn.ask-pill { min-height: max(48px, var(--tap)); padding-inline: var(--space-5); border-radius: var(--radius-pill); font-size: max(17px, 1em); }

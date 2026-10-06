@@ -7,7 +7,6 @@
 .care-home-over > span { white-space: normal; overflow-wrap: anywhere; }
 /* Patients read this: nothing on the page under the small size. */
 .care-home .chip.chip.chip, .care-home .stat-caption, .care-home .list-caption, .care-home .insight-overline, .care-home .insight-label { font-size: var(--text-small); }
-.care-home-clip { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
 .care-home .list > li > .empty { border: 0; }
 
 .care-home p { margin: 0; }
