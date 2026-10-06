@@ -1,10 +1,16 @@
 import { Link, type LinkProps } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-import { Button, type Tone } from "./primitives";
+import { Icon, type IconName } from "./icon";
+import type { Tone } from "./primitives";
 import "../styles/components.css";
+import "../styles/data.css";
 
-type Next = { label: string } & ({ onAct: () => void } | { to: LinkProps["to"] });
+type Next = {
+  label: string;
+  /** The suggested step, in one line, beside the action. */
+  step?: string;
+} & ({ onAct: () => void } | { to: LinkProps["to"] });
 
 type Props = {
   /** One line that says where things stand. */
@@ -16,12 +22,37 @@ type Props = {
   tone?: Tone;
   /** Detail on demand, behind a disclosure. */
   children?: ReactNode;
+  /** Pill at the top left, e.g. "Sona insight". */
+  label?: string;
+  /** Small text at the top right, e.g. when it was last updated. */
+  meta?: ReactNode;
+  /** Heading; with one, `lead` reads as the paragraph under it. */
+  title?: string;
+  /** What the insight rests on, one row each. */
+  evidence?: { icon?: IconName; text: ReactNode }[];
 };
 
-export function InsightCard({ lead, next, sources, tone = "info", children }: Props) {
+export function InsightCard({ lead, next, sources, tone = "info", children, label, meta, title, evidence }: Props) {
   return (
     <article className="insight glass halftone" data-tone={tone}>
-      <p className="insight-lead">{lead}</p>
+      {label || meta ? (
+        <header className="insight-head">
+          {label ? <span className="insight-label">{label}</span> : null}
+          {meta ? <span className="insight-meta">{meta}</span> : null}
+        </header>
+      ) : null}
+      {title ? <h3 className="insight-title">{title}</h3> : null}
+      <p className={title ? "insight-body" : "insight-lead"}>{lead}</p>
+      {evidence?.length ? (
+        <ul className="insight-evidence">
+          {evidence.map((e, i) => (
+            <li key={i}>
+              <Icon name={e.icon ?? "chevron-right"} size={18} />
+              <span>{e.text}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {children ? (
         <details className="insight-detail">
           <summary>Details</summary>
@@ -29,12 +60,23 @@ export function InsightCard({ lead, next, sources, tone = "info", children }: Pr
         </details>
       ) : null}
       {next ? (
-        "to" in next
-          ? <Link className="btn btn-primary" to={next.to}>{next.label}</Link>
-          : <Button variant="primary" onClick={next.onAct}>{next.label}</Button>
+        <div className="insight-next">
+          {next.step ? (
+            <p className="insight-step">
+              <span className="insight-overline">Suggested</span>
+              {next.step}
+            </p>
+          ) : null}
+          {"to" in next
+            ? <Link className="btn btn-primary insight-act" to={next.to}>{next.label}</Link>
+            : <button type="button" className="btn btn-primary insight-act" onClick={next.onAct}>{next.label}</button>}
+        </div>
       ) : null}
       {sources === undefined ? null : (
-        <footer className="insight-foot">You decide · {sources} {sources === 1 ? "source" : "sources"}</footer>
+        <footer className="insight-foot">
+          <Icon name="shield-check" size={16} />
+          You decide · {sources} {sources === 1 ? "source" : "sources"}
+        </footer>
       )}
     </article>
   );

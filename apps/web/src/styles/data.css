@@ -1,0 +1,79 @@
+/* Data table, AI insight panel and charts. Loaded after components.css, whose older
+   table/chart/insight rules it overrides. Pro-only looks sit under .pro. */
+
+/* Data table */
+.table-toolbar, .table-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-3) var(--space-4); }
+.table-toolbar { border-bottom: 1px solid var(--hairline); }
+.table-foot { border-top: 1px solid var(--hairline); }
+.table-count, .cell-muted { font-size: var(--text-small); color: var(--muted); }
+.table tbody tr[data-selected] { background: var(--fill-selected); }
+.table-row-open:hover { background: var(--fill-hover); }
+.table-row-open:focus-visible { outline: 0; box-shadow: inset var(--focus-ring); }
+.table-skel { display: block; height: 12px; max-width: 160px; border-radius: var(--radius-pill); background: var(--fill-field); animation: table-skel 1.2s var(--ease) infinite alternate; }
+@keyframes table-skel { to { opacity: 0.45; } }
+.cell-person { display: inline-flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.cell-person-text { display: grid; min-width: 0; }
+.cell-person-name { font-weight: 600; }
+.cell-value { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cell-value .cell-muted { font-weight: 400; }
+.row-action { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap); padding: 0 var(--space-4); border: 0; border-radius: var(--radius-pill); background: none; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; transition: background var(--quick) var(--ease), color var(--quick) var(--ease); }
+.row-action:hover { background: var(--fill-hover); }
+.row-action:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
+.pro .table th { height: 44px; font-size: var(--text-overline); letter-spacing: var(--track-overline); text-transform: uppercase; border-bottom-color: var(--hairline); }
+.pro .table td { height: 71px; border-bottom-color: var(--hairline); }
+
+/* Insight card: plain parts everywhere, the AI gradient panel in Pro */
+.insight-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.insight-label { display: inline-flex; align-items: center; height: var(--chip-h); padding: 0 var(--space-3); border-radius: var(--radius-pill); background: var(--blue-wash); color: var(--blue); font-size: var(--text-small); font-weight: 600; }
+.insight-meta, .insight-foot { font-size: var(--text-small); color: var(--muted); }
+.insight-foot { display: flex; align-items: center; gap: var(--space-2); }
+.insight-title { margin: 0; font-size: var(--text-title); line-height: 1.25; letter-spacing: var(--track-tight); }
+.insight-body { margin: 0; }
+.insight-evidence { display: grid; margin: 0; padding: 0; list-style: none; }
+.insight-evidence li { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; border-top: 1px solid var(--hairline); }
+.insight-evidence svg { flex: none; color: var(--muted); }
+.insight-next { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.insight-step { flex: 1 1 200px; margin: 0; }
+.insight-overline { display: block; font-size: var(--text-overline); font-weight: 600; letter-spacing: var(--track-overline); text-transform: uppercase; color: var(--muted); }
+/* White text on every stop of the gradient is at least 4.8:1. The translucent --ai-row is
+   used for hairlines only: as a fill behind text it would drop white below AA. */
+.pro .insight { background: var(--ai-gradient); border: 0; color: var(--on-ai); backdrop-filter: none; }
+.pro .insight::before, .pro .insight::after, .pro .insight-lead::before { display: none; }
+.pro .insight :is(.insight-meta, .insight-foot, .insight-overline, .insight-detail, .insight-detail summary) { color: var(--on-ai); }
+.pro .insight-label, .pro .insight .insight-act { background: var(--on-ai); color: var(--navy); border-color: transparent; }
+.pro .insight .insight-act { border-radius: var(--radius-pill); }
+.pro .insight-evidence li { border-top-color: var(--ai-row); }
+.pro .insight-evidence svg { color: var(--on-ai-soft); }
+.pro .insight-next { padding-top: var(--space-4); border-top: 1px solid var(--ai-row); }
+.pro .insight :focus-visible { outline: 2px solid var(--on-ai); outline-offset: 2px; box-shadow: none; }
+
+/* Charts */
+.chart { position: relative; }
+.chart svg:focus-visible { outline: 0; box-shadow: var(--focus-ring); border-radius: var(--radius-control); }
+.chart-grid { stroke: var(--hairline); }
+.chart-line { stroke: var(--blue); }
+.chart-dot { fill: var(--surface); stroke: var(--blue); stroke-width: 2; }
+.chart-dot[data-last] { fill: var(--blue); }
+.chart-dot[data-out] { fill: var(--surface); stroke: var(--amber); }
+.chart-halo { fill: var(--blue); opacity: 0.16; }
+.chart-active { fill: none; stroke: var(--blue); stroke-width: 2; }
+.chart-bar { fill: var(--blue-wash); }
+.chart-bar[data-last] { fill: var(--blue); }
+.chart-goal { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
+.chart .chart-value { fill: var(--ink); font-weight: 600; }
+.chart-tip { position: absolute; z-index: 1; display: grid; gap: 2px; width: max-content; max-width: 220px; padding: var(--space-2) var(--space-3); border-radius: var(--radius-control); background: var(--ink); color: var(--surface); font-size: var(--text-small); box-shadow: var(--shadow-float); pointer-events: none; transform: translate(-50%, calc(-100% - 14px)); }
+.chart-tip[data-side="end"] { transform: translate(-90%, calc(-100% - 14px)); }
+.chart-tip[data-side="start"] { transform: translate(-10%, calc(-100% - 14px)); }
+.chart-tip strong { font-size: var(--text-body); }
+.chart-tip-over { font-size: var(--text-overline); font-weight: 600; letter-spacing: var(--track-overline); text-transform: uppercase; opacity: 0.8; }
+.sparkline { display: inline-block; vertical-align: middle; overflow: visible; }
+.sparkline path { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.sparkline circle { fill: var(--muted); }
+.sparkline[data-tone="amber"] path { stroke: var(--amber); }
+.sparkline[data-tone="amber"] circle { fill: var(--amber); }
+
+@media (prefers-reduced-motion: reduce) {
+  .table-skel { animation: none; }
+  .row-action { transition: none; }
+}
