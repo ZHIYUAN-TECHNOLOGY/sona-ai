@@ -2,104 +2,101 @@ import { can } from "@sona-ai/api/roles";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-
-import { DataTable, type Column } from "@/components/data-table";
-import { InsightCard, InsightRow } from "@/components/insight-card";
+import { DataTable, PersonCell, RowAction, ValueCell, type Column } from "@/components/data-table";
+import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Avatar, Button, Chip } from "@/components/primitives";
+import { Button, SearchField, Tabs } from "@/components/primitives";
 import { WithRail } from "@/components/rail";
-import { FlagChip, ResultRail, valueOf, when } from "@/features/results/result-rail";
-import { byTriage, counts, matches, type Filter } from "@/features/results/triage";
+import { FlagCell, PriorityCell, ResultRail, when } from "@/features/results/result-rail";
+import { inTab, summary, type Tab } from "@/features/results/tabs";
+import { byTriage, isNormal } from "@/features/results/triage";
 import type { ResultRow } from "@/features/results/types";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/results.css";
 
 export const Route = createFileRoute("/pro/_app/results")({ component: Page });
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "abnormal", label: "Flagged" },
-  { key: "unacknowledged", label: "Unacknowledged" },
-];
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 function Page() {
   const { me } = Route.useRouteContext();
   const allowed = can(me.role, "results.acknowledge");
   const queryClient = useQueryClient();
   const list = useQuery(orpc.results.list.queryOptions({ input: {} }));
-  const acknowledge = useMutation(orpc.results.acknowledge.mutationOptions({
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: orpc.results.list.key() }),
-  }));
-  const [filter, setFilter] = useState<Filter>("all");
+  const refresh = () => queryClient.invalidateQueries({ queryKey: orpc.results.list.key() });
+  const acknowledge = useMutation(orpc.results.acknowledge.mutationOptions({ onSuccess: refresh }));
+  // "Acknowledge normal": the API acknowledges one result at a time, so this sends one call per normal result.
+  const acknowledgeAll = useMutation({
+    mutationFn: (rows: ResultRow[]) => Promise.all(rows.map(r => orpc.results.acknowledge.call({ resultId: r.id }))),
+    onSettled: () => { setConfirming(false); return refresh(); },
+  });
+  const [tab, setTab] = useState<Tab>("action");
+  const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string>();
+  const [confirming, setConfirming] = useState(false);
 
   const sorted = useMemo(() => [...(list.data ?? [])].sort(byTriage), [list.data]);
-  const shown = useMemo(() => sorted.filter(matches(filter)), [sorted, filter]);
+  const shown = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return sorted.filter(inTab(tab)).filter(r => !q || `${r.patientName} ${r.test}`.toLowerCase().includes(q));
+  }, [sorted, tab, query]);
   // The selection follows the click; until one, it is the row that most needs a doctor.
   const selected = shown.find(r => r.id === selectedId) ?? shown[0];
+  const normals = sorted.filter(r => !r.acknowledgedAt && !r.critical && isNormal(r.flag));
+  const next = sorted.find(r => !r.acknowledgedAt);
 
-  const columns = useMemo<Column<ResultRow>[]>(() => [
+  const columns: Column<ResultRow>[] = [
     {
       key: "patient", header: "Patient",
-      cell: r => (
-        <span className="results-patient" aria-current={r.id === selected?.id ? "true" : undefined}>
-          <Avatar name={r.patientName} /> {r.patientName}
-        </span>
-      ),
+      cell: r => <PersonCell name={r.patientName} detail={r.acknowledgedAt ? `Acknowledged${r.acknowledgedByName ? ` · ${r.acknowledgedByName}` : ""}` : "Waiting"} />,
     },
     { key: "test", header: "Test", cell: r => r.test },
-    { key: "value", header: "Value", cell: r => <span className="results-value" data-critical={r.critical || undefined}>{valueOf(r)}</span> },
-    { key: "flag", header: "Flag", cell: r => <FlagChip row={r} /> },
-    { key: "received", header: "Received", cell: r => when(r.receivedAt) },
-    {
-      key: "state", header: "State",
-      cell: r => (r.acknowledgedAt
-        ? <Chip tone="done">Acknowledged{r.acknowledgedByName ? ` · ${r.acknowledgedByName}` : ""}</Chip>
-        : <Chip tone={r.critical ? "urgent" : "soon"}>Waiting</Chip>),
-    },
-  ], [selected?.id]);
+    { key: "result", header: "Result", cell: r => <span className="results-value" data-critical={r.critical || undefined}><ValueCell value={r.value} unit={r.unit ?? undefined} /></span> },
+    { key: "flag", header: "Flag", cell: r => <FlagCell row={r} /> },
+    { key: "priority", header: "Priority", cell: r => <PriorityCell row={r} /> },
+    { key: "received", header: "Received", cell: r => <span className="results-received">{when(r.receivedAt)}</span> },
+  ];
 
-  if (list.isPending) return <><PageHeader title="Results" /><EmptyState>Loading results…</EmptyState></>;
   if (list.isError) {
     return (
       <>
         <PageHeader title="Results" />
-        <EmptyState>Results could not be shown: {list.error.message}</EmptyState>
+        <EmptyState title="Results could not be shown" icon="alert" action={<Button onClick={() => list.refetch()}>Try again</Button>}>
+          {list.error.message}
+        </EmptyState>
       </>
     );
   }
 
-  const n = counts(sorted, new Date());
-  const plural = (count: number) => (count === 1 ? "result" : "results");
-  const show = (next: Filter) => () => { setFilter(next); setSelectedId(undefined); };
-
+  const n = summary(sorted);
+  const pickTab = (t: Tab) => { setTab(t); setSelectedId(undefined); };
   return (
     <>
-      <PageHeader title="Results" lead="Lab results by what needs a doctor first." />
-      <InsightRow>
-        <InsightCard
-          tone="urgent" sources={n.mustNotMiss}
-          lead={n.mustNotMiss ? `${n.mustNotMiss} critical ${plural(n.mustNotMiss)} must not be missed.` : "No critical result is waiting."}
-          next={n.mustNotMiss ? { label: "Review the newest critical result", onAct: show("unacknowledged") } : undefined}
-        />
-        <InsightCard
-          tone="soon" sources={n.waiting}
-          lead={n.waiting ? `${n.waiting} other ${plural(n.waiting)} waiting for a doctor.` : "Nothing else is waiting."}
-          next={n.waiting ? { label: "Show unacknowledged", onAct: show("unacknowledged") } : undefined}
-        />
-        <InsightCard
-          tone="done" sources={n.acknowledgedToday}
-          lead={`${n.acknowledgedToday} ${plural(n.acknowledgedToday)} acknowledged today.`}
-          next={{ label: "Show all results", onAct: show("all") }}
-        />
-      </InsightRow>
-      <div className="results-filters" role="group" aria-label="Filter results">
-        {FILTERS.map(f => (
-          <Button key={f.key} variant={filter === f.key ? "primary" : "quiet"} aria-pressed={filter === f.key} onClick={show(f.key)}>
-            {f.label}
-          </Button>
-        ))}
-      </div>
+      <PageHeader
+        title="Results"
+        subtitle={list.isPending ? "Loading results…" : n.fresh
+          ? `${plural(n.fresh, "new result")} across ${plural(n.patients, "patient")} · ${n.critical} critical and ${n.review} to review`
+          : "No result is waiting for a doctor"}
+        actions={(
+          <>
+            {allowed && normals.length ? (confirming ? (
+              <span className="results-confirm">
+                <Button variant="primary" icon="check" pending={acknowledgeAll.isPending} onClick={() => acknowledgeAll.mutate(normals)}>
+                  Acknowledge {plural(normals.length, "normal result")}
+                </Button>
+                <Button onClick={() => setConfirming(false)}>Cancel</Button>
+              </span>
+            ) : <Button onClick={() => { pickTab("new"); setConfirming(true); }}>Acknowledge normal</Button>) : null}
+            <Button
+              variant="primary" icon="arrow-right" disabled={!next}
+              onClick={() => { if (next) { setQuery(""); setTab(inTab("action")(next) ? "action" : "new"); setSelectedId(next.id); } }}
+            >
+              Open next
+            </Button>
+          </>
+        )}
+      />
+      {acknowledgeAll.isError ? <p className="results-error" role="alert">Some results were not acknowledged: {acknowledgeAll.error.message}</p> : null}
       <WithRail
         rail={selected ? (
           <ResultRail
@@ -111,8 +108,28 @@ function Page() {
         ) : null}
       >
         <DataTable
-          columns={columns} rows={shown} rowKey={r => r.id} onRowOpen={r => setSelectedId(r.id)}
-          empty={sorted.length ? "No results match this filter." : "No lab results have arrived yet."}
+          columns={columns} rows={shown} rowKey={r => r.id} selectedKey={selected?.id} loading={list.isPending}
+          onRowOpen={r => setSelectedId(r.id)}
+          rowAction={r => <RowAction onClick={() => setSelectedId(r.id)}>Review</RowAction>}
+          toolbar={(
+            <div className="results-toolbar">
+              <Tabs
+                label="Results by state" value={tab} onChange={pickTab}
+                tabs={[
+                  { id: "action", label: "Needs action", count: sorted.filter(inTab("action")).length },
+                  { id: "new", label: "New", count: n.fresh },
+                  { id: "acknowledged", label: "Acknowledged", count: sorted.length - n.fresh },
+                ]}
+              />
+              <SearchField label="Search results" placeholder="Search patient or test" value={query} onChange={e => setQuery(e.target.value)} />
+            </div>
+          )}
+          empty={query ? "No result matches this search." : tab === "acknowledged" ? "No result has been acknowledged yet." : sorted.length ? "Nothing here is waiting for a doctor." : "No lab results have arrived yet."}
+          footer={(
+            <p className="results-footnote">
+              <Icon name="alert" size={16} /> Priority is suggested from the lab flag and call-now rules. You decide what to acknowledge.
+            </p>
+          )}
         />
       </WithRail>
     </>

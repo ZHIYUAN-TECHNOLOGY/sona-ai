@@ -1,15 +1,12 @@
-.results-filters { display: flex; gap: var(--space-2); margin: var(--space-4) 0 var(--space-3); }
-
-.results-patient { display: flex; align-items: center; gap: var(--space-2); }
-/* The selected row, marked from its patient cell so the shared table needs no extra prop. */
-tr:has(.results-patient[aria-current="true"]) { background: var(--blue-wash); }
-
+.results-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.results-muted { color: var(--muted); margin: 0; }
 .results-value { font-variant-numeric: tabular-nums; }
 .results-value[data-critical] { color: var(--red); font-weight: 600; }
-
-.results-values { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0 0 var(--space-3); }
-.results-values dt { color: var(--muted); }
-.results-values dd { margin: 0; }
-
-.results-note { color: var(--muted); margin: var(--space-2) 0 0; }
+.results-received { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.results-footnote { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); margin: 0; }
+.results-detail-head { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4); }
+.results-detail-head > div { flex: 1; min-width: 0; }
+.results-detail-title { font: inherit; font-weight: 600; margin: 0 0 var(--space-1); }
+.results-detail-actions { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); }
+.results-confirm { display: flex; align-items: center; gap: var(--space-2); }
 .results-error { color: var(--red); margin: var(--space-2) 0 0; }
