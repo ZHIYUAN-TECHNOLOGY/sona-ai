@@ -1,117 +1,174 @@
 import { can } from "@sona-ai/api/roles";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
-import { type Column, DataTable } from "@/components/data-table";
-import { InsightCard, InsightRow } from "@/components/insight-card";
+import { type Column, DataTable, PersonCell, RowAction, ValueCell } from "@/components/data-table";
+import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card } from "@/components/primitives";
+import { Button, Card, ListCard, ListRow, SearchField, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
-import { Loaded, PatientPicker, say } from "@/features/discharge/shared";
+import { matching, ringgit } from "@/features/audit/filter";
+import { say } from "@/features/discharge/shared";
 import { client, orpc } from "@/lib/orpc";
-import "@/styles/pages/discharge.css";
+import "@/styles/pages/audit.css";
 
 export const Route = createFileRoute("/pro/_app/audit")({ component: Page });
 
+type Tab = "coding" | "access";
 type Item = Awaited<ReturnType<typeof client.audit.list>>[number];
-const rm = (cents: number) => `RM ${(cents / 100).toLocaleString("en-MY")}`;
-
-const COLUMNS: Column<Item>[] = [
-  { key: "patient", header: "Patient", cell: r => r.patientId },
-  { key: "gap", header: "Gap in the note", cell: r => r.gap },
-  { key: "code", header: "Code", cell: r => `${r.fromCode ?? "none"} → ${r.toCode}` },
-  { key: "doctor", header: "Doctor", cell: r => r.doctor },
-  { key: "risk", header: "At risk", align: "right", cell: r => rm(r.riskCents), sort: (a, b) => b.riskCents - a.riskCents },
-];
+type Line = Awaited<ReturnType<typeof client.accessLog.list>>["lines"][number];
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+const codes = (r: Item) => `${r.fromCode ?? "No code"} → ${r.toCode}`;
 
 function Page() {
   const { me } = Route.useRouteContext();
-  const [tab, setTab] = useState<"coding" | "access">("coding");
+  const [tab, setTab] = useState<Tab>("coding");
+  const mayAudit = can(me.role, "audit.list");
+  // Both tabs read the same list, so the count on the tab is live whichever tab is open.
+  const items = useQuery(orpc.audit.list.queryOptions({ enabled: mayAudit }));
+  const tabs = (
+    <Tabs label="Audit" value={tab} onChange={setTab}
+      tabs={[{ id: "coding", label: "Coding audit", count: items.data?.length }, { id: "access", label: "Access trail" }]} />
+  );
+  if (tab === "coding") return mayAudit ? <Coding tabs={tabs} items={items} mayRun={can(me.role, "audit.run")} maySend={can(me.role, "audit.query")} /> : <Refused tabs={tabs}>Your role cannot see the coding audit.</Refused>;
+  return can(me.role, "accessLog.list") ? <Access tabs={tabs} /> : <Refused tabs={tabs}>Your role cannot see who opened a record.</Refused>;
+}
+
+function Refused({ tabs, children }: { tabs: ReactNode; children: ReactNode }) {
   return (
     <>
       <PageHeader title="Audit" />
-      <div className="dc-tabs" role="tablist">
-        <Button role="tab" aria-selected={tab === "coding"} variant={tab === "coding" ? "primary" : "quiet"} onClick={() => setTab("coding")}>Coding audit</Button>
-        <Button role="tab" aria-selected={tab === "access"} variant={tab === "access" ? "primary" : "quiet"} onClick={() => setTab("access")}>Access trail</Button>
-      </div>
-      {tab === "coding"
-        ? can(me.role, "audit.list") ? <Coding /> : <EmptyState>Your role cannot see the coding audit.</EmptyState>
-        : can(me.role, "accessLog.list") ? <Access /> : <EmptyState>Your role cannot see who opened a record.</EmptyState>}
+      <Card><div className="au-toolbar">{tabs}</div><EmptyState icon="shield-check" title="Not available to your role">{children}</EmptyState></Card>
     </>
   );
 }
 
-function Coding() {
+function Coding({ tabs, items, mayRun, maySend }: { tabs: ReactNode; items: { data?: Item[]; error: unknown; isPending: boolean }; mayRun: boolean; maySend: boolean }) {
   const queryClient = useQueryClient();
-  const items = useQuery(orpc.audit.list.queryOptions());
   const [openId, setOpenId] = useState<string>();
+  const [q, setQ] = useState("");
   const refresh = () => queryClient.invalidateQueries({ queryKey: orpc.audit.list.key() });
   const run = useMutation(orpc.audit.run.mutationOptions({ onSuccess: refresh }));
   // `audit.query` writes (a task for the doctor, the item marked queried), so it is a button, never a row open.
   const ask = useMutation(orpc.audit.query.mutationOptions({ onSuccess: refresh }));
-  const patients = useQuery(orpc.patients.list.queryOptions()); const nameOf = (id: string) => patients.data?.find(p => p.id === id)?.name ?? id; const columns = COLUMNS.map(c => (c.key === "patient" ? { ...c, cell: (r: Item) => nameOf(r.patientId) } : c)); const rows = items.data ?? [];
+  const patients = useQuery(orpc.patients.list.queryOptions());
+  const nameOf = (id: string) => patients.data?.find(p => p.id === id)?.name ?? id;
+
+  const rows = items.data ?? [];
+  const shown = matching(rows, q, r => [nameOf(r.patientId), r.patientId, r.doctor, r.gap, r.fromCode ?? "", r.toCode]);
   const open = rows.find(r => r.id === openId);
   const total = rows.reduce((sum, r) => sum + r.riskCents, 0);
+  const doctors = new Set(rows.map(r => r.doctor)).size;
+  const sent = ask.isSuccess ? ask.variables?.itemId : undefined;
+
+  const columns: Column<Item>[] = [
+    { key: "patient", header: "Patient", cell: r => <PersonCell name={nameOf(r.patientId)} detail={r.patientId} />, sort: (a, b) => nameOf(a.patientId).localeCompare(nameOf(b.patientId)) },
+    { key: "gap", header: "Gap in the note", cell: r => <span className="au-gap"><span>{r.gap}</span><span className="au-muted au-code">{codes(r)}</span></span> },
+    { key: "doctor", header: "Doctor", cell: r => <PersonCell name={r.doctor} size="sm" />, sort: (a, b) => a.doctor.localeCompare(b.doctor) },
+    { key: "risk", header: "At risk", align: "right", cell: r => <ValueCell value={ringgit(r.riskCents)} unit="RM" />, sort: (a, b) => a.riskCents - b.riskCents },
+  ];
 
   return (
     <>
-      <InsightRow>
-        <InsightCard tone={rows.length ? "soon" : "done"} sources={rows.length || 1}
-          lead={items.isPending ? "Reading the audit…" : rows.length ? `${rows.length} open item${rows.length > 1 ? "s" : ""} put ${rm(total)} at risk` : "No open coding items"} />
-      </InsightRow>
-      <div className="dc-row dc-tabs">
-        <Button variant="primary" pending={run.isPending} onClick={() => run.mutate({})}>Run audit now</Button>
-        {run.isSuccess ? <span className="dc-muted">Audit finished.</span> : null}
-        {run.error ? <span className="dc-refused" role="alert">{say(run.error)}</span> : null}
-      </div>
+      <PageHeader title="Audit"
+        lead={items.isPending ? "Reading the audit…" : items.error ? "The audit could not be read." : rows.length ? `${plural(rows.length, "open item")} put RM ${ringgit(total)} at risk across ${plural(doctors, "doctor")}.` : "No open coding items."}
+        status={run.isSuccess ? "Audit finished" : undefined}
+        actions={mayRun ? <Button variant="primary" icon="activity" pending={run.isPending} onClick={() => run.mutate({})}>Run audit now</Button> : undefined} />
+      {run.error ? <p className="au-note" role="alert">{say(run.error)}</p> : null}
+      {rows.length ? (
+        <StatRow>
+          <StatCard title="Open items" value={rows.length} caption="Notes that do not support their code" />
+          <StatCard title="At risk" value={ringgit(total)} unit="RM" caption="If the claims go out as coded" />
+          <StatCard title="Doctors involved" value={doctors} caption="Each query goes to the note's author" />
+        </StatRow>
+      ) : null}
       <WithRail rail={
-        <RightRail label="Item">
+        <RightRail label="Selected finding">
           {open ? (
-            <Card title={nameOf(open.patientId)}>
-              <p><strong>{open.gap}</strong></p>
-              <p>{open.fromCode ?? "none"} → {open.toCode} · {rm(open.riskCents)} at risk</p>
-              <p className="dc-muted">Sona’s query for {open.doctor}. You decide whether to send it.</p>
-              <blockquote className="dc-quote">{open.query}</blockquote>
-              <Button variant="primary" pending={ask.isPending} disabled={ask.isSuccess && ask.variables?.itemId === open.id} onClick={() => ask.mutate({ itemId: open.id })}>
-                {ask.isSuccess && ask.variables?.itemId === open.id ? "Query sent" : `Send query to ${open.doctor}`}
-              </Button>
-              {ask.error ? <p className="dc-refused" role="alert">{say(ask.error)}</p> : null}
-            </Card>
-          ) : <p className="dc-muted">Open a row to review its query.</p>}
+            <>
+              <Card title={nameOf(open.patientId)}>
+                <dl className="au-facts">
+                  <dt>Code</dt><dd className="au-code">{codes(open)}</dd>
+                  <dt>At risk</dt><dd>RM {ringgit(open.riskCents)}</dd>
+                  <dt>Doctor</dt><dd>{open.doctor}</dd>
+                </dl>
+              </Card>
+              <InsightCard label="Sona's query" meta={`For ${open.doctor}`} lead={open.query} sources={2}
+                evidence={[{ icon: "file", text: open.gap }, { icon: "clipboard", text: `Coded as ${open.fromCode ?? "nothing"}; the labs support ${open.toCode}` }]}
+                next={maySend && sent !== open.id ? { label: ask.isPending ? "Sending…" : "Send query", step: `Adds a task for ${open.doctor}`, onAct: () => { if (!ask.isPending) ask.mutate({ itemId: open.id }); } } : undefined} />
+              {sent === open.id ? <p className="au-note" role="status">Query sent to {open.doctor}.</p> : null}
+              {ask.error ? <p className="au-note" role="alert">{say(ask.error)}</p> : null}
+            </>
+          ) : (
+            <Card><EmptyState icon="clipboard" title="No finding selected">Choose Review on a row to read Sona’s query before you send it.</EmptyState></Card>
+          )}
         </RightRail>
       }>
-        <Loaded query={items} empty="No open items. Run the audit to check today's notes.">
-          {list => <DataTable columns={columns} rows={list} rowKey={r => r.id} onRowOpen={r => setOpenId(r.id)} />}
-        </Loaded>
+        <Card>
+          <DataTable columns={columns} rows={shown} rowKey={r => r.id} loading={items.isPending}
+            selectedKey={open?.id} onRowOpen={r => setOpenId(r.id)}
+            rowAction={r => <RowAction onClick={() => setOpenId(r.id)}>Review</RowAction>}
+            toolbar={<div className="au-toolbar">{tabs}<SearchField label="Search findings" placeholder="Patient, doctor or code" value={q} onChange={e => setQ(e.target.value)} /></div>}
+            empty={items.error ? <EmptyState title="The audit could not be read">{say(items.error)}</EmptyState>
+              : rows.length ? <EmptyState icon="search" title="No findings match">Try a patient, a doctor or a code.</EmptyState>
+              : <EmptyState icon="shield-check" title="No open items">Run the audit to check today’s notes.</EmptyState>}
+            count={rows.length ? `Showing ${shown.length} of ${plural(rows.length, "finding")}` : undefined} />
+        </Card>
       </WithRail>
     </>
   );
 }
 
-function Access() {
-  const [patient, setPatient] = useState<{ id: string }>();
+const TRAIL: Column<Line>[] = [
+  { key: "who", header: "Who", cell: l => <PersonCell name={l.who} size="sm" /> },
+  { key: "did", header: "What", cell: l => <>{l.did}{l.times > 1 ? <span className="au-muted"> · {l.times} times</span> : null}</> },
+  { key: "at", header: "When", align: "right", cell: l => <time className="au-muted" dateTime={new Date(l.at).toISOString()}>{new Date(l.at).toLocaleString("en-MY", { dateStyle: "medium", timeStyle: "short" })}</time>, sort: (a, b) => +new Date(a.at) - +new Date(b.at) },
+];
+
+function Access({ tabs }: { tabs: ReactNode }) {
+  const patients = useQuery(orpc.patients.list.queryOptions());
+  const [patientId, setPatientId] = useState<string>();
+  const [q, setQ] = useState("");
+  const patient = patients.data?.find(p => p.id === patientId);
+  const trail = useQuery(orpc.accessLog.list.queryOptions({ input: { patientId: patientId ?? "", limit: 50 }, enabled: !!patientId }));
+  const lines = patientId ? trail.data?.lines ?? [] : [];
+  const people = new Set(lines.map(l => l.who)).size;
+  const entries = plural(lines.length, "entry", "entries");
+  const listed = matching(patients.data ?? [], q, p => [p.name, p.subtitle ?? "", p.id]);
+
   return (
     <>
-      <PatientPicker lead="Choose a patient to see who opened their record." link={p => <Button onClick={() => setPatient(p)}>{patient?.id === p.id ? "Showing" : "Show trail"}</Button>} />
-      {patient ? <Trail key={patient.id} patientId={patient.id} /> : null}
+      <PageHeader title="Audit" lead={!patient ? "Choose a patient to see who opened their record." : trail.isPending ? `Reading the trail for ${patient.name}…` : `${plural(people, "person", "people")} opened ${patient.name}’s record, in ${entries}.`} />
+      {lines.length ? (
+        <StatRow>
+          <StatCard title="Entries" value={lines.length} caption="The latest 50 are shown" />
+          <StatCard title="People" value={people} caption="Who opened or changed the record" />
+        </StatRow>
+      ) : null}
+      <WithRail rail={
+        <RightRail label="Patients">
+          <Card title="Patient">
+            <SearchField label="Search patients" placeholder="Search patients" value={q} onChange={e => setQ(e.target.value)} />
+          </Card>
+          {patients.isPending ? <Card><EmptyState>Loading…</EmptyState></Card>
+            : patients.error ? <Card><EmptyState title="Patients could not be read">{say(patients.error)}</EmptyState></Card>
+            : listed.length ? (
+              <ListCard>
+                {listed.map(p => <ListRow key={p.id} avatar={p.name} title={p.name} caption={p.subtitle} selected={p.id === patientId} onClick={() => setPatientId(p.id)} />)}
+              </ListCard>
+            ) : <Card><EmptyState icon="search" title="No patients match" /></Card>}
+        </RightRail>
+      }>
+        <Card>
+          <DataTable columns={TRAIL} rows={lines} rowKey={l => `${l.who}|${l.did}|${l.at}`} loading={!!patientId && trail.isPending}
+            toolbar={<div className="au-toolbar">{tabs}</div>}
+            empty={!patientId ? <EmptyState icon="users" title="No patient chosen">Pick a patient on the right to see who opened their record.</EmptyState>
+              : trail.error ? <EmptyState title="The trail could not be read">{say(trail.error)}</EmptyState>
+              : <EmptyState icon="shield-check" title="Nobody has opened this record yet" />}
+            count={lines.length ? `${entries} for ${patient?.name ?? patientId}` : undefined} />
+        </Card>
+      </WithRail>
     </>
-  );
-}
-
-function Trail({ patientId }: { patientId: string }) {
-  const trail = useQuery(orpc.accessLog.list.queryOptions({ input: { patientId, limit: 50 } }));
-  return (
-    <Card title="Who opened this record">
-      <Loaded query={trail}>
-        {t => t.lines.length ? (
-          <ul className="dc-list">
-            {t.lines.map((l, i) => (
-              <li key={i}><span><strong>{l.who}</strong> {l.did}{l.times > 1 ? ` (${l.times} times)` : ""}</span><time className="dc-muted">{new Date(l.at).toLocaleString("en-MY")}</time></li>
-            ))}
-          </ul>
-        ) : <p className="dc-muted">Nobody has opened this record yet.</p>}
-      </Loaded>
-    </Card>
   );
 }
