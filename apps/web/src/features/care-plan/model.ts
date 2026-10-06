@@ -84,14 +84,10 @@ export function stepOf(input: { checkInWaiting: boolean; nextCheckInAt?: Date | 
   const soon = open.find(v => v.inDays <= 1);
   if (soon) return { step: `Your visit is ${inDaysWords(soon.inDays)}. Bring your medicines with you.`, ...followUps };
   if (input.visits.some(v => v.status === "missed")) return { step: "You missed a visit. Call the clinic to book a new time.", ...followUps };
-  // ponytail: the time of day is read from the plan's own wording; use real dose times when the API has them.
-  const hour = input.now.getHours();
-  const part = hour < 11 ? "morning" : hour >= 17 ? "evening" : undefined;
-  const words = part === "evening" ? /evening|night|bed/i : /morning/i;
   const due = input.meds.filter(m => !m.finished && m.take);
-  if (part && due.some(m => words.test(String(m.take)))) return { step: `Take your ${part} dose.`, ...medicines };
   if (input.nextCheckInAt) return { step: `Your check-in is ${inDaysWords(Math.round((dayStart(input.nextCheckInAt) - dayStart(input.now)) / 86_400_000))}.`, label: "See check-ins", to: "/care/check-ins" };
   if (open[0]) return { step: `Your visit is ${inDaysWords(open[0].inDays)}.`, ...followUps };
-  if (due[0]) return { step: `Take your ${due[0].name}. ${due[0].take}`, ...medicines };
+  // No dose times in the plan, so the step points at the list and never says a dose is due now.
+  if (due[0]) return { step: "See what to take today and mark each dose as you take it.", ...medicines };
   return undefined;
 }

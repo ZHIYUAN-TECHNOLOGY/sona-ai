@@ -57,7 +57,8 @@ test("stepOf picks one step from the plan and the clock", () => {
   const meds = [{ name: "Aspirin", take: "Take 1 tablet in the evening." }];
   const visit = { title: "Clinic", date: at(9), inDays: 3, status: "upcoming" };
   expect(stepOf({ checkInWaiting: true, visits: [visit], meds, now: at(19) })?.to).toBe("/care/check-ins");
-  expect(stepOf({ checkInWaiting: false, visits: [visit], meds, now: at(19) })).toMatchObject({ step: "Take your evening dose.", to: "/care/medicines" });
+  // The plan has no dose times, so a medicine never becomes "due now": the step only points at the list.
+  expect(stepOf({ checkInWaiting: false, visits: [], meds, now: at(19) })).toMatchObject({ step: "See what to take today and mark each dose as you take it.", to: "/care/medicines" });
   expect(stepOf({ checkInWaiting: false, nextCheckInAt: new Date(2026, 9, 7, 8), visits: [visit], meds, now: at(13) })?.step).toBe("Your check-in is tomorrow.");
   expect(stepOf({ checkInWaiting: false, visits: [visit], meds, now: at(13) })?.step).toBe("Your visit is in 3 days.");
   expect(stepOf({ checkInWaiting: false, visits: [], meds: [], now: at(13) })).toBeUndefined();
