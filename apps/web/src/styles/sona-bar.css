@@ -1,0 +1,34 @@
+/* The Sona bar and the answers it puts in the page. Tokens only; blue is the send button alone (the next step). */
+.sona-bar { --level: 0; position: relative; display: flex; align-items: center; gap: var(--space-2); width: min(720px, 100%); border-radius: 999px; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); }
+.sona-bar:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+.sona-bar-input { flex: 1; min-width: 0; min-height: var(--tap); border: 0; outline: 0; background: transparent; }
+.sona-bar-input::placeholder { color: var(--placeholder); }
+
+/* The status floats above the pill, so nothing moves when the state changes. */
+.sona-bar-status { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--space-2)); margin: 0; text-align: center; font-size: var(--text-small); line-height: 1.4; color: var(--muted); pointer-events: none; }
+.sona-bar-status:empty { display: none; }
+.sona-bar-status[data-error] { color: var(--ink); font-weight: 600; }
+
+.sona-bar-button { flex: none; display: grid; place-items: center; width: var(--tap); height: var(--tap); border: 0; border-radius: 50%; background: transparent; color: var(--ink); cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; transition: background var(--quick) var(--ease), color var(--quick) var(--ease), opacity var(--quick) var(--ease); }
+.sona-bar-button:disabled { opacity: 0.4; cursor: default; }
+.sona-bar-mic:hover:not(:disabled) { background: var(--line); }
+.sona-bar-send { background: var(--blue); color: var(--surface); }
+
+/* Listening: the mic fills with ink and a ring follows the voice. A shadow, so it takes no space. */
+.sona-bar[data-phase="listening"] .sona-bar-mic { background: var(--ink); color: var(--surface); box-shadow: 0 0 0 calc(2px + var(--level) * 10px) var(--line); }
+.sona-bar[data-phase="transcribing"] .sona-bar-mic { animation: sona-wait 1.2s var(--ease) infinite alternate; }
+@keyframes sona-wait { to { opacity: 0.15; } }
+@media (prefers-reduced-motion: reduce) {
+  .sona-bar[data-phase="listening"] .sona-bar-mic { box-shadow: 0 0 0 4px var(--line); }
+  .sona-bar[data-phase="transcribing"] .sona-bar-mic { animation: none; }
+}
+
+.sona-thread { display: flex; flex-direction: column; gap: var(--space-3); }
+.sona-thread:empty { display: none; }
+.sona-turn { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-group); padding: var(--space-4); }
+.sona-turn-q { margin: 0 0 var(--space-2); font-size: var(--text-small); line-height: 1.4; font-weight: 600; color: var(--muted); }
+.sona-turn-a p, .sona-turn-a ul { margin: 0; }
+.sona-turn-a > * + *, .sona-turn-a div > * + * { margin-top: var(--space-2); }
+.sona-turn-a ul { padding-left: var(--space-5); }
+.sona-turn-note { font-size: var(--text-small); color: var(--muted); }
+.sona-turn[data-state="error"] .sona-turn-a { color: var(--amber); }
