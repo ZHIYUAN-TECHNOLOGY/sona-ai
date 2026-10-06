@@ -54,3 +54,17 @@ export function countsOf(results: Result[]): { seen: number; inRange: number; at
 }
 
 export const plural = (n: number, one: string): string => `${n} ${one}${n === 1 ? "" : "s"}`;
+
+/** The status in the patient's words, for the detail rail and the summary. */
+export const plainOf = (flag: string | undefined): string =>
+  ({ Normal: "In the usual range", Above: "Above the usual range", Below: "Below the usual range", Check: "Needs a look" })[statusOf(flag)];
+
+/** The newest result of each test that is in range after an earlier flagged one. `results` is newest first. */
+export function improvedOf(results: Result[]): Released[] {
+  const done = new Set<string>();
+  return results.flatMap((r) => {
+    if (!r.released || done.has(r.test)) return [];
+    done.add(r.test);
+    return !isFlagged(r.flag) && results.some((o) => o.released && o.test === r.test && o.id !== r.id && isFlagged(o.flag)) ? [r] : [];
+  });
+}
