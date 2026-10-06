@@ -34,7 +34,7 @@ const inTab: Record<PatientTab, (p: PatientRow) => boolean> = {
   fit: (p) => p.ward?.status === "fit",
   incomplete: (p) => !!p.incomplete,
 };
-const TAB_LABEL: Record<PatientTab, string> = { all: "All", ward: "On a ward", watch: "Watch", fit: "Fit to go", incomplete: "Record incomplete" };
+const TAB_LABEL: Record<PatientTab, string> = { all: "All", ward: "On a ward", watch: "Watch", fit: "Fit to go", incomplete: "Incomplete" };
 
 /** In the list a chip means "look here"; calm states are quiet text. */
 function ListStatus({ patient }: { patient: PatientRow }) {
@@ -48,7 +48,7 @@ const PAGE_SIZE = 10;
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
 
 const columns: Column<PatientRow>[] = [
-  { key: "name", header: "Patient", cell: (p) => <PersonCell name={p.name} detail={`${p.sex}, ${p.age}`} />, sort: (a, b) => a.name.localeCompare(b.name) },
+  { key: "name", header: "Patient", cell: (p) => <PersonCell name={p.name} detail={`${p.sex.charAt(0).toUpperCase()}, ${p.age}`} />, sort: (a, b) => a.name.localeCompare(b.name) },
   { key: "reason", header: "Reason", cell: (p) => <span className="ptl-reason" title={p.complaint}>{p.complaint}</span>, sort: (a, b) => (a.complaint ?? "").localeCompare(b.complaint ?? "") },
   { key: "place", header: "Ward or clinic", cell: (p) => p.subtitle || <span className="ptl-calm">None</span>, sort: (a, b) => (a.subtitle ?? "").localeCompare(b.subtitle ?? "") },
   { key: "status", header: "Status", cell: (p) => <ListStatus patient={p} />, sort: (a, b) => statusRank(a) - statusRank(b) },
@@ -64,7 +64,7 @@ export function firstToSee(rows: PatientRow[]) {
   const patient = watch[0] ?? fit[0] ?? incomplete[0];
   if (!patient) return undefined;
   const sbar = patient.ward?.sbar;
-  const place: Fact[] = patient.subtitle ? [{ icon: "bed", text: patient.subtitle }] : [];
+  const place: Fact[] = patient.subtitle ? [{ icon: "clipboard", text: patient.subtitle }] : [];
   const others = (n: number, text: string): Fact[] => (n > 1 ? [{ icon: "users", text: `${plural(n - 1, "other patient")} ${text}` }] : []);
   if (watch.length) {
     return {
@@ -119,7 +119,7 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
     : `${plural(all.length, "patient")} at this hospital · ${count("ward")} on a ward · ${count("watch")} on watch`;
 
   const table = (
-    <Card>
+    <Card className="ptl-card">
       <DataTable
         columns={columns}
         rows={rows.slice(from - 1, to)}
