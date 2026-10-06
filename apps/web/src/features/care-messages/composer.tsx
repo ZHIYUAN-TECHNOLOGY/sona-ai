@@ -47,9 +47,12 @@ export function Composer() {
 
   return (
     <form className="cm-composer" onSubmit={onSubmit}>
-      <label className="cm-sr" htmlFor="cm-text">Write to your care team</label>
-      <textarea id="cm-text" rows={2} maxLength={1000} placeholder="Write to your care team…" value={text} onChange={e => setText(e.target.value)} onKeyDown={onKeyDown} />
-      <Button type="submit" variant="primary" pending={send.isPending} disabled={!text.trim()}>Send</Button>
+      <label className="cm-label" htmlFor="cm-text">Write a message</label>
+      <div className="cm-compose-row">
+        {/* Grows with the words (CSS field-sizing); older browsers keep two rows and scroll. */}
+        <textarea id="cm-text" rows={2} maxLength={1000} placeholder="How are you feeling? What do you want to ask?" value={text} onChange={e => setText(e.target.value)} onKeyDown={onKeyDown} />
+        <Button type="submit" variant="primary" icon="send" pending={send.isPending} disabled={!text.trim()}>Send</Button>
+      </div>
       {send.isError ? <p className="cm-error" role="alert">Not sent. Your words are still here. Try again.</p> : null}
     </form>
   );

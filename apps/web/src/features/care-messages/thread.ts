@@ -25,3 +25,15 @@ export const rollBack = <T extends ThreadMessage>(thread: readonly T[] | undefin
   (thread ?? []).filter(m => m.id !== SENDING + requestId);
 
 export const timeOf = (at: Date | string) => new Date(at).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+
+/** "9:41 am": the time under a bubble (the day is the separator above it). */
+export const clockOf = (at: Date | string) => new Date(at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+/** "Today", "Yesterday" or "Mon 5 Oct": the separator above a day's messages. */
+export function dayOf(at: Date | string, now: Date = new Date()): string {
+  const d = new Date(at), start = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((start(now) - start(d)) / 86_400_000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+}
