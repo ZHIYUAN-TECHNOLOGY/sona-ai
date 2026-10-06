@@ -32,3 +32,16 @@
 .sona-turn-a ul { padding-left: var(--space-5); }
 .sona-turn-note { font-size: var(--text-small); color: var(--muted); }
 .sona-turn[data-state="error"] .sona-turn-a { color: var(--amber); }
+
+/* Sona Pro: a floating glass pill in the shell's language. The send button is ink, like the active sidebar item. */
+.pro .sona-bar { width: min(640px, 100%); padding: 6px 6px 6px var(--space-4); border-radius: var(--radius-pill); box-shadow: 0 8px 28px rgb(29 31 35 / 0.1), 0 1px 2px rgb(29 31 35 / 0.06); transition: box-shadow var(--quick) var(--ease); }
+.pro .sona-bar:focus-within { outline: 0; box-shadow: var(--focus-ring), 0 8px 28px rgb(29 31 35 / 0.1); }
+.pro .sona-bar-input { min-height: 40px; font-size: 14px; }
+.pro .sona-bar-button { width: 40px; height: 40px; transition: background var(--quick) var(--ease), color var(--quick) var(--ease), opacity var(--quick) var(--ease), transform var(--quick) var(--ease); }
+.pro .sona-bar-button:active:not(:disabled) { transform: scale(var(--press)); }
+.pro .sona-bar-button:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+.pro .sona-bar-mic:hover:not(:disabled) { background: var(--fill-hover); }
+.pro .sona-bar-send { background: var(--ink); }
+.pro .sona-bar-status { font-size: 12px; }
+.pro .sona-turn { border-color: var(--hairline); border-radius: var(--radius-card); }
+@media (prefers-reduced-motion: reduce) { .pro .sona-bar, .pro .sona-bar-button { transition: none; } .pro .sona-bar-button:active:not(:disabled) { transform: none; } }

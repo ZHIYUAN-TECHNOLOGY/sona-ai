@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 
 import { authClient } from "@/lib/auth-client";
 import { queryClient } from "@/lib/orpc";
+import { Icon } from "@/components/icon";
 import "@/styles/sign-in.css";
 
 export const Route = createFileRoute("/pro/sign-in")({ component: SignIn });
@@ -25,7 +26,7 @@ function SignIn() {
 
   return <main className="pro sign-in">
     <section className="glass halftone sign-in-card">
-      <div className="sign-in-brand">Sona Pro</div>
+      <div className="sign-in-brand"><span className="sign-in-brand-tile"><Icon name="activity" size={22} /></span>Sona Pro</div>
       <h1>Sign in to your ward</h1>
       <p>Use your hospital email and password.</p>
       <form onSubmit={submit}>
