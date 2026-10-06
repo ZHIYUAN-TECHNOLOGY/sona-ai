@@ -90,7 +90,7 @@ function Page() {
           <StatCard title="Due today" value={groups.dueToday.length} caption={groups.dueToday.length ? "Finish these before handover" : "Nothing is due today"} />
           <StatCard title="Overdue" value={groups.overdue.length} caption={groups.overdue.length ? "Past their due date" : "Nothing is overdue"}
             chip={groups.overdue.length ? "Needs action" : undefined} tone="urgent" />
-          <StatCard title="Done" value={groups.done.length} unit={`of ${all.length}`} progress={all.length ? groups.done.length / all.length : 0} />
+          <StatCard title="Done" value={groups.done.length} unit={`of ${all.length}`} caption="Marked done by the care team" />
         </StatRow>
       )}
       <WithRail rail={(
@@ -147,7 +147,7 @@ function Page() {
                   { id: "overdue", label: "Overdue", count: groups.overdue.length }, { id: "done", label: "Done", count: groups.done.length },
                   { id: "all", label: "All", count: all.length },
                 ]} />
-                <SearchField label="Search tasks" placeholder="Search task, assignee or visit" value={search} onChange={e => setSearch(e.target.value)} />
+                <SearchField label="Search tasks" placeholder="Search tasks" value={search} onChange={e => setSearch(e.target.value)} />
               </div>
             )}
             rowAction={markDone} />

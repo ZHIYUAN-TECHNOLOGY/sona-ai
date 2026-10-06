@@ -3,7 +3,7 @@
 .tasks-title strong { font-weight: 600; }
 .tasks-title[data-done] strong { color: var(--muted); text-decoration: line-through; }
 .tasks-muted { color: var(--muted); font-size: var(--text-small); }
-.tasks-source { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted); font-size: var(--text-small); }
+.tasks-source { display: inline-flex; white-space: nowrap; align-items: center; gap: var(--space-2); color: var(--muted); font-size: var(--text-small); }
 .tasks-source .icon { flex: none; }
 .tasks-due { display: inline-flex; align-items: center; justify-content: flex-end; gap: var(--space-2); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tasks-due[data-overdue] { color: var(--red); font-weight: 600; }

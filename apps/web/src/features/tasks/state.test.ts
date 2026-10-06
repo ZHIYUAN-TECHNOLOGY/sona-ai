@@ -16,4 +16,5 @@ test("search, source and due date read in plain words", () => {
   expect(sourceOf("unknown").label).toBe("Added by the care team");
   expect(dueLabel("2026-10-06", "2026-10-06")).toBe("Today");
   expect(dueLabel("2026-10-03", "2026-10-06")).toBe("Sat 3 Oct");
+  expect(dueLabel("tomorrow", "2026-10-06")).toBe("tomorrow");
 });
