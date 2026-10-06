@@ -1,10 +1,8 @@
-/* Sona Care home: numbers, then three columns (next step, medicines, coming up); red only on the call card. */
+/* Sona Care home: the day in one sentence, then the next step and today's timeline beside a short rail; red only on the call card. */
 .care-home { display: flex; flex-direction: column; gap: var(--gap-card); }
-.care-home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--gap-card); align-items: start; }
+.care-home-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--gap-card); align-items: start; }
 .care-home-quiet { color: var(--muted); white-space: nowrap; }
 .care-home-act { color: var(--blue); font-weight: 600; white-space: nowrap; }
-.care-home-over { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
-.care-home-over > span { white-space: normal; overflow-wrap: anywhere; }
 /* Patients read this: nothing on the page under the small size. */
 .care-home .chip.chip.chip, .care-home .stat-caption, .care-home .list-caption, .care-home .insight-overline, .care-home .insight-label { font-size: var(--text-small); }
 .care-home .list > li > .empty { border: 0; }
@@ -13,3 +11,7 @@
 .care-home-call { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--space-5); background: var(--red-wash); border: 1px solid var(--red); border-radius: var(--radius-card); }
 .care-home-call h2 { margin: 0; font-size: var(--text-heading); color: var(--red); }
 .care-home-call ul { margin: 0; padding-left: var(--space-5); }
+.care-home-col { display: flex; flex-direction: column; gap: var(--gap-card); min-width: 0; }
+.care-home-status { padding: var(--space-3) var(--space-5); color: var(--muted); }
+.care-home-status:empty { display: none; }
+@media (max-width: 900px) { .care-home-grid { grid-template-columns: minmax(0, 1fr); } }
