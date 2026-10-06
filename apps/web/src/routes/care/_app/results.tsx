@@ -28,17 +28,17 @@ function Page() {
   const list = useQuery(orpc.care.results.list.queryOptions({ input: { lang } }));
   const [openId, setOpenId] = useState<string>();
 
-  if (list.isPending) return <><PageHeader title="Results" /><EmptyState>Getting your results…</EmptyState></>;
+  if (list.isPending) return <div className="res-page"><PageHeader title="Results" /><EmptyState>Getting your results…</EmptyState></div>;
   if (list.isError)
     return (
-      <><PageHeader title="Results" />
+      <div className="res-page"><PageHeader title="Results" />
         <EmptyState title="We couldn't open your results" action={<Button onClick={() => { void list.refetch(); }}>Try again</Button>}>
           Check your connection and try again.
-        </EmptyState></>
+        </EmptyState></div>
     );
   const results: Result[] = list.data;
   if (!results.length)
-    return <><PageHeader title="Results" /><EmptyState title="No results yet">Results appear here after your doctor has seen them.</EmptyState></>;
+    return <div className="res-page"><PageHeader title="Results" /><EmptyState title="No results yet" icon="flask">Results appear here after your doctor has seen them.</EmptyState></div>;
 
   const { seen, inRange, attention, waiting } = countsOf(results);
   const first = attention[0] ?? results.find((r) => r.released) ?? results[0];
