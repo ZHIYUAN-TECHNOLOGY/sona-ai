@@ -41,6 +41,7 @@ export const CARE_NAV: NavGroup[] = [
     { to: "/care/follow-ups", label: "Follow-ups" },
     { to: "/care/medicines", label: "Medicines" },
     { to: "/care/results", label: "Results" },
+    { to: "/care/readings", label: "Readings" },
     { to: "/care/discharge-plan", label: "Discharge plan" },
     { to: "/care/check-ins", label: "Check-ins" },
   ] },
