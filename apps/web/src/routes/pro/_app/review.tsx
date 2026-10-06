@@ -3,9 +3,10 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 
-import { InsightCard, InsightRow } from "@/components/insight-card";
+import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Avatar, Button, Card } from "@/components/primitives";
+import { Avatar, Button, Card, Chip, ListCard, ListRow, Tabs } from "@/components/primitives";
+import { RightRail, WithRail } from "@/components/rail";
 import { DraftChecks, DraftSources, ReplyEditor } from "@/features/messages/draft";
 import { ago } from "@/features/messages/format";
 import { Checks, type Done, failingOf, VisitSummaryCard } from "@/features/review/visit-summary-card";
@@ -16,9 +17,15 @@ import "@/styles/pages/review.css";
 
 export const Route = createFileRoute("/pro/_app/review")({ component: Page });
 
-const summaryId = (id: string) => `rv-summary-${id}`;
-const replyId = (patientId: string) => `rv-reply-${patientId}`;
-const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+type Tab = "all" | "reply" | "summary";
+const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+// ponytail: the header and the Sona panel press the open document's own approve button, so there is one approval path
+// (its confirm step and disabled state included). Lift the mutation up if the document and the button ever part ways.
+const approveOpen = () => {
+  const button = [...document.querySelectorAll<HTMLButtonElement>("#rv-open button")].find(b => b.textContent?.startsWith("Approve and send"));
+  button?.scrollIntoView({ block: "nearest" });
+  button?.click();
+};
 
 function Page() {
   const { me } = Route.useRouteContext();
@@ -29,6 +36,8 @@ function Page() {
   const [done, setDone] = useState<readonly Done[]>([]);
   const addDone = useCallback((d: Done) => setDone(all => [d, ...all]), []);
   // Dismissed here only: the message stays waiting in Messages (the API keeps no "draft dismissed").
+  const [tab, setTab] = useState<Tab>("all");
+  const [sel, setSel] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<readonly string[]>([]);
   const waiting = (inbox.data?.threads ?? []).filter(t => !t.handled && !dismissed.includes(t.patientId));
   // ponytail: one draft call per waiting thread, in parallel (the server keeps each answer); page it if queues grow long.
@@ -61,67 +70,124 @@ function Page() {
     : null;
   if (!total) return <>{header}{errors}{doneLines}{summaries.error || inbox.error ? null : <EmptyState>Nothing is waiting for review.</EmptyState>}</>;
 
-  const urgent = waiting.filter(t => t.label === "urgent").length;
-  const flagged = items.filter(s => failingOf(s.checks).length);
-  const samples = items.filter(s => s.origin === "fixture").length + drafts.filter(d => d.data && d.data.source !== "model").length;
-  const firstId = items[0] ? summaryId(items[0].id) : replyId(waiting[0]!.patientId);
-  const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  const now = inbox.data?.now;
+  const entries = [
+    ...items.map(item => ({
+      key: `s-${item.id}`, kind: "summary" as const, name: item.patient.name, item, failing: failingOf(item.checks).map(c => c.label),
+      sample: item.origin === "fixture", sources: item.sources.length,
+      caption: `Visit summary · ${new Date(item.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`,
+    })),
+    ...waiting.map((t, i) => {
+      const draft = drafts[i];
+      return {
+        key: `r-${t.patientId}`, kind: "reply" as const, name: t.name, t, draft, failing: t.label === "urgent" ? ["Triaged urgent: answer this first"] : [],
+        sample: !!draft?.data && draft.data.source !== "model", sources: 1,
+        caption: `Reply${t.waitingSince && now ? ` · ${ago(t.waitingSince, now)}` : ""}`,
+      };
+    }),
+  ];
+  const shown = entries.filter(e => tab === "all" || e.kind === tab);
+  const open = shown.find(e => e.key === sel) ?? shown[0];
+  const flagged = entries.filter(e => e.failing.length);
+  const samples = entries.filter(e => e.sample).length;
+  const otherFlagged = flagged.find(e => e.key !== open?.key);
+  const what = open?.kind === "summary" ? "after-visit summary" : "reply";
+
   return (
     <>
-      {header}
-      <InsightRow>
-        <InsightCard
-          tone={urgent ? "urgent" : "info"}
-          lead={`${count(total, "item waits", "items wait")} for review: ${count(items.length, "after-visit summary", "after-visit summaries")}, ${count(waiting.length, "drafted reply", "drafted replies")}${urgent ? ` (${urgent} urgent)` : ""}`}
-          evidence={[
-            ...(flagged.length ? [{ text: `${count(flagged.length, "summary has", "summaries have")} a check to look at before sending` }] : []),
-            ...(samples ? [{ text: `${count(samples, "draft is a sample", "drafts are samples")}, not a model's: read closely` }] : []),
-          ]}
-          next={flagged.length ? { label: "Go to the first flagged summary", onAct: () => jump(summaryId(flagged[0]!.id)) } : { label: "Start with the first", onAct: () => jump(firstId) }}
-          sources={total}
-        />
-      </InsightRow>
+      <PageHeader
+        title="Review queue"
+        lead={`${count(total, "item waits", "items wait")} for your approval: ${count(items.length, "visit summary", "visit summaries")}, ${count(waiting.length, "reply", "replies")}${flagged.length ? ` · ${flagged.length} flagged` : ""}. Nothing is sent until you approve it.`}
+        actions={open ? <Button variant="primary" icon="check" onClick={approveOpen}>Approve for {open.name}</Button> : undefined}
+      />
       {errors}
       {doneLines}
-      <ol className="review-queue">
-        {items.map(item => (
-          <li key={item.id} id={summaryId(item.id)}>
-            <VisitSummaryCard item={item} role={me.role} onDone={addDone} />
-          </li>
-        ))}
-        {waiting.map((t, i) => {
-          const draft = drafts[i];
-          return (
-            <li key={t.patientId} id={replyId(t.patientId)}>
-              <Card>
-                <header className="msg-row-top">
-                  <Avatar name={t.name} />
-                  <strong>{t.name}</strong>
-                  <span className="msg-meta">Reply to a patient message · waiting {t.waitingSince && inbox.data ? ago(t.waitingSince, inbox.data.now) : ""}</span>
-                  <Link to="/pro/messages" className="msg-meta">Open in Messages</Link>
-                </header>
-                {!draft || draft.isPending ? <p className="msg-meta">Sona is drafting…</p> : null}
-                {draft?.error ? <p className="msg-error" role="alert">No draft: {draft.error.message}</p> : null}
-                {draft?.data
-                  ? (
-                    <>
-                      <DraftChecks draft={draft.data} />
-                      <DraftSources draft={draft.data} asked={t.lastFrom === "patient" && !t.lastPhoto ? t.lastText : undefined} />
-                      <ReplyEditor
-                        key={draft.data.messageId}
-                        patientId={t.patientId}
-                        draft={draft.data}
-                        sendLabel="Approve and send"
-                        extra={<Button onClick={() => setDismissed(d => [...d, t.patientId])}>Dismiss</Button>}
-                      />
-                    </>
-                  )
-                  : null}
-              </Card>
-            </li>
-          );
-        })}
-      </ol>
+      <WithRail
+        rail={open
+          ? (
+            <RightRail label="Why this needs review">
+              <InsightCard
+                label="Sona insight"
+                lead={open.failing.length
+                  ? `${open.name}'s ${what} has ${count(open.failing.length, "check", "checks")} to look at before it is sent`
+                  : open.sample
+                    ? `This ${what} for ${open.name} is a sample, not a model's: read it closely`
+                    : `${open.name} reads this ${what} as soon as you approve it. Sona's checks found nothing to flag`}
+                evidence={[
+                  ...open.failing.map(text => ({ icon: "alert" as const, text })),
+                  ...(open.sample && open.failing.length ? [{ icon: "file" as const, text: "Sample draft, not a model's" }] : []),
+                  ...(otherFlagged ? [{ icon: "clipboard" as const, text: `${count(flagged.length, "item", "items")} in the queue flagged` }] : []),
+                  ...(samples > (open.sample ? 1 : 0) ? [{ icon: "file" as const, text: count(samples, "draft in the queue is a sample", "drafts in the queue are samples") }] : []),
+                ]}
+                next={otherFlagged && !open.failing.length
+                  ? { label: "Open the first flagged item", onAct: () => { setTab("all"); setSel(otherFlagged.key); } }
+                  : { label: `Approve for ${open.name}`, onAct: approveOpen }}
+                sources={open.sources}
+              />
+            </RightRail>
+          )
+          : null}
+      >
+        <div className="rv-body">
+          <div className="rv-queue">
+            <Tabs<Tab>
+              label="Kind of item"
+              value={tab}
+              onChange={setTab}
+              tabs={[{ id: "all", label: "All", count: total }, { id: "reply", label: "Replies", count: waiting.length }, { id: "summary", label: "Visit summaries", count: items.length }]}
+            />
+            {shown.length
+              ? (
+                <ListCard>
+                  {shown.map(e => (
+                    <ListRow
+                      key={e.key}
+                      avatar={e.name}
+                      title={e.name}
+                      caption={e.caption}
+                      selected={e.key === open?.key}
+                      onClick={() => setSel(e.key)}
+                      trailing={e.failing.length ? <Chip tone="soon">Check</Chip> : e.sample ? <Chip>Sample</Chip> : undefined}
+                    />
+                  ))}
+                </ListCard>
+              )
+              : <EmptyState>{tab === "reply" ? "No replies are waiting." : "No visit summaries are waiting."}</EmptyState>}
+          </div>
+          <div id="rv-open">
+            {open?.kind === "summary" ? <VisitSummaryCard key={open.key} item={open.item} role={me.role} onDone={addDone} /> : null}
+            {open?.kind === "reply"
+              ? (
+                <Card key={open.key} title="Reply to a patient message" className="rv-doc">
+                  <header className="rv-strip">
+                    <Avatar name={open.name} size="sm" />
+                    <strong>{open.name}</strong>
+                    <span className="msg-meta">{open.caption.replace("Reply · ", "Waiting ")}</span>
+                    <Link to="/pro/messages" className="rv-link">Open in Messages</Link>
+                  </header>
+                  {!open.draft || open.draft.isPending ? <p className="msg-meta">Sona is drafting…</p> : null}
+                  {open.draft?.error ? <p className="msg-error" role="alert">No draft: {open.draft.error.message}</p> : null}
+                  {open.draft?.data
+                    ? (
+                      <>
+                        <DraftChecks draft={open.draft.data} />
+                        <DraftSources draft={open.draft.data} asked={open.t.lastFrom === "patient" && !open.t.lastPhoto ? open.t.lastText : undefined} />
+                        <ReplyEditor
+                          key={open.draft.data.messageId}
+                          patientId={open.t.patientId}
+                          draft={open.draft.data}
+                          sendLabel="Approve and send"
+                          extra={<Button variant="secondary" onClick={() => setDismissed(d => [...d, open.t.patientId])}>Dismiss</Button>}
+                        />
+                      </>
+                    )
+                    : null}
+                </Card>
+              )
+              : null}
+          </div>
+        </div>
+      </WithRail>
     </>
   );
 }

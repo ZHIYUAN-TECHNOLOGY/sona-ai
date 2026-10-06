@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type MouseEvent, useState } from "react";
 
+import { Icon } from "@/components/icon";
 import { Avatar, Button, Card, Chip } from "@/components/primitives";
 import { type client, orpc } from "@/lib/orpc";
 
@@ -17,14 +18,14 @@ const KIND = { note: "Visit note", prescription: "Prescription", "follow-up": "F
 
 export const failingOf = (checks: readonly Check[]) => checks.filter(c => !c.ok);
 
-/** The automatic checks: passed is green, a failing one is amber ("check before sending", not an alarm). */
+/** The automatic checks: passed is calm muted text with a tick, a failing one is amber ("check before sending", not an alarm). */
 export function Checks({ checks }: { checks: readonly Check[] }) {
   return (
     <ul className="rv-list">
       {checks.map(c => (
-        <li key={c.id}>
-          <Chip tone={c.ok ? "done" : "soon"}>{c.ok ? "Passed" : "Check"}</Chip> {c.label}
-          {!c.ok && c.detail ? <span className="msg-meta"> · {c.detail}</span> : null}
+        <li key={c.id} data-ok={c.ok || undefined}>
+          {c.ok ? <Icon name="check" size={16} label="Passed" /> : <Chip tone="soon">Check</Chip>}
+          <span>{c.label}{!c.ok && c.detail ? <span className="msg-meta"> · {c.detail}</span> : null}</span>
         </li>
       ))}
     </ul>
@@ -61,13 +62,13 @@ export function VisitSummaryCard({ item, role, onDone }: { item: SummaryItem; ro
   };
 
   return (
-    <Card>
-      <header className="msg-row-top">
-        <Avatar name={item.patient.name} />
+    <Card title="After-visit summary" className="rv-doc">
+      <header className="rv-strip">
+        <Avatar name={item.patient.name} size="sm" />
         <strong>{item.patient.name}</strong>
-        <span className="msg-meta">After-visit summary · drafted {new Date(item.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</span>
+        <span className="msg-meta">Drafted {new Date(item.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</span>
         {item.origin === "fixture" ? <Chip>Sample draft</Chip> : null}
-        <Link to="/pro/visit" search={{ encounterId: item.encounterId }} className="msg-meta">Open the visit</Link>
+        <Link to="/pro/visit" search={{ encounterId: item.encounterId }} className="rv-link">Open the visit</Link>
       </header>
 
       <h3 className="rv-h">{edited ? "What the patient will read (edited)" : "What the patient will read"}</h3>
@@ -142,13 +143,13 @@ export function VisitSummaryCard({ item, role, onDone }: { item: SummaryItem; ro
               </div>
             )
             : (
-              <div className="msg-actions">
-                <Button variant="primary" pending={approve.isPending} disabled={busy || !text.trim()} onClick={failing.length ? () => setConfirm("approve") : send}>
+              <div className="msg-actions rv-foot">
+                <Button variant="primary" icon="check" pending={approve.isPending} disabled={busy || !text.trim()} onClick={failing.length ? () => setConfirm("approve") : send}>
                   Approve and send to patient
                 </Button>
                 <Button disabled={busy} onClick={() => setEditing(e => !e)}>{editing ? "Done editing" : "Edit"}</Button>
                 {edited ? <Button disabled={busy} onClick={() => setText(item.text)}>Undo edit</Button> : null}
-                <Button disabled={busy} onClick={() => setConfirm("dismiss")}>Dismiss</Button>
+                <Button variant="secondary" disabled={busy} onClick={() => setConfirm("dismiss")}>Dismiss</Button>
               </div>
             )}
     </Card>
