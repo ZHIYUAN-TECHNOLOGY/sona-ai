@@ -18,3 +18,7 @@ export function boxStyle(box: readonly number[]) {
 }
 
 export const messageOf = (error: unknown) => (error instanceof Error ? error.message : "Something went wrong. Try again.");
+
+/** A source this many years old is worth checking: guidance may have moved on since. */
+export const STALE_YEARS = 5;
+export const isStale = (year: number, thisYear = new Date().getFullYear()) => thisYear - year >= STALE_YEARS;
