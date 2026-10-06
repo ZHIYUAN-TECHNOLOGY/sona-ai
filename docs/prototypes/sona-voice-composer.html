@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice Draft Composer</title>
+<style>
+:root{
+  --bg:#EEF0F3; --panel:#FFFFFF; --ink:#1D1F23; --muted:#59616B; --soft:#8A919B; --line:#D8DBE0;
+  --blue:#245BCC; --blueWash:#DDE8FB; --red:#A23E3E; --green:#0F6E66; --dark:#282C33;
+  --canvas:#F3F5F9;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme:dark; --bg:#14161A; --panel:#1C1F24; --ink:#ECEEF1; --muted:#A5ACB6; --soft:#7D8591; --line:#2E323A; --blue:#86A9F2; --blueWash:#1F2C45; --green:#77C9B7;
+}}
+:root[data-theme="dark"]{color-scheme:dark; --bg:#14161A; --panel:#1C1F24; --ink:#ECEEF1; --muted:#A5ACB6; --soft:#7D8591; --line:#2E323A; --blue:#86A9F2; --blueWash:#1F2C45; --green:#77C9B7;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:0 16px 64px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+header{padding-top:44px;display:flex;flex-direction:column;gap:10px}
+h1{margin:0;font-size:clamp(26px,4vw,36px);letter-spacing:-.02em;line-height:1.15}
+h2{margin:0;font-size:20px;letter-spacing:-.01em}
+p{margin:0;max-width:68ch}
+.over{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--blue)}
+.lead{color:var(--muted);font-size:16.5px}
+.stage{display:grid;grid-template-columns:minmax(0,390px) minmax(0,1fr);gap:40px;align-items:start}
+@media (max-width:860px){.stage{grid-template-columns:1fr}}
+.notes{display:flex;flex-direction:column;gap:18px;position:sticky;top:20px}
+.now{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.now b{font-size:13px;color:var(--blue);letter-spacing:.04em;text-transform:uppercase}
+.now p{font-size:15.5px}
+ol.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+ol.steps li{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:14px;border:1px solid transparent;color:var(--muted);font-size:14.5px}
+ol.steps li i{font-style:normal;flex:none;width:22px;height:22px;border-radius:11px;background:var(--line);color:var(--ink);font-size:12px;font-weight:700;display:grid;place-items:center}
+ol.steps li.on{background:var(--panel);border-color:var(--line);color:var(--ink)}
+ol.steps li.on i{background:var(--blue);color:#fff}
+ol.steps li.done i{background:var(--green);color:#fff}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+.controls button{font:inherit;font-size:13.5px;font-weight:600;padding:8px 15px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.controls button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* ---------- the phone ---------- */
+.phone{width:100%;max-width:390px;aspect-ratio:390/844;border-radius:48px;padding:10px;background:#111;box-shadow:0 30px 60px -20px rgba(20,30,60,.35);margin:0 auto}
+.screen{position:relative;height:100%;border-radius:40px;overflow:hidden;background:radial-gradient(120% 60% at 90% 35%,#E6E9FB 0%,transparent 60%),radial-gradient(80% 50% at 0% 50%,#E3F2F0 0%,transparent 60%),var(--canvas);color:#1D1F23;font-size:15px}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:20px;background:#000;z-index:9}
+.status{position:absolute;top:16px;left:34px;right:28px;display:flex;justify-content:space-between;font-weight:600;font-size:15px;z-index:8}
+.round{width:46px;height:46px;border-radius:23px;background:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(40,70,140,.10);display:grid;place-items:center;color:#1D1F23}
+.round svg{width:22px;height:22px}
+.topbar{position:absolute;top:62px;left:18px;right:18px;display:flex;justify-content:space-between;z-index:5}
+.thread{position:absolute;left:20px;right:20px;top:130px;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+.sent{background:rgba(255,255,255,.8);border:1px solid #fff;border-radius:22px 22px 8px 22px;padding:10px 15px;max-width:86%;box-shadow:0 4px 14px rgba(40,70,140,.08)}
+.answer{align-self:flex-start;color:#59616B;font-size:14px;display:flex;gap:8px;align-items:center}
+.answer .dot{width:7px;height:7px;border-radius:4px;background:#245BCC;animation:pulse 1.6s infinite}
+
+/* the dithered wave */
+.veil{position:absolute;left:-10%;right:-10%;bottom:0;height:42%;pointer-events:none;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .7s}
+.veil .dots{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(110,130,230,.55) 1.1px,transparent 1.5px);background-size:5px 5px;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 45%,#000 100%);mask-image:linear-gradient(to bottom,transparent 0%,#000 45%,#000 100%)}
+.veil .glow{position:absolute;left:0;right:0;top:34%;height:90px;background:linear-gradient(90deg,rgba(80,200,200,.45),rgba(130,150,255,.55),rgba(170,140,255,.5));filter:blur(22px);border-radius:50%;animation:swell 3.2s ease-in-out infinite}
+.veil .crest{position:absolute;left:0;right:0;top:30%;height:60px;background:radial-gradient(60% 100% at 50% 100%,rgba(150,160,255,.35),transparent 70%);animation:swell 2.4s ease-in-out infinite reverse}
+.screen[data-mic="off"] .veil{transform:translateY(55%);opacity:.35}
+.screen[data-mic="off"] .veil .glow,.screen[data-mic="off"] .veil .crest{animation-play-state:paused}
+@keyframes swell{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-14px) scaleY(1.25)}}
+
+.dockarea{position:absolute;left:0;right:0;bottom:0;padding:0 20px 30px;display:flex;flex-direction:column;gap:10px;z-index:6}
+.pill{align-self:center;display:flex;align-items:center;gap:7px;min-height:34px;padding:0 14px;border-radius:17px;background:rgba(255,255,255,.82);border:1px solid #fff;font-weight:600;font-size:14px;box-shadow:0 4px 14px rgba(40,70,140,.08)}
+.pill .rec{width:7px;height:7px;border-radius:4px;background:#A23E3E;animation:pulse 1.6s infinite}
+.pill.off{color:#59616B}.pill.off .rec{display:none}
+.pill .hint{color:#59616B;font-weight:400}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* the draft bubble (today) — now a button */
+.draftwrap{align-self:flex-end;max-width:86%;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.draft{all:unset;cursor:text;padding:10px 16px;border-radius:22px;border:1px dashed rgba(110,120,200,.55);background:rgba(255,255,255,.45);line-height:1.4;position:relative;transition:transform .12s}
+.draft:active{transform:scale(.98)}
+.draft:focus-visible{outline:2px solid #245BCC;outline-offset:3px}
+.draft .w{display:inline-block;animation:rise .26s ease-out both}
+.iconbtn{all:unset;cursor:pointer;width:36px;height:36px;border-radius:18px;display:grid;place-items:center;color:#59616B;transition:background .15s,color .15s}
+.iconbtn svg{width:20px;height:20px}
+.iconbtn:hover{background:rgba(255,255,255,.7);color:#1D1F23}
+.iconbtn:active{transform:scale(.94)}
+.iconbtn:focus-visible{outline:2px solid #245BCC;outline-offset:2px}
+@keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.draftrow{display:flex;align-items:center;gap:4px}
+.draftrow .sendbtn{margin-left:6px}
+.draftrow span{font-size:12.5px;color:#59616B;font-weight:500}
+.sendbtn{all:unset;cursor:pointer;width:36px;height:36px;border-radius:18px;display:grid;place-items:center;background:#282C33;color:#fff;box-shadow:0 3px 10px rgba(20,28,40,.18);transition:transform .12s}
+.sendbtn svg{width:17px;height:17px}
+.sendbtn:active{transform:scale(.92)}
+.sendbtn:focus-visible{outline:2px solid #245BCC;outline-offset:2px}
+
+/* the bar */
+.bar{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 4px}
+.bar .round{width:50px;height:50px;border-radius:25px}
+.orb{width:72px;height:72px;border-radius:36px;background:#fff;display:grid;place-items:center;box-shadow:0 10px 28px rgba(60,100,200,.32);position:relative;cursor:pointer;border:0}
+.orb::before{content:"";position:absolute;inset:6px;border-radius:50%;border:2px solid rgba(80,110,220,.6);background:conic-gradient(from 0deg,rgba(80,200,200,.25),rgba(130,150,255,.35),rgba(200,140,255,.25),rgba(80,200,200,.25));animation:spin 4s linear infinite}
+.orb svg{position:relative;width:24px;height:24px;color:#1D1F23}
+.screen[data-mic="off"] .orb{opacity:.55}
+.screen[data-mic="off"] .orb::before{animation-play-state:paused}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* the composer card */
+.card{display:none;border-radius:28px;background:linear-gradient(170deg,rgba(255,255,255,.88),rgba(240,245,255,.82));border:1px solid #fff;box-shadow:0 0 0 .5px rgba(20,28,40,.06),0 6px 20px rgba(40,70,140,.10);padding:14px 14px 12px;flex-direction:column;gap:10px;animation:morph .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes morph{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+.field{min-height:46px;max-height:150px;overflow:auto;padding:4px 4px;font-size:17px;line-height:1.4;outline:none;word-wrap:break-word;caret-color:#245BCC}
+.field .tail{color:#9AA1AC}
+.field .tail .w{display:inline-block;animation:rise .26s ease-out both}
+.field:empty::before{content:"Ask Sona…";color:#8A929E}
+.cardrow{display:flex;align-items:center;gap:8px}
+.cardrow .round{width:40px;height:40px;border-radius:20px}
+.cardrow .round svg{width:18px;height:18px}
+.grow{flex:1}
+.micbtn{all:unset;cursor:pointer;height:40px;border-radius:20px;padding:0 13px 0 11px;display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;background:rgba(255,255,255,.85);border:1px solid rgba(20,28,40,.08);color:#1D1F23}
+.micbtn svg{width:17px;height:17px}
+.micbtn .bars{display:none;gap:2px;align-items:center;height:14px}
+.micbtn .bars i{width:2.5px;border-radius:2px;background:#A23E3E;animation:bar .9s ease-in-out infinite}
+.micbtn .bars i:nth-child(2){animation-delay:.15s}.micbtn .bars i:nth-child(3){animation-delay:.3s}.micbtn .bars i:nth-child(4){animation-delay:.45s}
+@keyframes bar{0%,100%{height:4px}50%{height:14px}}
+.micbtn[aria-pressed="true"]{background:#FBEDED;border-color:rgba(162,62,62,.25);color:#A23E3E}
+.micbtn[aria-pressed="true"] .bars{display:inline-flex}
+.micbtn[aria-pressed="true"] .ic{display:none}
+.micbtn:focus-visible,.go:focus-visible,.orb:focus-visible{outline:2px solid #245BCC;outline-offset:2px}
+.go{all:unset;cursor:pointer;width:40px;height:40px;border-radius:20px;background:#282C33;color:#fff;display:grid;place-items:center}
+.go svg{width:18px;height:18px}
+.go[disabled]{opacity:.35;cursor:default}
+
+/* fake keyboard */
+.kb{position:absolute;left:0;right:0;bottom:0;height:0;background:#D3D7DE;transition:height .3s cubic-bezier(.2,.8,.2,1);overflow:hidden;z-index:7;border-radius:0 0 40px 40px}
+.kb .keys{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;padding:10px 4px}
+.kb .keys span{height:40px;border-radius:6px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.25);display:grid;place-items:center;font-size:18px;color:#1D1F23}
+.screen[data-kb="up"] .kb{height:290px}
+.screen[data-kb="up"] .dockarea{bottom:282px;padding-bottom:8px}
+
+.screen[data-mode="compose"] .card{display:flex}
+.screen[data-mode="compose"] .bar,.screen[data-mode="compose"] .draftwrap{display:none}
+.screen[data-mode="compose"][data-mic="off"] .pill{display:none}
+
+.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.compare div{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.compare h3{margin:0;font-size:15.5px}
+.compare p{font-size:14.5px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="over">Sona Pro · prototype · voice draft</span>
+  <h1>Talk, fix a word, keep talking</h1>
+  <p class="lead">Tap the draft and it opens in the composer, with the mic still on. Type to fix a word (the mic pauses), and tap the mic to keep talking. New words are added at the end. The phone works: try it.</p>
+</header>
+
+<section class="stage">
+  <div class="phone">
+    <div class="screen" id="screen" data-mode="live" data-mic="on" data-kb="down">
+      <div class="island"></div>
+      <div class="status"><span>2:00</span><span>73%</span></div>
+      <div class="topbar">
+        <div class="round" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></div>
+        <div class="round" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 9l1.5 1.5L12 8M8 15l1.5 1.5L12 14M14 9.5h3M14 15.5h3"/></svg></div>
+      </div>
+      <div class="thread" id="thread"></div>
+      <div class="veil" aria-hidden="true"><div class="crest"></div><div class="glow"></div><div class="dots"></div></div>
+
+      <div class="dockarea">
+        <div class="draftwrap" id="draftwrap" hidden>
+          <button class="draft" id="draft" aria-label="Draft. Tap to edit"></button>
+          <div class="draftrow"><span id="draftlabel" style="margin-right:4px">Draft</span>
+            <button class="iconbtn" id="editbtn" aria-label="Edit draft" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></button>
+            <button class="iconbtn" id="clearbtn" aria-label="Clear draft" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></svg></button>
+            <button class="sendbtn" id="send1" aria-label="Send what you said" title="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div>
+        </div>
+        <div class="pill" id="pill" role="status"><span class="rec"></span><span id="pilltext">Listening</span><span class="hint" id="pillhint">· say “submit” to send</span></div>
+
+        <div class="card" id="card">
+          <div class="field" id="field" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Draft, editable"></div>
+          <div class="cardrow">
+            <div class="round" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+            <div class="grow"></div>
+            <button class="micbtn" id="micbtn" aria-pressed="true" aria-label="Turn microphone off">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21"/></svg>
+              <span class="bars"><i></i><i></i><i></i><i></i></span><span id="mictext">Listening</span></button>
+            <button class="go" id="send2" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+          </div>
+        </div>
+
+        <div class="bar">
+          <div class="round" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+          <button class="orb" id="orb" aria-label="Turn microphone off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21"/></svg></button>
+          <button class="round" id="kbbtn" aria-label="Type instead" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M7 10h.01M10 10h.01M13 10h.01M16 10h.01M8 14h8"/></svg></button>
+        </div>
+      </div>
+      <div class="kb" aria-hidden="true"><div class="keys"><span>q</span><span>w</span><span>e</span><span>r</span><span>t</span><span>y</span><span>u</span><span>i</span><span>o</span><span>p</span><span>a</span><span>s</span><span>d</span><span>f</span><span>g</span><span>h</span><span>j</span><span>k</span><span>l</span><span>⌫</span></div></div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="now" aria-live="polite"><b>Now</b><p id="now"></p></div>
+    <ol class="steps" id="steps">
+      <li data-s="1"><i>1</i><span>You speak. Words fill the draft bubble, as today. Below it: ✎ edit and 🗑 clear, as quiet icons, then a small dark ↑ to send (the same send as the composer).</span></li>
+      <li data-s="2"><i>2</i><span>Tap ✎ (or the bubble, or the keyboard button). The bar turns into the composer, with the words in it. <b>The mic stays on</b>, and the wave stays up.</span></li>
+      <li data-s="3"><i>3</i><span>Keep talking. New words come in grey at the end, then go black once they are read.</span></li>
+      <li data-s="4"><i>4</i><span>Tap the text to fix a word. The keyboard comes up and <b>the mic pauses</b>, so speech and typing never edit at the same time.</span></li>
+      <li data-s="5"><i>5</i><span>Tap <b>Listening</b> (the mic) to talk again. The keyboard goes down, and new words are added after your edit.</span></li>
+      <li data-s="6"><i>6</i><span>Send ↑ (or say “submit”). The edited text is sent.</span></li>
+    </ol>
+    <div class="controls"><button id="restart">Restart</button><button id="theme">Toggle dark page</button></div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:14px">
+  <h2>What changes from today</h2>
+  <div class="compare">
+    <div><h3>Today</h3><p>The keyboard button moves the draft into the composer, but it also turns the mic off and ends voice. To say more, you start over.</p></div>
+    <div><h3>This prototype</h3><p>The composer and voice stay open together. The draft can be edited, and talking adds to it. Typing pauses the mic, and the mic button resumes it.</p></div>
+    <div><h3>Left out on purpose</h3><p>Words go at the end, not where the cursor is. Inserting mid-sentence by voice adds a lot of code for little gain.</p></div>
+  </div>
+</section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const screen = $("screen"), field = $("field"), draft = $("draft");
+const PHRASES = [
+  "Show me Daniel's potassium from yesterday",
+  "and compare it with the morning bloods",
+  "then draft a note for the night team",
+];
+let state, timers = [];
+const NOW = {
+  1: "Listening. The words fill the draft. Tap ✎ to edit it.",
+  2: "The composer is open and the mic is still on. Keep talking, or tap the text to fix a word.",
+  3: "New words come in grey at the end, then go black.",
+  4: "You're typing, so the mic paused. Tap Listening to talk again.",
+  5: "Listening again. New words go after your edit.",
+  6: "Sent. Sona is answering in the page.",
+};
+function step(n){
+  state.step = n; $("now").textContent = NOW[n];
+  document.querySelectorAll("#steps li").forEach(li => { const s = +li.dataset.s; li.className = s === n ? "on" : s < n ? "done" : ""; });
+}
+const clear = () => { timers.forEach(clearTimeout); timers = []; };
+const wordsSpan = words => words.map(w => `<span class="w">${w}</span>`).join(" ");
+
+function setMic(on){
+  state.mic = on; screen.dataset.mic = on ? "on" : "off";
+  $("pill").classList.toggle("off", !on); $("pilltext").textContent = on ? "Listening" : "Mic off";
+  $("orb").setAttribute("aria-label", on ? "Turn microphone off" : "Turn microphone on");
+  $("micbtn").setAttribute("aria-pressed", String(on)); $("mictext").textContent = on ? "Listening" : "Talk";
+  $("micbtn").setAttribute("aria-label", on ? "Turn microphone off" : "Turn microphone on");
+  $("pillhint").hidden = !on || Boolean(state.text);
+  if (on) speak(); else { clear(); cut(); commitTail(); if (state.mode === "live") state.base = state.text; }
+}
+
+// Live mode: words stream into the bubble.
+function renderBubble(){
+  const has = Boolean(state.text.trim());
+  $("draftwrap").hidden = !has || state.mode !== "live";
+  draft.innerHTML = wordsSpan(state.text.split(" ").filter(Boolean));
+  $("pillhint").hidden = has || !state.mic;
+}
+
+// Compose mode: committed text + a grey tail of words still being read.
+function tailEl(){ let t = field.querySelector(".tail"); if (!t){ t = document.createElement("span"); t.className = "tail"; t.contentEditable = "false"; field.appendChild(t); } return t; }
+function commitTail(){
+  const t = field.querySelector(".tail"); if (!t) return;
+  const words = t.textContent.trim(); t.remove();
+  if (words){ const base = field.textContent.replace(/\s+$/, ""); field.textContent = (base ? base + " " : "") + words; }
+  state.text = field.textContent;
+}
+
+function speak(){
+  clear();
+  const phrase = PHRASES[state.phrase]; if (!phrase) return;
+  const words = phrase.split(" ");
+  state.said = 0;
+  words.forEach((_, i) => timers.push(setTimeout(() => {
+    state.said = i + 1;
+    if (state.mode === "live"){
+      const base = state.base; state.text = (base ? base + " " : "") + words.slice(0, i + 1).join(" "); renderBubble();
+    } else {
+      tailEl().innerHTML = " " + wordsSpan(words.slice(0, i + 1)); field.scrollTop = field.scrollHeight;
+      if (state.step === 2) step(3);
+    }
+    if (i === words.length - 1) timers.push(setTimeout(() => {
+      state.phrase++; state.said = 0;
+      if (state.mode === "compose") commitTail(); else state.base = state.text;
+    }, 700));
+  }, 380 + i * 260)));
+}
+
+// A phrase cut off mid-way (mic off, or the composer opening) keeps its heard words; the rest comes next time.
+function cut(){
+  const words = PHRASES[state.phrase]?.split(" ") ?? [];
+  if (state.said && state.said < words.length) PHRASES[state.phrase] = words.slice(state.said).join(" ");
+  else if (state.said && words.length) state.phrase++;
+  state.said = 0;
+}
+function openComposer(){
+  if (state.mode === "compose") return;
+  clear(); cut();
+  state.mode = "compose"; screen.dataset.mode = "compose";
+  field.textContent = state.text; state.base = state.text;
+  if (state.mic) speak();
+  step(2);
+}
+
+field.addEventListener("focus", () => {
+  if (state.mode !== "compose") return;
+  screen.dataset.kb = "up";
+  if (state.mic) setMic(false);
+  if (state.step < 4) step(4);
+});
+field.addEventListener("input", () => { state.text = field.textContent; });
+$("micbtn").addEventListener("click", () => {
+  const on = !state.mic;
+  if (on){ field.blur(); screen.dataset.kb = "down"; if (state.step === 4) step(5); }
+  setMic(on);
+});
+$("orb").addEventListener("click", () => setMic(!state.mic));
+draft.addEventListener("click", openComposer);
+$("editbtn").addEventListener("click", openComposer);
+$("clearbtn").addEventListener("click", () => { clear(); cut(); state.text = ""; state.base = ""; renderBubble(); if (state.mic) speak(); });
+$("kbbtn").addEventListener("click", openComposer);
+function send(){
+  clear(); commitTail();
+  const text = (state.mode === "compose" ? field.textContent : state.text).trim(); if (!text) return;
+  screen.dataset.kb = "down"; field.blur();
+  $("thread").innerHTML = `<div class="sent">${text.replace(/</g,"&lt;")}</div><div class="answer"><span class="dot"></span>Thinking…</div>`;
+  state.mode = "live"; screen.dataset.mode = "live"; state.text = ""; state.base = ""; field.textContent = "";
+  state.mic = false; screen.dataset.mic = "off"; $("pill").classList.add("off"); $("pilltext").textContent = "Thinking…";
+  $("draftwrap").hidden = true; step(6);
+}
+$("send1").addEventListener("click", send);
+$("send2").addEventListener("click", send);
+
+function restart(){
+  clear();
+  PHRASES.splice(0, PHRASES.length, "Show me Daniel's potassium from yesterday", "and compare it with the morning bloods", "then draft a note for the night team");
+  state = { mode: "live", mic: true, text: "", base: "", phrase: 0, said: 0, step: 1 };
+  screen.dataset.mode = "live"; screen.dataset.kb = "down"; field.textContent = ""; $("thread").innerHTML = "";
+  renderBubble(); setMic(true); step(1);
+}
+$("restart").addEventListener("click", restart);
+$("theme").addEventListener("click", () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme === "dark" ? "light" : "dark"; });
+restart();
+</script>
+</body>
+</html>

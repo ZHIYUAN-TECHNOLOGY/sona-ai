@@ -3,11 +3,11 @@ import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { RING } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, glass, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Icon, RoundAction, glass, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import type { Hearing } from "@/features/live/voice-input";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import { AppState, BackHandler, View, type ViewStyle } from "react-native";
+import { AppState, BackHandler, Pressable, View, type ViewStyle } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { draftText, opened, sampleAt, step, wordsOf, type Phase, type Step, type Talk } from "./live-turns";
 
@@ -29,7 +29,7 @@ const SAMPLE = 1;
  * last) sends it, and the page's adapter answers while the mic rests; listening resumes into a new draft if the mic is
  * still on. `owner` is whose recording the mic's words and errors belong to (Live, or the dock).
  */
-export function useSonaLive(adapter: LiveAdapter | undefined, mic: Mic, owner: RefObject<"dock" | "live">, live: boolean, sample: string) {
+export function useSonaLive(adapter: LiveAdapter | undefined, mic: Mic, owner: RefObject<"dock" | "live" | "compose">, live: boolean, sample: string) {
   const [talk, setTalk] = useState<Talk<LiveReply>>();
   // The loop's state also lives in a ref, so a step and what follows it (asking) read the same state.
   const now = useRef<Talk<LiveReply>>(undefined);
@@ -177,20 +177,32 @@ export function Bubble({ text }: { text: string }) {
 /**
  * The words heard so far, not yet sent: a pause never sends, so they wait here for Send (or "submit"). Lighter glass and a
  * dashed rim mark it unsent; it grows with the words on the layout spring, no bounce (after Honk's live-resizing bubble,
- * quieter), each word fading up as it is heard. "Reading…" while the last words are read, with Send held until they are.
+ * quieter), each word fading up as it is heard. Under it, quiet icons as under a chat answer: edit (the bubble too) opens
+ * it in the composer with the mic still on, clear drops it, and a small send. "Reading…" holds Send until the last words are read.
  */
-export function DraftBubble({ text, reading, sample, reduced, solid, onSend }: { text: string; reading: boolean; sample: boolean; reduced: boolean; solid: boolean; onSend: () => void }) {
-  return <Animated.View entering={reduced ? FadeIn.duration(150) : riseIn({ distance: 6, duration: 260 })} exiting={FadeOut.duration(140)} style={{ alignSelf: "flex-end", maxWidth: "86%", alignItems: "flex-end", gap: 8 }}>
-    <Animated.View layout={reduced ? undefined : LAYOUT} accessible accessibilityLabel={`Draft: ${text}`} style={{ overflow: "hidden", flexDirection: "row", flexWrap: "wrap", columnGap: 4.5, paddingHorizontal: 16, paddingVertical: 11, borderRadius: 22, borderWidth: 1, borderStyle: "dashed", borderColor: RING, backgroundColor: solid ? palette.surface : "rgba(255,255,255,0.4)" }}>
-      {wordsOf(text).map((word, i) => <Animated.View key={i} entering={reduced ? FadeIn.duration(150) : riseIn({ distance: 4, duration: 260 })}>
-        <Text style={{ ...type.body, color: palette.ink }}>{word}</Text>
-      </Animated.View>)}
-    </Animated.View>
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-      <Animated.Text style={{ ...type.caption, fontWeight: "500", color: palette.muted, ...(reading && !reduced ? pulsing : null) }}>{reading ? "Reading…" : "Draft"}</Animated.Text>
-      <Action label="Send" icon="arrow.up" accessibilityLabel="Send what you said" disabled={reading} onPress={onSend} />
+export function DraftBubble({ text, reading, sample, reduced, solid, onSend, onEdit, onClear }: { text: string; reading: boolean; sample: boolean; reduced: boolean; solid: boolean; onSend: () => void; onEdit: () => void; onClear: () => void }) {
+  return <Animated.View entering={reduced ? FadeIn.duration(150) : riseIn({ distance: 6, duration: 260 })} exiting={FadeOut.duration(140)} style={{ alignSelf: "flex-end", maxWidth: "86%", alignItems: "flex-end", gap: 6 }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Draft: ${text}`} accessibilityHint="Opens it to edit" onPress={onEdit}>
+      <Animated.View layout={reduced ? undefined : LAYOUT} style={{ overflow: "hidden", flexDirection: "row", flexWrap: "wrap", columnGap: 4.5, paddingHorizontal: 16, paddingVertical: 11, borderRadius: 22, borderWidth: 1, borderStyle: "dashed", borderColor: RING, backgroundColor: solid ? palette.surface : "rgba(255,255,255,0.4)" }}>
+        {wordsOf(text).map((word, i) => <Animated.View key={i} entering={reduced ? FadeIn.duration(150) : riseIn({ distance: 4, duration: 260 })}>
+          <Text style={{ ...type.body, color: palette.ink }}>{word}</Text>
+        </Animated.View>)}
+      </Animated.View>
+    </Pressable>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+      <Animated.Text style={{ ...type.caption, fontWeight: "500", color: palette.muted, marginRight: 4, ...(reading && !reduced ? pulsing : null) }}>{reading ? "Reading…" : "Draft"}</Animated.Text>
+      <DraftTool icon="pencil" label="Edit draft" onPress={onEdit} />
+      <DraftTool icon="trash" label="Clear draft" onPress={onClear} />
+      <View style={{ marginLeft: 6 }}><RoundAction icon="send" label="Send what you said" ready={!reading} onPress={onSend} /></View>
     </View>
     {sample && <SampleLabel source="fixture" what="voice" />}
   </Animated.View>;
 }
 
+/** A quiet outline icon under the draft (36 pt, 44 pt to touch). */
+function DraftTool({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4}
+    style={({ pressed }) => ({ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? "rgba(255,255,255,0.7)" : "transparent" })}>
+    <Icon name={icon} size={19} color={palette.muted} />
+  </Pressable>;
+}

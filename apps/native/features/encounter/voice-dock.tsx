@@ -5,7 +5,7 @@ import { useVoiceInput } from "@/features/live/voice-input";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { SampleLabel } from "@/components/sona/model-answer";
-import { GlassButton, RoundAction, useAccessibleEffects } from "@/components/sona/ui";
+import { GlassButton, RoundAction, glass as glassStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { EASE_OUT, EASE_OUT_CSS, riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
 import { GlassOrb } from "@/components/sona/glass-orb";
@@ -26,6 +26,7 @@ import { useKeyboardHandler } from "react-native-keyboard-controller";
 import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DraftBubble, LiveStatus, useSonaLive, type LiveAdapter } from "./sona-live";
+import { sendPhrase } from "./live-turns";
 
 const ORB = 64;
 /** Sona Live: the mic takes the bar's centre at 72 pt (scaled, so the layout keeps one size), and the wave rests about a quarter of the screen up. */
@@ -69,6 +70,9 @@ type Props = {
   /** How tall the dock stands (the bar with its chip, notices and draft above it), so the page keeps its last card clear of it. */
   onHeight?: (height: number) => void;
 };
+
+/** Words added after what is already in the box, one space between. */
+const joined = (a: string, b: string) => [a.trimEnd(), b.trim()].filter(Boolean).join(" ");
 
 function haptic(kind: "light" | "select") {
   if (process.env.EXPO_OS !== "ios") return;
@@ -151,17 +155,25 @@ export function VoiceDock(props: Props) {
   // Live mode hears the microphone (Sona speech on the server); demo mode plays the labelled sample.
   // The judge build always listens with the microphone: the authored words (`spokenPrompt`) never stand in for speech.
   const live = wantsLive(JUDGE, useLive().on);
-  // Whose recording the microphone is ending: its words and errors go back there (Sona Live, or the dock's own hold or tap).
-  const owner = useRef<"dock" | "live">("dock");
+  // Whose recording the microphone is ending: its words and errors go back there (Sona Live, the composer's dictation, or
+  // the dock's own hold or tap).
+  const owner = useRef<"dock" | "live" | "compose">("dock");
+  // The composer's mic: talking into the box (Live mode), each chunk added after the words already there.
+  const [dictating, setDictating] = useState(false);
+  const draftRef = useRef(draft); draftRef.current = draft;
   const mic = useVoiceInput({
     onHeard: (text, how, chunk) => {
       if (owner.current === "live") { talk.onHeard(text, chunk); return; }
+      if (owner.current === "compose") { dictated(text); return; }
+      // A chunk read after its dictation or Live ended (sent, or closed) belongs to nothing.
+      if (how === "live") return;
       // Holding sends at once; a tap puts the words in the text box to check before sending.
       if (how === "hold") { haptic("select"); setFlooding(true); onSubmit(text); }
       else { onDraft(text); setMode("composing"); }
     },
     onError: (message, chunk) => {
       if (owner.current === "live") { talk.onError(message, chunk); props.onVoiceError?.(message); return; }
+      if (owner.current === "compose") { setDictating(false); props.onVoiceError?.(message); return; }
       setMode(current => (current === "holding" || current === "handsfree" ? "idle" : current)); props.onVoiceError?.(message);
     },
     // Sona Live's draft fills in as it is heard (the dock's own hold or tap shows `mic.partial`).
@@ -251,10 +263,37 @@ export function VoiceDock(props: Props) {
   const toggleMic = () => { haptic("select"); talk.toggle(); };
   // The keyboard while talking hands the unsent words to the page's composer: the mic goes off, the voice session ends
   // and the bar morphs into the text box with the keyboard up (no words keep what was already typed there).
-  const typeInstead = async () => { const text = await talk.keyboard(); talk.end(); if (text) onDraft(text); setMode("composing"); };
+  // The mic stays on if it was: the composer opens without the keyboard and keeps taking dictation (Live mode). The voice
+  // session stays open under the composer (Today keeps its conversation) and ends once the composer closes with nothing left.
+  const typeInstead = async () => {
+    const listening = talk.micOn;
+    const text = await talk.keyboard(); if (text) onDraft(text); setMode("composing");
+    if (listening) dictate();
+  };
+  // The composer's mic: on, it records in chunks as Live does; off, the chunk being recorded is read into the box.
+  const dictate = () => { if (!live) return; owner.current = "compose"; setDictating(true); void mic.start("live"); };
+  const stopDictating = () => { setDictating(false); if (owner.current === "compose" && mic.state === "listening") void mic.stop(true); };
+  // A chunk heard into the box; said last, a send phrase sends the box (without the phrase), as it does in Live.
+  const dictated = (text: string) => {
+    const before = sendPhrase(text), value = joined(draftRef.current, before ?? text);
+    draftRef.current = value;
+    if (before === undefined) { onDraft(value); return; }
+    setDictating(false); owner.current = "dock"; void mic.stop(false);
+    if (value) { haptic("select"); onSubmit(value); }
+    Keyboard.dismiss(); setMode("idle");
+  };
+  // Typing pauses the mic, so speech and typing never edit the box at once; leaving the composer stops it too.
+  useEffect(() => { if (mode !== "composing" && dictating) stopDictating(); }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
+  const resuming = useRef(false);
+  const toggleDictation = () => {
+    haptic("select");
+    if (dictating) { stopDictating(); return; }
+    // The keyboard goes down so the wave shows; its blur keeps the composer open.
+    resuming.current = true; Keyboard.dismiss(); dictate();
+  };
   // Sona Live is the page's voice, not a page of its own: with the mic off, nothing left to send and no answer coming,
   // the session ends by itself (the status goes, the wave has sunk).
-  useEffect(() => { if (talk.open && !talk.micOn && talk.phase !== "thinking" && !talk.draft && !talk.reading) talk.end(); }, [talk.open, talk.micOn, talk.phase, talk.draft, talk.reading]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (mode !== "composing" && talk.open && !talk.micOn && talk.phase !== "thinking" && !talk.draft && !talk.reading) talk.end(); }, [mode, talk.open, talk.micOn, talk.phase, talk.draft, talk.reading]); // eslint-disable-line react-hooks/exhaustive-deps
   // A notice Live hears back (nothing for that question here, the model starting) is the page's notice, above the bar.
   const said = talk.turns.at(-1);
   useEffect(() => { if (said?.who === "sona" && "notice" in said.reply) props.onVoiceError?.(said.reply.notice); }, [said?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -280,7 +319,7 @@ export function VoiceDock(props: Props) {
   const liquid = !reducedTransparency && !veilFailed;
   const scrim = busy || (holding && !liquid);
   // Live keeps the wave up while the mic is on (calm while Sona thinks) and lets it sink while paused.
-  const veil = talk.open ? (talk.phase !== "paused" ? "listening" : "idle") : holding ? "listening" : flooding && busy ? "flood" : "idle";
+  const veil = dictating ? "listening" : talk.open ? (talk.phase !== "paused" ? "listening" : "idle") : holding ? "listening" : flooding && busy ? "flood" : "idle";
   // In Live the orb only ever says whether the mic is on (the header says when Sona is thinking).
   const orbActivity: OrbActivity = talk.open ? (talk.micOn ? "mic" : "muted")
     : mode === "handsfree" ? "stop" : holding ? "listening" : activity ?? (busy ? "searching" : "idle");
@@ -296,7 +335,10 @@ export function VoiceDock(props: Props) {
   // Once it has shown, no other dock this session shows it again.
   useEffect(() => { if (!coach) return; coachSeen = true; const timer = setTimeout(() => setCoached(true), 6000); return () => clearTimeout(timer); }, [coach]);
   const send = () => {
-    const value = draft.trim() || (attachments.length ? `Review the attached ${attachments.length === 1 ? "image" : "images"}` : "");
+    // ponytail: dictation sends its last partial reading as is, not the final reading (a second or so later); wait for it if words go missing.
+    const tail = dictating ? mic.partial : "";
+    if (dictating) { setDictating(false); owner.current = "dock"; void mic.stop(false); }
+    const value = joined(draft, tail) || (attachments.length ? `Review the attached ${attachments.length === 1 ? "image" : "images"}` : "");
     if (!value) return;
     // Typed inside Sona Live, it is asked there, as a spoken question is (the box keeps it while Sona still answers).
     onSubmit(value); Keyboard.dismiss();
@@ -349,7 +391,7 @@ export function VoiceDock(props: Props) {
   // The page is the shell: Sona Live is its voice, so the page stays where it is (and reads, scrolls and answers) while it listens.
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
     {/* Sona Live keeps the wave low (about a quarter of the screen) so the page above it keeps the room. */}
-    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open ? LIVE_CREST : undefined} reducedMotion={reducedMotion} thinking={talk.open && talk.phase === "thinking"} onUnavailable={() => setVeilFailed(true)} />}
+    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open || dictating ? LIVE_CREST : undefined} reducedMotion={reducedMotion} thinking={talk.open && talk.phase === "thinking"} onUnavailable={() => setVeilFailed(true)} />}
     {/* Frosted focus layer: a static blur crossfaded by opacity. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT_CSS }]}>
       <Frost solid={reducedTransparency} />
@@ -373,7 +415,7 @@ export function VoiceDock(props: Props) {
       {mode !== "composing" && (above || chip || talk.open) && <View pointerEvents="box-none" style={{ paddingHorizontal: 20, gap: 8 }}>
         {above}
         {/* Sona Live on the page: the words heard so far wait in the draft for Send (or "submit"), over the status by the mic. */}
-        {talk.open && Boolean(talk.draft) && <DraftBubble text={talk.draft} reading={talk.reading} sample={!live} reduced={reducedMotion} solid={reducedTransparency} onSend={() => { haptic("select"); talk.send(); }} />}
+        {talk.open && Boolean(talk.draft) && <DraftBubble text={talk.draft} reading={talk.reading} sample={!live} reduced={reducedMotion} solid={reducedTransparency} onSend={() => { haptic("select"); talk.send(); }} onEdit={() => { haptic("select"); void typeInstead(); }} onClear={() => { haptic("select"); talk.clear(); }} />}
         {talk.open && <LiveStatus phase={talk.phase} hint={!talk.draft} />}
         {chip}
       </View>}
@@ -453,12 +495,20 @@ export function VoiceDock(props: Props) {
         {composerMounted && <Animated.View pointerEvents={mode === "composing" ? "box-none" : "none"} onLayout={e => cardH.set(e.nativeEvent.layout.height)}
           style={[{ position: "absolute", bottom: 0, left: CARD_INSET, right: CARD_INSET, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 12 }, composerStyle]}>
           {attachments.length > 0 && <AttachmentStrip items={attachments} onRemove={removeAttachment} size={84} />}
-          <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#7D8591" multiline style={{ ...type.headline, fontWeight: "400", lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
+          {/* Opened from talking, the keyboard stays down while the mic is on; tapping the words brings it up and pauses the mic. */}
+          <TextInput autoFocus={!dictating} onFocus={() => { if (dictating) stopDictating(); }} onBlur={() => { if (resuming.current) { resuming.current = false; return; } setMode(current => current === "composing" ? "idle" : current); }} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#7D8591" multiline style={{ ...type.headline, fontWeight: "400", lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
+          {/* The words being heard, grey until their reading lands in the box. */}
+          {dictating && Boolean(mic.partial) && <Text accessibilityLiveRegion="polite" style={{ ...type.headline, fontWeight: "400", lineHeight: 22, color: palette.placeholder, marginTop: -8 }}>{mic.partial}</Text>}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             {/* Attachments from the composer, at its bottom left as in Claude's: the composer folds into the bar while the menu opens from its +. */}
             {attach && <ToolButton icon="add" label="Attach a photo, camera capture or file" onPress={leave(openMenu)} />}
             <View style={{ flex: 1 }} />
-            <RoundAction icon="send" label="Send message" ready={Boolean(draft.trim()) || attachments.length > 0} onPress={send} />
+            {live && <Pressable accessibilityRole="button" accessibilityLabel={dictating ? "Turn microphone off" : "Talk into the message"} onPress={toggleDictation} hitSlop={4}
+              style={({ pressed }) => ({ height: 36, borderRadius: 18, paddingLeft: 10, paddingRight: 12, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderColor: dictating ? "rgba(162,62,62,0.22)" : glassStyle.hairline, backgroundColor: dictating ? "#FBEDED" : pressed ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.85)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }] })}>
+              {dictating ? <Bars still={reducedMotion} level={level} color={palette.red} /> : <BrandIcon name="mic" size={17} />}
+              <Text style={{ ...type.footnote, fontWeight: "600", color: dictating ? palette.red : palette.ink }}>{dictating ? "Listening" : "Talk"}</Text>
+            </Pressable>}
+            <RoundAction icon="send" label="Send message" ready={Boolean(draft.trim()) || Boolean(dictating && mic.partial) || attachments.length > 0} onPress={send} />
           </View>
         </Animated.View>}
       </View>
