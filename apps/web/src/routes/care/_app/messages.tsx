@@ -5,16 +5,14 @@ import { useEffect, useRef } from "react";
 import { Avatar } from "@/components/avatar";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Anchor, Button, Card } from "@/components/primitives";
+import { Button, Card } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { Composer } from "@/features/care-messages/composer";
-import { clockOf, dayOf, stateOf, type MessageState } from "@/features/care-messages/thread";
+import { clockOf, dayOf, leadOf, statusOf } from "@/features/care-messages/thread";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-messages.css";
 
 export const Route = createFileRoute("/care/_app/messages")({ component: Page });
-
-const STATE: Record<MessageState, string> = { sending: "Sending…", sent: "Sent", seen: "Seen by care team", replied: "Replied" };
 
 function Page() {
   // ponytail: polling (focus + 20 s) until a shared live-socket hook exists; then invalidate on its "messages" change.
@@ -28,7 +26,7 @@ function Page() {
 
   return (
     <>
-      <PageHeader title="Messages" lead="Write to your care team. They reply here." />
+      <PageHeader title="Messages" lead={list ? leadOf(list) : "Write to your care team. They reply here."} />
       <WithRail rail={<BeforeYouWrite />}>
         <Card className="cm-card">
           <header className="cm-head">
@@ -48,7 +46,7 @@ function Page() {
               ) : <EmptyState>Loading your messages…</EmptyState>}
             </div>
           ) : list.length === 0 ? (
-            <div className="cm-thread"><EmptyState icon="send" title="No messages yet">Ask anything about your recovery. Your care team will reply here.</EmptyState></div>
+            <div className="cm-thread"><EmptyState icon="send" title="No messages yet">Your messages and your care team's replies will appear here. Write your first one in the box below.</EmptyState></div>
           ) : (
             <ol ref={scroller} className="cm-thread" role="log" aria-label="Messages with your care team" tabIndex={0}>
               {list.map((m, i) => {
@@ -72,13 +70,13 @@ function Page() {
                         ) : null}
                       </div>
                     </div>
-                    <p className="cm-meta">{who} · <time dateTime={new Date(m.createdAt).toISOString()}>{clockOf(m.createdAt)}</time>{fromMe ? ` · ${STATE[stateOf(list, i)]}` : ""}</p>
+                    <p className="cm-meta">{who} · <time dateTime={new Date(m.createdAt).toISOString()}>{clockOf(m.createdAt)}</time></p>
                   </li>
                 );
               })}
             </ol>
           )}
-          <Composer />
+          <Composer status={list ? statusOf(list) : null} />
         </Card>
       </WithRail>
     </>
@@ -102,7 +100,10 @@ function BeforeYouWrite() {
             <Button href="tel:999" variant="danger" icon="phone">Call 999</Button>
           </div>
         </div>
-        <p className="cm-quick">Have a quick question? <Anchor to="/care/ask" className="link">Ask Sona</Anchor></p>
+        <div className="cm-quick">
+          <p>For a quick question, ask Sona.</p>
+          <Button to="/care/ask">Ask Sona</Button>
+        </div>
       </Card>
     </RightRail>
   );

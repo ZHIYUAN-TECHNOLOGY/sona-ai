@@ -6,17 +6,17 @@
 .cm-head-title { margin: 0; font-size: 19px; font-weight: 600; }
 .cm-head-sub { margin: 0; color: var(--muted); font-size: 15px; }
 
-.cm-thread { list-style: none; margin: 0; display: flex; flex-direction: column; gap: var(--space-4); min-height: 240px; max-height: max(240px, calc(100vh - 520px)); overflow-y: auto; padding: var(--space-5) var(--pad-card); }
+.cm-thread { list-style: none; margin: 0; display: flex; flex-direction: column; gap: var(--space-4); min-height: 200px; max-height: max(200px, calc(100vh - 530px)); overflow-y: auto; padding: var(--space-5) var(--pad-card); }
 .cm-thread:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
 .cm-item { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); }
 .cm-item.cm-mine { align-items: flex-end; }
 .cm-day { align-self: stretch; display: flex; align-items: center; gap: var(--space-3); margin: 0 0 var(--space-3); color: var(--muted); font-size: 15px; font-weight: 600; }
 .cm-day::before, .cm-day::after { content: ""; flex: 1; height: 1px; background: var(--hairline); }
-.cm-bubble { display: flex; gap: var(--space-3); max-width: min(75%, 560px); padding: var(--space-3) var(--space-4); border-radius: var(--radius-group); background: var(--canvas); color: var(--ink); overflow-wrap: anywhere; white-space: pre-wrap; }
+.cm-bubble { display: flex; gap: var(--space-3); max-width: min(80%, 60ch); padding: var(--space-3) var(--space-4); border-radius: var(--radius-group); background: var(--canvas); color: var(--ink); overflow-wrap: anywhere; white-space: pre-wrap; }
 .cm-bubble p { margin: 0; }
 .cm-theirs .cm-bubble { border-bottom-left-radius: var(--space-1); }
 .cm-mine .cm-bubble { background: var(--blue-wash); border-bottom-right-radius: var(--space-1); }
-.cm-bubble.cm-999 { max-width: min(90%, 640px); padding: var(--space-4); background: var(--red-wash); box-shadow: inset 0 0 0 1px var(--red); font-size: 19px; font-weight: 600; }
+.cm-bubble.cm-999 { max-width: min(90%, 60ch); padding: var(--space-4); background: var(--red-wash); box-shadow: inset 0 0 0 1px var(--red); font-size: 19px; font-weight: 600; }
 .cm-999 > .icon, .cm-now > .icon { flex: none; margin-top: 2px; color: var(--red); }
 .cm-meta, .cm-attached, .cm-about { color: var(--muted); font-size: 15px; }
 .cm-meta { margin: 0; padding: 0 var(--space-1); }
@@ -25,10 +25,13 @@
 .cm-composer { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4) var(--pad-card) var(--space-5); border-top: 1px solid var(--hairline); }
 .cm-label { font-size: 15px; font-weight: 600; color: var(--ink); }
 .cm-compose-row { display: flex; gap: var(--space-3); align-items: flex-end; }
-.cm-composer textarea { flex: 1; min-width: 0; min-height: 76px; max-height: 220px; field-sizing: content; padding: var(--space-3) var(--space-4); font: inherit; font-size: 17px; line-height: 1.5; color: var(--ink); background: var(--canvas); border: 1px solid var(--line); border-radius: var(--radius-group); resize: none; }
+.cm-composer textarea { flex: 1; min-width: 0; min-height: 48px; max-height: 180px; field-sizing: content; padding: var(--space-3) var(--space-4); font: inherit; font-size: 17px; line-height: 1.5; color: var(--ink); background: var(--canvas); border: 1px solid var(--line); border-radius: var(--radius-group); resize: none; }
 .cm-composer textarea:focus-visible { outline: none; border-color: var(--blue); box-shadow: var(--focus-ring); background: var(--surface); }
 .cm-composer .btn { flex: none; min-height: 48px; min-width: 104px; font-size: 17px; }
-.cm-error { margin: 0; color: var(--amber); font-size: 15px; }
+.cm-status, .cm-hint { margin: 0; color: var(--muted); font-size: 15px; }
+.cm-compose-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-1) var(--space-3); }
+.cm-status:empty { display: none; }
+.cm-error { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin: 0; color: var(--ink); font-size: 17px; font-weight: 600; }
 
 /* Rail: Before you write. */
 .cm-tips { margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); font-size: 17px; line-height: 1.5; }
@@ -36,8 +39,9 @@
 .cm-now p { margin: 0 0 var(--space-2); }
 .cm-now .cm-now-title { font-size: 19px; font-weight: 700; }
 .cm-now .btn { min-height: 48px; margin-top: var(--space-2); font-size: 17px; }
-.cm-quick { margin: 0; font-size: 17px; }
-.cm-quick .link { display: inline-flex; align-items: center; min-height: 48px; }
+.cm-quick { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); font-size: 17px; line-height: 1.5; }
+.cm-quick p { margin: 0; }
+.cm-quick .btn { min-height: 48px; font-size: 17px; }
 
 /* Care team page (shared with care-team.tsx). */
 .cm-urgent { padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-lg, 16px); background: var(--surface); font-size: 17px; line-height: 1.5; }
