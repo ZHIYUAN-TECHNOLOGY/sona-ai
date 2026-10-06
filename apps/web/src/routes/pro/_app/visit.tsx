@@ -12,7 +12,10 @@ import { Note } from "@/features/visit/note";
 import { Orders } from "@/features/visit/orders";
 import { refusal } from "@/features/visit/visit";
 import { orpc } from "@/lib/orpc";
+import { Reasoning } from "@/features/visit-tools/reasoning";
+import { Scan } from "@/features/visit-tools/scan";
 import "@/styles/pages/visit.css";
+import "@/styles/pages/visit-tools.css";
 
 export const Route = createFileRoute("/pro/_app/visit")({
   validateSearch: (search: Record<string, unknown>): { encounterId?: string } =>
@@ -43,6 +46,7 @@ function Page() {
       <WithRail rail={
         <RightRail label="Sona AI and the medicine order">
           <Briefing encounterId={encounterId} />
+          <Reasoning encounterId={encounterId} allowed={can(me.role, "encounter.reasoning")} />
           <div id="visit-orders">
             {patients.isPending ? <Card><p className="visit-muted">Loading the record…</p></Card>
               : <Orders encounterId={encounterId} patient={patient} userId={me.userId} canPrescribe={can(me.role, "prescribing.simulate")} />}
@@ -50,6 +54,7 @@ function Page() {
         </RightRail>
       }>
         <Note encounterId={encounterId} canWrite={can(me.role, "note.save")} canDraft={can(me.role, "note.draft")} actions={actions} />
+        <div className="vt-scan"><Scan encounterId={encounterId} allowed={can(me.role, "scan.apply")} /></div>
       </WithRail>
     </>
   );
