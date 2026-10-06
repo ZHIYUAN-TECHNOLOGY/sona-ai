@@ -1,0 +1,4 @@
+/* Patients list: only what the shared table, tabs and cards do not already give. */
+.ptl-calm { color: var(--muted); }
+.ptl-search { flex: 0 1 18rem; min-width: 12rem; }
+.ptl-reason { display: block; max-width: 28ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
