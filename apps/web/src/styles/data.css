@@ -35,8 +35,8 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .pro .cell-person-name + .cell-muted { line-height: 1.3; }
 
 /* Insight card: plain parts everywhere, the AI gradient panel in Pro */
-.insight-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-.insight-label { display: inline-flex; align-items: center; height: var(--chip-h); padding: 0 var(--space-3); border-radius: var(--radius-pill); background: var(--blue-wash); color: var(--blue); font-size: var(--text-small); font-weight: 600; }
+.insight-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); }
+.insight-label { flex: none; white-space: nowrap; display: inline-flex; align-items: center; height: var(--chip-h); padding: 0 var(--space-3); border-radius: var(--radius-pill); background: var(--blue-wash); color: var(--blue); font-size: var(--text-small); font-weight: 600; }
 .insight-meta, .insight-foot { font-size: var(--text-small); color: var(--muted); }
 .insight-foot { display: flex; align-items: center; gap: var(--space-2); }
 .insight-title { margin: 0; font-size: var(--text-title); line-height: 1.25; letter-spacing: var(--track-tight); }
@@ -97,8 +97,12 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .table-wrap { min-width: 0; max-width: 100%; overflow: hidden; }
 .table-scroll { overflow-x: auto; min-width: 0; }
 .table-scroll > .table { width: 100%; table-layout: auto; }
+.table th { white-space: nowrap; }
+/* Inside a Card the card's padding is the only frame: the toolbar starts where any card's content starts. */
+.card > .table-wrap, .pro .card > .table-wrap { padding: 0; }
+.card > .table-wrap > .table-toolbar { padding: 0 0 var(--space-3); }
 .table .table-action { width: 1%; white-space: nowrap; padding-left: 0; }
-.cell-person { display: flex; width: clamp(150px, 16vw, 240px); }
+.cell-person { display: flex; min-width: 150px; max-width: 220px; }
 .cell-person > :first-child { flex: none; }
 .cell-person-name, .cell-person-text > .cell-muted { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .cell-clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-width: 12ch; overflow-wrap: anywhere; }
