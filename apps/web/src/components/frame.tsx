@@ -1,5 +1,6 @@
 import { Link, Outlet } from "@tanstack/react-router";
 
+import { SonaAnswers, SonaProvider } from "@/lib/sona";
 import type { NavGroup } from "@/nav";
 
 import { SonaBar } from "./sona-bar";
@@ -23,14 +24,17 @@ export function Frame({ app, brand, groups, who }: { app: "pro" | "care"; brand:
         <div className="frame-who">{who}</div>
       </nav>
       <div className="frame-main">
-        <main className="frame-scroll">
-          <div className="frame-page">
-            <Outlet />
+        <SonaProvider app={app}>
+          <main className="frame-scroll">
+            <div className="frame-page">
+              <SonaAnswers />
+              <Outlet />
+            </div>
+          </main>
+          <div className="frame-bar">
+            <SonaBar app={app} />
           </div>
-        </main>
-        <div className="frame-bar">
-          <SonaBar app={app} />
-        </div>
+        </SonaProvider>
       </div>
     </div>
   );
