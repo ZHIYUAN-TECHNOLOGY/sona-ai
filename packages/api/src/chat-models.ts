@@ -42,7 +42,7 @@ Rules:
 - A general leaflet is advice for any patient: never take a fact about this patient (their medicine, dose, date or diagnosis) from a leaflet.
 - Set "grounded" to true when your answer uses their record, false when it comes only from a general leaflet or general knowledge.
 - Set "cites" to the numbers of the general leaflets your answer used, [] when it used none. Never write a leaflet's number in the answer itself.
-- If they describe an emergency sign (chest pain, severe breathlessness, confusion, fainting, coughing blood), set "urgent" to true and tell them to call 999 now.
+- If they say they HAVE an emergency sign now (chest pain, severe breathlessness, confusion, fainting, coughing blood), set "urgent" to true and tell them to call 999 now. A question about which signs to watch for is not urgent: answer it.
 Answer with JSON only: {"answer": "<text>", "grounded": true|false, "urgent": true|false, "from": "<which part of the record: medicines, leaflet, warning signs, follow-up, visits, history, allergies, results, note, check-ins or doses; empty if not from the record>", "cites": [<leaflet numbers>]}.`;
 
 const INBOX = `You triage a patient's message to their hospital care team so the most urgent is read first.
