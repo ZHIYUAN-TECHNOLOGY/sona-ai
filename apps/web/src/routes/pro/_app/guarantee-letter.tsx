@@ -8,8 +8,9 @@ import { Icon } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader, PatientStrip } from "@/components/page";
 import { RightRail, WithRail } from "@/components/rail";
-import { Button, Card, Chip, Field } from "@/components/primitives";
-import { blockersOf, Loaded, oneParam, Origin, PatientPicker, say, usePatient } from "@/features/discharge/shared";
+import { Button, Card, Chip, Field, Signal, type Tone } from "@/components/primitives";
+import { letterHold, standings } from "@/features/discharge/rank";
+import { blockersOf, Loaded, type Mark, oneParam, Origin, PatientPicker, say, usePatient } from "@/features/discharge/shared";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/discharge.css";
 import "@/styles/pages/guarantee-letter.css";
@@ -18,10 +19,30 @@ export const Route = createFileRoute("/pro/_app/guarantee-letter")({ validateSea
 
 function Page() {
   const { encounterId } = Route.useSearch();
-  return encounterId ? <Letter key={encounterId} encounterId={encounterId} /> : (
+  return encounterId ? <Letter key={encounterId} encounterId={encounterId} /> : <Chooser />;
+}
+
+const openLetter = (p: { encounterId: string }) => <Link to="/pro/guarantee-letter" search={{ encounterId: p.encounterId }}>Open letter</Link>;
+
+/**
+ * No letter chosen. The ward knows which letters hold a bed, so those lead with the reason.
+ * ponytail: no procedure lists every claim's status, so a letter that holds no bed says nothing until opened.
+ */
+function Chooser() {
+  const beds = useQuery(orpc.ward.beds.queryOptions());
+  const by = standings(beds.data ?? []);
+  const holding = [...by.values()].filter(letterHold).length;
+  const mark = (id: string): Mark | undefined => {
+    const hold = letterHold(by.get(id));
+    return hold ? { rank: 0, reason: [hold.label, hold.detail].filter(Boolean).join(": "), chip: <Chip tone="soon">Holding a bed</Chip> } : undefined;
+  };
+  return (
     <>
-      <PageHeader title="Guarantee letter" lead="Choose a patient to see where their insurer claim stands." />
-      <PatientPicker link={p => <Link to="/pro/guarantee-letter" search={{ encounterId: p.encounterId }}>Open letter</Link>} />
+      <PageHeader title="Guarantee letter"
+        lead={!beds.data ? "Choose a patient to see where their insurer claim stands."
+          : holding ? <><Signal tone="soon">{holding} guarantee letter{holding === 1 ? " is" : "s are"} holding a bed</Signal>. Open {holding === 1 ? "it" : "those"} first.</>
+          : "No guarantee letter is holding a bed. Open a patient to see where their claim stands."} />
+      <PatientPicker link={openLetter} mark={mark} title={holding ? "Patients, letters holding a bed first" : "Patients"} />
     </>
   );
 }
@@ -58,6 +79,9 @@ const leadOf = (s: Claim) =>
     : s.status === "approved" ? `Approved${s.approvedAt ? ` on ${day(s.approvedAt)}` : ""}. Nothing left to do.`
     : s.status === "denied" ? `Denied${s.denial ? ` (${s.denial.code})` : ""}. An appeal draft is ready to review.`
     : s.status === "appealed" ? `Denied, and the appeal went${s.appealedAt ? ` on ${day(s.appealedAt)}` : ""}. The insurer has not answered yet.` : s.status;
+
+/** The statuses whose lead needs the eye: a denial, an insurer's question, an approval. The rest stay plain. */
+const NEEDS_EYE: Record<string, Tone | undefined> = { denied: "urgent", queried: "soon", approved: "done" };
 
 function Letter({ encounterId }: { encounterId: string }) {
   const { me } = Route.useRouteContext();
@@ -110,7 +134,7 @@ function Letter({ encounterId }: { encounterId: string }) {
 
   return (
     <>
-      <PageHeader title="Guarantee letter" breadcrumb={CRUMBS} lead={leadOf(s)}
+      <PageHeader title="Guarantee letter" breadcrumb={CRUMBS} lead={NEEDS_EYE[s.status] ? <Signal tone={NEEDS_EYE[s.status]}>{leadOf(s)}</Signal> : leadOf(s)}
         actions={draft && maySend ? <Button variant="primary" icon="arrow-right" pending={send.isPending} onClick={sendNow}>Accept codes and send</Button> : undefined} />
       {patient ? <PatientStrip name={patient.name} meta={patient.subtitle} /> : null}
       <WithRail rail={<RightRail label="What to decide">{insight}</RightRail>}>

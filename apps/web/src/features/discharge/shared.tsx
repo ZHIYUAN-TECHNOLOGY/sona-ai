@@ -37,23 +37,32 @@ export function usePatient(encounterId: string) {
   return useQuery(orpc.patients.list.queryOptions()).data?.find(p => p.encounterId === encounterId);
 }
 
-/** No visit chosen yet: the hospital's patients, searchable by name. Each row is the link `link` returns, stretched over the row. */
-export function PatientPicker({ link, lead }: { link: (p: { id: string; encounterId: string }) => ReactNode; lead?: string }) {
+/** What the page knows about a patient before their row is opened: where they sort (lowest first), the state that needs the eye, and why. */
+export type Mark = { rank: number; chip?: ReactNode; reason?: string };
+
+/**
+ * No visit chosen yet: the hospital's patients, searchable by name. Each row is the link `link` returns, stretched
+ * over the row. With `mark`, the rows are ranked and say why; `only` keeps the rows a pressed stat asks for.
+ */
+export function PatientPicker({ link, mark, only, title = "Patients" }: { link: (p: { id: string; encounterId: string }) => ReactNode; mark?: (patientId: string) => Mark | undefined; only?: (patientId: string) => boolean; title?: string }) {
   const patients = useQuery(orpc.patients.list.queryOptions());
   const [q, setQ] = useState("");
   return (
     <Loaded query={patients} empty="No patients to show.">
       {rows => {
-        const shown = rows.filter(p => p.name.toLowerCase().includes(q.trim().toLowerCase()));
+        const rank = (id: string) => mark?.(id)?.rank ?? Infinity;
+        const shown = rows.filter(p => p.name.toLowerCase().includes(q.trim().toLowerCase()) && (only?.(p.id) ?? true)).sort((a, b) => rank(a.id) - rank(b.id));
         return (
-          <Card title="Patients" className="list-card dp-pick">
+          <Card title={title} className="list-card dp-pick">
             <div className="dp-pick-head">
               <SearchField label="Search patients by name" placeholder="Search by name" value={q} onChange={e => setQ(e.target.value)} />
-              {lead ? <p>{lead}</p> : null}
             </div>
             <ul className="list">
-              {shown.map(p => <ListRow key={p.encounterId} avatar={p.name} title={p.name} caption={p.subtitle} trailing={link(p)} />)}
-              {shown.length ? null : <li className="dp-note dp-pick-none">No patient is named “{q.trim()}”.</li>}
+              {shown.map(p => {
+                const m = mark?.(p.id);
+                return <ListRow key={p.encounterId} avatar={p.name} title={p.name} caption={m?.reason ? <>{p.subtitle} · <span className="dp-why">{m.reason}</span></> : p.subtitle} trailing={<>{m?.chip}{link(p)}</>} />;
+              })}
+              {shown.length ? null : <li className="dp-note dp-pick-none">{q.trim() ? `No patient is named “${q.trim()}”.` : "No patient is in this group."}</li>}
             </ul>
           </Card>
         );
