@@ -1,12 +1,12 @@
 /* Sona Care: Care team and Messages. 17px body, 48px targets, red only for "call 999 now". */
 
 /* Messages: one card holding the header strip, the thread and the docked composer. */
-.cm-card { padding: 0; gap: 0; overflow: hidden; font-size: 17px; line-height: 1.5; }
+.card.cm-card { padding: 0; gap: 0; overflow: hidden; font-size: 17px; line-height: 1.5; }
 .cm-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--pad-card); border-bottom: 1px solid var(--hairline); }
 .cm-head-title { margin: 0; font-size: 19px; font-weight: 600; }
 .cm-head-sub { margin: 0; color: var(--muted); font-size: 15px; }
 
-.cm-thread { list-style: none; margin: 0; display: flex; flex-direction: column; gap: var(--space-4); min-height: 240px; max-height: max(240px, calc(100vh - 560px)); overflow-y: auto; padding: var(--space-5) var(--pad-card); }
+.cm-thread { list-style: none; margin: 0; display: flex; flex-direction: column; gap: var(--space-4); min-height: 240px; max-height: max(240px, calc(100vh - 520px)); overflow-y: auto; padding: var(--space-5) var(--pad-card); }
 .cm-thread:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
 .cm-item { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); }
 .cm-item.cm-mine { align-items: flex-end; }
