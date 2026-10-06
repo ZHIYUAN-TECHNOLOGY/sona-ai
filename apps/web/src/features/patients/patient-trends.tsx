@@ -1,43 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 
 import { LineChart } from "@/components/charts";
-import { Card, Chip } from "@/components/primitives";
+import { Card, ListCard, ListRow } from "@/components/primitives";
 import { FlagChip, valueOf, when } from "@/features/results/result-rail";
-import { byTriage, isFlagged } from "@/features/results/triage";
+import { byTriage } from "@/features/results/triage";
 import { orpc } from "@/lib/orpc";
 
-import { allSeries, chartPoints, direction, latestOf, type Series, topSeries } from "./trends";
+import { allSeries, chartPoints, latestOf, type Series } from "./trends";
 
-// Both trend blocks read the same query; TanStack Query sends it once. Only mounted for clinical-read roles.
-const useTrends = (patientId: string) => useQuery({ ...orpc.patients.trends.queryOptions({ input: { patientId } }), select: allSeries });
+// The stat row, the main chart and the lab charts read the same query; TanStack Query sends it once. Only mounted for clinical-read roles.
+export const useTrends = (patientId: string, enabled = true) => useQuery({ ...orpc.patients.trends.queryOptions({ input: { patientId } }), select: allSeries, enabled });
 
 const valueWithUnit = (s: Series) => `${latestOf(s).value}${s.unit ? ` ${s.unit}` : ""}`;
-
-/** Up to three cards for the series that matter most. Renders nothing while loading or when there is nothing to chart. */
-export function TrendCards({ patientId }: { patientId: string }) {
-  const { data } = useTrends(patientId);
-  const top = data ? topSeries(data) : [];
-  if (!top.length) return null;
-  return (
-    <section className="pt-trends" aria-label="Trends">
-      {top.map((s) => {
-        const flag = s.lab ? latestOf(s).flag : null;
-        return (
-          <Card key={`${s.lab}${s.name}${s.unit}`} title={s.name}>
-            <p className="pt-trend-value">
-              <strong>{valueWithUnit(s)}</strong> {isFlagged(flag) ? <Chip tone={flag?.startsWith("critical") ? "urgent" : "soon"}>{flag}</Chip> : null}
-            </p>
-            <p className="pt-muted">
-              {direction(s)} · {when(latestOf(s).at)}
-            </p>
-            {s.points.length > 1 ? <LineChart points={chartPoints(s)} label={`${s.name} over the last 12 months`} unit={s.unit ?? undefined} height={120} /> : null}
-          </Card>
-        );
-      })}
-    </section>
-  );
-}
 
 /** One chart per lab test with at least two values; a single value is shown as a value. */
 export function LabCharts({ patientId }: { patientId: string }) {
@@ -71,37 +45,29 @@ export function LabCharts({ patientId }: { patientId: string }) {
   );
 }
 
-const SHOWN = 5;
-
-/** The patient's own results, most urgent first, as a way into the results page. */
-export function PatientResults({ patientId }: { patientId: string }) {
+/** The patient's own results, most urgent first, as a way into the results page. `limit` keeps the overview column short. */
+export function PatientResults({ patientId, limit }: { patientId: string; limit?: number }) {
   const { data, isPending, error } = useQuery(orpc.results.list.queryOptions({ input: { patientId } }));
   const rows = data ? [...data].sort(byTriage) : [];
   return (
-    <Card title="Results">
+    <ListCard title="Results" action={{ to: "/pro/results", label: rows.length > (limit ?? rows.length) ? `All ${rows.length} results` : "Open results" }}>
       {isPending ? (
-        <p className="pt-muted">Loading…</p>
+        <p className="pt-muted po-note">Loading…</p>
       ) : error ? (
-        <p className="pt-muted">Could not be loaded: {error.message}</p>
+        <p className="pt-muted po-note">Could not be loaded: {error.message}</p>
       ) : !rows.length ? (
-        <p className="pt-muted">No results on record.</p>
+        <p className="pt-muted po-note">No results on record.</p>
       ) : (
-        <>
-          <ul className="pt-list">
-            {rows.slice(0, SHOWN).map((r) => (
-              <li key={r.id}>
-                {r.test}: {valueOf(r)} <FlagChip row={r} />
-                <small>
-                  {when(r.receivedAt)} · {r.acknowledgedAt ? "Acknowledged" : "Waiting for a doctor"}
-                </small>
-              </li>
-            ))}
-          </ul>
-          <Link to="/pro/results" className="pt-more">
-            {rows.length > SHOWN ? `All ${rows.length} results` : "Open results"}
-          </Link>
-        </>
+        rows.slice(0, limit).map((r) => (
+          <ListRow
+            key={r.id}
+            icon="flask"
+            title={<>{r.test} <span className="pt-muted">{valueOf(r)}</span></>}
+            caption={`${when(r.receivedAt)} · ${r.acknowledgedAt ? "Acknowledged" : "Waiting for a doctor"}`}
+            trailing={<FlagChip row={r} />}
+          />
+        ))
       )}
-    </Card>
+    </ListCard>
   );
 }

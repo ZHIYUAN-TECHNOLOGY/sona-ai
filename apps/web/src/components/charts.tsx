@@ -40,7 +40,8 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
   }
   const y = scale(domain, [height - BOTTOM, TOP]);
   const last = points.length - 1;
-  const suffix = unit ? ` ${unit}` : "";
+  // "7%" and "7°C" read closed up; every other unit takes a space.
+  const suffix = unit ? (/^[%°]/.test(unit) ? unit : ` ${unit}`) : "";
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
     setActive(nearest(xs, ((e.clientX - box.left) / box.width) * W));
@@ -74,7 +75,7 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
         {goal ? (
           <g>
             <line className="chart-goal" x1={LEFT} x2={RIGHT} y1={y(goal.value)} y2={y(goal.value)} />
-            <text className="chart-goal-label" x={RIGHT} y={y(goal.value) - 6} textAnchor="end">{goal.label ?? `Goal ${goal.value}${suffix}`}</text>
+            <text className="chart-goal-label" x={LEFT + 6} y={y(goal.value) - 6}>{goal.label ?? `Goal ${goal.value}${suffix}`}</text>
           </g>
         ) : null}
         {children}
