@@ -1,0 +1,29 @@
+/* Sona Care, Medicines: 17 px body, 48 px targets, green taken, amber due soon, no red. */
+.med-lead, .med-photo, .med-doses, .med-list { font-size: max(17px, var(--text-md, 17px)); line-height: 1.5; }
+.med-lead { display: grid; gap: var(--space-2); padding: var(--space-5); margin-bottom: var(--space-4); border-radius: var(--radius-lg); border: 1px solid var(--line); border-left: 6px solid var(--blue); }
+.med-lead[data-tone="soon"] { border-left-color: var(--amber); background: var(--amber-wash); }
+.med-lead h2 { margin: 0; font-size: 28px; line-height: 1.2; }
+.med-lead p { margin: 0; }
+.med-lead .btn { justify-self: start; min-height: 56px; padding-inline: var(--space-5); font-size: 19px; }
+.med-eyebrow, .med-muted { color: var(--muted); }
+.med-note { color: var(--ink); background: var(--amber-wash); padding: var(--space-3); border-radius: var(--radius-md); }
+
+.med-part h3 { margin: var(--space-3) 0 var(--space-1); font-size: 17px; color: var(--muted); }
+.med-doses, .med-list { list-style: none; margin: 0; padding: 0; }
+.med-doses li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); min-height: var(--tap, 48px); padding: var(--space-2) 0; border-top: 1px solid var(--line); }
+.med-time { min-width: 5.5em; font-variant-numeric: tabular-nums; font-weight: 600; }
+.med-what { flex: 1 1 12em; display: grid; }
+.med-doses .btn, .med-actions .btn, .med-photo .btn { min-height: 48px; font-size: 17px; }
+
+.med-list li { padding: var(--space-3) 0; border-top: 1px solid var(--line); }
+.med-list li:first-child, .med-part:first-child .med-doses li:first-child { border-top: 0; }
+.med-list p { margin: 0 0 var(--space-1); }
+
+.med-photo { display: grid; gap: var(--space-3); }
+.med-photo p { margin: 0; }
+.med-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.med-file { display: inline-flex; align-items: center; cursor: pointer; position: relative; }
+.med-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.med-file:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+.med-video { width: 100%; max-width: 480px; border-radius: var(--radius-md); background: var(--ink); }
+.med-input { width: 100%; min-height: 48px; padding: 0 var(--space-3); font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); }
