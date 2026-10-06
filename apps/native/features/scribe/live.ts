@@ -131,6 +131,16 @@ export function voicesOf(transcript: TranscriptLine[]): Person[] {
   }
   return [...people.values()];
 }
+/**
+ * Where the doctor stands, in one line: the voices heard so far while recording; once stopped, the people and how many
+ * still need a name (`open`, the part the screen marks). Nothing until a voice was heard.
+ */
+export function heardLine(people: Person[], stopped: boolean): { count: string; names?: string; open: number } | undefined {
+  const n = people.length, open = people.filter(p => !p.named).length;
+  if (!n) return undefined;
+  if (!stopped) return { count: `${n} ${n === 1 ? "voice" : "voices"} so far`, open: 0 };
+  return { count: `${n} ${n === 1 ? "person" : "people"}`, names: open ? `${open} ${open === 1 ? "needs" : "need"} a name` : "all named", open };
+}
 /** The labels already settled, by voice: later parts and a new draft keep them rather than go back to numbers. */
 export const namesOf = (transcript: TranscriptLine[]) => new Map(voicesOf(transcript).filter(p => p.named).map(p => [p.voice, p.label]));
 /** The doctor says who a voice is (a role or a name): every line of that voice takes it. */

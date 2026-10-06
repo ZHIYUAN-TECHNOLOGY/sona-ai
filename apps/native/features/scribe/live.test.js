@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { newEncounter } from "@/features/encounter/fixtures";
-import { captionLine, captionLines, draftFrom, draftLines, draftOrigin, failedLine, HARD_MS, isCaption, isQuiet, listen, mergeVoice, namesOf, nameVoice, placeCaption, ROLES, roleLabel, roleOf, scribeStore, sendPart, speechOff, turnLines, UNSURE, voicesOf, withCapturedDraft, withDraft, withPart } from "./live";
+import { captionLine, captionLines, draftFrom, draftLines, draftOrigin, failedLine, HARD_MS, heardLine,isCaption, isQuiet, listen, mergeVoice, namesOf, nameVoice, placeCaption, ROLES, roleLabel, roleOf, scribeStore, sendPart, speechOff, turnLines, UNSURE, voicesOf, withCapturedDraft, withDraft, withPart } from "./live";
 
 /**
  * Plays a recording through `listen` as the recorder does, ten level readings a second: speech around -30 dBFS, and
@@ -219,4 +219,13 @@ test("the judge build drafts only from a recording: with nothing recorded there 
   expect(draftFrom(true, true, 3)).toBe("recording");
   // Outside the judge build nothing changes: connected with a transcript asks the server, anything else drafts on the phone.
   expect([draftFrom(false, true, 3), draftFrom(false, true, 0), draftFrom(false, false, 0), draftFrom(false, false, 3)]).toEqual(["recording", "demo", "demo", "demo"]);
+});
+
+test("the insight line counts voices while recording, then people and the names still open", () => {
+  const person = (voice, named) => ({ voice, label: named ? "Patient" : `Voice ${voice}`, named, lines: 1, quote: "" });
+  expect(heardLine([], true)).toBeUndefined();
+  expect([heardLine([person(1, false)], false), heardLine([person(1, false), person(2, true)], false)].map(l => l.count)).toEqual(["1 voice so far", "2 voices so far"]);
+  expect(heardLine([person(1, false)], true)).toEqual({ count: "1 person", names: "1 needs a name", open: 1 });
+  expect(heardLine([person(1, false), person(2, false), person(3, true)], true)).toEqual({ count: "3 people", names: "2 need a name", open: 2 });
+  expect(heardLine([person(1, true), person(2, true)], true)).toEqual({ count: "2 people", names: "all named", open: 0 });
 });

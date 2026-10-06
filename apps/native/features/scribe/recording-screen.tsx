@@ -14,7 +14,7 @@ import { sameShallow } from "@/features/live/keep-same";
 import type { TranscriptLine } from "@/features/encounter/types";
 import { JUDGE, useLive } from "@/features/live";
 import { wantsLive } from "@/features/live/judge";
-import { failedLine, isCaption, partRange, UNSURE, type Part } from "./live";
+import { failedLine, heardLine, isCaption, mergeVoice, nameVoice, partRange, roleOf, ROLES, UNSURE, voiceLabel, voicesOf, type Part } from "./live";
 import { RecordingSeconds, applyCaptured, applyDraft, askDraft, retryParts, useScribe } from "./live-recorder";
 import { LiveWaveform } from "./live-waveform";
 import { buildDraft, elapsedLabel, scriptFor } from "./model";
@@ -78,7 +78,9 @@ function TranscriptSegment({ line, interpretation, tone, last, fresh, live = fal
     const interpretationConfirmed = interpretation && english.trim().length > 0;
     if (changed || interpretationConfirmed) {
       haptic("done");
-      updateEncounter(current => ({ ...current, transcriptDraft: undefined, noteReviewed: false, transcript: current.transcript.map(value => value.id === line.id ? { ...value, speaker: speaker.trim(), original: original.trim(), english: live ? original.trim() : english.trim(), englishReviewed: live || interpretationConfirmed || (original.trim() === line.original && value.englishReviewed), corrected: true } : value) }), true);
+      // Live: a line whose speaker changed moves to the person who has that label (or to nobody), so one line can be moved without renaming the whole voice.
+      const moved = live && speaker.trim() !== line.speaker;
+      updateEncounter(current => ({ ...current, transcriptDraft: undefined, noteReviewed: false, transcript: current.transcript.map(value => value.id === line.id ? { ...value, ...moved ? { voice: voicesOf(current.transcript).find(p => p.label === speaker.trim().replace(UNSURE, ""))?.voice } : {}, speaker: speaker.trim(), original: original.trim(), english: live ? original.trim() : english.trim(), englishReviewed: live || interpretationConfirmed || (original.trim() === line.original && value.englishReviewed), corrected: true } : value) }), true);
     } else cancelEdit();
     Keyboard.dismiss();
   };
@@ -91,7 +93,7 @@ function TranscriptSegment({ line, interpretation, tone, last, fresh, live = fal
       {!(live && isCaption(line)) && <>
         <Label>Speaker label</Label>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {["Clinician", "Patient"].map(label => <Chip key={label} label={label} selected={speaker.trim() === label} onPress={() => updateDraft({ speaker: label })} accessibilityLabel={`Speaker is ${label}`} />)}
+          {(live ? [...new Set([...ROLES, ...voicesOf(encounter?.transcript ?? []).map(p => p.label)])] : ["Clinician", "Patient"]).map(label => <Chip key={label} label={label} selected={speaker.trim() === label} onPress={() => updateDraft({ speaker: label })} accessibilityLabel={`Speaker is ${label}`} />)}
         </View>
         <TextInput accessibilityLabel="Speaker label" value={speaker} onChangeText={value => updateDraft({ speaker: value })} style={fieldStyle} />
       </>}
@@ -176,7 +178,7 @@ function PartRow({ part, last, reduced }: { part: Part; last: boolean; reduced: 
   </View>;
 }
 
-/** Colour by role: the clinician blue, the patient ink, an unsure speaker amber (check it); a caption's time is muted. */
+/** Colour by meaning, never one hue a person: an unsure speaker amber (check it), the clinician blue, a caption's time muted; everyone else, a numbered voice included, ink. */
 const liveTone = (line: TranscriptLine) => isCaption(line) ? palette.muted : line.speaker.endsWith(UNSURE) ? palette.amber : line.speaker === "Clinician" ? palette.blue : palette.ink;
 
 /**
@@ -198,6 +200,13 @@ function LiveRecording() {
   const status = liveStatus(encounter?.recording ?? "idle", { drafting, mic: scribe.mic, pending: pending.length, failed: failed.length });
   const announced = useRef(status.label);
   useEffect(() => { if (announced.current !== status.label) { announced.current = status.label; AccessibilityInfo.announceForAccessibility(status.label); } }, [status.label]);
+  // Who was heard, as one line; it is announced when it changes, like the status.
+  const people = voicesOf(encounter?.transcript ?? []);
+  const heard = heardLine(people, encounter?.recording === "stopped");
+  const insight = heard ? [heard.count, heard.names].filter(Boolean).join(", ") : "";
+  const insightSaid = useRef(insight);
+  useEffect(() => { if (insight && insightSaid.current !== insight) AccessibilityInfo.announceForAccessibility(insight); insightSaid.current = insight; }, [insight]);
+  const [name, setName] = useState("");
   if (!patient || !encounter) return <NoVisit view="recording" what="a consultation" />;
 
   const layout = reducedMotion ? undefined : LAYOUT;
@@ -218,7 +227,13 @@ function LiveRecording() {
     setDrafting(false);
     openPage(navigation, "/note");
   };
+  // Naming is optional and one person at a time: the first voice without a name, once the room is quiet enough to look.
+  const asking = (stopped || paused) && !drafting && !encounter.transcriptDraft ? people.find(p => !p.named) : undefined;
+  const guess = asking && roleOf(asking.label) ? asking.label : undefined;
+  const known = people.filter(p => p.named);
+  const settle = (next: (transcript: TranscriptLine[]) => TranscriptLine[]) => { haptic("done"); setName(""); updateEncounter(current => ({ ...current, transcript: next(current.transcript), noteReviewed: false })); };
   const subtitle = !lines.length && !waiting.length ? (stopped ? "No speech captured, so there is nothing to draft from." : "Captions appear here about every 30 seconds while you record.")
+    : people.length && !encounter.note ? "Each voice is numbered as Sona hears it. Name them after you stop, or Sona reads who is who when it drafts the note."
     : lines.some(line => !isCaption(line)) ? "Who said what, as Sona read it; unsure speakers are amber. Tap a turn to correct it."
     : "Captions as heard, part by part. Tap one to correct a word; Sona marks who said what when it drafts the note.";
 
@@ -234,11 +249,15 @@ function LiveRecording() {
     </View>
 
     <Surface feature layout={layout} style={{ padding: 22, gap: 18 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 9 }}>
-        <Dot color={status.tone} pulse={active && !reducedMotion} />
-        <Animated.View key={status.label} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ flex: 1 }}>
-          <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{status.label}</Text>
-        </Animated.View>
+      <View style={{ gap: 6 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 9 }}>
+          <Dot color={status.tone} pulse={active && !reducedMotion} />
+          <Animated.View key={status.label} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ flex: 1 }}>
+            <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{status.label}</Text>
+          </Animated.View>
+        </View>
+        {/* Where the doctor stands: only the names still open take a colour. */}
+        {heard && <Text accessibilityLabel={insight} style={{ ...type.subhead, color: palette.ink }}>{heard.count}{heard.names ? <> · <Text style={heard.open ? { color: palette.amber } : undefined}>{heard.names}</Text></> : null}</Text>}
       </View>
       <View style={{ gap: 6 }}>
         {/* The clock ticks in its own store while recording, so only this text re-renders each second. */}
@@ -256,6 +275,23 @@ function LiveRecording() {
       {failed.length > 0 && <StateLine warning>{[failedLine(failed), !starting && failed[0]!.error].filter(Boolean).join(" ")}</StateLine>}
       {failed.length > 0 && <Action label={failed.length === 1 ? "Retry this part" : `Retry ${failed.length} parts`} secondary icon="arrow.clockwise" onPress={() => { haptic("tap"); retryParts(patient.id, updateEncounter); }} />}
       {paused && <StateLine>Paused. Leaving the app pauses too; what was said so far is kept.</StateLine>}
+
+      {/* One tap names a voice; the audio is gone by now, so the doctor knows the voice by the longest thing it said. */}
+      {asking && <Expand key="naming" style={{ gap: 12 }}>
+        <Label>{`Who is ${voiceLabel(asking.voice)}?`}</Label>
+        {guess && <Text style={{ ...type.footnote, color: palette.muted }}>Sona's guess: {guess}</Text>}
+        <Text selectable style={{ ...type.callout, lineHeight: 22, color: palette.muted }}>“{asking.quote}”</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {ROLES.map(label => <Chip key={label} label={label} selected={label === guess} onPress={() => settle(t => nameVoice(t, asking.voice, label))} accessibilityLabel={`${voiceLabel(asking.voice)} is ${label === "Other" ? "someone else" : label === "Family" ? "family" : `the ${label.toLowerCase()}`}`} />)}
+        </View>
+        {known.length > 0 && <>
+          <Label>Same person as</Label>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {known.map(person => <Chip key={person.voice} label={person.label} onPress={() => settle(t => mergeVoice(t, asking.voice, person.voice))} accessibilityLabel={`${voiceLabel(asking.voice)} is the same person as ${person.label}`} />)}
+          </View>
+        </>}
+        <TextInput accessibilityLabel={`Type a name for ${voiceLabel(asking.voice)}`} placeholder="Or type a name" placeholderTextColor={palette.muted} value={name} onChangeText={setName} returnKeyType="done" onSubmitEditing={() => { if (name.trim()) settle(t => nameVoice(t, asking.voice, name)); }} style={fieldStyle} />
+      </Expand>}
 
       {idle && <Action label="Start recording" icon="mic.fill" onPress={record} />}
       {(active || paused) && <View style={{ flexDirection: "row", gap: 10 }}>
