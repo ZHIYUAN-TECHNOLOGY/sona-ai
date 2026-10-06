@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { Avatar } from "@/components/avatar";
 import { EmptyState } from "@/components/page";
@@ -56,6 +56,11 @@ const timeOf = (at: Date | string) => new Date(at).toLocaleTimeString(undefined,
 
 export function Thread({ patientId, canResolve }: { patientId: string; canResolve: boolean }) {
   const thread = useQuery(orpc.messages.thread.queryOptions({ input: { patientId } }));
+  const queryClient = useQueryClient();
+  // Opening a thread marks it seen on the server, so the inbox's unread counts are re-read once it has loaded.
+  useEffect(() => {
+    if (thread.dataUpdatedAt) void queryClient.invalidateQueries({ queryKey: orpc.messages.inbox.key() });
+  }, [thread.dataUpdatedAt, queryClient]);
   if (thread.isPending) return <section className="msg-thread"><EmptyState>Loading messages…</EmptyState></section>;
   if (thread.error) return <section className="msg-thread"><EmptyState>Could not open this thread: {thread.error.message}</EmptyState></section>;
   const { patient, messages } = thread.data;
