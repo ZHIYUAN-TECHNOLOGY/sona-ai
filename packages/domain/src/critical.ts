@@ -23,6 +23,15 @@ export function criticalOf(r: { test: string; value: string; unit?: string | nul
   return undefined;
 }
 
+/** Why the rule calls a result critical, naming the limit it crossed ("Potassium 6.8 mmol/L is above the call-now limit of 6 mmol/L"); undefined when the rule does not. */
+export function criticalWhy(r: { test: string; value: string; unit?: string | null }): string | undefined {
+  const flag = criticalOf(r);
+  const limit = LIMITS.find(l => l.test.test(r.test.trim()) && l.unit === r.unit);
+  if (!flag || !limit) return undefined;
+  const [side, bound] = flag === "critical low" ? ["below", limit.low] : ["above", limit.high];
+  return `${r.test.trim()} ${r.value.trim()} ${limit.unit} is ${side} the call-now limit of ${bound} ${limit.unit}`;
+}
+
 /** Minutes and seconds from `from` to `to`, like a stopwatch ("3:07"). */
 export function elapsed(from: Date, to: Date) {
   const s = Math.max(0, Math.floor((to.getTime() - from.getTime()) / 1000));
