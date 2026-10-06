@@ -16,7 +16,7 @@ import { partsOf, wordEnd } from "./voices";
 // ponytail: a first sentence takes 5–7 s to make on the L4 (8–11 s before it was compiled); a faster GPU lifts this.
 export const FIRST_MS = 8000;
 // Bump when the voice model changes, so a part made by an older voice is never played for the new one.
-const VERSION = "sona-voxcpm2-malaysian-r4";
+const VERSION = "sona-voxcpm2-malaysian-r4-anchored";
 
 type Said = { uri?: string; waking?: number; slow?: true };
 export type SonaVoiceEvents = { start(): void; upto(index: number): void; done(): void; fallback(from: number, waking?: number): void };
