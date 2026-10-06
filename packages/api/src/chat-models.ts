@@ -1,3 +1,4 @@
+import { languageOf } from "@sona-ai/domain/language";
 import { readReply } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
 import { triageByRules } from "@sona-ai/domain/messages";
@@ -87,7 +88,12 @@ export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Mo
     async answerFromPlan(input) {
       try {
         // Her record first and the leaflets after it, each under its own heading, as a call's chat has them (voice-agent/answer.ts).
-        const read = await chat(`${ANSWER}\n\nPatient's record:\n${input.plan}\n\n${leafletsText(input.passages)}`, `Patient's question, written in ${LANGUAGE_NAME[input.language]}. Answer in ${LANGUAGE_NAME[input.language]}, whatever language her record or the leaflets are in: ${input.question}`);
+        const system = `${ANSWER}\n\nPatient's record:\n${input.plan}\n\n${leafletsText(input.passages)}`, name = LANGUAGE_NAME[input.language];
+        const ask = (insist: string) => chat(system, `Patient's question, written in ${name}. Answer in ${name}, whatever language her record or the leaflets are in${insist}: ${input.question}`);
+        let read = await ask("");
+        // Her record's leaflet in another language can still pull the answer into it (6 Oct: English question, Malay answer
+        // copied from her Malay leaflet): asked once more, insisting, when the answer is not in the question's language.
+        if (typeof read?.answer === "string" && languageOf(read.answer) !== input.language) read = await ask(`. Your last answer was not in ${name}: write every word in ${name}, translating anything you take from her record`) ?? read;
         if (read && typeof read.answer === "string" && unnumbered(read.answer).trim()) {
           return {
             answer: unnumbered(read.answer).trim().slice(0, 800), grounded: read.grounded === true, urgent: read.urgent === true,
