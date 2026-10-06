@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { PageHeader } from "@/components/page";
-import { Listen } from "@/features/care-ask/listen";
+import { Call } from "@/features/care-ask/call";
+import { Listen }from "@/features/care-ask/listen";
 import { client } from "@/lib/orpc";
 import { useSonaAsk } from "@/lib/sona";
 import "@/styles/pages/care-ask.css";
@@ -32,8 +33,11 @@ async function answer(question: string): Promise<ReactNode> {
 
 function Page() {
   const ask = useSonaAsk(answer);
+  // The Worker names the agent from the session; the id only keeps the path in the phone's shape.
+  const { me } = Route.useRouteContext() as unknown as { me?: { userId?: string; id?: string } };
   return (
     <>
+      <Call instance={me?.userId ?? me?.id ?? "me"} />
       <PageHeader title="Ask Sona" lead="Ask anything. Type or speak in the bar below, or tap a question." />
       <ul className="ask-chips" aria-label="Suggested questions">
         {SUGGESTED.map(q => <li key={q}><button type="button" className="ask-chip" onClick={() => ask(q)}>{q}</button></li>)}
