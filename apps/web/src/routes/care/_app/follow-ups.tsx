@@ -4,9 +4,9 @@ import { useState } from "react";
 
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Chip, ListRow, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, ListRow, Tabs } from "@/components/primitives";
 import { Booking } from "@/features/care-follow-ups/booking";
-import { browserLang, dayKey, dayWords, whenWords } from "@/features/care-follow-ups/dates";
+import { browserLang, dayKey, dayWords, timeWords, whenWords } from "@/features/care-follow-ups/dates";
 import { downloadIcs } from "@/features/care-follow-ups/ics";
 import { MonthCalendar, type Mark } from "@/features/care-follow-ups/month-calendar";
 import { VisitPrep } from "@/features/care-readings/visit-prep";
@@ -17,6 +17,8 @@ export const Route = createFileRoute("/care/_app/follow-ups")({ component: Page 
 
 const lang = browserLang();
 const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+// Scrolls to the booking card and puts focus on its first choice.
+const toBook = () => { scrollTo("book")(); document.querySelector<HTMLElement>("#book button")?.focus({ preventScroll: true }); };
 const inWords = (n: number) => (n === 0 ? "Today" : n === 1 ? "Tomorrow" : `In ${n} days`);
 
 function Page() {
@@ -25,6 +27,8 @@ function Page() {
   const requests = useQuery(orpc.care.bookings.list.queryOptions());
   const clock = useQuery(orpc.care.clock.queryOptions());
   const prep = useQuery(orpc.care.visitPrep.get.queryOptions());
+  // Same options as the booking card, so the request is shared.
+  const doctors = useQuery(orpc.care.doctors.list.queryOptions({ input: {} }));
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
   // "Now" is the browser's time plus the hospital's demo clock offset, as in the phone app.
   const now = new Date(Date.now() + (clock.data?.offsetMs ?? 0));
@@ -52,6 +56,14 @@ function Page() {
   for (const v of visits.data) mark(v.date, { label: v.title, tone: v.inDays < 0 ? "neutral" : "done" });
   for (const r of waiting) mark(r.startsAt, { label: `Waiting: ${r.doctorName}`, tone: "soon" });
 
+  const openTimes = new Map<string, string[]>();
+  for (const d of doctors.data ?? []) for (const s of d.nextSlots) {
+    if (s.times[0]) openTimes.set(dayKey(s.times[0]), [...(openTimes.get(dayKey(s.times[0])) ?? []), `${d.name}: ${s.times.map(t => timeWords(t, lang)).join(", ")}`]);
+  }
+  const lead = next ? `Your next visit is ${next.inDays === 0 ? "today" : dayWords(next.date, lang)} at ${timeWords(next.date, lang)}.`
+    : waiting[0] ? `${waiting.length === 1 ? "1 request is" : `${waiting.length} requests are`} waiting for the hospital. Nothing is booked yet.`
+    : "No visit booked. Book one below.";
+
   const addToCalendar = (v: (typeof upcoming)[number]) => {
     const d = booked.get(v.id);
     downloadIcs({ id: v.id, title: v.title, start: v.date, location: d?.room, description: v.why }, new Date());
@@ -64,10 +76,10 @@ function Page() {
 
   return (
     <div className="fu">
-      <PageHeader title="Follow-ups" lead="Your visits, and a way to book one."
-        actions={<Button variant="primary" icon="plus" onClick={scrollTo("book")}>Book a visit</Button>} />
+      <PageHeader title="Follow-ups" lead={lead}
+        actions={<Button variant="primary" icon="plus" onClick={toBook}>Book a visit</Button>} />
 
-      <div className="fu-top">
+      <div className="fu-top" data-solo={next ? undefined : true}>
         <Card className="fu-hero">
           {next ? (
             <>
@@ -78,15 +90,14 @@ function Page() {
               <p>{next.why}</p>
               <div className="fu-side">
                 <Button variant="secondary" icon="calendar" onClick={() => addToCalendar(next)}>Add to calendar</Button>
-                {p ? <Button variant="secondary" onClick={toPrep}>Prepare</Button> : null}
               </div>
             </>
           ) : waiting[0] ? (
             <>
-              <Chip tone="soon">Waiting for the care team</Chip>
+              <Chip tone="soon">Waiting for the hospital</Chip>
               <h2 className="fu-hero-title">{waiting[0].doctorName}</h2>
               <p className="fu-muted">{whenWords(waiting[0].startsAt, lang)} · {waiting[0].room}</p>
-              <p>Nothing is booked until the care team confirms.</p>
+              <p>Nothing is booked until the hospital confirms.</p>
             </>
           ) : (
             <>
@@ -95,14 +106,23 @@ function Page() {
             </>
           )}
         </Card>
-        <StatRow>
-          <StatCard title="Visits coming up" value={upcoming.length} caption={waiting.length ? `${waiting.length} more waiting for the care team` : "Booked with the hospital"} />
-          {past[0] ? <StatCard title="Last visit" value={dayWords(past[0].date, lang)} caption={past[0].title} /> : null}
-        </StatRow>
+        {p ? (
+          <InsightCard label="Before your visit" title="Get ready for your visit" meta={dayWords(new Date(p.appointment!.startsAt), lang)}
+            lead={left ? `${left} ${left === 1 ? "step" : "steps"} left before your visit.` : "You are ready. Your doctor can read this before you arrive."}
+            evidence={[
+              { icon: "check", text: asked ? `${asked} of 3 questions saved for your doctor` : "No questions saved yet" },
+              { icon: "check", text: p.shareReadings ? "Your last 7 days of readings will be shared" : "Your readings will not be shared" },
+            ]}
+            next={{ label: asked ? (p.shareReadings ? "Review my prep" : "Share this week's readings") : "Write your questions", step: asked ? "Check what your doctor will see." : "Ask up to three questions.", onAct: toPrep }} />
+        ) : next ? (
+          <InsightCard label="Before your visit" title="Bring a fresh reading" meta={dayWords(next.date, lang)}
+            lead="A reading from home shows your care team how you are doing now."
+            next={{ label: "Add a reading before you go", step: "It takes a minute.", to: "/care/readings" }} />
+        ) : null}
       </div>
 
-      <div className="fu-cols">
-        <MonthCalendar today={dayKey(now)} marks={marks} lang={lang} />
+      <div className="fu-cols" data-cal>
+        <MonthCalendar today={dayKey(now)} marks={marks} open={openTimes} lang={lang} />
 
         <Card className="fu-visits">
           <Tabs label="Visits" value={tab} onChange={setTab}
@@ -119,7 +139,6 @@ function Page() {
                       trailing={
                         <span className="fu-row-end">
                           <Chip tone={d ? "done" : "neutral"}>{d ? "Confirmed" : inWords(v.inDays)}</Chip>
-                          {p?.appointment?.id === v.id ? <Button onClick={toPrep}>Prepare</Button> : null}
                         </span>
                       } />
                   );
@@ -131,7 +150,7 @@ function Page() {
                       <span>{whenWords(r.startsAt, lang)} · {r.specialty} · {r.room}</span>
                       {r.note ? <span className="fu-muted">Care team: {r.note}</span> : null}
                       <span>
-                        {r.status === "requested" ? <Chip tone="soon">Waiting for the care team</Chip>
+                        {r.status === "requested" ? <Chip tone="soon">Waiting for the hospital</Chip>
                           : r.status === "declined" ? <Chip>Not booked. Choose another time.</Chip>
                           : <Chip>{r.status}</Chip>}
                       </span>
@@ -157,18 +176,6 @@ function Page() {
             )}
           </ul>
         </Card>
-
-        {p ? (
-          <InsightCard label="Visit prep" title="Get ready for your visit" meta={dayWords(new Date(p.appointment!.startsAt), lang)}
-            lead={left ? `${left} ${left === 1 ? "step" : "steps"} left before your visit.` : "You are ready. Your doctor can read this before you arrive."}
-            evidence={[
-              { icon: "check", text: asked ? `${asked} of 3 questions saved for your doctor` : "No questions saved yet" },
-              { icon: "check", text: p.shareReadings ? "Your last 7 days of readings will be shared" : "Your readings will not be shared" },
-            ]}
-            next={{ label: asked ? "Review my prep" : "Write my questions", step: asked ? "Check what your doctor will see." : "Ask up to three questions.", onAct: toPrep }} />
-        ) : (
-          <InsightCard label="Visit prep" title="Nothing to prepare yet" lead="When the care team confirms a visit with a doctor, you can write questions for them here." />
-        )}
       </div>
 
       <div className="fu-cols" data-two>
