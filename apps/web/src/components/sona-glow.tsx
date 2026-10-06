@@ -6,7 +6,7 @@ import { useSonaThinking } from "@/lib/sona";
 export type GlowMode = "rest" | "awake" | "listening" | "thinking";
 
 // The phone apps' voice glow (apps/care/lib/voice-glow.tsx), the same shader in GLSL, drawn inside the bar: dots on a
-// 3px grid, ordered (Bayer 8x8) dithering, rising from the bar's bottom edge. Four soft lobes wave along it and bloom
+// 2px grid, ordered (Bayer 8x8) dithering, rising from the bar's bottom edge. Four soft lobes wave along it and bloom
 // with `level`; while Sona thinks they gather into one beam that sweeps side to side. `on` fades it in and out.
 const FRAGMENT = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -44,7 +44,7 @@ void main() {
   float b = (x - (0.5 + 0.34 * sin(t * 1.5))) / 0.11;
   float h = (mix(lobes(x) * (0.2 + 0.8 * level), exp(-b * b), think) + 0.08) * on;
   float I = clamp(1.0 - y / max(h, 0.001), 0.0, 1.0);
-  I *= I * 0.85;
+  I = pow(I, 1.3);
   if (I <= bayer8(idx)) { gl_FragColor = vec4(0.0); return; }
   vec3 col = I < 0.5 ? mix(hot, mid, I * 2.0) : mix(mid, deep, I * 2.0 - 1.0);
   float a = (1.0 - smoothstep(pitch * 0.32, pitch * 0.42, length(q - cell))) * (0.55 + 0.45 * I) * on;
@@ -64,7 +64,7 @@ const TARGET: Record<GlowMode, { on: number; level: number; think: number }> = {
   listening: { on: 1, level: 0.65, think: 0 },
   thinking: { on: 1, level: 0.65, think: 1 },
 };
-const PITCH = 3;
+const PITCH = 2;
 const EASE = 4; // per second: a mode change settles in about a second
 
 function compile(gl: WebGLRenderingContext) {

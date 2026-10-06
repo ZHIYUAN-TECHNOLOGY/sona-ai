@@ -30,7 +30,7 @@
 .btn-spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.icon-btn { display: inline-grid; place-items: center; flex: none; width: var(--field-h); height: var(--field-h); padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease), transform var(--quick) var(--ease); }
+.icon-btn { display: inline-grid; place-items: center; flex: none; width: var(--field-h); height: var(--field-h); padding: 0; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); cursor: pointer; transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease), transform var(--quick) var(--ease); }
 .icon-btn[data-size="sm"] { width: 32px; height: 32px; }
 .icon-btn:hover { background: var(--fill-hover); border-color: var(--ink); }
 .icon-btn:active { transform: scale(0.96); }
@@ -163,3 +163,16 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 .select:hover { border-color: var(--line); }
 .select:focus-visible { outline: 0; background: var(--surface); border-color: var(--blue); }
 .select:disabled { cursor: default; opacity: 0.5; }
+
+/* Sona Pro surfaces are content glass over the canvas's colour fields (tokens.css: --glass-surface, --shadow-card). */
+.pro :is(.card, .stat, .patient-strip, .empty, .sona-turn, .msg-inbox, .msg-thread, .table-wrap) { background: var(--glass-surface); }
+.pro .card > .table-wrap, .pro .card .empty { background: none; }
+.pro .stat[data-feature] { background: linear-gradient(160deg, var(--blue-wash), transparent 85%), var(--glass-surface); }
+/* Dithering is the accent (about a tenth of the screen): a halftone glint in the top-right corner of the feature
+   stat and of Sona's panel, and a dotted glint at the top-left of the primary action. Nowhere else. */
+.stat[data-feature]::after, .pro .insight::after { content: ""; display: block; position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none; background: var(--dots); -webkit-mask-image: radial-gradient(70% 110% at 100% 0%, #000, transparent 70%); mask-image: radial-gradient(70% 110% at 100% 0%, #000, transparent 70%); }
+.stat[data-feature]::after { color: var(--blue); opacity: 0.28; }
+.pro .insight::after { color: var(--on-ai); opacity: 0.3; }
+.stat[data-feature] > *, .pro .insight > * { position: relative; z-index: 1; }
+.stat[data-feature] > .stat-select { position: absolute; }
+.pro .btn-primary { background: linear-gradient(125deg, transparent, var(--ink) 34%), radial-gradient(circle at center, rgb(255 255 255 / 0.34) 0.7px, transparent 1.1px) 0 0 / 4px 4px, var(--ink); }
