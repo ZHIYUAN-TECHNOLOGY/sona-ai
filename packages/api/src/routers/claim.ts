@@ -44,11 +44,12 @@ async function suggest(context: Context & { hospitalId: string }, encounterId: s
     const grounded = answer.codes.filter(c => sentences.some(s => s.id === c.evidence));
     const diagnoses = grounded.filter(c => c.kind !== "Procedure").map(c => c.code);
     const known = new Map(diagnoses.length ? (await db.select({ code: icd10Codes.code, label: icd10Codes.label }).from(icd10Codes).where(inArray(icd10Codes.code, diagnoses))).map(r => [r.code, r.label] as const) : []);
-    // Procedures are not ICD-10 codes, so the table does not judge them (undefined). A code the model wrote from its own
-    // knowledge comes without a label: the table names it, and one the table lacks is dropped (nothing vouches for it).
-    const codes = grounded.filter(c => c.label || known.has(c.code)).map(c => ({ ...c, label: c.label || known.get(c.code)!, inTable: c.kind === "Procedure" ? undefined : known.has(c.code) }));
+    // Procedures are not ICD-10 codes, so the table does not judge them (undefined). The table names any code it has; a code
+    // the model wrote from its own knowledge that the table lacks keeps the model's title and is flagged, never silently
+    // trusted; one with no title at all is dropped (nothing names it).
+    const codes = grounded.filter(c => c.label || known.has(c.code)).map(c => ({ ...c, label: known.get(c.code) ?? c.label, inTable: c.kind === "Procedure" ? undefined : known.has(c.code) }));
     return { ...answer, codes, sentences };
-  }, answer => answer.codes.map(c => c.evidence));
+  }, answer => answer.codes.map(c => c.evidence), answer => answer.codes.length > 0);
 }
 
 /**

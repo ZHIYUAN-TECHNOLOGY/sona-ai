@@ -476,4 +476,7 @@ test("a condition the doctor names in other words than the WHO label is coded wh
   const hip = [{ id: "assessment", text: "Day 6 after a left hip hemiarthroplasty for a neck of femur fracture." }];
   const own = (async () => new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ codes: [{ code: "S72.00XA", kind: "Principal", evidence: "3", stated: "neck of femur fracture" }, { code: "B96.2", kind: "Secondary", evidence: "assessment", stated: "E. coli" }] }) } }] }))) as unknown as typeof fetch;
   expect((await basetenModels({ apiKey: "k", fetcher: own }).suggestCodes({ sentences: hip, candidates: [] })).codes).toEqual([{ code: "S72.0", label: "", kind: "Principal", evidence: "assessment" }]);
+  // With the WHO title the model gives, so a code the hospital's table lacks can still be shown, flagged by the route.
+  const titled = (async () => new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ codes: [{ code: "S72.0", kind: "Principal", evidence: "assessment", stated: "neck of femur fracture", label: "Fracture of neck of femur" }] }) } }] }))) as unknown as typeof fetch;
+  expect((await basetenModels({ apiKey: "k", fetcher: titled }).suggestCodes({ sentences: hip, candidates: [] })).codes[0]?.label).toBe("Fracture of neck of femur");
 });
