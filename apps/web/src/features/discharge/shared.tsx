@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
 import { EmptyState } from "@/components/page";
-import { Chip } from "@/components/primitives";
+import { Chip, ListCard, ListRow, Skeleton } from "@/components/primitives";
+import "@/styles/pages/discharge-plan.css";
 import { orpc } from "@/lib/orpc";
 
 /** The optional `?encounterId=` (or any one string key) every page here takes. */
@@ -25,8 +26,8 @@ export function Origin({ source }: { source?: string }) {
 
 /** Loading, refused and empty in plain words around a query's data. */
 export function Loaded<T>({ query, empty, children }: { query: { data?: T; error: unknown; isPending: boolean }; empty?: string; children: (data: T) => ReactNode }) {
-  if (query.isPending) return <EmptyState>Loading…</EmptyState>;
-  if (query.error) return <EmptyState>{say(query.error)}</EmptyState>;
+  if (query.isPending) return <div className="dp-skel" aria-busy="true" aria-label="Loading"><Skeleton width="40%" height={20} /><Skeleton /><Skeleton width="80%" /></div>;
+  if (query.error) return <EmptyState icon="alert" title="This did not load">{say(query.error)}</EmptyState>;
   if (query.data === undefined || (Array.isArray(query.data) && !query.data.length)) return <EmptyState>{empty ?? "Nothing here yet."}</EmptyState>;
   return <>{children(query.data)}</>;
 }
@@ -38,15 +39,12 @@ export function PatientPicker({ link, lead }: { link: (p: { id: string; encounte
     <Loaded query={patients} empty="No patients to show.">
       {rows => (
         <>
-          <p className="dc-lead">{lead}</p>
-          <ul className="dc-list">
+          <p className="dp-note dp-pick-lead">{lead}</p>
+          <ListCard title="Patients">
             {rows.map(p => (
-              <li key={p.encounterId}>
-                <span><strong>{p.name}</strong> <span className="dc-muted">{p.subtitle}</span></span>
-                {link(p)}
-              </li>
+              <ListRow key={p.encounterId} avatar={p.name} title={p.name} caption={p.subtitle} trailing={link(p)} />
             ))}
-          </ul>
+          </ListCard>
         </>
       )}
     </Loaded>
