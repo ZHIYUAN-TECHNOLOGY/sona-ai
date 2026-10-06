@@ -1,0 +1,11 @@
+.ask-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); list-style: none; padding: 0; margin: var(--space-4) 0; }
+.ask-chip { min-height: max(48px, var(--tap)); padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-pill, 999px); background: var(--surface); color: var(--ink); font: inherit; font-size: max(17px, 1em); cursor: pointer; }
+.ask-chip:hover, .ask-chip:focus-visible { border-color: var(--blue); background: var(--blue-wash); }
+.ask-listen { min-height: max(48px, var(--tap)); margin-top: var(--space-2); }
+
+.ask-call { display: grid; gap: var(--space-3); margin: var(--space-4) 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-lg, 16px); background: var(--surface); font-size: max(17px, 1em); }
+.ask-call .btn { min-height: max(48px, var(--tap)); justify-self: start; }
+.ask-call-state { font-weight: 600; color: var(--blue); margin: 0; }
+.ask-call-line { margin: 0; }
+.ask-call-line span { display: block; color: var(--muted); font-size: 0.85em; }
+.ask-call-note { color: var(--muted); margin: 0; }
