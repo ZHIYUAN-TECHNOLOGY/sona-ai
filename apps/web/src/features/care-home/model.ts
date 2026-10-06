@@ -49,3 +49,15 @@ export const partOfDay = (now: Date) => {
   const hour = (now.getUTCHours() + 8) % 24;
   return hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
 };
+
+/** The day in one sentence, from counts and the next visit's words ("today at 2:34 pm"). */
+export function dayLead(dosesLeft: number, checkInsWaiting: number, visitWords: string | undefined, atHome: boolean): string {
+  const todo = [
+    ...(dosesLeft ? [`${dosesLeft} ${dosesLeft === 1 ? "dose" : "doses"} left today`] : []),
+    ...(checkInsWaiting ? [checkInsWaiting === 1 ? "a check-in to answer" : `${checkInsWaiting} check-ins to answer`] : []),
+  ].join(" and ");
+  const visit = visitWords ? `Your next visit is ${visitWords}` : "";
+  if (todo) return `${todo[0]!.toUpperCase()}${todo.slice(1)}.${visit ? ` ${visit}.` : ""}`;
+  if (visit) return `${visit} and there is nothing else to do.`;
+  return atHome ? "Nothing needs you today." : "You are still in hospital. Nothing needs you today.";
+}
