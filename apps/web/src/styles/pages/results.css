@@ -1,0 +1,15 @@
+.results-filters { display: flex; gap: var(--space-2); margin: var(--space-4) 0 var(--space-3); }
+
+.results-patient { display: flex; align-items: center; gap: var(--space-2); }
+/* The selected row, marked from its patient cell so the shared table needs no extra prop. */
+tr:has(.results-patient[aria-current="true"]) { background: var(--blue-wash); }
+
+.results-value { font-variant-numeric: tabular-nums; }
+.results-value[data-critical] { color: var(--red); font-weight: 600; }
+
+.results-values { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0 0 var(--space-3); }
+.results-values dt { color: var(--muted); }
+.results-values dd { margin: 0; }
+
+.results-note { color: var(--muted); margin: var(--space-2) 0 0; }
+.results-error { color: var(--red); margin: var(--space-2) 0 0; }
