@@ -17,6 +17,13 @@ export const uploads = Cloudflare.R2.Bucket("uploads");
 
 export const server = Cloudflare.Worker("server", {
   main: "../../apps/server/src/index.ts",
+  // The web app (apps/web, built by the deploy script) on the same origin. Everything runs the Worker first
+  // except the app's own paths, which the asset layer serves: a file if one matches, otherwise index.html.
+  assets: {
+    directory: "../../apps/web/dist",
+    notFoundHandling: "single-page-application",
+    runWorkerFirst: ["/*", "!/pro", "!/pro/*", "!/care", "!/care/*", "!/assets/*"],
+  },
   compatibility: {
     flags: ["nodejs_compat"],
   },
