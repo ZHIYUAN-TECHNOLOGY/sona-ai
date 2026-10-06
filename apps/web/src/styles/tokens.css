@@ -62,7 +62,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
   --navy: #0E2A66; --ai-gradient: linear-gradient(160deg, #2E6BE0 0%, var(--blue) 35%, var(--navy) 100%); --on-ai: #FFFFFF; --on-ai-soft: #D5E5FC; --ai-row: rgb(255 255 255 / 0.1);
   --canvas-deep: #E8EAEE; --hairline: #E9EBEF; --fill-hover: rgb(29 31 35 / 0.05); --fill-selected: #EEF0F3; --fill-field: #F0F1F4;
   --shadow-card: 0 1px 2px rgb(29 31 35 / 0.03); --shadow-float: 0 2px 6px rgb(29 31 35 / 0.06), 0 16px 40px rgb(29 31 35 / 0.12);
-  --gap-card: 12px; --sona-bar-clearance: 128px; --pad-card: 28px;
+  --gap-card: 12px; --sona-bar-clearance: 176px; --pad-card: 28px;
   --pill-h: 48px; --field-h: 44px; --chip-h: 26px; --row-h: 64px;
   --avatar-sm: 28px; --avatar-md: 40px; --avatar-lg: 56px;
   --slow: 240ms; --press: 0.98; --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--blue);
