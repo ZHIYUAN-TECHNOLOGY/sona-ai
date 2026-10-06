@@ -20,7 +20,7 @@ import "./strings";
  */
 export type LivePhase = "off" | "ready" | "on" | "lost";
 
-export function useLiveVoice({ voice, voices, onFlood }: { voice?: SonaVoice; voices?: SonaVoice[]; onFlood: (flood: number) => void }) {
+export function useLiveVoice({ voice, voices, onFlood }: { voice?: SonaVoice; voices?: SonaVoice[]; onFlood: (flood: number, level: number) => void }) {
   const user = authClient.useSession().data?.user.id;
   const [talk, setTalk] = useState<Talk>(quiet);
   const [lost, setLost] = useState(false);
@@ -67,7 +67,7 @@ export function useLiveVoice({ voice, voices, onFlood }: { voice?: SonaVoice; vo
             const s = spanOf(t.said, at.frame, t.spoken, t.done);
             setUpto(wordEnd(t.said, s.start + Math.round((s.end - s.start) * at.share), s.end));
           } else if (!on && t.done) setUpto(undefined);
-          latest.current.onFlood(on ? 1 : t.status === "thinking" ? 0.55 : Math.min(0.4, level * 6));
+          latest.current.onFlood(on ? 1 : t.status === "thinking" ? 0.55 : Math.min(0.4, level * 6), on ? 0.55 : Math.min(1, level * 10));
         },
         plays: () => !!latest.current.voice?.hosted,
         read: (text, k) => new Promise<void>(done => {
