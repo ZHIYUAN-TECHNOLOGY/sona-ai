@@ -37,8 +37,8 @@ function Page() {
         subtitle={patient?.complaint}
         actions={<><Button to="/pro/visit" search={{}}>Today's visits</Button><span className="visit-header-slot" ref={setActions} /></>} />
       {patient ? (
-        <PatientStrip name={patient.name} meta={`${patient.sex}, ${patient.age}`}
-          chips={patient.allergies ? <Chip tone="red" icon="alert">Allergy: {patient.allergies}</Chip> : <span className="visit-muted">No allergies recorded</span>} />
+        <PatientStrip name={patient.name} meta={`${patient.sex.charAt(0).toUpperCase()}, ${patient.age} · ${patient.id}`}
+          chips={patient.allergies ? <span className="visit-allergy" title={`Allergy: ${patient.allergies}`}><Chip tone="red" icon="alert">Allergy: {shortAllergy(patient.allergies)}</Chip></span> : <span className="visit-muted">No allergies recorded</span>} />
       ) : null}
       <WithRail rail={
         <RightRail label="Sona AI and the medicine order">
@@ -69,11 +69,14 @@ function Briefing({ encounterId }: { encounterId: string }) {
   );
 }
 
+/** The allergen alone: the text before the first dash, semicolon or bracket. The full text stays in `title`. */
+const shortAllergy = (text: string) => text.split(/[—;(]/)[0]!.trim();
+
 const scrollToOrders = () => document.getElementById("visit-orders")?.scrollIntoView({ behavior: "smooth" });
 
 /** Hospital time is UTC+8: today's date there, whatever the browser's zone. */
 const today = () => new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
-const clock = (at: string | Date) => new Date(at).toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" });
+const clock = (at: string | Date) => new Date(at).toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Kuala_Lumpur" });
 
 function Pick({ patients }: { patients: { data?: { id: string; encounterId: string }[] } }) {
   const navigate = Route.useNavigate();
@@ -87,13 +90,14 @@ function Pick({ patients }: { patients: { data?: { id: string; encounterId: stri
   const columns: Column<Visit>[] = [
     { key: "patient", header: "Patient", cell: v => <PersonCell name={v.patientName} />, sort: (a, b) => a.patientName.localeCompare(b.patientName) },
     { key: "time", header: "Time", cell: v => <span className="visit-num">{clock(v.startsAt)}</span>, sort: (a, b) => +new Date(a.startsAt) - +new Date(b.startsAt) },
-    { key: "kind", header: "Visit", cell: v => v.kind },
+    { key: "kind", header: "Visit", cell: v => <>{v.kind}{v.incomplete ? <span className="visit-flag"> · Record incomplete</span> : null}</> },
   ];
   return (
     <>
       <PageHeader title="Visit" subtitle={day.data ? `${day.data.length} ${day.data.length === 1 ? "visit" : "visits"} today · open one to write its note` : undefined} />
       {day.isError ? <EmptyState icon="alert">{refusal(day.error).message}</EmptyState> : (
         <DataTable columns={columns} rows={day.data ?? []} rowKey={v => v.id} loading={day.isPending} onRowOpen={open}
+          toolbar={<h2 className="visit-table-title">Today's visits</h2>}
           empty={<EmptyState icon="calendar">No visits are booked for today.</EmptyState>}
           rowAction={v => visitOf.get(v.patientId) ? <RowAction onClick={() => open(v)}>Open visit</RowAction>
             : <span className="visit-muted">No visit record open</span>} />

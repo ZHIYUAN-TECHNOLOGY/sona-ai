@@ -22,3 +22,9 @@
 .po-meter { width: 100%; margin: var(--space-2) 0; accent-color: var(--green); }
 /* A plain line inside a ListCard lines up with the card title. */
 .po-note { padding: 0 var(--space-3) var(--space-2); }
+
+/* Wrappers that only scope a rule: the card inside stays the layout's child. */
+.po-wrap { display: contents; }
+.po-step-only .insight-act { display: none; }
+/* Medicine names read in full: two lines before they cut. */
+.po-meds .list-title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }

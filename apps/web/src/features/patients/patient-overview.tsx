@@ -97,7 +97,7 @@ function Loaded({ patient, canRead }: { patient: PatientRow; canRead: boolean })
         meta={`${patient.sex.charAt(0).toUpperCase()}, ${patient.age} · ${patient.id}`}
         chips={
           <>
-            {canRead && patient.allergies ? <span className="po-allergy" title={`Allergy: ${patient.allergies}`}>Allergy: {patient.allergies}</span> : null}
+            {canRead && patient.allergies ? <span className="po-allergy" title={`Allergy: ${patient.allergies}`}>Allergy: {patient.allergies.split(/[—;(]/)[0]!.trim()}</span> : null}
             <StatusChip patient={patient} />
           </>
         }
@@ -121,6 +121,8 @@ function Loaded({ patient, canRead }: { patient: PatientRow; canRead: boolean })
             </StatRow>
           ) : null}
           <div className="po-body">
+            {/* The header already opens the visit: without doses behind, the suggested step is text only. */}
+            <div className={behind ? "po-wrap" : "po-wrap po-step-only"}>
             <InsightCard
               label="Pre-visit summary"
               title={behind ? `${behind} ${behind === 1 ? "dose needs" : "doses need"} a word` : `Before you see ${patient.name.split(" ")[0]}`}
@@ -130,6 +132,7 @@ function Loaded({ patient, canRead }: { patient: PatientRow; canRead: boolean })
               next={behind ? { label: "Message", step: "Ask about the doses that are behind.", to: "/pro/messages" } : visit ? { label: "Open the visit", step: "Read the record before the visit.", ...visit } : undefined}
               meta={briefing.data?.source === "fixture" ? <Chip tone="soon">Sample answer</Chip> : undefined}
             />
+            </div>
             <Card title={main ? main.name : "Trend"}>
               {main ? (
                 <>
@@ -229,6 +232,7 @@ function Loaded({ patient, canRead }: { patient: PatientRow; canRead: boolean })
 /** "Metformin 500 mg twice daily": the name, then the dose muted. */
 function Medicines({ items, total, more }: { items?: string[]; total: number; more?: () => void }) {
   return (
+    <div className="po-wrap po-meds">
     <ListCard title="Medicines">
       {!items?.length ? <p className="pt-muted po-note">No medicines on record.</p> : null}
       {items?.map((m) => {
@@ -237,6 +241,7 @@ function Medicines({ items, total, more }: { items?: string[]; total: number; mo
       })}
       {more && total > (items?.length ?? 0) ? <Button size="sm" onClick={more}>All {total} medicines</Button> : null}
     </ListCard>
+    </div>
   );
 }
 
