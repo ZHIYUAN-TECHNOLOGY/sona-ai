@@ -9,6 +9,7 @@ import { RightRail, WithRail } from "@/components/rail";
 import { orpc } from "@/lib/orpc";
 
 import { type PatientRow, StatusChip } from "./patient-list";
+import { LabCharts, PatientResults, TrendCards } from "./patient-trends";
 
 type Role = Parameters<typeof can>[0];
 
@@ -37,7 +38,7 @@ export function PatientOverview({ patientId, role }: { patientId: string; role: 
         <StatusChip patient={patient} />
         {canRead && patient.encounterId ? (
           // The visit page reads encounterId from the URL itself.
-          <Link to="/pro/visit" search={{ encounterId: patient.encounterId } as never} className="pt-open">
+          <Link to="/pro/visit" search={{ encounterId: patient.encounterId }} className="pt-open">
             Open the visit
           </Link>
         ) : null}
@@ -105,7 +106,8 @@ function Clinical({ patient }: { patient: PatientRow }) {
 
       <WithRail
         rail={
-          <RightRail label="Medicines and doses">
+          <RightRail label="Results, medicines and doses">
+            <PatientResults patientId={patient.id} />
             <Card title="Medicines">
               {patient.allergies ? <Chip tone="urgent">Allergy: {patient.allergies}</Chip> : null}
               <List items={patient.medicines} empty="No medicines on record." />
@@ -170,6 +172,7 @@ function Clinical({ patient }: { patient: PatientRow }) {
           </RightRail>
         }
       >
+        <TrendCards patientId={patient.id} />
         <Card title="Timeline">
           {!hasVisit ? (
             <p className="pt-muted">No visit on record.</p>
@@ -193,6 +196,7 @@ function Clinical({ patient }: { patient: PatientRow }) {
             </ol>
           )}
         </Card>
+        <LabCharts patientId={patient.id} />
         <Card title="Presenting complaint">
           <p>{patient.complaint || "Not recorded."}</p>
         </Card>

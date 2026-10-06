@@ -18,7 +18,7 @@ export const Route = createFileRoute("/pro/_app/results")({ component: Page });
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "abnormal", label: "Abnormal" },
+  { key: "abnormal", label: "Flagged" },
   { key: "unacknowledged", label: "Unacknowledged" },
 ];
 

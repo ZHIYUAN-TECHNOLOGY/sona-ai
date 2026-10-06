@@ -17,14 +17,19 @@ export type Filter = "all" | "abnormal" | "unacknowledged";
 
 const time = (d: Date | string) => new Date(d).getTime();
 
+/** Only a flag that says "normal" means normal. No flag means nobody judged the result. */
+export const isNormal = (flag?: string | null) => flag?.trim().toLowerCase() === "normal";
+/** Flagged as something other than normal. */
+export const isFlagged = (flag?: string | null) => Boolean(flag) && !isNormal(flag);
+
 /** 0 must not be missed, 1 flagged and waiting, 2 waiting, 3 acknowledged. */
-export const priority = (r: TriageRow) => (r.acknowledgedAt ? 3 : r.critical ? 0 : r.flag ? 1 : 2);
+export const priority = (r: TriageRow) => (r.acknowledgedAt ? 3 : r.critical ? 0 : isFlagged(r.flag) ? 1 : 2);
 
 /** By priority, then newest first. */
 export const byTriage = (a: TriageRow, b: TriageRow) => priority(a) - priority(b) || time(b.receivedAt) - time(a.receivedAt);
 
 export const matches = (filter: Filter) => (r: TriageRow) =>
-  filter === "all" || (filter === "abnormal" ? Boolean(r.flag) : !r.acknowledgedAt);
+  filter === "all" || (filter === "abnormal" ? isFlagged(r.flag) : !r.acknowledgedAt);
 
 /** The three insight counts. `now` decides which day "today" is (the browser's day). */
 export function counts(rows: TriageRow[], now: Date) {

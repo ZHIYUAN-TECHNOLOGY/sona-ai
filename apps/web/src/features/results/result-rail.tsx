@@ -2,7 +2,7 @@ import { LineChart } from "@/components/charts";
 import { Button, Card, Chip } from "@/components/primitives";
 import { RightRail } from "@/components/rail";
 
-import { seriesFor } from "./triage";
+import { isNormal, seriesFor } from "./triage";
 import type { ResultRow } from "./types";
 
 export const when = (d: Date | string) =>
@@ -12,14 +12,15 @@ export const valueOf = (r: ResultRow) => (r.unit ? `${r.value} ${r.unit}` : r.va
 
 export function FlagChip({ row }: { row: ResultRow }) {
   if (row.critical) return <Chip tone="urgent">{row.flag}</Chip>;
-  return row.flag ? <Chip tone="soon">{row.flag}</Chip> : <Chip>Not flagged</Chip>;
+  if (!row.flag) return <Chip>Not flagged</Chip>;
+  return isNormal(row.flag) ? <Chip tone="done">{row.flag}</Chip> : <Chip tone="soon">{row.flag}</Chip>;
 }
 
-/** The only reasoning a result row carries is its flag, set by the lab's call-now rule when the result arrives. */
-function why(r: ResultRow) {
-  if (r.critical) return `Rule: ${r.test} ${valueOf(r)} is past the lab's call-now limit (${r.flag}). A doctor must see it now.`;
-  if (r.flag) return `Flagged "${r.flag}" when it arrived. It is not past a call-now limit.`;
-  return "No call-now rule flagged this result.";
+/** Used only when the row carries no `why`: the flag is then the only reasoning there is, so this line restates it and nothing more. */
+function derived(r: ResultRow) {
+  if (r.critical) return `Flagged "${r.flag}" when it arrived. A doctor must see it now.`;
+  if (r.flag) return `Flagged "${r.flag}" when it arrived.`;
+  return "This result arrived without a flag. Nobody has judged it yet.";
 }
 
 type Props = {
@@ -46,7 +47,8 @@ export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }
         {series.length > 1 ? <LineChart points={series} label={`${row.test} for ${row.patientName}`} unit={row.unit ?? undefined} height={160} /> : null}
       </Card>
       <Card title={row.critical ? "Why this is urgent" : "Why this is flagged this way"}>
-        <p>{why(row)}</p>
+        <p>{row.why ?? derived(row)}</p>
+        {row.why ? null : <p className="results-note">Derived from the flag. No call-now rule gave a reason for this result.</p>}
       </Card>
       <Card title="Your decision">
         {row.acknowledgedAt ? (
@@ -54,7 +56,7 @@ export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }
         ) : allowed ? (
           <>
             <Button variant={row.critical ? "danger" : "primary"} pending={pending} onClick={() => onAcknowledge(row)}>
-              {row.flag ? "Acknowledge" : "Acknowledge normal"}
+              {isNormal(row.flag) ? "Acknowledge normal" : "Acknowledge"}
             </Button>
             <p className="results-note">Records you as the doctor who saw this result.</p>
           </>
