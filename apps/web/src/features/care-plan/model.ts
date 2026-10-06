@@ -69,3 +69,29 @@ export const firstSentence = (text: string) => (text.match(/^[\s\S]*?[.!?。](?=
 
 /** Whole days from then to now; never negative. */
 export const daysSince = (at: Date | string, now: Date) => Math.max(0, Math.floor((now.getTime() - new Date(at).getTime()) / 86_400_000));
+
+export type Step = { step: string; label: string; to: "/care/check-ins" | "/care/follow-ups" | "/care/medicines" };
+
+const inDaysWords = (n: number) => (n <= 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`);
+const dayStart = (at: Date | string) => new Date(at).setHours(0, 0, 0, 0);
+
+/** The one suggested step for right now, from the plan and the clock; nothing when nothing is due. */
+export function stepOf(input: { checkInWaiting: boolean; nextCheckInAt?: Date | string; visits: Visit[]; meds: Med[]; now: Date }): Step | undefined {
+  const followUps = { label: "See follow-ups", to: "/care/follow-ups" } as const;
+  const medicines = { label: "See medicines", to: "/care/medicines" } as const;
+  if (input.checkInWaiting) return { step: "Your care team is asking how you are. It takes a minute.", label: "Answer now", to: "/care/check-ins" };
+  const open = input.visits.filter(v => v.status === "due-soon" || v.status === "upcoming");
+  const soon = open.find(v => v.inDays <= 1);
+  if (soon) return { step: `Your visit is ${inDaysWords(soon.inDays)}. Bring your medicines with you.`, ...followUps };
+  if (input.visits.some(v => v.status === "missed")) return { step: "You missed a visit. Call the clinic to book a new time.", ...followUps };
+  // ponytail: the time of day is read from the plan's own wording; use real dose times when the API has them.
+  const hour = input.now.getHours();
+  const part = hour < 11 ? "morning" : hour >= 17 ? "evening" : undefined;
+  const words = part === "evening" ? /evening|night|bed/i : /morning/i;
+  const due = input.meds.filter(m => !m.finished && m.take);
+  if (part && due.some(m => words.test(String(m.take)))) return { step: `Take your ${part} dose.`, ...medicines };
+  if (input.nextCheckInAt) return { step: `Your check-in is ${inDaysWords(Math.round((dayStart(input.nextCheckInAt) - dayStart(input.now)) / 86_400_000))}.`, label: "See check-ins", to: "/care/check-ins" };
+  if (open[0]) return { step: `Your visit is ${inDaysWords(open[0].inDays)}.`, ...followUps };
+  if (due[0]) return { step: `Take your ${due[0].name}. ${due[0].take}`, ...medicines };
+  return undefined;
+}
