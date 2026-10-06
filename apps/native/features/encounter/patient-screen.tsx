@@ -1,6 +1,6 @@
 import { Text } from "@/components/sona/text";
 import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { Stack, router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { Fragment, useCallback, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Alert, ScrollView, TextInput, View } from "react-native";
@@ -43,6 +43,15 @@ export function PatientScreen() {
   const [query, setQuery] = useState("");
   const [tab, keepTab] = useState<Tab>(TABS.some(t => t.id === startTab) ? startTab as Tab : kept.tab ?? "needs");
   const setTab = (t: Tab) => { kept.tab = t; keepTab(t); };
+  // Returned to with a tab (openPatients: Handover's Wrap up over a card), that tab shows once the page is in view again
+  // (switched while covered, the list crashed reading a row it no longer had); the param is then spent, so the next
+  // return asking for the same tab moves it again after a tap elsewhere.
+  const navigation = useNavigation();
+  useFocusEffect(useCallback(() => {
+    if (!startTab) return;
+    if (TABS.some(t => t.id === startTab)) keepTab(startTab as Tab);
+    navigation.setParams({ tab: undefined } as never);
+  }, [startTab, navigation]));
   const [opened, setOpened] = useState<ReadonlySet<Group>>(new Set());
   const list = useRef<LegendListRef>(null);
   const { census } = useContinueState();

@@ -23,7 +23,7 @@ import { answerOf, clearThread, type Entry, type Reply } from "@/features/ask/th
 import { isWatch } from "@sona-ai/domain/watch";
 import { capabilitySchema, namedPatient, offeredAs, routeInThread, routePrompt } from "./state";
 import { carry, takeCarried } from "./carry";
-import { isToolPage, openSession } from "./navigation";
+import { isToolPage, openPatients, openSession } from "./navigation";
 import { useEncounterSelect } from "./store";
 import { sameShallow } from "@/features/live/keep-same";
 import type { Capability, FeatureProps, FocusView, RequestState, ResponseCard } from "./types";
@@ -377,7 +377,7 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
   // The page's top bar.
   const bar = { patient, inEncounter: !home, openTasks, onMenu: openDrawer,
     // Today with a conversation: Back returns to the day's dashboard (the menu stays one tap away there).
-    onBack: home ? (thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined) : back, onPatient: () => router.push({ pathname: "/patients", params: { switch: "1" } }), onTasks: () => router.push("/tasks"),
+    onBack: home ? (thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined) : back, onPatient: () => openPatients(navigation, { switch: "1" }), onTasks: () => router.push("/tasks"),
   };
   const visitLive: LiveAdapter | undefined = patient && props && {
     scope: patient.name.split(" ")[0] ?? patient.name,

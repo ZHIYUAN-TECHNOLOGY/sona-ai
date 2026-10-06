@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { MarkedText } from "@/components/sona/marked-text";
-import { router, Stack } from "expo-router";
+import { router, Stack, useNavigation } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -16,6 +16,7 @@ import { Action, Chip, Icon, Insight, Notice, Tone, useAccessibleEffects } from 
 import { toWatch } from "@/features/ask/answers";
 import { useDockHeight, WithSona } from "@/features/ask";
 import { useContinue } from "@/features/patients/continue-store";
+import { openPatients } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
 import { useFindings } from "@/features/live/findings-sync";
 import { errorText, JUDGE } from "@/features/live";
@@ -262,10 +263,11 @@ function DockSpace() {
  */
 function WrapUp() {
   const { entries, toSign } = useContinue();
+  const navigation = useNavigation();
   const unfinished = entries.filter(e => e.left).length;
   if (!unfinished) return null;
   const parts = [toSign ? `${toSign} ${toSign === 1 ? "note" : "notes"} to sign` : "", unfinished - toSign > 0 ? `${unfinished - toSign} ${unfinished - toSign === 1 ? "visit" : "visits"} unfinished` : ""].filter(Boolean).join(", ");
-  return <Pressable accessibilityRole="button" accessibilityLabel={`Wrap up: ${parts}. Opens Continue`} onPress={() => router.push({ pathname: "/patients", params: { tab: "continue" } })}>{({ pressed }) => <PressScale pressed={pressed} style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44, paddingHorizontal: 14, borderRadius: radius.control, backgroundColor: "rgba(196,120,20,0.10)" }}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={`Wrap up: ${parts}. Opens Continue`} onPress={() => openPatients(navigation, { tab: "continue" })}>{({ pressed }) => <PressScale pressed={pressed} style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44, paddingHorizontal: 14, borderRadius: radius.control, backgroundColor: "rgba(196,120,20,0.10)" }}>
     <Icon name="checklist" size={15} color={palette.amber} />
     <Text style={{ ...type.subhead, flex: 1, fontWeight: "600", color: palette.amber }}>Wrap up: {parts}</Text>
     <Icon name="chevron.right" size={11} color={palette.amber} />

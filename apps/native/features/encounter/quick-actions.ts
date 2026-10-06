@@ -17,7 +17,7 @@ import { useServerEncounter } from "@/features/live/sync";
 import { counted } from "@/features/patients/record";
 import { DEMO_PATIENT, wardSummary, type Bed } from "@/features/ward/model";
 import { defaultMedications } from "./clinical-state";
-import { openSession } from "./navigation";
+import { openResults } from "./navigation";
 import type { Encounter, Patient } from "./types";
 
 /** The lines the home keys and the sidebar share, so both say the same thing. */
@@ -86,12 +86,10 @@ export function homeActions(patients: Patient[], encounters: Record<string, Enco
   // Whose result it is, among every patient the app knows (`roster`), not only today's visits: a ward patient with no
   // appointment today gets results too, and the key said "Nothing new" under the alert for one.
   const resultFor = result && roster.find(p => p.id === result.patientId);
-  // Opening a result only shows it: the briefing's Acknowledge (with its receipt) is the one way to clear it for the team.
-  const openResult = () => { if (resultFor) openSession(resultFor.id, { next: "briefing" }); };
   return [
     failed?.day ? { key: "patients", label: "Patients", icon: "person.2", status: DAY_FAILED, tone: "caution", onPress: failed.day }
       : { key: "patients", label: "Patients", icon: "person.2", ...counted(reading?.day ? undefined : patients.length, n => next ? `Next ${next.name.split(" ")[0]} · ${next.time}` : `${n} today`, "Reading…"), onPress: () => router.push("/patients") },
-    { key: "results", label: "Results", icon: "testtube.2", status: result && resultFor ? `${result.flag} ${testInSentence(result.test)} · ${resultFor.name.split(" ")[0]}` : "Nothing new", tone: resultFor ? "urgent" : "calm", badge: resultFor ? 1 : 0, onPress: openResult },
+    { key: "results", label: "Results", icon: "testtube.2", status: result && resultFor ? `${result.flag} ${testInSentence(result.test)} · ${resultFor.name.split(" ")[0]}` : "Nothing new", tone: resultFor ? "urgent" : "calm", badge: resultFor ? 1 : 0, onPress: openResults },
     // Patients' messages from Sona Care; hand over stays in the sidebar. A role that can't read them keeps Hand over here.
     messages.allowed
       ? { key: "messages", label: "Messages", icon: "bubble.left.and.bubble.right", status: messages.on ? messages.line : "From Sona Care", tone: messages.urgent ? "urgent" : messages.waiting ? "caution" : "calm", badge: messages.waiting, onPress: () => router.push("/inbox") }

@@ -58,6 +58,7 @@ export default function RootLayout() {
     <Stack.Screen name="inbox/[patientId]" options={{ title: "" }} />
     <Stack.Screen name="handover" options={{ title: "Shift handover" }} />
     <Stack.Screen name="ward" options={{ title: "Ward" }} />
+    <Stack.Screen name="results" options={{ title: "Results" }} />
     <Stack.Screen name="audit" options={{ title: "Coding audit" }} />
     <Stack.Screen name="training" options={{ title: "Training data" }} />
     <Stack.Screen name="discharge" options={{ title: "Discharge" }} />

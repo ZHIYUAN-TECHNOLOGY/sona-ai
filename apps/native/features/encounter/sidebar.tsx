@@ -17,7 +17,7 @@ import { wardSummary } from "@/features/ward/model";
 import { useDay, useDayError, useOpenTasks, useWard } from "@/features/day/use-counts";
 import { auditLine, auditOf, BEDS_FAILED, DAY_FAILED, wardLine } from "./quick-actions";
 import * as Haptics from "expo-haptics";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { interpolate, type SharedValue, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,7 +26,7 @@ import { useContinue } from "@/features/patients/continue-store";
 import { useSaved } from "@/features/ask/saved";
 import { useTodayAnswers } from "@/features/ask/today";
 import { useEncounter } from "./store";
-import { openSession } from "./navigation";
+import { openPatients, openSession } from "./navigation";
 
 export const SIDEBAR_WIDTH = 300;
 
@@ -66,6 +66,7 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
   const insets = useSafeAreaInsets();
   const { patient, patients } = useEncounter();
   const { user } = useLive();
+  const navigation = useNavigation();
   // Close first, then navigate, so the page is back in place when the next screen presents.
   const go = (to: () => void) => () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onClose(); setTimeout(to, 120); };
   // Continue: where you left off (the open visit, pins, unfinished work under 24 h), capped so the drawer
@@ -104,12 +105,12 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
     ] },
     { title: "Patients", items: [
       dayError ? { label: "Patients", icon: "patients", detail: DAY_FAILED, show: can("patients.list"), onPress: dayError.retry } :
-      { label: "Patients", icon: "patients", detail: !day ? undefined : day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today", show: can("patients.list"), onPress: go(() => router.push("/patients")) },
+      { label: "Patients", icon: "patients", detail: !day ? undefined : day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today", show: can("patients.list"), onPress: go(() => openPatients(navigation)) },
     ] },
     { title: "Continue", items: [
       ...entries.slice(0, CONTINUE_LIMIT).map((e): Item => ({ label: e.patient.name, ...(e.why === "pinned" ? { sf: "pin" } : { icon: e.why === "open" ? "stethoscope" as const : "clock" as const }),
         detail: [e.why === "open" ? "In visit" : e.why === "pinned" ? "Pinned" : "", e.left].filter(Boolean).join(" · "), onPress: go(() => openSession(e.patient.id)) })),
-      ...(entries.length > CONTINUE_LIMIT ? [{ label: `See all ${entries.length}`, sf: "ellipsis.circle", onPress: go(() => router.push({ pathname: "/patients", params: { tab: "continue" } })) }] : []),
+      ...(entries.length > CONTINUE_LIMIT ? [{ label: `See all ${entries.length}`, sf: "ellipsis.circle", onPress: go(() => openPatients(navigation, { tab: "continue" })) }] : []),
     ] },
     { title: "Ward & hospital", items: [
       bedsFailed ? { label: "Ward", sf: "bed.double", detail: BEDS_FAILED, show: can("ward.beds"), onPress: retryBeds } :

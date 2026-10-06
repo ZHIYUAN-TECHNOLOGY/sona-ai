@@ -52,6 +52,28 @@ export function receiptLine(ack: Ack, now: Date) {
   return `Acknowledged ${when} by ${ack.by}`;
 }
 
+/** One row of the Results page: `ack` once someone acknowledged it. */
+export type ResultEntry = { key: string; patientId: string; name?: string; test: string; value: string; flag: string; at: Date; ack?: Ack };
+
+/**
+ * The Results page: every result still waiting (whatever day it came), then today's acknowledged ones, each newest first.
+ * Live, the server's rows; demo, the fixture with its acknowledgement here. `now`: the demo clock in live mode.
+ */
+export function todaysResults(server: Server, acks: Record<string, Ack>, now: Date): ResultEntry[] {
+  const rows: ResultEntry[] = server ? server.results.map(r => ({
+    key: r.id, patientId: r.patientId, name: r.patientName, test: r.test, value: r.unit ? `${r.value} ${r.unit}` : r.value, flag: r.flag ?? "", at: new Date(r.receivedAt),
+    ...r.acknowledgedAt ? { ack: { at: new Date(r.acknowledgedAt).toISOString(), by: r.acknowledgedByName ?? "a colleague" } } : {},
+  })) : [{
+    key: resultKey(PENDING_RESULT), patientId: PENDING_RESULT.patientId, test: PENDING_RESULT.test, value: PENDING_RESULT.value, flag: PENDING_RESULT.flag,
+    at: new Date(`${localDate(now)}T${PENDING_RESULT.receivedAt}:00`), ...acks[resultKey(PENDING_RESULT)] ? { ack: acks[resultKey(PENDING_RESULT)] } : {},
+  }];
+  return rows.filter(r => !r.ack || r.at.toDateString() === now.toDateString())
+    .sort((a, b) => Number(Boolean(a.ack)) - Number(Boolean(b.ack)) || b.at.getTime() - a.at.getTime());
+}
+
+/** A lab flag's meaning colour: critical must not wait (red), low or high is soon (amber), anything else stays neutral. */
+export const flagTone = (flag: string) => /critical/i.test(flag) ? "urgent" as const : /low|high/i.test(flag) ? "soon" as const : undefined;
+
 /** "Potassium 3.1 mmol/L · low · last 3.8 on 14 Sep" */
 export const resultLine = (r: PendingResult) => [`${r.test} ${r.value}`, r.flag.toLowerCase(), r.last ? `last ${r.last}` : ""].filter(Boolean).join(" · ");
 
