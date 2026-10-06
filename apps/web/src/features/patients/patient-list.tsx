@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { DataTable, type Column, PersonCell, RowAction } from "@/components/data-table";
+import { DataTable, type Column, PersonCell, RowAction, TableToolbar, TextCell } from "@/components/data-table";
 import type { IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
@@ -48,9 +48,8 @@ const PAGE_SIZE = 10;
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
 
 const columns: Column<PatientRow>[] = [
-  { key: "name", header: "Patient", cell: (p) => <PersonCell name={p.name} detail={`${p.sex.charAt(0).toUpperCase()}, ${p.age}`} />, sort: (a, b) => a.name.localeCompare(b.name) },
-  { key: "reason", header: "Reason", cell: (p) => <span className="ptl-reason" title={p.complaint}>{p.complaint}</span>, sort: (a, b) => (a.complaint ?? "").localeCompare(b.complaint ?? "") },
-  { key: "place", header: "Ward or clinic", cell: (p) => p.subtitle || <span className="ptl-calm">None</span>, sort: (a, b) => (a.subtitle ?? "").localeCompare(b.subtitle ?? "") },
+  { key: "name", header: "Patient", cell: (p) => <PersonCell name={p.name} detail={`${p.sex.charAt(0).toUpperCase()}, ${p.age}${p.subtitle ? ` · ${p.subtitle}` : ""}`} />, sort: (a, b) => a.name.localeCompare(b.name) },
+  { key: "reason", header: "Reason", cell: (p) => <TextCell>{p.complaint}</TextCell>, sort: (a, b) => (a.complaint ?? "").localeCompare(b.complaint ?? "") },
   { key: "status", header: "Status", cell: (p) => <ListStatus patient={p} />, sort: (a, b) => statusRank(a) - statusRank(b) },
 ];
 
@@ -137,15 +136,14 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
           )
         }
         toolbar={
-          <>
+          <TableToolbar end={<SearchField label="Search patients" placeholder="Name or ID" value={query} onChange={(e) => { setPage(1); setQuery(e.target.value); }} />}>
             <Tabs
               label="Filter patients"
               tabs={PATIENT_TABS.map((id) => ({ id, label: TAB_LABEL[id], count: isPending ? undefined : count(id) }))}
               value={tab}
               onChange={(next) => { setPage(1); onTab(next); }}
             />
-            <SearchField className="ptl-search" label="Search patients" placeholder="Name or ID" value={query} onChange={(e) => { setPage(1); setQuery(e.target.value); }} />
-          </>
+          </TableToolbar>
         }
         count={isPending ? <Skeleton width={140} /> : rows.length ? `Showing ${from}-${to} of ${rows.length}` : "None shown"}
         footer={<Pager page={current} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} noun="patients" />}

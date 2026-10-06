@@ -1,6 +1,3 @@
 /* Patients list: only what the shared table, tabs and cards do not already give. */
 .ptl-calm { color: var(--muted); }
-.ptl-search { flex: 0 1 14rem; min-width: 10rem; }
-.ptl-reason { display: block; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ptl-card td:first-child, .ptl-card td:last-child { white-space: nowrap; }
-.ptl-card .table-toolbar { flex-wrap: wrap; }
+.ptl-card td:last-child { white-space: nowrap; }

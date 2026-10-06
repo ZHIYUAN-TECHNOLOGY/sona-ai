@@ -5,7 +5,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { BarChart } from "@/components/charts";
-import { DataTable, PersonCell, RowAction, type Column } from "@/components/data-table";
+import { DataTable, PersonCell, RowAction, TableToolbar, type Column } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
 import { Card, Chip, ListCard, ListRow, SearchField, StatCard, StatRow, Tabs } from "@/components/primitives";
@@ -59,15 +59,14 @@ function Page() {
   const ownerOf = (b: BedRow) => [...new Set(b.blockers.flatMap(x => owners.get(x.id) ?? []))].join(", ");
 
   const columns: Column<BedRow>[] = [
-    { key: "bed", header: "Bed", cell: b => <strong>{b.bed}</strong>, sort: (x, y) => x.bed.localeCompare(y.bed, undefined, { numeric: true }) },
+    { key: "bed", header: "Bed", cell: b => <span className="ward-bed"><strong>{b.bed}</strong>{b.predicted ? <span className="ward-muted">Free {b.predicted}</span> : null}</span>, sort: (x, y) => x.bed.localeCompare(y.bed, undefined, { numeric: true }) },
     { key: "patient", header: "Patient", cell: b => b.name ? <PersonCell name={b.name} detail={b.meta} /> : <span className="ward-muted">No patient</span> },
     {
       key: "waits", header: "Waiting on", cell: b => b.blockers.length === 0 ? <span className="ward-muted">{b.status === "watch" ? "Being watched" : b.name ? "Nothing blocking" : "Free"}</span> : (
-        <span className="ward-blocker"><Chip tone="soon">{b.blockers[0]!.label}</Chip>{b.blockers.length > 1 && <span className="ward-muted">+{b.blockers.length - 1} more</span>}</span>
+        <span className="ward-waits" title={b.blockers.map(x => x.label).join(", ")}><Chip tone="soon">{b.blockers[0]!.label}</Chip>{b.blockers.length > 1 && <span className="ward-muted">+{b.blockers.length - 1} more</span>}</span>
       ),
     },
-    { key: "owner", header: "Owner", cell: b => b.blockers.length === 0 ? <span className="ward-muted">–</span> : ownerOf(b) || <Chip tone="urgent">No owner</Chip> },
-    { key: "free", header: "Expected free", align: "right", cell: b => <span className="ward-num">{b.predicted || "–"}</span> },
+    { key: "owner", header: "Owner", cell: b => b.blockers.length === 0 ? <span className="ward-muted">–</span> : ownerOf(b) ? <span className="ward-owners" title={ownerOf(b)}>{ownerOf(b)}</span> : <Chip tone="urgent">No owner</Chip> },
   ];
 
   return (
@@ -135,13 +134,12 @@ function Page() {
             <DataTable columns={columns} rows={rows} rowKey={b => b.bed} selectedKey={bed?.bed} onRowOpen={b => setPicked(b.bed)}
               empty={q ? `No bed matches "${search}".` : "No beds in this state."} count={`Showing ${rows.length} of ${all.length} beds`}
               toolbar={(
-                <div className="ward-toolbar">
+                <TableToolbar end={<SearchField label="Search beds" placeholder="Search bed, patient or blocker" value={search} onChange={e => setSearch(e.target.value)} />}>
                   <Tabs label="Beds by state" value={tab} onChange={setTab} tabs={[
                     { id: "all", label: "All beds", count: all.length }, { id: "blocked", label: "Blocked", count: blocked.length },
                     { id: "watch", label: "Watch", count: groups.watch.length }, { id: "free", label: "Free", count: groups.free.length },
                   ]} />
-                  <SearchField label="Search beds" placeholder="Search bed, patient or blocker" value={search} onChange={e => setSearch(e.target.value)} />
-                </div>
+                </TableToolbar>
               )}
               rowAction={b => <RowAction onClick={() => setPicked(b.bed)}>{b.blockers.length ? "Review" : "Open"}</RowAction>} />
           )}
