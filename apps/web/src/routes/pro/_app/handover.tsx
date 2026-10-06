@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { EmptyState, PageHeader } from "@/components/page";
-import { Avatar, Button, Card, Chip, Field, Skeleton, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Avatar, Button, Card, Chip, Field, Select, Skeleton, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/handover.css";
@@ -42,6 +42,7 @@ function Page() {
   return (
     <>
       <PageHeader title="Handover"
+        status={mayAccept && all.length > 0 && !toUser && cardIds.length > 0 ? <span className="ho-muted">Choose who takes over first</span> : undefined}
         lead={cards.data ? `${n(all.length)} to hand over · ${watch.length} need${watch.length === 1 ? "s" : ""} watching · ${done.size} handed over` : "The patients you hand to the next shift."}
         actions={mayAccept && all.length > 0 && (
           <Button variant="primary" icon="swap" pending={accept.isPending} disabled={!toUser || cardIds.length === 0}
@@ -63,10 +64,10 @@ function Page() {
               <div className="ho-form">
                 <Field label="Receiving clinician" hint={cardIds.length ? `${n(cardIds.length)} ticked. Untick a patient to hold them back.` : "Nobody left to hand over. Tick a held patient to hand them over."} error={(accept.error ?? receivers.error)?.message}>
                   {control => (
-                    <select {...control} className="ho-control" value={toUser} onChange={e => setToUser(e.target.value)}>
+                    <Select label="Receiving clinician" {...control} value={toUser} onChange={e => setToUser(e.target.value)}>
                       <option value="" disabled>{receivers.isPending ? "Loading colleagues…" : receivers.data?.length ? "Choose a colleague" : "No colleague has signed in yet"}</option>
                       {receivers.data?.map(r => <option key={r.id} value={r.id}>{r.name} ({r.role})</option>)}
-                    </select>
+                    </Select>
                   )}
                 </Field>
                 {accept.data
@@ -117,7 +118,7 @@ function Page() {
                     <dt>Assessment</dt><dd>{c.assessment}</dd>
                     {c.recommendation.length > 0 && <><dt>To do</dt><dd><ul>{c.recommendation.map(r => <li key={r}>{r}</li>)}</ul></dd></>}
                   </dl>
-                  <p className="ho-muted">You decide · {c.sources.length} source{c.sources.length === 1 ? "" : "s"}</p>
+                  {c.sources.length > 0 && <p className="ho-muted">You decide · {c.sources.length} source{c.sources.length === 1 ? "" : "s"}</p>}
                   </details>
                 </li>
               ))}

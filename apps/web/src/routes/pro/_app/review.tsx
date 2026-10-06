@@ -19,12 +19,12 @@ export const Route = createFileRoute("/pro/_app/review")({ component: Page });
 
 type Tab = "all" | "reply" | "summary";
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-// ponytail: the header and the Sona panel press the open document's own approve button, so there is one approval path
-// (its confirm step and disabled state included). Lift the mutation up if the document and the button ever part ways.
+// The document's own "Approve and send" is the one place that sends. The header takes the clinician to it, with the
+// draft in view, and never presses it for them.
 const approveOpen = () => {
   const button = [...document.querySelectorAll<HTMLButtonElement>("#rv-open button")].find(b => b.textContent?.startsWith("Approve and send"));
-  button?.scrollIntoView({ block: "nearest" });
-  button?.click();
+  button?.scrollIntoView({ block: "center", behavior: "smooth" });
+  button?.focus({ preventScroll: true });
 };
 
 function Page() {
@@ -106,6 +106,8 @@ function Page() {
         rail={open
           ? (
             <RightRail label="Why this needs review">
+              {/* The header and the document hold the approve buttons: here the step is text only. */}
+              <div className={otherFlagged && !open.failing.length ? "rv-wrap" : "rv-wrap rv-step-only"}>
               <InsightCard
                 label="Sona insight"
                 lead={open.failing.length
@@ -121,9 +123,10 @@ function Page() {
                 ]}
                 next={otherFlagged && !open.failing.length
                   ? { label: "Open the first flagged item", onAct: () => { setTab("all"); setSel(otherFlagged.key); } }
-                  : { label: `Approve for ${open.name}`, onAct: approveOpen }}
+                  : { label: `Approve for ${open.name}`, step: "Read the draft, then approve it at its foot.", onAct: approveOpen }}
                 sources={open.sources}
               />
+              </div>
             </RightRail>
           )
           : null}

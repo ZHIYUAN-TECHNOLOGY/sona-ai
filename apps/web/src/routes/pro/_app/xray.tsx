@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
-import { Button, Card, Chip, Field, ListCard, ListRow, Skeleton } from "@/components/primitives";
+import { Button, Card, Chip, Field, ListCard, ListRow, Select, Skeleton } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { boxStyle, messageOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
@@ -90,6 +90,8 @@ function Page() {
       } />
       <WithRail rail={
         <RightRail label="Sona's read">
+          {/* The header already reads the image: that suggested step is text only. */}
+          <div className={data && !open.length ? "xr-wrap xr-step-only" : "xr-wrap"}>
           <InsightCard label={sample ? "Sona · sample" : "Sona draft"}
             title={!data ? "No read yet" : sample ? "Sample read, not from this image" : "Chest X-ray draft read"}
             lead={!data ? (encounterId && read.isError ? messageOf(read.error) : "Sona drafts a read as soon as an image is added. You confirm or change it.")
@@ -102,6 +104,7 @@ function Page() {
             next={!data ? undefined : open.length
               ? { label: "Review findings", step: "Check each finding against the image, then track or dismiss it.", onAct: () => decision.current?.querySelector("button")?.focus() }
               : mayDetect ? { label: "Read for findings", step: "Have the image read for findings that must not be missed.", onAct: () => detect.mutate({ encounterId }) } : undefined} />
+          </div>
           {detect.isError && <p className="xr-error" role="alert">{messageOf(detect.error)}</p>}
           {data && (
             <Card title="Your decision">
@@ -137,10 +140,10 @@ function Page() {
         <Card className="xr-viewer">
           <div className="xr-bar">
             <Field label="Patient">{c => (
-              <select {...c} value={encounterId} onChange={e => { setEncounterId(e.target.value); setZoom(1); setStream(undefined); setDismissing(undefined); upload.reset(); detect.reset(); }}>
+              <Select label="Patient" {...c} value={encounterId} onChange={e => { setEncounterId(e.target.value); setZoom(1); setStream(undefined); setDismissing(undefined); upload.reset(); detect.reset(); }}>
                 <option value="">{patients.isPending ? "Loading patients…" : "Choose a patient"}</option>
                 {patients.data?.map(p => <option key={p.encounterId} value={p.encounterId}>{p.name}</option>)}
-              </select>
+              </Select>
             )}</Field>
             {shown && (
               <label className="xr-zoom">Zoom

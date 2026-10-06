@@ -22,3 +22,18 @@
 .visit-num { font-variant-numeric: tabular-nums; }
 .visit-checks li { grid-template-columns: 4.5rem 1fr; }
 #visit-orders { scroll-margin-top: var(--space-6); }
+
+/* Patient strip: the allergen alone, the full text in the title. */
+.visit-allergy { display: inline-flex; max-width: 16rem; min-width: 0; }
+.visit-allergy > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: none; }
+
+/* Note fields: white, hairline, grow with the text, no resize handle. */
+.visit-section textarea, .visit-note textarea { background: var(--surface); border-color: var(--line); resize: none; field-sizing: content; min-height: 4.5rem; line-height: 1.5; }
+.visit-section textarea[readonly] { background: var(--canvas); }
+.visit-section textarea:focus, .visit-note textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
+
+/* Nothing to save: a muted ink pill, clearly resting rather than broken. */
+.visit-header-slot .btn-primary:disabled, .visit-note .btn-primary:disabled { background: var(--ink); color: var(--surface); border-color: transparent; opacity: 0.38; cursor: default; }
+
+.visit-table-title { margin: 0; font-size: var(--text-body); font-weight: 600; color: var(--ink); }
+.visit-flag { color: var(--muted); font-size: 13px; }
