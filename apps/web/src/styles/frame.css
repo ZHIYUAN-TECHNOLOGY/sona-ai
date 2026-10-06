@@ -56,7 +56,7 @@
 :is(.pro, .care) .frame-out:disabled { opacity: 0.4; cursor: default; }
 :is(.pro, .care) .frame-out-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 :is(.pro, .care) .frame-scroll { padding: var(--space-5) var(--space-5) var(--sona-bar-clearance); }
-:is(.pro, .care) .frame-page { max-width: 1320px; gap: var(--gap-card); }
+:is(.pro, .care) .frame-page { max-width: 1560px; margin: 0; gap: var(--gap-card); }
 :is(.pro, .care) .page-header h1 { font-size: var(--text-page); line-height: 1.15; letter-spacing: var(--track-display); font-weight: 500; }
 @media (max-height: 800px) { :is(.pro, .care) .frame-link { min-height: 30px; } :is(.pro, .care) .frame-groups { gap: var(--space-2); } }
 /* Icon rail: labels leave the layout but stay for screen readers; group labels become hairlines. */
