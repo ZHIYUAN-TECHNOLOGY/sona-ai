@@ -35,7 +35,7 @@ test("a patient's trends are their observations and numeric labs from the last 1
 
   const trends = await api.patients.trends({ patientId: "SYN-1086" });
   expect(trends.observations.find(o => o.kind === "weight")).toEqual({
-    kind: "weight", unit: "kg", points: [{ at: new Date("2026-03-01T00:00:00Z"), value: 74 }, { at: new Date("2026-08-01T00:00:00Z"), value: 71 }],
+    kind: "weight", source: "clinical", unit: "kg", points: [{ at: new Date("2026-03-01T00:00:00Z"), value: 74 }, { at: new Date("2026-08-01T00:00:00Z"), value: 71 }],
   });
   // The seeded potassium (3.1, low) follows March's; the culture's text and the ward's pending samples are not points.
   expect(trends.labs.find(l => l.test === "Potassium")).toEqual({

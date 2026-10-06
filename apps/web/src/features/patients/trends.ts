@@ -6,7 +6,7 @@ type TrendPoint = { at: At; value: number; flag?: string | null };
 
 /** The shape `patients.trends` answers with, as far as this page reads it. */
 export type Trends = {
-  observations: { kind: string; unit?: string | null; points: TrendPoint[] }[];
+  observations: { kind: string; source?: "clinical" | "patient"; unit?: string | null; points: TrendPoint[] }[];
   labs: { test: string; unit?: string | null; points: TrendPoint[] }[];
 };
 
@@ -19,7 +19,7 @@ const oldestFirst = (points: TrendPoint[]) => [...points].sort((a, b) => time(a.
 export function allSeries(t: Trends): Series[] {
   return [
     ...t.labs.map(l => ({ name: l.test, lab: true, unit: l.unit, points: oldestFirst(l.points) })),
-    ...t.observations.map(o => ({ name: o.kind, lab: false, unit: o.unit, points: oldestFirst(o.points) })),
+    ...t.observations.map(o => ({ name: `${readable(o.kind)}${o.source === "patient" ? " (home reading)" : ""}`, lab: false, unit: o.unit, points: oldestFirst(o.points) })),
   ].filter(s => s.points.length > 0);
 }
 
@@ -41,3 +41,6 @@ export function direction(s: Series) {
 
 export const chartPoints = (s: Series): Point[] =>
   s.points.map(p => ({ x: new Date(p.at).toLocaleDateString("en-MY", { timeZone: "Asia/Kuala_Lumpur", day: "numeric", month: "short" }), y: p.value }));
+
+/** "heart_rate" as the chart's name: "Heart rate". */
+const readable = (kind: string) => { const words = kind.replaceAll("_", " "); return words.charAt(0).toUpperCase() + words.slice(1); };

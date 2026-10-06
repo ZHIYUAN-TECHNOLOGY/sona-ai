@@ -153,7 +153,9 @@ export const patientsRouter = {
       db.select().from(labResults).where(and(eq(labResults.patientId, patient.id), gte(labResults.receivedAt, since), lte(labResults.receivedAt, now))).orderBy(asc(labResults.receivedAt)),
     ]);
     return {
-      observations: series(obs, o => o.kind, o => o.unit, o => ({ at: o.observedAt, value: o.value })).map(({ name: kind, ...s }) => ({ kind, ...s })),
+      // A home reading is never drawn on the same line as a ward observation: one series per kind and source.
+      observations: series(obs, o => `${o.source}:${o.kind}`, o => o.unit, o => ({ at: o.observedAt, value: o.value }))
+        .map(({ name, ...s }) => ({ kind: name.slice(name.indexOf(":") + 1), source: name.startsWith("patient:") ? "patient" as const : "clinical" as const, ...s })),
       labs: series(labs.filter(l => l.value.trim() !== "" && Number.isFinite(Number(l.value))), l => l.test, l => l.unit, l => ({ at: l.receivedAt, value: Number(l.value), flag: l.flag })).map(({ name: test, ...s }) => ({ test, ...s })),
     };
   }),
