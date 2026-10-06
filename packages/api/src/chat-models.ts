@@ -87,7 +87,7 @@ export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Mo
     async answerFromPlan(input) {
       try {
         // Her record first and the leaflets after it, each under its own heading, as a call's chat has them (voice-agent/answer.ts).
-        const read = await chat(`${ANSWER}\n\nPatient's record:\n${input.plan}\n\n${leafletsText(input.passages)}`, `Patient's question (answer in the same language as the question; if unclear, ${LANGUAGE_NAME[input.language]}): ${input.question}`);
+        const read = await chat(`${ANSWER}\n\nPatient's record:\n${input.plan}\n\n${leafletsText(input.passages)}`, `Patient's question, written in ${LANGUAGE_NAME[input.language]}. Answer in ${LANGUAGE_NAME[input.language]}, whatever language her record or the leaflets are in: ${input.question}`);
         if (read && typeof read.answer === "string" && unnumbered(read.answer).trim()) {
           return {
             answer: unnumbered(read.answer).trim().slice(0, 800), grounded: read.grounded === true, urgent: read.urgent === true,
