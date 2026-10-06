@@ -55,3 +55,17 @@ export function toBase64(bytes: Uint8Array): string {
   for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return btoa(s);
 }
+
+/** Where the lead's next step goes: the check-in, the visits, or the medicines. Nothing when nothing is due. */
+export function nextOf(lead: Lead) {
+  if (lead.to) return { label: "Answer now", to: lead.to };
+  if (lead.tone === "soon") return { label: "See follow-ups", to: "/care/follow-ups" as const };
+  if (lead.tone === "info") return { label: "See medicines", to: "/care/medicines" as const };
+  return undefined;
+}
+
+/** The opening sentence of a leaflet, for a one-line summary. */
+export const firstSentence = (text: string) => (text.match(/^[\s\S]*?[.!?。](?=\s|$)/)?.[0] ?? text).trim();
+
+/** Whole days from then to now; never negative. */
+export const daysSince = (at: Date | string, now: Date) => Math.max(0, Math.floor((now.getTime() - new Date(at).getTime()) / 86_400_000));
