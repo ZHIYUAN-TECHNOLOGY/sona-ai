@@ -6,6 +6,8 @@ import { orpc } from "@/lib/orpc";
 
 import { dayWords, timeWords, whenWords, type Lang } from "./dates";
 
+const STEPS = ["Doctor", "Day", "Time", "Review"];
+
 /** Pick a doctor, a clinic day and a time, review the line, then ask. The care team confirms or declines. */
 export function Booking({ lang }: { lang: Lang }) {
   const queryClient = useQueryClient();
@@ -14,7 +16,7 @@ export function Booking({ lang }: { lang: Lang }) {
   const [dayAt, setDayAt] = useState(0);
   const [time, setTime] = useState<number>();
   const [reason, setReason] = useState("");
-  const [review, setReview] = useState(false);
+  const [dayTouched, setDayTouched] = useState(false);
 
   const doctor = doctors.data?.find(d => d.id === doctorId);
   const day = doctor?.nextSlots[dayAt];
@@ -22,14 +24,15 @@ export function Booking({ lang }: { lang: Lang }) {
   const slot = day?.times.find(t => t.getTime() === time);
 
   const request = useMutation(orpc.care.bookings.request.mutationOptions({
-    onSuccess: () => { setTime(undefined); setReason(""); setReview(false); },
+    onSuccess: () => { setTime(undefined); setReason(""); setDayTouched(false); },
     onSettled: () => Promise.all([
       queryClient.invalidateQueries({ queryKey: orpc.care.bookings.list.key() }),
       queryClient.invalidateQueries({ queryKey: orpc.care.doctors.list.key() }),
     ]),
   }));
 
-  const pick = (id: string) => { setDoctorId(id); setDayAt(0); setTime(undefined); request.reset(); };
+  const step = !doctor ? 0 : !slot ? (time === undefined && !dayTouched ? 1 : 2) : 3;
+  const pick = (id: string) => { setDoctorId(id); setDayAt(0); setTime(undefined); setDayTouched(false); request.reset(); };
 
   return (
     <section className="card fu-book" id="book" aria-labelledby="book-title">
@@ -39,6 +42,9 @@ export function Booking({ lang }: { lang: Lang }) {
         : !doctors.data.length ? <p className="fu-muted">No doctors are listed yet. Message your care team to book.</p>
         : (
           <>
+            <ol className="fu-steps" aria-label="Steps">
+              {STEPS.map((s, i) => <li key={s} data-done={i < step || undefined} aria-current={i === step ? "step" : undefined}>{i + 1}. {s}</li>)}
+            </ol>
             <h3 className="fu-step">1. Choose a doctor</h3>
             <ul className="fu-doctors">
               {doctors.data.map(d => (
@@ -53,12 +59,12 @@ export function Booking({ lang }: { lang: Lang }) {
             </ul>
             {doctor ? (
               <>
-                <h3 className="fu-step">2. Choose a time</h3>
+                <h3 className="fu-step">2. Choose a day, then 3. a time</h3>
                 {doctor.nextSlots.length ? (
                   <>
                     <div className="fu-pills" role="group" aria-label="Clinic days">
                       {doctor.nextSlots.map((d, i) => (
-                        <button key={d.day.getTime()} type="button" className="fu-pill" aria-pressed={i === dayAt} onClick={() => { setDayAt(i); setTime(undefined); }}>
+                        <button key={d.day.getTime()} type="button" className="fu-pill" aria-pressed={i === dayAt} onClick={() => { setDayAt(i); setTime(undefined); setDayTouched(true); }}>
                           {dayWords(d.day, lang)}
                         </button>
                       ))}
@@ -76,18 +82,18 @@ export function Booking({ lang }: { lang: Lang }) {
             ) : null}
             {doctor && slot ? (
               <form className="fu-review" onSubmit={e => { e.preventDefault(); request.mutate({ doctorId: doctor.id, startsAt: slot, reason: reason.trim() || undefined }); }}>
-                <h3 className="fu-step">3. Reason</h3>
-                <p><strong>{doctor.name}</strong> · {whenWords(slot, lang)} · {doctor.room}</p>
+                <h3 className="fu-step">4. Review your request</h3>
+                <p className="fu-note" data-tone="info">You are asking for: <strong>{doctor.specialty} visit with {doctor.name}, {whenWords(slot, lang)}</strong>, {doctor.room}.</p>
                 <Field label="Reason (optional)" hint="A few words help the care team.">
                   {c => <input {...c} className="fu-input" maxLength={200} value={reason} onChange={e => setReason(e.target.value)} />}
                 </Field>
-                {review ? <><p className="fu-note" data-tone="info">Please check: <strong>{doctor.name}</strong>, {whenWords(slot, lang)}, {doctor.room}{reason.trim() ? `. Reason: ${reason.trim()}` : ""}.</p><div className="fu-side"><Button variant="primary" type="submit" pending={request.isPending}>Send request</Button><Button onClick={() => setReview(false)}>Change</Button></div></> : <Button variant="primary" onClick={() => setReview(true)}>Review and confirm</Button>}
-                <p className="fu-muted">The care team confirms your request. Nothing is booked until they do.</p>
+                <p className="fu-muted">Nothing is booked until the hospital confirms it. To change it, pick another doctor, day or time above.</p>
+                <Button variant="primary" type="submit" pending={request.isPending}>Confirm request</Button>
               </form>
             ) : doctor?.nextSlots.length ? <p className="fu-muted">Pick a time to continue.</p> : null}
-            <div role="status">
+            <div role="status" aria-live="polite">
               {request.isError ? <p className="fu-note" data-tone="soon">{request.error.message || "We couldn't send your request. Please try again."}</p> : null}
-              {request.isSuccess ? <p className="fu-note" data-tone="done">Request sent. The care team will confirm it. Until then it shows as waiting under Upcoming.</p> : null}
+              {request.isSuccess ? <p className="fu-note" data-tone="done">Request sent. The hospital still has to confirm it. Until then it shows as "Waiting for the hospital" under Upcoming.</p> : null}
             </div>
           </>
         )}
