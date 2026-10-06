@@ -137,7 +137,8 @@ const TOLD = Object.values(LINES).map(l => l.told);
 export function messagesFor(turn: Pick<AnswerTurn, "question" | "history" | "plan" | "language"> & { passages?: Passage[] }): ChatMessage[] {
   const said: ChatMessage[] = [];
   for (const m of [...turn.history, { role: "user" as const, content: turn.question }]) {
-    const last = said.at(-1), content = m.role === "assistant" ? TOLD.reduce((c, t) => c.split(t).join(""), m.content).trim() : m.content;
+    // A triage word that reached an earlier answer (TRIAGE_HEAD) is not shown back to Gemma as its own words.
+    const last = said.at(-1), content = m.role === "assistant" ? TOLD.reduce((c, t) => c.split(t).join(""), m.content.replace(TRIAGE_HEAD, "")).trim() : m.content;
     if (last?.role === m.role) last.content += `\n${content}`;
     else if (last || m.role === "user") said.push({ role: m.role, content });
   }
@@ -148,6 +149,13 @@ export function messagesFor(turn: Pick<AnswerTurn, "question" | "history" | "pla
 type Flags = { triage?: unknown; inPlan?: unknown; cites?: unknown };
 const TRIAGE = ["fine", "worse", "urgent"];
 /**
+ * The triage word heading a reply, with whatever Gemma sets it off by. It was asked for on a line of its own, but on
+ * staging (6 Oct, a long conversation) it also came on the words' own line ("fine You are allergic..."), which was
+ * spoken and kept in the conversation, where Gemma copied it. So a reply's first word, when it is one of the three,
+ * is always the triage word, whatever follows it.
+ */
+const TRIAGE_HEAD = /^\s*(fine|worse|urgent)(?![a-z])[\s.:,;!-]*/i;
+/**
  * What heads Gemma's reply, and the words after it: undefined while it is still coming, null flags when the reply has
  * none (its first words are words). The head is the triage word on its own line (two tokens, where the whole flags line
  * it used to write first cost every answer a third of a second before its first word, measured 6 Oct); the rest of the
@@ -155,7 +163,9 @@ const TRIAGE = ["fine", "worse", "urgent"];
  * sometimes fences the JSON, and the fence goes with it.
  */
 export function flagsOf(text: string, final = false): [Flags | null, string] | undefined {
-  const word = (final ? /^\s*(fine|worse|urgent)[ \t]*(?:\r?\n|$)/i : /^\s*(fine|worse|urgent)[ \t]*\r?\n/i).exec(text);
+  const word = TRIAGE_HEAD.exec(text);
+  // The word is in, but what follows it has not started: one more piece says where the words begin.
+  if (word && !final && word[0].length === text.length) return undefined;
   if (word) return [{ triage: word[1]!.toLowerCase() }, text.slice(word[0].length)];
   const head = /^\s*(?:```(?:json)?\s*)?(\{[\s\S]*?\})[ \t]*(?:\n\s*```)?/.exec(text);
   if (head) return [(jsonIn(head[1]) as Flags | undefined) ?? null, text.slice(head[0].length)];
@@ -163,8 +173,11 @@ export function flagsOf(text: string, final = false): [Flags | null, string] | u
   if (!final && text.length < 400 && (/^\s*(`{1,3}(json)?\s*)?(\{[^}]*)?$/.test(text) || TRIAGE.some(t => t.startsWith(start)))) return undefined;
   return [null, text];
 }
-/** Where the line of JSON closing Gemma's reply starts in the words not yet spoken (a fence goes with it): -1 when it has not. It is never read aloud. */
-export const closingAt = (text: string) => text.search(/(?:^|\n)[ \t]*(?:`{1,3}(?:json)?\s*)?\{/);
+/**
+ * Where the JSON closing Gemma's reply starts in the words not yet spoken (a fence goes with it): -1 when it has not.
+ * It is never read aloud, on a line of its own or not: spoken words hold no brace.
+ */
+export const closingAt = (text: string) => text.search(/\s*(?:`{1,3}(?:json)?\s*)?\{/);
 
 // "Dr." and the like do not end a sentence.
 const ABBREVIATION = /\b(dr|mr|mrs|ms|dato|datin|datuk|puan|encik|e\.g|i\.e|etc|vs|no|tab|caps)\.$/i;

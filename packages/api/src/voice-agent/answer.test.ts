@@ -250,8 +250,16 @@ test("the triage word heads the reply and the rest of the flags close it: the wo
   expect(flagsOf("Urgent \nCall")).toEqual([{ triage: "urgent" }, "Call"]);
   expect(flagsOf("wor")).toBeUndefined(); // still coming
   expect(flagsOf("fine")).toBeUndefined(); // the line has not ended
-  expect(flagsOf("Fine to take with food.")).toEqual([null, "Fine to take with food."]); // words, not the triage line
+  // However Gemma sets the word off, it is the triage word and never spoken: its own line, the words' line, a full stop.
+  expect(flagsOf("fine You are allergic")).toEqual([{ triage: "fine" }, "You are allergic"]);
+  expect(flagsOf("Fine.\n\nYou are")).toEqual([{ triage: "fine" }, "You are"]);
+  expect(flagsOf("fine\n")).toBeUndefined(); // the words have not started
+  expect(flagsOf("Finely chopped garlic helps.")).toEqual([null, "Finely chopped garlic helps."]);
   expect(flagsOf("worse", true)).toEqual([{ triage: "worse" }, ""]);
+  const sameLine = turnOf({ question: "Am I allergic to any medicine?", chat: gemma(["fine You are allergic to penicillin. ", 'Your record says it causes a rash. {"inPlan": true, "cites": []}']).chat });
+  expect(await spoken(sameLine.turn)).toEqual(["You are allergic to penicillin.", "Your record says it causes a rash."]);
+  // A triage word that reached an earlier answer is not shown back to Gemma.
+  expect(messagesFor({ question: "And my next visit?", plan: PLAN, language: "en", history: [{ role: "user", content: "Am I allergic?" }, { role: "assistant", content: "fine You are allergic to penicillin." }] })[2]!.content).toBe("You are allergic to penicillin.");
   expect(closingAt('Rest well.\n{"inPlan"')).toBe(10);
   expect(closingAt("Rest well. Drink water.")).toBe(-1);
 });
