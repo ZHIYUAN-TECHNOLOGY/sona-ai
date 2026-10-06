@@ -1,3 +1,4 @@
+import { can } from "@sona-ai/api/roles";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page";
@@ -43,7 +44,7 @@ function Page() {
             <Button onClick={() => void signOut("pro")}>Sign out</Button>
           </div>
         </Card>
-        <Watches role={me.role} />
+        {can(me.role, "watches.list") ? <Watches role={me.role} /> : null}
         <DemoClock />
       </div>
     </>

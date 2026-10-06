@@ -1,4 +1,5 @@
 import { Link, Outlet } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
 import { signOut } from "@/lib/session";
 import { SonaAnswers, SonaProvider } from "@/lib/sona";
@@ -7,7 +8,7 @@ import type { NavGroup } from "@/nav";
 import { SonaBar } from "./sona-bar";
 
 /** Sidebar, the page, and the Sona bar under every page. `app` picks the theme (tokens.css). */
-export function Frame({ app, brand, groups, who }: { app: "pro" | "care"; brand: string; groups: NavGroup[]; who: string }) {
+export function Frame({ app, brand, groups, who, instead }: { app: "pro" | "care"; brand: string; groups: NavGroup[]; who: string; /** Shown in place of the page (a page this role may not open). */ instead?: ReactNode }) {
   return (
     <div className={`${app} frame`}>
       <nav className="frame-side" aria-label={brand}>
@@ -31,8 +32,12 @@ export function Frame({ app, brand, groups, who }: { app: "pro" | "care"; brand:
         <SonaProvider app={app}>
           <main className="frame-scroll">
             <div className="frame-page">
-              <SonaAnswers />
-              <Outlet />
+              {instead ?? (
+                <>
+                  <SonaAnswers />
+                  <Outlet />
+                </>
+              )}
             </div>
           </main>
           <div className="frame-bar">
