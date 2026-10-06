@@ -20,3 +20,17 @@
 .vs-blank .empty { max-width: 34rem; margin-inline: auto; font-size: max(17px, 1em); line-height: 1.5; }
 
 @media (max-width: 900px) { .vs-split[data-several] { grid-template-columns: minmax(0, 1fr); } }
+
+/* The document reads first; the plain-words panel sits beside it. */
+@media (min-width: 901px) {
+  .vs-summary { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .vs-summary > * { grid-column: 2; }
+  .vs-summary > .vs-full { grid-column: 1; grid-row: 1 / span 3; }
+}
+/* "Download PDF" is the browser's print: only the summary, black on white. */
+@media print {
+  .frame-side, .frame-bar, .sona-bar, .vs-page > :not(.vs-split), .vs-split > :not(.vs-summary), .vs-summary > :not(.vs-full) { display: none !important; }
+  .frame-main, .frame-scroll, .frame-page { overflow: visible !important; height: auto !important; }
+  .vs-page, .vs-summary { display: block; max-width: none; }
+  .vs-full, .vs-full * { border: 0; box-shadow: none; padding-inline: 0; background: white !important; color: black !important; }
+}

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Chip, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, ListRow, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { Booking } from "@/features/care-follow-ups/booking";
 import { browserLang, dayKey, dayWords, whenWords } from "@/features/care-follow-ups/dates";
 import { downloadIcs } from "@/features/care-follow-ups/ics";
@@ -77,7 +77,7 @@ function Page() {
               <p className="fu-muted">{whenWords(next.date, lang)}</p>
               <p>{next.why}</p>
               <div className="fu-side">
-                <Button variant="primary" icon="calendar" onClick={() => addToCalendar(next)}>Add to calendar</Button>
+                <Button variant="secondary" icon="calendar" onClick={() => addToCalendar(next)}>Add to calendar</Button>
                 {p ? <Button variant="secondary" onClick={toPrep}>Prepare</Button> : null}
               </div>
             </>
@@ -97,7 +97,7 @@ function Page() {
         </Card>
         <StatRow>
           <StatCard title="Visits coming up" value={upcoming.length} caption={waiting.length ? `${waiting.length} more waiting for the care team` : "Booked with the hospital"} />
-          <StatCard title="Last visit" value={past[0] ? dayWords(past[0].date, lang) : "None"} caption={past[0]?.title ?? "Past visits show here"} />
+          {past[0] ? <StatCard title="Last visit" value={dayWords(past[0].date, lang)} caption={past[0].title} /> : null}
         </StatRow>
       </div>
 
@@ -114,14 +114,14 @@ function Page() {
                 {upcoming.map(v => {
                   const d = booked.get(v.id);
                   return (
-                    <li key={v.id}>
-                      <div>
-                        <strong>{v.title}</strong>
-                        <span>{whenWords(v.date, lang)}{d ? ` · ${d.doctorName} · ${d.room}` : ""}</span>
-                        <span><Chip tone={d ? "done" : "neutral"}>{d ? "Confirmed" : inWords(v.inDays)}</Chip></span>
-                      </div>
-                      {p?.appointment?.id === v.id ? <Button onClick={toPrep}>Prepare</Button> : null}
-                    </li>
+                    <ListRow key={v.id} icon="calendar" title={v.title}
+                      caption={`${whenWords(v.date, lang)}${d ? ` · ${d.doctorName} · ${d.room}` : ""}`}
+                      trailing={
+                        <span className="fu-row-end">
+                          <Chip tone={d ? "done" : "neutral"}>{d ? "Confirmed" : inWords(v.inDays)}</Chip>
+                          {p?.appointment?.id === v.id ? <Button onClick={toPrep}>Prepare</Button> : null}
+                        </span>
+                      } />
                   );
                 })}
                 {open.map(r => (
