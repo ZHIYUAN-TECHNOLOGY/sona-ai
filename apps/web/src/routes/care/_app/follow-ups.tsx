@@ -8,6 +8,7 @@ import { Booking } from "@/features/care-follow-ups/booking";
 import { browserLang, dayKey, whenWords } from "@/features/care-follow-ups/dates";
 import { downloadIcs } from "@/features/care-follow-ups/ics";
 import { MonthCalendar, type Mark } from "@/features/care-follow-ups/month-calendar";
+import { VisitPrep } from "@/features/care-readings/visit-prep";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-follow-ups.css";
 
@@ -69,6 +70,7 @@ function Page() {
           <InsightCard sources={1} lead="You have no visits coming up." next={{ label: "Book a visit", onAct: toBooking }} />
         )}
       </InsightRow>
+      <VisitPrep />
 
       <div className="fu-cols">
         <MonthCalendar today={dayKey(now)} marks={marks} lang={lang} />
