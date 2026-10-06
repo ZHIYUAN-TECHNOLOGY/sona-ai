@@ -6,10 +6,14 @@
 .table-toolbar { border-bottom: 1px solid var(--hairline); }
 .table-foot { border-top: 1px solid var(--hairline); }
 .table-count, .cell-muted { font-size: var(--text-small); color: var(--muted); }
+/* Rows start a step below the header line. A selected or hovered row is one rounded band: no hairline cuts its corners, above or below. */
+.table tbody::before { content: ""; display: block; height: var(--space-2); }
 .table tbody tr[data-selected] > * { background: var(--fill-selected); }
-.table tbody tr[data-selected] > :first-child { border-radius: var(--radius-control) 0 0 var(--radius-control); }
-.table tbody tr[data-selected] > :last-child { border-radius: 0 var(--radius-control) var(--radius-control) 0; }
-.table-row-open:hover { background: var(--fill-hover); }
+.table-row-open:hover { background: none; }
+.table-row-open:hover:not([data-selected]) > * { background: var(--fill-hover); }
+.table tbody tr:is([data-selected], .table-row-open:hover) > :first-child { border-radius: var(--radius-control) 0 0 var(--radius-control); }
+.table tbody tr:is([data-selected], .table-row-open:hover) > :last-child { border-radius: 0 var(--radius-control) var(--radius-control) 0; }
+.table tbody tr:is([data-selected], .table-row-open:hover) > *, .table tbody tr:has(+ tr:is([data-selected], .table-row-open:hover)) > * { border-bottom-color: transparent; }
 .table-row-open:focus-visible { outline: 0; box-shadow: inset var(--focus-ring); }
 .table-skel { display: block; height: 12px; max-width: 160px; border-radius: var(--radius-pill); background: var(--fill-field); animation: table-skel 1.2s var(--ease) infinite alternate; }
 @keyframes table-skel { to { opacity: 0.45; } }
