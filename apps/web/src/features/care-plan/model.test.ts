@@ -1,7 +1,18 @@
 // @ts-ignore -- apps/web has no Bun types installed; drop this line once @types/bun is a devDependency.
 import { expect, test } from "bun:test";
 
-import { afterReply, currentCheckIn, langOf, leadOf, nextCheckIn, toBase64 } from "./model";
+import { afterReply, currentCheckIn, daysSince, firstSentence, langOf, leadOf, nextCheckIn, nextOf, toBase64 } from "./model";
+
+test("discharge plan helpers: next step, first sentence, days since", () => {
+  expect(nextOf({ tone: "soon", title: "", text: "", to: "/care/check-ins" })?.to).toBe("/care/check-ins");
+  expect(nextOf({ tone: "soon", title: "", text: "" })?.to).toBe("/care/follow-ups");
+  expect(nextOf({ tone: "info", title: "", text: "" })?.to).toBe("/care/medicines");
+  expect(nextOf({ tone: "done", title: "", text: "" })).toBeUndefined();
+  expect(firstSentence("You had a chest infection. Rest at home.")).toBe("You had a chest infection.");
+  expect(firstSentence("No full stop")).toBe("No full stop");
+  expect(daysSince("2026-10-01T10:00:00Z", new Date("2026-10-04T09:00:00Z"))).toBe(2);
+  expect(daysSince("2026-10-05T10:00:00Z", new Date("2026-10-04T09:00:00Z"))).toBe(0);
+});
 
 test("language falls back to English", () => {
   expect(langOf("ms-MY")).toBe("ms");
