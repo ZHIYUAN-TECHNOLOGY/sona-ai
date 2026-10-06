@@ -15,6 +15,7 @@ import { useListen } from "@/lib/listen";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import "./strings";
 import { orbPad, SonaOrb } from "@/lib/orb";
+import { VoiceGlow } from "@/lib/voice-glow";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
 import { Icon, type IconName } from "@/lib/icons";
@@ -25,7 +26,7 @@ import { Button, CircleButton } from "@/lib/ui";
  * back; the orb in the middle with one honest line under it ("Tap to hear it", "Reading aloud…"); the
  * answer large and centred, the words already read in ink and the rest faint (karaoke on the phone's
  * word boundaries; all ink where the phone sends none); the plan's questions under it; and a bottom
- * row of the voice picker, the mic (talk / stop) and the keyboard back to text. Talking is a hands-free
+ * row of the mic (talk / stop) and the keyboard back to text (the voice is picked once, the first time). Talking is a hands-free
  * conversation, turn by turn: the patient speaks, the turn ends when they pause, Sona answers aloud,
  * then listens again, until they tap stop or go quiet. It only says it is listening while the mic is on,
  * and with no speech model switched on it says so plainly; tapping a question still reads its answer.
@@ -43,6 +44,7 @@ import { Button, CircleButton } from "@/lib/ui";
  */
 const KEY = "sona-care.voice";
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
+const EASE_IN_OUT = Easing.bezier(0.77, 0, 0.175, 1);
 /** A question to offer and its small line icon (a missed dose, a medicine, a visit, a doctor). */
 export type Suggestion = { question: string; icon: IconName };
 export const SUGGEST_ICON: Record<Asked["kind"] | "doctor", IconName> = { dose: "alarm", medicine: "pill", visit: "calendar", doctor: "doctor" };
@@ -60,13 +62,15 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
   const [speaking, setSpeaking] = useState(false);
   // 0 quiet, 1 speaking: floods the orb.
   const talk = useSharedValue(0);
+  // The glow along the bottom: the voice in the room (0–1), thinking (0–1, the sweeping beam), and shown (0–1).
+  const level = useSharedValue(0), think = useSharedValue(0), glowOn = useSharedValue(0);
   // Each utterance gets a number, so a stopped one's late callback can't touch the next one.
   const turn = useRef(0);
   // In a conversation: after each answer is read, the mic opens again by itself.
   const [talking, setTalking] = useState(false);
   const [heard, setHeard] = useState<string>();
   const listen = useListen({ language, onHeard: q => { setHeard(q); void ask(q); } });
-  const live = useLiveVoice({ voice, voices, onFlood: n => talk.set(still ? 0 : withTiming(n, { duration: 160, easing: EASE_OUT })) });
+  const live = useLiveVoice({ voice, voices, onFlood: (n, l) => { talk.set(still ? 0 : withTiming(n, { duration: 160, easing: EASE_OUT })); level.set(withTiming(l, { duration: 120 })); } });
   const inCall = live.phase === "on";
   // When a call ends, its last exchange stays on screen, and the orb can read it again.
   useEffect(() => {
@@ -161,12 +165,22 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
   const status = inCall ? (live.audible || live.status === "speaking" ? t("voice.liveSpeaking") : live.status === "thinking" ? t("voice.thinking") : live.status === "listening" ? t("voice.listening") : t("voice.connecting"))
     : listen.state === "listening" ? t("voice.listening") : listen.state === "reading" ? t("voice.thinking") : preparing ? t("voice.preparing") : speaking ? t("voice.readingAloud")
       : note ?? (said ? t("voice.again") : t("voice.start"));
+  const thinking = inCall ? live.status === "thinking" && !live.audible : listen.state === "reading" || preparing;
+  const listening = !inCall && listen.state === "listening";
+  const glowing = inCall || listening || thinking || speaking;
+  useEffect(() => { glowOn.set(withTiming(glowing ? 1 : 0, { duration: glowing ? 300 : 700, easing: EASE_OUT })); }, [glowing]);
+  useEffect(() => { think.set(withTiming(thinking ? 1 : 0, { duration: 500, easing: EASE_IN_OUT })); }, [thinking]);
+  // Turn by turn: the mic's -60 dB (quiet) to -10 dB (loud), or a steady bloom while Sona reads. In a call, live sends it.
+  useEffect(() => {
+    if (!inCall) level.set(withTiming(listening ? Math.max(0, Math.min(1, (listen.level + 60) / 50)) : speaking && !preparing ? 0.55 : 0, { duration: 120 }));
+  }, [inCall, listening, listen.level, speaking, preparing]);
   const warn = !inCall && status === note && (listen.state === "error" || !listen.error);
 
   if (!voices) return <ActivityIndicator color={palette.muted} style={{ flex: 1 }} />;
   if (picking || !voice) return <Picker voices={voices} initial={Math.max(0, voices.findIndex(v => v.id === voice?.id))} onPreview={v => speak(preview(v, lang), v, false, true)} note={starting} onStart={start} onClose={() => leave(voice ? () => setPicking(false) : onChat)} />;
 
   return <View style={{ flex: 1, paddingTop: insets.top + 8 }}>
+    <VoiceGlow level={level} think={think} on={glowOn} active={glowing} />
     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16 }}>
       <CircleButton icon="back" label={t("voice.backToChat")} onPress={() => leave(onChat)} />
       <Text accessibilityRole="header" style={{ flex: 1, textAlign: "center", fontSize: 20, lineHeight: 26, fontWeight: "600", letterSpacing: -0.6, color: palette.ink }}>Sona Care</Text>
@@ -190,7 +204,7 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
     </ScrollView>
     <Animated.View entering={still ? undefined : FadeIn.duration(260).delay(160)}
       style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 36, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 16) }}>
-      {inCall ? <View style={{ width: 56 }} /> : <CircleButton icon="person" size={56} label={t("voice.choose", { name: voice.name })} onPress={() => { stop(); setPicking(true); }} />}
+      <View style={{ width: 56 }} />
       <Pressable accessibilityRole="button" accessibilityLabel={inCall ? t("voice.end") : speaking ? t("voice.stop") : listen.state === "listening" ? t("voice.sendSaid") : t("voice.talk")}
         accessibilityHint={inCall || speaking || listen.state === "listening" ? undefined : t("voice.talkHint")}
         accessibilityState={{ busy: listen.state === "reading" }} disabled={listen.state === "reading"} onPress={main}
