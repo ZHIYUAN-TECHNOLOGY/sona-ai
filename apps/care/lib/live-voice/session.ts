@@ -40,10 +40,17 @@ let recorder: Audio.AudioRecorder | undefined;
 // A call waits for the last one to let go of the mic and the audio session.
 let released: Promise<unknown> = Promise.resolve();
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+/** How long a tap on the mic waits for the agent to answer the socket before the call counts as failed. */
+const READY_MS = 2500;
 
 export function connectLive(url: string, cookie: string | undefined, on: LiveHandlers) {
   const api = require("react-native-audio-api") as typeof Audio;
-  let talk = quiet, g = gate(), phone = false, ctx: Audio.AudioContext | undefined, starting: Promise<"ok" | "mic" | "failed"> | undefined;
+  let talk = quiet, g = gate(), phone = false, ctx: Audio.AudioContext | undefined, starting: Promise<"ok" | "mic" | "failed" | "ended"> | undefined;
+  // The agent's welcome, or the socket closing first: a tap that came before either waits here (READY_MS at most).
+  let welcomed = (_ok: boolean) => {};
+  const ready = new Promise<boolean>(resolve => { welcomed = resolve; });
+  // The patient still wants the call: ending it while it is starting stops the start.
+  let wanted = false;
   // Every stop starts a new generation, so a chunk still decoding when Sona was stopped never plays.
   let generation = 0, decoding = Promise.resolve();
   const queue = new Playback();
@@ -139,33 +146,42 @@ export function connectLive(url: string, cookie: string | undefined, on: LiveHan
     // The agent cut her off, or heard the patient's next words while she still played: she stops.
     if (event.type === "playback_interrupt" || (event.type === "transcript" && event.role === "user" && audible())) hush();
     act(event);
+    if (talk.ready) welcomed(true);
     if (event.type === "sona_say") read(event.text);
     // The agent ended the call (refused it, or its speech recognition failed).
     if (talk.call === "off") stopAudio();
   };
-  ws.onclose = () => { stopAudio(); on.closed(); };
+  ws.onclose = () => { welcomed(false); stopAudio(); on.closed(); };
   ws.onerror = () => { /* onclose follows */ };
 
   const end = () => {
+    wanted = false;
     if (talk.call !== "off") { send({ type: "end_call" }); act({ type: "hang_up" }); }
     stopAudio();
   };
 
   return {
-    /** Starts the call: the mic permission first ("mic" if refused), then start_call, then the phone's audio. */
+    /**
+     * Starts the call: waits for the agent if the socket is still opening (READY_MS at most), then the mic permission
+     * ("mic" if refused), then start_call, then the phone's audio. "ended": the patient ended it while it was starting.
+     */
     start() {
       starting ??= (async () => {
         if (talk.call !== "off") return "ok" as const;
-        if (!open()) return "failed" as const;
+        wanted = true;
+        if (!await Promise.race([ready, sleep(READY_MS).then(() => false)]) || !open()) return "failed" as const;
+        if (!wanted) return "ended" as const;
         const allowed = await api.AudioManager.requestRecordingPermissions().catch(() => "Denied");
         if (allowed !== "Granted") return "mic" as const;
+        if (!wanted) return "ended" as const;
         act({ type: "call" });
         send({ type: "start_call" });
         const started = await startAudio().catch(() => false);
         // The agent may have refused the call while the audio was starting.
         if (started && talk.call !== "off") return "ok" as const;
+        const ended = !wanted;
         end();
-        return "failed" as const;
+        return ended ? "ended" as const : "failed" as const;
       })().finally(() => { starting = undefined; });
       return starting;
     },
