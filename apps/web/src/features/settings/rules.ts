@@ -36,4 +36,12 @@ const TIME = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kuala_Lumpur", w
 /** The hospital's time (Kuala Lumpur), such as "Wed 30 Sept, 10:02". */
 export const hospitalTime = (at: Date) => TIME.format(at);
 
-export const hourLabel = (hour: number) => `${String(hour).padStart(2, "0")}:00`;
+/** How far the demo clock is from real time, in plain words: "2 days ahead of real time". */
+export function offsetText(ms: number) {
+  const hours = Math.round(Math.abs(ms) / 3_600_000);
+  if (!hours) return "on real time";
+  const [n, unit] = hours >= 24 ? [Math.round(hours / 24), "day"] : [hours, "hour"];
+  return `${n} ${unit}${n === 1 ? "" : "s"} ${ms > 0 ? "ahead of" : "behind"} real time`;
+}
+
+export const hourLabel =(hour: number) => `${String(hour).padStart(2, "0")}:00`;

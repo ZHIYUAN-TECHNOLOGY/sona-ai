@@ -2,9 +2,10 @@ import { can } from "@sona-ai/api/roles";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/page";
-import { Avatar, Button, Card, Chip } from "@/components/primitives";
+import { Avatar, Button } from "@/components/primitives";
 import { DemoClock } from "@/features/settings/demo-clock";
 import { roleAreas } from "@/features/settings/rules";
+import { Section } from "@/features/settings/section";
 import { Watches } from "@/features/settings/watches";
 import { signOut } from "@/lib/session";
 import "@/styles/pages/settings.css";
@@ -16,34 +17,32 @@ function Page() {
   const areas = roleAreas(me.role);
   return (
     <>
-      <PageHeader title="Settings" />
+      <PageHeader title="Settings" lead="Your account, the questions Sona watches for you, and the demo hospital's clock." />
       <div className="settings">
-        <Card title="Account">
+        <Section title="Account" description="Who you are signed in as. Your hospital sets your role.">
           <div className="settings-account">
-            <Avatar name={me.name} />
+            <Avatar name={me.name} size="lg" />
             <div>
-              <p className="settings-lead">{me.name}</p>
-              <p className="settings-muted">{me.email}</p>
+              <p className="settings-name">{me.name}</p>
+              <p className="settings-muted">{[me.label, me.email].filter(Boolean).join(" · ")}</p>
             </div>
-            <Chip>{me.label}</Chip>
+            <Button variant="secondary" onClick={() => void signOut("pro")}>Sign out</Button>
           </div>
-          <h3 className="settings-sub">What a {me.label.toLowerCase()} can and can't do</h3>
-          <dl className="settings-areas">
-            {areas.map(({ area, can, cannot }) => (
-              <div key={area}>
-                <dt>{area}</dt>
-                <dd>
-                  {can.length ? <span>Can {can.join(", ")}.</span> : null}
-                  {cannot.length ? <span className="settings-muted"> Can't {cannot.join(", ")}.</span> : null}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <p className="settings-muted">Everything else is open to every role. Your hospital sets your role.</p>
-          <div className="settings-actions">
-            <Button onClick={() => void signOut("pro")}>Sign out</Button>
-          </div>
-        </Card>
+          {areas.length ? (
+            <dl className="settings-rows">
+              {areas.map(({ area, can, cannot }) => (
+                <div key={area}>
+                  <dt>{area}</dt>
+                  <dd>
+                    {can.length ? <span>Can {can.join(", ")}.</span> : null}
+                    {cannot.length ? <span className="settings-muted"> Can't {cannot.join(", ")}.</span> : null}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          <p className="settings-muted">Everything not listed is open to every role.</p>
+        </Section>
         {can(me.role, "watches.list") ? <Watches role={me.role} /> : null}
         <DemoClock />
       </div>
