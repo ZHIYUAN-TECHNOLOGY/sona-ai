@@ -34,7 +34,7 @@ export function Explain({ resultId, lang }: { resultId: string; lang: "en" | "ms
           {q.isError && !q.isFetching ? <p className="res-note">Sona can't explain this result right now. Please try again in a minute.</p> : null}
         </>
       )}
-      <p className="res-ask"><Link to="/care/messages">Ask your care team if you are unsure</Link></p>
+      <p className="res-ask"><Link to="/care/ask">Ask about this result</Link></p>
     </div>
   );
 }
