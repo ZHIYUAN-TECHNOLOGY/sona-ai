@@ -1,5 +1,6 @@
 import { Link, Outlet } from "@tanstack/react-router";
 
+import { signOut } from "@/lib/session";
 import { SonaAnswers, SonaProvider } from "@/lib/sona";
 import type { NavGroup } from "@/nav";
 
@@ -21,7 +22,10 @@ export function Frame({ app, brand, groups, who }: { app: "pro" | "care"; brand:
             ))}
           </div>
         ))}
-        <div className="frame-who">{who}</div>
+        <div className="frame-who">
+          {who}
+          <button type="button" className="frame-out" onClick={() => signOut(app)}>Sign out</button>
+        </div>
       </nav>
       <div className="frame-main">
         <SonaProvider app={app}>

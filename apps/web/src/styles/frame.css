@@ -19,3 +19,4 @@
 .empty { padding: var(--space-6); border: 1px dashed var(--line); border-radius: var(--radius-card); color: var(--muted); text-align: center; }
 
 @media (max-width: 860px) { .frame { grid-template-columns: minmax(0, 1fr); } .frame-side { display: none; } .frame-scroll { padding-inline: var(--space-4); } }
+.frame-out { display: block; min-height: var(--tap); margin-top: var(--space-1); padding: 0; border: 0; background: none; color: var(--blue); cursor: pointer; }
