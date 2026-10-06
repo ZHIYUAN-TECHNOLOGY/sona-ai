@@ -14,6 +14,7 @@ export function Booking({ lang }: { lang: Lang }) {
   const [dayAt, setDayAt] = useState(0);
   const [time, setTime] = useState<number>();
   const [reason, setReason] = useState("");
+  const [review, setReview] = useState(false);
 
   const doctor = doctors.data?.find(d => d.id === doctorId);
   const day = doctor?.nextSlots[dayAt];
@@ -21,7 +22,7 @@ export function Booking({ lang }: { lang: Lang }) {
   const slot = day?.times.find(t => t.getTime() === time);
 
   const request = useMutation(orpc.care.bookings.request.mutationOptions({
-    onSuccess: () => { setTime(undefined); setReason(""); },
+    onSuccess: () => { setTime(undefined); setReason(""); setReview(false); },
     onSettled: () => Promise.all([
       queryClient.invalidateQueries({ queryKey: orpc.care.bookings.list.key() }),
       queryClient.invalidateQueries({ queryKey: orpc.care.doctors.list.key() }),
@@ -75,18 +76,18 @@ export function Booking({ lang }: { lang: Lang }) {
             ) : null}
             {doctor && slot ? (
               <form className="fu-review" onSubmit={e => { e.preventDefault(); request.mutate({ doctorId: doctor.id, startsAt: slot, reason: reason.trim() || undefined }); }}>
-                <h3 className="fu-step">3. Check and ask</h3>
+                <h3 className="fu-step">3. Reason</h3>
                 <p><strong>{doctor.name}</strong> · {whenWords(slot, lang)} · {doctor.room}</p>
                 <Field label="Reason (optional)" hint="A few words help the care team.">
                   {c => <input {...c} className="fu-input" maxLength={200} value={reason} onChange={e => setReason(e.target.value)} />}
                 </Field>
-                <Button variant="primary" type="submit" pending={request.isPending}>Request appointment</Button>
+                {review ? <><p className="fu-note" data-tone="info">Please check: <strong>{doctor.name}</strong>, {whenWords(slot, lang)}, {doctor.room}{reason.trim() ? `. Reason: ${reason.trim()}` : ""}.</p><div className="fu-side"><Button variant="primary" type="submit" pending={request.isPending}>Send request</Button><Button onClick={() => setReview(false)}>Change</Button></div></> : <Button variant="primary" onClick={() => setReview(true)}>Review and confirm</Button>}
                 <p className="fu-muted">The care team confirms your request. Nothing is booked until they do.</p>
               </form>
             ) : doctor?.nextSlots.length ? <p className="fu-muted">Pick a time to continue.</p> : null}
             <div role="status">
               {request.isError ? <p className="fu-note" data-tone="soon">{request.error.message || "We couldn't send your request. Please try again."}</p> : null}
-              {request.isSuccess ? <p className="fu-note" data-tone="soon">Request sent. It is waiting for the care team. See "Your requests".</p> : null}
+              {request.isSuccess ? <p className="fu-note" data-tone="done">Request sent. The care team will confirm it. Until then it shows as waiting under Upcoming.</p> : null}
             </div>
           </>
         )}
