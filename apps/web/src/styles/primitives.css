@@ -135,3 +135,7 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 .pro .empty { border: 0; background: var(--surface); border-radius: var(--radius-card); }
 /* frame.css adds a top margin to the subtitle on top of the header's own gap. */
 .pro .page-header p { margin: 0; }
+/* Header actions are the tall pills; a stat head keeps its height without a corner arrow. */
+.pro .page-actions .btn { min-height: var(--pill-h); padding: 0 var(--space-5); }
+.pro .page-actions .icon-btn { width: var(--pill-h); height: var(--pill-h); padding: 0; }
+.stat-head { min-height: 32px; }

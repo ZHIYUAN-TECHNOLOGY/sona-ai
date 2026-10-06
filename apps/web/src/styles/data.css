@@ -6,7 +6,9 @@
 .table-toolbar { border-bottom: 1px solid var(--hairline); }
 .table-foot { border-top: 1px solid var(--hairline); }
 .table-count, .cell-muted { font-size: var(--text-small); color: var(--muted); }
-.table tbody tr[data-selected] { background: var(--fill-selected); }
+.table tbody tr[data-selected] > * { background: var(--fill-selected); }
+.table tbody tr[data-selected] > :first-child { border-radius: var(--radius-control) 0 0 var(--radius-control); }
+.table tbody tr[data-selected] > :last-child { border-radius: 0 var(--radius-control) var(--radius-control) 0; }
 .table-row-open:hover { background: var(--fill-hover); }
 .table-row-open:focus-visible { outline: 0; box-shadow: inset var(--focus-ring); }
 .table-skel { display: block; height: 12px; max-width: 160px; border-radius: var(--radius-pill); background: var(--fill-field); animation: table-skel 1.2s var(--ease) infinite alternate; }
