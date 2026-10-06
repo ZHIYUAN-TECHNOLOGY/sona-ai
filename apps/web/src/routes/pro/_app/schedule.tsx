@@ -2,9 +2,10 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Fragment, useState } from "react";
 
-import { InsightCard, InsightRow } from "@/components/insight-card";
+import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button } from "@/components/primitives";
+import { Button, Card, StatCard, StatRow } from "@/components/primitives";
+import { WithRail } from "@/components/rail";
 import { addDays, dateKey, dayLabel, hourOf, longLabel, timeOf, weekOf } from "@/features/today/time";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/today.css";
@@ -40,33 +41,43 @@ function Page() {
 
   return (
     <>
-      <PageHeader title="Schedule" lead={`${longLabel(days[0]!)} to ${longLabel(days[6]!)}`}>
-        <Button onClick={() => setWeeksAhead(w => w - 1)} aria-label="Week before">‹</Button>
-        <Button onClick={() => setWeeksAhead(0)} disabled={weeksAhead === 0}>This week</Button>
-        <Button onClick={() => setWeeksAhead(w => w + 1)} aria-label="Week after">›</Button>
-      </PageHeader>
+      <PageHeader
+        title="Schedule"
+        lead={`${longLabel(days[0]!)} to ${longLabel(days[6]!)}${loading || failed ? "" : ` · ${visits.length} ${visits.length === 1 ? "visit" : "visits"}${slots.data ? ` · ${open.length} open ${open.length === 1 ? "slot" : "slots"}` : ""}`}`}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setWeeksAhead(w => w - 1)} aria-label="Week before">‹</Button>
+            <Button variant="secondary" onClick={() => setWeeksAhead(w => w + 1)} aria-label="Week after">›</Button>
+            <Button variant="primary" onClick={() => setWeeksAhead(0)} disabled={weeksAhead === 0}>This week</Button>
+          </>
+        }
+      />
 
       {loading || failed ? null : (
-        <InsightRow>
+        <StatRow>
+          <StatCard feature title="Visits this week" value={visits.length} caption={visits.length ? `${dayLabel(days[busiest]!)} is the fullest` : "None booked"} />
+          <StatCard title="Fullest day" value={visits.length ? perDay[busiest] : 0} unit="visits" caption={visits.length ? dayLabel(days[busiest]!) : "No visits"} />
+          {slots.data ? <StatCard title="Open slots" value={open.length} chip={open.length ? undefined : "Full"} tone="soon" caption={slots.data.doctor.name} /> : null}
+        </StatRow>
+      )}
+
+      <WithRail
+        rail={loading || failed ? null : (
           <InsightCard
+            label="Sona AI"
+            meta="Schedule check"
+            title="This week"
             tone={visits.length ? "info" : "done"}
             lead={visits.length
               ? `${visits.length} ${visits.length === 1 ? "visit" : "visits"} this week; ${dayLabel(days[busiest]!)} is the fullest with ${perDay[busiest]}.`
               : "No visits are booked this week."}
-            sources={visits.length}
+            evidence={slots.data ? [{ text: `${slots.data.doctor.name} has ${open.length} open ${open.length === 1 ? "slot" : "slots"} this week` }] : undefined}
+            next={weeksAhead === 0 ? { label: "Open today", to: "/pro/today" } : undefined}
+            sources={visits.length + open.length}
           />
-          {slots.data ? (
-            <InsightCard
-              tone={open.length ? "done" : "soon"}
-              lead={open.length
-                ? `${slots.data.doctor.name} has ${open.length} open ${open.length === 1 ? "slot" : "slots"} this week.`
-                : `${slots.data.doctor.name} has no open slots this week.`}
-              sources={open.length}
-            />
-          ) : null}
-        </InsightRow>
-      )}
-
+        )}
+      >
+        <Card title="Week calendar">
       {loading ? <EmptyState>Loading the week…</EmptyState>
         : failed ? <EmptyState>The week could not be loaded. {failed.error?.message}</EmptyState>
           : (
@@ -100,7 +111,9 @@ function Page() {
               </div>
             </div>
           )}
-      {slots.isError ? <p className="today-quiet">Open slots are not shown: {slots.error.message}</p> : null}
+          {slots.isError ? <p className="today-quiet">Open slots are not shown: {slots.error.message}</p> : null}
+        </Card>
+      </WithRail>
     </>
   );
 }

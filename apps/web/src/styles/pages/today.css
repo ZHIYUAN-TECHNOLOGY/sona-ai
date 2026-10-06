@@ -6,7 +6,7 @@
 .today-error { color: var(--red); font-size: var(--text-small); }
 
 .today-requests { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
-.today-request { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); }
+.today-request { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3) 0; border-top: 1px solid var(--line); }
 .today-request p { margin: 0; }
 .today-request-who { font-weight: 600; }
 .today-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
@@ -28,3 +28,11 @@
 a.schedule-visit:hover, a.schedule-visit:focus-visible { border-color: var(--blue); }
 .schedule-visit small { display: block; color: var(--muted); }
 .schedule-open { padding: var(--space-1) var(--space-2); border: 1px dashed var(--green); border-radius: var(--space-2); color: var(--green); font-size: var(--text-small); font-variant-numeric: tabular-nums; }
+.today-pad { margin: 0; padding: var(--space-3) 0; }
+/* Inside the card: no second frame; visits are tinted blocks, today's column header an ink pill. */
+.schedule-scroll { border: 0; border-radius: 0; }
+.schedule-head { text-align: center; text-transform: uppercase; letter-spacing: 0.04em; }
+.schedule-head[aria-current] { color: var(--surface); background: var(--ink); border-radius: var(--radius-control); }
+.schedule-hour { text-align: right; }
+.schedule-visit { background: var(--blue-wash); border-color: transparent; border-left-color: transparent; font-size: var(--text-small); text-decoration: none; color: var(--ink); }
+.schedule-cell[data-today] .schedule-visit { background: var(--surface); border-color: var(--line); }
