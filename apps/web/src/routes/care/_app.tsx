@@ -19,5 +19,5 @@ export const Route = createFileRoute("/care/_app")({
 
 function CareFrame() {
   const { me } = Route.useRouteContext();
-  return <Frame app="care" brand="Sona Care" groups={CARE_NAV} who={`${me.name} · ${me.hospital}`} />;
+  return <Frame app="care" brand="Sona Care" groups={CARE_NAV} name={me.name} who={me.hospital} />;
 }
