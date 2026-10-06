@@ -77,3 +77,8 @@
 .with-rail { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--space-5); align-items: start; }
 .with-rail-main, .rail { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 @media (max-width: 1080px) { .with-rail { grid-template-columns: minmax(0, 1fr); } }
+
+/* Letter avatar (components/avatar.tsx). */
+.avatar { flex: none; display: inline-grid; place-items: center; width: var(--avatar-md); height: var(--avatar-md); border-radius: 50%; background: hsl(var(--avatar-hue) 55% 90%); color: hsl(var(--avatar-hue) 45% 28%); font-size: 14px; font-weight: 600; line-height: 1; user-select: none; }
+.avatar[data-size="sm"] { width: var(--avatar-sm); height: var(--avatar-sm); font-size: 11px; }
+.avatar[data-size="lg"] { width: var(--avatar-lg); height: var(--avatar-lg); font-size: 19px; }
