@@ -11,7 +11,8 @@
 .frame-main { position: relative; display: flex; flex-direction: column; min-width: 0; height: 100vh; }
 .frame-scroll { flex: 1; overflow-y: auto; padding: var(--space-5) var(--space-6) 120px; }
 .frame-page { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5); }
-.frame-bar { position: absolute; left: 0; right: 0; bottom: var(--space-4); display: flex; justify-content: center; padding: 0 var(--space-6); pointer-events: none; }
+/* The page fades out under the bar, so rows never show through the glass. */
+.frame-bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; padding: var(--space-6) var(--space-6) var(--space-4); background: linear-gradient(to top, var(--canvas) 60%, transparent); pointer-events: none; }
 .frame-bar > * { pointer-events: auto; }
 
 .page-header h1 { margin: 0; font-size: var(--text-display); line-height: 35px; letter-spacing: -0.6px; font-weight: 600; }
