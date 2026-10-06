@@ -1,0 +1,42 @@
+/* Sona Care follow-ups: 17px body, 48px targets, amber waiting, green confirmed, no red. */
+.fu { font-size: max(17px, 1rem); display: grid; gap: var(--space-4); }
+.fu .btn, .fu-doctor, .fu-pill, .fu-input { min-height: max(48px, var(--tap)); font-size: inherit; }
+.fu .chip { font-size: 15px; }
+.fu-muted { color: var(--muted); }
+.fu .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.fu-cols { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 900px) { .fu-cols { grid-template-columns: minmax(320px, 2fr) minmax(0, 3fr); } }
+.fu-lists { display: grid; gap: var(--space-4); }
+
+.fu-cal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.fu-cal-head .btn { min-width: 48px; }
+.fu-cal-title { margin: 0; font-size: 1.1em; }
+.fu-cal-grid { list-style: none; margin: var(--space-3) 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--space-1); text-align: center; }
+.fu-cal-weekday { color: var(--muted); font-size: 14px; padding-block: var(--space-1); }
+.fu-cal-day { position: relative; aspect-ratio: 1; display: grid; place-items: center; border-radius: var(--radius-sm, 8px); }
+.fu-cal-day[data-today] { outline: 2px solid var(--blue); font-weight: 600; }
+.fu-cal-day[data-tone="done"] { background: var(--green-wash); }
+.fu-cal-day[data-tone="soon"] { background: var(--amber-wash); }
+.fu-cal-day[data-tone="neutral"] { background: var(--canvas); }
+.fu-cal-dot { position: absolute; bottom: 12%; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.fu-cal-day[data-tone="done"] .fu-cal-dot { background: var(--green); }
+.fu-cal-day[data-tone="soon"] .fu-cal-dot { background: var(--amber); }
+
+.fu-list { list-style: none; margin: 0; padding: 0; }
+.fu-list > li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); padding-block: var(--space-3); border-top: 1px solid var(--line); }
+.fu-list > li:first-child { border-top: 0; }
+.fu-list > li > div:first-child { display: grid; gap: var(--space-1); min-width: 0; }
+.fu-side { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.fu-step { margin: var(--space-4) 0 var(--space-2); font-size: 1em; }
+.fu-doctors { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.fu-doctor { width: 100%; display: grid; gap: var(--space-1); justify-items: start; text-align: start; padding: var(--space-3); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-md, 12px); cursor: pointer; }
+.fu-doctor span:not(.chip) { color: var(--muted); }
+.fu-pills { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
+.fu-pill { padding-inline: var(--space-4); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
+.fu-doctor[aria-pressed="true"], .fu-pill[aria-pressed="true"] { border-color: var(--blue); background: var(--blue-wash); font-weight: 600; }
+.fu-doctor:focus-visible, .fu-pill:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.fu-review { display: grid; gap: var(--space-2); justify-items: start; }
+.fu-input { width: min(100%, 420px); padding-inline: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-sm, 8px); background: var(--surface); color: var(--ink); }
+.fu-note { padding: var(--space-3); border-radius: var(--radius-sm, 8px); background: var(--amber-wash); }
