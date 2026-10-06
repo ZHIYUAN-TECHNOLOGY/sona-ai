@@ -27,3 +27,6 @@ export function leadOf(s: Summary, locale: string): string {
 
 /** The summary a link names, or the newest when the link names none or one that is not this patient's. */
 export const openOf = (list: Summary[], id?: string) => list.find(s => s.id === id) ?? list[0];
+
+/** "No changes", "1 change", "3 changes". */
+export const changesLabel = (n: number) => (n === 0 ? "No changes" : n === 1 ? "1 change" : `${n} changes`);
