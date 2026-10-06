@@ -1,5 +1,6 @@
-.tasks-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
-.tasks-title { display: grid; gap: 2px; min-width: 0; }
+td:has(> .tasks-title) { width: 100%; }
+.tasks-title { display: grid; gap: 2px; min-width: 7rem; }
+.tasks-owner { white-space: nowrap; }
 .tasks-title strong { font-weight: 600; }
 .tasks-title[data-done] strong { color: var(--muted); text-decoration: line-through; }
 .tasks-muted { color: var(--muted); font-size: var(--text-small); }
@@ -17,3 +18,5 @@
 .tasks-link { color: var(--blue); font-weight: 600; }
 .tasks-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .tasks-error { margin: 0; color: var(--red); font-size: var(--text-small); }
+.tasks-detail-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.tasks-actions { margin-bottom: var(--space-3); }

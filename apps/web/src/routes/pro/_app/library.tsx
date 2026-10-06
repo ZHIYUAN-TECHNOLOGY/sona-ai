@@ -3,10 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { type Column, DataTable } from "@/components/data-table";
+import { type Column, DataTable, TableToolbar } from "@/components/data-table";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Field, SearchField, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Button, Card, Field, SearchField, Select, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { messageOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
@@ -92,14 +92,13 @@ function Page() {
               selectedKey={openId} onRowOpen={d => setOpenId(d.id)}
               count={`Showing ${rows.length} of ${docs.length}`}
               toolbar={
-                <div className="lib-toolbar">
+                <TableToolbar end={<SearchField label="Search the library" placeholder="Search title, kind, year or who added it" value={search} onChange={e => setSearch(e.target.value)} />}>
                   <Tabs label="Who can use the source" value={tab} onChange={setTab} tabs={[
                     { id: "all", label: "All", count: docs.length },
                     { id: "hospital", label: "Whole hospital", count: shared },
                     { id: "me", label: "Only you", count: docs.length - shared },
                   ]} />
-                  <SearchField label="Search the library" placeholder="Search title, kind, year or who added it" value={search} onChange={e => setSearch(e.target.value)} />
-                </div>
+                </TableToolbar>
               }
               empty={<EmptyState icon="book" title={q ? `Nothing matches "${search}"` : "No sources here yet"}>{q ? "Try a title, a year or a name." : "Add the first one on the right."}</EmptyState>}
               rowAction={mayRemove ? d => confirming === d.id ? (
@@ -143,8 +142,8 @@ function AddSource({ onAdded }: { onAdded: () => unknown }) {
 
   return (
     <form className="lib-form" key={requestId + mode} onSubmit={e => { e.preventDefault(); setDone(undefined); add.mutate(new FormData(e.currentTarget)); }}>
-      <div className="lib-row" role="group" aria-label="How to add">
-        {(["text", "pdf", "article"] as const).map(m => <Button key={m} variant={mode === m ? "primary" : "quiet"} aria-pressed={mode === m} onClick={() => pick(m)}>{m === "text" ? "Paste text" : m === "pdf" ? "PDF file" : "Article"}</Button>)}
+      <div className="lib-modes" role="group" aria-label="How to add">
+        {(["text", "pdf", "article"] as const).map(m => <Button key={m} size="sm" variant={mode === m ? "primary" : "quiet"} aria-pressed={mode === m} onClick={() => pick(m)}>{m === "text" ? "Paste text" : m === "pdf" ? "PDF file" : "Article"}</Button>)}
       </div>
       {mode !== "article" && <Field label="Title">{c => <input {...c} name="title" required maxLength={200} />}</Field>}
       {mode === "text" && <>
@@ -160,12 +159,10 @@ function AddSource({ onAdded }: { onAdded: () => unknown }) {
           <div className="lib-note">{preview.journal} · {preview.year} · {preview.sections} sections · <a href={preview.url} target="_blank" rel="noreferrer">Open on PubMed</a></div>
         </div>
       )}
-      <Field label="Who can use it">{c => (
-        <select {...c} value={scope} onChange={e => setScope(e.target.value as typeof scope)}>
+      <Select label="Who can use it" value={scope} onChange={e => setScope(e.target.value as typeof scope)}>
           <option value="hospital">Whole hospital</option>
           <option value="me">Only me</option>
-        </select>
-      )}</Field>
+      </Select>
       <div className="lib-row">
         <Button type="submit" variant="primary" pending={add.isPending}>{mode !== "article" ? "Add to library" : preview ? "Confirm and add" : "Preview article"}</Button>
         {preview && <Button onClick={() => setPreview(undefined)}>Choose another</Button>}

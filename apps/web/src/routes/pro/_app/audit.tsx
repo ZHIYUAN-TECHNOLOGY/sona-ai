@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
 
-import { type Column, DataTable, PersonCell, RowAction, ValueCell } from "@/components/data-table";
+import { type Column, DataTable, PersonCell, RowAction, TableToolbar, TextCell, ValueCell } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, ListCard, ListRow, SearchField, StatCard, StatRow, Tabs } from "@/components/primitives";
@@ -39,7 +39,7 @@ function Refused({ tabs, children }: { tabs: ReactNode; children: ReactNode }) {
   return (
     <>
       <PageHeader title="Audit" />
-      <Card><div className="au-toolbar">{tabs}</div><EmptyState icon="shield-check" title="Not available to your role">{children}</EmptyState></Card>
+      <Card><TableToolbar>{tabs}</TableToolbar><EmptyState icon="shield-check" title="Not available to your role">{children}</EmptyState></Card>
     </>
   );
 }
@@ -64,8 +64,8 @@ function Coding({ tabs, items, mayRun, maySend }: { tabs: ReactNode; items: { da
 
   const columns: Column<Item>[] = [
     { key: "patient", header: "Patient", cell: r => <PersonCell name={nameOf(r.patientId)} detail={r.patientId} />, sort: (a, b) => nameOf(a.patientId).localeCompare(nameOf(b.patientId)) },
-    { key: "gap", header: "Gap in the note", cell: r => <span className="au-gap"><span>{r.gap}</span><span className="au-muted au-code">{codes(r)}</span></span> },
-    { key: "doctor", header: "Doctor", cell: r => <PersonCell name={r.doctor} size="sm" />, sort: (a, b) => a.doctor.localeCompare(b.doctor) },
+    { key: "gap", header: "Gap in the note", cell: r => <span className="au-gap"><TextCell>{r.gap}</TextCell><span className="au-muted au-code">{codes(r)}</span></span> },
+    { key: "doctor", header: "Doctor", cell: r => <span className="au-doctor">{r.doctor}</span>, sort: (a, b) => a.doctor.localeCompare(b.doctor) },
     { key: "risk", header: "At risk", align: "right", cell: r => <ValueCell value={ringgit(r.riskCents)} unit="RM" />, sort: (a, b) => a.riskCents - b.riskCents },
   ];
 
@@ -109,7 +109,7 @@ function Coding({ tabs, items, mayRun, maySend }: { tabs: ReactNode; items: { da
           <DataTable columns={columns} rows={shown} rowKey={r => r.id} loading={items.isPending}
             selectedKey={open?.id} onRowOpen={r => setOpenId(r.id)}
             rowAction={r => <RowAction onClick={() => setOpenId(r.id)}>Review</RowAction>}
-            toolbar={<div className="au-toolbar">{tabs}<SearchField label="Search findings" placeholder="Patient, doctor or code" value={q} onChange={e => setQ(e.target.value)} /></div>}
+            toolbar={<TableToolbar end={<SearchField label="Search findings" placeholder="Patient, doctor or code" value={q} onChange={e => setQ(e.target.value)} />}>{tabs}</TableToolbar>}
             empty={items.error ? <EmptyState title="The audit could not be read">{say(items.error)}</EmptyState>
               : rows.length ? <EmptyState icon="search" title="No findings match">Try a patient, a doctor or a code.</EmptyState>
               : <EmptyState icon="shield-check" title="No open items">Run the audit to check today’s notes.</EmptyState>}
@@ -162,7 +162,7 @@ function Access({ tabs }: { tabs: ReactNode }) {
       }>
         <Card>
           <DataTable columns={TRAIL} rows={lines} rowKey={l => `${l.who}|${l.did}|${l.at}`} loading={!!patientId && trail.isPending}
-            toolbar={<div className="au-toolbar">{tabs}</div>}
+            toolbar={<TableToolbar>{tabs}</TableToolbar>}
             empty={!patientId ? <EmptyState icon="users" title="No patient chosen">Pick a patient on the right to see who opened their record.</EmptyState>
               : trail.error ? <EmptyState title="The trail could not be read">{say(trail.error)}</EmptyState>
               : <EmptyState icon="shield-check" title="Nobody has opened this record yet" />}
