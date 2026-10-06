@@ -1,0 +1,30 @@
+/* Sona Care: Care team and Messages. 17px body, 48px targets, red only for "call 999 now". */
+.cm-column { display: flex; flex-direction: column; gap: var(--space-3); font-size: 17px; line-height: 1.5; }
+.cm-thread { display: flex; flex-direction: column; gap: var(--space-3); max-height: 60vh; overflow-y: auto; padding: var(--space-2); }
+.cm-bubble { max-width: 75%; padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg, 16px); border: 1px solid var(--line); background: var(--surface); color: var(--ink); overflow-wrap: anywhere; white-space: pre-wrap; }
+.cm-bubble p { margin: 0; }
+.cm-mine { align-self: flex-end; background: var(--blue-wash); }
+.cm-theirs { align-self: flex-start; }
+.cm-999 { border-color: var(--red); background: var(--red-wash); font-weight: 600; }
+.cm-who { font-weight: 600; }
+.cm-meta, .cm-attached, .cm-about { color: var(--muted); font-size: 15px; }
+.cm-meta { margin-top: var(--space-1); }
+
+.cm-composer { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-end; }
+.cm-composer textarea { flex: 1; min-height: var(--tap, 48px); padding: var(--space-3); font: inherit; font-size: 17px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md, 12px); resize: vertical; }
+.cm-composer .btn { min-height: 48px; min-width: 88px; font-size: 17px; }
+.cm-error { flex-basis: 100%; margin: 0; color: var(--amber); }
+.cm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+.cm-urgent { padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-lg, 16px); background: var(--surface); font-size: 17px; line-height: 1.5; }
+.cm-urgent h2 { margin: 0 0 var(--space-2); font-size: 19px; }
+.cm-urgent p { margin: 0 0 var(--space-2); }
+.cm-call { display: flex; align-items: center; justify-content: center; min-height: 48px; margin-top: var(--space-3); padding: 0 var(--space-4); border-radius: var(--radius-md, 12px); background: var(--red); color: var(--surface); font-weight: 700; text-decoration: none; }
+
+.cm-team { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); font-size: 17px; line-height: 1.5; }
+.cm-member { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: flex-start; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-lg, 16px); background: var(--surface); }
+.cm-member-text { flex: 1; min-width: 220px; }
+.cm-member h2 { margin: 0; font-size: 19px; }
+.cm-member p { margin: var(--space-1) 0 0; }
+.cm-role { color: var(--muted); }
+.cm-member .btn, .cm-team + .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; min-width: 110px; font-size: 17px; text-decoration: none; }
