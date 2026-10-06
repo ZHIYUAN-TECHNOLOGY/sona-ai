@@ -118,3 +118,13 @@
 /* Short screens: the 48px rows stay; the air between them goes, so every Care item fits at 1280x720 without scrolling. */
 @media (max-height: 800px) { .care .frame-side { gap: var(--space-2); padding-block: var(--space-2); } .care .frame-groups { gap: var(--space-1); } .care .frame-group { gap: 0; } .care .frame-who { padding-top: var(--space-1); } }
 @media (max-height: 800px) and (min-width: 1101px) { .care .frame-group-label { padding-bottom: 0; font-size: 12px; line-height: 16px; } }
+
+/* Atmosphere: a faint blue wash and a corner of halftone behind the page, so glass has something to sit on.
+   It stays put while the page scrolls over it. */
+:is(.pro, .care).frame { background: radial-gradient(60rem 30rem at 0% 0%, color-mix(in srgb, var(--blue) 16%, transparent), transparent 70%), var(--canvas-deep); }
+:is(.pro, .care).frame > .frame-main { background: radial-gradient(52rem 24rem at 100% 0%, color-mix(in srgb, var(--blue) 9%, transparent), transparent 72%), var(--canvas); }
+:is(.pro, .care) .frame-main::before { content: ""; position: absolute; inset: 0 0 auto auto; width: min(46rem, 70%); height: 15rem; pointer-events: none; color: var(--blue); background-image: var(--dither); background-size: var(--dither-size); opacity: 0.2; mask-image: radial-gradient(100% 100% at 100% 0%, #000, transparent 68%); -webkit-mask-image: radial-gradient(100% 100% at 100% 0%, #000, transparent 68%); }
+:is(.pro, .care) .frame-scroll { position: relative; }
+/* The sidebar is glass over the shell's wash. */
+:is(.pro, .care).frame > .frame-side { background: var(--glass-float); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }
+@media (prefers-reduced-transparency: reduce) { :is(.pro, .care).frame > .frame-side { background: var(--canvas); backdrop-filter: none; -webkit-backdrop-filter: none; } :is(.pro, .care) .frame-main::before { display: none; } }

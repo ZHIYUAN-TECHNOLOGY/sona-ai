@@ -49,13 +49,18 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .insight-overline { display: block; font-size: var(--text-overline); font-weight: 600; letter-spacing: var(--track-overline); text-transform: uppercase; color: var(--muted); }
 /* White text on every stop of the gradient is at least 4.8:1. The translucent --ai-row is
    used for hairlines only: as a fill behind text it would drop white below AA. */
-:is(.pro, .care) .insight { background: var(--ai-gradient); border: 0; color: var(--on-ai); backdrop-filter: none; }
-:is(.pro, .care) .insight::before, :is(.pro, .care) .insight::after, :is(.pro, .care) .insight-lead::before { display: none; }
+:is(.pro, .care) .insight { position: relative; isolation: isolate; overflow: hidden; padding: var(--pad-card); border: 0; border-radius: var(--radius-card); color: var(--on-ai); backdrop-filter: none;
+  background: radial-gradient(120% 150% at 0% 0%, #3B7BF0 0%, var(--blue) 40%, var(--navy) 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.34), inset 0 0 0 1px rgb(255 255 255 / 0.12), 0 10px 28px color-mix(in srgb, var(--navy) 26%, transparent); }
+/* Sona's surface is the one place the two materials meet: a liquid highlight from the top left, halftone dissolving in from the bottom right. */
+:is(.pro, .care) .insight::before { content: ""; display: block; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(70% 60% at 12% 0%, rgb(255 255 255 / 0.26), transparent 70%); }
+:is(.pro, .care) .insight::after { content: ""; display: block; position: absolute; inset: 0; z-index: -1; pointer-events: none; color: #fff; background-image: var(--dither); background-size: var(--dither-size); opacity: 0.42; mask-image: radial-gradient(85% 120% at 100% 100%, #000, transparent 62%); -webkit-mask-image: radial-gradient(85% 120% at 100% 100%, #000, transparent 62%); }
+:is(.pro, .care) .insight-lead::before { display: none; }
 :is(.pro, .care) .insight :is(.insight-meta, .insight-foot, .insight-overline, .insight-detail, .insight-detail summary) { color: var(--on-ai); }
 :is(.pro, .care) .insight-label, :is(.pro, .care) .insight .insight-act { background: var(--on-ai); color: var(--navy); border-color: transparent; }
 :is(.pro, .care) .insight .insight-act { border-radius: var(--radius-pill); }
 :is(.pro, .care) .insight .insight-act:is(:hover, :active) { background: var(--on-ai-soft); color: var(--navy); }
-:is(.pro, .care) .insight-title { font-size: var(--text-display); }
+:is(.pro, .care) .insight-title { font-size: var(--text-heading); font-weight: 600; }
 :is(.pro, .care) .insight-step { font-weight: 600; }
 :is(.pro, .care) .insight-overline { margin-bottom: var(--space-1); }
 :is(.pro, .care) .insight-evidence li { border-top-color: var(--ai-row); }
@@ -118,4 +123,16 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
   :is(.pro, .care) .table th, :is(.pro, .care) .table td { padding-inline: var(--space-2); }
   .row-action { padding: 0 var(--space-3); gap: var(--space-1); }
   .cell-person { min-width: 132px; }
+}
+
+/* Band: the insight that leads a page reads left to right, where things stand, what that rests on, what to do. */
+@media (min-width: 1101px) {
+  :is(.pro, .care) .insight[data-band] { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.25fr) minmax(13rem, 0.8fr); column-gap: var(--space-6); row-gap: var(--space-2); align-items: start; }
+  :is(.pro, .care) .insight[data-band] > * { grid-column: 1; }
+  :is(.pro, .care) .insight[data-band] > .insight-evidence { grid-column: 2; grid-row: 1 / span 5; align-self: center; }
+  :is(.pro, .care) .insight[data-band] > .insight-evidence li:first-child { border-top: 0; }
+  :is(.pro, .care) .insight[data-band] > .insight-next { grid-column: 3; grid-row: 1 / span 4; flex-direction: column; align-items: flex-start; align-self: stretch; justify-content: center; padding: 0 0 0 var(--space-5); border-top: 0; border-left: 1px solid var(--ai-row); }
+  :is(.pro, .care) .insight[data-band] > .insight-next .insight-step { flex: none; }
+  :is(.pro, .care) .insight[data-band] > .insight-foot { grid-column: 3; grid-row: 5; padding-left: var(--space-5); }
+  :is(.pro, .care) .insight[data-band] .insight-title { font-size: var(--text-title); }
 }

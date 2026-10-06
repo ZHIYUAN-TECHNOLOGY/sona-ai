@@ -13,13 +13,13 @@ export function JoinCode({ encounterId, patientName }: { encounterId?: string; p
   const data = issue.data;
 
   return (
-    <Card title="Sona Care">
+    <Card title="Sona Care" variant="flat">
       {!encounterId ? (
         <p className="pt-muted">A join code belongs to a visit, and {first} has no visit on record yet.</p>
       ) : !data ? (
         <>
           <p className="pt-muted">A join code links {first}'s Sona Care account to this record.</p>
-          <Button variant="primary" pending={issue.isPending} onClick={() => issue.mutate({ encounterId })}>Give this patient a join code</Button>
+          <Button variant="secondary" size="sm" pending={issue.isPending} onClick={() => issue.mutate({ encounterId })}>Give this patient a join code</Button>
           {issue.error ? <p role="alert" className="pt-muted">The code could not be issued: {issue.error.message}</p> : null}
         </>
       ) : data.joined ? (

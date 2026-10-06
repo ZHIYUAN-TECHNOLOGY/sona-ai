@@ -94,10 +94,11 @@ export function SearchField({ label, className, ...rest }: Omit<InputHTMLAttribu
 }
 
 /** A white surface with an optional title and a corner action link. */
-export function Card({ title, action, className, children }: { title?: string; action?: CornerAction; className?: string; children: ReactNode }) {
+/** `variant`: "sheet" (default, the page's working content), "flat" (a labelled group on the canvas, for reference detail) or "well" (a recessed area to fill in). */
+export function Card({ title, action, className, variant, children }: { title?: string; action?: CornerAction; className?: string; variant?: "sheet" | "flat" | "well"; children: ReactNode }) {
   const { label, ...target } = action ?? { label: "" };
   return (
-    <section className={`card${className ? ` ${className}` : ""}`}>
+    <section className={`card${className ? ` ${className}` : ""}`} data-variant={variant}>
       {title || action ? (
         <div className="card-head">
           {title ? <h2 className="card-title">{title}</h2> : <span />}

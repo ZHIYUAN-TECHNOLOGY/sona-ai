@@ -92,7 +92,7 @@ function Page() {
               next={blocked.length ? { label: "Show blocked beds", onAct: () => setTab("blocked") } : undefined} />
           )}
           {bed && (
-            <Card title={`Bed ${bed.bed}`}>
+            <Card title={/^bed/i.test(bed.bed) ? bed.bed : `Bed ${bed.bed}`}>
               {bed.name ? <PersonCell name={bed.name} detail={bed.meta} /> : <p className="ward-muted">No patient in this bed.</p>}
               <dl className="ward-counts ward-gap">
                 <dt>Status</dt><dd>{bed.status}</dd>

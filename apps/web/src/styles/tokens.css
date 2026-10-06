@@ -75,3 +75,19 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .icon { flex: none; display: block; }
 /* Sona Care on the shared shell: patient sizes. Small text never under 15px, fields and pills at the 48px tap size. */
 .care { --radius-card: 28px; --text-small: 15px; --text-overline: 13px; --field-h: 48px; --chip-h: 30px; --avatar-sm: 36px; --side-width: 264px; }
+
+/* Surfaces (glance-to-decision pass). One family of corners, working-screen type sizes, and the two materials
+   every surface is made of: liquid glass (a lit rim over a translucent sheet) and halftone dither (Sona's mark,
+   kept to the page's atmosphere and the Sona insight). */
+:is(.pro, .care) {
+  --radius-shell: 24px; --radius-card: 20px; --radius-group: 14px; --radius-control: 10px;
+  --pad-card: 20px; --text-title: 16px; --text-page: 28px; --text-stat: 30px;
+  --glass-sheet: linear-gradient(180deg, rgb(255 255 255 / 0.92), rgb(255 255 255 / 0.74));
+  --glass-float: linear-gradient(180deg, rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.46));
+  --glass-rim: inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 0 0 1px rgb(255 255 255 / 0.45);
+  --edge: 0 0 0 1px rgb(29 31 35 / 0.06);
+  --shadow-card: var(--glass-rim), var(--edge), 0 1px 2px rgb(29 31 35 / 0.04);
+  --shadow-float: var(--glass-rim), var(--edge), 0 10px 32px rgb(29 31 35 / 0.1);
+  --dither: radial-gradient(circle at center, currentColor 0.9px, transparent 1.3px);
+  --dither-size: 6px 6px;
+}
