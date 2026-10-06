@@ -1,13 +1,17 @@
 /* Care team: person cards in a grid, how to reach the hospital, and the one red card. */
-.ct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--gap-card); margin: 0; padding: 0; list-style: none; }
-.ct-grid > li { display: flex; }
+.ct-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--gap-card); margin: 0; padding: 0; list-style: none; }
+.ct-grid > li { display: flex; max-width: 620px; }
 .ct-person { flex: 1; display: flex; flex-direction: column; gap: var(--space-3); }
 .ct-who { display: flex; align-items: center; gap: var(--space-4); }
 .ct-name { margin: 0; font-size: var(--text-title); line-height: 1.25; letter-spacing: var(--track-tight); }
 .ct-role, .ct-note { margin: 0; color: var(--muted); font-size: var(--text-body); line-height: var(--line-body); }
-.ct-about { margin: 0; font-size: var(--text-body); line-height: var(--line-body); }
+.ct-about { max-width: 70ch; margin: 0; font-size: var(--text-body); line-height: var(--line-body); }
 .ct-hospital { margin: 0; font-size: var(--text-heading); font-weight: 600; line-height: 1.35; }
-.ct-action { display: inline-flex; align-items: center; align-self: flex-start; min-height: var(--tap); margin-top: auto; font-size: var(--text-body); }
+.ct-ask h3 { margin: 0 0 var(--space-2); color: var(--muted); font-size: var(--text-body); font-weight: 600; line-height: var(--line-body); }
+.ct-ask ul { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ct-ask li { padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--fill-field); font-size: var(--text-body); line-height: var(--line-body); }
+.ct-ask li::first-letter { text-transform: uppercase; }
+.ct-foot { margin: auto 0 0; padding-top: var(--space-3); border-top: 1px solid var(--line); color: var(--muted); font-size: var(--text-body); line-height: var(--line-body); }
 .ct-note { margin-top: var(--space-2); }
 
 /* The only red on the page: call for help now. */

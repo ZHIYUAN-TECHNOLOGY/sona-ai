@@ -2,12 +2,31 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { EmptyState, PageHeader } from "@/components/page";
-import { Anchor, Avatar, Button, Card } from "@/components/primitives";
+import { Avatar, Button, Card } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-team.css";
 
 export const Route = createFileRoute("/care/_app/care-team")({ component: Page });
+
+/** Up to three plain topics from a doctor's search tags, without near repeats ("breath", "breathing") or words the role already says. */
+function topics(tags: string[], specialty: string) {
+  const role = specialty.toLowerCase();
+  const kept: string[] = [];
+  for (const raw of tags) {
+    const tag = raw.trim().toLowerCase();
+    if (tag && !role.includes(tag) && !kept.some(k => tag.startsWith(k) || k.startsWith(tag))) kept.push(tag);
+  }
+  return kept.slice(0, 3);
+}
+
+const urgent = (
+  <section className="ct-urgent" aria-labelledby="ct-urgent-title">
+    <h2 id="ct-urgent-title">In an emergency</h2>
+    <p>If you faint or have chest pain, call 999. Messages are not for emergencies.</p>
+    <Button variant="danger" href="tel:999">Call 999 now</Button>
+  </section>
+);
 
 function Page() {
   const doctors = useQuery(orpc.care.doctors.list.queryOptions());
@@ -15,25 +34,26 @@ function Page() {
   const team = doctors.data?.filter(d => d.careTeam);
   const hospital = me.data?.hospital;
 
+  const count = team?.length
+    ? `${team.length} ${team.length === 1 ? "doctor looks" : "doctors look"} after you`
+    : "The people looking after you";
+  const lead = hospital ? `${count} at ${hospital}.` : `${count}.`;
+
   return (
     <>
       <PageHeader
         title="Care team"
-        lead={hospital ? `The people looking after you at ${hospital}.` : "The people looking after you."}
+        lead={lead}
         actions={<Button variant="primary" to="/care/messages">Message your care team</Button>}
       />
       <WithRail
         rail={
           <RightRail label="How to reach us">
+            {urgent}
             <Card title="How to reach us">
               {hospital ? <p className="ct-hospital">{hospital}</p> : null}
-              <p className="ct-note">Write to your care team in Messages.</p>
+              <p className="ct-note">Write to your care team in Messages. One message reaches the whole team.</p>
             </Card>
-            <section className="ct-urgent" aria-labelledby="ct-urgent-title">
-              <h2 id="ct-urgent-title">In an emergency</h2>
-              <p>If you faint or have chest pain, call 999. Messages are not for emergencies.</p>
-              <Button variant="danger" href="tel:999">Call 999 now</Button>
-            </section>
           </RightRail>
         }
       >
@@ -54,13 +74,19 @@ function Page() {
                     <Avatar name={d.name} size="lg" />
                     <div>
                       <h2 className="ct-name">{d.name}</h2>
-                      <p className="ct-role">{d.specialty} · {d.room}</p>
+                      <p className="ct-role">{d.specialty} doctor</p>
                     </div>
                   </div>
                   <p className="ct-about">{d.about}</p>
-                  {d.tags.length ? <p className="ct-role">Ask about: {d.tags.join(", ")}.</p> : null}
-                  {d.languages.length ? <p className="ct-role">Speaks {d.languages.join(", ")}.</p> : null}
-                  <Anchor className="link ct-action" to="/care/messages" aria-label={`Message ${d.name}`}>Message</Anchor>
+                  {topics(d.tags, d.specialty).length ? (
+                    <div className="ct-ask">
+                      <h3>Ask about</h3>
+                      <ul>{topics(d.tags, d.specialty).map(t => <li key={t}>{t}</li>)}</ul>
+                    </div>
+                  ) : null}
+                  <p className="ct-foot">
+                    Find them in {d.room}.{d.languages.length ? ` Speaks ${d.languages.join(", ")}.` : ""}
+                  </p>
                 </Card>
               </li>
             ))}
