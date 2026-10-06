@@ -196,7 +196,8 @@ function statedIn(sentence: string, label: string) {
 export function citedSentence<T extends { id: string; text?: string }>(raw: unknown, sentences: T[]) {
   const cited = String(raw ?? "").trim();
   const id = cited.match(/^\[([^\]]+)\]/)?.[1] ?? cited.split(/\s/)[0]!.replace(/[[\]:,.]/g, "");
-  const named = sentences.find(s => s.id === id || s.id === cited);
+  // Gemma also numbers the sentences in the order it was shown them ("5" for the fifth), when no sentence has that id.
+  const named = sentences.find(s => s.id === id || s.id === cited) ?? (/^\d+$/.test(id) ? sentences[Number(id) - 1] : undefined);
   if (named || cited.length < 12) return named;
   const quoted = sentences.filter(s => s.text?.includes(cited));
   return quoted.length === 1 ? quoted[0] : undefined;

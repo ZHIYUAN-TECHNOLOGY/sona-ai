@@ -460,6 +460,9 @@ test("a code whose evidence quotes the note's words, not the sentence id, is kep
   expect(citedSentence("Cough for five days, fever since yesterday.", sentences)?.id).toBe("subjective");
   expect(citedSentence("[plan] Chest film today.", sentences)?.id).toBe("plan");
   expect(citedSentence("Something the note never says at all", sentences)).toBeUndefined();
+  // A sentence cited by its place in the list (Gemma, 6 Oct: "evidence": "5" for the note's fifth part).
+  expect(citedSentence("2", sentences)?.id).toBe("plan");
+  expect(citedSentence("9", sentences)).toBeUndefined();
 });
 
 test("a condition the doctor names in other words than the WHO label is coded when the model copies those words, never a negated or made-up one", async () => {
