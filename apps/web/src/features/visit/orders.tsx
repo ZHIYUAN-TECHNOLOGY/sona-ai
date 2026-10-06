@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { EmptyState } from "@/components/page";
-import { Button, Card, Chip, Field } from "@/components/primitives";
+import { Button, Card, Chip, Field, ListRow } from "@/components/primitives";
 import { orpc } from "@/lib/orpc";
 
 import { orderChecks, refusal, type VisitPatient } from "./visit";
@@ -47,16 +47,17 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
   return (
     <div className="visit-orders">
       <Card title="Medicine order">
-        <p>{proposed || "No medicine has been entered for this visit yet. It is entered on the phone app."}</p>
-        <p className="visit-muted">
-          {reviewed ? `Reviewed at revision ${revision}.` : "Review the check before placing the order."}{" "}
-          {blocked.length ? `${blocked.length} of ${checks.length} checks block it.` : `All ${checks.length} checks pass.`}
-        </p>
+        {proposed ? (
+          <ListRow icon="pill" title={proposed}
+            caption={reviewed ? `Reviewed at revision ${revision}` : "Not reviewed yet"}
+            trailing={blocked.length ? <Chip tone="amber" icon="alert">{blocked.length} of {checks.length} blocked</Chip>
+              : <span className="visit-muted">{checks.length} checks pass</span>} />
+        ) : <p className="visit-muted">No medicine has been entered for this visit yet. It is entered on the phone app.</p>}
         {reviewed || !canPrescribe ? (
           <ul className="visit-checks">
             {checks.map(c => (
               <li key={c.id}>
-                <Chip tone={c.status === "blocked" ? "soon" : "done"}>{c.status === "blocked" ? "Blocked" : "Passed"}</Chip>
+                {c.status === "blocked" ? <Chip tone="amber">Blocked</Chip> : <span className="visit-muted">Passed</span>}
                 <span><strong>{c.label}</strong><br />{c.detail}</span>
               </li>
             ))}
@@ -64,12 +65,12 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
         ) : null}
         {canPrescribe ? (
           <div className="visit-actions">
-            <Button variant={reviewed ? "quiet" : "primary"} pending={review.isPending}
+            <Button size="sm" variant={reviewed ? "quiet" : "primary"} pending={review.isPending}
               onClick={() => review.mutate({ encounterId, expectedRevision: revision })}>
               {reviewed ? "Review again" : "Review the order"}
             </Button>
             {reviewed ? (
-              <Button variant="primary" disabled={blocked.length > 0} pending={place.isPending} onClick={() => { amend.reset(); place.mutate(command); }}>
+              <Button size="sm" variant="primary" icon="check" disabled={blocked.length > 0} pending={place.isPending} onClick={() => { amend.reset(); place.mutate(command); }}>
                 Place the order
               </Button>
             ) : null}
