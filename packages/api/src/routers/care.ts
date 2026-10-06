@@ -10,6 +10,7 @@ import { patientProcedure, protectedProcedure, publicProcedure, signedInProcedur
 import { checkInReplySchema, xrayUploadSchema } from "../contracts";
 import { listCheckIns, replyToCheckIn } from "./check-ins";
 import { clockOffsetOf } from "../clock";
+import { languageOf } from "@sona-ai/domain/language";
 import { citedSources, leafletHits, passagesIn } from "../leaflets";
 import { stubModels } from "../models";
 import { recordText } from "./care-plan";
@@ -149,11 +150,12 @@ export const careRouter = {
     const found = leafletHits(context.library, context.hospitalId, input.question);
     // Her visits and her record are real whether or not she has gone home; only the take-home plan waits for discharge.
     // A part that cannot be read never fails the answer (recordText): the gates below must still run.
-    const { plan, text: record } = await recordText(context);
+    const { text: record } = await recordText(context);
     // The live call's gates: the keyword floors, or the model's own urgent flag; the care team's reader then decides. Never fails the answer.
     const tell = () => tellCareTeam(context, context.hospitalId, context.patientId, input.question).catch(error => { console.error("care team not told", error); return undefined; });
     const floor = callNow(input.question) || mayReport(input.question) ? tell() : undefined;
-    const language = plan.language ?? "en";
+    // The question's own language (an English question gets English, even when her papers are in Malay).
+    const language = languageOf(input.question);
     const passages = passagesIn(await found, language);
     const { cites, ...answer } = await (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: record, language, passages });
     const told = await (floor ?? (answer.urgent ? tell() : undefined));
