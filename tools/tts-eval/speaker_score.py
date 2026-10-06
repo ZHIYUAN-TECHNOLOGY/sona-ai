@@ -32,7 +32,7 @@ anchor, anchor_pitch, _ = measure(ANCHOR)
 report = {"anchor": str(ANCHOR), "anchor_pitch_hz": round(anchor_pitch, 1), "arms": {}}
 print(f"anchor {ANCHOR.name} pitch {anchor_pitch:.0f} Hz")
 print("arm   n  cos-centroid mean/min  cos-anchor mean  pitch median (p5-p95)  secs mean (min-max)  off sentences  off answers")
-for arm in ("none", "ref"):
+for arm in sorted(d.name for d in (DATA / "speaker").iterdir() if d.is_dir()):
     files = sorted((DATA / "speaker" / arm).glob("*.wav"))
     if not files:
         continue
