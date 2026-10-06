@@ -130,10 +130,12 @@ export function StatCard({ title, value, unit, caption, chip, tone = "neutral", 
   const { label, ...target } = action ?? { label: "" };
   return (
     <section className="stat" data-feature={feature || undefined}>
-      <div className="stat-head">
-        {chip ? <Chip tone={tone}>{chip}</Chip> : <span />}
-        {action ? <IconButton icon="arrow-up-right" label={label} size="sm" {...target} /> : null}
-      </div>
+      {chip || action ? (
+        <div className="stat-head">
+          {chip ? <Chip tone={tone}>{chip}</Chip> : <span />}
+          {action ? <IconButton icon="arrow-up-right" label={label} size="sm" {...target} /> : null}
+        </div>
+      ) : null}
       <h3 className="stat-title" title={title}>{title}</h3>
       <div className="stat-body">
         <p className="stat-value"><span>{value}</span>{unit ? <span className="stat-unit" title={typeof unit === "string" ? unit : undefined}>{unit}</span> : null}</p>

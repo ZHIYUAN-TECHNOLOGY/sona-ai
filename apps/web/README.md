@@ -310,7 +310,7 @@ Empty `points` draws the chart's own empty state.
 
 ### Shared additions (design-system fixes)
 
-- `DataTable`: the table scrolls sideways inside its card (`.table-scroll`) and is never wider than it. `PersonCell` keeps name and caption on one line each with an ellipsis (full text in `title`). The action column is as narrow as its content.
+- `DataTable`: the table scrolls sideways inside its card (`.table-scroll`) and is never wider than it. `PersonCell` keeps name and caption on one line each with an ellipsis (full text in `title`) and sizes to its content between 150px and 220px. Header labels never wrap. Inside a `Card` the table drops its own padding, so the toolbar starts where any card content starts. A `StatCard` with no chip and no action has no head row; beside cards that have one it reserves that height so titles line up. The action column is as narrow as its content.
 - `TextCell` (`data-table.tsx`): long cell text, two lines then an ellipsis.
 - `TableToolbar({ children, end })`: pass it as `DataTable`'s `toolbar`; `children` (tabs, filters) sit left, `end` (`SearchField`, icon buttons) right, wrapping under 900px.
 - `StatCard`: value and `unit` share one baseline, the unit shrinks with an ellipsis; title and caption clamp to two lines; value rows align across a `StatRow`.
