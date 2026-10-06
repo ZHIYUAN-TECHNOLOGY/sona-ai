@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 
 import { PageHeader } from "@/components/page";
 import { Call } from "@/features/care-ask/call";
-import { Listen }from "@/features/care-ask/listen";
+import { Listen } from "@/features/care-ask/listen";
+import { authClient } from "@/lib/auth-client";
 import { client } from "@/lib/orpc";
 import { useSonaAsk } from "@/lib/sona";
 import "@/styles/pages/care-ask.css";
@@ -33,11 +34,11 @@ async function answer(question: string): Promise<ReactNode> {
 
 function Page() {
   const ask = useSonaAsk(answer);
-  // The Worker names the agent from the session; the id only keeps the path in the phone's shape.
-  const { me } = Route.useRouteContext() as unknown as { me?: { userId?: string; id?: string } };
+  // The Worker refuses a call whose path is not the signed-in account's own id.
+  const userId = authClient.useSession().data?.user.id;
   return (
     <>
-      <Call instance={me?.userId ?? me?.id ?? "me"} />
+      {userId ? <Call instance={userId} /> : null}
       <PageHeader title="Ask Sona" lead="Ask anything. Type or speak in the bar below, or tap a question." />
       <ul className="ask-chips" aria-label="Suggested questions">
         {SUGGESTED.map(q => <li key={q}><button type="button" className="ask-chip" onClick={() => ask(q)}>{q}</button></li>)}
