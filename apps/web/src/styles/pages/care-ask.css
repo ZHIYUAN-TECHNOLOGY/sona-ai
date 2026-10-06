@@ -72,3 +72,15 @@
 
 /* Off a call the stage row is unused: the conversation (or the welcome) sits level with the rail. */
 .frame-page.frame-page:has(> .ask-page[data-call="off"]) > .sona-thread, .ask-page[data-call="off"] > .ask-welcome { grid-row: 2; }
+
+/* An answer's next steps, a failure with its "Try again", and room so the newest turn clears the floating Sona bar. */
+.ask-next { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); }
+.ask-next .ask-listen { margin-top: 0; }
+.ask-failed { display: grid; justify-items: start; gap: var(--space-3); color: var(--ink); }
+.ask-failed p { margin: 0; color: var(--amber); font-weight: 500; }
+.frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-a p { max-width: 70ch; }
+.ask-welcome .empty p { max-width: 60ch; margin-inline: auto; }
+.ask-next, .ask-failed { scroll-margin-bottom: calc(var(--tap) * 3); }
+/* Only the newest failure offers "Try again"; the rail of suggestions stays in view beside a long conversation. */
+.sona-turn:not(:last-child) .ask-failed .btn { display: none; }
+@media (min-width: 1001px) { .ask-page > .rail { position: sticky; top: var(--space-4); } }
