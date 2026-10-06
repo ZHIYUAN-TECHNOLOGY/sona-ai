@@ -37,3 +37,8 @@
 
 .visit-table-title { margin: 0; font-size: var(--text-body); font-weight: 600; color: var(--ink); }
 .visit-flag { color: var(--muted); font-size: 13px; }
+
+/* Medicine entry in the orders rail */
+.visit-row-actions { display: inline-flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: flex-end; }
+.visit-med-form { display: grid; gap: var(--space-3); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--hairline); }
+.visit-check { display: flex; gap: var(--space-2); align-items: flex-start; font-size: var(--text-sm, 0.875rem); }

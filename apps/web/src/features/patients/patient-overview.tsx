@@ -14,6 +14,7 @@ import { isFlagged } from "@/features/results/triage";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/patient-overview.css";
 
+import { JoinCode } from "./join-code";
 import { type PatientRow, StatusChip } from "./patient-list";
 import { LabCharts, PatientResults, useTrends } from "./patient-trends";
 import { chartPoints, direction, latestOf, topSeries } from "./trends";
@@ -38,7 +39,7 @@ export function PatientOverview({ patientId, role }: { patientId: string; role: 
     );
   }
 
-  return <Loaded patient={patient} canRead={can(role, "encounter.get")} />;
+  return <Loaded patient={patient} canRead={can(role, "encounter.get")} canCode={can(role, "care.code")} />;
 }
 
 const TABS = [
@@ -49,7 +50,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
 
-function Loaded({ patient, canRead }: { patient: PatientRow; canRead: boolean }) {
+function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: boolean; canCode: boolean }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [picked, setPicked] = useState<string>();
   const encounterId = patient.encounterId;
@@ -225,6 +226,7 @@ function Loaded({ patient, canRead }: { patient: PatientRow; canRead: boolean })
           </Card>
         </>
       )}
+      {canCode ? <JoinCode encounterId={patient.encounterId} patientName={patient.name} /> : null}
     </>
   );
 }
