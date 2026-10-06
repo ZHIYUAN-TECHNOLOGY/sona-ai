@@ -34,3 +34,7 @@
   .frame-side, .frame-bar, .no-print { display: none !important; }
   .dp-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Nothing to show yet: one centred card, as on Check-ins. */
+.dp-alone { width: min(100%, 640px); margin-inline: auto; }
+.dp-alone .empty .btn { align-self: center; margin-top: var(--space-2); }
