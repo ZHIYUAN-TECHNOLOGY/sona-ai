@@ -22,19 +22,22 @@ function Page() {
   // Unticked cards; everything is handed over unless the clinician holds one back.
   const [held, setHeld] = useState<ReadonlySet<string>>(new Set());
   // One id per attempt so a retry records the same acceptance once.
+  // Handed over in this sitting; the row settles to done in place and is not recorded twice.
+  const [done, setDone] = useState<ReadonlySet<string>>(new Set());
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
-  const accept = useMutation(orpc.handover.accept.mutationOptions({ onSuccess: () => setRequestId(crypto.randomUUID()) }));
+  const accept = useMutation(orpc.handover.accept.mutationOptions({ onSuccess: data => { setRequestId(crypto.randomUUID()); setDone(prev => new Set([...prev, ...data.cardIds])); } }));
 
   const all = cards.data ?? [];
-  const cardIds = all.filter(c => !held.has(c.id)).map(c => c.id);
+  const cardIds = all.filter(c => !held.has(c.id) && !done.has(c.id)).map(c => c.id);
   const watch = all.filter(c => c.priority === "watch");
   const [tab, setTab] = useState<State>("all");
   const shown = tab === "all" ? all : all.filter(c => (c.priority === "watch") === (tab === "watch"));
-  // Handed over in this sitting; the row settles to done in place.
-  const done = new Set(accept.data?.cardIds);
   const n = (count: number) => `${count} patient${count === 1 ? "" : "s"}`;
   const receiver = receivers.data?.find(r => r.id === accept.data?.toUser);
-  const toggle = (id: string) => setHeld(prev => { const next = new Set(prev); if (!next.delete(id)) next.add(id); return next; });
+  const flip = (prev: ReadonlySet<string>, id: string) => { const next = new Set(prev); if (!next.delete(id)) next.add(id); return next; };
+  const toggle = (id: string) => setHeld(prev => flip(prev, id));
+  // Watch rows start open and stable rows closed; this holds the ones the reader flipped.
+  const [flipped, setFlipped] = useState<ReadonlySet<string>>(new Set());
 
   return (
     <>
@@ -43,12 +46,12 @@ function Page() {
         actions={mayAccept && all.length > 0 && (
           <Button variant="primary" icon="swap" pending={accept.isPending} disabled={!toUser || cardIds.length === 0}
             onClick={() => accept.mutate({ requestId, cardIds, toUser })}>
-            Record handover of {n(cardIds.length)}
+            {done.size > 0 && cardIds.length === 0 ? "Handover recorded" : `Record handover of ${n(cardIds.length)}`}
           </Button>
         )} />
       {cards.data && all.length > 0 && (
         <StatRow>
-          <StatCard title="To hand over" value={cardIds.length} unit={`of ${all.length}`} caption={held.size ? `${held.size} held back` : "Everyone on your list"} />
+          <StatCard title="To hand over" value={cardIds.length} unit={`of ${all.length}`} caption={held.size ? `${held.size} held back` : done.size ? "Nobody left" : "Everyone on your list"} />
           <StatCard title="Need watching" value={watch.length} chip={watch.length ? "Watch" : undefined} tone="soon" caption={watch.map(c => c.name).join(", ") || "All stable"} />
           <StatCard title="Handed over" value={done.size} tone="done" caption={accept.data ? `To ${receiver?.name ?? "your colleague"}` : "Not recorded yet"} />
         </StatRow>
@@ -58,7 +61,7 @@ function Page() {
           <Card title="Hand over to">
             {!mayAccept ? <p className="ho-muted">Your role can read the handover but cannot accept one.</p> : (
               <div className="ho-form">
-                <Field label="Receiving clinician" hint={`${n(cardIds.length)} ticked. Untick a patient to hold them back.`} error={(accept.error ?? receivers.error)?.message}>
+                <Field label="Receiving clinician" hint={cardIds.length ? `${n(cardIds.length)} ticked. Untick a patient to hold them back.` : "Nobody left to hand over. Tick a held patient to hand them over."} error={(accept.error ?? receivers.error)?.message}>
                   {control => (
                     <select {...control} className="ho-control" value={toUser} onChange={e => setToUser(e.target.value)}>
                       <option value="" disabled>{receivers.isPending ? "Loading colleagues…" : receivers.data?.length ? "Choose a colleague" : "No colleague has signed in yet"}</option>
@@ -67,7 +70,7 @@ function Page() {
                   )}
                 </Field>
                 {accept.data
-                  ? <p className="ho-done" role="status"><Chip tone="done" icon="check">Handed over</Chip> {n(accept.data.cardIds.length)} to {receiver?.name ?? "your colleague"}.</p>
+                  ? <div className="ho-done" role="status"><Chip tone="done" icon="check">Handed over</Chip><span>{n(accept.data.cardIds.length)} to {receiver?.name ?? "your colleague"}.</span></div>
                   : <p className="ho-muted">Review each patient, pick who takes over, then record the handover.</p>}
               </div>
             )}
@@ -107,13 +110,15 @@ function Page() {
                       : c.priority === "watch" ? <Chip tone="soon">Watch</Chip>
                       : <span className="ho-muted">{held.has(c.id) ? "Held back" : "Stable"}</span>}
                   </div>
+                  <details className="ho-more" open={(c.priority === "watch") !== flipped.has(c.id)}>
+                    <summary onClick={e => { e.preventDefault(); setFlipped(prev => flip(prev, c.id)); }}>{c.situation}</summary>
                   <dl className="ho-sbar">
-                    <dt>Situation</dt><dd>{c.situation}</dd>
                     <dt>Background</dt><dd>{c.background}</dd>
                     <dt>Assessment</dt><dd>{c.assessment}</dd>
                     {c.recommendation.length > 0 && <><dt>To do</dt><dd><ul>{c.recommendation.map(r => <li key={r}>{r}</li>)}</ul></dd></>}
                   </dl>
-                  <p className="ho-muted ho-foot">You decide · {c.sources.length} source{c.sources.length === 1 ? "" : "s"}</p>
+                  <p className="ho-muted">You decide · {c.sources.length} source{c.sources.length === 1 ? "" : "s"}</p>
+                  </details>
                 </li>
               ))}
             </ul>
