@@ -1,21 +1,24 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Fragment, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, StatCard, StatRow } from "@/components/primitives";
+import { Button, Card, Chip, StatCard, StatRow } from "@/components/primitives";
 import { WithRail } from "@/components/rail";
-import { addDays, dateKey, dayLabel, hourOf, longLabel, timeOf, weekOf } from "@/features/today/time";
-import { orpc } from "@/lib/orpc";
+import { addDays, dateKey, dayLabel, hourOf, longLabel, timeOf, weekOf, whenOf } from "@/features/today/time";
+import { type client, orpc } from "@/lib/orpc";
 import "@/styles/pages/today.css";
 
 export const Route = createFileRoute("/pro/_app/schedule")({ component: Page });
 
-const cellKey = (at: Date) => `${dateKey(at)} ${hourOf(at)}`;
+type Visit = Awaited<ReturnType<typeof client.day.list>>[number];
+type Picked = { id: string; visit?: Visit; slot?: Date };
+const minutesOf = (at: Date) => { const [h = 0, m = 0] = timeOf(at).split(":").map(Number); return h * 60 + m; };
 
 function Page() {
   const [weeksAhead, setWeeksAhead] = useState(0);
+  const [picked, setPicked] = useState<Picked>();
   const today = dateKey(new Date());
   const days = weekOf(addDays(today, weeksAhead * 7));
 
@@ -29,11 +32,21 @@ function Page() {
   const visits = week.flatMap(q => q.data ?? []);
   const open = (slots.data?.days ?? []).flatMap(d => d.times.map(t => new Date(t))).filter(t => days.includes(dateKey(t)));
 
-  const visitsAt = Map.groupBy(visits, v => cellKey(new Date(v.startsAt)));
-  const openAt = Map.groupBy(open, cellKey);
-  const used = [...visits.map(v => hourOf(new Date(v.startsAt))), ...open.map(hourOf)];
+  const visitsOn = Map.groupBy(visits, v => dateKey(new Date(v.startsAt)));
+  const openOn = Map.groupBy(open, dateKey);
+  // This week the grid reaches the current hour, so the now line always has a place.
+  const used = [...visits.map(v => hourOf(new Date(v.startsAt))), ...open.map(hourOf), ...(weeksAhead === 0 ? [hourOf(new Date())] : [])];
   const from = Math.min(8, ...used);
   const hours = Array.from({ length: Math.max(17, ...used) - from + 1 }, (_, i) => from + i);
+  const offset = (at: Date) => `calc(${(minutesOf(at) - from * 60) / 60} * var(--week-hour))`;
+  // ponytail: visits with the very same start share the column; partly overlapping starts still overlap. Lay out by interval once `day.list` has an end time.
+  const sameStart = (visit: Visit, d: string) => {
+    const same = (visitsOn.get(d) ?? []).filter(v => String(v.startsAt) === String(visit.startsAt));
+    return { i: same.indexOf(visit), n: same.length };
+  };
+  const place = (at: Date, { i, n }: { i: number; n: number }) => ({ top: offset(at), left: `calc(${(Math.max(i, 0) / n) * 100}% + 2px)`, width: `calc(${100 / n}% - 4px)` });
+  const nowMinutes = minutesOf(new Date());
+  const nowTop = nowMinutes >= from * 60 && nowMinutes <= (from + hours.length) * 60 ? offset(new Date()) : undefined;
 
   const perDay = days.map(d => visits.filter(v => dateKey(new Date(v.startsAt)) === d).length);
   const busiest = perDay.indexOf(Math.max(...perDay));
@@ -63,6 +76,7 @@ function Page() {
 
       <WithRail
         rail={loading || failed ? null : (
+          <div className="week-rail">
           <InsightCard
             label="Sona AI"
             meta="Schedule check"
@@ -75,42 +89,70 @@ function Page() {
             next={weeksAhead === 0 ? { label: "Open today", to: "/pro/today" } : undefined}
             sources={visits.length + open.length}
           />
+          <Card title={picked?.visit ? "Visit" : picked?.slot ? "Open slot" : "Details"}>
+            {picked?.visit ? (
+              <div className="week-detail">
+                <b>{picked.visit.patientName}</b>
+                <span>{whenOf(new Date(picked.visit.startsAt))} · {picked.visit.kind}</span>
+                {picked.visit.incomplete ? <Chip tone="soon">Record incomplete</Chip> : null}
+                {encounterOf(picked.visit.patientId)
+                  ? <Button variant="primary" size="sm" to="/pro/visit" search={{ encounterId: encounterOf(picked.visit.patientId) } as never}>Open visit</Button>
+                  : <span className="today-quiet">No visit record to open yet.</span>}
+              </div>
+            ) : picked?.slot ? (
+              <div className="week-detail">
+                <b>{whenOf(picked.slot)}</b>
+                <span>{slots.data?.doctor.name} is free. Patients book this slot from Sona Care.</span>
+              </div>
+            ) : <p className="today-quiet">Select a visit or an open slot to see it here.</p>}
+          </Card>
+          </div>
         )}
       >
         <Card title="Week calendar">
-      {loading ? <EmptyState>Loading the week…</EmptyState>
-        : failed ? <EmptyState>The week could not be loaded. {failed.error?.message}</EmptyState>
-          : (
-            <div className="schedule-scroll">
-              <div className="schedule-grid" role="table" aria-label="Week calendar">
-                <div role="row" className="schedule-row">
-                  <span role="columnheader" className="schedule-head" />
-                  {days.map(d => (
-                    <span key={d} role="columnheader" className="schedule-head" aria-current={d === today ? "date" : undefined}>
-                      {dayLabel(d)}{d === today ? <small> Today</small> : null}
-                    </span>
-                  ))}
-                </div>
-                {hours.map(h => (
-                  <div key={h} role="row" className="schedule-row">
-                    <span role="rowheader" className="schedule-hour">{String(h).padStart(2, "0")}:00</span>
+          {loading ? <EmptyState>Loading the week…</EmptyState>
+            : failed ? <EmptyState>The week could not be loaded. {failed.error?.message}</EmptyState>
+              : (
+                <div className="week" role="group" aria-label="Week calendar">
+                  <div className="week-head">
+                    <span />
                     {days.map(d => (
-                      <div key={d} role="cell" className="schedule-cell" data-today={d === today || undefined}>
-                        {visitsAt.get(`${d} ${h}`)?.map(v => {
-                          const encounterId = encounterOf(v.patientId);
-                          const body = <Fragment><b>{timeOf(new Date(v.startsAt))}</b> {v.patientName}<small>{v.kind}</small></Fragment>;
-                          return encounterId
-                            ? <Link key={v.id} className="schedule-visit" to="/pro/visit" search={{ encounterId } as never}>{body}</Link>
-                            : <span key={v.id} className="schedule-visit">{body}</span>;
+                      <span key={d} className="week-day" aria-current={d === today ? "date" : undefined}>{dayLabel(d)}</span>
+                    ))}
+                  </div>
+                  <div className="week-body" style={{ height: `calc(${hours.length} * var(--week-hour))` }}>
+                    <div className="week-gutter" aria-hidden="true">
+                      {hours.map((h, i) => <span key={h} style={{ top: `calc(${i} * var(--week-hour))` }}>{String(h).padStart(2, "0")}:00</span>)}
+                    </div>
+                    {days.map(d => (
+                      <div key={d} className="week-col" data-today={d === today || undefined}>
+                        {(visitsOn.get(d) ?? []).map(v => {
+                          const at = new Date(v.startsAt);
+                          return (
+                            <button key={v.id} type="button" className="week-block" style={place(at, sameStart(v, d))}
+                              data-attention={v.incomplete || undefined} aria-pressed={picked?.id === v.id}
+                              onClick={() => setPicked({ id: v.id, visit: v })}>
+                              <b>{timeOf(at)}</b> {v.patientName}<small>{v.kind}</small>
+                            </button>
+                          );
                         })}
-                        {openAt.get(`${d} ${h}`)?.map(t => <span key={t.getTime()} className="schedule-open">{timeOf(t)} open</span>)}
+                        {(openOn.get(d) ?? []).map(t => (
+                          <button key={t.getTime()} type="button" className="week-block week-open" style={place(t, { i: 0, n: 1 })}
+                            aria-pressed={picked?.id === t.toISOString()} onClick={() => setPicked({ id: t.toISOString(), slot: t })}>
+                            <b>{timeOf(t)}</b> Open
+                          </button>
+                        ))}
+                        {d === today && nowTop !== undefined ? <span className="week-now" style={{ top: nowTop }} role="img" aria-label={`Now, ${timeOf(new Date())}`} /> : null}
                       </div>
                     ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                  <p className="week-legend">
+                    <span className="week-key" /> Visit
+                    <span className="week-key" data-attention /> Record incomplete
+                    <span className="week-key week-open" /> Open slot
+                  </p>
+                </div>
+              )}
           {slots.isError ? <p className="today-quiet">Open slots are not shown: {slots.error.message}</p> : null}
         </Card>
       </WithRail>
