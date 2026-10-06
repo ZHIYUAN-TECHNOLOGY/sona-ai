@@ -1,5 +1,4 @@
 import { can } from "@sona-ai/api/roles";
-import { FOLLOW_UPS } from "@sona-ai/domain/evidence";
 import { createFileRoute } from "@tanstack/react-router";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
@@ -14,7 +13,8 @@ import "@/styles/pages/evidence.css";
 export const Route = createFileRoute("/pro/_app/evidence")({ component: Page });
 
 // The phone app's rehearsed question and its first two follow-ups.
-const EXAMPLES = ["Steroids for this patient with community-acquired pneumonia?", ...FOLLOW_UPS.slice(0, 2).map(f => f.question)];
+// This page has no patient open, so its examples name the condition, never "this patient".
+const EXAMPLES = ["Do steroids help in community-acquired pneumonia?", "When is oral antibiotic step-down safe in pneumonia?", "Which adults with pneumonia can be treated at home?"];
 type Picked = { turn: string; n: number };
 
 function Page() {
