@@ -27,13 +27,14 @@ import { flaggedItems, flaggedTaskIds, reportItems } from "@/features/check-ins/
 import { useCheckIns, useKeptFlags } from "@/features/check-ins/state";
 import { FlagActions } from "@/features/check-ins/thread";
 import { BookingActions, useKeptBookings } from "@/features/bookings/parts";
-import { DemoTimeLine, useDemoOffset } from "@/features/live/demo-clock";
+import { useDemoOffset } from "@/features/live/demo-clock";
 import { useRole } from "@/features/live/roles";
 import type { Bed, Owner } from "@/features/ward/model";
 import { WardGlance } from "@/features/ward/ops";
 import { MessageActions, useInbox } from "@/features/inbox";
 import { TodayWatches } from "@/features/watches";
 import { needLine } from "./counts";
+import { NeedsYou } from "./needs-you";
 import { useNeedsYou, usePendingResult, useWardBeds } from "./use-counts";
 import { bookingItems, canSnooze, dayOf, glDeniedItems, groupVisits, messageItems, ownersOf, rankDay, rankOtherDay, sameForToday, scheduleFor, snooze, splitSnoozed, unownedBlocked, type DayItem, type DayTone, type ScheduleVisit, type Snoozed } from "./model";
 
@@ -400,6 +401,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
       </Animated.View>}
       {/* Medium-style cascade on first open: the lead card, then the keys, then the rows, each a beat later. */}
       {offset === 0 && <Animated.View entering={animate ? riseIn({ delay: 80, distance: 14, duration: 450 }) : undefined}>{shelf}</Animated.View>}
+      {/* Who needs you, the discharges blocked and your tasks, each acted on in place; its own empty line stands for the day's. */}
+      {offset === 0 && <NeedsYou now={now} beds={beds} live={live} />}
       {/* What the clinician asked Sona to keep asking, answered: above the ranked rows, since they asked to see it each day. */}
       {offset === 0 && <TodayWatches />}
       {rest.length > 0 && <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ paddingVertical: 2 }}>
@@ -415,7 +418,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
           <Text style={{ ...type.footnote, color: palette.muted }}>{item.title} · back {clockOf(wakes + offsetMs)} · <Text style={{ color: palette.blue }}>Wake now</Text></Text>
         </Pressable>)}
       </Animated.View>}
-      {!ordered.length && !dayError && <Text style={{ ...type.callout, color: palette.muted, textAlign: "center", paddingVertical: 12 }}>Nothing scheduled this day.</Text>}
+      {offset !== 0 && !ordered.length && !dayError && <Text style={{ ...type.callout, color: palette.muted, textAlign: "center", paddingVertical: 12 }}>Nothing scheduled this day.</Text>}
       {schedule.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: timeline }} onPress={() => { haptic(); setTimeline(v => !v); }} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Icon name={timeline ? "chevron.up" : "clock"} size={13} color={palette.blue} />
@@ -423,10 +426,9 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
         </Pressable>
         {timeline && <Expand><TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} /></Expand>}
       </Animated.View>}
-      <Text style={{ ...type.caption, color: palette.muted }}>{live || offset === 0 ? "Ranked by urgency, with the reason on every item." : "Clinic schedule for other days; open today's visits to act."}</Text>
-      {(live || offset === 0) && <SampleLabel source="fixture" rule />}
+      {/* Today's rule-based label sits by "Needs you now". */}
+      {offset !== 0 && <Text style={{ ...type.caption, color: palette.muted }}>{live ? "Ranked by urgency, with the reason on every item." : "Clinic schedule for other days; open today's visits to act."}</Text>}
+      {offset !== 0 && live && <SampleLabel source="fixture" rule />}
     </Animated.View>}
-    {/* The demo clock is a presenter's tool: it sits under the day, not above the insight. */}
-    <DemoTimeLine now={clock} />
   </View>;
 }
