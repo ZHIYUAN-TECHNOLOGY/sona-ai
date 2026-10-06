@@ -21,3 +21,14 @@
 .pt-labs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-3); }
 .pt-labs h3 { margin: 0 0 var(--space-1); font-size: 1rem; }
 .pt-labs p { margin: 0; }
+
+/* Sona Care join code on the patient overview */
+.join-code-for { font-weight: 600; margin: 0; }
+.join-code { display: block; font-size: 2.75rem; font-weight: 700; letter-spacing: 0.18em; font-variant-numeric: tabular-nums; line-height: 1.2; margin: var(--space-2) 0; overflow-wrap: anywhere; }
+@media print {
+  /* Print only the code card: everything else stays in the layout but is not drawn. */
+  body:has(.join-code-print) * { visibility: hidden; }
+  .join-code-print, .join-code-print * { visibility: visible; }
+  .join-code-print { position: fixed; top: 0; left: 0; padding: 20mm; color: #000; }
+  .join-code-print .join-code-action { display: none; }
+}

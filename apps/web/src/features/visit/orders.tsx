@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/page";
 import { Button, Card, Chip, Field, ListRow } from "@/components/primitives";
 import { orpc } from "@/lib/orpc";
 
+import { Medicines, type MedicineState } from "./medicines";
 import { orderChecks, refusal, type VisitPatient } from "./visit";
 
 type Payload = Partial<Regimen> & { checks?: string[]; transmitted?: boolean; amendment?: { reason?: string; supersedes?: string } };
@@ -33,7 +34,8 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
   if (!patient) return <EmptyState>This visit's patient record is not available, so the order cannot be checked here.</EmptyState>;
 
   const { revision } = encounter.data;
-  const proposed = (encounter.data.state as { proposedMedicine?: string }).proposedMedicine;
+  const state = encounter.data.state as MedicineState;
+  const proposed = state.proposedMedicine;
   const checks = orderChecks(encounter.data, patient);
   const blocked = checks.filter(c => c.status === "blocked");
   const reviewed = shown === revision;
@@ -46,13 +48,14 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
 
   return (
     <div className="visit-orders">
+      <Medicines encounterId={encounterId} revision={revision} state={state} patient={patient} canEdit={canPrescribe} />
       <Card title="Medicine order">
         {proposed ? (
           <ListRow icon="pill" title={proposed}
             caption={reviewed ? `Reviewed at revision ${revision}` : "Not reviewed yet"}
             trailing={blocked.length ? <Chip tone="amber" icon="alert">{blocked.length} of {checks.length} blocked</Chip>
               : <span className="visit-muted">{checks.length} checks pass</span>} />
-        ) : <p className="visit-muted">No medicine has been entered for this visit yet. It is entered on the phone app.</p>}
+        ) : <p className="visit-muted">No medicine is proposed for this visit yet.{canPrescribe ? " Propose one above, then review it." : ""}</p>}
         {reviewed || !canPrescribe ? (
           <ul className="visit-checks">
             {checks.map(c => (
@@ -65,7 +68,7 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
         ) : null}
         {canPrescribe ? (
           <div className="visit-actions">
-            <Button size="sm" variant={reviewed ? "quiet" : "primary"} pending={review.isPending}
+            <Button size="sm" variant={reviewed ? "quiet" : "primary"} disabled={!proposed} pending={review.isPending}
               onClick={() => review.mutate({ encounterId, expectedRevision: revision })}>
               {reviewed ? "Review again" : "Review the order"}
             </Button>
