@@ -106,7 +106,7 @@ Rules:
 - If the label is urgent, tell them to call 999 or go to the nearest emergency department now.
 Answer with JSON only: {"text": "<reply>"}`;
 
-const CODING = `You code a hospital admission note for the insurer in WHO ICD-10. Pick from the candidates: for every stated condition give the closest candidate. Only when that candidate is not the exact code, add the exact WHO ICD-10 code as well (it is checked against the WHO table and dropped if the table lacks it).
+const CODING = `You code a hospital admission note for the insurer in WHO ICD-10. Pick from the candidates: for every stated condition give the closest candidate. The candidates carry formal WHO titles that often name a condition in other words than the note: match by meaning (acute pyelonephritis is "Acute tubulo-interstitial nephritis", a stroke is "Cerebral infarction"). Only when that candidate is not the exact code, add the exact WHO ICD-10 code as well (it is checked against the WHO table and dropped if the table lacks it).
 Code only what a note sentence states the patient has: skip anything negated, ruled out, only suspected, or in the family history.
 One Principal code (the main reason for admission), other diagnoses Secondary, a procedure Procedure. Cite the id of the one sentence that states each,
 and copy the exact words in it that name the condition. Choose the candidate whose meaning matches those words most exactly: a named condition, not a general one.
