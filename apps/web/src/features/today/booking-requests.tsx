@@ -10,7 +10,7 @@ export type BookingRequest = Awaited<ReturnType<typeof client.bookings.list>>[nu
 
 /** Booking requests waiting for an answer. Each is read in full, then confirmed or declined where it sits. */
 export function BookingRequests({ requests, canDecide }: { requests: BookingRequest[]; canDecide: boolean }) {
-  if (!requests.length) return <p className="today-quiet">No booking requests are waiting.</p>;
+  if (!requests.length) return null;
   return (
     <ul className="today-requests">
       {requests.map(r => <Request key={r.id} request={r} canDecide={canDecide} />)}

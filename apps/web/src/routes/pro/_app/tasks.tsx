@@ -1,14 +1,14 @@
 import { can } from "@sona-ai/api/roles";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
 import { TableToolbar, TextCell, DataTable, PersonCell, type Column } from "@/components/data-table";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Chip, Field, SearchField, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, Field, SearchField, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
-import { dueLabel, groupTasks, matchesTask, sourceOf, type TaskTab } from "@/features/tasks/state";
+import { dueLabel, groupTasks, matchesTask, rankTasks, sourceOf, type TaskTab } from "@/features/tasks/state";
 import { isOverdue, today } from "@/features/ward/state";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/tasks.css";
@@ -16,7 +16,7 @@ import "@/styles/pages/tasks.css";
 export const Route = createFileRoute("/pro/_app/tasks")({ component: Page });
 
 const EMPTY: Record<TaskTab, string> = {
-  open: "No open tasks. The ward is caught up.", mine: "No open task is yours.", overdue: "Nothing is overdue.",
+  open: "No open tasks. The ward is caught up.", mine: "No open task is yours.", dueToday: "Nothing is due today.", overdue: "Nothing is overdue.",
   done: "No task has been marked done yet.", all: "No tasks yet.",
 };
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -49,8 +49,9 @@ function Page() {
   const visits = [...new Set(all.flatMap(t => t.encounterId ?? []))];
   const q = search.trim().toLowerCase();
   const inTab = new Set(groups[tab].map(t => t.id));
-  const rows = all.filter(t => (inTab.has(t.id) || settled.includes(t.id)) && matchesTask(t, q));
+  const rows = rankTasks(all.filter(t => (inTab.has(t.id) || settled.includes(t.id)) && matchesTask(t, q)));
   const task = rows.find(t => t.id === picked) ?? rows[0];
+  const nextOpen = rows.find(t => !t.completed);
   const error = create.error ?? complete.error ?? update.error;
   const pick = (next: TaskTab) => { setTab(next); setSettled([]); };
 
@@ -60,8 +61,8 @@ function Page() {
     const due = String(f.get("due") ?? "");
     create.mutate({ encounterId: String(f.get("encounterId")), title: String(f.get("title")), owner: String(f.get("owner")), ...(due ? { due } : {}), requestId }, { onSuccess: () => form.reset() });
   };
-  const markDone = (t: Task) => mayComplete && !t.completed
-    ? <Button size="sm" icon="check" pending={complete.isPending && complete.variables?.taskId === t.id} onClick={() => complete.mutate({ taskId: t.id })}>Mark done</Button>
+  const markDone = (t: Task, variant?: "primary") => mayComplete && !t.completed
+    ? <Button size="sm" icon="check" variant={variant} pending={complete.isPending && complete.variables?.taskId === t.id} onClick={() => complete.mutate({ taskId: t.id })}>Mark done</Button>
     : null;
 
   const columns: Column<Task>[] = [
@@ -82,15 +83,23 @@ function Page() {
   return (
     <>
       <PageHeader title="Tasks"
-        lead={list.data ? `${plural(groups.open.length, "open task")} · ${groups.dueToday.length} due today · ${groups.overdue.length} overdue` : undefined}
+        lead={list.data ? (
+          <>
+            {plural(groups.open.length, "open task")}
+            {groups.overdue.length ? <> · <Signal tone="urgent">{groups.overdue.length} overdue</Signal></> : null}
+            {groups.dueToday.length ? <> · <Signal tone="soon">{groups.dueToday.length} due today</Signal></> : null}
+            {groups.open.length && !groups.overdue.length && !groups.dueToday.length ? " · none overdue or due today" : null}
+          </>
+        ) : undefined}
         status={mayComplete ? undefined : "Your role can see tasks but cannot complete or change them."} />
       {list.data && (
         <StatRow>
-          <StatCard title="Open" value={groups.open.length} unit="tasks" caption={`${groups.mine.length} of them yours`} feature />
-          <StatCard title="Due today" value={groups.dueToday.length} caption={groups.dueToday.length ? "Finish these before handover" : "Nothing is due today"} />
+          <StatCard title="Open" value={groups.open.length} unit="tasks" caption={`${groups.mine.length} of them yours`} feature onSelect={() => pick("open")} selected={tab === "open"} />
+          <StatCard title="Due today" value={groups.dueToday.length} caption={groups.dueToday.length ? "Finish these before handover" : "Nothing is due today"}
+            onSelect={() => pick("dueToday")} selected={tab === "dueToday"} />
           <StatCard title="Overdue" value={groups.overdue.length} caption={groups.overdue.length ? "Past their due date" : "Nothing is overdue"}
-            chip={groups.overdue.length ? "Needs action" : undefined} tone="urgent" />
-          <StatCard title="Done" value={groups.done.length} unit={`of ${all.length}`} caption="Marked done by the care team" />
+            chip={groups.overdue.length ? "Needs action" : undefined} tone="urgent" onSelect={() => pick("overdue")} selected={tab === "overdue"} />
+          <StatCard title="Done" value={groups.done.length} unit={`of ${all.length}`} caption="Marked done by the care team" onSelect={() => pick("done")} selected={tab === "done"} />
         </StatRow>
       )}
       <WithRail rail={(
@@ -104,12 +113,15 @@ function Page() {
                 <dt>State</dt><dd>{task.completed ? "Done" : isOverdue(task, on) ? "Overdue" : "Open"}</dd>
               </dl>
               <div className="tasks-actions">
-                {markDone(task)}
-                {task.encounterId && <Link className="tasks-link" to="/pro/visit" search={{ encounterId: task.encounterId }}>Open the patient's visit</Link>}
+                {markDone(task, "primary")}
+                {task.encounterId ? <Button size="sm" variant="secondary" to="/pro/visit" search={{ encounterId: task.encounterId }}>Open visit</Button> : null}
               </div>
+              {settled.includes(task.id) ? (
+                <p className="tasks-muted" role="status">Marked done. {nextOpen ? <button type="button" className="tasks-next" onClick={() => setPicked(nextOpen.id)}>Review the next task</button> : "Nothing else is open here."}</p>
+              ) : null}
               {/* Uncontrolled and keyed on the saved value: commits on blur, and redraws when the server answers. */}
               {mayUpdate && !task.completed ? (
-                <div className="tasks-form">
+                <div className="tasks-form tasks-pair">
                   <Field label="Assignee">{c => <input {...c} key={task.id + task.owner} defaultValue={task.owner} maxLength={80}
                     onBlur={e => { const owner = e.target.value.trim(); if (owner && owner !== task.owner) update.mutate({ taskId: task.id, owner }); }} />}</Field>
                   <Field label="Due">{c => <input {...c} key={task.id + task.due} type="date" defaultValue={task.due ?? ""}
@@ -119,8 +131,10 @@ function Page() {
             </Card>
           )}
           {mayCreate && list.data && (
-            <Card title="Add a task">
+            <Card>
               {visits.length > 0 ? (
+                <details className="tasks-add">
+                <summary>Add a task</summary>
                 <form className="tasks-form" onSubmit={submit}>
                   <Field label="Task">{c => <input {...c} name="title" required maxLength={200} />}</Field>
                   <Field label="Visit">{c => <select {...c} name="encounterId" required>{visits.map(v => <option key={v}>{v}</option>)}</select>}</Field>
@@ -128,6 +142,7 @@ function Page() {
                   <Field label="Due">{c => <input {...c} name="due" type="date" />}</Field>
                   <Button type="submit" variant="primary" icon="plus" pending={create.isPending}>Add task</Button>
                 </form>
+                </details>
               ) : <p className="tasks-muted">A task is added to a visit, and no visit has tasks yet. Add the first one from the patient's page.</p>}
             </Card>
           )}
@@ -144,6 +159,7 @@ function Page() {
               <TableToolbar end={<SearchField label="Search tasks" placeholder="Search tasks" value={search} onChange={e => setSearch(e.target.value)} />}>
                 <Tabs label="Tasks by state" value={tab} onChange={pick} tabs={[
                   { id: "open", label: "Open", count: groups.open.length }, { id: "mine", label: "Mine", count: groups.mine.length },
+                  { id: "dueToday", label: "Due today", count: groups.dueToday.length },
                   { id: "overdue", label: "Overdue", count: groups.overdue.length }, { id: "done", label: "Done", count: groups.done.length },
                   { id: "all", label: "All", count: all.length },
                 ]} />
