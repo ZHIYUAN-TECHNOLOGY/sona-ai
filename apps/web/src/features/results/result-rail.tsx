@@ -48,18 +48,30 @@ export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }
   const earlier = series.length > 1 ? series[series.length - 2] : undefined;
   const unit = row.unit ? ` ${row.unit}` : "";
   const evidence = [
-    { icon: "flask" as const, text: `${row.test} ${valueOf(row)}, ${row.flag ? `flagged ${row.flag} by the lab` : "no flag from the lab"}` },
+    { icon: "flask" as const, text: `${row.patientName} · ${row.test} ${valueOf(row)}, ${row.flag ? `flagged ${row.flag} by the lab` : "no flag from the lab"}` },
     ...(earlier ? [{ icon: "activity" as const, text: `${series.length} values on record; the one before was ${earlier.y}${unit} on ${earlier.x}` }] : []),
-    { icon: "clock" as const, text: `Received ${when(row.receivedAt)}` },
-    row.acknowledgedAt
-      ? { icon: "check" as const, text: `Acknowledged by ${row.acknowledgedByName ?? "a doctor"}, ${when(row.acknowledgedAt)}` }
-      : { icon: "user" as const, text: allowed ? "Waiting for a doctor to acknowledge" : `Only a doctor can acknowledge. Tell the doctor on call${row.critical ? " now" : ""}.` },
+    // When it arrived is on the card below, and the Acknowledge button says it is waiting: neither is repeated here.
+    ...(row.acknowledgedAt
+      ? [{ icon: "check" as const, text: `Acknowledged by ${row.acknowledgedByName ?? "a doctor"}, ${when(row.acknowledgedAt)}` }]
+      : allowed ? [] : [{ icon: "user" as const, text: `Only a doctor can acknowledge. Tell the doctor on call${row.critical ? " now" : ""}.` }]),
   ];
   return (
     <RightRail label="Selected result">
+      <InsightCard
+        label="Why this is flagged"
+        tone={row.critical ? "urgent" : isFlagged(row.flag) ? "soon" : "info"}
+        title={row.critical ? "Must not be missed" : isFlagged(row.flag) ? "Needs review" : isNormal(row.flag) ? "Routine" : "Not judged yet"}
+        lead={row.why ?? derived(row)}
+        meta={row.why ? "Call-now rule" : "From the lab flag"}
+        evidence={evidence}
+        sources={evidence.length}
+        next={!row.acknowledgedAt && allowed && !pending
+          ? { label: isNormal(row.flag) ? "Acknowledge normal" : "Acknowledge", step: "Records you as the doctor who saw this result.", onAct: () => onAcknowledge(row) }
+          : undefined}
+      />
       <Card>
         <div className="results-detail-head">
-          <Avatar name={row.patientName} size="lg" />
+          <Avatar name={row.patientName} />
           <div>
             <h2 className="results-detail-title">{row.patientName} · {row.test}</h2>
             <p className="results-muted">
@@ -77,18 +89,6 @@ export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }
         </div>
         {error ? <p className="results-error" role="alert">Not acknowledged: {error}</p> : null}
       </Card>
-      <InsightCard
-        label="Why this is flagged"
-        tone={row.critical ? "urgent" : isFlagged(row.flag) ? "soon" : "info"}
-        title={row.critical ? "Must not be missed" : isFlagged(row.flag) ? "Needs review" : isNormal(row.flag) ? "Routine" : "Not judged yet"}
-        lead={row.why ?? derived(row)}
-        meta={row.why ? "Call-now rule" : "From the lab flag"}
-        evidence={evidence}
-        sources={evidence.length}
-        next={!row.acknowledgedAt && allowed && !pending
-          ? { label: isNormal(row.flag) ? "Acknowledge normal" : "Acknowledge", step: "Records you as the doctor who saw this result.", onAct: () => onAcknowledge(row) }
-          : undefined}
-      />
     </RightRail>
   );
 }

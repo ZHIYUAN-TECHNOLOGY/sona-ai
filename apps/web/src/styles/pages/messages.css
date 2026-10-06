@@ -29,6 +29,8 @@
 @media (max-width: 1000px) { .msg-none { grid-column: auto; } }
 
 /* The reply sits open in Sona's panel: a light input surface with ink text on the dark blue, a white send pill. */
+/* It stays beside the conversation while a long thread scrolls. */
+@media (min-width: 1001px) { .msg-reply { position: sticky; top: 0; } }
 .msg-reply .insight-detail { color: inherit; }
 .msg-reply .insight-detail summary { display: none; }
 .msg-reply .field label { color: var(--on-ai); }

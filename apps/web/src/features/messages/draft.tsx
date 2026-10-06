@@ -16,7 +16,7 @@ export function DraftChecks({ draft }: { draft: Draft }) {
       <li>
         {draft.source === "model"
           ? <>Drafted by Sona ({draft.model})</>
-          : <><Chip>Sample</Chip> {draft.waking ? "The model is waking; this is a rule-based sample draft" : "Rule-based sample draft, not a model's"}</>}
+          : <><Chip>Sample</Chip> {draft.waking ? "The model is waking, so this was written from rules" : "Written from rules, not by a model"}</>}
       </li>
     </ul>
   );
@@ -34,14 +34,15 @@ export function DraftSources({ draft, asked }: { draft: Draft; asked?: string })
 
 /**
  * Sona's reply as a proposal, editable in place. Nothing is sent until the clinician presses send on the text they
- * see. With no draft it is a plain reply box. `extra` sits beside the buttons (the review queue's Dismiss).
+ * see. With no draft it is a plain reply box. `extra` sits beside the buttons (the review queue's Dismiss);
+ * `onSent` runs once the reply is sent.
  */
-export function ReplyEditor({ patientId, draft, sendLabel = "Send reply", extra }: { patientId: string; draft: Draft | null; sendLabel?: string; extra?: ReactNode }) {
+export function ReplyEditor({ patientId, draft, sendLabel = "Send reply", extra, onSent }: { patientId: string; draft: Draft | null; sendLabel?: string; extra?: ReactNode; onSent?: () => void }) {
   const queryClient = useQueryClient();
   // One id per draft shown, so a retried send is the same send.
   const [requestId] = useState(() => crypto.randomUUID());
   const done = () => queryClient.invalidateQueries({ queryKey: orpc.messages.key() });
-  const reply = useMutation(orpc.messages.reply.mutationOptions({ onSuccess: done }));
+  const reply = useMutation(orpc.messages.reply.mutationOptions({ onSuccess: () => { onSent?.(); return done(); } }));
   const handle = useMutation(orpc.messages.handle.mutationOptions({ onSuccess: done }));
   const send = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,7 +52,7 @@ export function ReplyEditor({ patientId, draft, sendLabel = "Send reply", extra 
   const error = reply.error ?? handle.error;
   return (
     <form className="msg-editor" onSubmit={send}>
-      <Field label={draft ? "Sona drafted a reply · check before sending" : "Reply"} error={error?.message}>
+      <Field label={draft ? "Check before sending" : "Reply"} error={error?.message}>
         {c => <textarea {...c} name="text" rows={6} maxLength={1000} required defaultValue={draft?.text ?? ""} />}
       </Field>
       <div className="msg-actions">

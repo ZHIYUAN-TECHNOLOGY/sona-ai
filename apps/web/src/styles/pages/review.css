@@ -1,34 +1,30 @@
 /* Review queue: a queue list, the open item as a document, one Sona panel in the rail. Reply drafts reuse messages.css. */
-.rv-body { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: var(--gap-card); align-items: start; }
+.rv-body { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: var(--gap-card); align-items: start; }
 @media (max-width: 860px) { .rv-body { grid-template-columns: minmax(0, 1fr); } }
 .rv-queue { display: contents; } .rv-queue > :first-child { grid-column: 1 / -1; }
 .rv-queue .chip, .rv-doc .chip { flex: none; }
 .rv-doc { min-width: 0; }
 .rv-strip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding-bottom: var(--space-3); border-bottom: 1px solid var(--line); }
-.rv-link { margin-left: auto; color: var(--blue); font-size: var(--text-sm); font-weight: 600; text-decoration: none; }
+.rv-link { margin-left: auto; color: var(--blue); font-size: var(--text-small); font-weight: 600; text-decoration: none; }
 .rv-link:hover, .rv-link:focus-visible { text-decoration: underline; }
-.rv-h { margin: var(--space-4) 0 var(--space-1); color: var(--muted); font-size: var(--text-sm); font-weight: 600; }
+.rv-h { margin: var(--space-4) 0 var(--space-1); color: var(--muted); font-size: var(--text-small); font-weight: 600; }
 .rv-text { margin: 0; white-space: pre-wrap; max-width: 68ch; }
 .rv-text a { color: var(--blue); font-weight: 600; text-decoration: none; }
 .rv-text a:hover, .rv-text a:focus-visible { text-decoration: underline; }
 .rv-doc textarea { width: 100%; }
-.rv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); }
+.rv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-small); }
 .rv-list li { display: flex; align-items: flex-start; gap: var(--space-2); }
 .rv-list li[data-ok] { color: var(--muted); }
 .rv-list svg { flex: none; margin-top: 2px; }
-.rv-changed, .rv-sources { margin: 0; padding-left: var(--space-4); font-size: var(--text-sm); }
+.rv-changed, .rv-sources { margin: 0; padding-left: var(--space-4); font-size: var(--text-small); }
 .rv-sources { color: var(--muted); }
-.rv-sources li { padding: 2px var(--space-1); border-radius: var(--radius-sm); }
+.rv-sources li { padding: 2px var(--space-1); border-radius: var(--radius-control); }
 .rv-sources li[aria-current] { background: var(--blue-wash); color: var(--ink); }
 .rv-foot, .rv-doc .rv-confirm, .rv-doc > .msg-meta:last-child { margin-top: var(--space-4); }
 .rv-foot { padding-top: var(--space-3); border-top: 1px solid var(--line); justify-content: flex-start; }
 .rv-doc .msg-actions button { flex: none; }
-.rv-confirm { padding: var(--space-3); border-radius: var(--radius-sm); background: var(--tone-wash); }
+.rv-confirm { padding: var(--space-3); border-radius: var(--radius-control); background: var(--tone-wash); }
 .rv-confirm p { margin: 0 0 var(--space-2); }
 .rv-done { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.rv-done > li { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--tone-wash); }
+.rv-done > li { padding: var(--space-2) var(--space-3); border-radius: var(--radius-control); background: var(--tone-wash); }
 .rv-done .rv-list { margin: var(--space-2) 0 0; }
-
-/* A wrapper that only scopes a rule: the approve step in the insight card is text only. */
-.rv-wrap { display: contents; }
-.rv-step-only .insight-act { display: none; }

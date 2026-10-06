@@ -5,10 +5,11 @@ import { useCallback, useState } from "react";
 
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Avatar, Button, Card, Chip, ListCard, ListRow, Tabs } from "@/components/primitives";
+import { Avatar, Button, Card, Chip, ListCard, ListRow, Signal, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { DraftChecks, DraftSources, ReplyEditor } from "@/features/messages/draft";
 import { ago } from "@/features/messages/format";
+import { flaggedFirst } from "@/features/review/rank";
 import { Checks, type Done, failingOf, VisitSummaryCard } from "@/features/review/visit-summary-card";
 import { orpc } from "@/lib/orpc";
 
@@ -18,8 +19,10 @@ import "@/styles/pages/review.css";
 export const Route = createFileRoute("/pro/_app/review")({ component: Page });
 
 type Tab = "all" | "reply" | "summary";
+/** A line for an item that left the queue; `reply` marks a sent reply, the rest are visit summaries. */
+type Sent = Done & { reply?: true };
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-// The document's own "Approve and send" is the one place that sends. The header takes the clinician to it, with the
+// The document's own "Approve and send" is the one place that sends. The rail's suggested step takes the clinician to it, with the
 // draft in view, and never presses it for them.
 const approveOpen = () => {
   const button = [...document.querySelectorAll<HTMLButtonElement>("#rv-open button")].find(b => b.textContent?.startsWith("Approve and send"));
@@ -33,8 +36,8 @@ function Page() {
   const canSummaries = can(me.role, "review.list");
   const inbox = useQuery(orpc.messages.inbox.queryOptions({ enabled: allowed }));
   const summaries = useQuery(orpc.review.list.queryOptions({ enabled: canSummaries }));
-  const [done, setDone] = useState<readonly Done[]>([]);
-  const addDone = useCallback((d: Done) => setDone(all => [d, ...all]), []);
+  const [done, setDone] = useState<readonly Sent[]>([]);
+  const addDone = useCallback((d: Sent) => setDone(all => [d, ...all]), []);
   // Dismissed here only: the message stays waiting in Messages (the API keeps no "draft dismissed").
   const [tab, setTab] = useState<Tab>("all");
   const [sel, setSel] = useState<string | null>(null);
@@ -61,7 +64,7 @@ function Page() {
       <ul className="rv-done" role="status">
         {done.map(d => (
           <li key={d.id} data-tone={d.outcome === "approved" ? "done" : "neutral"}>
-            {d.outcome === "approved" ? `After-visit summary sent to ${d.name}.` : `Summary for ${d.name} dismissed. Nothing was sent.`}
+            {d.outcome === "approved" ? `${d.reply ? "Reply" : "After-visit summary"} sent to ${d.name}.` : `Summary for ${d.name} dismissed. Nothing was sent.`}
             {d.checks ? <> Checks on your edited text:<Checks checks={d.checks} /></> : null}
           </li>
         ))}
@@ -71,7 +74,8 @@ function Page() {
   if (!total) return <>{header}{errors}{doneLines}{summaries.error || inbox.error ? null : <EmptyState>Nothing is waiting for review.</EmptyState>}</>;
 
   const now = inbox.data?.now;
-  const entries = [
+  // Flagged first, so the item opened by default is the one that most needs reading.
+  const entries = flaggedFirst([
     ...items.map(item => ({
       key: `s-${item.id}`, kind: "summary" as const, name: item.patient.name, item, failing: failingOf(item.checks).map(c => c.label),
       sample: item.origin === "fixture", sources: item.sources.length,
@@ -85,7 +89,7 @@ function Page() {
         caption: `Reply${t.waitingSince && now ? ` · ${ago(t.waitingSince, now)}` : ""}`,
       };
     }),
-  ];
+  ]);
   const shown = entries.filter(e => tab === "all" || e.kind === tab);
   const open = shown.find(e => e.key === sel) ?? shown[0];
   const flagged = entries.filter(e => e.failing.length);
@@ -97,8 +101,13 @@ function Page() {
     <>
       <PageHeader
         title="Review queue"
-        lead={`${count(total, "item waits", "items wait")} for your approval: ${count(items.length, "visit summary", "visit summaries")}, ${count(waiting.length, "reply", "replies")}${flagged.length ? ` · ${flagged.length} flagged` : ""}. Nothing is sent until you approve it.`}
-        actions={open ? <Button variant="primary" icon="check" onClick={approveOpen}>Approve for {open.name}</Button> : undefined}
+        lead={(
+          <>
+            <Signal tone="soon">{count(total, "item waits", "items wait")} for your approval</Signal>
+            {flagged.length ? <> · <Signal tone="urgent">{flagged.length} flagged</Signal></> : null}
+            {" · "}Nothing is sent until you approve it
+          </>
+        )}
       />
       {errors}
       {doneLines}
@@ -106,27 +115,24 @@ function Page() {
         rail={open
           ? (
             <RightRail label="Why this needs review">
-              {/* The header and the document hold the approve buttons: here the step is text only. */}
-              <div className={otherFlagged && !open.failing.length ? "rv-wrap" : "rv-wrap rv-step-only"}>
               <InsightCard
                 label="Sona insight"
                 lead={open.failing.length
                   ? `${open.name}'s ${what} has ${count(open.failing.length, "check", "checks")} to look at before it is sent`
                   : open.sample
-                    ? `This ${what} for ${open.name} is a sample, not a model's: read it closely`
+                    ? `This ${what} for ${open.name} is a rule-based sample, not written by a model. Read it closely`
                     : `${open.name} reads this ${what} as soon as you approve it. Sona's checks found nothing to flag`}
                 evidence={[
                   ...open.failing.map(text => ({ icon: "alert" as const, text })),
-                  ...(open.sample && open.failing.length ? [{ icon: "file" as const, text: "Sample draft, not a model's" }] : []),
+                  ...(open.sample && open.failing.length ? [{ icon: "file" as const, text: "Sample draft, not written by a model" }] : []),
                   ...(otherFlagged ? [{ icon: "clipboard" as const, text: `${count(flagged.length, "item", "items")} in the queue flagged` }] : []),
                   ...(samples > (open.sample ? 1 : 0) ? [{ icon: "file" as const, text: count(samples, "draft in the queue is a sample", "drafts in the queue are samples") }] : []),
                 ]}
                 next={otherFlagged && !open.failing.length
                   ? { label: "Open the first flagged item", onAct: () => { setTab("all"); setSel(otherFlagged.key); } }
-                  : { label: `Approve for ${open.name}`, step: "Read the draft, then approve it at its foot.", onAct: approveOpen }}
+                  : { label: "Go to the approve button", step: "Read the draft, then approve it at its foot.", onAct: approveOpen }}
                 sources={open.sources}
               />
-              </div>
             </RightRail>
           )
           : null}
@@ -161,7 +167,7 @@ function Page() {
             {open?.kind === "summary" ? <VisitSummaryCard key={open.key} item={open.item} role={me.role} onDone={addDone} /> : null}
             {open?.kind === "reply"
               ? (
-                <Card key={open.key} title="Reply to a patient message" className="rv-doc">
+                <Card key={open.key} title="Draft reply to a patient message" className="rv-doc">
                   <header className="rv-strip">
                     <Avatar name={open.name} size="sm" />
                     <strong>{open.name}</strong>
@@ -180,6 +186,7 @@ function Page() {
                           patientId={open.t.patientId}
                           draft={open.draft.data}
                           sendLabel="Approve and send"
+                          onSent={() => addDone({ id: crypto.randomUUID(), name: open.name, outcome: "approved", reply: true })}
                           extra={<Button variant="secondary" onClick={() => setDismissed(d => [...d, open.t.patientId])}>Dismiss</Button>}
                         />
                       </>
