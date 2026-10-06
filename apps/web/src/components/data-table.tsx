@@ -1,3 +1,4 @@
+import { Link, type LinkProps } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 
 import { Avatar } from "./avatar";
@@ -54,13 +55,11 @@ export function ValueCell({ value, unit }: { value: ReactNode; unit?: ReactNode 
 }
 
 /** The row's action: text and an arrow; an ink pill on the selected row. */
-export function RowAction({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
-  return (
-    <button type="button" className="row-action" onClick={onClick}>
-      {children}
-      <Icon name="arrow-right" size={16} />
-    </button>
-  );
+export function RowAction({ children, onClick, to }: { children: ReactNode; onClick?: () => void; to?: LinkProps["to"] }) {
+  const inner = <>{children}<Icon name="arrow-right" size={16} /></>;
+  return to
+    ? <Link className="row-action" to={to} onClick={onClick}>{inner}</Link>
+    : <button type="button" className="row-action" onClick={onClick}>{inner}</button>;
 }
 
 export function DataTable<T>({ columns, rows, rowKey, onRowOpen, rowAction, empty, selectedKey, toolbar, count, footer, loading }: Props<T>) {
