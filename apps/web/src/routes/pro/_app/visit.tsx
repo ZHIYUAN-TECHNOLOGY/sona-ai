@@ -70,7 +70,7 @@ function Briefing({ encounterId }: { encounterId: string }) {
   return (
     <InsightCard label={briefing.data.source === "fixture" ? "Sona AI · sample" : "Sona AI"} title="Before you start" lead={lead}
       evidence={rest.map(text => ({ icon: "file" as const, text }))} sources={briefing.data.lines.length}
-      next={{ label: "Review the order", step: "Check the medicine order against this record.", onAct: scrollToOrders }} />
+      next={{ label: "Go to the order", step: "Check the medicine order against this record.", onAct: scrollToOrders }} />
   );
 }
 
