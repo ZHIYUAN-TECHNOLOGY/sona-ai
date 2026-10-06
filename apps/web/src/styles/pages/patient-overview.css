@@ -1,13 +1,4 @@
 /* Patient overview. Tokens only. */
-.po-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--gap-card); align-items: start; }
-.po-col { display: grid; gap: var(--gap-card); min-width: 0; }
-.po-body > * { min-width: 0; }
-@media (max-width: 68rem) {
-  .po-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .po-body > :first-child { grid-column: 1 / -1; }
-}
-@media (max-width: 44rem) { .po-body { grid-template-columns: minmax(0, 1fr); } }
-
 /* The allergy is one short chip; the full text is in the title. */
 .po-allergy { display: inline-block; max-width: 14rem; padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--red-wash); color: var(--red); font-size: var(--text-small); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
 

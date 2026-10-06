@@ -2,13 +2,14 @@ import { can } from "@sona-ai/api/roles";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
-import { useState } from "react";
+import { Fragment, type ReactNode, useState } from "react";
 
 import { LineChart } from "@/components/charts";
 import type { IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader, PatientStrip } from "@/components/page";
-import { Button, Card, Chip, ListCard, ListRow, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, ListCard, ListRow, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { RightRail, WithRail } from "@/components/rail";
 import { when } from "@/features/results/result-rail";
 import { isFlagged } from "@/features/results/triage";
 import { orpc } from "@/lib/orpc";
@@ -74,6 +75,14 @@ function Loaded({ patient, canRead }: { patient: PatientRow; canRead: boolean })
     ...(latest ? [{ icon: "clock" as const, text: `Latest: ${latest.title}, ${day(latest.at)}` }] : []),
     ...(a?.due ? [{ icon: "pill" as const, text: a.missed.length ? `${a.missed.length} missed, ${a.late.length} due now of ${a.due} doses` : a.late.length ? `${a.late.length} of ${a.due} doses due now` : `All ${a.due} doses taken` }] : []),
   ];
+  // Where this patient stands, in one line: the ward's own assessment (amber on watch, green when fit to go, plain when stable) and any doses behind.
+  const sbar = patient.ward?.sbar;
+  const status = patient.ward?.status;
+  const lead: ReactNode[] = [
+    patient.subtitle,
+    sbar?.a ? (status === "watch" || status === "fit" ? <Signal tone={status === "watch" ? "soon" : "done"}>{sbar.a}</Signal> : sbar.a) : null,
+    behind ? <Signal tone={a?.missed.length ? "urgent" : "soon"}>{behind === 1 ? "1 dose" : `${behind} doses`} behind</Signal> : null,
+  ].filter(Boolean);
   const sources = (briefing.data ? (patient.sources?.length ?? 0) : 0) + (latest ? 1 : 0) + (a?.due ? 1 : 0);
 
   return (
@@ -81,11 +90,12 @@ function Loaded({ patient, canRead }: { patient: PatientRow; canRead: boolean })
       <PageHeader
         breadcrumb={[{ label: "Patients", to: "/pro/patients" }, { label: patient.name }]}
         title="Patient overview"
-        lead={[patient.subtitle, latest ? `Latest record ${day(latest.at)}` : null].filter(Boolean).join(" · ")}
+        lead={lead.length ? lead.map((part, i) => <Fragment key={i}>{i ? " · " : null}{part}</Fragment>) : latest ? `Latest record ${day(latest.at)}` : undefined}
         actions={
           canRead ? (
             <>
-              <Button to="/pro/messages" icon="message" variant="secondary">Message</Button>
+              {/* With doses behind, the summary's suggested step is the Message button. */}
+              {behind ? null : <Button to="/pro/messages" icon="message" variant="secondary">Message</Button>}
               {/* The visit page reads encounterId from the URL itself. */}
               {visit ? <Button {...visit} variant="primary" icon="arrow-right">Open the visit</Button> : null}
             </>
@@ -120,19 +130,25 @@ function Loaded({ patient, canRead }: { patient: PatientRow; canRead: boolean })
               {patient.vitals?.slice(0, Math.max(0, 3 - top.length)).map((v) => <StatCard key={v.label} title={v.label} value={v.value} caption="Latest reading" />)}
             </StatRow>
           ) : null}
-          <div className="po-body">
-            {/* The header already opens the visit: without doses behind, the suggested step is text only. */}
-            <div className={behind ? "po-wrap" : "po-wrap po-step-only"}>
-            <InsightCard
-              label="Pre-visit summary"
-              title={behind ? `${behind} ${behind === 1 ? "dose needs" : "doses need"} a word` : `Before you see ${patient.name.split(" ")[0]}`}
-              lead={!hasVisit ? "No visit on record, so there is no briefing yet." : briefing.isPending ? "Sona is reading the record…" : briefing.error ? `No briefing: ${briefing.error.message}` : (briefing.data.lines[0] ?? "The briefing came back empty.")}
-              evidence={evidence}
-              sources={sources || undefined}
-              next={behind ? { label: "Message", step: "Ask about the doses that are behind.", to: "/pro/messages" } : visit ? { label: "Open the visit", step: "Read the record before the visit.", ...visit } : undefined}
-              meta={briefing.data?.source === "fixture" ? <Chip tone="soon">Sample answer</Chip> : undefined}
-            />
-            </div>
+          <WithRail
+            rail={
+              <RightRail label="Summary and medicines">
+                <div className={behind ? "po-wrap" : "po-wrap po-step-only"}>
+                <InsightCard
+                  label="Pre-visit summary"
+                  title={behind ? `${behind} ${behind === 1 ? "dose needs" : "doses need"} a word` : "Before the visit"}
+                  lead={!hasVisit ? "No visit on record, so there is no briefing yet." : briefing.isPending ? "Sona is reading the record…" : briefing.error ? `No briefing: ${briefing.error.message}` : (briefing.data.lines[0] ?? "The briefing came back empty.")}
+                  evidence={evidence}
+                  sources={sources || undefined}
+                  next={behind ? { label: "Message", step: "Ask about the doses that are behind.", to: "/pro/messages" } : visit ? { label: "Open the visit", step: sbar?.r ?? "Read the record before the visit.", ...visit } : undefined}
+                  meta={briefing.data?.source === "fixture" ? <Chip tone="soon">Sample answer</Chip> : undefined}
+                />
+                </div>
+                <Medicines items={patient.medicines?.slice(0, 4)} more={() => setTab("medicines")} total={patient.medicines?.length ?? 0} />
+                <TakeHome patient={patient} />
+              </RightRail>
+            }
+          >
             <Card title={main ? main.name : "Trend"}>
               {main ? (
                 <>
@@ -148,25 +164,21 @@ function Loaded({ patient, canRead }: { patient: PatientRow; canRead: boolean })
                   ) : null}
                 </>
               ) : (
-                <EmptyState icon="activity" title={trends.isPending ? "Loading the trend…" : "No trend yet"}>
-                  {trends.error ? `Could not be loaded: ${trends.error.message}` : trends.isPending ? null : "A chart appears here once a measure has two values in the last 12 months."}
-                </EmptyState>
+                <p className="pt-muted">
+                  {trends.error ? `Could not be loaded: ${trends.error.message}` : trends.isPending ? "Loading the trend…" : "No trend yet. A chart appears here once a measure has two values in the last 12 months."}
+                </p>
               )}
             </Card>
-            <div className="po-col">
-              <PatientResults patientId={patient.id} limit={3} />
-              <Medicines items={patient.medicines?.slice(0, 4)} more={() => setTab("medicines")} total={patient.medicines?.length ?? 0} />
-              <TakeHome patient={patient} />
-            </div>
-          </div>
-          <Card title="History">
-            <dl className="po-history">
-              <div><dt>Presenting complaint</dt><dd>{patient.complaint || "Not recorded."}</dd></div>
-              <div><dt>Medical history</dt><dd>{patient.history?.length ? patient.history.join(", ") : "None recorded."}</dd></div>
-              <div><dt>Family history</dt><dd>{patient.family || "None recorded."}</dd></div>
-              <div><dt>Social history</dt><dd>{patient.social || "None recorded."}</dd></div>
-            </dl>
-          </Card>
+            <PatientResults patientId={patient.id} limit={3} />
+            <Card title="History">
+              <dl className="po-history">
+                <div><dt>Presenting complaint</dt><dd>{patient.complaint || "Not recorded."}</dd></div>
+                <div><dt>Medical history</dt><dd>{patient.history?.length ? patient.history.join(", ") : "None recorded."}</dd></div>
+                <div><dt>Family history</dt><dd>{patient.family || "None recorded."}</dd></div>
+                <div><dt>Social history</dt><dd>{patient.social || "None recorded."}</dd></div>
+              </dl>
+            </Card>
+          </WithRail>
         </>
       ) : tab === "timeline" ? (
         <Card title="Timeline">
