@@ -1,7 +1,11 @@
 # Web versions of Sona Pro and Sona Care: plan
 
-Status: approved by the owner on 6 Oct 2026. Nothing is built yet. This worktree (`feat/web-apps`) is the
-orchestrator: it splits the work into worktree subagents by dependency and merges their branches.
+Status: approved by the owner on 6 Oct 2026. Phases 1 to 4 are built on `feat/web-apps` (6 Oct) and every page
+was walked in a browser as each role against a local Worker on a Neon branch, with the model keys blank. Not done:
+phase 5 on staging with the real models, the two new migrations on staging (`care_readings_visit_prep`,
+`visit_summaries`), a deploy, and the patient phone-code sign-in, mic and live voice call in a real browser.
+How to build a page: `apps/web/README.md`. This worktree (`feat/web-apps`) is the orchestrator: it splits the work
+into worktree subagents by dependency and merges their branches.
 
 References (screenshots only, layout and feature ideas, not our look):
 - Sona Pro: `/Users/ngchwanlii/Documents/sona-ai/reference-uis/ai-clinician` (11 screens)
