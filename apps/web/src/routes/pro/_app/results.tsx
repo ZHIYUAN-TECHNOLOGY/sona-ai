@@ -2,12 +2,12 @@ import { can } from "@sona-ai/api/roles";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { DataTable, PersonCell, RowAction, ValueCell, type Column } from "@/components/data-table";
+import { DataTable, PersonCell, RowAction, TableToolbar, ValueCell, type Column } from "@/components/data-table";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, SearchField, Tabs } from "@/components/primitives";
 import { WithRail } from "@/components/rail";
-import { FlagCell, PriorityCell, ResultRail, when } from "@/features/results/result-rail";
+import { PriorityCell, ResultRail } from "@/features/results/result-rail";
 import { inTab, summary, type Tab } from "@/features/results/tabs";
 import { byTriage, isNormal } from "@/features/results/triage";
 import type { ResultRow } from "@/features/results/types";
@@ -52,9 +52,8 @@ function Page() {
     },
     { key: "test", header: "Test", cell: r => r.test },
     { key: "result", header: "Result", cell: r => <span className="results-value" data-critical={r.critical || undefined}><ValueCell value={r.value} unit={r.unit ?? undefined} /></span> },
-    { key: "flag", header: "Flag", cell: r => <FlagCell row={r} /> },
-    { key: "priority", header: "Priority", cell: r => <PriorityCell row={r} /> },
-    { key: "received", header: "Received", cell: r => <span className="results-received">{when(r.receivedAt)}</span> },
+    { key: "priority", header: "Priority", cell: r => <span className="results-priority"><PriorityCell row={r} />{r.flag ? <span className="results-muted">{r.flag}</span> : null}</span> },
+    { key: "received", header: "Received", cell: r => <span className="results-received">{new Date(r.receivedAt).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false })}</span> },
   ];
 
   if (list.isError) {
@@ -112,7 +111,7 @@ function Page() {
           onRowOpen={r => setSelectedId(r.id)}
           rowAction={r => <RowAction onClick={() => setSelectedId(r.id)}>Review</RowAction>}
           toolbar={(
-            <div className="results-toolbar">
+            <TableToolbar end={<SearchField label="Search results" placeholder="Search patient or test" value={query} onChange={e => setQuery(e.target.value)} />}>
               <Tabs
                 label="Results by state" value={tab} onChange={pickTab}
                 tabs={[
@@ -121,13 +120,12 @@ function Page() {
                   { id: "acknowledged", label: "Acknowledged", count: sorted.length - n.fresh },
                 ]}
               />
-              <SearchField label="Search results" placeholder="Search patient or test" value={query} onChange={e => setQuery(e.target.value)} />
-            </div>
+            </TableToolbar>
           )}
           empty={query ? "No result matches this search." : tab === "acknowledged" ? "No result has been acknowledged yet." : sorted.length ? "Nothing here is waiting for a doctor." : "No lab results have arrived yet."}
           footer={(
             <p className="results-footnote">
-              <Icon name="alert" size={16} /> Priority is suggested from the lab flag and call-now rules. You decide what to acknowledge.
+              <Icon name="info" size={16} /> Priority is suggested from the lab flag and call-now rules. You decide what to acknowledge.
             </p>
           )}
         />

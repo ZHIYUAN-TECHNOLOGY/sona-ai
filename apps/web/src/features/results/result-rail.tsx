@@ -65,8 +65,8 @@ export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }
             <p className="results-muted">
               <span className="results-value" data-critical={row.critical || undefined}>{valueOf(row)}</span> · received {when(row.receivedAt)}
             </p>
+            <div className="results-detail-chip"><PriorityCell row={row} /></div>
           </div>
-          <PriorityCell row={row} />
         </div>
         {series.length > 1
           ? <LineChart points={series} label={`${row.test} for ${row.patientName}`} unit={row.unit ?? undefined} height={160} />

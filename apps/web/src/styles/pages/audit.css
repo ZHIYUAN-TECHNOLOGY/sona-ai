@@ -1,7 +1,7 @@
 /* Audit: the tabs and search share the table's toolbar; the rail shows one finding. */
-.au-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; }
-.au-toolbar > :last-child:not(:first-child) { flex: 0 1 280px; min-width: 0; }
-.au-gap { display: grid; gap: var(--space-1); min-width: 0; }
+td:has(> .au-gap) { width: 100%; }
+.au-doctor { white-space: nowrap; }
+.au-gap { display: grid; gap: var(--space-1); min-width: 8rem; }
 .au-muted { color: var(--muted); font-size: var(--text-small); }
 .au-code { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .au-facts { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0; font-size: var(--text-body); }

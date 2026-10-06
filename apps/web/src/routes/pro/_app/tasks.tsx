@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
-import { DataTable, PersonCell, type Column } from "@/components/data-table";
+import { TableToolbar, TextCell, DataTable, PersonCell, type Column } from "@/components/data-table";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, Field, SearchField, StatCard, StatRow, Tabs } from "@/components/primitives";
@@ -67,10 +67,10 @@ function Page() {
   const columns: Column<Task>[] = [
     {
       key: "task", header: "Task", sort: (a, b) => a.title.localeCompare(b.title),
-      cell: t => <span className="tasks-title" data-done={t.completed || undefined}><strong>{t.title}</strong><span className="tasks-muted">{t.encounterId ? `Visit ${t.encounterId}` : "Ward task"}</span></span>,
+      cell: t => <span className="tasks-title" data-done={t.completed || undefined}><strong><TextCell>{t.title}</TextCell></strong><span className="tasks-muted">{t.encounterId ? `Visit ${t.encounterId}` : "Ward task"}</span></span>,
     },
     { key: "source", header: "Source", cell: t => { const s = sourceOf(t.kind); return <span className="tasks-source"><Icon name={s.icon} size={16} />{s.label}</span>; } },
-    { key: "owner", header: "Assignee", sort: (a, b) => a.owner.localeCompare(b.owner), cell: t => <PersonCell name={t.owner} size="sm" /> },
+    { key: "owner", header: "Assignee", sort: (a, b) => a.owner.localeCompare(b.owner), cell: t => <span className="tasks-owner">{t.owner}</span> },
     {
       key: "due", header: "Due", align: "right", sort: (a, b) => (a.due ?? "9").localeCompare(b.due ?? "9"),
       cell: t => t.completed ? <span className="tasks-due"><Chip tone="done" icon="check">Done</Chip></span>
@@ -97,12 +97,16 @@ function Page() {
         <RightRail label="Task detail and new task">
           {task && (
             <Card title="Task detail">
-              <strong>{task.title}</strong>
+              <strong className="tasks-detail-title" title={task.title}>{task.title}</strong>
               <dl className="tasks-detail">
                 <dt>Why</dt><dd>{sourceOf(task.kind).label}</dd>
                 <dt>Visit</dt><dd>{task.encounterId ?? "Ward task, no visit"}</dd>
                 <dt>State</dt><dd>{task.completed ? "Done" : isOverdue(task, on) ? "Overdue" : "Open"}</dd>
               </dl>
+              <div className="tasks-actions">
+                {markDone(task)}
+                {task.encounterId && <Link className="tasks-link" to="/pro/visit" search={{ encounterId: task.encounterId }}>Open the patient's visit</Link>}
+              </div>
               {/* Uncontrolled and keyed on the saved value: commits on blur, and redraws when the server answers. */}
               {mayUpdate && !task.completed ? (
                 <div className="tasks-form">
@@ -112,10 +116,6 @@ function Page() {
                     onBlur={e => { const due = e.target.value || null; if (due !== task.due) update.mutate({ taskId: task.id, due }); }} />}</Field>
                 </div>
               ) : <PersonCell name={task.owner} detail={task.completed ? "Completed" : `Due: ${dueLabel(task.due, on)}`} size="sm" />}
-              <div className="tasks-actions">
-                {markDone(task)}
-                {task.encounterId && <Link className="tasks-link" to="/pro/visit" search={{ encounterId: task.encounterId }}>Open the patient's visit</Link>}
-              </div>
             </Card>
           )}
           {mayCreate && list.data && (
@@ -141,14 +141,13 @@ function Page() {
             empty={<EmptyState icon="check" title={q ? `No task matches "${search}".` : EMPTY[tab]} />}
             count={list.data ? `Showing ${rows.length} of ${all.length} tasks` : undefined}
             toolbar={(
-              <div className="tasks-toolbar">
+              <TableToolbar end={<SearchField label="Search tasks" placeholder="Search tasks" value={search} onChange={e => setSearch(e.target.value)} />}>
                 <Tabs label="Tasks by state" value={tab} onChange={pick} tabs={[
                   { id: "open", label: "Open", count: groups.open.length }, { id: "mine", label: "Mine", count: groups.mine.length },
                   { id: "overdue", label: "Overdue", count: groups.overdue.length }, { id: "done", label: "Done", count: groups.done.length },
                   { id: "all", label: "All", count: all.length },
                 ]} />
-                <SearchField label="Search tasks" placeholder="Search tasks" value={search} onChange={e => setSearch(e.target.value)} />
-              </div>
+              </TableToolbar>
             )}
             rowAction={markDone} />
         )}
