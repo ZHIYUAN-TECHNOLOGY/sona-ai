@@ -59,7 +59,7 @@ Cost: about $10 of H100 time across all TTS runs (two smoke tests, the LoRA, the
 
 ## Known weak spots
 
-- Between sentences of one answer the speaker could change (each sentence is its own call). Since 6 Oct every line is spoken from a reference clip in its language and a fixed seed; see [the handoff](handoff.md#who-said-what-and-one-voice-per-answer-6-oct-2026-built-not-on-the-box-yet). Not yet heard on the box.
+- Between sentences of one answer the speaker could change (each sentence is its own call). Since 6 Oct every line is spoken from a reference clip in its language and a fixed seed; see [the handoff](handoff.md#who-said-what-and-one-voice-per-answer-6-oct-2026-proven-on-the-box-not-live). On the box it has spoken three lines; an answer of several sentences is still to be measured and heard there.
 
 - Some rare drug names still slip: gliklazid, budesonid, 西替利嗪 (heard as "citalopram"), 培哚普利.
 - "pening kepala" is sometimes heard as the Indonesian "pusing kepala".
