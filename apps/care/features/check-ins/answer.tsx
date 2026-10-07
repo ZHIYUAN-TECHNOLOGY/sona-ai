@@ -1,13 +1,14 @@
 import type { Language } from "@sona-ai/domain/discharge";
 import { useState } from "react";
 import { AccessibilityInfo, ActivityIndicator, Pressable, View, type ViewStyle } from "react-native";
-import { MicButton } from "@/features/assistant/mic";
+import { Composer } from "@/features/assistant/composer";
+import { Dictation, MicButton } from "@/features/assistant/mic";
 import { useListen } from "@/lib/listen";
-import { Text, TextInput } from "@/lib/text";
+import { Text } from "@/lib/text";
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
 import { motion, palette, type } from "@/lib/theme";
-import { Button, Chip, field } from "@/lib/ui";
+import { Button, Chip } from "@/lib/ui";
 import { useT } from "@/lib/i18n";
 import { answersFor, replyText, type Feeling } from "./model";
 import "./strings";
@@ -107,15 +108,13 @@ function FollowUp({ language, text, feeling: f, busy, onSend }: { language: Lang
         <View style={{ flex: 1 }}><Button quiet label={copy.change} disabled={busy} onPress={() => setReview(undefined)} /></View>
       </View>
     </Animated.View>
-    : writing ? <Animated.View entering={enter(0)} style={{ gap: 10 }}>
-      <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
-        <TextInput value={words} onChangeText={setWords} placeholder={copy.placeholder} placeholderTextColor={palette.muted} multiline autoFocus maxLength={900}
-          accessibilityLabel={copy.more} style={{ ...field, flex: 1, backgroundColor: palette.white, minHeight: 96, paddingTop: 12, textAlignVertical: "top" }} />
-        <MicButton listen={listen} label={t("ci.sayIt")} />
-      </View>
-      {listen.state === "listening" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{t("ci.listening")}</Text>
-        : listen.error ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{listen.error}</Text> : null}
-      <Button label={copy.send} busy={busy} disabled={!words.trim()} onPress={() => onSend(replyText(text, words))} />
+    : writing ? <Animated.View entering={enter(0)} style={{ gap: 8 }}>
+      {/* One composer like ChatGPT's and Claude's: the words, the mic and send inside the same box. */}
+      <Composer value={words} onChangeText={setWords} placeholder={copy.placeholder} label={copy.more} autoFocus busy={busy}
+        canSend={!!words.trim() && !busy && listen.state !== "listening" && listen.state !== "reading"} onSend={() => { if (words.trim() && !busy) onSend(replyText(text, words)); }}
+        pill={listen.state === "listening" || listen.state === "reading" ? <Dictation listen={listen} /> : undefined}
+        alongside={<MicButton listen={listen} label={t("ci.sayIt")} quiet />} />
+      {listen.error ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{listen.error}</Text> : null}
     </Animated.View>
     : <>
       <Animated.View entering={enter(1)}><Text style={{ ...type.body, color: palette.muted }}>{follow.prompt}</Text></Animated.View>
