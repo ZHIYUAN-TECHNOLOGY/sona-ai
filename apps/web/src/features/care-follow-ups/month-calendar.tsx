@@ -56,7 +56,7 @@ export function MonthCalendar({ today, marks, open, lang }: { today: string; mar
       </div>
       <div className="fu-cal-picked" aria-live="polite">
         <h3 className="fu-step">{pickedWords}</h3>
-        {onPicked ? onPicked.map(m => <span key={m.label}>{m.label}</span>) : <span className="fu-muted">No visits on this day.</span>}
+        {onPicked ? onPicked.map((m, i) => <span key={`${i}-${m.label}`}>{m.label}</span>) : <span className="fu-muted">No visits on this day.</span>}
         {openPicked ? (
           <>
             <strong>Open times</strong>
