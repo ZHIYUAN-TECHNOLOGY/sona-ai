@@ -20,7 +20,14 @@
 .cm-999 > .icon, .cm-now > .icon { flex: none; margin-top: 2px; color: var(--red); }
 .cm-meta, .cm-attached, .cm-about { color: var(--muted); font-size: 15px; }
 .cm-meta { margin: 0; padding: 0 var(--space-1); }
-.cm-attached { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
+/* A medicine name can run to two lines (120 characters): the icon stays by its first line. */
+.cm-attached { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2); }
+.cm-attached > .icon { flex: none; margin-top: 3px; }
+/* A phone: the thread gets the room (a 1,000-character message in a 200px window read as a slot), bubbles go wider. */
+@media (max-width: 600px) {
+  .cm-thread { max-height: max(360px, calc(100dvh - 430px)); padding-inline: var(--space-3); }
+  .cm-bubble, .cm-bubble.cm-999 { max-width: 92%; }
+}
 
 .cm-composer { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4) var(--pad-card) var(--space-5); border-top: 1px solid var(--hairline); }
 .cm-label { font-size: 15px; font-weight: 600; color: var(--ink); }

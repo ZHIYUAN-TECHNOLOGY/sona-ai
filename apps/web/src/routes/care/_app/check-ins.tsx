@@ -58,9 +58,10 @@ function Page() {
           <span className="list-tile"><Icon name={answered ? "check" : c.id === current?.id ? "message" : "calendar"} size={20} /></span>
           <span className="list-text">
             <span className="list-title">Day {c.day}</span>
-            <span className="list-caption">{dayWords(c.dueAt)}</span>
+            {/* The state sits under the day, so a narrow row never squeezes the date to "Sund…". */}
+            <span className="list-caption">{dayWords(c.dueAt)} · {answered ? "Answered" : c.id === current?.id ? "Waiting for you" : "Planned"}</span>
           </span>
-          {c.id === current?.id ? <Chip tone="blue">Today</Chip> : <span className="ci-state">{answered ? "Answered" : "Planned"}</span>}
+          {c.id === current?.id ? <Chip tone="blue">Today</Chip> : null}
         </>;
         return <li key={c.id} className="ci-row">
           {answered
@@ -71,7 +72,11 @@ function Page() {
               {isOpen
                 ? <div id={`ci-${c.id}`} className="ci-detail">
                   <p className="ci-muted">Sona asked: {c.message}</p>
-                  {c.replies.map(r => <p key={r.id}>You said: “{r.text}” <span className={r.label === "urgent" ? "ci-said ci-said-urgent" : "ci-said"}>{SAID[r.label]}</span></p>)}
+                  {/* What came of it first, then her words: a 1,000-character reply never pushes the outcome out of sight. */}
+                  {c.replies.map(r => <div key={r.id} className="ci-reply">
+                    <p className={r.label === "urgent" ? "ci-said ci-said-urgent" : "ci-said"}>{SAID[r.label]}</p>
+                    <p>You said: “{r.text}”</p>
+                  </div>)}
                 </div>
                 : null}
             </>
@@ -123,7 +128,7 @@ function Page() {
                 meta={panel.sent.source === "fixture" ? "Sample answer" : undefined}
                 title={panel.after.title}
                 lead={panel.after.text}
-                evidence={[{ icon: "message", text: <>You said: “{panel.sent.text}”</> }]}
+                evidence={[{ icon: "message", text: <span className="ci-quote">You said: “{panel.sent.text}”</span> }]}
                 next={panel.next}
               />
             </div>
