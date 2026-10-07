@@ -6,16 +6,18 @@ import { LineChart, Sparkline } from "@/components/charts";
 import { DataTable, TableToolbar, ValueCell, type Column } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Chip, StatCard, StatRow } from "@/components/primitives";
+import { Button, Card, Chip, Pager, StatCard, StatRow } from "@/components/primitives";
 import { langOf } from "@/features/care-medicines/model";
 import { Explain } from "@/features/care-results/explain";
-import { REVIEWING, countsOf, dateOf, improvedOf, isFlagged, plainOf, plural, statusOf, trendOf, valueOf, type Result } from "@/features/care-results/model";
+import { REVIEWING, countsOf, dateOf, improvedOf, isFlagged, plainOf, plural, shownOf, statusOf, trendOf, valueOf, type Result } from "@/features/care-results/model";
+import { formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-results.css";
 
 export const Route = createFileRoute("/care/_app/results")({ component: Page });
 
 const lang = langOf(typeof navigator === "undefined" ? undefined : navigator.language);
+const PAGE_SIZE = 20;
 
 /** "Normal" is plain text; anything else is an amber chip. Red is never used for a result. */
 function StatusCell({ r }: { r: Result }) {
@@ -27,6 +29,7 @@ function StatusCell({ r }: { r: Result }) {
 function Page() {
   const list = useQuery(orpc.care.results.list.queryOptions({ input: { lang } }));
   const [openId, setOpenId] = useState<string>();
+  const [page, setPage] = useState(1);
 
   const alone = (body: React.ReactNode) => <div className="res-page"><PageHeader title="Results" lead="Your test results, in plain words." /><Card className="res-alone">{body}</Card></div>;
   if (list.isPending) return alone(<EmptyState icon="flask" title="Getting your results…" />);
@@ -47,12 +50,14 @@ function Page() {
   const { seen, inRange, attention, waiting } = countsOf(results);
   const first = attention.find((r) => results.find((o) => o.released && o.test === r.test)?.id === r.id) ?? attention[0] ?? results.find((r) => r.released) ?? results[0];
   const picked = results.find((r) => r.id === openId) ?? first;
-  const trends = new Map(results.map((r) => [r.id, trendOf(results, r.test, lang)]));
-  const trend = picked ? trends.get(picked.id) ?? [] : [];
+  // One trend per test, not per result: 1,000 results of four tests read the list four times, not a thousand.
+  const trends = new Map([...new Set(results.map((r) => r.test))].map((test) => [test, trendOf(results, test, lang)]));
+  const current = Math.min(page, Math.ceil(results.length / PAGE_SIZE));
+  const trend = picked ? trends.get(picked.test) ?? [] : [];
 
   const columns: Column<Result>[] = [
-    { key: "test", header: "Test", cell: (r) => <span className="res-test">{r.test}</span> },
-    { key: "value", header: "Result", cell: (r) => (r.released ? <ValueCell value={r.value} unit={r.unit} /> : <span className="res-muted">Not ready</span>) },
+    { key: "test", header: "Test", cell: (r) => <><span className="res-test">{r.test}</span><span className="res-when">{dateOf(r.at, lang)}</span></> },
+    { key: "value", header: "Result", cell: (r) => (r.released ? <ValueCell value={shownOf(r.value)} unit={r.unit} /> : <span className="res-muted">Not ready</span>) },
     { key: "status", header: "Status", cell: (r) => <StatusCell r={r} /> },
     { key: "at", header: "Received", cell: (r) => dateOf(r.at, lang) },
   ];
@@ -60,7 +65,7 @@ function Page() {
     columns.push({
       key: "trend", header: "Trend",
       cell: (r) => {
-        const t = trends.get(r.id) ?? [];
+        const t = trends.get(r.test) ?? [];
         return r.released && t.length ? <Sparkline values={t.map((p) => p.y)} label={`${r.test} over time`} tone={statusOf(r.flag) === "Normal" ? "neutral" : "amber"} /> : null;
       },
     });
@@ -69,7 +74,7 @@ function Page() {
   // An older flagged value that a newer in-range one replaced no longer needs a look.
   const open = attention.filter((r) => !improved.some((i) => i.test === r.test));
   const need = open.length;
-  const needLine = `${need} ${need === 1 ? "needs" : "need"} a look.`;
+  const needLine = `${formatNumber(need)} ${need === 1 ? "needs" : "need"} a look.`;
   const leadLine = !seen ? "Your doctor has not seen your results yet."
     : `${plural(seen, "result")} your doctor has seen. ${need ? needLine : "All in the usual range."}`;
   const flagged = picked?.released ? isFlagged(picked.flag) : false;
@@ -85,8 +90,8 @@ function Page() {
           tone={need ? "soon" : "info"}
           lead={
             !seen ? REVIEWING
-              : need ? `${inRange} of ${seen} are in the usual range. ${needLine}`
-                : `All ${plural(seen, "result")} are in the usual range.`
+              : need ? `${formatNumber(inRange)} of ${formatNumber(seen)} are in the usual range. ${needLine}`
+                : seen === 1 ? "Your result is in the usual range." : `All ${plural(seen, "result")} are in the usual range.`
           }
           evidence={[
             ...open.slice(0, 3).map((r) => ({ text: `${r.test}: ${plainOf(r.flag).toLowerCase()} (${valueOf(r)}, ${dateOf(r.at, lang)})` })),
@@ -106,12 +111,13 @@ function Page() {
           <Card title="All results">
             <DataTable
               columns={columns}
-              rows={results}
+              rows={results.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)}
               rowKey={(r) => r.id}
               selectedKey={picked?.id}
               onRowOpen={(r) => setOpenId(r.id)}
               toolbar={<TableToolbar><span className="res-muted">Choose a result to see what it means.</span></TableToolbar>}
-              count={plural(results.length, "result")}
+              count={results.length > PAGE_SIZE ? undefined : plural(results.length, "result")}
+              footer={results.length > PAGE_SIZE ? <Pager page={current} pageSize={PAGE_SIZE} total={results.length} onPage={setPage} noun={["result", "results"]} /> : undefined}
             />
           </Card>
         </div>
@@ -120,7 +126,7 @@ function Page() {
             <Card title={picked.test} className="res-detail">
               {picked.released ? (
                 <>
-                  <p className="res-big"><span>{picked.value}</span>{picked.unit ? <small> {picked.unit}</small> : null}</p>
+                  <p className="res-big" data-long={picked.value.length > 12 || undefined}><span>{shownOf(picked.value)}</span>{picked.unit ? <small> {picked.unit}</small> : null}</p>
                   <p className="res-meta">{flagged ? <Chip tone="amber">{plainOf(picked.flag)}</Chip> : <span>{plainOf(picked.flag)}</span>}<span className="res-muted">{dateOf(picked.at, lang)}</span></p>
                   {trend.length ? <LineChart points={trend} label={`Your ${picked.test} results over time`} unit={picked.unit} height={160} /> : null}
                   <h3 className="res-h">What this means</h3>
