@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
-import { SegmentBar } from "@/components/charts";
 import { TableToolbar, TextCell, DataTable, PersonCell, type Column } from "@/components/data-table";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
@@ -148,16 +147,6 @@ function Page() {
             </Card>
           )}
           {error && <p className="tasks-error" role="alert">That did not save: {error.message}</p>}
-          {all.length ? (
-            <Card title="Tasks by state">
-              <SegmentBar label="Tasks by state" segments={[
-                { label: "Overdue", value: groups.overdue.length, tone: "red" },
-                { label: "Due today", value: groups.dueToday.length, tone: "amber" },
-                { label: "Open, later", value: groups.open.length - groups.overdue.length - groups.dueToday.length, tone: "blue" },
-                { label: "Done", value: groups.done.length, tone: "green" },
-              ]} />
-            </Card>
-          ) : null}
         </RightRail>
       )}>
         {list.error ? (

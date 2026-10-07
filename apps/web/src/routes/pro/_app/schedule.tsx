@@ -81,7 +81,7 @@ function Page() {
       {loading || failed ? null : (
         <StatRow>
           <StatCard feature title="Visits this week" value={visits.length} caption={visits.length ? `${dayLabel(days[busiest]!)} is the fullest` : "None booked"} />
-          <StatCard title="Records incomplete" value={incomplete.length} chip={incomplete.length ? "Needs you" : undefined} tone="soon"
+          <StatCard title="Records incomplete" value={incomplete.length} tone="soon"
             caption={firstIncomplete ? `First: ${firstIncomplete.patientName}` : "Every record is complete"}
             onSelect={firstIncomplete ? () => setPicked({ id: firstIncomplete.id, visit: firstIncomplete }) : undefined}
             selected={picked?.id !== undefined && picked.id === firstIncomplete?.id} />

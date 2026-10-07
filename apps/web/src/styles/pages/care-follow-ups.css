@@ -81,3 +81,5 @@
   .fu-cal { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--space-5, var(--space-4)); align-items: start; }
   .fu-cal-picked { padding-top: 0; border-top: 0; padding-left: var(--space-4); border-left: 1px solid var(--line); min-height: 100%; align-content: start; }
 }
+/* The month reads at a glance: day cells are a row of numbers, not 80px discs. */
+.fu-cal-day { aspect-ratio: auto; height: 44px; min-height: 44px; }

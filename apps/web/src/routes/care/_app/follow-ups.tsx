@@ -80,6 +80,7 @@ function Page() {
         actions={<Button variant="primary" icon="plus" onClick={toBook}>Book a visit</Button>} />
 
       <div className="fu-top" data-solo={next ? undefined : true}>
+        {next || waiting[0] ? (
         <Card className="fu-hero">
           {next ? (
             <>
@@ -99,13 +100,9 @@ function Page() {
               <p className="fu-muted">{whenWords(waiting[0].startsAt, lang)} · {waiting[0].room}</p>
               <p>Nothing is booked until the hospital confirms.</p>
             </>
-          ) : (
-            <>
-              <h2 className="fu-hero-title">No visits coming up</h2>
-              <p className="fu-muted">Use "Book a visit" to ask for a time.</p>
-            </>
-          )}
+          ) : null}
         </Card>
+        ) : null}
         {p ? (
           <InsightCard label="Before your visit" title="Get ready for your visit" meta={dayWords(new Date(p.appointment!.startsAt), lang)}
             lead={left ? `${left} ${left === 1 ? "step" : "steps"} left before your visit.` : "You are ready. Your doctor can read this before you arrive."}

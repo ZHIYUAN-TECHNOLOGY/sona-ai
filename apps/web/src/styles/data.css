@@ -214,3 +214,38 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .chart-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--gap-card); }
 .chart-row .card { gap: var(--space-3); padding-block: var(--space-5); }
 .chart-row .card-title { font-size: var(--text-body); font-weight: 500; color: var(--muted); letter-spacing: 0; }
+
+/* Compact tables (Pro): a row is one line of reading, ~44px, so a page shows twice the rows. Names and captions sit
+   on one line each at body/small size, the avatar shrinks to 28px, and actions are link-weight, not pills.
+   Sona Care keeps its 48px tap rows. */
+.pro .table th { height: 34px; padding-block: 0; }
+.pro .table td { height: 46px; padding-block: 6px; font-size: 14px; line-height: 20px; }
+.pro .table tbody::before { height: var(--space-1); }
+.pro .table .cell-person { gap: var(--space-2); }
+.pro .table .cell-person .avatar { width: var(--avatar-sm); height: var(--avatar-sm); font-size: 11px; }
+.pro .table .cell-person-name { font-size: 14px; }
+.pro .table .cell-person-text > .cell-muted, .pro .table .cell-muted { font-size: 12px; line-height: 16px; }
+.pro .table .row-action { min-height: 28px; padding: 0 var(--space-2); font-size: 13px; }
+.pro .table .chip { min-height: 18px; }
+.pro .table .table-skel { height: 10px; }
+/* Toolbar: tabs and search share one line; the tabs scroll sideways before the search drops to a second row,
+   and the search is a compact field, not a hero input. Tabs are tighter in Pro. */
+.pro .table-toolbar-row { flex-wrap: nowrap; }
+.pro .table-toolbar-start { flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
+.pro .table-toolbar-end { flex: 0 0 auto; min-width: 0; }
+.pro .table-toolbar-end .search-field { flex: none; width: 13rem; height: 34px; }
+.pro .table-toolbar .tabs { gap: var(--space-4); }
+.pro .table-toolbar .tab { min-height: 34px; font-size: 14px; }
+/* An empty table is one calm line in the table's place, not a card inside the card. */
+:is(.pro, .care) .table td.table-empty { padding: var(--space-5) var(--pad-card); }
+:is(.pro, .care) .table td.table-empty .empty { padding: 0; background: none; box-shadow: none; border-radius: 0; }
+/* A filled button inside a Sona card keeps white text (the card's own ink colour would make it ink on ink). */
+:is(.pro, .care) .insight .btn-primary { color: var(--surface); }
+/* Toolbar: a narrower search so five tabs and the search fit one line beside the rail. */
+.pro .table-toolbar-end .search-field { width: 11rem; }
+.pro .table-toolbar .tabs { gap: var(--space-3); }
+/* Compact: long cell text is one line with an ellipsis (the full text is in the row's detail). */
+.pro .table .cell-clamp { -webkit-line-clamp: 1; line-clamp: 1; }
+.pro .table .ptl-reason { display: grid; }
+.pro .table .ptl-reason > * { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pro .table .ptl-reason strong { font-weight: 600; }

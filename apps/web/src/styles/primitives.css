@@ -232,3 +232,6 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 /* A list card's empty line sits on the title's edge, like its rows; an arc at 0% draws nothing, not a dot. */
 :is(.pro, .care) .list .empty { padding-inline: var(--space-3); }
 .stat-arc path[data-done][stroke-dasharray^="0 "] { display: none; }
+/* An empty page state starts where the page's content starts, not floating mid-page. */
+/* A page with nothing yet shows its empty state where the content starts, not floating mid-page. */
+.care :is(.ci-alone, .dp-alone, .meds-alone, .res-alone) { margin-inline: 0; }

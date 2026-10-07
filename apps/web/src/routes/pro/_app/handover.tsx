@@ -62,7 +62,7 @@ function Page() {
       {cards.data && all.length > 0 ? (
         <StatRow>
           <StatCard title="To hand over" value={cardIds.length} unit={`of ${all.length}`} caption={held.size ? `${held.size} held back` : done.size ? `${done.size} handed over` : "Everyone on your list"} onSelect={() => setTab("all")} selected={tab === "all"} />
-          <StatCard title="Need watching" value={watch.length} chip={watch.length ? "Watch" : undefined} tone="soon" caption={watch.length ? "Read these first" : "Nobody on watch"} onSelect={() => setTab("watch")} selected={tab === "watch"} />
+          <StatCard title="Need watching" value={watch.length} tone="soon" caption={watch.length ? "Read these first" : "Nobody on watch"} onSelect={() => setTab("watch")} selected={tab === "watch"} />
           <StatCard title="Stable" value={all.length - watch.length} caption="Not on watch" onSelect={() => setTab("stable")} selected={tab === "stable"} />
         </StatRow>
       ) : null}

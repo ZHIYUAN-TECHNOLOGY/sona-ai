@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { SegmentBar } from "@/components/charts";
 import { DataTable, type Column, PersonCell, RowAction, TableToolbar, TextCell } from "@/components/data-table";
 import type { IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
@@ -114,9 +113,6 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
   const count = (t: PatientTab) => all.filter(inTab[t]).length;
   const stat = (t: PatientTab) => (isPending ? <Skeleton width={56} height={40} /> : count(t));
   const rows = filterPatients(all.filter(inTab[tab]), query);
-  // Each patient in exactly one state for the chart, in the order the list is ranked.
-  const mix = { watch: 0, fit: 0, incomplete: 0, rest: 0 };
-  for (const p of all) mix[inTab.watch(p) ? "watch" : inTab.fit(p) ? "fit" : inTab.incomplete(p) ? "incomplete" : "rest"]++;
   const current = Math.min(page, Math.max(1, Math.ceil(rows.length / PAGE_SIZE)));
   const [from, to] = pageRange(current, PAGE_SIZE, rows.length);
   const insight = firstToSee(all);
@@ -168,8 +164,8 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
       <StatRow>
         <StatCard title="Patients" value={stat("all")} caption="Registered at this hospital" {...filter("all")} />
         <StatCard title="On a ward" value={stat("ward")} caption={`${count("fit")} medically fit`} {...filter("ward")} />
-        <StatCard title="On watch" value={stat("watch")} chip={count("watch") ? "Needs a look" : undefined} tone="soon" caption="Marked watch by the ward" {...filter("watch")} />
-        <StatCard title="Record incomplete" value={stat("incomplete")} chip={count("incomplete") ? "To complete" : undefined} tone="soon" caption="Details missing" {...filter("incomplete")} />
+        <StatCard title="On watch" value={stat("watch")} tone="soon" caption="Marked watch by the ward" {...filter("watch")} />
+        <StatCard title="Record incomplete" value={stat("incomplete")} tone="soon" caption="Details missing" {...filter("incomplete")} />
       </StatRow>
       {insight ? (
         <WithRail
@@ -177,14 +173,6 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
             <RightRail label="Who to see first">
               <InsightCard label={insight.label} title={insight.title} lead={insight.lead} tone={insight.tone} evidence={insight.evidence}
                 next={{ label: "Open", step: insight.step, onAct: () => open(insight.patient) }} />
-              <Card title="Patients by state">
-                <SegmentBar label="Patients by state" segments={[
-                  { label: "On watch", value: mix.watch, tone: "amber" },
-                  { label: "Medically fit", value: mix.fit, tone: "green" },
-                  { label: "Record incomplete", value: mix.incomplete, tone: "blue" },
-                  { label: "Everyone else", value: mix.rest, tone: "neutral" },
-                ]} />
-              </Card>
             </RightRail>
           }
         >

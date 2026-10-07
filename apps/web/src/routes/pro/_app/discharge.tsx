@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { SegmentBar } from "@/components/charts";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader, PatientStrip } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow, Select, Signal, StatCard, StatRow, Status } from "@/components/primitives";
@@ -31,7 +30,6 @@ function Chooser() {
   const by = standings(beds.data ?? []);
   const fit = countOf(by, "fit");
   const blocked = countOf(by, "blocked");
-  const watched = countOf(by, "watch");
   const toggle = (g: Group) => () => setGroup(now => (now === g ? undefined : g));
   const mark = (id: string): Mark | undefined => {
     const s = by.get(id);
@@ -49,22 +47,10 @@ function Chooser() {
         actions={beds.data ? <Button to="/pro/ward" icon="bed">Open the ward</Button> : undefined} />
       {beds.data ? (
         <StatRow>
-          <StatCard title="Ready for discharge" value={fit} caption="Medically fit, no discharge barrier" chip={fit ? "Approve next" : undefined} tone="done" onSelect={toggle("fit")} selected={group === "fit"} />
-          <StatCard title="Blocked" value={blocked} caption="Fit, but something holds the bed" chip={blocked ? "Clear first" : undefined} tone="soon" onSelect={toggle("blocked")} selected={group === "blocked"} />
+          <StatCard title="Ready for discharge" value={fit} caption="Medically fit, no discharge barrier" tone="done" onSelect={toggle("fit")} selected={group === "fit"} />
+          <StatCard title="Blocked" value={blocked} caption="Medically fit, with a discharge barrier" tone="soon" onSelect={toggle("blocked")} selected={group === "blocked"} />
           <StatCard title="On the ward" value={by.size} caption="Admitted patients with a bed" />
         </StatRow>
-      ) : null}
-      {beds.data && by.size ? (
-        <div className="chart-row">
-          <Card title="The ward by readiness to go home">
-            <SegmentBar label="Patients by readiness to go home" segments={[
-              { label: "Ready for discharge", value: fit, tone: "green" },
-              { label: "Fit but blocked", value: blocked, tone: "amber" },
-              { label: "On watch", value: watched, tone: "blue" },
-              { label: "Not fit yet", value: by.size - fit - blocked - watched, tone: "neutral" },
-            ]} />
-          </Card>
-        </div>
       ) : null}
       <PatientPicker link={openPlan} mark={mark} only={group ? id => by.get(id)?.kind === group : undefined}
         title={group === "fit" ? "Ready for discharge" : group === "blocked" ? "Blocked" : "Patients, nearest to going home first"} />

@@ -101,7 +101,7 @@ export function Review() {
       )} />
       {status.isError ? <EmptyState icon="database" title="The status could not be shown">{messageOf(status.error)}</EmptyState> : (
         <StatRow>
-          <StatCard title="To review" value={stat(c?.pending)} unit={unit("samples")} chip={c?.pending ? "Needs review" : undefined} tone="soon" caption="Waiting for a decision" onSelect={() => setTab("pending")} selected={tab === "pending"} />
+          <StatCard title="To review" value={stat(c?.pending)} unit={unit("samples")} tone="soon" caption="Waiting for a decision" onSelect={() => setTab("pending")} selected={tab === "pending"} />
           <StatCard title="Approved" value={stat(c?.approved)} unit={unit(total ? `of ${total}` : "samples")} progress={total ? (c?.approved ?? 0) / total : undefined} caption="Cleared to contribute" onSelect={() => setTab("approved")} selected={tab === "approved"} />
           <StatCard title="Blocked" value={stat(c?.blocked)} unit={unit("samples")} chip={c?.blocked ? "Patient details" : undefined} tone="urgent" caption={c ? `${c.excluded} excluded, ${c.withdrawn} withdrawn` : undefined} onSelect={() => setTab("blocked")} selected={tab === "blocked"} />
           <StatCard title="Ready for next dataset" value={stat(s?.ready)} unit={unit("rows")} caption={!s ? undefined : s.lastDataset ? `Last dataset: version ${s.lastDataset.version}, ${s.lastDataset.rows} rows` : "No dataset exported yet"} />

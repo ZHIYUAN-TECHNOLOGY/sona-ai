@@ -71,7 +71,7 @@ function Page() {
       />
       <StatRow>
         <StatCard title="Need a clinician now" value={red.length} tone={red.length ? "urgent" : "neutral"} chip={red.length ? "Red flag" : undefined} feature />
-        <StatCard title="Worse" value={worse.length} tone={worse.length ? "soon" : "neutral"} chip={worse.length ? "Review" : undefined} />
+        <StatCard title="Worse" value={worse.length} tone={worse.length ? "soon" : "neutral"} />
         <StatCard title="Sent, no reply yet" value={waiting.length} />
         <StatCard title="Answered and fine" value={fine.length} tone="done" />
       </StatRow>
