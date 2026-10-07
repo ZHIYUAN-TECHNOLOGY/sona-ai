@@ -26,4 +26,5 @@ test("the clock's offset is said in plain words", () => {
   expect(offsetText(3 * 3_600_000)).toBe("3 hours ahead of real time");
   expect(offsetText(-86_400_000)).toBe("1 day behind real time");
   expect(offsetText(7 * 86_400_000)).toBe("7 days ahead of real time");
+  expect(offsetText(1_284 * 86_400_000)).toBe("1,284 days ahead of real time");
 });

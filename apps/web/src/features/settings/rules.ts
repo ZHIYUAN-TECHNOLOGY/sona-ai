@@ -1,5 +1,7 @@
 import { PERMISSIONS, ROLES, type Role } from "@sona-ai/api/roles";
 
+import { countOf } from "@/lib/format";
+
 export type Area = { area: string; can: string[]; cannot: string[] };
 
 /** "checkIns" reads "Check ins". */
@@ -41,7 +43,7 @@ export function offsetText(ms: number) {
   const hours = Math.round(Math.abs(ms) / 3_600_000);
   if (!hours) return "on real time";
   const [n, unit] = hours >= 24 ? [Math.round(hours / 24), "day"] : [hours, "hour"];
-  return `${n} ${unit}${n === 1 ? "" : "s"} ${ms > 0 ? "ahead of" : "behind"} real time`;
+  return `${countOf(n, unit)} ${ms > 0 ? "ahead of" : "behind"} real time`;
 }
 
 export const hourLabel =(hour: number) => `${String(hour).padStart(2, "0")}:00`;
