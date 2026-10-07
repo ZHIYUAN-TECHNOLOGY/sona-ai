@@ -1,0 +1,23 @@
+{
+  "pyelonephritis:en": ["Kidney infection tablets, can I stop when the fever is gone?", "What are the signs my kidney infection is coming back?"],
+  "pyelonephritis:ms": ["Boleh berhenti antibiotik bila demam dah hilang?", "Tanda-tanda jangkitan buah pinggang datang semula?"],
+  "pyelonephritis:zh": ["肾脏感染退烧后可以停药吗？", "肾脏感染复发有什么征兆？"],
+  "appendicitis:en": ["Can I shower after keyhole surgery on my appendix?", "My appendix wound is red and weeping, what now?"],
+  "appendicitis:ms": ["Boleh mandi lepas pembedahan lubang kunci apendiks?", "Luka apendiks merah dan berair, kena buat apa?"],
+  "appendicitis:zh": ["阑尾微创手术后可以洗澡吗？", "阑尾手术伤口发红渗液怎么办？"],
+  "cellulitis:en": ["How long do I keep taking the antibiotic for the leg skin infection?", "Should I keep my infected leg raised?"],
+  "cellulitis:ms": ["Berapa lama lagi makan antibiotik untuk jangkitan kulit kaki?", "Kaki yang berjangkit perlu diangkat ke?"],
+  "cellulitis:zh": ["腿部皮肤感染抗生素还要吃多久？", "感染的腿要抬高吗？"],
+  "pneumonia:en": ["Finished treatment for chest infection but still short of breath", "When should I go back to hospital after pneumonia?"],
+  "pneumonia:ms": ["Dah habis rawatan jangkitan paru-paru tapi masih sesak nafas", "Bila perlu balik hospital lepas jangkitan paru-paru?"],
+  "pneumonia:zh": ["肺部感染治疗结束了还是喘怎么办？", "肺炎后什么情况要回医院？"],
+  "heart-failure:en": ["What is my daily fluid limit with heart failure?", "Gained 2 kg in three days after heart failure, is that serious?"],
+  "heart-failure:ms": ["Had minuman harian untuk kegagalan jantung berapa?", "Berat naik 2 kg dalam tiga hari lepas kegagalan jantung, serius ke?"],
+  "heart-failure:zh": ["心力衰竭每天可以喝多少水？", "心衰出院后三天重了两公斤严重吗？"],
+  "stroke:en": ["Which tablets must I keep taking after my stroke?", "What are the signs of another stroke to call 999 for?"],
+  "stroke:ms": ["Ubat apa yang mesti terus dimakan selepas strok?", "Apa tanda strok kedua yang perlu telefon 999?"],
+  "stroke:zh": ["中风后哪些药必须一直吃？", "再次中风有什么征兆要打999？"],
+  "going-home:en": ["What does the care team explain before I am discharged?", "I feel worse after going home from hospital, what should I do?"],
+  "going-home:ms": ["Apa yang pasukan penjagaan terangkan sebelum discaj?", "Rasa lebih teruk lepas balik dari hospital, patut buat apa?"],
+  "going-home:zh": ["出院前护理团队会说明什么？", "出院回家后觉得更不舒服怎么办？"]
+}

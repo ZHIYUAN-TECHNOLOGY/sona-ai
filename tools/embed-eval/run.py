@@ -7,7 +7,7 @@ Manglish; a hit is a leaflet on the right topic in any language. Each model gets
 Worker sends them (old) and its model card gives them (new), and the new one also with the old prompts. Also: seconds
 for one question on this CPU.
 
-  ~/zyt/venvs/embed/bin/python tools/embed-eval/run.py <leaflets.json>
+  ~/zyt/venvs/embed/bin/python tools/embed-eval/run.py <leaflets.json> [fine-tuned model dir]
 """
 import json, sys, time
 from pathlib import Path
@@ -26,9 +26,11 @@ MODELS = {
     # Text only: the vision and audio encoders are not loaded (its model card).
     "EmbeddingGemma 2 (text)": ("google/embeddinggemma-2", {"config_kwargs": {"vision_config": None, "audio_config": None}},
                                 lambda q: f"task: question answering | query: {q}", lambda t, x: f"title: {t} | text: {x}"),
-    "EmbeddingGemma 2, old prompts": ("google/embeddinggemma-2", {"config_kwargs": {"vision_config": None, "audio_config": None}},
-                                      lambda q: f"task: search result | query: {q}", lambda t, x: f"title: none | text: {t}\n{x}"),
 }
+# A fine-tuned EmbeddingGemma 2 (train.py), with its prompts, when its folder is given.
+if len(sys.argv) > 2:
+    MODELS["EmbeddingGemma 2, fine-tuned"] = (sys.argv[2], {"config_kwargs": {"vision_config": None, "audio_config": None}},
+                                              lambda q: f"task: question answering | query: {q}", lambda t, x: f"title: {t} | text: {x}")
 
 
 for name, (repo, kw, query, doc) in MODELS.items():
