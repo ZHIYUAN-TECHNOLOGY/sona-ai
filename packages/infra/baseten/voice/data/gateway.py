@@ -1,6 +1,9 @@
-"""Box ② gateway: Baseten gives a container one port, so this sits in front of the ASR vLLM server and Sona's voice
-(two local servers) and runs the reranker in-process. Everything loads before the server starts, so /health answers
-only once all is up.
+"""Box ② gateway: Baseten gives a container one port, so this sits in front of the ASR vLLM server, Sona's voice and
+the diarizer (three local servers) and runs the reranker in-process. Everything loads before the server starts, so
+/health answers only once all is up.
+Speech sent with a `diarize` field comes back as who said what: the diarizer finds each voice's turns, the ASR writes
+each turn down (data/voices.py), and the `memory` in the answer, sent back with the next part, keeps a person's voice
+number the same through a consultation.
 On SageMaker (packages/infra/aws/voice) the same file serves: MODELS and PORT come from the environment, and SageMaker's
 one route, POST /invocations, goes to the three by what is sent."""
 import os
@@ -16,7 +19,10 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sentence_transformers import CrossEncoder
 
+import voices
+
 MODELS, PORT = os.environ.get("MODELS", "/app/models"), int(os.environ.get("PORT", 8000))
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def wait_for(proc: subprocess.Popen, url: str, name: str):
@@ -32,8 +38,20 @@ def wait_for(proc: subprocess.Popen, url: str, name: str):
 
 # Sona's voice first, in its own venv (data/tts_server.py: Nano-vLLM-VoxCPM needs flash-attn, which has no build for
 # this image's torch), so it takes its share of the GPU before the reranker and vLLM.
-voice = subprocess.Popen(["/opt/tts/bin/python", os.path.join(os.path.dirname(os.path.abspath(__file__)), "tts_server.py")])
+voice = subprocess.Popen(["/opt/tts/bin/python", os.path.join(HERE, "tts_server.py")])
 wait_for(voice, "http://127.0.0.1:8002/health", "Voice server")
+
+# Who spoke when, in a third venv (data/diar_server.py: its model is not in a released transformers yet). An image
+# built before it has no /opt/diar, and SageMaker's model data may not hold the weights yet; both must still boot,
+# so there speech is only written down.
+diar = None
+if os.path.exists("/opt/diar/bin/python") and os.path.isdir(f"{MODELS}/diar"):
+    diar = subprocess.Popen(["/opt/diar/bin/python", os.path.join(HERE, "diar_server.py")])
+    try:
+        wait_for(diar, "http://127.0.0.1:8004/health", "Diarization server")
+    except SystemExit:  # a diarizer that will not start must not keep the box from hearing and speaking
+        print("the diarization server did not start: speech is only written down", flush=True)
+        diar = None
 
 reranker = CrossEncoder(f"{MODELS}/rerank", device="cuda", model_kwargs={"torch_dtype": torch.float16})
 torch.cuda.empty_cache()
@@ -47,19 +65,41 @@ wait_for(vllm, "http://127.0.0.1:8001/health", "ASR vLLM")
 
 asr = httpx.AsyncClient(base_url="http://127.0.0.1:8001", timeout=600)
 tts = httpx.AsyncClient(base_url="http://127.0.0.1:8002", timeout=120)
+who = httpx.AsyncClient(base_url="http://127.0.0.1:8004", timeout=120)
 app = FastAPI()
 
 
 @app.get("/health")
 async def health():
-    if vllm.poll() is not None or voice.poll() is not None:
+    if vllm.poll() is not None or voice.poll() is not None or (diar and diar.poll() is not None):
         return Response(status_code=503)
     return Response(status_code=(await asr.get("/health")).status_code)
 
 
+async def spoke(wav: bytes, memory: str):
+    r = await who.post("/v1/diarize", files={"file": ("part.wav", wav, "audio/wav")}, data={"memory": memory})
+    return r.raise_for_status().json()
+
+
+async def written(wav: bytes):
+    r = await asr.post("/v1/audio/transcriptions", files={"file": ("turn.wav", wav, "audio/wav")}, data={"model": "sona-asr"})
+    return r.raise_for_status().json()["text"]
+
+
 @app.post("/v1/audio/transcriptions")
 async def transcribe(request: Request):
-    r = await asr.post("/v1/audio/transcriptions", content=await request.body(),
+    body = await request.body()  # read first: Starlette then parses the form from it, and it is still here to pass on
+    form = await request.form()
+    if diar and "diarize" in form:
+        # Hearing must never fail because of diarization: whatever goes wrong here, or a part in which it finds
+        # nobody speaking, is written down the plain way below.
+        try:
+            said = await voices.heard(await form["file"].read(), form.get("memory") or "", spoke, written)
+            if said["segments"]:
+                return said
+        except Exception as e:
+            print(f"diarization failed, writing the speech down without it: {e!r}", flush=True)
+    r = await asr.post("/v1/audio/transcriptions", content=body,
                        headers={"content-type": request.headers["content-type"]})
     return Response(r.content, r.status_code, media_type=r.headers.get("content-type"))
 
@@ -92,8 +132,9 @@ def rerank(r: Rerank):
     return {"scores": reranker.predict([(r.query, p) for p in r.passages]).tolist()}
 
 
-# SageMaker's contract: GET /ping, and every request on POST /invocations. An uploaded file is speech to write down;
-# JSON with passages is a rerank; other JSON is a line for Sona's voice ("stream": as it is made).
+# SageMaker's contract: GET /ping, and every request on POST /invocations. An uploaded file is speech to write down
+# (by voice when a `diarize` field comes with it); JSON with passages is a rerank; other JSON is a line for Sona's
+# voice ("stream": as it is made).
 app.get("/ping")(health)
 
 

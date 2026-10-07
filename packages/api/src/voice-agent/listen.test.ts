@@ -19,7 +19,7 @@ test("a turn is speech then 0.7 s of quiet: it starts once there is 0.3 s of spe
   const events = run(new TurnDetector(), pcm(quiet(500), tone(1000), quiet(1000)));
   expect(events.map(e => e.type)).toEqual(["start", "end"]);
   const turn = (events[1] as Extract<TurnEvent, { type: "end" }>).pcm;
-  // All the speech is in it (nothing clipped at the start), with 0.2 s of quiet kept at the end, not the whole 0.7 s.
+  // All the speech is in it (nothing clipped at the start), with 0.2 s of quiet kept at the end, not the whole 0.5 s.
   const loud = turn.filter(s => Math.abs(s) > 1000).length;
   expect(loud).toBeGreaterThan(0.95 * (RATE - RATE / 10)); // a sine is above 1000 most of the time
   expect(ms(turn)).toBeGreaterThan(1000 + 200);
@@ -28,7 +28,7 @@ test("a turn is speech then 0.7 s of quiet: it starts once there is 0.3 s of spe
 });
 
 test("a short pause does not end the turn; a cough or a click never starts one", () => {
-  const paused = run(new TurnDetector(), pcm(tone(800), quiet(500), tone(800), quiet(900)));
+  const paused = run(new TurnDetector(), pcm(tone(800), quiet(400), tone(800), quiet(900)));
   expect(paused.map(e => e.type)).toEqual(["start", "end"]);
   expect(ms((paused[1] as Extract<TurnEvent, { type: "end" }>).pcm)).toBeGreaterThan(2000);
   expect(run(new TurnDetector(), pcm(quiet(300), tone(200), quiet(1500), tone(120), quiet(1500)))).toEqual([]);
@@ -100,7 +100,7 @@ test("the STT provider: while the ASR starts, the turn is unheard with its minut
   expect([unheard, said]).toEqual([[30], ["pertama", "kedua"]]);
 });
 
-test("a turn is read from its first 0.3 s of quiet: said through, it is read once and its words come as it ends; a patient who goes on is read again, whole", async () => {
+test("a turn is read from its first 0.2 s of quiet: said through, it is read once and its words come as it ends; a patient who goes on is read again, whole", async () => {
   const sent: number[] = [], said: string[] = [];
   const ears = new SonaTranscriber(async audio => { sent.push(audio.length); return { text: `turn of ${audio.length} bytes`, source: "model", model: "sona-asr" }; });
   const session = ears.createSession({ onUtterance: text => said.push(text) });
@@ -109,8 +109,8 @@ test("a turn is read from its first 0.3 s of quiet: said through, it is read onc
   await Bun.sleep(0);
   expect(sent.length).toBe(1); // the early reading is the turn's
   expect(said).toEqual([`turn of ${sent[0]} bytes`]);
-  // A pause of 0.5 s mid-turn: read early, in vain; the whole turn is read at its end (its early reading is that of the whole).
-  feed(pcm(tone(800), quiet(500), tone(800), quiet(900)));
+  // A pause of 0.4 s mid-turn: read early, in vain; the whole turn is read at its end (its early reading is that of the whole).
+  feed(pcm(tone(800), quiet(400), tone(800), quiet(900)));
   await Bun.sleep(0);
   expect(sent.length).toBe(3);
   expect(sent[2]).toBeGreaterThan(sent[1]!);

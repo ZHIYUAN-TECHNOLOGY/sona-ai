@@ -6,10 +6,14 @@
 .table-toolbar { border-bottom: 1px solid var(--hairline); }
 .table-foot { border-top: 1px solid var(--hairline); }
 .table-count, .cell-muted { font-size: var(--text-small); color: var(--muted); }
+/* Rows start a step below the header line. A selected or hovered row is one rounded band: no hairline cuts its corners, above or below. */
+.table tbody::before { content: ""; display: block; height: var(--space-2); }
 .table tbody tr[data-selected] > * { background: var(--fill-selected); }
-.table tbody tr[data-selected] > :first-child { border-radius: var(--radius-control) 0 0 var(--radius-control); }
-.table tbody tr[data-selected] > :last-child { border-radius: 0 var(--radius-control) var(--radius-control) 0; }
-.table-row-open:hover { background: var(--fill-hover); }
+.table-row-open:hover { background: none; }
+.table-row-open:hover:not([data-selected]) > * { background: var(--fill-hover); }
+.table tbody tr:is([data-selected], .table-row-open:hover) > :first-child { border-radius: var(--radius-control) 0 0 var(--radius-control); }
+.table tbody tr:is([data-selected], .table-row-open:hover) > :last-child { border-radius: 0 var(--radius-control) var(--radius-control) 0; }
+.table tbody tr:is([data-selected], .table-row-open:hover) > *, .table tbody tr:has(+ tr:is([data-selected], .table-row-open:hover)) > * { border-bottom-color: transparent; }
 .table-row-open:focus-visible { outline: 0; box-shadow: inset var(--focus-ring); }
 .table-skel { display: block; height: 12px; max-width: 160px; border-radius: var(--radius-pill); background: var(--fill-field); animation: table-skel 1.2s var(--ease) infinite alternate; }
 @keyframes table-skel { to { opacity: 0.45; } }
@@ -121,14 +125,15 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .cell-person-name, .cell-person-text > .cell-muted { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .cell-clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-width: 12ch; overflow-wrap: anywhere; }
 /* Toolbar: tabs and filters left, search and icon buttons right, on one row. */
-.table-toolbar-row { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: var(--space-3); min-width: 0; }
-.table-toolbar-start { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-.table-toolbar-end { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
+/* Tabs keep their width; the search gives way, then drops under them, so the last tab is never cut. */
+.table-toolbar-row { display: flex; flex: 1; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); min-width: 0; }
+.table-toolbar-start { display: flex; flex: none; align-items: center; gap: var(--space-3); min-width: 0; max-width: 100%; }
+.table-toolbar-end { display: flex; flex: 1 1 9rem; align-items: center; justify-content: flex-end; gap: var(--space-2); min-width: 9rem; }
+.table-toolbar-end .search-field { flex: 0 1 15rem; }
 .table-toolbar > .search-field { margin-left: auto; }
-@media (max-width: 1360px) { .table-toolbar-row { flex-wrap: wrap; } .table-toolbar-end { margin-left: 0; } }
 .insight-act[data-pending] { opacity: 0.6; pointer-events: none; cursor: progress; }
 /* Beside a rail on a laptop the table has about 620px: tighter cells so every column and the row action stay in view. */
-@media (max-width: 1360px) {
+@media (max-width: 1480px) {
   :is(.pro, .care) .table th, :is(.pro, .care) .table td { padding-inline: var(--space-2); }
   .row-action { padding: 0 var(--space-3); gap: var(--space-1); }
   .cell-person { min-width: 132px; }
@@ -177,3 +182,35 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 /* Chips in a table are small labels beside the row's text, not headlines. */
 .pro .table .chip { min-height: 20px; padding: 0 7px; font-size: 10px; letter-spacing: 0.05em; }
 .care .table .chip { min-height: 24px; padding: 0 var(--space-2); font-size: 12px; }
+
+/* Chart fills: the status colours' chart shades (checked for colour-blind separation), each always named beside its mark. */
+[data-chart-tone="red"] { --fill: var(--chart-red); }
+[data-chart-tone="amber"] { --fill: var(--chart-amber); }
+[data-chart-tone="green"] { --fill: var(--chart-green); }
+[data-chart-tone="blue"] { --fill: var(--chart-blue); }
+[data-chart-tone="neutral"] { --fill: var(--chart-neutral); }
+.chart-line { stroke-dasharray: 1; }
+/* Segment bar: 2px of surface between fills, 4px ends; every state named and counted underneath. */
+.seg-chart { display: grid; gap: var(--space-3); }
+.seg-bar { display: flex; gap: 2px; height: 12px; }
+.seg { min-width: 4px; border-radius: 2px; background: var(--fill); }
+.seg:first-child { border-radius: 4px 2px 2px 4px; }
+.seg:last-child { border-radius: 2px 4px 4px 2px; }
+.seg:only-child { border-radius: 4px; }
+.seg-legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin: 0; }
+.seg-legend > div { display: flex; align-items: baseline; gap: var(--space-2); }
+.seg-legend dt { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-small); color: var(--muted); }
+.seg-legend dd { margin: 0; font-weight: 600; }
+.seg-legend [data-empty] dd { font-weight: 400; color: var(--muted); }
+.seg-key { flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--fill); }
+/* Bar list: name, bar to the largest, number. */
+.bar-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.bar-list li { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); }
+.bar-name { font-size: var(--text-small); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { display: block; height: 8px; border-radius: 4px; background: var(--fill-selected); }
+.bar-fill { display: block; height: 100%; min-width: 4px; border-radius: 4px; background: var(--fill); }
+.bar-value { font-weight: 600; }
+/* A row of chart cards under the stats. */
+.chart-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--gap-card); }
+.chart-row .card { gap: var(--space-3); padding-block: var(--space-5); }
+.chart-row .card-title { font-size: var(--text-body); font-weight: 500; color: var(--muted); letter-spacing: 0; }

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Chip, ListCard, ListRow, SearchField, Tabs } from "@/components/primitives";
+import { Chip, ListCard, ListRow, SearchField, Signal, Tabs } from "@/components/primitives";
 import { ReplyEditor } from "@/features/messages/draft";
 import { ago, triageBy } from "@/features/messages/format";
 import { Thread } from "@/features/messages/thread";
@@ -31,15 +31,15 @@ function ReplyPanel({ patientId, name, waiting }: { patientId: string; name: str
     <div ref={panel}>
     <InsightCard
       label={d ? "Draft reply" : "Reply"}
-      meta={d && d.source !== "model" ? <Chip tone="amber">Sample</Chip> : undefined}
+      meta={d && d.source !== "model" ? <Chip tone="amber">{d.waking ? "Sample · model waking" : "Sample · not a model"}</Chip> : undefined}
       tone={d?.label === "urgent" ? "urgent" : "info"}
-      title={d ? `Sona drafted a reply to ${name}` : `Reply to ${name}`}
+      title={`Reply to ${name}`}
       lead={drafting ? "Sona is drafting…" : d ? d.reason : draft.error ? `No draft: ${draft.error.message}. Write the reply yourself.` : waiting ? "No draft for this message. Write the reply yourself." : "Nothing is waiting here. You can still write."}
       evidence={d
         ? [
             { text: "The patient's message" },
             { text: <>Triage: {d.label} · {triageBy(d.triagedBy)}</> },
-            { text: d.source === "model" ? `Drafted by Sona (${d.model})` : d.waking ? "The model is waking; this is a rule-based sample draft" : "Rule-based sample draft, not a model's" },
+            ...(d.source === "model" ? [{ text: `Drafted by Sona (${d.model})` }] : []),
           ]
         : undefined}
       sources={d ? 2 : undefined}
@@ -55,6 +55,8 @@ type Filter = "waiting" | "all";
 function Page() {
   const { me } = Route.useRouteContext();
   const inbox = useQuery(orpc.messages.inbox.queryOptions());
+  // Read before any early return: hooks run in the same order on every render.
+  const { patient } = Route.useSearch();
   const [picked, setPicked] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
@@ -72,9 +74,16 @@ function Page() {
   const oldest = waiting.reduce<(typeof waiting)[number] | undefined>((a, t) => (!a || new Date(t.waitingSince!) < new Date(a.waitingSince!) ? t : a), undefined);
   const needle = q.trim().toLowerCase();
   const visible = (filter === "waiting" ? waiting : threads).filter(t => !needle || `${t.name} ${t.lastText ?? ""}`.toLowerCase().includes(needle));
-  const { patient } = Route.useSearch();
   const selected = visible.find(t => t.patientId === (picked ?? patient)) ?? visible[0];
-  const lead = [`${unread} unread`, `${waiting.length} waiting for a reply`, oldest ? `oldest ${ago(oldest.waitingSince!, now)}` : null].filter(Boolean).join(" · ");
+  const urgent = waiting.filter(t => t.label === "urgent").length;
+  const lead = (
+    <>
+      {unread} unread ·{" "}
+      {waiting.length ? <Signal tone="soon">{waiting.length} waiting for a reply</Signal> : "nobody waiting for a reply"}
+      {urgent ? <> · <Signal tone="urgent">{urgent} urgent</Signal></> : null}
+      {oldest ? ` · oldest ${ago(oldest.waitingSince!, now)}` : null}
+    </>
+  );
 
   return (
     <>

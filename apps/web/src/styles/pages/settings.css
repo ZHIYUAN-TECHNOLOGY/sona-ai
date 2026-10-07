@@ -1,10 +1,11 @@
-/* Settings: one calm, centred column of cards; label left, control right, hairlines between rows. */
-.settings { display: grid; gap: var(--gap-card); width: 100%; max-width: 860px; margin-inline: auto; }
+/* Settings: one calm column of cards, starting where the page starts; label left, control right, hairlines between rows. */
+.settings { display: grid; gap: var(--gap-card); width: 100%; max-width: 860px; }
 .settings-card { display: grid; gap: var(--space-4); }
 .settings p { margin: 0; }
 .settings-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
 .settings-head > div { display: grid; gap: var(--space-1); min-width: 0; }
 .settings-head .card-title { margin: 0; }
+.settings-head > span { flex: none; white-space: nowrap; }
 .settings-lead { font-weight: 600; color: var(--ink); }
 .settings-name { font-size: var(--text-title); font-weight: 600; color: var(--ink); }
 .settings-muted { color: var(--muted); font-size: var(--text-small); }
@@ -13,9 +14,15 @@
 .settings-account { display: flex; align-items: center; gap: var(--space-4); }
 .settings-account > div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 
+/* The role's rules, behind a tap: they are reference, not a setting. */
+.settings-more { border-top: 1px solid var(--hairline); }
+.settings-more summary { min-height: var(--tap); padding-block: var(--space-3); font-size: var(--text-small); font-weight: 600; cursor: pointer; }
+.settings-more summary .settings-muted { font-weight: 400; }
+.settings-more > p { padding-top: var(--space-3); border-top: 1px solid var(--hairline); }
+
 /* Label left, value or control right. */
 .settings-rows { display: grid; margin: 0; font-size: var(--text-small); }
-.settings-rows > div, .settings-row { display: grid; grid-template-columns: 10rem 1fr; align-items: center; gap: var(--space-4); padding-block: var(--space-3); border-top: 1px solid var(--line); }
+.settings-rows > div, .settings-row { display: grid; grid-template-columns: 10rem 1fr; align-items: center; gap: var(--space-4); padding-block: var(--space-3); border-top: 1px solid var(--hairline); }
 .settings-rows dt { color: var(--muted); }
 .settings-rows dd { margin: 0; color: var(--ink); }
 .settings-actions, .settings-jumps { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
@@ -28,21 +35,26 @@
 .settings-segment button:hover:not(:disabled) { background: var(--fill-hover); }
 .settings-segment button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
 .settings-segment button:disabled { color: var(--placeholder); cursor: not-allowed; }
-.settings-segment button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 .settings-review { display: grid; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-control); background: var(--blue-wash); color: var(--ink); }
-.settings-form { display: grid; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--line); }
+.settings-form { display: grid; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--hairline); }
 .settings-form input { width: 100%; }
 .settings-submit { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .settings-submit > p { min-width: 0; }
 .settings-submit .btn { flex: none; }
 
 .settings-watches { display: grid; margin: 0; padding: 0; list-style: none; }
-.settings-watches > li { display: flex; align-items: flex-start; gap: var(--space-3); padding-block: var(--space-3); border-top: 1px solid var(--line); }
+.settings-watches > li { display: flex; align-items: flex-start; gap: var(--space-3); padding-block: var(--space-3); border-top: 1px solid var(--hairline); }
 .settings-watch-icon { display: grid; place-items: center; flex: none; width: var(--avatar-md); height: var(--avatar-md); border-radius: var(--radius-pill); background: var(--fill-field); color: var(--muted); }
 .settings-watch-body { display: grid; gap: var(--space-1); flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .settings-watches .btn { flex: none; }
 .settings-answer { display: grid; gap: var(--space-1); margin: 0; padding-left: var(--space-4); font-size: var(--text-small); color: var(--ink); }
+
+/* On a wide screen the account sits beside the settings that change something, so all of it is in view. */
+@media (min-width: 100rem) {
+  .settings { max-width: none; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto 1fr; align-items: start; }
+  .settings > :first-child { grid-row: span 2; }
+}
 
 @media (max-width: 40rem) {
   .settings-rows > div, .settings-row { grid-template-columns: 1fr; gap: var(--space-2); }

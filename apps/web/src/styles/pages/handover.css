@@ -1,33 +1,32 @@
-/* Handover: per-patient SBAR rows in one card, receiver form in the rail. Tokens only. */
-.ho-muted { color: var(--muted); font-size: var(--text-sm); margin: 0; }
+/* Handover: per-patient SBAR rows in one card; receiver, review and the hand-over button in the rail. Tokens only. */
+.ho-muted { color: var(--muted); font-size: var(--text-small); margin: 0; }
 .ho-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
 .ho-loading { display: grid; gap: var(--space-3); }
 .ho-list { list-style: none; margin: 0; padding: 0; }
-.ho-row { padding: var(--space-3) 0; border-top: 1px solid var(--line); min-width: 0; }
+.ho-row { padding: var(--space-3) 0; border-top: 1px solid var(--hairline); min-width: 0; }
 .ho-row:first-child { border-top: 0; padding-top: var(--space-2); }
 .ho-row:last-child { padding-bottom: 0; }
 .ho-row[data-done] .ho-more { color: var(--muted); }
 .ho-head { display: flex; align-items: center; gap: var(--space-3); }
 .ho-who { display: grid; flex: 1; min-width: 0; }
-.ho-check { inline-size: 1.125rem; block-size: 1.125rem; flex: none; accent-color: var(--ink); border-radius: 5px; }
-.ho-check:focus-visible, .ho-control:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.ho-check { inline-size: 1.125rem; block-size: 1.125rem; flex: none; accent-color: var(--ink); }
 .ho-sbar { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-2) var(--space-3); margin: var(--space-2) 0; }
-.ho-sbar dt { color: var(--muted); font-size: var(--text-sm); }
-.ho-sbar dd { margin: 0; overflow-wrap: anywhere; }
-.ho-sbar ul { margin: 0; padding-inline-start: 1.1em; }
-.ho-form { display: grid; gap: var(--space-3); }
-.ho-control { inline-size: 100%; min-height: var(--tap); padding: 0 var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; }
-.ho-done { display: grid; justify-items: start; gap: var(--space-2); font-size: var(--text-sm); }
+.ho-sbar dt, .ho-review dt { color: var(--muted); font-size: var(--text-small); }
+.ho-sbar dd, .ho-review dd { margin: 0; overflow-wrap: anywhere; }
+.ho-form { display: grid; gap: var(--space-4); }
+.ho-review { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-3); margin: 0; }
+.ho-review dd { font-weight: 600; text-align: right; }
+.ho-done { display: grid; justify-items: start; gap: var(--space-2); font-size: var(--text-small); }
+/* The SBAR sits under the name, clear of the checkbox and avatar. */
 .ho-more { margin-top: var(--space-2); }
-.ho-more summary { cursor: pointer; border-radius: var(--radius-sm); overflow-wrap: anywhere; }
-.ho-more summary { list-style: none; display: flex; align-items: baseline; gap: var(--space-2); }
+.ho-more summary { cursor: pointer; border-radius: var(--radius-control); overflow-wrap: anywhere; list-style: none; display: flex; align-items: baseline; gap: var(--space-2); }
 .ho-more summary::-webkit-details-marker { display: none; }
-.ho-more summary::before { content: ""; flex: none; inline-size: 0.4375rem; block-size: 0.4375rem; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: translateY(-0.125rem) rotate(-45deg); transition: transform 150ms ease; }
+.ho-more summary::before { content: ""; flex: none; inline-size: 0.4375rem; block-size: 0.4375rem; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: translateY(-0.125rem) rotate(-45deg); transition: transform var(--quick) var(--ease); }
 .ho-more[open] summary::before { transform: translateY(-0.1875rem) rotate(45deg); }
-@media (prefers-reduced-motion: reduce) { .ho-more summary::before { transition: none; } }
+.ho-more[open] summary { font-weight: 600; }
 .ho-more dd ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
 .ho-more dd li { position: relative; padding-left: var(--space-3); }
-.ho-more dd li::before { content: ""; position: absolute; left: 0; top: 0.6em; inline-size: 0.25rem; block-size: 0.25rem; border-radius: 50%; background: var(--muted); }
+.ho-more dd li::before { content: ""; position: absolute; left: 0; top: 0.6em; inline-size: 0.25rem; block-size: 0.25rem; border-radius: var(--radius-pill); background: var(--muted); }
 .ho-more summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .ho-more[open] summary { font-weight: 600; }
 /* Toolbar for the rows in view: tick all, the watch list only, open or fold all; the colour key sits at the end. */

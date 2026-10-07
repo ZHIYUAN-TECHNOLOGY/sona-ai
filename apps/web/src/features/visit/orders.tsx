@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { EmptyState } from "@/components/page";
-import { Button, Card, Chip, Field, ListRow } from "@/components/primitives";
+import { Button, Card, Chip, Field, ListRow, Skeleton } from "@/components/primitives";
 import { orpc } from "@/lib/orpc";
 
 import { Medicines, type MedicineState } from "./medicines";
@@ -29,7 +29,7 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
   const place = useMutation(orpc.prescribing.simulate.mutationOptions());
   const amend = useMutation(orpc.prescribing.amend.mutationOptions());
 
-  if (encounter.isPending) return <EmptyState>Loading the medicine order…</EmptyState>;
+  if (encounter.isPending) return <Card title="Medicine order"><Skeleton height={48} /></Card>;
   if (encounter.isError) return <EmptyState>{refusal(encounter.error).message}</EmptyState>;
   if (!patient) return <EmptyState>This visit's patient record is not available, so the order cannot be checked here.</EmptyState>;
 
@@ -56,16 +56,6 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
             trailing={blocked.length ? <Chip tone="amber" icon="alert">{blocked.length} of {checks.length} blocked</Chip>
               : <span className="visit-muted">{checks.length} checks pass</span>} />
         ) : <p className="visit-muted">No medicine is proposed for this visit yet.{canPrescribe ? " Propose one above, then review it." : ""}</p>}
-        {reviewed || !canPrescribe ? (
-          <ul className="visit-checks">
-            {checks.map(c => (
-              <li key={c.id}>
-                {c.status === "blocked" ? <Chip tone="amber">Blocked</Chip> : <span className="visit-muted">Passed</span>}
-                <span><strong>{c.label}</strong><br />{c.detail}</span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
         {canPrescribe ? (
           <div className="visit-actions">
             <Button size="sm" variant={reviewed ? "quiet" : "primary"} disabled={!proposed} pending={review.isPending}
@@ -79,6 +69,17 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
             ) : null}
           </div>
         ) : <p className="visit-muted">Only a doctor can review and place a medicine order.</p>}
+        {/* What the decision rests on and what is still open, under the buttons so they stay in view. */}
+        {proposed || reviewed || !canPrescribe ? (
+          <ul className="visit-checks">
+            {checks.map(c => (
+              <li key={c.id}>
+                {c.status === "blocked" ? <Chip tone="amber">Blocked</Chip> : <span className="visit-muted">Passed</span>}
+                <span><strong>{c.label}</strong><br />{c.detail}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {refused ? (
           <div role="alert" className="visit-refused">
             {refused.message}
@@ -97,17 +98,22 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
             A record only: not sent to a pharmacy, not dispensed.<br />
             Request {last.requestId}
           </p>
+          <div className="visit-actions"><Button size="sm" icon="arrow-right" to="/pro/visit" search={{}}>Next visit</Button></div>
         </Card>
       ) : null}
 
       {canPrescribe && reviewed ? (
-        <Card title="Amend an order">
-          <Field label="Reason for the change" hint="For an order already placed, after the visit was edited and reviewed again.">
-            {control => <input {...control} value={reason} maxLength={500} onChange={e => setReason(e.target.value)} />}
-          </Field>
-          <Button disabled={!reason.trim() || blocked.length > 0} pending={amend.isPending} onClick={() => { place.reset(); amend.mutate({ ...command, reason }); }}>
-            Amend the order
-          </Button>
+        <Card>
+          {/* Rarely needed, so it waits behind one tap and the order card keeps the eye. */}
+          <details className="visit-amend">
+            <summary>Amend an order already placed</summary>
+            <Field label="Reason for the change" hint="After the visit was edited and reviewed again.">
+              {control => <input {...control} value={reason} maxLength={500} onChange={e => setReason(e.target.value)} />}
+            </Field>
+            <Button disabled={!reason.trim() || blocked.length > 0} pending={amend.isPending} onClick={() => { place.reset(); amend.mutate({ ...command, reason }); }}>
+              Amend the order
+            </Button>
+          </details>
         </Card>
       ) : null}
     </div>

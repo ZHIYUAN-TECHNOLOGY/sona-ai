@@ -6,7 +6,7 @@ import { type ReactNode, useState } from "react";
 import { type Column, DataTable, PersonCell, RowAction, TableToolbar, TextCell, ValueCell } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, ListCard, ListRow, SearchField, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Button, Card, ListCard, ListRow, SearchField, Signal, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { matching, ringgit } from "@/features/audit/filter";
 import { say } from "@/features/discharge/shared";
@@ -53,17 +53,19 @@ function Coding({ tabs, items, mayRun, maySend }: { tabs: ReactNode; items: { da
   // `audit.query` writes (a task for the doctor, the item marked queried), so it is a button, never a row open.
   const ask = useMutation(orpc.audit.query.mutationOptions({ onSuccess: refresh }));
   const patients = useQuery(orpc.patients.list.queryOptions());
-  const nameOf = (id: string) => patients.data?.find(p => p.id === id)?.name ?? id;
+  const names = new Map(patients.data?.map(p => [p.id, p.name]));
+  const nameOf = (id: string) => names.get(id) ?? id;
 
-  const rows = items.data ?? [];
+  // The most money at risk first, and that finding is open until another is chosen: the evidence and the decision are in view on arrival.
+  const rows = [...(items.data ?? [])].sort((a, b) => b.riskCents - a.riskCents);
   const shown = matching(rows, q, r => [nameOf(r.patientId), r.patientId, r.doctor, r.gap, r.fromCode ?? "", r.toCode]);
-  const open = rows.find(r => r.id === openId);
+  const open = rows.find(r => r.id === openId) ?? rows[0];
   const total = rows.reduce((sum, r) => sum + r.riskCents, 0);
   const doctors = new Set(rows.map(r => r.doctor)).size;
   const sent = ask.isSuccess ? ask.variables?.itemId : undefined;
 
   const columns: Column<Item>[] = [
-    { key: "patient", header: "Patient", cell: r => <PersonCell name={nameOf(r.patientId)} detail={r.patientId} />, sort: (a, b) => nameOf(a.patientId).localeCompare(nameOf(b.patientId)) },
+    { key: "patient", header: "Patient", cell: r => <span className="au-patient"><PersonCell name={nameOf(r.patientId)} detail={r.patientId} /></span>, sort: (a, b) => nameOf(a.patientId).localeCompare(nameOf(b.patientId)) },
     { key: "gap", header: "Gap in the note", cell: r => <span className="au-gap"><TextCell>{r.gap}</TextCell><span className="au-muted au-code">{codes(r)}</span></span> },
     { key: "doctor", header: "Doctor", cell: r => <span className="au-doctor">{r.doctor}</span>, sort: (a, b) => a.doctor.localeCompare(b.doctor) },
     { key: "risk", header: "At risk", align: "right", cell: r => <ValueCell value={ringgit(r.riskCents)} unit="RM" />, sort: (a, b) => a.riskCents - b.riskCents },
@@ -72,17 +74,10 @@ function Coding({ tabs, items, mayRun, maySend }: { tabs: ReactNode; items: { da
   return (
     <>
       <PageHeader title="Audit"
-        lead={items.isPending ? "Reading the audit…" : items.error ? "The audit could not be read." : rows.length ? `${plural(rows.length, "open item")} put RM ${ringgit(total)} at risk across ${plural(doctors, "doctor")}.` : "No open coding items."}
+        lead={items.isPending ? "Reading the audit…" : items.error ? "The audit could not be read." : rows.length ? <><Signal tone="soon">RM {ringgit(total)} at risk</Signal> in {plural(rows.length, "open item")} across {plural(doctors, "doctor")}.</> : "No open coding items."}
         status={run.isSuccess ? "Audit finished" : undefined}
         actions={mayRun ? <Button variant="primary" icon="activity" pending={run.isPending} onClick={() => run.mutate({})}>Run audit now</Button> : undefined} />
       {run.error ? <p className="au-note" role="alert">{say(run.error)}</p> : null}
-      {rows.length ? (
-        <StatRow>
-          <StatCard title="Open items" value={rows.length} caption="Notes that do not support their code" />
-          <StatCard title="At risk" value={ringgit(total)} unit="RM" caption="If the claims go out as coded" />
-          <StatCard title="Doctors involved" value={doctors} caption="Each query goes to the note's author" />
-        </StatRow>
-      ) : null}
       <WithRail rail={
         <RightRail label="Selected finding">
           {open ? (
@@ -97,11 +92,12 @@ function Coding({ tabs, items, mayRun, maySend }: { tabs: ReactNode; items: { da
               <InsightCard label="Sona's query" meta={`For ${open.doctor}`} lead={open.query} sources={2}
                 evidence={[{ icon: "file", text: open.gap }, { icon: "clipboard", text: `Coded as ${open.fromCode ?? "nothing"}; the labs support ${open.toCode}` }]}
                 next={maySend && sent !== open.id ? { label: ask.isPending ? "Sending…" : "Send query", step: `Adds a task for ${open.doctor}`, onAct: () => { if (!ask.isPending) ask.mutate({ itemId: open.id }); } } : undefined} />
-              {sent === open.id ? <p className="au-note" role="status">Query sent to {open.doctor}.</p> : null}
+              {sent === open.id ? <p className="au-note" role="status">Query sent to {open.doctor}.</p>
+                : sent ? <p className="au-note" role="status">Query sent. This is the next largest finding.</p> : null}
               {ask.error ? <p className="au-note" role="alert">{say(ask.error)}</p> : null}
             </>
           ) : (
-            <Card><EmptyState icon="clipboard" title="No finding selected">Choose Review on a row to read Sona’s query before you send it.</EmptyState></Card>
+            <Card><EmptyState icon="shield-check" title="Nothing to review">{items.isPending ? "Reading the audit…" : "A finding opens here with Sona’s query, to read before you send it."}</EmptyState></Card>
           )}
         </RightRail>
       }>
@@ -140,12 +136,6 @@ function Access({ tabs }: { tabs: ReactNode }) {
   return (
     <>
       <PageHeader title="Audit" lead={!patient ? "Choose a patient to see who opened their record." : trail.isPending ? `Reading the trail for ${patient.name}…` : `${plural(people, "person", "people")} opened ${patient.name}’s record, in ${entries}.`} />
-      {lines.length ? (
-        <StatRow>
-          <StatCard title="Entries" value={lines.length} caption="The latest 50 are shown" />
-          <StatCard title="People" value={people} caption="Who opened or changed the record" />
-        </StatRow>
-      ) : null}
       <WithRail rail={
         <RightRail label="Patients">
           <Card title="Patient">

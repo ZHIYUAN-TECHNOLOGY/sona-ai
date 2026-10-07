@@ -2,10 +2,11 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { BarChart } from "@/components/charts";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Chip, StatCard, StatRow } from "@/components/primitives";
-import { WithRail } from "@/components/rail";
+import { Button, Card, Chip, IconButton, Signal, StatCard, StatRow } from "@/components/primitives";
+import { RightRail, WithRail } from "@/components/rail";
 import { addDays, dateKey, dayLabel, hourOf, longLabel, timeOf, weekOf, whenOf } from "@/features/today/time";
 import { type client, orpc } from "@/lib/orpc";
 import "@/styles/pages/today.css";
@@ -48,20 +49,31 @@ function Page() {
   const nowMinutes = minutesOf(new Date());
   const nowTop = nowMinutes >= from * 60 && nowMinutes <= (from + hours.length) * 60 ? offset(new Date()) : undefined;
 
-  const perDay = days.map(d => visits.filter(v => dateKey(new Date(v.startsAt)) === d).length);
+  const perDay = days.map(d => visitsOn.get(d)?.length ?? 0);
   const busiest = perDay.indexOf(Math.max(...perDay));
-  const encounterOf = (patientId: string) => patients.data?.find(p => p.id === patientId)?.encounterId || undefined;
+  const encounters = new Map(patients.data?.map(p => [p.id, p.encounterId]));
+  const encounterOf = (patientId: string) => encounters.get(patientId) || undefined;
+  const count = (n: number, one: string) => `${n} ${n === 1 ? one : `${one}s`}`;
+  // What needs the doctor this week: records still incomplete, the soonest first.
+  const incomplete = visits.filter(v => v.incomplete).sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+  const firstIncomplete = incomplete.find(v => new Date(v.startsAt).getTime() >= Date.now()) ?? incomplete[0];
 
   return (
     <>
       <PageHeader
         title="Schedule"
-        lead={`${longLabel(days[0]!)} to ${longLabel(days[6]!)}${loading || failed ? "" : ` · ${visits.length} ${visits.length === 1 ? "visit" : "visits"}${slots.data ? ` · ${open.length} open ${open.length === 1 ? "slot" : "slots"}` : ""}`}`}
+        lead={
+          <>
+            {longLabel(days[0]!)} to {longLabel(days[6]!)}
+            {loading || failed ? null : ` · ${count(visits.length, "visit")}${slots.data ? ` · ${count(open.length, "open slot")}` : ""}`}
+            {incomplete.length ? <> · <Signal tone="soon">{count(incomplete.length, "record")} incomplete</Signal></> : null}
+          </>
+        }
         actions={
           <>
-            <Button variant="secondary" onClick={() => setWeeksAhead(w => w - 1)} aria-label="Week before">‹</Button>
-            <Button variant="secondary" onClick={() => setWeeksAhead(w => w + 1)} aria-label="Week after">›</Button>
-            <Button variant="primary" onClick={() => setWeeksAhead(0)} disabled={weeksAhead === 0}>This week</Button>
+            <IconButton icon="chevron-left" label="Week before" onClick={() => setWeeksAhead(w => w - 1)} />
+            <IconButton icon="chevron-right" label="Week after" onClick={() => setWeeksAhead(w => w + 1)} />
+            <Button variant="secondary" onClick={() => setWeeksAhead(0)} disabled={weeksAhead === 0}>This week</Button>
           </>
         }
       />
@@ -69,24 +81,28 @@ function Page() {
       {loading || failed ? null : (
         <StatRow>
           <StatCard feature title="Visits this week" value={visits.length} caption={visits.length ? `${dayLabel(days[busiest]!)} is the fullest` : "None booked"} />
-          <StatCard title="Fullest day" value={visits.length ? perDay[busiest] : 0} unit="visits" caption={visits.length ? dayLabel(days[busiest]!) : "No visits"} />
+          <StatCard title="Records incomplete" value={incomplete.length} chip={incomplete.length ? "Needs you" : undefined} tone="soon"
+            caption={firstIncomplete ? `First: ${firstIncomplete.patientName}` : "Every record is complete"}
+            onSelect={firstIncomplete ? () => setPicked({ id: firstIncomplete.id, visit: firstIncomplete }) : undefined}
+            selected={picked?.id !== undefined && picked.id === firstIncomplete?.id} />
           {slots.data ? <StatCard title="Open slots" value={open.length} chip={open.length ? undefined : "Full"} tone="soon" caption={slots.data.doctor.name} /> : null}
         </StatRow>
       )}
 
       <WithRail
         rail={loading || failed ? null : (
-          <div className="week-rail">
+          <RightRail label="Schedule check and details">
           <InsightCard
             label="Sona AI"
             meta="Schedule check"
-            title="This week"
-            tone={visits.length ? "info" : "done"}
-            lead={visits.length
-              ? `${visits.length} ${visits.length === 1 ? "visit" : "visits"} this week; ${dayLabel(days[busiest]!)} is the fullest with ${perDay[busiest]}.`
+            title={firstIncomplete ? firstIncomplete.patientName : "This week"}
+            tone={firstIncomplete ? "soon" : visits.length ? "info" : "done"}
+            lead={firstIncomplete ? `${count(incomplete.length, "record")} incomplete this week. The first is ${firstIncomplete.patientName}, ${whenOf(new Date(firstIncomplete.startsAt))}.`
+              : visits.length ? `${count(visits.length, "visit")} this week; ${dayLabel(days[busiest]!)} is the fullest with ${perDay[busiest]}.`
               : "No visits are booked this week."}
-            evidence={slots.data ? [{ text: `${slots.data.doctor.name} has ${open.length} open ${open.length === 1 ? "slot" : "slots"} this week` }] : undefined}
-            next={weeksAhead === 0 ? { label: "Open today", to: "/pro/today" } : undefined}
+            evidence={slots.data && !firstIncomplete ? [{ text: `${slots.data.doctor.name} has ${open.length} open ${open.length === 1 ? "slot" : "slots"} this week` }] : undefined}
+            next={firstIncomplete ? { label: "Review the visit", onAct: () => setPicked({ id: firstIncomplete.id, visit: firstIncomplete }) }
+              : weeksAhead === 0 ? { label: "Open today", to: "/pro/today" } : undefined}
             sources={visits.length + open.length}
           />
           <Card title={picked?.visit ? "Visit" : picked?.slot ? "Open slot" : "Details"}>
@@ -106,7 +122,11 @@ function Page() {
               </div>
             ) : <p className="today-quiet">Select a visit or an open slot to see it here.</p>}
           </Card>
-          </div>
+          <Card title="Visits by day">
+            <BarChart label="Visits booked each day this week" unit="visits" height={160} showValues
+              points={days.map((d, i) => ({ x: new Date(d).toLocaleDateString("en-GB", { weekday: "short" }), y: perDay[i] ?? 0 }))} />
+          </Card>
+          </RightRail>
         )}
       >
         <Card title="Week calendar">
@@ -130,9 +150,9 @@ function Page() {
                           const at = new Date(v.startsAt);
                           return (
                             <button key={v.id} type="button" className="week-block" style={place(at, sameStart(v, d))}
-                              data-attention={v.incomplete || undefined} aria-pressed={picked?.id === v.id}
+                              data-attention={v.incomplete || undefined} aria-pressed={picked?.id === v.id} title={`${timeOf(at)} ${v.patientName}, ${v.kind}`}
                               onClick={() => setPicked({ id: v.id, visit: v })}>
-                              <b>{timeOf(at)}</b> {v.patientName}<small>{v.kind}</small>
+                              {v.patientName} <b>{timeOf(at)}</b><small>{v.kind}</small>
                             </button>
                           );
                         })}

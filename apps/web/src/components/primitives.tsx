@@ -1,5 +1,7 @@
-import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes } from "react";
+import { useId, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
+
+import { EASE_OUT, gsap, moves, useGSAP } from "@/lib/motion";
 
 import { Avatar } from "./avatar";
 import { Icon, type IconName } from "./icon";
@@ -110,12 +112,25 @@ export function Card({ title, action, className, variant, children }: { title?: 
   );
 }
 
+/** A whole number that counts to its value when it first shows and whenever it changes. */
+function Count({ to }: { to: number }) {
+  const el = useRef<HTMLSpanElement>(null);
+  const shown = useRef(0);
+  useGSAP(() => {
+    const from = { n: shown.current };
+    shown.current = to;
+    // Only counts count up. A measured value (3.1 mmol/L) is shown as it is, never rounded or passed through other numbers on the way.
+    if (moves() && el.current && Number.isInteger(to)) gsap.to(from, { n: to, duration: 0.7, ease: EASE_OUT, onUpdate: () => { el.current!.textContent = String(Math.round(from.n)); }, onComplete: () => { el.current!.textContent = String(to); } });
+  }, { dependencies: [to] });
+  return <span ref={el}>{to}</span>;
+}
+
 type StatCardProps = {
   title: string;
   value: ReactNode;
   unit?: string;
   caption?: ReactNode;
-  /** Overline chip text and its tone. */
+  /** Chip beside the number and its tone: a state that needs the eye. Two or three words. */
   chip?: ReactNode;
   tone?: ChipTone;
   /** Corner arrow link; `label` is its accessible name. */
@@ -124,22 +139,23 @@ type StatCardProps = {
   feature?: boolean;
   /** 0 to 1: draws a progress arc. */
   progress?: number;
+  /** Makes the whole card a button, to filter the list below to this stat. `selected` marks the filter in use. */
+  onSelect?: () => void;
+  selected?: boolean;
 };
 
-export function StatCard({ title, value, unit, caption, chip, tone = "neutral", action, feature, progress }: StatCardProps) {
+export function StatCard({ title, value, unit, caption, chip, tone = "neutral", action, feature, progress, onSelect, selected }: StatCardProps) {
   const done = progress === undefined ? undefined : Math.min(1, Math.max(0, progress)) * 100;
   const { label, ...target } = action ?? { label: "" };
   return (
-    <section className="stat" data-feature={feature || undefined}>
-      {chip || action ? (
-        <div className="stat-head">
-          {chip ? <Chip tone={tone}>{chip}</Chip> : <span />}
-          {action ? <IconButton icon="arrow-up-right" label={label} size="sm" {...target} /> : null}
-        </div>
-      ) : null}
-      <h3 className="stat-title" title={title}>{title}</h3>
+    <section className="stat" data-feature={feature || undefined} data-selected={selected || undefined}>
+      <div className="stat-head">
+        <h3 className="stat-title" title={title}>{title}</h3>
+        {action ? <IconButton icon="arrow-up-right" label={label} size="sm" {...target} /> : null}
+      </div>
       <div className="stat-body">
-        <p className="stat-value"><span>{value}</span>{unit ? <span className="stat-unit" title={typeof unit === "string" ? unit : undefined}>{unit}</span> : null}</p>
+        <p className="stat-value">{typeof value === "number" ? <Count to={value} /> : <span>{value}</span>}{unit ? <span className="stat-unit" title={typeof unit === "string" ? unit : undefined}>{unit}</span> : null}</p>
+        {chip ? <Chip tone={tone}>{chip}</Chip> : null}
         {done === undefined ? null : (
           <svg className="stat-arc" viewBox="0 0 100 56" role="img" aria-label={`${Math.round(done)}%`}>
             <path d="M8 50 A42 42 0 0 1 92 50" pathLength={100} />
@@ -148,8 +164,22 @@ export function StatCard({ title, value, unit, caption, chip, tone = "neutral", 
         )}
       </div>
       {caption ? <p className="stat-caption">{caption}</p> : null}
+      {onSelect ? <button type="button" className="stat-select" aria-pressed={Boolean(selected)} aria-label={`Show ${title}`} onClick={onSelect} /> : null}
     </section>
   );
+}
+
+/**
+ * A state in a row or a detail line: a tone dot and the word, lighter than a `Chip`. Every state wears its meaning's
+ * colour (done or safe green, next or waiting blue, soon amber, must-not-miss red); neutral is for "nothing to say".
+ */
+export function Status({ tone = "neutral", children }: { tone?: Tone | "neutral"; children: ReactNode }) {
+  return <span className="status" data-tone={tone}>{children}</span>;
+}
+
+/** A part of a lead line that needs the eye, in its tone's colour, e.g. `<Signal tone="soon">7 blocked</Signal>`. */
+export function Signal({ tone = "info", children }: { tone?: Tone; children: ReactNode }) {
+  return <span className="signal" data-tone={tone}>{children}</span>;
 }
 
 /** A row of stat cards; wraps on narrow widths. */

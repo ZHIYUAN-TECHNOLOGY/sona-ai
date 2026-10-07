@@ -28,7 +28,8 @@ type Language = keyof typeof LINES;
  *
  * The protocol is the SDK's voice protocol (agents/voice VoiceClient: PCM16 16 kHz mono up; JSON events and one MP3 frame
  * per sentence down). An answer sent with no audio (Sona's voice is starting, slow or unavailable) is read by the phone's
- * own voice, and so is a notice (Sona's line, then "listening"). Three more JSON events, which a client may ignore:
+ * own voice, and so is a notice (Sona's line, then "listening"). Four more JSON events, which a client may ignore
+ * (`sona_timing` {passages, firstPiece, flags, firstSentence, ear}: where the turn's wait went, in ms; answer.ts TurnTiming):
  * - `sona_say` {text, reason: "starting" | "slow" | "unavailable" | "notice", waking?}: a sentence sent with no audio, and why.
  * - `sona_turn` {grounded, urgent, sources, withheld, source, model?, waking?, ear?}: how the answer went, after its last sentence (`ear`: who heard
  *   a spoken question; `sources`: the hospital's leaflets the answer used, by title, as care.ask gives them).
@@ -47,6 +48,8 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
    * utterance if the SDK ever passes one through.
    */
   readonly #heard = new WeakMap<Connection, { text: string; by: NonNullable<TurnSummary["ear"]> }>();
+  /** How long the ASR took over the last words it read on each phone, for `sona_timing`. */
+  readonly #earMs = new WeakMap<Connection, number>();
   /** The language chosen at discharge, read when a call starts: Sona's own lines when the app does not say (`?lang=`). */
   #discharged: Language | undefined;
   /**
@@ -75,7 +78,8 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
   createTranscriber(connection: Connection) {
     // Who heard the words is kept beside them, so the turn they start can say so (`sona_turn`'s `ear`).
     return new SonaTranscriber(async audio => {
-      const heard = await this.#models.transcribe({ audio });
+      const began = Date.now(), heard = await this.#models.transcribe({ audio });
+      this.#earMs.set(connection, Date.now() - began);
       if (heard.source === "model") this.#heard.set(connection, { text: heard.text.trim(), by: { source: "model", model: heard.model } });
       return heard;
     }, waking => {
@@ -112,7 +116,11 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
     // A turn with no call started before it (a typed one) reads the record itself, once for the connection.
     const reading = this.#records.get(connection) ?? this.#read();
     this.#records.set(connection, reading);
-    const [context, record] = await Promise.all([this.#context(hospitalId), reading]);
+    // The route context (one read of the hospital's clock) is only for telling the care team: it is read meanwhile and
+    // never waited for before Gemma is asked.
+    const context = this.#context(hospitalId);
+    context.catch(() => { /* a report that cannot be filed is not said to be (escalate) */ });
+    const record = await reading;
     // A record that could not be read is read again next turn; this turn is still answered, so its 999 and care-team checks run.
     if (!record) this.#records.delete(connection);
     if (record?.plan.status === "discharged") this.#discharged = record.plan.language;
@@ -123,11 +131,12 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
       passages: found.then(hits => passagesIn(hits, language)),
       language,
       escalate: async () => {
-        const told = await tellCareTeam(context, hospitalId, patientId, transcript);
+        const told = await tellCareTeam(await context, hospitalId, patientId, transcript);
         if (told) send(connection, { type: "sona_care_team", ...told });
         return Boolean(told);
       },
       done: summary => send(connection, { type: "sona_turn", ...summary }),
+      timed: timing => send(connection, { type: "sona_timing", ...timing, ear: this.#earMs.get(connection) }),
     });
   }
 

@@ -25,7 +25,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 
 .pro, .care {
-  --radius-control: 14px; --radius-group: 20px; --radius-card: 24px;
+  --radius-control: 8px; --radius-group: 12px; --radius-card: 16px;
   --text-display: 27px; --text-title: 22px; --text-heading: 19px; --text-small: 13px; --text-overline: 11px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
   /* Liquid glass on the web: a soft gradient over a blurred backdrop. */
@@ -56,7 +56,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 /* Design-system tokens (restyle). Shared by both apps unless under `.pro`. */
 .pro, .care {
-  --radius-shell: 28px; --radius-pill: 999px;
+  --radius-shell: 20px; --radius-pill: 8px;
   --text-panel: 28px; --text-page: 36px; --text-stat: 64px;
   --track-overline: 0.06em; --track-tight: -0.02em; --track-display: -0.03em;
   --navy: #0E2A66; --ai-gradient: linear-gradient(160deg, #2E6BE0 0%, var(--blue) 35%, var(--navy) 100%); --on-ai: #FFFFFF; --on-ai-soft: #D5E5FC; --ai-row: rgb(255 255 255 / 0.1);
@@ -65,12 +65,20 @@ button, input, textarea, select { font: inherit; color: inherit; }
   --gap-card: 12px; --sona-bar-clearance: 176px; --pad-card: 28px;
   --pill-h: 48px; --field-h: 44px; --chip-h: 26px; --row-h: 64px;
   --avatar-sm: 28px; --avatar-md: 40px; --avatar-lg: 56px;
-  --slow: 240ms; --press: 0.98; --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--blue);
-  --side-width: 220px; --rail-width: 68px;
+  --slow: 240ms; --press: 0.96; --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--blue);
+  --side-width: 220px; --rail-width: 68px; --page-max: 1560px;
 }
 .pro {
   --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --radius-card: 28px; --text-overline: 12px; --text-title: 21px;
+  --text-overline: 12px; --text-title: 21px;
+  --text-stat: 44px;
+  /* Content glass (design-direction.md, "glass first"): a white gradient the canvas tints through, a bright rim with a
+     sheen along the top, a faint blue catch along the bottom, a hairline outline and a soft blue lift. No live blur. */
+  --glass-surface: linear-gradient(180deg, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.68));
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 -1px 0 rgb(36 91 204 / 0.08), 0 0 0 1px rgb(29 31 35 / 0.04), 0 10px 28px rgb(36 91 204 / 0.07);
+  --chart-red: #CC3F4A; --chart-amber: #E0A21A; --chart-green: #0F8F7F; --chart-blue: #2F6BDE; --chart-neutral: #C3C8D0;
+  /* Halftone dots for an accent glint: one per feature surface, never behind body text. */
+  --dots: radial-gradient(circle at center, currentColor 0.9px, transparent 1.3px) 0 0 / 5px 5px;
 }
 .icon { flex: none; display: block; }
 /* Sona Care on the shared shell: patient sizes. Small text never under 15px, fields and pills at the 48px tap size. */

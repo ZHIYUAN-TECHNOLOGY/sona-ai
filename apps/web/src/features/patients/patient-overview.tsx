@@ -2,14 +2,14 @@ import { can } from "@sona-ai/api/roles";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
-import { useState } from "react";
+import { Fragment, type ReactNode, useState } from "react";
 
 import { LineChart } from "@/components/charts";
 import type { IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { Marked } from "@/components/marked";
 import { EmptyState, PageHeader, PatientStrip } from "@/components/page";
-import { Button, Card, Chip, ListCard, ListRow, StatCard, StatRow, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, ListCard, ListRow, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { when } from "@/features/results/result-rail";
 import { isFlagged } from "@/features/results/triage";
@@ -77,6 +77,14 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
     ...(latest ? [{ icon: "clock" as const, text: `Latest: ${latest.title}, ${day(latest.at)}` }] : []),
     ...(a?.due ? [{ icon: "pill" as const, text: a.missed.length ? `${a.missed.length} missed, ${a.late.length} due now of ${a.due} doses` : a.late.length ? `${a.late.length} of ${a.due} doses due now` : `All ${a.due} doses taken` }] : []),
   ];
+  // Where this patient stands, in one line: the ward's own assessment (amber on watch, green when fit to go, plain when stable) and any doses behind.
+  const sbar = patient.ward?.sbar;
+  const status = patient.ward?.status;
+  const lead: ReactNode[] = [
+    patient.subtitle,
+    sbar?.a ? (status === "watch" || status === "fit" ? <Signal tone={status === "watch" ? "soon" : "done"}>{sbar.a}</Signal> : sbar.a) : null,
+    behind ? <Signal tone={a?.missed.length ? "urgent" : "soon"}>{behind === 1 ? "1 dose" : `${behind} doses`} behind</Signal> : null,
+  ].filter(Boolean);
   const sources = (briefing.data ? (patient.sources?.length ?? 0) : 0) + (latest ? 1 : 0) + (a?.due ? 1 : 0);
 
   return (
@@ -84,11 +92,12 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
       <PageHeader
         breadcrumb={[{ label: "Patients", to: "/pro/patients" }, { label: patient.name }]}
         title="Patient overview"
-        lead={[patient.subtitle, latest ? `Latest record ${day(latest.at)}` : null].filter(Boolean).join(" · ")}
+        lead={lead.length ? lead.map((part, i) => <Fragment key={i}>{i ? " · " : null}{part}</Fragment>) : latest ? `Latest record ${day(latest.at)}` : undefined}
         actions={
           canRead ? (
             <>
-              <Button to="/pro/messages" search={{ patient: patient.id }} icon="message" variant="secondary">Message</Button>
+              {/* With doses behind, the summary's suggested step is the Message button. */}
+              {behind ? null : <Button to="/pro/messages" search={{ patient: patient.id }} icon="message" variant="secondary">Message</Button>}
               {/* The visit page reads encounterId from the URL itself. */}
               {visit ? <Button {...visit} variant="primary" icon="arrow-right">Open the visit</Button> : null}
             </>
@@ -122,7 +131,7 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
               lead={!hasVisit ? "No visit on record, so there is no briefing yet." : briefing.isPending ? "Sona is reading the record…" : briefing.error ? `No briefing: ${briefing.error.message}` : (briefing.data.lines[0] ?? "The briefing came back empty.")}
               evidence={evidence}
               sources={sources || undefined}
-              next={behind ? { label: "Message", step: "Ask about the doses that are behind.", to: "/pro/messages" } : visit ? { label: "Open the visit", step: "Read the record before the visit.", ...visit } : undefined}
+              next={behind ? { label: "Message", step: "Ask about the doses that are behind.", to: "/pro/messages", search: { patient: patient.id } } : visit ? { label: "Open the visit", step: "Read the record before the visit.", ...visit } : undefined}
               meta={briefing.data?.source === "fixture" ? <Chip tone="soon">Sample answer</Chip> : undefined}
             />
             </div>

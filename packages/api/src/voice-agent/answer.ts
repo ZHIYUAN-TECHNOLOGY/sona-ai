@@ -58,7 +58,14 @@ export type AnswerTurn = {
   escalate(label: "worse" | "urgent"): Promise<boolean>;
   /** How the turn went, once it has all been said. */
   done?(summary: TurnSummary): void;
+  /** Where the turn's wait went, once it has all been said (TurnTiming). */
+  timed?(timing: TurnTiming): void;
 };
+/**
+ * Milliseconds from the start of the turn (its words are in) to: the leaflets found, Gemma's first piece, its flags
+ * line read, and the first sentence handed on to be spoken. What is left of "first audio" after these is the voice's.
+ */
+export type TurnTiming = { passages?: number; firstPiece?: number; flags?: number; firstSentence?: number };
 
 /** Sona's own lines, worded like Sona Care's app (apps/care/features/assistant/strings.ts). */
 export const LINES: Record<Language, {
@@ -102,9 +109,9 @@ export const callNow = (text: string) => URGENT.test(text) || URGENT_MS_ZH.test(
 
 // Kept in step with the typed answer's prompt (ANSWER in ../chat-models.ts): the same rules, here as spoken words.
 const VOICE = `You are Sona Care, a hospital's assistant for its patients, talking with one patient by voice. Answer whatever they ask: their own care, any other health or medicine question, or anything else. For anything about them (their medicines, doses, visits, conditions, allergies, results, what their doctor noted, what they told us), use their record below: it is what the hospital has recorded about them.
-Begin every reply with one line of JSON, then the words to say on the next line:
-{"triage": "fine" | "worse" | "urgent", "inPlan": true | false, "cites": [<leaflet numbers>]}
-- triage is about how the patient says they feel: "urgent" when they say they have an emergency sign now (chest pain, severe breathlessness, confusion, fainting, coughing blood; asking which signs to watch for is a question, not urgent), "worse" if a symptom came back or got worse or a new problem started, otherwise "fine" (a question is fine).
+Begin every reply with one word on a line of its own: fine, worse or urgent. Then the words to say. Then, on a last line of its own, one line of JSON:
+{"inPlan": true | false, "cites": [<leaflet numbers>]}
+- The first word is about how the patient says they feel: "urgent" when they say they have an emergency sign now (chest pain, severe breathlessness, confusion, fainting, coughing blood; asking which signs to watch for is a question, not urgent), "worse" if a symptom came back or got worse or a new problem started, otherwise "fine" (a question is fine).
 - inPlan is true when your answer uses their record, false when it comes only from a general leaflet or general knowledge.
 - cites is the numbers of the hospital's general leaflets your answer used, [] when it used none. The numbers belong in this line only: never say one.
 The words to say:
@@ -130,7 +137,8 @@ const TOLD = Object.values(LINES).map(l => l.told);
 export function messagesFor(turn: Pick<AnswerTurn, "question" | "history" | "plan" | "language"> & { passages?: Passage[] }): ChatMessage[] {
   const said: ChatMessage[] = [];
   for (const m of [...turn.history, { role: "user" as const, content: turn.question }]) {
-    const last = said.at(-1), content = m.role === "assistant" ? TOLD.reduce((c, t) => c.split(t).join(""), m.content).trim() : m.content;
+    // A triage word that reached an earlier answer (TRIAGE_HEAD) is not shown back to Gemma as its own words.
+    const last = said.at(-1), content = m.role === "assistant" ? TOLD.reduce((c, t) => c.split(t).join(""), m.content.replace(TRIAGE_HEAD, "")).trim() : m.content;
     if (last?.role === m.role) last.content += `\n${content}`;
     else if (last || m.role === "user") said.push({ role: m.role, content });
   }
@@ -139,16 +147,37 @@ export function messagesFor(turn: Pick<AnswerTurn, "question" | "history" | "pla
 }
 
 type Flags = { triage?: unknown; inPlan?: unknown; cites?: unknown };
+const TRIAGE = ["fine", "worse", "urgent"];
 /**
- * The flags line heading Gemma's reply and the words after it: undefined while the line is still coming, null flags
- * when the reply has none (its first words are words). Gemma sometimes fences the JSON; the fence goes with it.
+ * The triage word heading a reply, with whatever Gemma sets it off by. It was asked for on a line of its own, but on
+ * staging (6 Oct, a long conversation) it also came on the words' own line ("fine You are allergic..."), which was
+ * spoken and kept in the conversation, where Gemma copied it. So a reply's first word, when it is one of the three,
+ * is always the triage word, whatever follows it.
+ */
+const TRIAGE_HEAD = /^\s*(fine|worse|urgent)(?![a-z])[\s.:,;!-]*/i;
+/**
+ * What heads Gemma's reply, and the words after it: undefined while it is still coming, null flags when the reply has
+ * none (its first words are words). The head is the triage word on its own line (two tokens, where the whole flags line
+ * it used to write first cost every answer a third of a second before its first word, measured 6 Oct); the rest of the
+ * flags close the reply (closingAt). A reply that still opens with the whole line of JSON is read as before; Gemma
+ * sometimes fences the JSON, and the fence goes with it.
  */
 export function flagsOf(text: string, final = false): [Flags | null, string] | undefined {
+  const word = TRIAGE_HEAD.exec(text);
+  // The word is in, but what follows it has not started: one more piece says where the words begin.
+  if (word && !final && word[0].length === text.length) return undefined;
+  if (word) return [{ triage: word[1]!.toLowerCase() }, text.slice(word[0].length)];
   const head = /^\s*(?:```(?:json)?\s*)?(\{[\s\S]*?\})[ \t]*(?:\n\s*```)?/.exec(text);
   if (head) return [(jsonIn(head[1]) as Flags | undefined) ?? null, text.slice(head[0].length)];
-  if (!final && text.length < 400 && /^\s*(`{1,3}(json)?\s*)?(\{[^}]*)?$/.test(text)) return undefined;
+  const start = text.trim().toLowerCase();
+  if (!final && text.length < 400 && (/^\s*(`{1,3}(json)?\s*)?(\{[^}]*)?$/.test(text) || TRIAGE.some(t => t.startsWith(start)))) return undefined;
   return [null, text];
 }
+/**
+ * Where the JSON closing Gemma's reply starts in the words not yet spoken (a fence goes with it): -1 when it has not.
+ * It is never read aloud, on a line of its own or not: spoken words hold no brace.
+ */
+export const closingAt = (text: string) => text.search(/\s*(?:`{1,3}(?:json)?\s*)?\{/);
 
 // "Dr." and the like do not end a sentence.
 const ABBREVIATION = /\b(dr|mr|mrs|ms|dato|datin|datuk|puan|encik|e\.g|i\.e|etc|vs|no|tab|caps)\.$/i;
@@ -191,9 +220,11 @@ function within(promise: Promise<boolean>, ms: number) {
 export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
   const lines = LINES[turn.language], summary: TurnSummary = { grounded: false, urgent: false, source: "fixture", sources: [], withheld: 0, ...turn.heard && { ear: turn.heard } };
   let told: Promise<boolean> | undefined, said = false, passages: Passage[] = [], grounds: Grounds | undefined;
+  const began = Date.now(), timing: TurnTiming = {}, mark = (step: keyof TurnTiming) => { timing[step] ??= Date.now() - began; };
   const escalate = (label: "worse" | "urgent") => { told ??= turn.escalate(label).catch(() => false); };
   function* say(text: string): Generator<Part> {
     said = true;
+    mark("firstSentence");
     yield { type: "text-delta", text };
     yield { type: "text-end" };
   }
@@ -214,7 +245,7 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
 
   // Gemma is asked before anything is said, so its reply is already coming while the 999 line is spoken: at once, or as
   // soon as the leaflets still being found are in (never past PASSAGES_MS; a search that failed offers none).
-  const ask = (found: Passage[] = []) => { passages = found; return turn.chat!(messagesFor({ ...turn, passages }), turn.signal); };
+  const ask = (found: Passage[] = []) => { passages = found; mark("passages"); return turn.chat!(messagesFor({ ...turn, passages }), turn.signal); };
   const reply = !turn.chat ? undefined : turn.passages instanceof Promise ? turn.passages.then(ask, () => ask()) : ask(turn.passages);
   // The keyword floors: the 999 line waits for no model; the narrow urgent words always reach the care team.
   if (callNow(turn.question)) yield* urgentFirst();
@@ -227,27 +258,36 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
     summary.model = got.model;
     // Her record and the leaflets Gemma was given, read once for the turn (her discharge leaflet is in the record, planText).
     grounds = groundsOf(turn.plan ?? "", passages.map(p => p.text));
-    let text = "", flags: Flags | null | undefined;
+    // `closing`: the line of JSON after the words, once it has started; nothing from there on is spoken.
+    let text = "", flags: Flags | null | undefined, closing: string | undefined;
     try {
       for await (const delta of got.text) {
         if (turn.signal.aborted) return;
+        mark("firstPiece");
+        if (closing !== undefined) { closing += delta; continue; }
         text += delta;
         if (flags === undefined) {
           const head = flagsOf(text);
           if (!head) continue;
           [flags, text] = head;
+          mark("flags");
           summary.grounded = flags?.inPlan !== false;
           // Only a leaflet that was offered can be a source: a number Gemma made up names nothing.
           summary.sources = citedSources(flags?.cites, passages);
           if (flags?.triage === "urgent") yield* urgentFirst();
           if (flags?.triage === "urgent" || flags?.triage === "worse") escalate(flags.triage);
         }
-        const [whole, rest] = sentencesOf(text);
+        const at = closingAt(text);
+        if (at >= 0) { closing = text.slice(at); text = text.slice(0, at); }
+        const [whole, rest] = sentencesOf(text, closing !== undefined);
         text = rest;
         for (const s of whole) yield* sayModel(s);
       }
       if (flags === undefined) text = flagsOf(text, true)![1];
       for (const s of sentencesOf(text, true)[0]) yield* sayModel(s);
+      const closed = closing === undefined ? undefined : jsonIn(closing) as Flags | undefined;
+      if (closed?.inPlan === false) summary.grounded = false;
+      if (closed?.cites !== undefined) summary.sources = citedSources(closed.cites, passages);
     } catch {
       // A reply cut off mid-way keeps what was already said; one cut off before any of it counts as no answer.
       if (turn.signal.aborted) return;
@@ -258,7 +298,7 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
 
   if (!said) yield* say(summary.waking ? lines.starting(summary.waking) : lines.unavailable);
   if (told && await within(told, TOLD_WAIT_MS) && !turn.signal.aborted) yield* say(lines.told);
-  if (!turn.signal.aborted) turn.done?.(summary);
+  if (!turn.signal.aborted) { turn.done?.(summary); turn.timed?.(timing); }
 }
 
 /** Gemma in box ① as a `ChatStream`: a cold box is woken and not waited for, so Sona says when it should be ready. */

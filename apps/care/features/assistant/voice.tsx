@@ -27,8 +27,9 @@ import { Button, CircleButton } from "@/lib/ui";
  * answer large and centred, the words already read in ink and the rest faint (karaoke on the phone's
  * word boundaries; all ink where the phone sends none); the plan's questions under it; and a bottom
  * row of the mic (talk / stop) and the keyboard back to text (the voice is picked once, the first time). Talking is a hands-free
- * conversation, turn by turn: the patient speaks, the turn ends when they pause, Sona answers aloud,
- * then listens again, until they tap stop or go quiet. It only says it is listening while the mic is on,
+ * conversation: a live call where this build and the server have one (the mic stays on, and shows on, until the patient
+ * taps it off; talking over Sona stops her), else turn by turn: the patient speaks, the turn ends when they pause, Sona
+ * answers aloud, then listens again, until they tap stop or go quiet. It only says it is listening while the mic is on,
  * and with no speech model switched on it says so plainly; tapping a question still reads its answer.
  * The first time, "Choose Sona's voice" (after Gemini's picker): Sona's own Malaysian voice first, then
  * the phone's voices; each says hello. Sona's own voice is made on Sona's server (./sona-voice): its words
@@ -151,8 +152,11 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
     if (speaking) { setTalking(false); stop(); return; }
     if (listen.state === "listening") { listen.toggle(); return; }
     setHeard(undefined); setDropped(false);
-    if (live.phase === "ready") { void live.start(); return; }
-    setTalking(true); listen.toggle();
+    const turns = () => { setTalking(true); listen.toggle(); };
+    // A live call first, also while its socket is still opening (a tap that came early waits for it); turn by turn
+    // only when there is no call to be had.
+    if (live.available) void live.start().then(started => { if (!started) turns(); });
+    else turns();
   };
   const leave = (then: () => void) => { setTalking(false); listen.cancel(); live.end(); stop(); then(); };
   // Live: her answer as the agent writes it (the last one stays until the next begins), lit as she speaks it.
@@ -167,6 +171,7 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
       : note ?? (said ? t("voice.again") : t("voice.start"));
   const thinking = inCall ? live.status === "thinking" && !live.audible : listen.state === "reading" || preparing;
   const listening = !inCall && listen.state === "listening";
+  const micOn = inCall || listen.state === "listening";
   const glowing = inCall || listening || thinking || speaking;
   useEffect(() => { glowOn.set(withTiming(glowing ? 1 : 0, { duration: glowing ? 300 : 700, easing: EASE_OUT })); }, [glowing]);
   useEffect(() => { think.set(withTiming(thinking ? 1 : 0, { duration: 500, easing: EASE_IN_OUT })); }, [thinking]);
@@ -208,11 +213,12 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
       <Pressable accessibilityRole="button" accessibilityLabel={inCall ? t("voice.end") : speaking ? t("voice.stop") : listen.state === "listening" ? t("voice.sendSaid") : t("voice.talk")}
         accessibilityHint={inCall || speaking || listen.state === "listening" ? undefined : t("voice.talkHint")}
         accessibilityState={{ busy: listen.state === "reading" }} disabled={listen.state === "reading"} onPress={main}
-        style={({ pressed }) => ({ width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: listen.state === "listening" ? palette.blue : palette.white, borderWidth: 1, borderColor: listen.state === "listening" ? palette.blue : palette.line,
+        style={({ pressed }) => ({ width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: micOn ? palette.blue : palette.white, borderWidth: 1, borderColor: micOn ? palette.blue : palette.line,
           boxShadow: "0 14px 28px -14px rgba(37,99,235,0.45)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-        {inCall || speaking ? <View style={{ width: 20, height: 20, borderRadius: 5, backgroundColor: palette.blue }} />
-          : listen.state === "reading" ? <ActivityIndicator color={palette.blue} />
-            : <Icon name="mic" color={listen.state === "listening" ? palette.white : palette.blue} size={28} />}
+        {/* In a call the mic is on from the tap until the patient taps it off, through Sona's thinking and speaking. */}
+        {speaking && !inCall ? <View style={{ width: 20, height: 20, borderRadius: 5, backgroundColor: palette.blue }} />
+          : listen.state === "reading" && !inCall ? <ActivityIndicator color={palette.blue} />
+            : <Icon name="mic" color={micOn ? palette.white : palette.blue} size={28} />}
       </Pressable>
       <CircleButton icon="keyboard" size={56} label={t("voice.type")}onPress={() => leave(onType)} />
     </Animated.View>

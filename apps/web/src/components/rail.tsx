@@ -17,12 +17,12 @@ export function RightRail({ label, id, children }: { label: string; id?: string;
   return <aside className="rail" aria-label={label} id={id}>{children}</aside>;
 }
 
-/** Main column plus a rail; the rail drops below on narrow screens. Pass a `<RightRail>` as `rail`. */
+/** Main column plus a rail; the rail stays in view while the main column scrolls, and drops below on narrow screens. Pass a `<RightRail>` as `rail`. */
 export function WithRail({ rail, children }: { rail: ReactNode; children: ReactNode }) {
   return (
     <div className="with-rail">
       <div className="with-rail-main">{children}</div>
-      {rail}
+      <div className="with-rail-side">{rail}</div>
     </div>
   );
 }

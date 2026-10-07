@@ -1,5 +1,23 @@
 /* The Sona bar and the answers it puts in the page. Tokens only; blue is the send button alone (the next step). */
-.sona-bar { --level: 0; position: relative; display: flex; align-items: center; gap: var(--space-2); width: min(720px, 100%); border-radius: 999px; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); }
+/* The dithered glow fills the bar, under the text and buttons and clipped to the pill. */
+.sona-glow { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; }
+.sona-bar { --level: 0; position: relative; isolation: isolate; display: flex; flex-direction: column; width: min(720px, 100%); border-radius: var(--radius-card); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); transition: box-shadow var(--settle) var(--ease); }
+.sona-bar-row { display: flex; align-items: center; gap: var(--space-2); }
+.sona-bar-field { position: relative; display: flex; flex: 1; min-width: 0; }
+/* The cycling placeholder sits where the text will: each letter is its own box so it can arrive out of a blur. */
+.sona-bar-hint { position: absolute; inset: 0; display: flex; align-items: center; overflow: hidden; white-space: nowrap; color: var(--placeholder); pointer-events: none; }
+.sona-bar-hint > span { display: inline-block; }
+/* In use the bar opens a second row. The row's height runs from nothing to its own on the layout curve, and the
+   questions rise in a beat later; closed, it takes no space and cannot be reached. */
+.sona-bar-more { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--settle) var(--ease); }
+.sona-bar[data-open] .sona-bar-more { grid-template-rows: 1fr; }
+.sona-bar-asks { display: flex; flex-wrap: wrap; gap: var(--space-2); min-height: 0; overflow: hidden; opacity: 0; transform: translateY(12px); transition: opacity var(--quick) var(--ease), transform var(--settle) var(--ease), padding var(--settle) var(--ease); }
+.sona-bar[data-open] .sona-bar-asks { padding: var(--space-2) 0 var(--space-1); opacity: 1; transform: none; transition-delay: 80ms; }
+.sona-bar-ask { min-height: 32px; padding: 0 var(--space-3); border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--fill-field); color: var(--ink); font-size: var(--text-small); font-weight: 500; white-space: nowrap; cursor: pointer; transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease), transform var(--quick) var(--ease); }
+.sona-bar-ask:hover { background: var(--blue-wash); border-color: var(--blue); }
+.sona-bar-ask:active { transform: scale(var(--press)); }
+/* Listening: the bar itself glows with the voice, around the dithering inside it. */
+.sona-bar[data-phase="listening"] { box-shadow: 0 0 0 1px var(--blue), 0 0 calc(16px + var(--level) * 36px) rgb(36 91 204 / calc(0.18 + var(--level) * 0.3)); }
 .sona-bar:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
 .sona-bar-input { flex: 1; min-width: 0; min-height: var(--tap); border: 0; outline: 0; background: transparent; }
 .sona-bar-input::placeholder { color: var(--placeholder); }
@@ -7,9 +25,11 @@
 /* The status floats above the pill, so nothing moves when the state changes. */
 .sona-bar-status { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--space-2)); margin: 0; text-align: center; font-size: var(--text-small); line-height: 1.4; color: var(--muted); pointer-events: none; }
 .sona-bar-status:empty { display: none; }
+/* A small plate under the words, so they read over whatever the page shows behind them. */
+.sona-bar-status { width: fit-content; max-width: 100%; margin-inline: auto; padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--surface); box-shadow: var(--shadow-float); }
 .sona-bar-status[data-error] { color: var(--ink); font-weight: 600; }
 
-.sona-bar-button { flex: none; display: grid; place-items: center; width: var(--tap); height: var(--tap); border: 0; border-radius: 50%; background: transparent; color: var(--ink); cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; transition: background var(--quick) var(--ease), color var(--quick) var(--ease), opacity var(--quick) var(--ease); }
+.sona-bar-button { flex: none; display: grid; place-items: center; width: var(--tap); height: var(--tap); border: 0; border-radius: var(--radius-control); background: transparent; color: var(--ink); cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; transition: background var(--quick) var(--ease), color var(--quick) var(--ease), opacity var(--quick) var(--ease); }
 .sona-bar-button:disabled { opacity: 0.4; cursor: default; }
 .sona-bar-mic:hover:not(:disabled) { background: var(--line); }
 .sona-bar-send { background: var(--blue); color: var(--surface); }
@@ -34,9 +54,15 @@
 .sona-turn[data-state="error"] .sona-turn-a { color: var(--amber); }
 
 /* Sona Pro: a floating glass pill in the shell's language. The send button is ink, like the active sidebar item. */
-:is(.pro, .care) .sona-bar { width: min(640px, 100%); padding: 6px 6px 6px var(--space-4); border-radius: var(--radius-pill); box-shadow: 0 8px 28px rgb(29 31 35 / 0.1), 0 1px 2px rgb(29 31 35 / 0.06); transition: box-shadow var(--quick) var(--ease); }
-:is(.pro, .care) .sona-bar:focus-within { outline: 0; box-shadow: var(--focus-ring), 0 8px 28px rgb(29 31 35 / 0.1); }
+:is(.pro, .care) .sona-bar { width: min(640px, 100%); padding: 6px 6px 6px var(--space-4); border-radius: var(--radius-card); box-shadow: 0 8px 28px rgb(29 31 35 / 0.1), 0 1px 2px rgb(29 31 35 / 0.06); transition: box-shadow var(--quick) var(--ease); }
+/* In use the bar lifts: a deeper shadow, and the focus ring. */
+:is(.pro, .care) .sona-bar[data-open] { box-shadow: 0 12px 40px rgb(29 31 35 / 0.16); }
+:is(.pro, .care) .sona-bar:focus-within { outline: 0; box-shadow: var(--focus-ring), 0 12px 40px rgb(29 31 35 / 0.16); }
+/* Listening, the mic stays ink under the pointer (the hover fill would hide its white icon). */
+:is(.pro, .care) .sona-bar[data-phase="listening"] .sona-bar-mic:not(:disabled) { background: var(--ink); color: var(--surface); }
+:is(.pro, .care) .sona-bar[data-phase="listening"] { box-shadow: 0 0 0 1px var(--blue), 0 0 calc(16px + var(--level) * 36px) rgb(36 91 204 / calc(0.18 + var(--level) * 0.3)); }
 :is(.pro, .care) .sona-bar-input { min-height: 40px; font-size: 14px; }
+:is(.pro, .care) .sona-bar-hint { font-size: 14px; }
 :is(.pro, .care) .sona-bar-button { width: 40px; height: 40px; transition: background var(--quick) var(--ease), color var(--quick) var(--ease), opacity var(--quick) var(--ease), transform var(--quick) var(--ease); }
 :is(.pro, .care) .sona-bar-button:active:not(:disabled) { transform: scale(var(--press)); }
 :is(.pro, .care) .sona-bar-button:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
@@ -49,3 +75,4 @@
 .care .sona-bar-input { min-height: var(--tap); font-size: var(--text-body); }
 .care .sona-bar-button { width: var(--tap); height: var(--tap); }
 .care .sona-bar-status { font-size: var(--text-small); }
+.care .sona-bar-hint { font-size: var(--text-body); }

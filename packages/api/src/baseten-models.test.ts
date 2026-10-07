@@ -487,3 +487,26 @@ test("a condition the doctor names in other words than the WHO label is coded wh
   const own = (async () => new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ codes: [{ code: "S72.00XA", kind: "Principal", evidence: "3", stated: "neck of femur fracture" }, { code: "B96.2", kind: "Secondary", evidence: "assessment", stated: "E. coli" }] }) } }] }))) as unknown as typeof fetch;
   expect((await basetenModels({ apiKey: "k", fetcher: own }).suggestCodes({ sentences: hip, candidates: [] })).codes).toEqual([{ code: "S72.0", label: "", kind: "Principal", evidence: "assessment" }]);
 });
+
+test("asked for voices, the ASR box is told to diarize and handed the visit's memory; its segments come back checked", async () => {
+  const good = [{ voice: 1, from: 0, to: 2.4, text: " So apa masalah? " }, { voice: 2, from: 2.4, to: 5, text: "Batuk." }];
+  const bad = [{ voice: 0, from: 0, to: 1, text: "x" }, { voice: 9, from: 0, to: 1, text: "x" }, { voice: 1.5, from: 0, to: 1, text: "x" }, { voice: 1, from: "0", to: 1, text: "x" }, { voice: 1, from: 0, to: 1, text: " " }, { voice: 1, from: 0, text: "x" }, null];
+  const { fetcher, calls } = fake({ [box("voice")]: { text: "So apa masalah? Batuk.", memory: "m2", segments: [...good, ...bad] } });
+  const models = basetenModels({ apiKey: "k", fetcher }), audio = new TextEncoder().encode("RIFF");
+  const sent = () => { const form = calls.at(-1)!.init.body as FormData; return [form.get("diarize"), form.get("memory")]; };
+  expect(await models.transcribe({ audio, voices: { memory: "m1" } })).toEqual({
+    text: "So apa masalah? Batuk.", segments: [{ voice: 1, from: 0, to: 2.4, text: "So apa masalah?" }, good[1]!], memory: "m2", source: "model", model: ASR_MODEL,
+  });
+  expect(sent()).toEqual(["1", "m1"]);
+  // A visit's first part has no memory to hand back yet.
+  await models.transcribe({ audio, voices: {} });
+  expect(sent()).toEqual(["1", null]);
+  // Not asked for voices: the request and the answer are the words only, whatever else the box says.
+  expect(await models.transcribe({ audio })).toEqual({ text: "So apa masalah? Batuk.", source: "model", model: ASR_MODEL });
+  expect(sent()).toEqual([null, null]);
+});
+
+test("a diarized answer with no usable segment or memory is the words alone", async () => {
+  const { fetcher } = fake({ [box("voice")]: { text: "Batuk.", memory: 7, segments: [{ voice: "1", from: 0, to: 1, text: "Batuk." }] } });
+  expect(await basetenModels({ apiKey: "k", fetcher }).transcribe({ audio: new Uint8Array(4), voices: {} })).toEqual({ text: "Batuk.", source: "model", model: ASR_MODEL });
+});

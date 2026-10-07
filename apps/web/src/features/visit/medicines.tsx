@@ -52,7 +52,9 @@ export function Medicines({ encounterId, revision, state, patient, canEdit }: { 
   return (
     <Card title="Medicines on this visit">
       {state.reviewInvalidated ? <p role="status" className="visit-refused">The visit was edited after its last medication review. Review it again before ordering.</p> : null}
-      {entries.length ? entries.map(e => (
+      {entries.length ? null : <p className="visit-muted">No medicines are recorded for this visit.</p>}
+      <ul className="list visit-med-list">
+      {entries.map(e => (
         <ListRow key={e.id} icon="pill" title={e.name}
           caption={[e.ingredient || "ingredient not set", e.formulation || "form not set", e.change].filter(Boolean).join(" · ")}
           trailing={
@@ -62,7 +64,7 @@ export function Medicines({ encounterId, revision, state, patient, canEdit }: { 
               {canEdit ? <Button size="sm" aria-label={`Remove ${e.name}`} pending={edit.isPending} onClick={() => saveEntries(entries.filter(x => x.id !== e.id))}>Remove</Button> : null}
             </span>
           } />
-      )) : <p className="visit-muted">No medicines are recorded for this visit.</p>}
+      ))}
 
       <ListRow icon="pill" title={proposed || "No medicine proposed yet"} caption="Proposed order"
         trailing={canEdit ? (
@@ -71,6 +73,7 @@ export function Medicines({ encounterId, revision, state, patient, canEdit }: { 
             {proposed ? <Button size="sm" aria-label="Remove the proposed medicine" pending={edit.isPending} onClick={() => saveProposed("")}>Remove</Button> : null}
           </span>
         ) : undefined} />
+      </ul>
 
       {entry ? (
         <form className="visit-med-form" onSubmit={ev => { ev.preventDefault(); submitEntry(entry); }}>

@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { DataTable, PersonCell, RowAction, TableToolbar, ValueCell, type Column } from "@/components/data-table";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, SearchField, Tabs } from "@/components/primitives";
+import { Button, SearchField, Signal, Tabs } from "@/components/primitives";
 import { revealRail, WithRail } from "@/components/rail";
 import { PriorityCell, ResultRail } from "@/features/results/result-rail";
 import { inTab, summary, type Tab } from "@/features/results/tabs";
@@ -74,9 +74,13 @@ function Page() {
     <>
       <PageHeader
         title="Results"
-        subtitle={list.isPending ? "Loading results…" : n.fresh
-          ? `${plural(n.fresh, "new result")} across ${plural(n.patients, "patient")} · ${n.critical} critical and ${n.review} to review`
-          : "No result is waiting for a doctor"}
+        lead={list.isPending ? "Loading results…" : n.fresh ? (
+          <>
+            {plural(n.fresh, "new result")} across {plural(n.patients, "patient")} ·{" "}
+            {n.critical ? <Signal tone="urgent">{n.critical} critical</Signal> : "0 critical"} ·{" "}
+            {n.review ? <Signal tone="soon">{n.review} to review</Signal> : "0 to review"}
+          </>
+        ) : "No result is waiting for a doctor"}
         actions={(
           <>
             {allowed && normals.length ? (confirming ? (
@@ -126,7 +130,7 @@ function Page() {
           empty={query ? "No result matches this search." : tab === "acknowledged" ? "No result has been acknowledged yet." : sorted.length ? "Nothing here is waiting for a doctor." : "No lab results have arrived yet."}
           footer={(
             <p className="results-footnote">
-              <Icon name="info" size={16} /> Priority is suggested from the lab flag and call-now rules. You decide what to acknowledge.
+              <Icon name="info" size={16} /> Priority is suggested from lab flags and call-now rules.
             </p>
           )}
         />

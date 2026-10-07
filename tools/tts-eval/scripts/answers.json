@@ -1,0 +1,20 @@
+[
+  {"id": "en_01", "lang": "en", "sentences": ["Take one tablet of amlodipine 5 milligrams every morning.", "Check your blood pressure at home twice a day and write it down.", "Come back to the hospital if you have chest pain or a bad headache."]},
+  {"id": "en_02", "lang": "en", "sentences": ["Your metformin is 500 milligrams, twice a day with food.", "Drink plenty of water and do not skip your meals.", "Call the ward if you feel dizzy, sweaty or very weak."]},
+  {"id": "en_03", "lang": "en", "sentences": ["Keep the wound dry for the next two days.", "Change the dressing every day with clean hands.", "See a doctor if the wound turns red, swells or has pus."]},
+  {"id": "en_04", "lang": "en", "sentences": ["Take paracetamol 1 gram every six hours when you have pain.", "Do not take more than four doses in one day.", "Go to the emergency department if the fever lasts more than three days."]},
+  {"id": "en_05", "lang": "en", "sentences": ["Your follow-up appointment is next Tuesday at ten in the morning.", "Please bring all your medicines and your appointment card.", "Do not eat or drink after midnight before the blood test."]},
+  {"id": "en_06", "lang": "en", "sentences": ["Take warfarin 3 milligrams at the same time every evening.", "Avoid new supplements and herbal medicines without asking the pharmacist.", "Come in at once if you see blood in your urine or black stools."]},
+  {"id": "ms_01", "lang": "ms", "sentences": ["Ambil satu biji amlodipine 5 miligram setiap pagi.", "Periksa tekanan darah di rumah dua kali sehari dan catatkan bacaannya.", "Datang semula ke hospital jika anda sakit dada atau sakit kepala yang teruk."]},
+  {"id": "ms_02", "lang": "ms", "sentences": ["Metformin anda ialah 500 miligram, dua kali sehari bersama makanan.", "Minum air secukupnya dan jangan tinggalkan waktu makan.", "Hubungi wad jika anda berasa pening, berpeluh atau sangat lemah."]},
+  {"id": "ms_03", "lang": "ms", "sentences": ["Pastikan luka kekal kering selama dua hari.", "Tukar balutan setiap hari dengan tangan yang bersih.", "Jumpa doktor jika luka menjadi merah, bengkak atau bernanah."]},
+  {"id": "ms_04", "lang": "ms", "sentences": ["Ambil paracetamol 1 gram setiap enam jam apabila sakit.", "Jangan ambil lebih daripada empat dos dalam sehari.", "Pergi ke jabatan kecemasan jika demam berlarutan lebih tiga hari."]},
+  {"id": "ms_05", "lang": "ms", "sentences": ["Temu janji susulan anda ialah hari Selasa depan, pukul sepuluh pagi.", "Sila bawa semua ubat dan kad temu janji anda.", "Jangan makan atau minum selepas tengah malam sebelum ujian darah."]},
+  {"id": "ms_06", "lang": "ms", "sentences": ["Ambil warfarin 3 miligram pada waktu yang sama setiap petang.", "Elakkan supplemen dan ubat herba baharu tanpa bertanya ahli farmasi.", "Datang segera jika ada darah dalam air kencing atau najis berwarna hitam."]},
+  {"id": "zh_01", "lang": "zh", "sentences": ["每天早上服用一粒五毫克的氨氯地平。", "在家里每天量两次血压，并把数字记下来。", "如果胸口痛或者头很痛，请马上回来医院。"]},
+  {"id": "zh_02", "lang": "zh", "sentences": ["您的二甲双胍是五百毫克，一天两次，跟饭一起吃。", "要多喝水，不要跳过正餐。", "如果觉得头晕、冒冷汗或者很虚弱，请打电话给病房。"]},
+  {"id": "zh_03", "lang": "zh", "sentences": ["接下来两天，伤口要保持干爽。", "每天用干净的手换一次纱布。", "如果伤口发红、肿起来或者有脓，请去看医生。"]},
+  {"id": "zh_04", "lang": "zh", "sentences": ["痛的时候，每六个小时吃一克扑热息痛。", "一天之内不要吃超过四次。", "如果发烧超过三天，请到急诊部。"]},
+  {"id": "zh_05", "lang": "zh", "sentences": ["您的复诊时间是下个星期二早上十点。", "请带齐所有的药和复诊卡。", "验血的前一晚，半夜十二点过后不要吃东西或喝水。"]},
+  {"id": "zh_06", "lang": "zh", "sentences": ["每天傍晚在同一个时间服用三毫克的华法林。", "没有问过药剂师，不要吃新的保健品或草药。", "如果小便有血或者大便变黑，请立刻回来医院。"]}
+]

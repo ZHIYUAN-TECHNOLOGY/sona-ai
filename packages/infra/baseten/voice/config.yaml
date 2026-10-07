@@ -1,12 +1,14 @@
-# Box ② Voice: Manglish ASR (fine-tuned Qwen3-ASR-1.7B on vLLM), Malaysian TTS (fine-tuned VoxCPM2 on Nano-vLLM-VoxCPM)
-# and the bge reranker, behind one gateway port (data/gateway.py). EmbeddingGemma runs on Workers AI and OpenMed PII on
-# its own CPU box instead (docs/handoff.md#baseten-boxes-deployed-30-sep-2026).
-# Routes: /environments/production/sync/v1/audio/transcriptions | /v1/tts | /v1/rerank
+# Box ② Voice: Manglish ASR (fine-tuned Qwen3-ASR-1.7B on vLLM), Malaysian TTS (fine-tuned VoxCPM2 on Nano-vLLM-VoxCPM),
+# who spoke when (NVIDIA Nemotron-3-Diarization) and the bge reranker, behind one gateway port (data/gateway.py).
+# EmbeddingGemma runs on Workers AI and OpenMed PII on its own CPU box instead
+# (docs/handoff.md#baseten-boxes-deployed-30-sep-2026).
+# Routes: /environments/production/sync/v1/audio/transcriptions (with a `diarize` field: by voice) | /v1/tts | /v1/rerank
 model_name: sona-voice
 base_image:
   image: vllm/vllm-openai:v0.29.0-cu129
 system_packages:
   - ffmpeg
+  - git  # pip needs it for the transformers commit below
 build_commands:
   # Constrain what vLLM depends on, so nothing below can swap torch or transformers under it.
   - >-
@@ -24,6 +26,13 @@ build_commands:
     printf 'torch==2.8.0\ntorchaudio==2.8.0\ntorchcodec==0.7.0\n' > /tmp/tts-pins.txt &&
     /opt/tts/bin/pip install --no-cache-dir -c /tmp/tts-pins.txt nano-vllm-voxcpm==2.0.4 fastapi uvicorn soundfile
   - /opt/tts/bin/python -c "import flash_attn, torch, nanovllm_voxcpm.models.voxcpm2.server; print('voice deps ok, torch', torch.__version__)"
+  # Who spoke when gets a third venv (data/diar_server.py): Nemotron-3-Diarization is not in a released transformers
+  # yet, so it runs on the commit it was measured with (tools/diar-eval), which vLLM above must not be moved to.
+  - python3 -m virtualenv /opt/diar && /opt/diar/bin/pip install --no-cache-dir torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128
+  - >-
+    /opt/diar/bin/pip install --no-cache-dir "transformers @ git+https://github.com/huggingface/transformers@d28b79377cdf2a36549bb4b163f1956a70d07926"
+    librosa soundfile numpy fastapi uvicorn python-multipart
+  - /opt/diar/bin/python -c "import librosa, soundfile, python_multipart, torch, transformers.models.nemotron3_diarization; print('diar deps ok, torch', torch.__version__)"
 weights:
   - source: "hf://zhiyuantechnology/sona-qwen3-asr-manglish@d62584cd390628614b899ca12aa25fdd39e27fd0"
     mount_location: /app/models/asr
@@ -34,6 +43,9 @@ weights:
   - source: "hf://BAAI/bge-reranker-v2-m3@953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e"
     mount_location: /app/models/rerank
     allow_patterns: ["*.json", "model.safetensors", "sentencepiece.bpe.model", "tokenizer*"]
+  - source: "hf://nvidia/Nemotron-3-Diarization@f667ed73aee57d40cc39428eb768b4fd87a0a29e"
+    mount_location: /app/models/diar
+    allow_patterns: ["config.json", "model.safetensors", "processor_config.json"]
 docker_server:
   start_command: python3 /app/data/gateway.py
   readiness_endpoint: /health

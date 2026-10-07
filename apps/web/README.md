@@ -29,12 +29,28 @@ and read-only: if a shared file needs a change, say so in your report instead of
 
 ## Page shape
 
-Insight first: a row of at most three insight cards (one lead line, one suggested next step, "You decide · N
-sources"), then the main table or detail, then a right rail when there is a second thing worth seeing. Act in
-place (no modals for the main action), review before deciding, loading, empty and refused states in plain words.
-Colour carries meaning only: red must-not-miss, amber soon or blocked, green done or safe, blue the next step.
-Glass for floating surfaces; halftone on one accent per page at most. Pro: dense, letter avatars. Care: 17 px
-body, 48 px targets, red only for "call the hospital now", short sentences.
+Every Sona Pro page reads top to bottom as glance, then decide (the UX principles in `docs/design-direction.md`):
+
+1. **Insight** (`PageHeader`): the title, then a `lead` that says where things stand in one line. Wrap the part that
+   needs the eye in `<Signal tone>` ("16 of 17 beds occupied · <Signal tone="soon">7 blocked</Signal>"). At most one
+   primary button in `actions`: the most likely next step ("Open next visit").
+2. **Overview** (`StatRow`): at most four `StatCard`s. A stat that matches a filter of the list below takes
+   `onSelect` and `selected`, so pressing the number filters the list in place. A page whose lead already says it all
+   needs no stat row.
+3. **Work** (`WithRail` main column): one list or table, ranked so what needs the person is first, with the row's
+   action in the row.
+4. **Review and decide** (the rail, which stays in view while the list scrolls): Sona's `InsightCard` (lead, evidence,
+   the one suggested next step, "You decide · N sources"), and the review panel for the selected row with its
+   decision buttons beside the evidence. With a row selected, its panel and buttons are in view at 1440 x 900
+   without scrolling: put it first, or keep the insight short (detail goes in `children`, behind the disclosure).
+   After a decision, say what happened and offer the next step.
+
+Act in place (no modals for the main action); loading, empty and refused states in plain words ("Nothing needs you
+today", not a blank card). Colour carries meaning only: red must-not-miss, amber soon or blocked, green done or
+safe, blue the next step. Glass for floating surfaces; halftone on one accent per page at most. Pro: dense, letter
+avatars. Care: 17 px body, 48 px targets, red only for "call the hospital now", short sentences.
+
+The Pro page column starts at the sidebar (left-aligned, `--page-max` wide); the Sona bar sits centred over it.
 
 
 ## Tokens
@@ -43,7 +59,7 @@ All tokens are custom properties in `src/styles/tokens.css`, set on `.pro` and `
 
 - Pages use tokens only. No inline hex, no new colours, no raw pixel radii or shadows.
 - Colour carries meaning only: red must-not-miss, amber soon or blocked, green done or safe, blue the next step.
-- A calm state ("Stable", "Routine", "Seen") is plain `--muted` text, not a chip. A chip is for a state that needs the eye.
+- Every state is colour-coded by its meaning (owner's call, 6 Oct): a state that needs the eye is a `Chip`; a calm one ("Stable", "Earlier", "Being watched") is a `Status`, a tone dot and the word. Plain grey is for a state with nothing to say ("Free", "Not on a ward").
 
 Values marked "Pro / Care" differ between the apps. Everything else is shared.
 
@@ -70,6 +86,12 @@ All colour values differ between Pro and Care; the names and meanings do not.
 - `--on-ai`: text on the gradient. `--on-ai-soft`: secondary text on the gradient.
 - `--ai-row`: a row or tile fill on the gradient.
 
+**Glass and dithering (Sona Pro)**
+
+- The canvas carries still colour fields (blue, lilac, teal); cards are content glass over it: `--glass-surface` and the rim, sheen and blue lift in `--shadow-card`. The shared `Card`, `StatCard`, `PatientStrip`, `EmptyState` and tables already use them; a page's own card-like block sets `background: var(--glass-surface); box-shadow: var(--shadow-card)`.
+- Dithering is the accent, about a tenth of the screen: the glint on the feature stat and Sona's panel, the dotted glint on the primary button, and the glow in the Sona bar. Do not add halftone to a page.
+- `--chart-red`, `--chart-amber`, `--chart-green`, `--chart-blue`, `--chart-neutral`: chart fills for a state (the status colours' chart shades, checked for colour-blind separation). Text never wears them.
+
 **Fills and lines**
 
 - `--canvas-deep`: the shell behind the Pro frame, one step darker than `--canvas`.
@@ -81,15 +103,16 @@ All colour values differ between Pro and Care; the names and meanings do not.
 
 **Radii**
 
-- `--radius-control` 14px: buttons that are not pills, inputs, small tiles.
-- `--radius-group` 20px: grouped blocks inside a card.
-- `--radius-card`: cards (Pro 28px / Care 24px).
-- `--radius-shell` 28px: the frame shell.
-- `--radius-pill` 999px: pills, chips, badges.
+- Corners are slightly rounded everywhere (owner's call, 6 Oct): nothing is a full pill except avatars.
+- `--radius-control` 8px: inputs, icon buttons, small tiles.
+- `--radius-group` 12px: grouped blocks inside a card.
+- `--radius-card` 16px: cards and the Sona bar.
+- `--radius-shell` 20px: the frame shell.
+- `--radius-pill` 8px: buttons, chips, badges, tabs' counts (the name is historical).
 
 **Type sizes**
 
-- `--text-stat` 64px: the one big number in a stat card.
+- `--text-stat` (Pro 44px / Care 64px): the number in a stat card.
 - `--text-page` 36px: page title.
 - `--text-panel` 28px: panel or insight heading.
 - `--text-display` 27px, `--text-title` (Pro 21px / Care 22px), `--text-heading` 19px: headings in descending order.
@@ -110,7 +133,7 @@ All colour values differ between Pro and Care; the names and meanings do not.
 - `--tap` (Pro 36px / Care 48px): smallest target for a custom control.
 - `--pill-h` 48px: large pill button. `--field-h` 44px: fields. `--chip-h` 26px: chips. `--row-h` 64px: table and list rows.
 - `--avatar-sm` 28px, `--avatar-md` 40px, `--avatar-lg` 56px: avatar sizes; match a custom leading tile to these.
-- `--side-width` 220px, `--rail-width` 68px: frame navigation widths. Read-only facts for layout maths.
+- `--side-width` 220px, `--rail-width` 68px: frame navigation widths. `--page-max` 1560px: the page column. Read-only facts for layout maths.
 
 **Shadows**
 
@@ -119,7 +142,7 @@ All colour values differ between Pro and Care; the names and meanings do not.
 **Motion**
 
 - `--ease`: the one easing curve. `--quick` 160ms: hover and press. `--slow` 240ms: reveal and expand. `--settle` 380ms: layout moves.
-- `--press` 0.98: scale of a pressed control.
+- `--press` 0.96: scale of a pressed control.
 - Reduced motion is handled globally. Do not add your own media query for it.
 
 **Focus**
@@ -168,7 +191,9 @@ Types: `Tone = "info" | "urgent" | "soon" | "done"` (blue, red, amber, green). `
 - `SearchField({ label, className, ...inputProps }: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { label: string })`. Search input with an icon. `label` is the accessible name.
 - `Card({ title, action, className, children }: { title?: string; action?: CornerAction; className?: string; children: ReactNode })`. The white surface. `action` is a corner arrow link.
 - `StatRow({ children }: { children: ReactNode })`. A row of stat cards.
-- `StatCard({ title, value, unit, caption, chip, tone = "neutral", action, feature, progress }: { title: string; value: ReactNode; unit?: string; caption?: ReactNode; chip?: ReactNode; tone?: ChipTone; action?: CornerAction; feature?: boolean; progress?: number })`. `chip` is the overline chip text and `tone` its tone. `feature` marks the one highlighted stat in a row. `progress` is 0 to 1 and draws an arc.
+- `StatCard({ title, value, unit, caption, chip, tone = "neutral", action, feature, progress, onSelect, selected }: { title: string; value: ReactNode; unit?: string; caption?: ReactNode; chip?: ReactNode; tone?: ChipTone; action?: CornerAction; feature?: boolean; progress?: number; onSelect?: () => void; selected?: boolean })`. A compact glance tile: title, number, one-line caption. `chip` (two or three words) sits beside the number in `tone`. `feature` marks the one highlighted stat in a row. `progress` is 0 to 1 and draws an arc. `onSelect` makes the whole card a button that filters the list below; `selected` marks the filter in use.
+- `Status({ tone = "neutral", children }: { tone?: Tone | "neutral"; children: ReactNode })`. A calm state in a row: a tone dot and the word.
+- `Signal({ tone = "info", children }: { tone?: Tone; children: ReactNode })`. Inline text in its tone's colour, for the part of a `PageHeader` lead that needs the eye.
 - `Tabs<T extends string>({ tabs, value, onChange, label }: { tabs: TabItem<T>[]; value: T; onChange: (id: T) => void; label: string })`. Controlled tab list with arrow keys. The selected tab is `value`.
 - `tabForKey<T extends string>(ids: T[], current: T, key: string): T | undefined`. The tab an arrow key moves to. `Tabs` uses it; pages rarely need it.
 - `ListCard({ title, action, children }: { title?: string; action?: CornerAction; children: ReactNode })`. A card that holds `ListRow`s.
@@ -187,7 +212,7 @@ Types: `Tone = "info" | "urgent" | "soon" | "done"` (blue, red, amber, green). `
 <StatRow>
   <StatCard title="Due today" value={tasks.length} feature action={{ to: "/pro/tasks", label: "Open tasks" }} />
   <StatCard title="Beds in use" value={beds.used} unit={`of ${beds.total}`} progress={beds.used / beds.total} />
-  <StatCard title="Unread" value={unread.length} chip={overdue.length ? "Overdue" : undefined} tone="soon" />
+  <StatCard title="Overdue" value={overdue.length} chip={overdue.length ? "Act now" : undefined} tone="urgent" onSelect={() => setTab("overdue")} selected={tab === "overdue"} />
 </StatRow>
 
 <Tabs label="Results" tabs={[{ id: "new", label: "New", count: fresh.length }, { id: "all", label: "All" }]} value={tab} onChange={setTab} />
@@ -262,7 +287,11 @@ const columns: Column<Patient>[] = [
 - `BarChart(props: ChartProps)`. `height` defaults to 200.
 - `Sparkline({ values, label, tone = "neutral", width = 96, height = 28 }: { values: number[]; label: string; tone?: "amber" | "neutral"; width?: number; height?: number })`. A trend in a table cell or stat.
 
-Empty `points` draws the chart's own empty state.
+- `SegmentBar({ label, segments }: { label: string; segments: { label: string; value: number; tone: "red" | "amber" | "green" | "blue" | "neutral" }[] })`. How a whole splits into states: one bar cut in proportion, every state named and counted under it. Each item must be in exactly one segment.
+- `BarList({ label, rows, tone = "blue", unit }: { label: string; rows: { label: string; value: number }[]; tone?: ChartTone; unit?: string })`. Ranked amounts with long names; pass rows largest first, five at most.
+- A row of chart cards under the stats: `<div className="chart-row"><Card title="...">...</Card></div>`.
+
+Empty `points` draws the chart's own empty state. Charts draw in when their data arrives. Real counts only.
 
 ```tsx
 <LineChart label="Haemoglobin" unit={series.unit} points={series.points} band={series.range} describe={(p) => `${p.y} on ${p.x}`} />
@@ -270,9 +299,14 @@ Empty `points` draws the chart's own empty state.
 <Sparkline label="Heart rate trend" values={vitals.map((v) => v.hr)} tone={rising ? "amber" : "neutral"} />
 ```
 
+### `@/lib/motion` (GSAP)
+
+- Motion that CSS transitions cannot do goes through GSAP: `import { gsap, useGSAP, useReveal, moves, EASE_OUT } from "@/lib/motion"`. `useReveal(scope, selector, from, key)` plays marks in once per `key`. Check `moves()` (false under Reduce Motion) before any tween, always pass a `scope`, and never run a tween that loops: motion happens on arrival and on change, then rests (the one exception is the resting Sona bar's cycling placeholder).
+- Already in place, do not repeat: each page's blocks rise in a beat apart (`Frame`), a `StatCard` number counts to its value, charts draw in.
+
 ### `@/components/rail`
 
-- `WithRail({ rail, children }: { rail: ReactNode; children: ReactNode })`. Main column with a right rail; the rail drops below on narrow screens.
+- `WithRail({ rail, children }: { rail: ReactNode; children: ReactNode })`. Main column with a right rail. On Pro the rail stays in view while the main column scrolls (and scrolls by itself when taller than the window); it drops below on narrow screens.
 - `RightRail({ label, children }: { label: string; children: ReactNode })`. The rail itself. `label` names the region.
 
 ```tsx
@@ -282,6 +316,7 @@ Empty `points` draws the chart's own empty state.
 ### Frame, Sona bar and navigation (already mounted, do not render)
 
 - `Frame({ app, brand, groups, who, name, instead })` from `@/components/frame` and `SonaBar({ app }: { app: "pro" | "care" })` from `@/components/sona-bar` are drawn by the `_app` layout.
+- `SonaGlow` (`@/components/sona-glow`) is the dithered glow inside the Sona bar, drawn by `SonaBar` in both apps. It appears only while the mic hears: dots rise from the bar's bottom edge and bloom with the voice, and the bar's edge glows with it. It is the frame's one moving halftone; do not add another. The bar itself rests as one row whose placeholder cycles through things to ask, and opens a second row of those questions when focused or holding a draft.
 - `@/nav`: `NavItem = { to: string; label: string; icon: IconName; count?: number; needs?: string }`, `NavGroup = { label: string; items: NavItem[] }`, `PRO_NAV`, `CARE_NAV`, `navFor(role, groups = PRO_NAV): NavGroup[]`.
 
 ## Page recipe
@@ -301,9 +336,9 @@ Empty `points` draws the chart's own empty state.
 </>
 ```
 
-- The frame wraps the page in `.frame-page` (a column, `--gap-card` between children on Pro, max width 1320px). Do not add your own outer wrapper, max width or page padding.
+- The frame wraps the page in `.frame-page` (a column, `--gap-card` between children on Pro, left-aligned, max width `--page-max`). Do not add your own outer wrapper, max width or page padding.
 - Pro pages get bottom padding for the Sona bar from the frame (`.frame-scroll`, 128px). Do not add your own.
-- Navigation comes from `nav.ts`. `needs` hides an entry the role cannot use. `count` draws a badge when above zero, but nothing supplies it yet: do not expect or fake badges.
+- Navigation comes from `nav.ts`. `needs` names the permission the page's own job needs (not just one it can read), so a role never sees a page it can open but not use; a list means any one is enough. A link to another page is shown only when the role may open it (`can(me.role, ...)`). `count` draws a badge when above zero, but nothing supplies it yet: do not expect or fake badges.
 - Loading is `Skeleton` or `DataTable loading`. Empty and refused are `EmptyState` in plain words.
 - Page-only styles go in `src/styles/pages/<page>.css`, using tokens.
 - Do not edit: anything in `src/components/`, any `src/styles/*.css` outside `src/styles/pages/`, or `src/nav.ts`. If a shared piece is missing something, say so in your report.
@@ -322,10 +357,10 @@ Every page reads top to bottom in one order: header (where things stand, in one 
 
 ### Shared additions (design-system fixes)
 
-- `DataTable`: the table scrolls sideways inside its card (`.table-scroll`) and is never wider than it. `PersonCell` keeps name and caption on one line each with an ellipsis (full text in `title`) and sizes to its content between 150px and 220px. Header labels never wrap. Inside a `Card` the table drops its own padding, so the toolbar starts where any card content starts. A `StatCard` with no chip and no action has no head row; beside cards that have one it reserves that height so titles line up. The action column is as narrow as its content.
+- `DataTable`: the table scrolls sideways inside its card (`.table-scroll`) and is never wider than it. `PersonCell` keeps name and caption on one line each with an ellipsis (full text in `title`) and sizes to its content between 150px and 220px. Header labels never wrap. Inside a `Card` the table drops its own padding, so the toolbar starts where any card content starts. The action column is as narrow as its content.
 - `TextCell` (`data-table.tsx`): long cell text, two lines then an ellipsis.
 - `TableToolbar({ children, end })`: pass it as `DataTable`'s `toolbar`; `children` (tabs, filters) sit left, `end` (`SearchField`, icon buttons) right, wrapping under 900px.
-- `StatCard`: value and `unit` share one baseline, the unit shrinks with an ellipsis; title and caption clamp to two lines; value rows align across a `StatRow`.
+- `StatCard`: value and `unit` share one baseline, the unit shrinks with an ellipsis; title and caption keep to one line; value rows align across a `StatRow`.
 - `InsightCard` `next`: `onAct`, or a full target (`to`, `params`, `search`, or `href`); `pending` shows the action as busy.
 - `FileTile({ icon })`, `DetailList({ items: [{ label, value }] })`, `SectionLabel`, `Select({ label })` in `primitives.tsx`; `.num` for tabular numerals.
 - Icons: `info`, `phone`, `upload`, `image`, `trash`, `refresh`, `external`.

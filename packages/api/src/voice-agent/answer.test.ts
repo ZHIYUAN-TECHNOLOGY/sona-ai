@@ -3,7 +3,7 @@ import { beforeEach, expect, test } from "bun:test";
 
 import { boxState } from "../baseten-models";
 import { deltas } from "../sse";
-import { LINES, answerTurn, basetenChat, flagsOf, messagesFor, sentencesOf, type AnswerTurn, type ChatStream, type Part, type TurnSummary } from "./answer";
+import { LINES, answerTurn, basetenChat, closingAt, flagsOf, messagesFor, sentencesOf, type AnswerTurn, type ChatStream, type Part, type TurnSummary } from "./answer";
 
 /** Amelia's plan as Gemma reads it (planText, discharged in Malay). */
 const PLAN = `Discharged: 2026-09-28T02:05:00.000Z
@@ -216,4 +216,50 @@ test("a sentence stating a fact her record does not hold is not spoken; the not-
   const general = turnOf({ question: "肺炎康复期间我应该注意什么？", language: "zh", chat: gemma(['{"triage":"fine","inPlan":false}\n请多喝水并休息。保持环境空气清新对康复有帮助。如有呼吸困难请立即就医。']).chat });
   expect((await spoken(general.turn)).join("")).toBe("请多喝水并休息。保持环境空气清新对康复有帮助。如有呼吸困难请立即就医。");
   expect(general.summaries[0]!.withheld).toBe(0);
+});
+
+test("the triage word heads the reply and the rest of the flags close it: the words start at once, and the closing JSON is never spoken", async () => {
+  // The word may come in pieces; the first sentence is handed on before the closing line is written.
+  const { chat, log } = gemma(["fi", "ne\nYou are allergic to penicillin. ", "Your record says it causes a rash.", '\n{"inPlan": true,', ' "cites": []}']);
+  const { turn, summaries } = turnOf({ question: "Am I allergic to any medicine?", chat });
+  const parts = answerTurn(turn);
+  expect((await parts.next()).value).toEqual({ type: "text-delta", text: "You are allergic to penicillin." });
+  expect(log.pulled).toBe(2);
+  const rest: string[] = [];
+  for await (const p of parts) if (p.type === "text-delta") rest.push(p.text);
+  expect(rest).toEqual(["Your record says it causes a rash."]);
+  expect(summaries).toEqual([{ grounded: true, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test" }]);
+
+  // General advice says so in the closing line (fenced or not); a reply with no closing line counts as from the record, as one with no flags did.
+  const general = turnOf({ question: "How long should an adult sleep?", chat: gemma(["fine\nMost adults need seven to nine hours.\n```json\n", '{"inPlan": false, "cites": []}\n```']).chat });
+  expect(await spoken(general.turn)).toEqual(["Most adults need seven to nine hours."]);
+  expect(general.summaries[0]!.grounded).toBe(false);
+  const bare = turnOf({ question: "When is my review?", chat: gemma(["fine\nYour review is on 12 October."]).chat });
+  expect(await spoken(bare.turn)).toEqual(["Your review is on 12 October."]);
+  expect(bare.summaries[0]!.grounded).toBe(true);
+
+  // "urgent" still puts the 999 line before Gemma's words, and "worse" still reaches the care team.
+  const urgent = turnOf({ question: "I feel confused and dizzy", chat: gemma(['urgent\nYour plan says to come back if you feel faint.\n{"inPlan": true, "cites": []}']).chat });
+  expect(await spoken(urgent.turn)).toEqual([LINES.en.call999, "Your plan says to come back if you feel faint."]);
+  expect([urgent.escalated, urgent.summaries[0]!.urgent]).toEqual([["urgent"], true]);
+  const worse = turnOf({ question: "Demam saya datang balik.", language: "ms", chat: gemma(['worse\nPelan anda menyatakan datang semula jika demam kembali.\n{"inPlan": true, "cites": []}']).chat });
+  expect(await spoken(worse.turn)).toEqual(["Pelan anda menyatakan datang semula jika demam kembali."]);
+  expect(worse.escalated).toEqual(["worse"]);
+
+  expect(flagsOf("fine\nYou are")).toEqual([{ triage: "fine" }, "You are"]);
+  expect(flagsOf("Urgent \nCall")).toEqual([{ triage: "urgent" }, "Call"]);
+  expect(flagsOf("wor")).toBeUndefined(); // still coming
+  expect(flagsOf("fine")).toBeUndefined(); // the line has not ended
+  // However Gemma sets the word off, it is the triage word and never spoken: its own line, the words' line, a full stop.
+  expect(flagsOf("fine You are allergic")).toEqual([{ triage: "fine" }, "You are allergic"]);
+  expect(flagsOf("Fine.\n\nYou are")).toEqual([{ triage: "fine" }, "You are"]);
+  expect(flagsOf("fine\n")).toBeUndefined(); // the words have not started
+  expect(flagsOf("Finely chopped garlic helps.")).toEqual([null, "Finely chopped garlic helps."]);
+  expect(flagsOf("worse", true)).toEqual([{ triage: "worse" }, ""]);
+  const sameLine = turnOf({ question: "Am I allergic to any medicine?", chat: gemma(["fine You are allergic to penicillin. ", 'Your record says it causes a rash. {"inPlan": true, "cites": []}']).chat });
+  expect(await spoken(sameLine.turn)).toEqual(["You are allergic to penicillin.", "Your record says it causes a rash."]);
+  // A triage word that reached an earlier answer is not shown back to Gemma.
+  expect(messagesFor({ question: "And my next visit?", plan: PLAN, language: "en", history: [{ role: "user", content: "Am I allergic?" }, { role: "assistant", content: "fine You are allergic to penicillin." }] })[2]!.content).toBe("You are allergic to penicillin.");
+  expect(closingAt('Rest well.\n{"inPlan"')).toBe(10);
+  expect(closingAt("Rest well. Drink water.")).toBe(-1);
 });

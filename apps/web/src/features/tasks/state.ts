@@ -3,7 +3,7 @@ import { isOverdue } from "@/features/ward/state";
 
 type TaskLike = { title: string; owner: string; due: string | null; completed: boolean; encounterId: string | null; kind: string };
 
-export type TaskTab = "open" | "mine" | "overdue" | "done" | "all";
+export type TaskTab = "open" | "mine" | "dueToday" | "overdue" | "done" | "all";
 
 /** Where a task came from, in plain words: its kind is the only source the list carries. */
 const SOURCES: Record<string, { label: string; icon: IconName }> = {
@@ -18,13 +18,17 @@ const SOURCES: Record<string, { label: string; icon: IconName }> = {
 };
 export const sourceOf = (kind: string) => SOURCES[kind] ?? { label: "Added by the care team", icon: "plus" as const };
 
-export function groupTasks<T extends TaskLike>(tasks: T[], me: string, on: string): Record<TaskTab, T[]> & { dueToday: T[] } {
+export function groupTasks<T extends TaskLike>(tasks: T[], me: string, on: string): Record<TaskTab, T[]> {
   const open = tasks.filter(t => !t.completed);
   return {
     all: tasks, open, mine: open.filter(t => t.owner === me), overdue: tasks.filter(t => isOverdue(t, on)),
     done: tasks.filter(t => t.completed), dueToday: open.filter(t => t.due === on),
   };
 }
+
+/** What needs doing first: open before done, then the earliest due date, undated last. Overdue tasks lead. */
+export const rankTasks = <T extends TaskLike>(tasks: T[]) =>
+  tasks.toSorted((a, b) => Number(a.completed) - Number(b.completed) || (a.due ?? "9").localeCompare(b.due ?? "9"));
 
 export const matchesTask = (t: TaskLike, q: string) =>
   !q || [t.title, t.owner, t.encounterId ?? "ward", sourceOf(t.kind).label].some(s => s.toLowerCase().includes(q));

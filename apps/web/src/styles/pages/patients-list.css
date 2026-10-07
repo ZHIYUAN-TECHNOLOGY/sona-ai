@@ -1,3 +1,9 @@
 /* Patients list: only what the shared table, tabs and cards do not already give. */
 .ptl-calm { color: var(--muted); }
 .ptl-card td:last-child { white-space: nowrap; }
+/* The name and ID read in full: the reason column takes what is left. */
+.ptl-card th:first-child { width: 13.5rem; }
+/* Reason: the diagnosis, then the complaint underneath in full (two lines). */
+.ptl-reason { display: grid; min-width: 12rem; }
+.ptl-reason .cell-clamp { color: var(--muted); font-size: var(--text-small); }
+.ptl-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }

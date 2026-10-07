@@ -1,5 +1,7 @@
 /* Audit: the tabs and search share the table's toolbar; the rail shows one finding. */
 td:has(> .au-gap) { width: 100%; }
+/* The gap column takes the spare width, so the patient column keeps room for a full name. */
+.au-patient { display: block; min-width: 11rem; }
 .au-doctor { white-space: nowrap; }
 .au-gap { display: grid; gap: var(--space-1); min-width: 8rem; }
 .au-muted { color: var(--muted); font-size: var(--text-small); }

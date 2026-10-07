@@ -1,5 +1,7 @@
-import { Link, Outlet } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { Link, Outlet, useLocation } from "@tanstack/react-router";
+import { type ReactNode, useRef } from "react";
+
+import { EASE_OUT, gsap, moves, useGSAP } from "@/lib/motion";
 
 import { signOut } from "@/lib/session";
 import { SonaAnswers, SonaProvider } from "@/lib/sona";
@@ -11,6 +13,13 @@ import { SonaBar } from "./sona-bar";
 
 /** Sidebar, the page, and the Sona bar under every page. `app` picks the theme (tokens.css). */
 export function Frame({ app, brand, groups, who, name, instead }: { app: "pro" | "care"; brand: string; groups: NavGroup[]; who: string; /** The signed-in person, for the avatar; `who` then reads as the role line under it. */ name?: string; /** Shown in place of the page (a page this role may not open). */ instead?: ReactNode }) {
+  // Each page arrives as one move: its blocks rise into place a beat apart (the phone apps' list stagger).
+  const page = useRef<HTMLDivElement>(null);
+  const path = useLocation({ select: location => location.pathname });
+  useGSAP(() => {
+    if (moves() && page.current) gsap.from(page.current.children, { opacity: 0, y: 12, duration: 0.45, ease: EASE_OUT, stagger: 0.05, clearProps: "opacity,transform" });
+  }, { dependencies: [path] });
+
   return (
     <div className={`${app} frame`}>
       <nav className="frame-side" aria-label={brand}>
@@ -38,7 +47,7 @@ export function Frame({ app, brand, groups, who, name, instead }: { app: "pro" |
       <div className="frame-main">
         <SonaProvider app={app}>
           <main className="frame-scroll">
-            <div className="frame-page">
+            <div className="frame-page" ref={page}>
               {instead ?? (
                 <>
                   <SonaAnswers />

@@ -1,0 +1,241 @@
+<title>Scribe Speakers</title>
+<style>
+/* Layout: one phone on the left that plays the flow, the step notes beside it, the rules underneath. */
+:root{
+  --bg:#EEF0F3; --panel:#FFFFFF; --ink:#1D1F23; --muted:#59616B; --soft:#8A919B; --line:#D8DBE0;
+  --blue:#245BCC; --blueWash:#DDE8FB; --amber:#8A5A00; --green:#0F6E66;
+  /* the phone keeps the app's light look in both themes */
+  --p-canvas:#F3F5F9; --p-ink:#1D1F23; --p-muted:#59616B; --p-soft:#8A919B; --p-rail:rgba(20,28,40,.12);
+  --p-blue:#245BCC; --p-blueWash:#DDE8FB; --p-amber:#8A5A00; --p-amberWash:#FBF0D9; --p-red:#A23E3E; --p-green:#0F6E66;
+  --p-glass:rgba(255,255,255,.72); --p-rim:rgba(255,255,255,.95);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme:dark; --bg:#14161A; --panel:#1C1F24; --ink:#ECEEF1; --muted:#A5ACB6; --soft:#7D8591; --line:#2E323A; --blue:#86A9F2; --blueWash:#1F2C45; --amber:#E0B25A; --green:#77C9B7;
+}}
+:root[data-theme="dark"]{color-scheme:dark; --bg:#14161A; --panel:#1C1F24; --ink:#ECEEF1; --muted:#A5ACB6; --soft:#7D8591; --line:#2E323A; --blue:#86A9F2; --blueWash:#1F2C45; --amber:#E0B25A; --green:#77C9B7;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:0 16px 64px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+header{padding-top:44px;display:flex;flex-direction:column;gap:10px}
+h1{margin:0;font-size:clamp(26px,4vw,36px);letter-spacing:-.02em;line-height:1.15;text-wrap:balance}
+h2{margin:0;font-size:20px;letter-spacing:-.01em}
+p{margin:0;max-width:68ch}
+.over{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--blue)}
+.lead{color:var(--muted);font-size:16.5px}
+.stage{display:grid;grid-template-columns:minmax(0,390px) minmax(0,1fr);gap:40px;align-items:start}
+@media (max-width:860px){.stage{grid-template-columns:1fr}}
+.notes{display:flex;flex-direction:column;gap:18px;min-width:0}
+.now{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.now b{font-size:13px;color:var(--blue);letter-spacing:.04em;text-transform:uppercase}
+.now p{font-size:15.5px}
+ol.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+ol.steps button{all:unset;box-sizing:border-box;width:100%;display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:14px;border:1px solid transparent;color:var(--muted);font-size:14.5px;cursor:pointer}
+ol.steps i{font-style:normal;flex:none;width:22px;height:22px;border-radius:11px;background:var(--line);color:var(--ink);font-size:12px;font-weight:700;display:grid;place-items:center}
+ol.steps .on button{background:var(--panel);border-color:var(--line);color:var(--ink)}
+ol.steps .on i{background:var(--blue);color:var(--panel)}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+.controls button{font:inherit;font-size:13.5px;font-weight:600;padding:8px 15px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button:focus-visible,ol.steps button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.rule{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.rule b{font-size:15px}
+.rule p{color:var(--muted);font-size:14.5px}
+.open{color:var(--amber)}
+
+/* ---------- the phone ---------- */
+.phone{width:100%;max-width:390px;aspect-ratio:390/844;border-radius:48px;padding:10px;background:#111;box-shadow:0 30px 60px -20px rgba(20,30,60,.35);margin:0 auto}
+.screen{position:relative;height:100%;border-radius:40px;overflow:hidden;background:radial-gradient(120% 60% at 90% 35%,#E6E9FB 0%,transparent 60%),radial-gradient(80% 50% at 0% 50%,#E3F2F0 0%,transparent 60%),var(--p-canvas);color:var(--p-ink);font-size:15px;line-height:1.4}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:20px;background:#000;z-index:9}
+.topbar{position:absolute;top:58px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:center;z-index:5}
+.round{width:44px;height:44px;border-radius:22px;background:var(--p-glass);border:1px solid var(--p-rim);box-shadow:0 4px 14px rgba(40,70,140,.10);display:grid;place-items:center;font-size:20px}
+.state{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:999px;background:var(--p-glass);border:1px solid var(--p-rim);font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.state .d{width:8px;height:8px;border-radius:4px;background:var(--p-soft)}
+.state.rec .d{background:var(--p-red);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.state.rec .d{animation:none}}
+.body{position:absolute;inset:116px 0 0 0;overflow-y:auto;padding:4px 18px 28px;display:flex;flex-direction:column;gap:16px}
+.insight{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.insight span{color:var(--p-amber)}
+.sub{color:var(--p-muted);font-size:13.5px;margin-top:-10px}
+.people{display:flex;flex-wrap:wrap;gap:8px}
+.person{display:flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:var(--p-glass);border:1px solid var(--p-rim);font-size:13px;font-weight:600}
+.person small{font-weight:400;color:var(--p-muted);font-size:12px}
+.av{flex:none;width:26px;height:26px;border-radius:13px;display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--p-ink);color:#fff}
+.av.t2{background:#4A515C}.av.t3{background:#767E8A}.av.t4{background:#9AA1AC}
+.av.new{background:var(--p-amberWash);color:var(--p-amber);border:1.5px dashed var(--p-amber)}
+.card{background:linear-gradient(rgba(255,255,255,.86),rgba(255,255,255,.6));border:1px solid var(--p-rim);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 26px -10px rgba(36,91,204,.28);position:relative;overflow:hidden}
+.card::after{content:"";position:absolute;top:0;right:0;width:74px;height:54px;background-image:radial-gradient(circle,rgba(36,91,204,.5) 1px,transparent 1.4px);background-size:5px 5px;-webkit-mask-image:radial-gradient(circle at 100% 0,#000,transparent 70%);mask-image:radial-gradient(circle at 100% 0,#000,transparent 70%);pointer-events:none}
+.card h3{margin:0;font-size:17px;letter-spacing:-.01em}
+.quote{display:flex;gap:10px;align-items:center;font-size:14.5px}
+.play{flex:none;width:34px;height:34px;border-radius:17px;border:1px solid var(--p-rail);background:#fff;color:var(--p-ink);font-size:12px;cursor:pointer}
+.why{font-size:13px;color:var(--p-muted)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{font:inherit;font-size:13.5px;font-weight:600;padding:7px 13px;border-radius:999px;border:1px solid var(--p-rim);background:var(--p-glass);color:var(--p-ink);cursor:pointer;box-shadow:0 1px 0 var(--p-rail)}
+.chip.sel{background:var(--p-ink);color:#fff;border-color:var(--p-ink)}
+.field{font:inherit;font-size:14px;padding:9px 12px;border-radius:12px;border:1px solid var(--p-rail);background:#fff;color:var(--p-ink);width:100%}
+.act{font:inherit;font-size:15px;font-weight:600;padding:12px 16px;border-radius:999px;border:0;background:var(--p-ink);color:#fff;cursor:pointer}
+.act.sec{background:var(--p-glass);color:var(--p-ink);border:1px solid var(--p-rim)}
+.act:active,.chip:active,.turn:active{transform:scale(.96)}
+.row2{display:flex;gap:8px}.row2 .act{flex:1}
+.turns{display:flex;flex-direction:column}
+.turn{all:unset;box-sizing:border-box;display:flex;gap:10px;padding-bottom:16px;cursor:pointer;width:100%;border-radius:10px}
+.turn .who{display:flex;align-items:baseline;gap:7px;font-size:13px;font-weight:600}
+.turn .who time{font-weight:400;color:var(--p-soft);font-size:12px;font-variant-numeric:tabular-nums}
+.turn .txt{font-size:15px}
+.turn.interim .txt{color:var(--p-muted)}
+.flag{font-size:12.5px;color:var(--p-amber);font-weight:600}
+.pick{display:flex;flex-direction:column;gap:7px;padding:0 0 16px 36px}
+.pick small{color:var(--p-muted);font-size:12.5px}
+.done{display:flex;gap:8px;font-size:13.5px;color:var(--p-green);font-weight:600}
+.note{border-left:2px solid var(--p-rail);padding-left:10px;font-size:13.5px;color:var(--p-muted)}
+.note b{color:var(--p-ink)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="over">Sona Pro · scribe · prototype for review</div>
+    <h1>Who said what, with any number of people in the room</h1>
+    <p class="lead">Today the scribe knows two roles, clinician and patient, and guesses them from the words. This flow lets Sona tell voices apart by sound, however many there are, and asks the doctor only for what it cannot work out. The consultation below is synthetic.</p>
+  </header>
+
+  <div class="stage">
+    <div class="phone"><div class="screen">
+      <div class="island"></div>
+      <div class="topbar"><div class="round" aria-hidden="true">‹</div><div class="state" id="state"><span class="d"></span><span id="stateT"></span></div></div>
+      <div class="body" id="body"></div>
+    </div></div>
+
+    <div class="notes">
+      <div class="now"><b id="nowT"></b><p id="nowP"></p></div>
+      <ol class="steps" id="steps"></ol>
+      <div class="controls"><button id="prev" type="button">Back</button><button id="next" type="button">Next step</button><button id="reset" type="button">Start over</button></div>
+    </div>
+  </div>
+
+  <h2>Rules this follows</h2>
+  <div class="rules">
+    <div class="rule"><b>No fixed number of people</b><p>Voices are numbered as they are heard. The planned model follows up to 8 at once; past that, the extra voices share one "Others" label the doctor can split by hand.</p></div>
+    <div class="rule"><b>Never interrupt the consultation</b><p>While recording, the screen only counts voices. Naming waits until the doctor stops.</p></div>
+    <div class="rule"><b>Sona suggests, the doctor decides</b><p>Sona guesses a role from what the voice said and shows the sentence that made it think so. Nothing is a name until the doctor confirms it.</p></div>
+    <div class="rule"><b>Name once, apply everywhere</b><p>Naming a voice labels every line it spoke. Fixing one line moves only that line.</p></div>
+    <div class="rule"><b>Colour keeps its meaning</b><p>People are told apart by initials and grey tone, not by hue. Amber stays for "needs you", green for done.</p></div>
+    <div class="rule"><b>The note says who reported it</b><p>History from a family member is written as theirs ("daughter reports"), so the doctor can weigh it.</p></div>
+    <div class="rule"><b class="open">Open: not built, not hosted</b><p>No voice-separating model runs today. It would be added to box ② in AWS Malaysia. It has not been tested on Malay or Manglish speech.</p></div>
+  </div>
+</div>
+
+<script>
+const STEPS = [
+  { t: "Listening", s: "Recording 0:26", rec: true, p: "Sona counts voices as it hears them and labels lines Voice 1, 2, 3. It asks nothing while the doctor is with the patient." },
+  { t: "Same person twice?", s: "Stopped 0:58", p: "A voice that moved closer or coughed can be heard as a new person. Sona flags the likely repeat first, so the doctor names fewer voices." },
+  { t: "Name the voices", s: "Stopped 0:58", p: "Sona already read the doctor and the patient from their words. For the rest it plays a line, gives its guess and the reason, and the doctor confirms with one tap." },
+  { t: "Review and fix a line", s: "Stopped 0:58", p: "Every line carries a name. A line Sona could not place is marked; tap any line to move it to someone else, then draft the note." },
+];
+const ROLES = ["Family member", "Nurse", "Interpreter", "Another doctor"];
+const LINES = [
+  { n: 1, sp: "d", at: "0:04", x: "Okay Mdm Tan, have a seat. Macam mana hari ni?" },
+  { n: 2, sp: "p", at: "0:09", x: "Pening sikit doktor, kaki pun bengkak lagi." },
+  { n: 3, sp: "v3", at: "0:15", x: "Mak saya tak makan ubat malam semalam, doktor." },
+  { n: 4, sp: "d", at: "0:21", x: "Yang amlodipine tu ke? Berapa hari dah miss?" },
+  { n: 5, sp: "v3", at: "0:26", x: "Dua malam. Dia kata lupa." },
+  { n: 6, sp: "v4", at: "0:34", x: "BP satu lima puluh over sembilan puluh, doktor." },
+  { n: 7, sp: "p", at: "0:40", x: "我昨晚真的忘记了。" },
+  { n: 8, sp: "d", at: "0:44", x: "Okay, okay.", unsure: true },
+  { n: 9, sp: "v5", at: "0:51", x: "Doktor, boleh tukar ubat pagi saja?" },
+];
+const ASK = {
+  v3: { guess: "Family member", why: "She says “mak saya” (my mother).", line: 3 },
+  v4: { guess: "Nurse", why: "She reports a blood pressure reading to you.", line: 6 },
+  v5: { guess: "Family member", why: "She asks about changing the medicine time.", line: 9 },
+};
+let step, people, lines, pick, open, merged, drafted;
+
+function start(n) {
+  step = n; pick = null; open = null; drafted = false; merged = n > 1;
+  const live = n === 0;
+  people = {
+    d: live ? { name: "Voice 1", fresh: true } : { name: "Dr Lim", sub: "you" },
+    p: live ? { name: "Voice 2", fresh: true } : { name: "Mdm Tan", sub: "patient" },
+    v3: n > 2 ? { name: "Family member" } : { name: "Voice 3", fresh: true },
+    v4: n > 2 ? { name: "Nurse" } : { name: "Voice 4", fresh: true },
+    v5: { name: "Voice 5", fresh: true },
+  };
+  lines = LINES.filter(l => !live || l.n <= 5).map(l => ({ ...l, sp: merged && l.sp === "v5" ? "v3" : l.sp }));
+  draw();
+}
+const ids = () => [...new Set(lines.map(l => l.sp))];
+const unnamed = () => ids().filter(id => people[id].fresh);
+const initials = id => people[id].fresh ? people[id].name.split(" ")[1] : people[id].name.replace(/^(Dr|Mdm) /, "").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+const avatar = id => `<span class="av ${people[id].fresh && step ? "new" : "t" + (ids().indexOf(id) % 4 + 1)}">${initials(id)}</span>`;
+
+function naming(id) {
+  const a = ASK[id], chosen = pick ?? a.guess;
+  return `<div class="card"><h3>Who is ${people[id].name}?</h3>
+    <div class="quote"><button class="play" type="button" aria-label="Play this line">▶</button><span>“${LINES[a.line - 1].x}”</span></div>
+    <div class="why">Sona's guess: <b>${a.guess}</b>. ${a.why}</div>
+    <div class="chips">${ROLES.map(r => `<button class="chip ${r === chosen ? "sel" : ""}" type="button" data-role="${r}">${r}</button>`).join("")}</div>
+    <input class="field" id="person-name" placeholder="Add a name (optional)" aria-label="Name, optional">
+    <button class="act" type="button" data-confirm="${id}">Confirm ${chosen.toLowerCase()}</button></div>`;
+}
+
+function draw() {
+  const S = STEPS[step], todo = unnamed(), count = ids().length;
+  let insight, sub = "", card = "", foot = "";
+  if (step === 0) { insight = `Listening · ${count} voices so far`; sub = "Names come after you stop."; }
+  else if (step === 1 && !merged) {
+    insight = `${count} voices heard · <span>1 may be a repeat</span>`;
+    card = `<div class="card"><h3>Is Voice 5 the same person as Voice 3?</h3>
+      <div class="quote"><button class="play" type="button" aria-label="Play Voice 3">▶</button><span>Voice 3 · “${LINES[4].x}”</span></div>
+      <div class="quote"><button class="play" type="button" aria-label="Play Voice 5">▶</button><span>Voice 5 · “${LINES[8].x}”</span></div>
+      <div class="why">They sound alike, and Voice 5 only speaks once, near the end.</div>
+      <div class="row2"><button class="act" type="button" data-merge="1">Same person</button><button class="act sec" type="button" data-merge="0">Different</button></div></div>`;
+  } else if (todo.length) {
+    insight = `${count} people · <span>${todo.length} need${todo.length === 1 ? "s" : ""} a name</span>`;
+    sub = "Sona read Dr Lim and Mdm Tan from what they said.";
+    card = naming(todo[0]);
+  } else {
+    const loose = lines.filter(l => l.unsure).length;
+    insight = loose ? `${count} people · <span>1 line unsure</span>` : `${count} people · every line has a speaker`;
+    foot = drafted
+      ? `<div class="done">✓ Draft note ready</div><div class="note"><b>History.</b> Dizziness and leg swelling. Daughter reports two missed evening doses of amlodipine [3, 5]; patient confirms [7].<br><b>Examination.</b> BP 150/90, taken by nurse [6].</div>`
+      : `<button class="act" type="button" data-draft="1">Draft the note</button>`;
+  }
+  const turns = lines.map((l, i) => {
+    const interim = step === 0 && i === lines.length - 1, who = people[l.sp];
+    return `<button class="turn ${interim ? "interim" : ""}" type="button" data-line="${l.n}" ${step < 3 ? "disabled" : ""} aria-label="${who.name}: ${l.x}">
+      ${avatar(l.sp)}<span><span class="who">${who.name}<time>${l.at}</time>${l.unsure && step === 3 ? `<span class="flag">Sona unsure · tap</span>` : ""}${interim ? `<span class="flag" style="color:var(--p-muted)">still hearing</span>` : ""}</span>
+      <span class="txt">${l.x}${interim ? "…" : ""}</span></span></button>` +
+      (open === l.n ? `<div class="pick"><small>Who said this?</small><div class="chips">${ids().map(id => `<button class="chip ${id === l.sp && !l.unsure ? "sel" : ""}" type="button" data-to="${id}">${people[id].name}</button>`).join("")}</div></div>` : "");
+  }).join("");
+  document.getElementById("body").innerHTML =
+    `<div class="insight">${insight}</div>${sub ? `<div class="sub">${sub}</div>` : ""}
+     <div class="people">${ids().map(id => `<span class="person">${avatar(id)}${people[id].name}${people[id].sub ? `<small>${people[id].sub}</small>` : ""}</span>`).join("")}</div>
+     ${card}<div class="turns">${turns}</div>${foot}`;
+  document.getElementById("state").className = "state" + (S.rec ? " rec" : "");
+  document.getElementById("stateT").textContent = S.s;
+  document.getElementById("nowT").textContent = `Step ${step + 1} of ${STEPS.length} · ${S.t}`;
+  document.getElementById("nowP").textContent = S.p;
+  document.getElementById("steps").innerHTML = STEPS.map((x, i) => `<li class="${i === step ? "on" : ""}"><button type="button" data-step="${i}"><i>${i + 1}</i><span>${x.t}</span></button></li>`).join("");
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const d = b.dataset;
+  if (b.id === "prev") return start(Math.max(0, step - 1));
+  if (b.id === "next") return start(Math.min(STEPS.length - 1, step + 1));
+  if (b.id === "reset") return start(0);
+  if (d.step) return start(+d.step);
+  if (d.merge) { merged = true; if (d.merge === "1") lines.forEach(l => { if (l.sp === "v5") l.sp = "v3"; }); step = 2; }
+  if (d.role) pick = d.role;
+  if (d.confirm) {
+    const typed = document.getElementById("person-name").value.trim(), role = pick ?? ASK[d.confirm].guess;
+    people[d.confirm] = typed ? { name: typed, sub: role.toLowerCase() } : { name: role };
+    pick = null; if (!unnamed().length) step = 3;
+  }
+  if (d.line) open = open === +d.line ? null : +d.line;
+  if (d.to) { const l = lines.find(x => x.n === open); l.sp = d.to; l.unsure = false; open = null; }
+  if (d.draft) drafted = true;
+  draw();
+});
+start(0);
+</script>

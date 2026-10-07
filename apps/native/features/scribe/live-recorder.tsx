@@ -7,7 +7,7 @@ import { sameShallow } from "@/features/live/keep-same";
 import type { TranscriptLine } from "@/features/encounter/types";
 import { api, errorText } from "@/features/live";
 import { OPTIONS } from "@/features/live/voice-input";
-import { captionLine, draftLines, draftOrigin, listen, placeCaption, scribeStore, sendPart, speechOff, withCapturedDraft, withDraft, withPart, type Listening, type LiveDraft, type Part, type SendDeps } from "./live";
+import { captionLines, draftLines, draftOrigin, listen, namesOf, placeCaption, scribeStore, sendPart, speechOff, withCapturedDraft, withDraft, withPart, type Listening, type LiveDraft, type Part, type SendDeps } from "./live";
 
 type Update = ReturnType<typeof useEncounter>["updateEncounter"];
 /** A visit's live parts, last draft and microphone state, re-read whenever they change. */
@@ -32,30 +32,40 @@ export function RecordingSeconds({ patientId, saved, children }: { patientId: st
 
 const deps: SendDeps = {
   read: uri => new File(uri).base64(),
-  transcribe: async audio => (await api.voice.transcribe({ audio })).text,
+  transcribe: (audio, memory) => api.voice.transcribe({ audio, voices: { memory } }),
   remove: uri => { try { new File(uri).delete(); } catch { /* already gone */ } },
   wait: ms => new Promise(resolve => setTimeout(resolve, ms)),
 };
 
+/*
+ * A visit's parts reach the speech model one at a time, in recording order: each is sent with the voice memory the one
+ * before returned, so a person keeps their number. A part that fails does not hold up the next.
+ */
+const sending = new Map<string, Promise<void>>();
+const inTurn = (owner: string, part: Part, update: Update) => {
+  sending.set(owner, (sending.get(owner) ?? Promise.resolve()).then(() => send(owner, part, update)).catch(e => console.warn("scribe: part was not filed", e)));
+};
+
 /** Sends one part and files its words under the visit it was recorded in; a part that fails keeps its audio for `retryParts`. */
 async function send(owner: string, part: Part, update: Update) {
-  const result = await sendPart(part.uri!, deps, () => scribeStore.update(owner, withPart(part.n, { status: "retrying" })));
+  const result = await sendPart(part.uri!, deps, () => scribeStore.update(owner, withPart(part.n, { status: "retrying" })), scribeStore.get(owner).memory);
   if ("text" in result) {
-    scribeStore.update(owner, withPart(part.n, { status: "done", uri: undefined, error: undefined, starting: undefined }));
+    // A part whose voices could not be told apart brings no memory: the last one stands.
+    scribeStore.update(owner, s => ({ ...withPart(part.n, { status: "done", uri: undefined, error: undefined, starting: undefined })(s), memory: result.memory ?? s.memory }));
     // New dialogue revises the visit, as a scripted line does: the note needs review again.
-    if (result.text) update(c => ({ ...c, transcript: placeCaption(c.transcript, captionLine(part, result.text)), noteReviewed: false }), true, owner);
+    if (result.text) update(c => ({ ...c, transcript: placeCaption(c.transcript, captionLines(part, result, namesOf(c.transcript))), noteReviewed: false }), true, owner);
     return;
   }
   const off = speechOff(result.error);
   scribeStore.update(owner, withPart(part.n, { status: "failed", error: errorText(result.error), starting: off?.starting ? { minutes: off.minutes } : undefined }));
 }
 
-/** The clinician's retry: every part that failed is sent again (with its one retry). */
+/** The clinician's retry: every part that failed is sent again (with its one retry), in turn, with the voice memory as it is now. */
 export function retryParts(owner: string, update: Update) {
   for (const part of scribeStore.get(owner).parts) {
     if (part.status !== "failed" || !part.uri) continue;
     scribeStore.update(owner, withPart(part.n, { status: "sending", error: undefined, starting: undefined }));
-    void send(owner, part, update);
+    inTurn(owner, part, update);
   }
 }
 
@@ -107,7 +117,7 @@ export function LiveRecorder() {
   const queue = (owner: string, span: { from: number; to: number }, uri: string) => {
     const part: Part = { n: scribeStore.get(owner).parts.length + 1, from: Math.round(span.from / 1000), to: Math.round(span.to / 1000), status: "sending", uri };
     scribeStore.update(owner, s => ({ ...s, parts: [...s.parts, part] }));
-    void send(owner, part, updateEncounter);
+    inTurn(owner, part, updateEncounter);
   };
   const start = (owner: string, seconds: number) => {
     const r: Run = { owner, baseMs: seconds * 1000, doneMs: 0, busy: true, heard: { levels: [] } };
