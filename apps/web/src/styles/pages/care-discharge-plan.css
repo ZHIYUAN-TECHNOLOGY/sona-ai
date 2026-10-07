@@ -13,7 +13,11 @@
 .dp-doc .list-row { min-height: 48px; }
 .dp-grid > .card { min-width: 0; }
 .dp-doc .list-text { min-width: 0; }
-.dp-doc .list-title, .dp-doc .list-caption { white-space: normal; overflow: visible; }
+.dp-doc .list-title, .dp-doc .list-caption { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+/* A long medicine or visit name keeps its width; its chip drops under it on a narrow row. */
+.dp-doc .list-row { flex-wrap: wrap; }
+.dp-doc .list-text { flex-basis: 8rem; }
+.dp-doc .list-text ~ * { margin-inline-start: auto; }
 .dp-doc .dp-muted, .dp-dose { color: var(--muted); }
 .dp-dose { font-weight: 400; }
 .dp-leaflet { white-space: pre-line; }

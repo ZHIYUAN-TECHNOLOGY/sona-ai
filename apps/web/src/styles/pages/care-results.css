@@ -3,7 +3,7 @@
 .res-page p { margin: 0; }
 
 /* The summary beside the three stat cards; they stack on a narrow screen. */
-.res-top { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--gap-card); align-items: stretch; }
+.res-top { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--gap-card); align-items: start; }
 .res-top .stat-row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
 @media (max-width: 1100px) {
   .res-top, .res-page .with-rail { grid-template-columns: minmax(0, 1fr); }
@@ -15,6 +15,25 @@
 .res-page table { font-size: max(16px, var(--text-body)); }
 .res-page tbody tr { height: 56px; }
 .res-test { font-weight: 600; }
+/* A written result ("Mixed growth of >3 organisms…") wraps in its cell, so Status and Received stay on screen. */
+.res-page td .cell-value { display: inline-block; max-width: 22ch; white-space: normal; overflow-wrap: break-word; }
+.res-page td .cell-value .cell-muted { white-space: nowrap; }
+.res-page td .chip { overflow-wrap: normal; }
+/* On a phone each result is a short stack (test and date, then value and status), so nothing scrolls sideways. */
+.res-page .with-rail-main { container-type: inline-size; }
+.res-when { display: none; }
+@container (max-width: 560px) {
+  .res-page .table thead, .res-page .table :is(th, td):nth-child(n + 4) { display: none; }
+  .res-page .table, .res-page .table tbody { display: block; }
+  .res-page .table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) max-content; align-items: center; gap: var(--space-1) var(--space-3); height: auto; padding: var(--space-3); }
+  .res-page .table tbody tr > td, .res-page .table tbody tr > td:first-child { display: block; height: auto; padding: 0; border: 0; background: none; }
+  .res-page .table tbody tr { border-bottom: 1px solid var(--hairline); border-radius: var(--radius-control); }
+  .res-page .table tbody tr:is([data-selected], .table-row-open:hover) { background: var(--fill-selected); }
+  .res-page td .cell-value .cell-muted { white-space: normal; }
+  .res-page .table td:first-child { grid-column: 1 / -1; }
+  .res-when { display: block; color: var(--muted); font-size: 15px; font-weight: 400; }
+}
+.res-big[data-long] { font-size: var(--text-heading); line-height: 1.4; overflow-wrap: anywhere; }
 .res-muted { color: var(--muted); font-size: max(15px, var(--text-small)); }
 .res-note { color: var(--ink); background: var(--amber-wash); padding: var(--space-3); border-radius: var(--radius-control); }
 

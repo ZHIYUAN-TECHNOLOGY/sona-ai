@@ -23,6 +23,11 @@ test("only plain numbers become chart points", () => {
   for (const v of ["<5", "5-6", "Positive", "", "5.", "1e3"]) expect(numberOf(v)).toBeUndefined();
 });
 
+test("a big whole number gets separators; any other value stays as the lab wrote it", () => {
+  expect(["12846", "250", "5.20", "<0.01", "Not detected"].map(model.shownOf)).toEqual(["12,846", "250", "5.20", "<0.01", "Not detected"]);
+  expect(model.plural(1284, "result")).toBe("1,284 results");
+});
+
 test("a trend is oldest first, skips what is not a number or not released, and needs two points", () => {
   expect(trendOf([waiting, ...rows], "Haemoglobin").map((p: { y: number }) => p.y)).toEqual([10.9, 11.8]);
   expect(trendOf(rows.slice(0, 2), "Haemoglobin")).toEqual([]);

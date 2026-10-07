@@ -1,4 +1,5 @@
 import type { Point } from "@/components/chart-scale";
+import { formatNumber } from "@/lib/format";
 
 export type Released = { id: string; test: string; at: Date | string; released: true; value: string; unit?: string; flag?: string };
 export type Waiting = { id: string; test: string; at: Date | string; released: false };
@@ -10,7 +11,10 @@ export const REVIEWING = "Your care team is reviewing this. You will see it here
 export const dateOf = (at: Date | string, lang = "en"): string =>
   new Date(at).toLocaleDateString(lang === "zh" ? "zh-CN" : lang === "ms" ? "ms" : "en-MY", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kuala_Lumpur" });
 
-export const valueOf = (r: Released): string => (r.unit ? `${r.value} ${r.unit}` : r.value);
+/** The value as the patient reads it: a whole number of four or more digits gets separators ("12,846"); anything else as the lab wrote it ("5.20", "<0.01"). */
+export const shownOf = (value: string): string => (/^\d{4,}$/.test(value.trim()) ? formatNumber(Number(value)) : value);
+
+export const valueOf = (r: Released): string => (r.unit ? `${shownOf(r.value)} ${r.unit}` : shownOf(r.value));
 
 /** Only a plain number counts ("5.2", not "<5", "5-6" or "Positive"): the chart never guesses a point. */
 export const numberOf = (value: string): number | undefined =>
@@ -53,7 +57,7 @@ export function countsOf(results: Result[]): { seen: number; inRange: number; at
   return { seen: seen.length, inRange: seen.length - attention.length, attention, waiting: results.length - seen.length };
 }
 
-export const plural = (n: number, one: string): string => `${n} ${one}${n === 1 ? "" : "s"}`;
+export const plural = (n: number, one: string): string => `${formatNumber(n)} ${one}${n === 1 ? "" : "s"}`;
 
 /** The status in the patient's words, for the detail rail and the summary. */
 export const plainOf = (flag: string | undefined): string =>

@@ -65,7 +65,8 @@ export function nextOf(lead: Lead) {
 }
 
 /** The opening sentence of a leaflet, for a one-line summary. */
-export const firstSentence = (text: string) => (text.match(/^[\s\S]*?[.!?。](?=\s|$)/)?.[0] ?? text).trim();
+// A Chinese full stop ends a sentence without a space after it.
+export const firstSentence = (text: string) => (text.match(/^[\s\S]*?(?:[.!?](?=\s|$)|[。！？])/)?.[0] ?? text).trim();
 
 /** Whole days from then to now; never negative. */
 export const daysSince = (at: Date | string, now: Date) => Math.max(0, Math.floor((now.getTime() - new Date(at).getTime()) / 86_400_000));
