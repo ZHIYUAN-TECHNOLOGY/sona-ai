@@ -45,7 +45,8 @@ export function createAuth(
       "http://localhost:8081",
       "https://appleid.apple.com", // Sign in with Apple posts back from here
     ],
-    emailAndPassword: { enabled: true },
+    // Three characters: the demo accounts (DEMO_ACCOUNTS in @sona-ai/db/seed) are synthetic and shown to audiences as `doctor / 123`.
+    emailAndPassword: { enabled: true, minPasswordLength: 3 },
     socialProviders: {
       // A native iOS sign-in (expo-apple-authentication) sends an idToken whose audience is the app's bundle id.
       ...(env.APPLE_CLIENT_ID && {

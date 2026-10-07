@@ -271,24 +271,28 @@ function EmailStep({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState<string>();
   const secret = useRef<import("react-native").TextInput>(null);
   const t = useT();
-  const ready = email.trim().includes("@") && password.length >= 8;
+  const ready = email.trim().length > 0 && password.length > 0;
   const submit = async () => {
     setBusy(true); setError(undefined);
-    const { error } = await authClient.signIn.email({ email: email.trim(), password });
+    const { error } = await authClient.signIn.email({ email: demoEmail(email), password });
     setBusy(false);
     if (error) setError(error.message ?? t("in.signInFailed")); else onDone();
   };
   return <View style={{ gap: 8 }}>
     <Label>{t("in.emailLabel")}</Label>
     {/* Return moves on to the password and then signs in; iOS pairs the two for Password AutoFill. */}
-    <Field value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" autoCorrect={false} spellCheck={false} autoComplete="email" textContentType="username"
-      keyboardType="email-address" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => secret.current?.focus()} autoFocus accessibilityLabel={t("in.emailLabel")} />
+    <Field value={email} onChangeText={setEmail} placeholder="patient" autoCapitalize="none" autoCorrect={false} spellCheck={false} autoComplete="username" textContentType="username"
+      returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => secret.current?.focus()} autoFocus accessibilityLabel={t("in.emailLabel")} />
     <View style={{ height: 6 }} />
     <Label>{t("in.password")}</Label>
     <Field ref={secret} secret value={password} onChangeText={setPassword} placeholder={t("in.passwordHint")} autoComplete="current-password" textContentType="password"
       returnKeyType="go" onSubmitEditing={() => { if (ready && !busy) void submit(); }} accessibilityLabel={t("in.password")} />
     {error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
+    <Text style={{ ...type.footnote, color: palette.muted }}>Demo: patient / 123</Text>
     <View style={{ height: 16 }} />
     <Button label={t("in.signIn")}busy={busy} disabled={!ready} onPress={() => { void submit(); }} />
   </View>;
 }
+
+/** better-auth signs in by email, so a demo username typed bare (`patient`) becomes its account's address. */
+const demoEmail = (input: string) => { const v = input.trim(); return v.includes("@") ? v : `${v}@sona.test`; };

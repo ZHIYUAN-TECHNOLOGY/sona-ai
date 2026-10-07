@@ -159,25 +159,42 @@ const WARD = [...WARD_FIXTURE, ...WARD_EXTRA].filter(b => b.name).map(b => {
 /** The lab results the seed writes; any other result arrived during a demo run. */
 export const SEED_LAB_IDS = ["lab-1086-potassium", "lab-hb-1086", ...WARD.flatMap(w => w.labs.map(l => l.id))];
 /**
- * The synthetic test accounts for local and staging runs (never real people): one per role, each signs in as
- * `<role>@sona.com` with the password `123`, seeded with its role at the demo hospital (seedTestStaff), so no
- * sign-up is needed. The simple password is on purpose: staging holds synthetic data only. Sign-up still asks for 8
- * characters; these are written straight into the database.
+ * The synthetic demo logins (fictional people at the demo hospital, never real accounts), shown to audiences as
+ * `<username> / 123`: the sign-in forms turn a bare username into `<username>@sona.test`. Seeding resets every
+ * password to this list on each run, so a login is always what the slide says.
  */
-const DEMO_PASSWORD = "123";
-export const TEST_DOCTOR = { id: "test-doctor", name: "Dr Test Aisyah", email: "doctor@sona.com", password: DEMO_PASSWORD, role: "doctor" as const };
-export const TEST_NURSE = { id: "test-nurse", name: "Nurse Test Mei Ling", email: "nurse@sona.com", password: DEMO_PASSWORD, role: "nurse" as const };
-export const TEST_BED_MANAGER = { id: "test-bed-manager", name: "Test Bed Manager Hafiz", email: "bed-manager@sona.com", password: DEMO_PASSWORD, role: "bed-manager" as const };
-export const TEST_MANAGER = { id: "test-manager", name: "Test Manager Farah", email: "management@sona.com", password: DEMO_PASSWORD, role: "management" as const };
-/** Two more colleagues, so the demo doctor's handover always has someone to receive it. */
-export const TEST_DOCTOR_2 = { id: "test-doctor-2", name: "Dr Test Rajesh Kumar", email: "doctor2@sona.com", password: DEMO_PASSWORD, role: "doctor" as const };
-export const TEST_NURSE_2 = { id: "test-nurse-2", name: "Nurse Test Siti Aminah", email: "nurse2@sona.com", password: DEMO_PASSWORD, role: "nurse" as const };
+export const DEMO_ACCOUNTS = [
+  { username: "doctor", email: "doctor@sona.test", password: "123", name: "Dr Test Aisyah", role: "doctor" },
+  { username: "nurse", email: "nurse@sona.test", password: "123", name: "Nurse Test Mei Ling", role: "nurse" },
+  { username: "beds", email: "beds@sona.test", password: "123", name: "Test Bed Manager Hafiz", role: "bed-manager" },
+  { username: "manager", email: "manager@sona.test", password: "123", name: "Test Manager Farah", role: "management" },
+  { username: "doctor2", email: "doctor2@sona.test", password: "123", name: "Dr Test Rajesh Kumar", role: "doctor" },
+  { username: "nurse2", email: "nurse2@sona.test", password: "123", name: "Nurse Test Siti Aminah", role: "nurse" },
+  { username: "patient", email: "patient@sona.test", password: "123", name: "Amelia Tan", role: "patient" },
+] as const;
+/** The addresses these accounts had before the memorable usernames, so a staging account signed up under one keeps its data. */
+export const LEGACY_EMAILS: Record<string, string> = {
+  "doctor@sona.test": "dr.test@sona.test", "nurse@sona.test": "nurse.test@sona.test", "beds@sona.test": "beds.test@sona.test",
+  "manager@sona.test": "manager.test@sona.test", "doctor2@sona.test": "dr2.test@sona.test", "nurse2@sona.test": "nurse2.test@sona.test",
+  "patient@sona.test": "amelia.test@sona.test",
+};
+type DemoAccount = (typeof DEMO_ACCOUNTS)[number];
+const demoAccount = <U extends DemoAccount["username"]>(username: U) => DEMO_ACCOUNTS.find(a => a.username === username) as Extract<DemoAccount, { username: U }>;
+/** The synthetic test doctor for local and staging end-to-end runs. */
+export const TEST_DOCTOR = { id: "test-doctor", ...demoAccount("doctor") };
+/** Synthetic test accounts for the other clinician roles; all are seeded by seedTestStaff as members of the demo hospital. */
+export const TEST_NURSE = { id: "test-nurse", ...demoAccount("nurse") };
+export const TEST_BED_MANAGER = { id: "test-bed-manager", ...demoAccount("beds") };
+export const TEST_MANAGER = { id: "test-manager", ...demoAccount("manager") };
+/** Two more synthetic clinicians, so the demo doctor's handover always has a colleague to receive it. */
+export const TEST_DOCTOR_2 = { id: "test-doctor-2", ...demoAccount("doctor2") };
+export const TEST_NURSE_2 = { id: "test-nurse-2", ...demoAccount("nurse2") };
 /**
- * The synthetic test patient for Sona Care runs (never a real person): seeded as a signed-up account
- * already linked to Amelia (SYN-1042) by seedTestPatient, so it signs in with this email and password,
- * or with the demo phone (DEMO_PATIENT_PHONE), without a doctor issuing a code.
+ * The synthetic test patient for Sona Care runs: seeded as a signed-up account already linked to Amelia (SYN-1042)
+ * by seedTestPatient, so it signs in with this email and password, or with the demo phone (DEMO_PATIENT_PHONE),
+ * without a doctor issuing a code.
  */
-export const TEST_PATIENT = { name: "Amelia Tan", email: "patient@sona.com", password: DEMO_PASSWORD, phone: DEMO_PATIENT_PHONE, patientId: "SYN-1042" };
+export const TEST_PATIENT = { ...demoAccount("patient"), phone: DEMO_PATIENT_PHONE, patientId: "SYN-1042" };
 // Any drizzle Postgres database: Neon in staging, PGlite in tests.
 type AnyDb = PgAsyncDatabase<any, any>;
 
@@ -302,7 +319,7 @@ export async function seedDemoNote(db: AnyDb, now = new Date()) {
  */
 export async function seedTestPatient(db: AnyDb) {
   const { email, name, password, phone, patientId } = TEST_PATIENT;
-  const id = await seededUser(db, "test-patient-amelia", name, email);
+  const id = await demoUser(db, "test-patient-amelia", name, email);
   await db.update(user).set({ phoneNumber: null, phoneNumberVerified: null }).where(and(eq(user.phoneNumber, phone), ne(user.id, id)));
   await db.update(user).set({ phoneNumber: phone, phoneNumberVerified: true }).where(eq(user.id, id));
   await credential(db, id, password);
@@ -311,17 +328,21 @@ export async function seedTestPatient(db: AnyDb) {
 }
 
 /**
- * A seeded test account by its fixed id, holding `email`: made if missing, and moved to `email` if an earlier seed gave
- * it another (or an older account signed up with this email is reused). Returns the account's id.
+ * The user row for a demo login, by its email. A user still on the account's legacy address (signed up on staging
+ * before the memorable usernames) is renamed to the new one so its data stays with it; otherwise the row is made.
  */
-async function seededUser(db: AnyDb, seeded: string, name: string, email: string) {
-  const [taken] = await db.select({ id: user.id }).from(user).where(eq(user.email, email));
-  if (taken) return taken.id;
-  await db.insert(user).values({ id: seeded, name, email, emailVerified: true }).onConflictDoUpdate({ target: user.id, set: { email } });
-  return seeded;
+async function demoUser(db: AnyDb, seeded: string, name: string, email: string) {
+  const byEmail = async (address: string) => (await db.select({ id: user.id }).from(user).where(eq(user.email, address)))[0]?.id;
+  const legacy = LEGACY_EMAILS[email] && !(await byEmail(email)) ? await byEmail(LEGACY_EMAILS[email]) : undefined;
+  if (legacy) await db.update(user).set({ email }).where(eq(user.id, legacy));
+  await db.insert(user).values({ id: seeded, name, email, emailVerified: true }).onConflictDoNothing();
+  return (await byEmail(email))!;
 }
 
-/** The test account's email-and-password login, always with the test password, so a rerun puts it back however it was changed. */
+/**
+ * An email-and-password login for a seeded user. An existing login keeps its row id but gets the constant's hash on every
+ * run: demo passwords must be what the slide says, every time, even after someone changed one in the app.
+ */
 async function credential(db: AnyDb, id: string, password: string) {
   const hash = await hashPassword(password);
   const [login] = await db.select({ id: account.id }).from(account).where(and(eq(account.userId, id), eq(account.providerId, "credential")));
@@ -330,13 +351,14 @@ async function credential(db: AnyDb, id: string, password: string) {
 }
 
 /**
- * Every test clinician (one per role, and a second doctor and nurse for handover) as a real staff account that is a
- * member of the demo hospital with its role, without a first sign-in. Safe to rerun: accounts and memberships are
- * kept, emails and passwords are put back to the test ones.
+ * Every synthetic staff login (the four role accounts and the two handover colleagues) as real accounts, made as
+ * seedTestPatient makes Amelia's, that are members of the demo hospital without a first sign-in: handover.receivers (the
+ * members who may accept, the caller left out) is then never empty for the demo doctor. Safe to rerun: a user or a
+ * membership that exists is kept, its password reset.
  */
 export async function seedTestStaff(db: AnyDb) {
   for (const { id: seeded, name, email, password, role } of [TEST_DOCTOR, TEST_NURSE, TEST_BED_MANAGER, TEST_MANAGER, TEST_DOCTOR_2, TEST_NURSE_2]) {
-    const id = await seededUser(db, seeded, name, email);
+    const id = await demoUser(db, seeded, name, email);
     await credential(db, id, password);
     await db.insert(hospitalMembers).values({ userId: id, hospitalId: DEMO_HOSPITAL, role }).onConflictDoNothing();
   }

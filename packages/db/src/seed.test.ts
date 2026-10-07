@@ -6,7 +6,8 @@ import { defaultMedications } from "@sona-ai/domain/prescribing";
 import type { Patient } from "@sona-ai/domain/types";
 import { account, admissions, appointments, careLinks, casemixWeights, encounters, followUpRules, guaranteeLetters, hospitalMembers, insurerCriteria, labResults, notes, observations, patients, user } from "./schema";
 import { DEMO_CLINICIANS } from "./demo";
-import { DEMO_HOSPITAL, seedDemo, seedDemoNote, seedTestPatient, seedTestStaff, TEST_BED_MANAGER, TEST_DOCTOR, TEST_DOCTOR_2, TEST_MANAGER, TEST_NURSE, TEST_NURSE_2, TEST_PATIENT, WARD_EXTRA } from "./seed";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
+import { DEMO_HOSPITAL, LEGACY_EMAILS, seedDemo, seedDemoNote, seedTestPatient, seedTestStaff, TEST_BED_MANAGER, TEST_DOCTOR, TEST_DOCTOR_2, TEST_MANAGER, TEST_NURSE, TEST_NURSE_2, TEST_PATIENT, WARD_EXTRA } from "./seed";
 import { createTestDb } from "./testing";
 
 test("the Sona Care test patient is seeded signed up and linked to Amelia, rerun-safe, and takes the demo phone back from a stray account", async () => {
@@ -20,16 +21,32 @@ test("the Sona Care test patient is seeded signed up and linked to Amelia, rerun
   expect(await db.select().from(careLinks).where(eq(careLinks.userId, id))).toMatchObject([{ hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042" }]);
 });
 
-test("two more test clinicians are seeded signed up and already members of the demo hospital, rerun-safe, so a handover has a receiver", async () => {
+const STAFF = [TEST_DOCTOR, TEST_NURSE, TEST_BED_MANAGER, TEST_MANAGER, TEST_DOCTOR_2, TEST_NURSE_2];
+
+test("every test clinician is seeded signed up and already a member of the demo hospital, rerun-safe, so a handover has a receiver", async () => {
   const db = await createTestDb();
   await seedDemo(db);
   await seedTestStaff(db);
   await seedTestStaff(db);
   const staff = await db.select({ name: user.name, email: user.email, role: hospitalMembers.role, hospitalId: hospitalMembers.hospitalId })
-    .from(hospitalMembers).innerJoin(user, eq(user.id, hospitalMembers.userId)).orderBy(user.email);
-  const all = [TEST_DOCTOR, TEST_NURSE, TEST_BED_MANAGER, TEST_MANAGER, TEST_DOCTOR_2, TEST_NURSE_2];
-  expect(staff).toEqual(all.toSorted((a, b) => (a.email < b.email ? -1 : 1)).map(({ name, email, role }) => ({ name, email, role, hospitalId: DEMO_HOSPITAL })));
-  expect((await db.select().from(account)).map(a => [a.userId, a.providerId]).sort()).toEqual(all.map(a => [a.id, "credential"]).sort());
+    .from(hospitalMembers).innerJoin(user, eq(user.id, hospitalMembers.userId));
+  const byEmail = (a: { email: string }, b: { email: string }) => a.email < b.email ? -1 : 1;
+  expect(staff.sort(byEmail)).toEqual([...STAFF].sort(byEmail).map(({ name, email, role }) => ({ name, email, role, hospitalId: DEMO_HOSPITAL })));
+  expect((await db.select().from(account)).map(a => [a.userId, a.providerId]).sort()).toEqual(STAFF.map(s => [s.id, "credential"]).sort());
+});
+
+test("a staff account signed up under its legacy email is renamed to the demo username and its password reset to the slide's, keeping its rows", async () => {
+  const db = await createTestDb();
+  await seedDemo(db);
+  await db.insert(user).values({ id: "signed-up-on-staging", name: "Aisyah", email: LEGACY_EMAILS[TEST_DOCTOR.email]! });
+  await db.insert(account).values({ id: "their-login", accountId: "signed-up-on-staging", providerId: "credential", userId: "signed-up-on-staging", password: await hashPassword("something-else") });
+  await seedTestStaff(db);
+  const [doctor] = await db.select().from(user).where(eq(user.email, TEST_DOCTOR.email));
+  expect(doctor?.id).toBe("signed-up-on-staging");
+  expect(await db.select().from(user).where(eq(user.id, TEST_DOCTOR.id))).toEqual([]);
+  const [login] = await db.select().from(account).where(eq(account.userId, "signed-up-on-staging"));
+  expect(login?.id).toBe("their-login");
+  expect(await verifyPassword({ hash: login!.password!, password: TEST_DOCTOR.password })).toBe(true);
 });
 
 test("each synthetic test clinician joins the demo hospital with its own role", () => {
