@@ -4,6 +4,7 @@ import { type IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Chip, ListCard, ListRow, StatCard, StatRow } from "@/components/primitives";
+import { countOf } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 
 import { dayLead, dosesToday, inDaysWords, langOf, nextStep, partOfDay } from "./model";
@@ -18,9 +19,9 @@ const shortDay = (d: Date) => d.toLocaleDateString(lang, { day: "numeric", month
 /** Rail: the places a patient goes from here; static, so built once. */
 const MORE = (
   <ListCard title="More for you">
-    <ListRow to="/care/ask" icon="sparkle" title="Ask Sona" caption="Ask in your own words" />
-    <ListRow to="/care/discharge-plan" icon="clipboard" title="Your discharge plan" caption="Your steps at home" />
-    <ListRow to="/care/medicines" icon="pill" title="All medicines" caption="What to take and why" />
+    <ListRow wrap to="/care/ask" icon="sparkle" title="Ask Sona" caption="Ask in your own words" />
+    <ListRow wrap to="/care/discharge-plan" icon="clipboard" title="Your discharge plan" caption="Your steps at home" />
+    <ListRow wrap to="/care/medicines" icon="pill" title="All medicines" caption="What to take and why" />
   </ListCard>
 );
 
@@ -72,7 +73,7 @@ export function CareHome({ firstName }: { firstName: string }) {
 
   // What the next step rests on: the same numbers the cards below show.
   const evidence: { icon: IconName; text: string }[] = [
-    ...(doses.length ? [{ icon: "pill" as const, text: `${done} of ${doses.length} doses taken today` }] : []),
+    ...(doses.length ? [{ icon: "pill" as const, text: `${done} of ${countOf(doses.length, "dose")} taken today` }] : []),
     ...(visit && step.kind !== "visit" ? [{ icon: "calendar" as const, text: `${visit.title} ${inDaysWords(visit.inDays)}` }] : []),
     ...(step.kind === "check-in" ? []
       : waitingCount ? [{ icon: "clipboard" as const, text: waitingCount === 1 ? "1 check-in waiting" : `${waitingCount} check-ins waiting` }]
@@ -116,22 +117,22 @@ export function CareHome({ firstName }: { firstName: string }) {
   // The row that is the panel's next step carries no second button for the same action.
   const rows = [
     ...doses.map(d => ({ at: d.dueAt.getTime(), row: (
-      <ListRow key={d.key} icon="pill" title={d.name} caption={`${d.line} · ${timeOf(d.dueAt)}`}
+      <ListRow wrap key={d.key} icon="pill" title={d.name} caption={`${timeOf(d.dueAt)} · ${d.line}`}
         trailing={d.taken ? <span className="care-home-quiet">Taken</span>
           : d.key === stepDoseKey ? <Chip tone="amber">Due</Chip>
           : <Button pending={take.isPending && take.variables.key === d.key} disabled={take.isPending} onClick={() => take.mutate({ key: d.key })}>I took it</Button>} />
     ) })),
     ...(visit ? [{ at: visit.date.getTime(), row: step.kind === "visit" ? (
-      <ListRow key="visit" icon="calendar" title={visit.title} caption={visitCaption} trailing={<span className="care-home-quiet">{inDaysWords(visit.inDays)}</span>} />
+      <ListRow wrap key="visit" icon="calendar" title={visit.title} caption={visitCaption} trailing={<span className="care-home-quiet">{inDaysWords(visit.inDays)}</span>} />
     ) : (
-      <ListRow key="visit" to="/care/follow-ups" icon="calendar" title={visit.title} caption={visitCaption} trailing={<span className="care-home-act">Prepare</span>} />
+      <ListRow wrap key="visit" to="/care/follow-ups" icon="calendar" title={visit.title} caption={visitCaption} trailing={<span className="care-home-act">Prepare</span>} />
     ) }] : []),
     ...(waiting ? [{ at: waiting.dueAt.getTime(), row: step.kind === "check-in" ? (
-      <ListRow key="check-in" icon="clipboard" title="Your check-in is waiting" caption="It takes about a minute" trailing={<Chip tone="amber">Waiting</Chip>} />
+      <ListRow wrap key="check-in" icon="clipboard" title="Your check-in is waiting" caption="It takes about a minute" trailing={<Chip tone="amber">Waiting</Chip>} />
     ) : (
-      <ListRow key="check-in" to="/care/check-ins" icon="clipboard" title="Your check-in is waiting" caption="It takes about a minute" trailing={<span className="care-home-act">Answer</span>} />
+      <ListRow wrap key="check-in" to="/care/check-ins" icon="clipboard" title="Your check-in is waiting" caption="It takes about a minute" trailing={<span className="care-home-act">Answer</span>} />
     ) }] : nextCheckIn ? [{ at: nextCheckIn.dueAt.getTime(), row: (
-      <ListRow key="check-in" to="/care/check-ins" icon="clipboard" title={`Next check-in on ${shortDay(nextCheckIn.dueAt)}`} caption="A few short questions from your care team" trailing={<span className="care-home-act">View</span>} />
+      <ListRow wrap key="check-in" to="/care/check-ins" icon="clipboard" title={`Next check-in on ${shortDay(nextCheckIn.dueAt)}`} caption="A few short questions from your care team" trailing={<span className="care-home-act">View</span>} />
     ) }] : []),
   ].sort((a, b) => a.at - b.at).map(r => r.row);
 
@@ -146,10 +147,10 @@ export function CareHome({ firstName }: { firstName: string }) {
           <InsightCard label="Next for you" title={insight.title} lead={insight.lead} evidence={evidence} next={insight.next} />
 
           <ListCard title="Today">
-            {home ? null : <ListRow icon="pill" title="Your medicines start when you go home" caption="Each dose will show here with a button to mark it taken." />}
+            {home ? null : <ListRow wrap icon="pill" title="Your medicines start when you go home" caption="Each dose will show here with a button to mark it taken." />}
             {rows}
             {lastMessage ? (
-              <ListRow to="/care/messages" icon="message" title={lastMessage.from === "patient" ? "You wrote to your care team" : "From your care team"}
+              <ListRow wrap to="/care/messages" icon="message" title={lastMessage.from === "patient" ? "You wrote to your care team" : "From your care team"}
                 caption={lastMessage.text} trailing={<span className="care-home-act">{lastMessage.from === "patient" ? "View" : "Reply"}</span>} />
             ) : null}
             {home && !rows.length && !lastMessage ? (

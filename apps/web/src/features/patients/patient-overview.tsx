@@ -13,11 +13,12 @@ import { Button, Card, Chip, ListCard, ListRow, Signal, StatCard, StatRow, Tabs 
 import { RightRail, WithRail } from "@/components/rail";
 import { when } from "@/features/results/result-rail";
 import { isFlagged } from "@/features/results/triage";
+import { countOf, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/patient-overview.css";
 
 import { JoinCode } from "./join-code";
-import { type PatientRow, StatusChip } from "./patient-list";
+import { allergyChip, type PatientRow, patientMeta, StatusChip } from "./patient-list";
 import { LabCharts, PatientResults, useTrends } from "./patient-trends";
 import { chartPoints, direction, latestOf, topSeries } from "./trends";
 
@@ -75,7 +76,7 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
   const evidence: { icon: IconName; text: string }[] = [
     ...(briefing.data?.lines.slice(1, 3).map((text) => ({ icon: "file" as const, text })) ?? []),
     ...(latest ? [{ icon: "clock" as const, text: `Latest: ${latest.title}, ${day(latest.at)}` }] : []),
-    ...(a?.due ? [{ icon: "pill" as const, text: a.missed.length ? `${a.missed.length} missed, ${a.late.length} due now of ${a.due} doses` : a.late.length ? `${a.late.length} of ${a.due} doses due now` : `All ${a.due} doses taken` }] : []),
+    ...(a?.due ? [{ icon: "pill" as const, text: a.missed.length ? `${formatNumber(a.missed.length)} missed, ${formatNumber(a.late.length)} due now of ${countOf(a.due, "dose")}` : a.late.length ? `${formatNumber(a.late.length)} of ${countOf(a.due, "dose")} due now` : `All ${countOf(a.due, "dose")} taken` }] : []),
   ];
   // Where this patient stands, in one line: the ward's own assessment (amber on watch, green when fit to go, plain when stable) and any doses behind.
   const sbar = patient.ward?.sbar;
@@ -83,7 +84,7 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
   const lead: ReactNode[] = [
     patient.subtitle,
     sbar?.a ? (status === "watch" || status === "fit" ? <Signal tone={status === "watch" ? "soon" : "done"}>{sbar.a}</Signal> : sbar.a) : null,
-    behind ? <Signal tone={a?.missed.length ? "urgent" : "soon"}>{behind === 1 ? "1 dose" : `${behind} doses`} behind</Signal> : null,
+    behind ? <Signal tone={a?.missed.length ? "urgent" : "soon"}>{countOf(behind, "dose")} behind</Signal> : null,
   ].filter(Boolean);
   const sources = (briefing.data ? (patient.sources?.length ?? 0) : 0) + (latest ? 1 : 0) + (a?.due ? 1 : 0);
 
@@ -106,10 +107,10 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
       />
       <PatientStrip
         name={patient.name}
-        meta={`${patient.sex.charAt(0).toUpperCase()}, ${patient.age} · ${patient.id}`}
+        meta={patientMeta(patient)}
         chips={
           <>
-            {canRead && patient.allergies ? <span className="po-allergy" title={`Allergy: ${patient.allergies}`}>Allergy: {patient.allergies.split(/[—;(]/)[0]!.trim()}</span> : null}
+            {canRead && patient.allergies ? <span className="po-allergy" title={`Allergy: ${patient.allergies}`}>Allergy: {allergyChip(patient.allergies)}</span> : null}
             <StatusChip patient={patient} />
           </>
         }
@@ -127,7 +128,7 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
             <InsightCard
               band
               label="Pre-visit summary"
-              title={behind ? `${behind} ${behind === 1 ? "dose needs" : "doses need"} a word` : `Before you see ${patient.name.split(" ")[0]}`}
+              title={behind ? `${countOf(behind, "dose")} ${behind === 1 ? "needs" : "need"} a word` : `Before you see ${patient.name.split(" ")[0]}`}
               lead={!hasVisit ? "No visit on record, so there is no briefing yet." : briefing.isPending ? "Sona is reading the record…" : briefing.error ? `No briefing: ${briefing.error.message}` : (briefing.data.lines[0] ?? "The briefing came back empty.")}
               evidence={evidence}
               sources={sources || undefined}
@@ -141,13 +142,13 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
                 const flag = s.lab ? latestOf(s).flag : null;
                 return <StatCard key={`${s.lab}${s.name}${s.unit}`} title={s.name} value={latestOf(s).value} unit={s.unit ?? undefined} caption={`${direction(s)} · ${when(latestOf(s).at)}`} chip={isFlagged(flag) ? flag : undefined} tone={flag?.startsWith("critical") ? "urgent" : "soon"} />;
               })}
-              {a?.due ? <StatCard title="Doses taken" value={a.taken} unit={`of ${a.due}`} caption="Since discharge" progress={a.taken / a.due} chip={a.missed.length ? `${a.missed.length} missed` : undefined} tone="urgent" /> : null}
+              {a?.due ? <StatCard title="Doses taken" value={a.taken} unit={`of ${formatNumber(a.due)}`} caption="Since discharge" progress={a.taken / a.due} chip={a.missed.length ? `${formatNumber(a.missed.length)} missed` : undefined} tone="urgent" /> : null}
               {patient.vitals?.slice(0, Math.max(0, 3 - top.length)).map((v) => <StatCard key={v.label} title={v.label} value={v.value} caption="Latest reading" />)}
             </StatRow>
           ) : null}
-          <WithRail rail={
+          <WithRail follow rail={
             <RightRail label="Record at a glance">
-              <PatientResults patientId={patient.id} limit={3} />
+              <div className="po-wrap po-full"><PatientResults patientId={patient.id} limit={3} /></div>
               <Medicines items={patient.medicines?.slice(0, 4)} more={() => setTab("medicines")} total={patient.medicines?.length ?? 0} />
               <TakeHome patient={patient} />
             </RightRail>
@@ -155,13 +156,13 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
             {main ? (
               <Card title={main.name}>
                   <p className="po-caption">
-                    {latestOf(main).value}{main.unit ? ` ${main.unit}` : ""} · {direction(main)} · {when(latestOf(main).at)}
+                    {formatNumber(latestOf(main).value)}{main.unit ? ` ${main.unit}` : ""} · {direction(main)} · {when(latestOf(main).at)}
                   </p>
-                  <p className="po-legend"><span><i aria-hidden="true" />{main.name}{main.unit ? `, ${main.unit}` : ""}</span><span>{main.points.length} values, last 12 months</span></p>
+                  <p className="po-legend"><span><i aria-hidden="true" />{main.name}{main.unit ? `, ${main.unit}` : ""}</span><span>{countOf(main.points.length, "value")}, last 12 months</span></p>
                   <LineChart points={chartPoints(main)} label={`${main.name} over the last 12 months`} unit={main.unit ?? undefined} height={260} />
                   {charted.length > 1 ? (
                     <div className="po-chart-pick" role="group" aria-label="Measure to chart">
-                      {charted.map((s) => <Button key={`${s.lab}${s.name}`} size="sm" variant={s === main ? "secondary" : "quiet"} aria-pressed={s === main} onClick={() => setPicked(s.name)}>{s.name}</Button>)}
+                      {charted.map((s) => <Button key={`${s.lab}${s.name}`} size="sm" variant="quiet" aria-pressed={s === main} onClick={() => setPicked(s.name)}>{s.name}</Button>)}
                     </div>
                   ) : null}
               </Card>
@@ -202,7 +203,7 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
         </Card>
       ) : tab === "results" ? (
         <>
-          <PatientResults patientId={patient.id} />
+          <div className="po-wrap po-full"><PatientResults patientId={patient.id} /></div>
           <LabCharts patientId={patient.id} />
         </>
       ) : (
@@ -218,7 +219,7 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
               <p className="pt-muted">No doses are due. Doses are counted from discharge.</p>
             ) : (
               <>
-                <p className="pt-muted"><strong>{a.taken} of {a.due}</strong> doses taken since discharge{a.line ? ` · ${a.line}` : ""}</p>
+                <p className="pt-muted"><strong>{formatNumber(a.taken)} of {formatNumber(a.due)}</strong> doses taken since discharge{a.line ? ` · ${a.line}` : ""}</p>
                 <meter className="po-meter" min={0} max={a.due} value={a.taken} aria-label="Doses taken" />
                 <ul className="pt-list">
                   {[...a.missed.map((d) => ({ d, missed: true })), ...a.late.map((d) => ({ d, missed: false }))].map(({ d, missed }) => (
@@ -241,14 +242,14 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
 /** "Metformin 500 mg twice daily": the name, then the dose muted. */
 function Medicines({ items, total, more }: { items?: string[]; total: number; more?: () => void }) {
   return (
-    <div className="po-wrap po-meds">
+    <div className="po-wrap po-full">
     <ListCard title="Medicines">
       {!items?.length ? <p className="pt-muted po-note">No medicines on record.</p> : null}
-      {items?.map((m) => {
+      {items?.map((m, i) => {
         const at = m.search(/\s\d/);
-        return <ListRow key={m} icon="pill" title={at < 0 ? m : <>{m.slice(0, at)} <span className="pt-muted">{m.slice(at + 1)}</span></>} />;
+        return <ListRow key={`${i}${m}`} icon="pill" title={at < 0 ? m : <>{m.slice(0, at)} <span className="pt-muted">{m.slice(at + 1)}</span></>} />;
       })}
-      {more && total > (items?.length ?? 0) ? <Button size="sm" onClick={more}>All {total} medicines</Button> : null}
+      {more && total > (items?.length ?? 0) ? <Button size="sm" onClick={more}>All {formatNumber(total)} medicines</Button> : null}
     </ListCard>
     </div>
   );
@@ -257,10 +258,12 @@ function Medicines({ items, total, more }: { items?: string[]; total: number; mo
 function TakeHome({ patient }: { patient: PatientRow }) {
   if (!patient.takeHome?.length) return null;
   return (
+    <div className="po-wrap po-full">
     <ListCard title="Take-home list">
-      {patient.takeHome.map((m) => (
-        <ListRow key={m.name} icon="pill" title={m.name} caption={m.detail} trailing={m.change !== "unchanged" ? <Chip tone={m.change === "stopped" ? "soon" : "info"}>{m.change}</Chip> : undefined} />
+      {patient.takeHome.map((m, i) => (
+        <ListRow key={`${i}${m.name}`} icon="pill" title={m.name} caption={m.detail} trailing={m.change !== "unchanged" ? <Chip tone={m.change === "stopped" ? "soon" : "info"}>{m.change}</Chip> : undefined} />
       ))}
     </ListCard>
+    </div>
   );
 }

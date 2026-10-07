@@ -1,7 +1,6 @@
 /* Sona Care follow-ups: 17px body, 48px targets, amber waiting, green confirmed, no red. */
 .fu { font-size: max(17px, 1rem); display: grid; gap: var(--space-4); }
 .fu .btn, .fu-doctor, .fu-pill, .fu-input { min-height: max(48px, var(--tap)); font-size: inherit; }
-.fu .chip { font-size: 15px; }
 .fu-muted { color: var(--muted); }
 .fu .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
@@ -11,18 +10,20 @@
 .fu-cal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .fu-cal-title { margin: 0; font-size: 1.1em; }
 .fu-cal-grid { list-style: none; margin: var(--space-3) 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--space-1); text-align: center; }
-.fu-cal-weekday { color: var(--muted); font-size: 14px; padding-block: var(--space-1); }
+.fu-cal-weekday { color: var(--muted); font-size: 15px; padding-block: var(--space-1); }
 
 .fu-list { list-style: none; margin: 0; padding: 0; }
 .fu-list > li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); padding-block: var(--space-3); border-top: 1px solid var(--line); }
 .fu-list > li:first-child { border-top: 0; }
 .fu-list > li > .list-row { padding-inline: 0; }
+/* A visit's name, doctor and room are read in full: rows wrap instead of cutting them off. */
+.fu-list > li { line-height: 1.35; }
 .fu-list > li > div:first-child:not(.list-row) { display: grid; gap: var(--space-1); min-width: 0; }
 .fu-side { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 
 .fu-step { margin: var(--space-4) 0 var(--space-2); font-size: 1em; }
-.fu-doctors { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
-.fu-doctor { width: 100%; display: grid; gap: var(--space-1); justify-items: start; text-align: start; padding: var(--space-3); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-md, 12px); cursor: pointer; }
+.fu-doctors { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.fu-doctor { width: 100%; min-width: 0; overflow-wrap: anywhere; display: grid; gap: var(--space-1); justify-items: start; text-align: start; padding: var(--space-3); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-md, 12px); cursor: pointer; }
 .fu-doctor span:not(.chip) { color: var(--muted); }
 .fu-pills { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
 .fu-pill { padding-inline: var(--space-4); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
@@ -37,7 +38,7 @@
 .fu-top .stat-row { margin: 0; }
 .fu-hero { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
 .fu-hero p { margin: 0; }
-.fu-hero-title { margin: 0; font-size: var(--text-panel); }
+.fu-hero-title { margin: 0; font-size: var(--text-panel); line-height: 1.25; overflow-wrap: break-word; }
 .fu-cols { gap: var(--gap-card); }
 @media (min-width: 1100px) {
   .fu-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
@@ -45,7 +46,7 @@
   .fu-cols[data-two] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .fu-visits { display: grid; gap: var(--space-2); align-content: start; }
-.fu-visits .tabs { justify-self: start; }
+.fu-visits .tabs { justify-self: start; max-width: 100%; }
 .fu-list > li { flex-wrap: nowrap; }
 .fu-cal-day { position: relative; width: 100%; aspect-ratio: 1; min-height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: inherit; font: inherit; cursor: pointer; }
 .fu-cal-day:hover { background: var(--canvas); }
@@ -63,6 +64,9 @@
 .fu-note[data-tone="done"] { background: var(--green-wash); }
 .fu-note[data-tone="info"] { background: var(--blue-wash); margin: 0; }
 #prep > form { height: 100%; }
+/* A question is up to 200 characters: it shows in full as it is typed. */
+#prep .rd-switch input { flex: none; }
+#prep textarea { width: 100%; resize: vertical; font: inherit; line-height: var(--line-body); }
 
 /* Top row: the next visit beside Sona's one suggestion. Then the calendar with its day panel beside the visit list. */
 .fu-cal-day { min-height: 48px; }
@@ -81,3 +85,5 @@
   .fu-cal { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--space-5, var(--space-4)); align-items: start; }
   .fu-cal-picked { padding-top: 0; border-top: 0; padding-left: var(--space-4); border-left: 1px solid var(--line); min-height: 100%; align-content: start; }
 }
+/* The month reads at a glance: day cells are a row of numbers, not 80px discs. */
+.fu-cal-day { aspect-ratio: auto; height: 48px; min-height: 48px; }

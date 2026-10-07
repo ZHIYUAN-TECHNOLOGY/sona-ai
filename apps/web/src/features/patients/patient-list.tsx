@@ -2,13 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { SegmentBar } from "@/components/charts";
 import { DataTable, type Column, PersonCell, RowAction, TableToolbar, TextCell } from "@/components/data-table";
 import type { IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Card, Chip, Pager, pageRange, SearchField, Signal, Skeleton, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
+import { countOf, formatNumber } from "@/lib/format";
 import { type client, orpc } from "@/lib/orpc";
 
 import { filterPatients, rankPatients } from "./search";
@@ -23,6 +23,16 @@ export function StatusChip({ patient }: { patient: PatientRow }) {
   if (status === "stable") return <Chip>Stable</Chip>;
   if (patient.incomplete) return <Chip tone="soon">Record incomplete</Chip>;
   return <Chip>Not on a ward</Chip>;
+}
+
+/** "F, 67 · SYN-1001": a part the record does not have (no sex, age 0 from an incomplete intake) is left out, never ", 0". */
+export const patientMeta = (p: { sex: string; age: number; id: string }) =>
+  [[p.sex.charAt(0).toUpperCase(), p.age > 0 ? p.age : ""].filter(Boolean).join(", "), p.id].filter(Boolean).join(" · ");
+
+/** The allergy as a chip: the first allergen, then how many more ("Penicillin +5"). The full text goes in the chip's `title`. */
+export function allergyChip(text: string) {
+  const [first = "", ...others] = text.split(";").map((part) => part.trim()).filter(Boolean);
+  return `${first.split(/[—(]/)[0]!.trim() || first}${others.length ? ` +${others.length}` : ""}`;
 }
 
 export const PATIENT_TABS = ["all", "ward", "watch", "fit", "incomplete"] as const;
@@ -41,17 +51,16 @@ const TAB_LABEL: Record<PatientTab, string> = { all: "All", ward: "On a ward", w
 function ListStatus({ patient }: { patient: PatientRow }) {
   const status = patient.ward?.status;
   const hours = status === "fit" ? patient.ward?.waitingHours : undefined;
-  if (hours) return <span className="ptl-status"><StatusChip patient={patient} /><span className="ptl-calm">{plural(hours, "hour")} waiting</span></span>;
+  if (hours) return <span className="ptl-status"><StatusChip patient={patient} /><span className="ptl-calm">{countOf(hours, "hour")} waiting</span></span>;
   if (status === "watch" || status === "fit" || (!status && patient.incomplete)) return <StatusChip patient={patient} />;
   return status === "stable" ? <Status tone="done">Stable</Status> : <Status>Not on a ward</Status>;
 }
 
 const statusRank = (p: PatientRow) => ["watch", "fit", "stable"].indexOf(p.ward?.status ?? "") + (p.ward ? 0 : p.incomplete ? 3 : 5);
 const PAGE_SIZE = 10;
-const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
 
 const columns: Column<PatientRow>[] = [
-  { key: "name", header: "Patient", cell: (p) => <PersonCell name={p.name} detail={`${p.sex.charAt(0).toUpperCase()}, ${p.age} · ${p.id}`} />, sort: (a, b) => a.name.localeCompare(b.name) },
+  { key: "name", header: "Patient", cell: (p) => <PersonCell name={p.name} detail={patientMeta(p)} />, sort: (a, b) => a.name.localeCompare(b.name) },
   { key: "reason", header: "Reason", cell: (p) => <span className="ptl-reason">{p.subtitle ? <strong>{p.subtitle}</strong> : null}<TextCell>{p.complaint}</TextCell></span>, sort: (a, b) => (a.subtitle ?? a.complaint ?? "").localeCompare(b.subtitle ?? b.complaint ?? "") },
   { key: "status", header: "Status", cell: (p) => <ListStatus patient={p} />, sort: (a, b) => statusRank(a) - statusRank(b) },
 ];
@@ -67,22 +76,22 @@ export function firstToSee(rows: PatientRow[]) {
   if (!patient) return undefined;
   const sbar = patient.ward?.sbar;
   const place: Fact[] = patient.subtitle ? [{ icon: "clipboard", text: patient.subtitle }] : [];
-  const others = (n: number, text: string): Fact[] => (n > 1 ? [{ icon: "users", text: `${plural(n - 1, "other patient")} ${text}` }] : []);
+  const others = (n: number, text: string): Fact[] => (n > 1 ? [{ icon: "users", text: `${countOf(n - 1, "other patient")} ${text}` }] : []);
   if (watch.length) {
     return {
       patient, tone: "soon" as const, label: "On watch", title: `See ${patient.name} first`,
-      lead: sbar?.a ?? patient.complaint ?? "Marked watch by the ward.",
+      lead: sbar?.a || patient.complaint || "Marked watch by the ward.",
       evidence: [...place, ...(sbar?.s ? [{ icon: "activity", text: sbar.s } as Fact] : []), ...others(watch.length, "on watch")],
-      step: sbar?.r ?? "Review the overview",
+      step: sbar?.r || "Review the overview",
     };
   }
   if (fit.length) {
     const hours = patient.ward?.waitingHours;
     return {
       patient, tone: "info" as const, label: "Medically fit", title: `${patient.name} is medically fit`,
-      lead: sbar?.a ?? patient.complaint ?? "The ward marks this patient fit for discharge.",
-      evidence: [...place, ...(hours ? [{ icon: "clock", text: `Waiting ${plural(hours, "hour")}` } as Fact] : []), ...others(fit.length, "medically fit")],
-      step: sbar?.r ?? "Review before discharge",
+      lead: sbar?.a || patient.complaint || "The ward marks this patient fit for discharge.",
+      evidence: [...place, ...(hours ? [{ icon: "clock", text: `Waiting ${countOf(hours, "hour")}` } as Fact] : []), ...others(fit.length, "medically fit")],
+      step: sbar?.r || "Review before discharge",
     };
   }
   return {
@@ -114,9 +123,6 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
   const count = (t: PatientTab) => all.filter(inTab[t]).length;
   const stat = (t: PatientTab) => (isPending ? <Skeleton width={56} height={40} /> : count(t));
   const rows = filterPatients(all.filter(inTab[tab]), query);
-  // Each patient in exactly one state for the chart, in the order the list is ranked.
-  const mix = { watch: 0, fit: 0, incomplete: 0, rest: 0 };
-  for (const p of all) mix[inTab.watch(p) ? "watch" : inTab.fit(p) ? "fit" : inTab.incomplete(p) ? "incomplete" : "rest"]++;
   const current = Math.min(page, Math.max(1, Math.ceil(rows.length / PAGE_SIZE)));
   const [from, to] = pageRange(current, PAGE_SIZE, rows.length);
   const insight = firstToSee(all);
@@ -125,7 +131,7 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
   const filter = (t: PatientTab) => ({ onSelect: () => pick(tab === t ? "all" : t), selected: t !== "all" && tab === t });
   const lead = isPending ? "Everyone registered at this hospital." : (
     <>
-      {count("watch") ? <Signal tone="soon">{count("watch")} on watch</Signal> : "No one on watch"} · {count("fit")} medically fit · {count("ward")} of {plural(all.length, "patient")} on a ward
+      {count("watch") ? <Signal tone="soon">{formatNumber(count("watch"))} on watch</Signal> : "No one on watch"} · {formatNumber(count("fit"))} medically fit · {formatNumber(count("ward"))} of {countOf(all.length, "patient")} on a ward
     </>
   );
 
@@ -157,7 +163,7 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
             />
           </TableToolbar>
         }
-        footer={<Pager page={current} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} noun="patients" />}
+        footer={<Pager page={current} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} noun={["patient", "patients"]} />}
       />
     </Card>
   );
@@ -167,9 +173,9 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
       <PageHeader title="Patients" lead={lead} />
       <StatRow>
         <StatCard title="Patients" value={stat("all")} caption="Registered at this hospital" {...filter("all")} />
-        <StatCard title="On a ward" value={stat("ward")} caption={`${count("fit")} medically fit`} {...filter("ward")} />
-        <StatCard title="On watch" value={stat("watch")} chip={count("watch") ? "Needs a look" : undefined} tone="soon" caption="Marked watch by the ward" {...filter("watch")} />
-        <StatCard title="Record incomplete" value={stat("incomplete")} chip={count("incomplete") ? "To complete" : undefined} tone="soon" caption="Details missing" {...filter("incomplete")} />
+        <StatCard title="On a ward" value={stat("ward")} caption={`${formatNumber(count("fit"))} medically fit`} {...filter("ward")} />
+        <StatCard title="On watch" value={stat("watch")} tone="soon" caption="Marked watch by the ward" {...filter("watch")} />
+        <StatCard title="Record incomplete" value={stat("incomplete")} tone="soon" caption="Details missing" {...filter("incomplete")} />
       </StatRow>
       {insight ? (
         <WithRail
@@ -177,14 +183,6 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
             <RightRail label="Who to see first">
               <InsightCard label={insight.label} title={insight.title} lead={insight.lead} tone={insight.tone} evidence={insight.evidence}
                 next={{ label: "Open", step: insight.step, onAct: () => open(insight.patient) }} />
-              <Card title="Patients by state">
-                <SegmentBar label="Patients by state" segments={[
-                  { label: "On watch", value: mix.watch, tone: "amber" },
-                  { label: "Medically fit", value: mix.fit, tone: "green" },
-                  { label: "Record incomplete", value: mix.incomplete, tone: "blue" },
-                  { label: "Everyone else", value: mix.rest, tone: "neutral" },
-                ]} />
-              </Card>
             </RightRail>
           }
         >

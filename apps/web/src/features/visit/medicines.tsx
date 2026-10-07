@@ -3,13 +3,17 @@ import type { MedicationEntry, Patient } from "@sona-ai/domain/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { Button, Card, Chip, Field, ListRow } from "@/components/primitives";
+import { Button, Card, Field, ListRow, Signal } from "@/components/primitives";
+import { countOf } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 
 import { entryProblem, NO_REGIMEN, REGIMEN, type RegimenDraft, regimenOf } from "./medicine-entry";
 import { refusal, type VisitPatient } from "./visit";
 
 export type MedicineState = { medicationEntries?: MedicationEntry[]; proposedMedicine?: string; reviewInvalidated?: boolean; medicationCheckedRevision?: number };
+
+// A long list waits behind one tap, so the order card below stays in reach.
+const FIRST = 6;
 
 const isConflict = (error: unknown) => (error as { code?: string } | null)?.code === "CONFLICT";
 
@@ -20,6 +24,7 @@ export function Medicines({ encounterId, revision, state, patient, canEdit }: { 
   const [entry, setEntry] = useState<MedicationEntry>();
   const [regimen, setRegimen] = useState<RegimenDraft>();
   const [problem, setProblem] = useState<string>();
+  const [all, setAll] = useState(false);
   const options = {
     onSuccess: (snapshot: unknown) => { queryClient.setQueryData(queryKey, snapshot as never); setEntry(undefined); setRegimen(undefined); },
     // Refused as stale or otherwise: read the visit again so the next attempt carries the current revision.
@@ -31,6 +36,8 @@ export function Medicines({ encounterId, revision, state, patient, canEdit }: { 
   // Until the visit has its own list, it starts from the medicines on the patient's record, as on the phone.
   const entries: MedicationEntry[] = state.medicationEntries ?? defaultMedications(patient as Patient);
   const proposed = state.proposedMedicine;
+  const shown = all ? entries : entries.slice(0, FIRST);
+  const unconfirmed = entries.filter(e => !e.confirmed).length;
   const failed = edit.error ?? record.error;
   const saveEntries = (medicationEntries: MedicationEntry[]) => { record.reset(); edit.mutate({ encounterId, expectedRevision: revision, medicationEntries }); };
   const saveProposed = (proposedMedicine: string) => { record.reset(); edit.mutate({ encounterId, expectedRevision: revision, proposedMedicine }); };
@@ -54,17 +61,25 @@ export function Medicines({ encounterId, revision, state, patient, canEdit }: { 
       {state.reviewInvalidated ? <p role="status" className="visit-refused">The visit was edited after its last medication review. Review it again before ordering.</p> : null}
       {entries.length ? null : <p className="visit-muted">No medicines are recorded for this visit.</p>}
       <ul className="list visit-med-list">
-      {entries.map(e => (
+      {shown.map(e => (
         <ListRow key={e.id} icon="pill" title={e.name}
-          caption={[e.ingredient || "ingredient not set", e.formulation || "form not set", e.change].filter(Boolean).join(" · ")}
+          // Only an unconfirmed medicine is marked, in the caption, so the row's two buttons always fit beside the name in the rail.
+          caption={<>{[e.ingredient || "ingredient not set", e.formulation || "form not set", e.change].filter(Boolean).join(" · ")}{e.confirmed ? null : <> · <Signal tone="soon">not confirmed</Signal></>}</>}
           trailing={
             <span className="visit-row-actions">
-              {e.confirmed ? <Chip tone="done">Confirmed</Chip> : <Chip tone="amber">Not confirmed</Chip>}
               {canEdit ? <Button size="sm" onClick={() => open({ entry: e })}>Edit</Button> : null}
               {canEdit ? <Button size="sm" aria-label={`Remove ${e.name}`} pending={edit.isPending} onClick={() => saveEntries(entries.filter(x => x.id !== e.id))}>Remove</Button> : null}
             </span>
           } />
       ))}
+      {entries.length > FIRST ? (
+        <li className="visit-med-more">
+          <Button size="sm" variant="quiet" aria-expanded={all} onClick={() => setAll(!all)}>
+            {all ? "Show fewer" : `Show all ${countOf(entries.length, "medicine")}`}
+          </Button>
+          {unconfirmed ? <span className="visit-muted">{unconfirmed} not confirmed</span> : null}
+        </li>
+      ) : null}
 
       <ListRow icon="pill" title={proposed || "No medicine proposed yet"} caption="Proposed order"
         trailing={canEdit ? (

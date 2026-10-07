@@ -5,10 +5,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Chip, ListCard, ListRow, SearchField, Signal, Tabs } from "@/components/primitives";
+import { Button, Chip, ListCard, ListRow, SearchField, Signal, Tabs } from "@/components/primitives";
 import { ReplyEditor } from "@/features/messages/draft";
 import { ago, triageBy } from "@/features/messages/format";
 import { Thread } from "@/features/messages/thread";
+import { countOf, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 
 import "@/styles/pages/messages.css";
@@ -51,6 +52,7 @@ function ReplyPanel({ patientId, name, waiting }: { patientId: string; name: str
 }
 
 type Filter = "waiting" | "all";
+const PAGE = 50;
 
 function Page() {
   const { me } = Route.useRouteContext();
@@ -60,6 +62,8 @@ function Page() {
   const [picked, setPicked] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
+  // ponytail: the inbox is unbounded, so it draws PAGE rows at a time; virtualize if a ward ever pages through thousands.
+  const [limit, setLimit] = useState(PAGE);
 
   if (!can(me.role, "messages.inbox")) return <><PageHeader title="Messages" /><EmptyState>Your role cannot see the care inbox.</EmptyState></>;
   if (inbox.isPending) return <><PageHeader title="Messages" /><EmptyState>Loading messages…</EmptyState></>;
@@ -76,11 +80,16 @@ function Page() {
   const visible = (filter === "waiting" ? waiting : threads).filter(t => !needle || `${t.name} ${t.lastText ?? ""}`.toLowerCase().includes(needle));
   const selected = visible.find(t => t.patientId === (picked ?? patient)) ?? visible[0];
   const urgent = waiting.filter(t => t.label === "urgent").length;
+  // One column below 1000px: the thread opens under the whole inbox, so a picked row brings it into view.
+  const pick = (id: string) => {
+    setPicked(id);
+    if (window.matchMedia("(max-width: 1000px)").matches) requestAnimationFrame(() => document.querySelector(".msg-panes > .msg-thread")?.scrollIntoView({ block: "start" }));
+  };
   const lead = (
     <>
-      {unread} unread ·{" "}
-      {waiting.length ? <Signal tone="soon">{waiting.length} waiting for a reply</Signal> : "nobody waiting for a reply"}
-      {urgent ? <> · <Signal tone="urgent">{urgent} urgent</Signal></> : null}
+      {formatNumber(unread)} unread ·{" "}
+      {waiting.length ? <Signal tone="soon">{formatNumber(waiting.length)} waiting for a reply</Signal> : "nobody waiting for a reply"}
+      {urgent ? <> · <Signal tone="urgent">{formatNumber(urgent)} urgent</Signal></> : null}
       {oldest ? ` · oldest ${ago(oldest.waitingSince!, now)}` : null}
     </>
   );
@@ -95,12 +104,14 @@ function Page() {
           {visible.length
             ? (
               <ListCard>
-                {visible.map(t => (
+                {visible.slice(0, limit).map(t => (
                   <ListRow
                     key={t.patientId}
+                    wrap
+                    captionTitle={t.lastPhoto ? `Photo · ${t.lastPhoto}` : t.lastText}
                     avatar={t.name}
                     selected={t.patientId === selected?.patientId}
-                    onClick={() => setPicked(t.patientId)}
+                    onClick={() => pick(t.patientId)}
                     title={(
                       <span className="msg-title">
                         <strong>{t.name}</strong>
@@ -116,6 +127,7 @@ function Page() {
                     )}
                   />
                 ))}
+                {visible.length > limit ? <Button onClick={() => setLimit(l => l + PAGE)}>Show {countOf(Math.min(PAGE, visible.length - limit), "more thread")}</Button> : null}
               </ListCard>
             )
             : <EmptyState>{needle ? "No thread matches that search." : "No one is waiting for a reply."}</EmptyState>}

@@ -8,9 +8,11 @@ import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader, PatientStrip } from "@/components/page";
 import { Button, Card, Chip, Signal, Skeleton } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
+import { allergyChip, patientMeta } from "@/features/patients/patient-list";
 import { Note } from "@/features/visit/note";
 import { Orders } from "@/features/visit/orders";
 import { nextVisit, orderChecks, refusal, type VisitPatient } from "@/features/visit/visit";
+import { countOf } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import { Reasoning } from "@/features/visit-tools/reasoning";
 import { Scan } from "@/features/visit-tools/scan";
@@ -40,10 +42,10 @@ function Page() {
         lead={<Standing encounterId={encounterId} patient={patient} />}
         actions={<><Button to="/pro/visit" search={{}}>Today's visits</Button><span className="visit-header-slot" ref={setActions} /></>} />
       {patient ? (
-        <PatientStrip name={patient.name} meta={`${patient.sex.charAt(0).toUpperCase()}, ${patient.age} · ${patient.id}${patient.complaint ? ` · ${patient.complaint}` : ""}`}
-          chips={patient.allergies ? <span className="visit-allergy" title={`Allergy: ${patient.allergies}`}><Chip tone="red" icon="alert">Allergy: {shortAllergy(patient.allergies)}</Chip></span> : <span className="visit-muted">No allergies recorded</span>} />
+        <PatientStrip name={patient.name} meta={[patientMeta(patient), patient.complaint].filter(Boolean).join(" · ")}
+          chips={patient.allergies ? <span className="visit-allergy" title={`Allergy: ${patient.allergies}`}><Chip tone="red" icon="alert">Allergy: {allergyChip(patient.allergies)}</Chip></span> : <span className="visit-muted">No allergies recorded</span>} />
       ) : null}
-      <WithRail rail={
+      <WithRail follow rail={
         <RightRail label="The medicine order and Sona AI">
           {/* The decision first, so its checks and buttons are in view; what the record says sits under it. */}
           <div id="visit-orders">
@@ -92,9 +94,6 @@ function Briefing({ encounterId }: { encounterId: string }) {
   );
 }
 
-/** The allergen alone: the text before the first dash, semicolon or bracket. The full text stays in `title`. */
-const shortAllergy = (text: string) => text.split(/[—;(]/)[0]!.trim();
-
 /** Hospital time is UTC+8: today's date there, whatever the browser's zone. */
 const today = () => new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
 const clock = (at: string | Date) => new Date(at).toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Kuala_Lumpur" });
@@ -123,11 +122,11 @@ function Pick({ patients }: { patients: { data?: { id: string; encounterId: stri
       <PageHeader title="Visit"
         lead={!day.data ? undefined : !visits.length ? "No visits booked today" : (
           <>
-            {visits.length} {visits.length === 1 ? "visit" : "visits"} today
-            {incomplete ? <> · <Signal tone="soon">{incomplete} {incomplete === 1 ? "record" : "records"} incomplete</Signal></> : null}
+            {countOf(visits.length, "visit")} today
+            {incomplete ? <> · <Signal tone="soon">{countOf(incomplete, "record")} incomplete</Signal></> : null}
           </>
         )}
-        actions={next ? <Button variant="primary" icon="arrow-right" onClick={() => open(next)}>Open next visit · {next.patientName}</Button> : undefined} />
+        actions={next ? <Button variant="primary" icon="arrow-right" title={`Open next visit: ${next.patientName}`} onClick={() => open(next)}>Open next visit · <span className="visit-next-name">{next.patientName}</span></Button> : undefined} />
       {day.isError ? <EmptyState icon="alert" action={toPatients}>{refusal(day.error).message}</EmptyState> : (
         <DataTable columns={columns} rows={visits} rowKey={v => v.id} loading={day.isPending} onRowOpen={open}
           toolbar={<h2 className="visit-table-title">Today's visits</h2>}

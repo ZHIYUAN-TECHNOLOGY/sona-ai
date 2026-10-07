@@ -25,3 +25,14 @@ test("weekDots marks each dose done, missed or upcoming", () => {
   expect(days[6]!.dots.map(d => d.state)).toEqual(["upcoming", "upcoming"]);
   expect(days[5]!.dots.map(d => d.state)).toEqual(["missed", "missed"]);
 });
+
+test("a medicine taken for a year reads only the days it shows: same doses, without rebuilding every one since discharge", () => {
+  const long = Array.from({ length: 18 }, (_, i) => ({ name: `Med ${i}`, line: "x", at: ["08:00", "12:00", "18:00", "22:00"] }));
+  const yearAgo = new Date(now.getTime() - 400 * 86_400_000).toISOString();
+  const started = performance.now();
+  const today = dosesToday(long, yearAgo, [], now), next = nextDose(long, yearAgo, [], now), week = weekDots(long, yearAgo, [], now, "en");
+  expect(performance.now() - started).toBeLessThan(40);
+  expect(today).toHaveLength(72);
+  expect(next?.key).toBe("Med 0@2026-10-03T00:00:00.000Z");
+  expect(week.map(d => d.dots.length)).toEqual([72, 72, 72, 72, 72, 72, 72]);
+});

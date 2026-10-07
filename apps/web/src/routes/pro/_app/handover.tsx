@@ -6,6 +6,7 @@ import { useState } from "react";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Avatar, Button, Card, Chip, Field, Select, Signal, Skeleton, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
+import { countOf, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import { Marked, MarkKey } from "@/components/marked";
 import "@/styles/pages/handover.css";
@@ -35,7 +36,7 @@ function Page() {
   const going = watch.filter(c => cardIds.includes(c.id));
   const [tab, setTab] = useState<State>("all");
   const shown = tab === "all" ? all : all.filter(c => (c.priority === "watch") === (tab === "watch"));
-  const n = (count: number) => `${count} patient${count === 1 ? "" : "s"}`;
+  const n = (count: number) => countOf(count, "patient");
   const receiver = receivers.data?.find(r => r.id === accept.data?.toUser);
   const flip = (prev: ReadonlySet<string>, id: string) => { const next = new Set(prev); if (!next.delete(id)) next.add(id); return next; };
   const toggle = (id: string) => setHeld(prev => flip(prev, id));
@@ -55,14 +56,14 @@ function Page() {
         lead={cards.data ? (
           <>
             {n(cardIds.length)} to hand over ·{" "}
-            {watch.length ? <Signal tone="soon">{watch.length} need{watch.length === 1 ? "s" : ""} watching</Signal> : "all stable"}
-            {done.size ? <> · <Signal tone="done">{done.size} handed over</Signal></> : null}
+            {watch.length ? <Signal tone="soon">{formatNumber(watch.length)} need{watch.length === 1 ? "s" : ""} watching</Signal> : "all stable"}
+            {done.size ? <> · <Signal tone="done">{formatNumber(done.size)} handed over</Signal></> : null}
           </>
         ) : "The patients you hand to the next shift."} />
       {cards.data && all.length > 0 ? (
         <StatRow>
-          <StatCard title="To hand over" value={cardIds.length} unit={`of ${all.length}`} caption={held.size ? `${held.size} held back` : done.size ? `${done.size} handed over` : "Everyone on your list"} onSelect={() => setTab("all")} selected={tab === "all"} />
-          <StatCard title="Need watching" value={watch.length} chip={watch.length ? "Watch" : undefined} tone="soon" caption={watch.length ? "Read these first" : "Nobody on watch"} onSelect={() => setTab("watch")} selected={tab === "watch"} />
+          <StatCard title="To hand over" value={cardIds.length} unit={`of ${formatNumber(all.length)}`} caption={held.size ? `${formatNumber(held.size)} held back` : done.size ? `${formatNumber(done.size)} handed over` : "Everyone on your list"} onSelect={() => setTab("all")} selected={tab === "all"} />
+          <StatCard title="Need watching" value={watch.length} tone="soon" caption={watch.length ? "Read these first" : "Nobody on watch"} onSelect={() => setTab("watch")} selected={tab === "watch"} />
           <StatCard title="Stable" value={all.length - watch.length} caption="Not on watch" onSelect={() => setTab("stable")} selected={tab === "stable"} />
         </StatRow>
       ) : null}
@@ -83,7 +84,7 @@ function Page() {
                 {cardIds.length > 0 ? (
                   <dl className="ho-review">
                     <dt>Handing over</dt><dd>{n(cardIds.length)}</dd>
-                    <dt>On watch</dt><dd>{going.length ? going.map(c => c.name).join(", ") : "Nobody"}</dd>
+                    <dt>On watch</dt><dd>{going.length ? <>{going.slice(0, 3).map((c, i) => <span key={c.id}>{i ? ", " : null}<bdi>{c.name}</bdi></span>)}{going.length > 3 ? ` and ${formatNumber(going.length - 3)} more` : null}</> : "Nobody"}</dd>
                     {held.size > 0 ? <><dt>Held back</dt><dd>{n(held.size)}, staying with you</dd></> : null}
                   </dl>
                 ) : null}
@@ -119,7 +120,7 @@ function Page() {
                 <label className="ho-bulk-pick">
                   <input type="checkbox" className="ho-check" checked={pickable.length > 0 && picked === pickable.length} disabled={pickable.length === 0}
                     ref={el => { if (el) el.indeterminate = picked > 0 && picked < pickable.length; }} onChange={e => pickAll(e.target.checked)} />
-                  <span>{picked} of {pickable.length} selected</span>
+                  <span>{formatNumber(picked)} of {formatNumber(pickable.length)} selected</span>
                 </label>
               )}
               {mayAccept && watch.length > 0 && watch.length < all.length && (
@@ -147,7 +148,7 @@ function Page() {
                     {mayAccept && <input type="checkbox" className="ho-check" aria-label={`Hand over ${c.name}`} checked={!held.has(c.id)} disabled={done.has(c.id)} onChange={() => toggle(c.id)} />}
                     <Avatar name={c.name} />
                     <div className="ho-who">
-                      <strong>{c.name}</strong>
+                      <strong><bdi>{c.name}</bdi></strong>
                       <span className="ho-muted">{c.meta}</span>
                     </div>
                     {done.has(c.id) ? <Chip tone="done" icon="check">Handed over</Chip>
@@ -161,7 +162,7 @@ function Page() {
                     <dt>Assessment</dt><dd><Marked text={c.assessment} /></dd>
                     {c.recommendation.length > 0 && <><dt>To do</dt><dd><ul>{c.recommendation.map(r => <li key={r}><Marked text={r} /></li>)}</ul></dd></>}
                   </dl>
-                  {c.sources.length > 0 && <p className="ho-muted">You decide · {c.sources.length} source{c.sources.length === 1 ? "" : "s"}</p>}
+                  {c.sources.length > 0 && <p className="ho-muted">You decide · {countOf(c.sources.length, "source")}</p>}
                   </details>
                 </li>
               ))}

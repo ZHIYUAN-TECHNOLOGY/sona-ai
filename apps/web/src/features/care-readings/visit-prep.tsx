@@ -37,7 +37,7 @@ function PrepForm({ prep }: { prep: Prep }) {
       <p className="rd-calm">{whenWords(new Date(prep.appointment!.startsAt), lang)}. Ask up to three questions. Your doctor reads them before you arrive.</p>
       {questions.map((q, i) => (
         <Field key={i} label={`Question ${i + 1}`}>
-          {c => <input {...c} maxLength={200} value={q} onChange={e => setQuestions(qs => qs.map((old, j) => (j === i ? e.target.value : old)))} />}
+          {c => <textarea {...c} rows={2} maxLength={200} value={q} onChange={e => setQuestions(qs => qs.map((old, j) => (j === i ? e.target.value : old)))} />}
         </Field>
       ))}
       <label className="rd-switch">

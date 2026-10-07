@@ -27,3 +27,21 @@
 .dp-text:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .dp-refused { display: grid; gap: var(--space-2); padding: var(--space-3); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-control); text-align: left; }
 .dp-refused ul { margin: 0; padding-left: var(--space-4); color: var(--muted); }
+/* The picker's search sits on the title's line at the right, not as a second header inside the card. */
+.dp-pick { position: relative; }
+.dp-pick > .dp-pick-head { position: absolute; top: calc(var(--pad-card) - 6px); right: var(--pad-card); margin: 0; padding: 0; border: 0; }
+.dp-pick > .dp-pick-head .search-field { width: 13rem; height: 34px; }
+/* A readiness check and a take-home medicine are read in full before approving: their lines wrap, never "…". */
+.dp-stack .list-row :is(.list-title, .list-caption) { white-space: normal; overflow-wrap: anywhere; }
+/* The picker's reason ("Bed 12A · discharge barriers: …") wraps to two lines; on a narrow screen the state chip and
+   the link move under the name instead of squeezing it away. */
+.dp-pick .list-row { flex-wrap: wrap; }
+.dp-pick .list-text { flex: 1 1 14ch; }
+.dp-pick .list-caption { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; }
+/* The title wraps beside the search rather than running under it; on a phone the search drops below the title. */
+.dp-pick > .card-head .card-title { padding-right: calc(13rem + var(--space-3)); }
+@media (max-width: 40rem) {
+  .dp-pick > .dp-pick-head { position: static; padding: 0 0 var(--space-3); }
+  .dp-pick > .dp-pick-head .search-field { width: 100%; }
+  .dp-pick > .card-head .card-title { padding-right: 0; }
+}

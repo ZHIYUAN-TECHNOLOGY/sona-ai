@@ -4,13 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { BarChart, BarList, SegmentBar } from "@/components/charts";
+import { BarChart } from "@/components/charts";
 import { DataTable, PersonCell, RowAction, TableToolbar, type Column } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow, SearchField, Select, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { revealRail, RightRail, WithRail } from "@/components/rail";
 import { freeBy, Loaded, rankBeds, unownedOn } from "@/features/ward/state";
+import { countOf, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/ward.css";
 
@@ -19,7 +20,6 @@ export const Route = createFileRoute("/pro/_app/ward")({ component: Page });
 type Tab = "all" | "blocked" | "unowned" | "watch" | "free";
 const STATUS = { fit: "Medically fit", watch: "Being watched", stable: "Stable", empty: "Empty", free: "Free" };
 const hour = (at: Date | string) => new Date(at).toLocaleTimeString("en-GB", { hour: "2-digit", timeZone: "Asia/Kuala_Lumpur" }) + ":00";
-const s = (count: number) => count === 1 ? "" : "s";
 
 function Page() {
   const { me } = Route.useRouteContext();
@@ -55,16 +55,9 @@ function Page() {
 
   const occupied = all.filter(b => b.name).length;
   const groups: Record<Tab, BedRow[]> = { all, blocked, unowned: noOwner, watch: all.filter(b => b.status === "watch"), free: all.filter(b => !b.name) };
-  // One pass for the charts: each bed in exactly one state, and how many beds wait on each kind of blocker.
-  const states = { unowned: 0, blocked: 0, watch: 0, clear: 0, free: 0 };
-  const waits = new Map<string, number>();
-  for (const b of all) {
-    states[!b.name ? "free" : unownedOn(b, owners) > 0 ? "unowned" : b.blockers.length ? "blocked" : b.status === "watch" ? "watch" : "clear"]++;
-    for (const x of b.blockers) waits.set(x.label, (waits.get(x.label) ?? 0) + 1);
-  }
-  const holding = [...waits].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
   const q = search.trim().toLowerCase();
   const rows = groups[tab].filter(b => !q || `${b.bed} ${b.name ?? ""} ${b.blockers.map(x => x.label).join(" ")}`.toLowerCase().includes(q));
+  // 50 beds a page: a ward of hundreds stays quick to draw and to scan; a new tab or search starts on page 1.
   const bed = all.find(b => b.bed === picked) ?? all[0];
   // The suggested next step once this bed's blockers all have an owner.
   const nextBed = bed && unownedOn(bed, owners) === 0 ? noOwner[0] : undefined;
@@ -76,11 +69,11 @@ function Page() {
   };
 
   const columns: Column<BedRow>[] = [
-    { key: "bed", header: "Bed", cell: b => <span className="ward-bed"><strong>{b.bed}</strong>{b.predicted ? <span className="ward-muted">{freeBy(b.predicted)}</span> : null}</span>, sort: (x, y) => x.bed.localeCompare(y.bed, undefined, { numeric: true }) },
+    { key: "bed", header: "Bed", cell: b => <span className="ward-bed"><strong title={b.bed}>{b.bed}</strong>{b.predicted ? <span className="ward-muted" title={freeBy(b.predicted)}>{freeBy(b.predicted)}</span> : null}</span>, sort: (x, y) => x.bed.localeCompare(y.bed, undefined, { numeric: true }) },
     { key: "patient", header: "Patient", cell: b => b.name ? <PersonCell name={b.name} detail={b.meta} /> : <span className="ward-muted">No patient</span> },
     {
-      key: "waits", header: "Discharge barrier", cell: b => b.blockers.length === 0 ? (b.status === "watch" ? <Status tone="info">Being watched</Status> : b.name ? <Status tone="done">Nothing blocking</Status> : <Status>Free</Status>) : (
-        <span className="ward-waits"><span>{b.blockers.map(x => x.label).join(", ")}</span>{ownerLine(b)}</span>
+      key: "waits", header: "Discharge barrier", cell: b => b.blockers.length === 0 ? (b.status === "watch" ? <Status tone="info">Being watched</Status> : b.name ? <Status tone="done">Nothing blocking</Status> : <Status>{STATUS[b.status]}</Status>) : (
+        <span className="ward-waits"><span className="ward-first" title={b.blockers.map(x => x.label).join(", ")}><span>{b.blockers[0]!.label}</span>{b.blockers.length > 1 ? <span className="ward-more">+{formatNumber(b.blockers.length - 1)} more</span> : null}</span>{ownerLine(b)}</span>
       ),
     },
   ];
@@ -90,9 +83,9 @@ function Page() {
       <PageHeader title="Ward"
         lead={beds.data ? (
           <>
-            {occupied} of {all.length} beds occupied ·{" "}
-            {blocked.length ? <Signal tone="soon">{blocked.length} blocked</Signal> : "none blocked"} ·{" "}
-            {unowned ? <Signal tone="urgent">{unowned} discharge barrier{s(unowned)} unassigned</Signal> : "every discharge barrier is assigned"}
+            {formatNumber(occupied)} of {countOf(all.length, "bed")} occupied ·{" "}
+            {blocked.length ? <Signal tone="soon">{formatNumber(blocked.length)} blocked</Signal> : "none blocked"} ·{" "}
+            {unowned ? <Signal tone="urgent">{countOf(unowned, "discharge barrier")} unassigned</Signal> : all.length ? "every discharge barrier is assigned" : "no discharge barrier"}
           </>
         ) : "Loading the ward…"}
         status={mayAssign ? undefined : "Your role can see the ward but cannot assign discharge barriers."} />
@@ -100,30 +93,16 @@ function Page() {
         <>
         <StatRow>
           <StatCard title="Beds occupied" value={occupied} unit={`of ${all.length}`} progress={all.length ? occupied / all.length : 0} feature onSelect={() => setTab("all")} selected={tab === "all"} />
-          <StatCard title="Blocked" value={blocked.length} unit="beds" caption={blocked.length ? `${blocked.flatMap(b => b.blockers).length} discharge barriers` : "No bed is blocked"} chip={blocked.length ? "Needs action" : undefined} tone="soon" onSelect={() => setTab("blocked")} selected={tab === "blocked"} />
-          <StatCard title="Unassigned" value={unowned} caption={unowned ? `Barrier${s(unowned)} on ${noOwner.length} bed${s(noOwner.length)}` : "Every barrier is assigned"} chip={unowned ? "Assign" : undefined} tone="urgent" onSelect={() => setTab("unowned")} selected={tab === "unowned"} />
-          <StatCard title="Free" value={groups.free.length} unit="now" caption={forecast.data ? `${forecast.data.today.count} due for discharge today` : undefined} onSelect={() => setTab("free")} selected={tab === "free"} />
+          <StatCard title="Blocked" value={blocked.length} unit="beds" caption={blocked.length ? countOf(blocked.flatMap(b => b.blockers).length, "discharge barrier") : "No bed is blocked"} tone="soon" onSelect={() => setTab("blocked")} selected={tab === "blocked"} />
+          <StatCard title="Unassigned" value={unowned} caption={unowned ? `${unowned === 1 ? "Barrier" : "Barriers"} on ${countOf(noOwner.length, "bed")}` : "Every barrier is assigned"} tone="urgent" onSelect={() => setTab("unowned")} selected={tab === "unowned"} />
+          <StatCard title="Free" value={groups.free.length} unit="now" caption={forecast.data ? `${formatNumber(forecast.data.today.count)} due for discharge today` : undefined} onSelect={() => setTab("free")} selected={tab === "free"} />
         </StatRow>
-        <div className="chart-row">
-          <Card title="Beds by state">
-            <SegmentBar label="Beds by state" segments={[
-              { label: "Blocked, unassigned", value: states.unowned, tone: "red" },
-              { label: "Blocked, assigned", value: states.blocked, tone: "amber" },
-              { label: "On watch only", value: states.watch, tone: "blue" },
-              { label: "Nothing blocking", value: states.clear, tone: "green" },
-              { label: "Free", value: states.free, tone: "neutral" },
-            ]} />
-          </Card>
-          <Card title="Discharge barriers">
-            {holding.length ? <BarList label="Beds held by each discharge barrier" rows={holding} tone="amber" unit="beds" /> : <p className="ward-muted">Nothing is holding a bed.</p>}
-          </Card>
-        </div>
         </>
       ) : null}
       <WithRail rail={(
         <RightRail label="Bed detail, huddle brief and forecast" id="ward-rail">
           {bed ? (
-            <Card title={bed.bed}>
+            <Card title={bed.bed} className="ward-detail">
               {bed.name ? <PersonCell name={bed.name} detail={bed.meta} /> : <p className="ward-muted">No patient in this bed.</p>}
               <dl className="ward-counts ward-gap">
                 <dt>Status</dt><dd>{STATUS[bed.status]}</dd>
@@ -162,20 +141,21 @@ function Page() {
           </Card>
           {ops.data ? (
             <ListCard title="Last 7 days">
-              <ListRow icon="home" title="Discharges" trailing={<span className="ward-num">{ops.data.discharges}</span>} />
-              <ListRow icon="clock" title="Bed minutes saved" trailing={<span className="ward-num">{ops.data.bedMinutesSaved}</span>} />
-              <ListRow icon="alert" title="Red flags acted on" trailing={<span className="ward-num">{ops.data.redFlagsActedOn} of {ops.data.redFlags}</span>} />
-              <ListRow icon="message" title="Check-ins answered" trailing={<span className="ward-num">{ops.data.checkInsAnswered} of {ops.data.checkInsSent}</span>} />
+              <ListRow icon="home" title="Discharges" trailing={<span className="ward-num">{formatNumber(ops.data.discharges)}</span>} />
+              <ListRow icon="clock" title="Bed minutes saved" trailing={<span className="ward-num">{formatNumber(ops.data.bedMinutesSaved)}</span>} />
+              <ListRow icon="alert" title="Red flags acted on" trailing={<span className="ward-num">{formatNumber(ops.data.redFlagsActedOn)} of {formatNumber(ops.data.redFlags)}</span>} />
+              <ListRow icon="message" title="Check-ins answered" trailing={<span className="ward-num">{formatNumber(ops.data.checkInsAnswered)} of {formatNumber(ops.data.checkInsSent)}</span>} />
             </ListCard>
           ) : <p className="ward-muted">{ops.isPending ? "Loading the ops counter…" : `No ops counter: ${ops.error?.message}`}</p>}
         </RightRail>
       )}>
         <Loaded query={beds} what="the ward" empty="No beds on this ward yet.">
           {() => (
-            <DataTable columns={columns} rows={rows} rowKey={b => b.bed} selectedKey={bed?.bed} onRowOpen={b => setPicked(b.bed)}
-              empty={q ? `No bed matches "${search}".` : "No beds in this state."} count={`Showing ${rows.length} of ${all.length} beds`}
+            <DataTable columns={columns} rows={rows} pageSize={50} noun={["bed", "beds"]} rowKey={b => b.bed} selectedKey={bed?.bed} onRowOpen={b => setPicked(b.bed)}
+              empty={q ? `No bed matches "${search}".` : "No beds in this state."}
+              count={`Showing ${formatNumber(rows.length)} of ${countOf(all.length, "bed")}`}
               toolbar={(
-                <TableToolbar end={<SearchField className="ward-search" label="Search bed, patient or discharge barrier" placeholder="Search beds" value={search} onChange={e => setSearch(e.target.value)} />}>
+                <TableToolbar end={<SearchField label="Search bed, patient or discharge barrier" placeholder="Search beds" value={search} onChange={e => setSearch(e.target.value)} />}>
                   <Tabs label="Beds by state" value={tab} onChange={setTab} tabs={[
                     { id: "all", label: "All", count: all.length }, { id: "blocked", label: "Blocked", count: blocked.length },
                     { id: "unowned", label: "Unassigned", count: noOwner.length },

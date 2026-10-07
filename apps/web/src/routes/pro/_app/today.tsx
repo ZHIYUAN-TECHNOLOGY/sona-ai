@@ -10,6 +10,7 @@ import { Button, Card, Chip, ListCard, ListRow, SearchField, Signal, StatCard, S
 import { RightRail, WithRail } from "@/components/rail";
 import { BookingRequests } from "@/features/today/booking-requests";
 import { dateKey, hourOf, longLabel, timeOf } from "@/features/today/time";
+import { countOf, formatNumber } from "@/lib/format";
 import { type client, orpc } from "@/lib/orpc";
 import "@/styles/pages/today.css";
 
@@ -17,7 +18,8 @@ export const Route = createFileRoute("/pro/_app/today")({ component: Page });
 
 type Visit = Awaited<ReturnType<typeof client.day.list>>[number];
 
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+/** The rail names this many incomplete records; the rest are one tap away in the table's Incomplete tab. */
+const RAIL_CAP = 5;
 
 type Filter = "all" | "upcoming" | "earlier" | "incomplete";
 
@@ -61,12 +63,14 @@ function Page() {
   const hour = hourOf(new Date());
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const time = (v: Visit) => timeOf(new Date(v.startsAt));
-  const toggle = (to: Filter) => setFilter(f => f === to ? "all" : to);
+  const pick = (to: Filter) => setFilter(to);
+  const toggle = (to: Filter) => pick(filter === to ? "all" : to);
+  const alsoIncomplete = others.slice(0, RAIL_CAP).map(v => v.patientName).join(", ") + (others.length > RAIL_CAP ? ` and ${countOf(others.length - RAIL_CAP, "other")}` : "");
   const calm = day.data && !incomplete.length && (!seesRequests || (requests.data && !waiting.length));
 
   const columns: Column<Visit>[] = [
     { key: "time", header: "Time", cell: v => <span className="today-time">{time(v)}</span> },
-    { key: "patient", header: "Patient", cell: v => <PersonCell name={v.patientName} detail={v.kind} /> },
+    { key: "patient", header: "Patient", minWidth: "13rem", cell: v => <PersonCell name={v.patientName} detail={v.kind} /> },
     {
       key: "status", header: "Status", cell: v =>
         v.incomplete ? <Chip tone="soon">Record incomplete</Chip>
@@ -81,9 +85,9 @@ function Page() {
         title={`${greeting}, ${me.name}`}
         lead={
           <>
-            {longLabel(today)} · {day.data ? plural(visits.length, "visit") : "loading visits"}{next ? ` · next at ${time(next)}` : ""}
-            {incomplete.length ? <> · <Signal tone="soon">{plural(incomplete.length, "record")} incomplete</Signal></> : null}
-            {waiting.length ? <> · <Signal tone="soon">{plural(waiting.length, "booking request")} waiting</Signal></> : null}
+            {longLabel(today)} · {day.data ? countOf(visits.length, "visit") : "loading visits"}{next ? ` · next at ${time(next)}` : ""}
+            {incomplete.length ? <> · <Signal tone="soon">{countOf(incomplete.length, "record")} incomplete</Signal></> : null}
+            {waiting.length ? <> · <Signal tone="soon">{countOf(waiting.length, "booking request")} waiting</Signal></> : null}
             {calm ? <> · <Signal tone="done">nothing needs you</Signal></> : null}
           </>
         }
@@ -101,7 +105,7 @@ function Page() {
           title="Visits started"
           value={day.data ? earlier.length : "–"}
           progress={visits.length ? earlier.length / visits.length : 0}
-          caption={day.data ? `of ${visits.length} today · ${upcoming.length ? `${upcoming.length} still to come` : "none left"}` : "Loading"}
+          caption={!day.data ? "Loading" : !visits.length ? "No visits booked today" : `of ${formatNumber(visits.length)} today · ${upcoming.length ? `${formatNumber(upcoming.length)} still to come` : "none left"}`}
           onSelect={() => toggle("earlier")}
           selected={filter === "earlier"}
         />
@@ -137,7 +141,7 @@ function Page() {
             {day.data ? (
               <InsightCard
                 label="Sona AI"
-                meta={first?.incomplete ? "Needs you" : "Next patient"}
+                meta={!first ? "All clear" : first.incomplete ? "Needs you" : "Next patient"}
                 title={first ? first.patientName : "Today"}
                 tone={first?.incomplete ? "soon" : first ? "info" : "done"}
                 lead={!visits.length ? "No visits are booked today."
@@ -145,20 +149,24 @@ function Page() {
                     : !first.incomplete ? `Next is ${first.patientName} at ${time(first)}, ${first.kind}.`
                       : at(first) < now ? `${first.patientName}'s ${time(first)} visit has started and their record is still incomplete.`
                         : `Start with ${first.patientName} at ${time(first)}: their record is incomplete.`}
-                evidence={others.length ? [{ text: `Also incomplete today: ${others.map(v => v.patientName).join(", ")}` }] : undefined}
+                evidence={others.length ? [{ text: `Also incomplete today: ${alsoIncomplete}` }] : undefined}
                 next={first && encounterOf(first) ? { label: "Open the visit", onAct: () => open(first) } : undefined}
                 sources={visits.length}
               />
             ) : null}
             <ListCard title="Needs you">
-              {incomplete.map(v => (
+              {incomplete.slice(0, RAIL_CAP).map(v => (
                 <ListRow key={v.id} avatar={v.patientName} title={v.patientName} caption={`Record incomplete · ${time(v)}`} onClick={encounterOf(v) ? () => open(v) : undefined} />
               ))}
-              {!seesRequests ? <p className="today-quiet today-pad">Your role does not see booking requests. The care team answers them.</p>
+              {incomplete.length > RAIL_CAP ? (
+                <li className="today-pad"><Button size="sm" onClick={() => pick("incomplete")}>All {countOf(incomplete.length, "incomplete record")} in the table</Button></li>
+              ) : null}
+              {/* A ListCard is a <ul>: everything after the record rows sits in one <li>. */}
+              <li>{!seesRequests ? <p className="today-quiet today-pad">Your role does not see booking requests. The care team answers them.</p>
                 : requests.isPending ? <p className="today-quiet today-pad">Loading requests…</p>
                   : requests.isError ? <p className="today-error today-pad" role="alert">Booking requests could not be loaded. {requests.error.message}</p>
                     : calm ? <EmptyState icon="check" title="Nothing needs you today">Incomplete records and booking requests appear here.</EmptyState>
-                      : <BookingRequests requests={waiting} canDecide={can(me.role, "bookings.decide")} />}
+                      : <BookingRequests requests={waiting} canDecide={can(me.role, "bookings.decide")} />}</li>
             </ListCard>
           </RightRail>
         }
@@ -173,7 +181,7 @@ function Page() {
                     <Tabs<Filter>
                       label="Filter visits"
                       value={filter}
-                      onChange={setFilter}
+                      onChange={pick}
                       tabs={[
                         { id: "all", label: "All", count: visits.length },
                         { id: "upcoming", label: "Upcoming", count: upcoming.length },
@@ -185,6 +193,8 @@ function Page() {
                 }
                 columns={columns}
                 rows={shown}
+                pageSize={50}
+                noun={["visit", "visits"]}
                 rowKey={v => v.id}
                 selectedKey={next?.id}
                 onRowOpen={open}

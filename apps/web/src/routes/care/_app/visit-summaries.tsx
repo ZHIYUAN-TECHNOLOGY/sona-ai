@@ -18,6 +18,8 @@ export const Route = createFileRoute("/care/_app/visit-summaries")({
 const locale = (typeof navigator === "undefined" ? "" : navigator.language) || "en-MY";
 const LEAD = "What your care team wrote after each visit.";
 const ASK = { label: "Ask Sona about this summary", step: "Not sure what a line means? Sona can explain it.", to: "/care/ask" } as const;
+/** The panel lists this many changes; the rest open under "Details", so a long list never buries the next step. */
+const SHOWN = 5;
 const MEDICINES = { label: "See your medicines", step: "Check this against your medicine list.", to: "/care/medicines" } as const;
 
 /** A state with nothing to read yet: one centred card across the page. */
@@ -66,6 +68,12 @@ function Page() {
           <p className="vs-approved">Approved by your care team</p>
         </Card>
         <aside className="vs-rail" aria-label="About this summary">
+          {insight ? (
+            <InsightCard label="Sona" title="What this means for you" lead={insight.lead}
+              evidence={insight.rows.slice(0, SHOWN).map(text => ({ icon: "check" as const, text }))} next={insight.medicine ? MEDICINES : ASK}>
+              {insight.rows.length > SHOWN ? <ul className="vs-more">{insight.rows.slice(SHOWN).map((text, i) => <li key={i}>{text}</li>)}</ul> : null}
+            </InsightCard>
+          ) : null}
           {several ? (
             <ListCard title="Your visits">
               {summaries.map(s => (
@@ -73,10 +81,6 @@ function Page() {
                   to="/care/visit-summaries" search={s.id === newest.id ? {} : { id: s.id }} selected={s.id === open.id} />
               ))}
             </ListCard>
-          ) : null}
-          {insight ? (
-            <InsightCard label="Sona" title="What this means for you" lead={insight.lead}
-              evidence={insight.rows.map(text => ({ icon: "check" as const, text }))} next={insight.medicine ? MEDICINES : ASK} />
           ) : null}
           <Card title="Not sure about something?" className="vs-help">
             <p>{panelAsks ? "Your care team can answer questions about this visit." : "Sona can explain a line in plain words, or your care team can answer."}</p>

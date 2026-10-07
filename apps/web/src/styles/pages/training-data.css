@@ -1,6 +1,10 @@
 /* Training data: sample review. Tokens only. */
 .td-muted { color: var(--muted); }
-.td-clip { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-width: 26rem; min-width: 12rem; overflow-wrap: anywhere; }
+.td-clip { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-width: 26rem; min-width: 9rem; overflow-wrap: anywhere; }
+/* A long model name wraps in its column; the status chip never does, so it stays readable beside them. */
+.td-deid { display: block; max-width: 8rem; overflow-wrap: anywhere; }
+.td-status { display: inline-block; min-width: max-content; }
+.td-status .chip { white-space: nowrap; }
 .td-actions { display: inline-flex; gap: var(--space-2); white-space: nowrap; }
 .td-switch { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: 500; cursor: pointer; }
 /* A switch drawn on the native checkbox; green only while samples are being taken. */

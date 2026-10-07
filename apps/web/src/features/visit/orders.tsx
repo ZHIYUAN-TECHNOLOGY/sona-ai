@@ -51,10 +51,10 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
       <Medicines encounterId={encounterId} revision={revision} state={state} patient={patient} canEdit={canPrescribe} />
       <Card title="Medicine order">
         {proposed ? (
-          <ListRow icon="pill" title={proposed}
+          <ul className="list"><ListRow icon="pill" title={proposed}
             caption={reviewed ? `Reviewed at revision ${revision}` : "Not reviewed yet"}
             trailing={blocked.length ? <Chip tone="amber" icon="alert">{blocked.length} of {checks.length} blocked</Chip>
-              : <span className="visit-muted">{checks.length} checks pass</span>} />
+              : <span className="visit-muted">{checks.length} checks pass</span>} /></ul>
         ) : <p className="visit-muted">No medicine is proposed for this visit yet.{canPrescribe ? " Propose one above, then review it." : ""}</p>}
         {canPrescribe ? (
           <div className="visit-actions">

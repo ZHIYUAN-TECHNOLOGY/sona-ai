@@ -11,6 +11,7 @@ import { DraftChecks, DraftSources, ReplyEditor } from "@/features/messages/draf
 import { ago } from "@/features/messages/format";
 import { flaggedFirst } from "@/features/review/rank";
 import { Checks, type Done, failingOf, VisitSummaryCard } from "@/features/review/visit-summary-card";
+import { countOf, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 
 import "@/styles/pages/messages.css";
@@ -19,9 +20,9 @@ import "@/styles/pages/review.css";
 export const Route = createFileRoute("/pro/_app/review")({ component: Page });
 
 type Tab = "all" | "reply" | "summary";
+const PAGE = 50;
 /** A line for an item that left the queue; `reply` marks a sent reply, the rest are visit summaries. */
 type Sent = Done & { reply?: true };
-const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 // The document's own "Approve and send" is the one place that sends. The rail's suggested step takes the clinician to it, with the
 // draft in view, and never presses it for them.
 const approveOpen = () => {
@@ -43,8 +44,10 @@ function Page() {
   const [sel, setSel] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<readonly string[]>([]);
   const waiting = (inbox.data?.threads ?? []).filter(t => !t.handled && !dismissed.includes(t.patientId));
-  // ponytail: one draft call per waiting thread, in parallel (the server keeps each answer); page it if queues grow long.
-  const drafts = useQueries({ queries: waiting.map(t => orpc.messages.draft.queryOptions({ input: { patientId: t.patientId }, enabled: allowed })) });
+  // The queue draws `limit` rows; a reply's row is never later than its place among the waiting, so drafts for the first
+  // `limit` waiting threads cover every row drawn. ponytail: one draft call per drawn reply, in parallel (the server keeps each answer).
+  const [limit, setLimit] = useState(PAGE);
+  const drafts = useQueries({ queries: waiting.slice(0, limit).map(t => orpc.messages.draft.queryOptions({ input: { patientId: t.patientId }, enabled: allowed })) });
 
   const header = <PageHeader title="Review queue" lead="Approve what a patient will read. Nothing is sent until you approve it." />;
   if (!allowed && !canSummaries) return <>{header}<EmptyState>Only a doctor or a nurse reviews what a patient will read.</EmptyState></>;
@@ -103,8 +106,8 @@ function Page() {
         title="Review queue"
         lead={(
           <>
-            <Signal tone="soon">{count(total, "item waits", "items wait")} for your approval</Signal>
-            {flagged.length ? <> · <Signal tone="urgent">{flagged.length} flagged</Signal></> : null}
+            <Signal tone="soon">{countOf(total, "item waits", "items wait")} for your approval</Signal>
+            {flagged.length ? <> · <Signal tone="urgent">{formatNumber(flagged.length)} flagged</Signal></> : null}
             {" · "}Nothing is sent until you approve it
           </>
         )}
@@ -118,15 +121,15 @@ function Page() {
               <InsightCard
                 label="Sona insight"
                 lead={open.failing.length
-                  ? `${open.name}'s ${what} has ${count(open.failing.length, "check", "checks")} to look at before it is sent`
+                  ? `${open.name}'s ${what} has ${countOf(open.failing.length, "check", "checks")} to look at before it is sent`
                   : open.sample
                     ? `This ${what} for ${open.name} is a rule-based sample, not written by a model. Read it closely`
                     : `${open.name} reads this ${what} as soon as you approve it. Sona's checks found nothing to flag`}
                 evidence={[
                   ...open.failing.map(text => ({ icon: "alert" as const, text })),
                   ...(open.sample && open.failing.length ? [{ icon: "file" as const, text: "Sample draft, not written by a model" }] : []),
-                  ...(otherFlagged ? [{ icon: "clipboard" as const, text: `${count(flagged.length, "item", "items")} in the queue flagged` }] : []),
-                  ...(samples > (open.sample ? 1 : 0) ? [{ icon: "file" as const, text: count(samples, "draft in the queue is a sample", "drafts in the queue are samples") }] : []),
+                  ...(otherFlagged ? [{ icon: "clipboard" as const, text: `${countOf(flagged.length, "item", "items")} in the queue flagged` }] : []),
+                  ...(samples > (open.sample ? 1 : 0) ? [{ icon: "file" as const, text: countOf(samples, "draft in the queue is a sample", "drafts in the queue are samples") }] : []),
                 ]}
                 next={otherFlagged && !open.failing.length
                   ? { label: "Open the first flagged item", onAct: () => { setTab("all"); setSel(otherFlagged.key); } }
@@ -148,9 +151,10 @@ function Page() {
             {shown.length
               ? (
                 <ListCard>
-                  {shown.map(e => (
+                  {shown.slice(0, limit).map(e => (
                     <ListRow
                       key={e.key}
+                      wrap
                       avatar={e.name}
                       title={e.name}
                       caption={e.caption}
@@ -159,6 +163,7 @@ function Page() {
                       trailing={e.failing.length ? <Chip tone="soon">Check</Chip> : e.sample ? <Chip>Sample</Chip> : undefined}
                     />
                   ))}
+                  {shown.length > limit ? <Button onClick={() => setLimit(l => l + PAGE)}>Show {countOf(Math.min(PAGE, shown.length - limit), "more item")}</Button> : null}
                 </ListCard>
               )
               : <EmptyState>{tab === "reply" ? "No replies are waiting." : "No visit summaries are waiting."}</EmptyState>}

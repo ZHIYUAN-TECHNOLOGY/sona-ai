@@ -20,12 +20,13 @@
 .cell-person { display: inline-flex; align-items: center; gap: var(--space-3); min-width: 0; }
 .cell-person-text { display: grid; min-width: 0; }
 .cell-person-name { font-weight: 600; }
-.cell-value { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.cell-value .cell-muted { font-weight: 400; }
+/* A reading in words wraps; a number keeps its unit on the same line (ValueCell joins them with a no-break space). */
+.cell-value { font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+.cell-value .cell-muted { font-weight: 400; white-space: nowrap; }
 .row-action { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap); padding: 0 var(--space-4); border: 0; border-radius: var(--radius-pill); background: none; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; transition: background var(--quick) var(--ease), color var(--quick) var(--ease); }
 .row-action:hover { background: var(--fill-hover); }
 .row-action:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
-tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
+tr[data-selected] .row-action { color: var(--ink); }
 :is(.pro, .care) .table th { height: 44px; font-size: var(--text-overline); letter-spacing: var(--track-overline); text-transform: uppercase; border-bottom-color: var(--hairline); }
 :is(.pro, .care) .table td { height: 71px; border-bottom-color: var(--hairline); }
 /* Sort buttons do not inherit type from the header cell by default. */
@@ -120,15 +121,18 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .card > .table-wrap, :is(.pro, .care) .card > .table-wrap { padding: 0; }
 .card > .table-wrap > .table-toolbar { padding: 0 0 var(--space-3); }
 .table .table-action { width: 1%; white-space: nowrap; padding-left: 0; }
+/* A chip or a row's button in a narrow column keeps its words whole. */
+.table :is(.chip, .table-action .btn) { white-space: nowrap; }
 .cell-person { display: flex; min-width: 150px; max-width: 220px; }
 .cell-person > :first-child { flex: none; }
-.cell-person-name, .cell-person-text > .cell-muted { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* A name and its line under it keep two lines each before "…": cutting a name to one line hides what tells two patients apart. */
+.cell-person-name, .cell-person-text > .cell-muted { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
 .cell-clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-width: 12ch; overflow-wrap: anywhere; }
 /* Toolbar: tabs and filters left, search and icon buttons right, on one row. */
 /* Tabs keep their width; the search gives way, then drops under them, so the last tab is never cut. */
 .table-toolbar-row { display: flex; flex: 1; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); min-width: 0; }
 .table-toolbar-start { display: flex; flex: none; align-items: center; gap: var(--space-3); min-width: 0; max-width: 100%; }
-.table-toolbar-end { display: flex; flex: 1 1 9rem; align-items: center; justify-content: flex-end; gap: var(--space-2); min-width: 9rem; }
+.table-toolbar-end { display: flex; flex: 1 1 9rem; align-items: center; justify-content: flex-end; gap: var(--space-2); min-width: 0; }
 .table-toolbar-end .search-field { flex: 0 1 15rem; }
 .table-toolbar > .search-field { margin-left: auto; }
 .insight-act[data-pending] { opacity: 0.6; pointer-events: none; cursor: progress; }
@@ -164,7 +168,6 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 :is(.pro, .care) .card > .table-wrap { margin: 0 calc(var(--pad-card) * -1) calc(var(--space-3) * -1); padding: 0; background: none; box-shadow: none; }
 :is(.pro, .care) .card > .table-wrap > .table-toolbar { padding: 0 var(--pad-card) var(--space-3); }
 :is(.pro, .care) .table tbody tr[data-selected] > * { border-radius: 0; }
-:is(.pro, .care) .table tbody tr[data-selected] > :first-child { box-shadow: inset 3px 0 0 var(--ink); }
 
 /* Sona card on glass: quiet parts are muted, the suggested step is a tinted block, and its button is the card's one filled control. */
 :is(.pro, .care) .insight :is(.insight-meta, .insight-foot, .insight-detail, .insight-detail summary) { color: var(--muted); }
@@ -181,7 +184,7 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 
 /* Chips in a table are small labels beside the row's text, not headlines. */
 .pro .table .chip { min-height: 20px; padding: 0 7px; font-size: 10px; letter-spacing: 0.05em; }
-.care .table .chip { min-height: 24px; padding: 0 var(--space-2); font-size: 12px; }
+.care .table .chip { min-height: 24px; padding: 0 var(--space-2); }
 
 /* Chart fills: the status colours' chart shades (checked for colour-blind separation), each always named beside its mark. */
 [data-chart-tone="red"] { --fill: var(--chart-red); }
@@ -214,3 +217,34 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .chart-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--gap-card); }
 .chart-row .card { gap: var(--space-3); padding-block: var(--space-5); }
 .chart-row .card-title { font-size: var(--text-body); font-weight: 500; color: var(--muted); letter-spacing: 0; }
+
+/* Compact tables (Pro): a row is one line of reading, ~44px, so a page shows twice the rows. Names and captions sit
+   on one line each at body/small size, the avatar shrinks to 28px, and actions are link-weight, not pills.
+   Sona Care keeps its 48px tap rows. */
+.pro .table th { height: 34px; padding-block: 0; }
+.pro .table td { height: 46px; padding-block: 6px; font-size: 14px; line-height: 20px; }
+.pro .table tbody::before { height: var(--space-1); }
+.pro .table .cell-person { gap: var(--space-2); }
+.pro .table .cell-person .avatar { width: var(--avatar-sm); height: var(--avatar-sm); font-size: 11px; }
+.pro .table .cell-person-name { font-size: 14px; }
+.pro .table .cell-person-text > .cell-muted, .pro .table .cell-muted { font-size: 12px; line-height: 16px; }
+.pro .table .row-action { min-height: 28px; padding: 0 var(--space-2); font-size: 13px; }
+.pro .table .chip { min-height: 18px; }
+.pro .table .table-skel { height: 10px; }
+/* Toolbar: tabs and search share one line while they fit; then the search drops to its own row, never cutting a tab.
+   The search is a compact field, not a hero input. Tabs are tighter in Pro. */
+.pro .table-toolbar-end .search-field { flex: 0 1 11rem; height: 34px; }
+.pro .table-toolbar .tab { min-height: 34px; font-size: 14px; }
+/* An empty table is one calm line in the table's place, not a card inside the card. */
+:is(.pro, .care) .table td.table-empty { padding: var(--space-5) var(--pad-card); }
+:is(.pro, .care) .table td.table-empty .empty { padding: 0; background: none; box-shadow: none; border-radius: 0; }
+/* A filled button inside a Sona card keeps white text (the card's own ink colour would make it ink on ink). */
+:is(.pro, .care) .insight .btn-primary { color: var(--surface); }
+.pro .table-toolbar .tabs { column-gap: var(--space-3); }
+.pro .table .ptl-reason { display: grid; }
+.pro .table .ptl-reason > * { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pro .table .ptl-reason strong { font-weight: 600; }
+
+/* Every row's action looks the same; the selected row is told apart by its fill alone. The action column never shrinks. */
+.pro .table .table-action { width: 1%; }
+.pro .table .row-action { flex: none; }

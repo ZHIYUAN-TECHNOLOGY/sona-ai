@@ -62,7 +62,7 @@ export function PatientPicker({ link, mark, only, title = "Patients" }: { link: 
             <ul className="list">
               {shown.map(p => {
                 const m = mark?.(p.id);
-                return <ListRow key={p.encounterId} avatar={p.name} title={p.name} caption={m?.reason ? <>{p.subtitle} · <span className="dp-why">{m.reason}</span></> : p.subtitle} trailing={<>{m?.chip}{link(p)}</>} />;
+                return <ListRow key={p.encounterId} avatar={p.name} title={p.name} caption={m?.reason ? <>{p.subtitle ? `${p.subtitle} · ` : null}<span className="dp-why" title={m.reason}>{m.reason}</span></> : p.subtitle} trailing={<>{m?.chip}{link(p)}</>} />;
               })}
               {shown.length ? null : <li className="dp-note dp-pick-none">{q.trim() ? `No patient is named “${q.trim()}”.` : "No patient is in this group."}</li>}
             </ul>

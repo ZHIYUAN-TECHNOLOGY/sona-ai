@@ -62,7 +62,8 @@ async function answer(question: string): Promise<ReactNode> {
   return (
     <>
       {res.source === "fixture" ? <Chip tone="neutral">Sample answer</Chip> : null}
-      <p>{res.answer}</p>
+      {/* Keeps the answer's own line breaks: a numbered list stays a list. */}
+      <p className="ask-answer">{res.answer}</p>
       {res.careTeam?.line ? <p>{res.careTeam.line}</p> : null}
       {res.grounded ? <p className="sona-turn-note">From your record.</p> : null}
       {res.sources?.length ? <p className="sona-turn-note">From: {res.sources.map(s => s.title).join(", ")}</p> : null}

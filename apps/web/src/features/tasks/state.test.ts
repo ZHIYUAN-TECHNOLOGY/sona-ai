@@ -15,6 +15,12 @@ test("tasks rank overdue first, undated after dated, done last", () => {
   expect(ranked.map(t => t.title)).toEqual(["overdue", "today", "undated", "done"]);
 });
 
+test("a due written in words is neither overdue nor ranked before dated tasks", () => {
+  const written = task({ title: "written", due: "1 day after discharge" });
+  expect(groupTasks([written], "Dr Lim", "2026-10-06").overdue).toEqual([]);
+  expect(rankTasks([written, task({ title: "dated", due: "2026-10-09" })]).map(t => t.title)).toEqual(["dated", "written"]);
+});
+
 test("search, source and due date read in plain words", () => {
   expect(matchesTask(task({ kind: "check-in" }), "check-in")).toBe(true);
   expect(matchesTask(task({}), "xray")).toBe(false);

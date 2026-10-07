@@ -53,8 +53,8 @@ function Page() {
 
   const marks = new Map<string, Mark[]>();
   const mark = (at: Date, m: Mark) => marks.set(dayKey(at), [...(marks.get(dayKey(at)) ?? []), m]);
-  for (const v of visits.data) mark(v.date, { label: v.title, tone: v.inDays < 0 ? "neutral" : "done" });
-  for (const r of waiting) mark(r.startsAt, { label: `Waiting: ${r.doctorName}`, tone: "soon" });
+  for (const v of visits.data) mark(v.date, { label: `${timeWords(v.date, lang)} · ${v.title}`, tone: v.inDays < 0 ? "neutral" : "done" });
+  for (const r of waiting) mark(r.startsAt, { label: `${timeWords(r.startsAt, lang)} · Waiting: ${r.doctorName}`, tone: "soon" });
 
   const openTimes = new Map<string, string[]>();
   for (const d of doctors.data ?? []) for (const s of d.nextSlots) {
@@ -80,6 +80,7 @@ function Page() {
         actions={<Button variant="primary" icon="plus" onClick={toBook}>Book a visit</Button>} />
 
       <div className="fu-top" data-solo={next ? undefined : true}>
+        {next || waiting[0] ? (
         <Card className="fu-hero">
           {next ? (
             <>
@@ -99,13 +100,9 @@ function Page() {
               <p className="fu-muted">{whenWords(waiting[0].startsAt, lang)} · {waiting[0].room}</p>
               <p>Nothing is booked until the hospital confirms.</p>
             </>
-          ) : (
-            <>
-              <h2 className="fu-hero-title">No visits coming up</h2>
-              <p className="fu-muted">Use "Book a visit" to ask for a time.</p>
-            </>
-          )}
+          ) : null}
         </Card>
+        ) : null}
         {p ? (
           <InsightCard label="Before your visit" title="Get ready for your visit" meta={dayWords(new Date(p.appointment!.startsAt), lang)}
             lead={left ? `${left} ${left === 1 ? "step" : "steps"} left before your visit.` : "You are ready. Your doctor can read this before you arrive."}
@@ -134,7 +131,7 @@ function Page() {
                 {upcoming.map(v => {
                   const d = booked.get(v.id);
                   return (
-                    <ListRow key={v.id} icon="calendar" title={v.title}
+                    <ListRow key={v.id} wrap icon="calendar" title={v.title}
                       caption={`${whenWords(v.date, lang)}${d ? ` · ${d.doctorName} · ${d.room}` : ""}`}
                       trailing={
                         <span className="fu-row-end">

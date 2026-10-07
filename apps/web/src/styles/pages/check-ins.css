@@ -1,6 +1,5 @@
 .check-ins-muted { color: var(--muted); font-size: var(--text-small); }
 .check-ins-error { color: var(--red); font-size: var(--text-small); }
-.check-ins-text { display: block; max-width: 36ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .check-ins-exchange, .check-ins-reply { display: grid; gap: var(--space-2); }
 .check-ins-reply { padding-top: var(--space-3); }
 .check-ins-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
@@ -8,3 +7,4 @@
 .check-ins-timeline li > span { display: block; }
 .check-ins-quote { margin: var(--space-2) 0; padding-left: var(--space-3); border-left: 2px solid var(--muted); }
 .check-ins-exchange + *, .check-ins-quote + * { margin-top: var(--space-2); }
+.check-ins-exchange p, .check-ins-quote, .check-ins-timeline li { overflow-wrap: anywhere; }

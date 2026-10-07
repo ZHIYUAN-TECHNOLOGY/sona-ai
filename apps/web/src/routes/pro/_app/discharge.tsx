@@ -4,13 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { SegmentBar } from "@/components/charts";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader, PatientStrip } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow, Select, Signal, StatCard, StatRow, Status } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { countOf, dischargeRank, standings } from "@/features/discharge/rank";
 import { blockersOf, Loaded, type Mark, oneParam, Origin, PatientPicker, say, usePatient } from "@/features/discharge/shared";
+import { countOf as count, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/discharge-plan.css";
 
@@ -31,7 +31,6 @@ function Chooser() {
   const by = standings(beds.data ?? []);
   const fit = countOf(by, "fit");
   const blocked = countOf(by, "blocked");
-  const watched = countOf(by, "watch");
   const toggle = (g: Group) => () => setGroup(now => (now === g ? undefined : g));
   const mark = (id: string): Mark | undefined => {
     const s = by.get(id);
@@ -45,26 +44,14 @@ function Chooser() {
       <PageHeader title="Discharge"
         lead={beds.isPending ? "Reading the ward…" : !beds.data ? "The ward could not be read, so this list is not ranked. Open a plan to see what is holding the bed."
           : fit + blocked === 0 ? "Nobody is medically fit for discharge yet."
-          : <>{fit ? <Signal tone="done">{fit} ready for discharge</Signal> : "Nobody is ready for discharge"} · {blocked ? <Signal tone="soon">{blocked} medically fit, with barriers</Signal> : "nobody is blocked"}</>}
+          : <>{fit ? <Signal tone="done">{formatNumber(fit)} ready for discharge</Signal> : "Nobody is ready for discharge"} · {blocked ? <Signal tone="soon">{formatNumber(blocked)} medically fit, with barriers</Signal> : "nobody is blocked"}</>}
         actions={beds.data ? <Button to="/pro/ward" icon="bed">Open the ward</Button> : undefined} />
       {beds.data ? (
         <StatRow>
-          <StatCard title="Ready for discharge" value={fit} caption="Medically fit, no discharge barrier" chip={fit ? "Approve next" : undefined} tone="done" onSelect={toggle("fit")} selected={group === "fit"} />
-          <StatCard title="Blocked" value={blocked} caption="Fit, but something holds the bed" chip={blocked ? "Clear first" : undefined} tone="soon" onSelect={toggle("blocked")} selected={group === "blocked"} />
+          <StatCard title="Ready for discharge" value={fit} caption="Medically fit, no discharge barrier" tone="done" onSelect={toggle("fit")} selected={group === "fit"} />
+          <StatCard title="Blocked" value={blocked} caption="Medically fit, with a discharge barrier" tone="soon" onSelect={toggle("blocked")} selected={group === "blocked"} />
           <StatCard title="On the ward" value={by.size} caption="Admitted patients with a bed" />
         </StatRow>
-      ) : null}
-      {beds.data && by.size ? (
-        <div className="chart-row">
-          <Card title="The ward by readiness to go home">
-            <SegmentBar label="Patients by readiness to go home" segments={[
-              { label: "Ready for discharge", value: fit, tone: "green" },
-              { label: "Fit but blocked", value: blocked, tone: "amber" },
-              { label: "On watch", value: watched, tone: "blue" },
-              { label: "Not fit yet", value: by.size - fit - blocked - watched, tone: "neutral" },
-            ]} />
-          </Card>
-        </div>
       ) : null}
       <PatientPicker link={openPlan} mark={mark} only={group ? id => by.get(id)?.kind === group : undefined}
         title={group === "fit" ? "Ready for discharge" : group === "blocked" ? "Blocked" : "Patients, nearest to going home first"} />
@@ -72,7 +59,7 @@ function Chooser() {
   );
 }
 
-const things = (n: number) => `${n} thing${n === 1 ? "" : "s"}`;
+const things = (n: number) => count(n, "thing");
 /** A medicine's words: its name first, the rest (dose, frequency) quieter. */
 const words = (med: object) => Object.values(med).filter((v): v is string => typeof v === "string" && !!v);
 
@@ -132,13 +119,14 @@ function Visit({ encounterId }: { encounterId: string }) {
               <RightRail label="Sona insight">
                 <InsightCard label="Sona insight" title={done ? "Discharge approved" : clear ? "Ready to approve" : "Not ready yet"} sources={checks.length || 1}
                   lead={clear ? `Every discharge check has passed for ${bed}.` : `${things(blocked.length)} to clear before ${bed} can be released.`}
-                  evidence={blocked.map(c => ({ icon: "clock" as const, text: c.detail ? `${c.label}: ${c.detail}` : c.label }))}
+                  evidence={[...blocked.slice(0, 3).map(c => ({ icon: "clock" as const, text: c.detail ? `${c.label}: ${c.detail}` : c.label })),
+                    ...blocked.length > 3 ? [{ icon: "clock" as const, text: `${things(blocked.length - 3)} more, listed under Readiness` }] : []]}
                   next={canAct ? { label: "Review the summary draft", step: "Read the draft first, then approve at the top. Sona checks the conditions again when you do.", onAct: () => document.getElementById("dp-summary")?.scrollIntoView({ behavior: "smooth" }) } : undefined} />
               </RightRail>
             }>
               <div className="dp-stack">
                 {approve.error ? <Card title="Not approved"><Refused error={approve.error} /></Card> : null}
-                <ListCard title={`Readiness: ${blocked.length} blocker${blocked.length === 1 ? "" : "s"} · ${p.meds.length} take-home medicine${p.meds.length === 1 ? "" : "s"}`}>
+                <ListCard title={`Readiness: ${count(blocked.length, "blocker")} · ${count(p.meds.length, "take-home medicine")}`}>
                   {checks.map(c => c.status === "blocked"
                     ? <ListRow key={c.id} icon="clock" title={c.label} caption={c.detail} trailing={<Chip tone="soon">Blocking</Chip>} />
                     : <ListRow key={c.id} icon="check" title={c.label} caption={c.detail} />)}

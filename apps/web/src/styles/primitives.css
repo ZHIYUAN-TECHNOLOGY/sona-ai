@@ -9,13 +9,18 @@
 .avatar { border: 0; }
 
 /* Chip */
+/* A chip or button keeps one line and its own width, and wraps only when longer than its whole container. */
+/* A button breaks only a word longer than its line (break-word), so it never shrinks to a letter a line in a tight table cell. */
+.chip, .btn { flex-shrink: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.btn { overflow-wrap: break-word; }
+.btn { text-align: center; }
 .chip { gap: var(--space-1); min-height: var(--chip-h); padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-pill); font-size: var(--text-small); font-weight: 600; }
 .chip[data-tone="neutral"] { border-color: transparent; }
 .chip[data-variant="solid"] { background: var(--tone); color: var(--surface); }
 .chip[data-variant="outline"] { background: transparent; border-color: currentColor; }
 
 /* Button: quiet fill by default, ink pill primary, outline secondary. */
-.btn { gap: var(--space-2); min-height: var(--tap); padding: 0 18px; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--fill-field); color: var(--ink); white-space: nowrap; transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease), transform var(--quick) var(--ease); }
+.btn { gap: var(--space-2); min-height: var(--tap); padding: 0 18px; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--fill-field); color: var(--ink); transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease), transform var(--quick) var(--ease); }
 .btn[data-size="sm"] { min-height: 32px; padding: 0 14px; font-size: var(--text-small); }
 .btn[data-size="lg"] { min-height: var(--pill-h); padding: 0 var(--space-5); }
 .btn:hover { opacity: 1; background: var(--fill-selected); }
@@ -49,8 +54,8 @@
 /* Card */
 .card { gap: var(--space-4); padding: var(--pad-card); border: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-card); min-width: 0; }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-.card-title { font-size: var(--text-title); letter-spacing: var(--track-tight); }
-.card-action { color: var(--muted); font-size: var(--text-small); font-weight: 600; text-decoration: none; border-radius: var(--space-1); }
+.card-title { min-width: 0; overflow-wrap: anywhere; font-size: var(--text-title); letter-spacing: var(--track-tight); }
+.card-action { flex: none; white-space: nowrap; color: var(--muted); font-size: var(--text-small); font-weight: 600; text-decoration: none; border-radius: var(--space-1); }
 .card-action:hover { color: var(--ink); text-decoration: underline; }
 
 /* Stat: a compact glance tile. The title, the number with its chip, one caption. */
@@ -60,7 +65,7 @@
 .stat-head { display: flex; align-items: center; gap: var(--space-2); min-height: 32px; }
 .stat-title { flex: 1; min-width: 0; margin: 0; font-size: var(--text-body); font-weight: 500; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stat-body { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-1) var(--space-3); margin-top: auto; min-width: 0; }
-.stat-value { display: flex; align-items: baseline; min-width: 0; margin: 0; font-size: var(--text-stat); line-height: 1; font-weight: 500; letter-spacing: var(--track-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stat-value { display: flex; align-items: baseline; min-width: 0; margin: 0; font-size: var(--text-stat); line-height: 1; font-weight: 500; letter-spacing: var(--track-display); font-variant-numeric: tabular-nums; flex-wrap: wrap; }
 .stat-unit { min-width: 0; margin-left: var(--space-1); font-size: var(--text-body); line-height: 1.4; letter-spacing: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
 .stat-caption { margin: 0; font-size: var(--text-small); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stat-body .chip { flex: none; margin: 0 0 var(--space-1) auto; }
@@ -82,7 +87,8 @@
 .signal { color: var(--tone); font-weight: 600; }
 
 /* Tabs */
-.tabs { display: flex; gap: var(--space-5); overflow-x: auto; }
+/* Tabs wrap to a second line rather than scroll out of view with no hint (a narrow rail, 200% text). */
+.tabs { display: flex; flex-wrap: wrap; gap: 0 var(--space-5); }
 .tab { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap); padding: 0; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font-weight: 600; white-space: nowrap; cursor: pointer; transition: color var(--quick) var(--ease), border-color var(--quick) var(--ease); }
 .tab:hover { color: var(--ink); }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
@@ -98,9 +104,14 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 .list-row:disabled { opacity: 0.45; pointer-events: none; }
 .list-tile { display: inline-grid; place-items: center; flex: none; width: var(--avatar-md); height: var(--avatar-md); border-radius: var(--radius-control); background: var(--fill-field); color: var(--muted); }
 .list-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.list-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.list-caption { font-size: var(--text-small); line-height: 18px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: anywhere; }
+.list-caption { font-size: var(--text-small); line-height: 1.35; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list-chevron { flex: none; color: var(--placeholder); }
+/* ListRow `wrap`: names read in full. Title and caption wrap, and on a narrow screen the trailing part drops below them. */
+.list-row[data-wrap] { flex-wrap: wrap; }
+.list-row[data-wrap] > .list-text { flex: 1 1 10rem; }
+.list-row[data-wrap] > .list-text ~ * { margin-inline-start: auto; }
+.list-row[data-wrap] :is(.list-title, .list-caption) { overflow: visible; white-space: normal; }
 
 /* Main column (~69%) + right rail (~31%) */
 .with-rail { display: grid; grid-template-columns: minmax(0, 69fr) minmax(0, 31fr); gap: var(--gap-card); align-items: start; }
@@ -110,12 +121,13 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 @media (min-width: 1081px) {
   .pro .with-rail-side { position: sticky; top: var(--space-5); max-height: calc(100dvh - var(--space-3) * 2 - var(--space-5)); margin: 0 calc(var(--space-3) * -1); padding: 0 var(--space-3) var(--sona-bar-clearance); overflow-y: auto; scrollbar-width: none; }
   .pro .with-rail-side::-webkit-scrollbar { display: none; }
+  .pro .with-rail[data-follow] > .with-rail-side { position: static; max-height: none; overflow: visible; padding-bottom: 0; }
 }
 
 /* Page header */
 .page-header { display: flex; flex-direction: column; gap: var(--space-2); }
 .page-header-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); }
-.page-header h1 { margin: 0; font-size: var(--text-page); line-height: 1.15; font-weight: 600; letter-spacing: var(--track-display); }
+.page-header h1 { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: var(--text-page); line-height: 1.15; font-weight: 600; letter-spacing: var(--track-display); }
 .page-header > p { margin: 0; color: var(--muted); }
 .page-status { font-size: var(--text-small); color: var(--muted); }
 .page-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-left: auto; align-self: center; }
@@ -127,14 +139,15 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 /* Patient strip */
 .patient-strip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); padding: var(--space-4) var(--space-5); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
 .patient-strip-text { min-width: 0; }
-.patient-strip h2 { margin: 0; font-size: var(--text-heading); line-height: 1.3; font-weight: 600; }
+.patient-strip h2 { margin: 0; overflow-wrap: anywhere; font-size: var(--text-heading); line-height: 1.3; font-weight: 600; }
 .patient-strip p { margin: 0; font-size: var(--text-small); color: var(--muted); }
-.patient-strip-tabs { flex: 1; min-width: 0; margin-left: var(--space-4); }
+.patient-strip-tabs { flex: 1 1 320px; min-width: 0; margin-left: var(--space-4); }
 .patient-strip-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-left: auto; }
 
 /* Empty, skeleton, pager */
 .empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-6) var(--space-5); border-radius: var(--radius-group); color: var(--muted); text-align: center; }
 .empty-icon { display: inline-grid; place-items: center; width: var(--pill-h); height: var(--pill-h); border-radius: 50%; background: var(--fill-field); }
+.empty .btn { align-self: center; }
 .empty-title { margin: 0; color: var(--ink); font-weight: 600; }
 .skeleton { display: block; border-radius: var(--space-2); background: var(--fill-selected); animation: skeleton 1.4s ease-in-out infinite; }
 @keyframes skeleton { 50% { opacity: 0.45; } }
@@ -143,7 +156,7 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 
 /* Visual repair against the reference (looked at, not guessed). */
 /* Chips: uppercase and tracked; a neutral chip is an outline, not a grey fill. */
-:is(.pro, .care) .chip { font-size: var(--text-overline); line-height: 1; letter-spacing: var(--track-overline); text-transform: uppercase; white-space: nowrap; }
+:is(.pro, .care) .chip { font-size: var(--text-overline); line-height: 1.2; letter-spacing: var(--track-overline); text-transform: uppercase; }
 :is(.pro, .care) .chip[data-tone="neutral"]:not([data-variant="solid"]) { background: transparent; border-color: var(--line); color: var(--muted); }
 /* A quiet button keeps a hairline: its fill alone disappears on the canvas. */
 .btn-quiet { border-color: var(--line); }
@@ -231,3 +244,8 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 /* A list card's empty line sits on the title's edge, like its rows; an arc at 0% draws nothing, not a dot. */
 :is(.pro, .care) .list .empty { padding-inline: var(--space-3); }
 .stat-arc path[data-done][stroke-dasharray^="0 "] { display: none; }
+/* An empty page state starts where the page's content starts, not floating mid-page. */
+/* A page with nothing yet shows its empty state where the content starts, not floating mid-page. */
+.care :is(.ci-alone, .dp-alone, .meds-alone, .res-alone) { margin-inline: 0; }
+/* A pressed or selected button is ink, also over the glass secondary fill above. */
+:is(.pro, .care) :is(.btn[aria-pressed="true"], .btn[aria-selected="true"]) { background: var(--ink); color: var(--surface); }

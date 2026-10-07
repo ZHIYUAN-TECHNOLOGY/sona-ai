@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/client";
 import { can } from "@sona-ai/api/roles";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -16,6 +17,8 @@ export const Route = createFileRoute("/pro/_app/xray")({ component: Page });
 
 /** The follow-up test as the API writes it on the visit (findings.ts testOf). */
 const testOf = (action?: string | null) => action?.split(/,| at /)[0]?.trim() || "follow-up test";
+/** A visit with no X-ray yet answers NOT_FOUND: that is the empty state, not an error to show. */
+const missing = (error: unknown) => error instanceof ORPCError && error.code === "NOT_FOUND";
 const when = (at: Date | string) => new Date(at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" });
 
 function Page() {
@@ -110,7 +113,7 @@ function Page() {
       <div className={data && !open.length ? "xr-wrap xr-step-only" : "xr-wrap"}>
       <InsightCard label={sample ? "Sona · sample" : "Sona draft"}
         title={!data ? (encounterId && read.isPending ? "Looking for a read" : "No read yet") : sample ? "Sample read, not from this image" : "Chest X-ray draft read"}
-        lead={!data ? (encounterId && read.isError ? messageOf(read.error) : "Sona drafts a read as soon as an image is added. You confirm or change it.")
+        lead={!data ? (encounterId && read.isError && !missing(read.error) ? messageOf(read.error) : "Sona drafts a read as soon as an image is added. You confirm or change it.")
           : data.findings[0] ?? "Nothing described on this image."}
         evidence={data ? [
           ...data.findings.slice(1, 4).map(text => ({ icon: "scan" as const, text })),
@@ -195,7 +198,7 @@ function Page() {
           <div className="xr-bar">
             <Field label="Patient">{c => (
               <Select label="Patient" {...c} value={encounterId} onChange={e => { setEncounterId(e.target.value); setZoom(1); setStream(undefined); setDismissing(undefined); upload.reset(); detect.reset(); }}>
-                <option value="">{patients.isPending ? "Loading patients…" : "Choose a patient"}</option>
+                <option value="">{patients.isPending ? "Loading patients…" : patients.data?.length === 0 ? "No patients yet" : "Choose a patient"}</option>
                 {patients.data?.map(p => <option key={p.encounterId} value={p.encounterId}>{p.name}</option>)}
               </Select>
             )}</Field>

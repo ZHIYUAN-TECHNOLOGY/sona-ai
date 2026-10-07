@@ -8,6 +8,7 @@ import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow, StatCard, StatRow } from "@/components/primitives";
 import { browserLang, currentCheckIn, dayWords, daysSince, firstSentence, nextCheckIn, stepOf } from "@/features/care-plan/model";
+import { countOf } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-discharge-plan.css";
 
@@ -15,9 +16,11 @@ export const Route = createFileRoute("/care/_app/discharge-plan")({ component: P
 
 const GROUPS = [["new", "blue", "New"], ["changed", "amber", "Changed"], ["continue", "neutral", "Keep taking"], ["stopped", "neutral", "Stopped: do not take"]] as const;
 const VISIT = { "due-soon": ["soon", "Due soon"], upcoming: ["neutral", "Coming up"], attended: ["done", "Done"], missed: ["soon", "Missed"] } as const;
-const weekDay = (at: Date | string) => new Date(at).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
-const longDay = (at: Date | string) => new Date(at).toLocaleDateString(undefined, { day: "numeric", month: "long" });
-const shortDay = (at: Date | string) => new Date(at).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+// A date in another year says which ("2 September 2025"): a plan can be read long after discharge.
+const year = (at: Date | string) => (new Date(at).getFullYear() === new Date().getFullYear() ? {} : { year: "numeric" as const });
+const weekDay = (at: Date | string) => new Date(at).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", ...year(at) });
+const longDay = (at: Date | string) => new Date(at).toLocaleDateString(undefined, { day: "numeric", month: "long", ...year(at) });
+const shortDay = (at: Date | string) => new Date(at).toLocaleDateString(undefined, { day: "numeric", month: "short", ...year(at) });
 
 function Page() {
   const lang = browserLang();
@@ -44,7 +47,10 @@ function Page() {
   const active = [...p.medicines.new, ...p.medicines.changed, ...p.medicines.continue].filter(m => !m.finished);
   const nextVisit = visits.data?.find(v => v.status === "due-soon" || v.status === "upcoming");
   const step = stepOf({ checkInWaiting: Boolean(checkIns.data && currentCheckIn(checkIns.data)), nextCheckInAt: checkIns.data ? nextCheckIn(checkIns.data)?.dueAt : undefined, visits: visits.data ?? [], meds: active, now });
-  const medWords = `${active.length} ${active.length === 1 ? "medicine" : "medicines"} to take`;
+  // Only check-ins still to come: the ones already sent are on Check-ins.
+  const today = new Date(now); today.setHours(0, 0, 0, 0);
+  const comingCheckIns = p.checkIns.filter(c => new Date(c.date) >= today);
+  const medWords = active.length ? `${countOf(active.length, "medicine")} to take` : "no medicines to take";
 
   // The PDF kit and its engine load on the first click, so they stay out of the page's own chunk.
   const downloadPlan = async () => {
@@ -113,10 +119,10 @@ function Page() {
             {visits.data?.length && step?.to !== "/care/follow-ups" ? <div className="dp-foot no-print"><Button to="/care/follow-ups" icon="calendar">See all follow-ups</Button></div> : null}
           </section>
 
-          {p.checkIns.length > 0 ? <section>
+          {comingCheckIns.length > 0 ? <section>
             <h2 className="section-label">Sona will check on you</h2>
             <ul className="list">
-              {p.checkIns.map(c => <ListRow
+              {comingCheckIns.map(c => <ListRow
                 key={String(c.date)}
                 icon="message"
                 title={dayWords(c.date)}
@@ -140,7 +146,7 @@ function Page() {
             title="Your plan in plain words"
             lead={leaflet && !sample ? firstSentence(leaflet.text) : `Your plan has ${medWords}${nextVisit ? " and a visit to keep" : ""}.`}
             evidence={[
-              { icon: "pill" as const, text: medWords },
+              ...(active.length ? [{ icon: "pill" as const, text: medWords }] : []),
               ...(nextVisit ? [{ icon: "calendar" as const, text: `${nextVisit.title} on ${dayWords(nextVisit.date)}` }] : []),
               ...(p.warningSigns.length ? [{ icon: "alert" as const, text: `${p.warningSigns.length} warning ${p.warningSigns.length === 1 ? "sign" : "signs"} to watch for` }] : []),
             ]}
