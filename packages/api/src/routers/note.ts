@@ -2,7 +2,7 @@ import { notes } from "@sona-ai/db/schema/clinical";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { noteSaveSchema } from "../contracts";
+import { noteSaveSchema, type NoteSave } from "../contracts";
 import type { Context } from "../context";
 import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
@@ -31,25 +31,28 @@ export async function latestNote(db: Context["db"], hospitalId: string, encounte
   return { encounterId, revision: row?.revision ?? 0, sentences: row?.sentences ?? [] };
 }
 
+/** Saves the note's next revision (note.save, and a claim fix's sentence); a write against an old revision is refused as stale. */
+export async function saveNote(context: Context, hospitalId: string, input: NoteSave) {
+  const { db } = context;
+  const { encounterId, sentences, expectedRevision } = input;
+  const current = await latestNote(db, hospitalId, encounterId);
+  if (current.revision !== expectedRevision) throw stale(encounterId);
+  const revision = expectedRevision + 1;
+  const rows = await db.insert(notes).values({ id: `note-${encounterId}-${revision}`, encounterId, revision, sentences })
+    .onConflictDoNothing().returning({ id: notes.id });
+  if (!rows.length) throw stale(encounterId);
+  // The scribe's draft and the saved note become a de-identified training sample (if consented); never fails the save.
+  const sample = await captureNoteEdit(context, hospitalId, encounterId, sentences.map(s => s.text).join("\n"), input.excludeFromTraining);
+  // A doctor saving the note is the signing here: the patient's summary is drafted for review; never fails the save.
+  await draftVisitSummaryFor(context, hospitalId, encounterId, revision, sentences).catch(error => console.error("visit summary draft failed", error));
+  // `sample`, as on a check-in reply: who de-identified the training sample this save became, and whether the leak gate let it through (none without consent).
+  return { encounterId, revision, sentences, ...sample && { sample } };
+}
+
 export const noteRouter = {
   get: protectedProcedure.input(z.object({ encounterId: z.string().min(1) }))
     .handler(({ context, input }) => latestNote(context.db, context.hospitalId, input.encounterId)),
-  save: protectedProcedure.input(noteSaveSchema).handler(async ({ context, input }) => {
-    const { db, hospitalId } = context;
-    const { encounterId, sentences, expectedRevision } = input;
-    const current = await latestNote(db, hospitalId, encounterId);
-    if (current.revision !== expectedRevision) throw stale(encounterId);
-    const revision = expectedRevision + 1;
-    const rows = await db.insert(notes).values({ id: `note-${encounterId}-${revision}`, encounterId, revision, sentences })
-      .onConflictDoNothing().returning({ id: notes.id });
-    if (!rows.length) throw stale(encounterId);
-    // The scribe's draft and the saved note become a de-identified training sample (if consented); never fails the save.
-    const sample = await captureNoteEdit(context, hospitalId, encounterId, sentences.map(s => s.text).join("\n"), input.excludeFromTraining);
-    // A doctor saving the note is the signing here: the patient's summary is drafted for review; never fails the save.
-    await draftVisitSummaryFor(context, hospitalId, encounterId, revision, sentences).catch(error => console.error("visit summary draft failed", error));
-    // `sample`, as on a check-in reply: who de-identified the training sample this save became, and whether the leak gate let it through (none without consent).
-    return { encounterId, revision, sentences, ...sample && { sample } };
-  }),
+  save: protectedProcedure.input(noteSaveSchema).handler(({ context, input }) => saveNote(context, context.hospitalId, input)),
   /**
    * The scribe's draft of the visit's note from its consultation, for the doctor to review and edit before note.save:
    * Gemma's sections checked against the transcript (models.draftNote), or the captured words as they are, labelled fixture.
