@@ -82,9 +82,18 @@ async function passagesFor(context: Context, hospitalId: string, question: strin
   const { retrieval, ranked } = hits as { retrieval?: "hybrid" | "keywords"; ranked?: boolean };
   const found = { ...retrieval && { retrieval }, ...ranked !== undefined && { ranked } };
   if (!hits.length) return { passages: [], found };
-  const docs = await context.db.select({ id: documents.id, title: documents.title }).from(documents).where(inArray(documents.id, hits.map(h => h.documentId)));
+  // A film is cited once however many of its chunks matched (indexXray stores a reading and its search terms): its
+  // reading when that matched, else the first chunk; the app shows the film either way.
+  const reading = new Set(hits.filter(h => h.tags.kind === "xray" && h.tags.section === "Reading").map(h => h.documentId)), cited = new Set<string>();
+  const shown = hits.filter(h => {
+    if (h.tags.kind !== "xray") return true;
+    if ((reading.has(h.documentId) && h.tags.section !== "Reading") || cited.has(h.documentId)) return false;
+    cited.add(h.documentId);
+    return true;
+  });
+  const docs = await context.db.select({ id: documents.id, title: documents.title }).from(documents).where(inArray(documents.id, shown.map(h => h.documentId)));
   const title = new Map(docs.map(d => [d.id, d.title]));
-  return { found, passages: hits.map(h => ({ id: h.sourceId, documentId: h.documentId, title: title.get(h.documentId) ?? h.tags.source, section: h.tags.section, from: h.tags.source, year: h.tags.year, text: h.text, kind: h.tags.kind })) };
+  return { found, passages: shown.map(h => ({ id: h.sourceId, documentId: h.documentId, title: title.get(h.documentId) ?? h.tags.source, section: h.tags.section, from: h.tags.source, year: h.tags.year, text: h.text, kind: h.tags.kind })) };
 }
 type Passage = Awaited<ReturnType<typeof passagesFor>>["passages"][number];
 

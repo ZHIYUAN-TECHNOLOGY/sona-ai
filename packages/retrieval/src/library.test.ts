@@ -184,6 +184,8 @@ test("a patient's X-ray is found by its reading, in Malay too, and comes back as
   // The answer hands the film back as an image reference naming the visit, with the reading as its text.
   const r = await api.evidence.ask({ encounterId: "visit-1042", question: "Tunjukkan X-ray dada dia, ada nodul?" });
   expect(r.references.find(x => x.kind === "image")).toMatchObject({ design: "Imaging", encounterId: "visit-1042", documentId: "xray:visit-1042", title: "Chest X-ray: Amelia Tan, 3 Oct 2026", from: "Imaging", year: 2026 });
+  // Once, though its reading and its search terms are separate chunks and both match.
+  expect(r.references.filter(x => x.kind === "image")).toHaveLength(1);
   expect(r.references.map(x => x.text).join("\n")).toContain("9 mm nodule, right upper zone 9 mm, right upper zone (open, CT chest due 1 Jan 2027, demo reading)");
   // Not a doctor's source, not another hospital's, and never a patient's leaflet.
   expect(await api.library.list()).toEqual([]);
