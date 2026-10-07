@@ -1,5 +1,6 @@
 import type { Point } from "@/components/chart-scale";
 import { isFlagged } from "@/features/results/triage";
+import { formatNumber } from "@/lib/format";
 
 type At = Date | string;
 type TrendPoint = { at: At; value: number; flag?: string | null };
@@ -34,9 +35,9 @@ export const topSeries = (all: Series[], n = 3) =>
 /** The latest value against the one before it, in words. */
 export function direction(s: Series) {
   const prev = s.points[s.points.length - 2];
-  if (!prev) return "Only value on record";
+  if (!prev) return "One value";
   const now = latestOf(s).value;
-  return `${now > prev.value ? "Up" : now < prev.value ? "Down" : "Unchanged"} from ${prev.value}`;
+  return `${now > prev.value ? "Up" : now < prev.value ? "Down" : "Unchanged"} from ${formatNumber(prev.value)}`;
 }
 
 export const chartPoints = (s: Series): Point[] =>
