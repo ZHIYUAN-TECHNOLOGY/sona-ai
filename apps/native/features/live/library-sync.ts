@@ -11,11 +11,6 @@ export type ArticlePreview = Awaited<ReturnType<AppRouterClient["library"]["prev
 /** `pages`: how many checked pages a scan added. */
 export type Added = Awaited<ReturnType<AppRouterClient["library"]["add"]>> & { pages?: number };
 type Failure = { error: string; retryable: boolean; reason?: string };
-// TODO(merge): use api.library.readScan/addScan once the server lands
-const scanApi = api.library as unknown as {
-  readScan(input: { pdf: { dataBase64: string } } | { images: { dataBase64: string; contentType: PageType }[] }): Promise<ScanRead>;
-  addScan(input: { requestId: string; scope: LibraryScope; title: string; source: ScanRead["source"]; model: string; pages: string[] }): Promise<Added & { pages: number }>;
-};
 
 /** The doctor's library in live mode: their own sources and the hospital's shared ones. Re-read whenever the screen comes back into view (after the add sheet closes) or a colleague changes it. */
 export function useLiveLibrary() {
@@ -66,13 +61,13 @@ export function useAddSource() {
     /** A scanned PDF or photos of printed pages (in the order picked), read by MedGemma for the doctor to check. Saves nothing. */
     read: async (source: { pdf: string } | { images: { file: { uri: string }; contentType: PageType }[] }): Promise<{ read: ScanRead } | Failure> => {
       try {
-        return { read: await scanApi.readScan("pdf" in source ? { pdf: { dataBase64: await base64Of(source.pdf) } }
+        return { read: await api.library.readScan("pdf" in source ? { pdf: { dataBase64: await base64Of(source.pdf) } }
           : { images: await Promise.all(source.images.map(async ({ file, contentType }) => ({ dataBase64: await base64Of(file.uri), contentType }))) }) };
       } catch (e) { return failure(e); }
     },
     /** The text the doctor checked, page by page, under the same request ID as the upload. */
     scan: (scope: LibraryScope, title: string, read: ScanRead, pages: string[]) => run(requestId =>
-      scanApi.addScan({ requestId, scope, title, source: read.source, model: read.model, pages })),
+      api.library.addScan({ requestId, scope, title, source: read.source, model: read.model, pages })),
     text: (scope: LibraryScope, title: string, text: string) => run(requestId =>
       api.library.add({ requestId, scope, title, text, source: scope === "me" ? "Added by you" : "Added by your hospital", year: new Date().getFullYear() })),
     article: (scope: LibraryScope, pmid: string) => run(requestId => api.library.importArticle({ requestId, scope, pmid })),

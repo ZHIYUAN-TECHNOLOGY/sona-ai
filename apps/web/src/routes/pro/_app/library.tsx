@@ -8,7 +8,7 @@ import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, Field, SearchField, Select, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
-import { isStale, MAX_PAGES, messageOf, type PageType, type ScanRead, scanPages, splitPicked, titleOf, toBase64 } from "@/features/library/files";
+import { isStale, MAX_PAGES, messageOf, type ScanRead, scanPages, splitPicked, titleOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
 import "@/styles/pages/library.css";
 
@@ -17,11 +17,6 @@ export const Route = createFileRoute("/pro/_app/library")({ component: Page });
 type Doc = Awaited<ReturnType<typeof client.library.list>>[number];
 type Preview = Awaited<ReturnType<typeof client.library.previewArticle>>;
 type Added = Awaited<ReturnType<typeof client.library.add>>;
-// TODO(merge): use client.library.readScan/addScan once the server lands
-const scanApi = client.library as unknown as {
-  readScan(input: { pdf: { dataBase64: string } } | { images: { dataBase64: string; contentType: PageType }[] }): Promise<ScanRead>;
-  addScan(input: { requestId: string; scope: "me" | "hospital"; title: string; source: ScanRead["source"]; model: string; pages: string[] }): Promise<Added & { pages: number }>;
-};
 /** A scan read by MedGemma, waiting for staff to check each page before anything is saved. */
 type Review = { title: string; read: ScanRead };
 // "scan": pages MedGemma read from a scanned PDF or photos.
@@ -159,10 +154,10 @@ function AddSource({ onAdded }: { onAdded: () => unknown }) {
           try { return await client.library.addPdf({ requestId, scope, title: named, dataBase64 }); }
           catch (e) { if ((e as { data?: { reason?: string } }).data?.reason !== "scan") throw e; }
           setScanning(true);
-          return { title: named, read: await scanApi.readScan({ pdf: { dataBase64 } }) };
+          return { title: named, read: await client.library.readScan({ pdf: { dataBase64 } }) };
         }
         const images = await Promise.all(picked.images.map(async ({ file, contentType }) => ({ dataBase64: await toBase64(file), contentType })));
-        return { title: title || titleOf(picked.images[0]!.file.name), read: await scanApi.readScan({ images }) };
+        return { title: title || titleOf(picked.images[0]!.file.name), read: await client.library.readScan({ images }) };
       }
       if (!preview) { setPreview(await client.library.previewArticle({ ref: String(form.get("ref")) })); return undefined; }
       return client.library.importArticle({ requestId, scope, pmid: preview.pmid });
@@ -176,7 +171,7 @@ function AddSource({ onAdded }: { onAdded: () => unknown }) {
   });
   // The checked text, with the same request ID, scope and title as the upload.
   const confirm = useMutation({
-    mutationFn: (pages: string[]) => scanApi.addScan({ requestId, scope, title: review!.title, source: review!.read.source, model: review!.read.model, pages }),
+    mutationFn: (pages: string[]) => client.library.addScan({ requestId, scope, title: review!.title, source: review!.read.source, model: review!.read.model, pages }),
     onSuccess: saved => added(saved, true),
   });
   const pick = (m: typeof mode) => { setMode(m); setPreview(undefined); setDone(undefined); add.reset(); };
