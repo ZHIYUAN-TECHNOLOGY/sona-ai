@@ -6,6 +6,7 @@ import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, SearchField, Signal, Skeleton, StatCard, StatRow, type TabItem, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { messageOf } from "@/features/library/files";
+import { countOf, formatNumber } from "@/lib/format";
 import { client, orpc } from "@/lib/orpc";
 import "@/styles/pages/library.css";
 import "@/styles/pages/training-data.css";
@@ -38,6 +39,7 @@ export function Review() {
   const total = c ? STATUSES.reduce((n, k) => n + c[k], 0) : 0;
   const stat = (n: number | undefined) => n ?? <Skeleton width={48} height={28} />;
   const unit = (text: string) => (s ? text : undefined); // no unit beside a loading number
+  const per = (n: number | undefined, one: string) => unit(n === 1 ? one : `${one}s`);
 
   const needle = q.trim().toLowerCase();
   const all = samples.data ?? [];
@@ -58,15 +60,15 @@ export function Review() {
   const columns: Column<Sample>[] = [
     { key: "input", header: "Asked", cell: r => <div className="td-clip">{r.input}</div> },
     { key: "output", header: "Answered", cell: r => <div className="td-clip td-muted">{r.output}</div> },
-    { key: "deidentifier", header: "De-identified by", cell: r => <span className="td-muted">{r.deidentifier}</span>, sort: (a, b) => a.deidentifier.localeCompare(b.deidentifier) },
-    { key: "status", header: "Status", cell: r => <StatusText status={r.status} /> },
+    { key: "deidentifier", header: "De-identified by", cell: r => <span className="td-muted td-deid">{r.deidentifier}</span>, sort: (a, b) => a.deidentifier.localeCompare(b.deidentifier) },
+    { key: "status", header: "Status", cell: r => <span className="td-status"><StatusText status={r.status} /></span> },
   ];
 
   const lead = !s ? "De-identified samples the hospital may contribute. Nothing leaves before you approve it."
     : !s.contributes ? "The hospital is not contributing, so no samples are taken."
     : <>
-        {left ? <Signal tone="soon">{left} {left === 1 ? "sample" : "samples"} to review</Signal> : <Signal tone="done">Nothing to review</Signal>}
-        {s.counts.blocked ? <> · <Signal tone="urgent">{s.counts.blocked} blocked for patient details</Signal></> : null}
+        {left ? <Signal tone="soon">{countOf(left, "sample")} to review</Signal> : <Signal tone="done">Nothing to review</Signal>}
+        {s.counts.blocked ? <> · <Signal tone="urgent">{formatNumber(s.counts.blocked)} blocked for patient details</Signal></> : null}
         {" · nothing leaves before you approve it"}
       </>;
 
@@ -86,7 +88,7 @@ export function Review() {
               {needle ? "Try a different search." : s && !s.contributes ? "Turn on contributing to start collecting de-identified samples." : "Samples appear here once they are de-identified."}
             </EmptyState>
           )}
-          count={all.length ? <span className="lib-num">Showing {rows.length} of {all.length} {all.length === 1 ? "sample" : "samples"}</span> : undefined} />
+          count={all.length ? <span className="lib-num">Showing {formatNumber(rows.length)} of {countOf(all.length, "sample")}</span> : undefined} />
       )}
     </Card>
   );
@@ -101,10 +103,10 @@ export function Review() {
       )} />
       {status.isError ? <EmptyState icon="database" title="The status could not be shown">{messageOf(status.error)}</EmptyState> : (
         <StatRow>
-          <StatCard title="To review" value={stat(c?.pending)} unit={unit("samples")} tone="soon" caption="Waiting for a decision" onSelect={() => setTab("pending")} selected={tab === "pending"} />
-          <StatCard title="Approved" value={stat(c?.approved)} unit={unit(total ? `of ${total}` : "samples")} progress={total ? (c?.approved ?? 0) / total : undefined} caption="Cleared to contribute" onSelect={() => setTab("approved")} selected={tab === "approved"} />
-          <StatCard title="Blocked" value={stat(c?.blocked)} unit={unit("samples")} chip={c?.blocked ? "Patient details" : undefined} tone="urgent" caption={c ? `${c.excluded} excluded, ${c.withdrawn} withdrawn` : undefined} onSelect={() => setTab("blocked")} selected={tab === "blocked"} />
-          <StatCard title="Ready for next dataset" value={stat(s?.ready)} unit={unit("rows")} caption={!s ? undefined : s.lastDataset ? `Last dataset: version ${s.lastDataset.version}, ${s.lastDataset.rows} rows` : "No dataset exported yet"} />
+          <StatCard title="To review" value={stat(c?.pending)} unit={per(c?.pending, "sample")} tone="soon" caption="Waiting for a decision" onSelect={() => setTab("pending")} selected={tab === "pending"} />
+          <StatCard title="Approved" value={stat(c?.approved)} unit={unit(total ? `of ${formatNumber(total)}` : "samples")} progress={total ? (c?.approved ?? 0) / total : undefined} caption="Cleared to contribute" onSelect={() => setTab("approved")} selected={tab === "approved"} />
+          <StatCard title="Blocked" value={stat(c?.blocked)} unit={per(c?.blocked, "sample")} chip={c?.blocked ? "Patient details" : undefined} tone="urgent" caption={c ? `${formatNumber(c.excluded)} excluded, ${formatNumber(c.withdrawn)} withdrawn` : undefined} onSelect={() => setTab("blocked")} selected={tab === "blocked"} />
+          <StatCard title="Ready for next dataset" value={stat(s?.ready)} unit={per(s?.ready, "row")} caption={!s ? undefined : s.lastDataset ? `Last: v${s.lastDataset.version}, ${countOf(s.lastDataset.rows, "row")}` : "No dataset exported yet"} />
         </StatRow>
       )}
       {samples.isPending ? (
@@ -126,7 +128,7 @@ export function Review() {
                 {mayExclude ? <Button size="sm" pending={decide.isPending} onClick={() => decide.mutate({ id: open.id, decision: "exclude" })}>Exclude</Button> : null}
               </span>
               {decide.isSuccess ? (
-                <p role="status"><Signal tone="done">{decide.variables.decision === "approve" ? "Approved" : "Excluded"}</Signal> {left ? `${left} left to review.` : "Nothing is left to review."}</p>
+                <p role="status"><Signal tone="done">{decide.variables.decision === "approve" ? "Approved" : "Excluded"}</Signal> {left ? `${formatNumber(left)} left to review.` : "Nothing is left to review."}</p>
               ) : null}
             </Card>
           </RightRail>
