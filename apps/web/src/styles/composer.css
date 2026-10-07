@@ -26,9 +26,37 @@
 }
 .ai-composer:focus-within .ai-composer-ring[data-fallback] { opacity: 1; }
 
-.ai-composer-status { flex-basis: 100%; margin: 0; padding: var(--space-1) 0 0; font-size: 12px; line-height: 1.4; color: var(--muted); }
+/* A problem with the mic or the transcript, in the box's first line. */
+.ai-composer-status { flex-basis: 100%; margin: 0; padding: var(--space-1) 0 0; font-size: 12px; line-height: 1.4; color: var(--ink); font-weight: 600; }
 .ai-composer-status:empty { display: none; }
-.ai-composer-status[data-error] { color: var(--ink); font-weight: 600; }
+
+/* Listening (components/ai/voice-glow.tsx, and the timeline in composer.tsx). The veil: a fixed frosted dim over the
+   stage (the Sona panel or the page), under the composer; only its opacity moves. */
+.voice-veil {
+  position: absolute; inset: 0; z-index: 1; opacity: 0; visibility: hidden; pointer-events: none;
+  background: linear-gradient(to top, color-mix(in srgb, var(--blue) 7%, transparent), transparent 45%), color-mix(in srgb, var(--canvas) 55%, transparent);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+:is(.sona-panel-head, .sona-panel-foot, .frame-main > .ai-composer-dock) { position: relative; z-index: 2; }
+/* The glow: dots rising from the box's bottom edge, above it while the voice is loud, faded at both ends. */
+.voice-glow {
+  position: absolute; left: 0; bottom: 0; z-index: -1; width: 100%; height: calc(100% + 88px); opacity: 0.85; pointer-events: none;
+  mask: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); -webkit-mask: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+}
+/* Without WebGPU or WebGL 2: still dots in a soft mound, shown while listening. */
+.voice-glow[data-fallback] {
+  opacity: 0; color: var(--blue); background: var(--dither) 0 0 / 4px 4px; transition: opacity 350ms var(--ai-ease);
+  mask: radial-gradient(60% 70% at 50% 100%, #000, transparent); -webkit-mask: radial-gradient(60% 70% at 50% 100%, #000, transparent);
+}
+.ai-composer[data-phase="listening"] .voice-glow[data-fallback] { opacity: 0.5; }
+/* The caption: a small glass pill above the box. */
+.ai-composer-caption {
+  position: absolute; bottom: calc(100% + var(--space-2)); left: 0; right: 0; width: fit-content; max-width: calc(100% - var(--space-4)); margin: 0 auto;
+  padding: 4px 12px; overflow: hidden; border-radius: var(--radius-pill); opacity: 0; visibility: hidden; pointer-events: none;
+  background: var(--glass-float); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 0 0 1px rgb(29 31 35 / 0.06), 0 2px 8px rgb(29 31 35 / 0.05);
+  color: var(--muted); font-size: 12px; font-weight: 500; line-height: 18px; text-overflow: ellipsis; white-space: nowrap;
+}
 .ai-composer-input {
   flex: 1; min-width: 0; resize: none; margin: 0; padding: 8px 0; border: 0; outline: 0; overflow-y: hidden;
   background: transparent; color: var(--ink); font: inherit; font-size: 14px; line-height: 20px;
@@ -64,6 +92,9 @@
 .ai-composer-send:not(:disabled) { color: #fff; box-shadow: none; }
 .ai-composer-send:not(:disabled)::before { opacity: 1; }
 .ai-composer-send:not(:disabled)::after { opacity: 0.45; }
+/* The mic and the stop square share the button's one cell; the timeline swaps them. */
+.ai-composer-mic > * { grid-area: 1 / 1; display: grid; }
+.ai-composer-stop { width: 12px; height: 12px; border-radius: 9px; background: currentColor; opacity: 0; visibility: hidden; transform: scale(0.4); }
 /* Listening: the mic is the blue circle, with a ring that swells with the voice. */
 .ai-composer[data-phase="listening"] .ai-composer-mic { color: #fff; box-shadow: 0 0 0 calc(2px + var(--level) * 6px) rgb(36 91 204 / 0.2); }
 .ai-composer[data-phase="listening"] .ai-composer-mic::before { opacity: 1; }
@@ -73,11 +104,14 @@
 /* Sona Care: sized for patients, the buttons at the tap size. */
 .care .ai-composer { --composer-button: var(--tap); }
 .care .ai-composer-input { padding-block: 12px; font-size: var(--text-body); line-height: 24px; }
-.care .ai-composer-status { font-size: var(--text-small); }
+.care .ai-composer-status, .care .ai-composer-caption { font-size: var(--text-small); }
 /* A chat page's composer, under its thread at the thread's width. */
 .ai-composer-dock { flex: none; width: 100%; max-width: 760px; margin-inline: auto; padding: var(--space-2) var(--space-4) var(--space-4); }
 
-@media (prefers-reduced-transparency: reduce) { .ai-composer { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+@media (prefers-reduced-transparency: reduce) {
+  .ai-composer, .ai-composer-caption { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .voice-veil { background: color-mix(in srgb, var(--canvas) 88%, transparent); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .ai-composer-button:active:not(:disabled) { transform: none; }
   .ai-composer[data-phase="transcribing"] .ai-composer-mic { animation: none; }

@@ -120,12 +120,13 @@ function paint({ gl, canvas, at }: Renderer, px: number, scale: number, app: App
 
 const density = () => Math.min(devicePixelRatio || 1, 2);
 
-/** The centre glyph, crisp on top of the glass: sparkle at rest, three rising dots while thinking, ✓ when answered. */
+/** The centre glyph, crisp on top of the glass: sparkle at rest, voice bars while listening, three rising dots while thinking, ✓ when answered. */
 function Glyph({ state }: { state: OrbState }) {
-  const glyph = state === "thinking" ? "dots" : state === "answered" ? "check" : "spark";
+  const glyph = state === "listening" ? "bars" : state === "thinking" ? "dots" : state === "answered" ? "check" : "spark";
   return (
     <svg className="sona-orb-glyph" viewBox="0 0 24 24" data-glyph={glyph} aria-hidden="true">
       <path className="sona-orb-spark" d="M12 3l1.9 5.6a2 2 0 0 0 1.5 1.5L21 12l-5.6 1.9a2 2 0 0 0-1.5 1.5L12 21l-1.9-5.6a2 2 0 0 0-1.5-1.5L3 12l5.6-1.9a2 2 0 0 0 1.5-1.5z" />
+      <g className="sona-orb-bars"><rect x="4.6" y="7" width="2.4" height="10" rx="1.2" /><rect x="8.8" y="4" width="2.4" height="16" rx="1.2" /><rect x="13" y="6" width="2.4" height="12" rx="1.2" /><rect x="17.2" y="8.5" width="2.4" height="7" rx="1.2" /></g>
       <g className="sona-orb-dots"><circle cx="7" cy="12" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="17" cy="12" r="1.7" /></g>
       <path className="sona-orb-check" d="M6.5 12.5l3.6 3.6L17.5 8.5" />
     </svg>

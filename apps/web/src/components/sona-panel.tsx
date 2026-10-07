@@ -1,8 +1,10 @@
 import { Composer, focusComposer, Suggestions } from "@/components/ai";
 import { SonaTurns, useSona } from "@/lib/sona";
+import { markState } from "@/lib/sona-orb";
+import { useVoice } from "@/lib/voice";
 
 import { IconButton } from "./primitives";
-import { SonaOrbButton, SonaOrbMark } from "./sona-orb";
+import { SonaOrb, SonaOrbButton } from "./sona-orb";
 import "@/styles/sona-panel.css";
 
 // What the empty panel offers, one press each.
@@ -22,10 +24,12 @@ export const SHORTCUT = mac ? "⌘K" : "Ctrl+K";
  */
 export function SonaPanel({ app, label }: { app: "pro" | "care"; /** What the page is about, for the header chip. */ label: string }) {
   const { turns, panel, unseen, setPanel, ask } = useSona();
+  const voice = useVoice();
+  const pending = turns.some(turn => turn.state === "pending");
 
   if (panel === "closed")
     return (
-      <SonaOrbButton app={app} pending={turns.some(turn => turn.state === "pending")} unseen={unseen}
+      <SonaOrbButton app={app} pending={pending} unseen={unseen}
         aria-label={`Ask Sona (${SHORTCUT})${unseen ? ", new answer" : ""}`} title={`Ask Sona · ${SHORTCUT}`}
         onClick={() => { setPanel("open"); focusComposer(); }} />
     );
@@ -35,7 +39,8 @@ export function SonaPanel({ app, label }: { app: "pro" | "care"; /** What the pa
   return (
     <aside className="sona-panel" data-mode={panel} aria-label="Sona">
       <header className="sona-panel-head">
-        <SonaOrbMark app={app} />
+        {/* The mark, live: it listens with the mic and thinks while Sona answers; one still frame otherwise. */}
+        <SonaOrb app={app} state={markState({ voice, pending })} size={28} />
         <h2>Sona</h2>
         <span className="sona-panel-context" title={label}>{label}</span>
         <IconButton className="sona-panel-expand" icon={expanded ? "collapse" : "expand"} label={expanded ? "Back to the side panel" : "Full screen"} variant="quiet" size="sm"

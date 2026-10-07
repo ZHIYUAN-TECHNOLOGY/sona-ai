@@ -4,7 +4,7 @@ import type { RefObject } from "react";
 
 gsap.registerPlugin(useGSAP);
 // A chart with no marks yet (still loading) is not a mistake.
-gsap.config({ nullTargetWarn: false });
+gsap.config({ nullTargetWarn: false, autoSleep: 60 }); // the ticker sleeps a second after the last tween
 
 export { gsap, useGSAP };
 

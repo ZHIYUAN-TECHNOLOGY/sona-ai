@@ -13,7 +13,11 @@
   transition: opacity 600ms var(--sona-ease, ease-out), scale 600ms var(--sona-ease, ease-out);
 }
 .sona-orb-visual[data-state="hover"]::before { opacity: 0.55; }
+.sona-orb-visual[data-state="listening"]::before { opacity: 0.9; }
 .sona-orb-visual[data-state="thinking"]::before { opacity: 0.8; }
+/* Listening: the orb grows a little, as the phone's does while held. */
+.sona-orb-visual { transition: scale 350ms var(--sona-ease, ease-out); }
+.sona-orb-visual[data-state="listening"] { scale: 1.12; }
 .sona-orb-visual[data-state="answered"]::before { opacity: 1; scale: 1.15; transition-duration: 300ms; }
 
 /* Without WebGL 2: the same sphere in CSS, still. */
@@ -31,13 +35,19 @@
   transform-box: view-box; transform-origin: 12px 12px; opacity: 0; scale: 0.55; rotate: -25deg;
   transition: opacity 200ms ease-out, scale 450ms var(--orb-spring), rotate 450ms var(--orb-spring);
 }
-.sona-orb-spark, .sona-orb-dots { fill: currentColor; }
+.sona-orb-spark, .sona-orb-dots, .sona-orb-bars { fill: currentColor; }
 .sona-orb-check { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-:is([data-glyph="spark"] .sona-orb-spark, [data-glyph="dots"] .sona-orb-dots, [data-glyph="check"] .sona-orb-check) { opacity: 1; scale: 1; rotate: 0deg; }
+:is([data-glyph="spark"] .sona-orb-spark, [data-glyph="bars"] .sona-orb-bars, [data-glyph="dots"] .sona-orb-dots, [data-glyph="check"] .sona-orb-check) { opacity: 1; scale: 1; rotate: 0deg; }
 /* Thinking: the three dots rise in turn. */
 [data-glyph="dots"] .sona-orb-dots circle { animation: sona-orb-rise 900ms ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 [data-glyph="dots"] .sona-orb-dots circle:nth-child(2) { animation-delay: 150ms; }
 [data-glyph="dots"] .sona-orb-dots circle:nth-child(3) { animation-delay: 300ms; }
+/* Listening: the voice bars rise and fall out of step. */
+[data-glyph="bars"] .sona-orb-bars rect { animation: sona-orb-bar 760ms ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+[data-glyph="bars"] .sona-orb-bars rect:nth-child(2) { animation-delay: -380ms; }
+[data-glyph="bars"] .sona-orb-bars rect:nth-child(3) { animation-delay: -190ms; }
+[data-glyph="bars"] .sona-orb-bars rect:nth-child(4) { animation-delay: -570ms; }
+@keyframes sona-orb-bar { from { scale: 1 0.45; } to { scale: 1 1; } }
 @keyframes sona-orb-rise { 0%, 100% { translate: 0 1.6px; opacity: 0.45; } 50% { translate: 0 -1.6px; opacity: 1; } }
 
 /* Closed Sona panel: the orb in the bottom-right corner, with a dot when an answer arrived while it was closed. */
@@ -56,8 +66,9 @@
 @media (max-width: 860px) { .sona-orb { right: var(--space-4); bottom: max(var(--space-4), env(safe-area-inset-bottom)); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .sona-orb, .sona-orb-visual::before, .sona-orb-glyph > * { transition: none; }
+  .sona-orb, .sona-orb-visual, .sona-orb-visual::before, .sona-orb-glyph > * { transition: none; }
+  .sona-orb-visual[data-state="listening"] { scale: none; }
   .sona-orb:active, .sona-orb[data-state] { scale: none; }
-  [data-glyph="dots"] .sona-orb-dots circle { animation: none; }
+  [data-glyph="dots"] .sona-orb-dots circle, [data-glyph="bars"] .sona-orb-bars rect { animation: none; }
 }
 @media print { .sona-orb { display: none !important; } }

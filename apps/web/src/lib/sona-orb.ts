@@ -1,8 +1,11 @@
 // The Sona orb's states and motion, without the DOM (components/sona-orb.tsx draws them). After the iPhone's Aurora
 // core orb (apps/native/components/sona/glass-orb.tsx): at rest the aurora holds still and nothing is drawn.
 
-/** rest: one still frame. hover: the aurora wakes and curls. thinking: it circles. answered: one bright bloom. */
-export type OrbState = "rest" | "hover" | "thinking" | "answered";
+/**
+ * rest: one still frame. hover: the aurora wakes and curls. listening: it rises and brightens with a blue glow (the
+ * orb grows to 1.12). thinking: it circles. answered: one bright bloom.
+ */
+export type OrbState = "rest" | "hover" | "listening" | "thinking" | "answered";
 
 /** How long an answer that arrived while the panel was closed blooms (and shows ✓) before the orb rests with a dot. */
 export const BLOOM_MS = 1200;
@@ -17,6 +20,12 @@ export function orbState({ closed, pending, blooming, hover }: { closed: boolean
   return hover ? "hover" : "rest";
 }
 
+/** The Sona panel's own orb (its header): listening while the mic is open, thinking while Sona reads it or answers. */
+export function markState({ voice, pending }: { voice: "idle" | "listening" | "transcribing"; pending: boolean }): OrbState {
+  if (voice === "listening") return "listening";
+  return voice === "transcribing" || pending ? "thinking" : "rest";
+}
+
 /**
  * What the shader is given: `energy` raises and brightens the aurora, `speed` is how fast its folds move, `spin` how
  * fast it circles the glass (radians a second), `bloom` the answered flash and its blue glow.
@@ -25,6 +34,7 @@ export type Look = { energy: number; speed: number; spin: number; bloom: number 
 export const LOOK: Record<OrbState, Look> = {
   rest: { energy: 0, speed: 0, spin: 0, bloom: 0 },
   hover: { energy: 0.55, speed: 1.4, spin: 0.25, bloom: 0 },
+  listening: { energy: 1, speed: 1.7, spin: 0.3, bloom: 0.4 },
   thinking: { energy: 0.7, speed: 1.8, spin: 1.6, bloom: 0.15 },
   answered: { energy: 1, speed: 1.6, spin: 0.5, bloom: 1 },
 };
