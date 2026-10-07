@@ -11,12 +11,12 @@ import { PriorityCell, ResultRail } from "@/features/results/result-rail";
 import { inTab, summary, type Tab } from "@/features/results/tabs";
 import { byTriage, isNormal } from "@/features/results/triage";
 import type { ResultRow } from "@/features/results/types";
+import { countOf, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/results.css";
 
 export const Route = createFileRoute("/pro/_app/results")({ component: Page });
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 function Page() {
   const { me } = Route.useRouteContext();
@@ -76,9 +76,9 @@ function Page() {
         title="Results"
         lead={list.isPending ? "Loading results…" : n.fresh ? (
           <>
-            {plural(n.fresh, "new result")} across {plural(n.patients, "patient")} ·{" "}
-            {n.critical ? <Signal tone="urgent">{n.critical} critical</Signal> : "0 critical"} ·{" "}
-            {n.review ? <Signal tone="soon">{n.review} to review</Signal> : "0 to review"}
+            {countOf(n.fresh, "new result")} across {countOf(n.patients, "patient")} ·{" "}
+            {n.critical ? <Signal tone="urgent">{formatNumber(n.critical)} critical</Signal> : "0 critical"} ·{" "}
+            {n.review ? <Signal tone="soon">{formatNumber(n.review)} to review</Signal> : "0 to review"}
           </>
         ) : "No result is waiting for a doctor"}
         actions={(
@@ -86,7 +86,7 @@ function Page() {
             {allowed && normals.length ? (confirming ? (
               <span className="results-confirm">
                 <Button variant="primary" icon="check" pending={acknowledgeAll.isPending} onClick={() => acknowledgeAll.mutate(normals)}>
-                  Acknowledge {plural(normals.length, "normal result")}
+                  Acknowledge {countOf(normals.length, "normal result")}
                 </Button>
                 <Button onClick={() => setConfirming(false)}>Cancel</Button>
               </span>
@@ -116,7 +116,7 @@ function Page() {
           onRowOpen={r => setSelectedId(r.id)}
           rowAction={r => <RowAction onClick={() => navigate({ to: "/pro/results/$resultId", params: { resultId: r.id } })}>Review</RowAction>}
           toolbar={(
-            <TableToolbar end={<SearchField label="Search results" placeholder="Search patient or test" value={query} onChange={e => setQuery(e.target.value)} />}>
+            <TableToolbar end={<SearchField label="Search results" placeholder="Patient or test" value={query} onChange={e => setQuery(e.target.value)} />}>
               <Tabs
                 label="Results by state" value={tab} onChange={pickTab}
                 tabs={[
