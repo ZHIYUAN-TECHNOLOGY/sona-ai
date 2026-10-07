@@ -22,7 +22,7 @@
 .btn-danger { background: var(--red); border-color: var(--red); color: var(--surface); }
 
 /* Chip */
-.chip { display: inline-flex; align-items: center; padding: 2px var(--space-2); border-radius: var(--radius-control); background: var(--tone-wash); color: var(--tone); font-size: var(--text-small); line-height: 18px; font-weight: 600; white-space: nowrap; }
+.chip { display: inline-flex; align-items: center; padding: 2px var(--space-2); border-radius: var(--radius-control); background: var(--tone-wash); color: var(--tone); font-size: var(--text-small); line-height: 18px; font-weight: 600; }
 .chip[data-tone="neutral"] { border: 1px solid var(--line); }
 
 /* Avatar */
@@ -38,7 +38,7 @@
 .field-error { color: var(--red); }
 
 /* Insight card: the one feature surface. Glass, and the only place halftone appears. */
-.insight { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; padding: var(--space-5); border-radius: var(--radius-card); }
+.insight { overflow-wrap: anywhere; display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; padding: var(--space-5); border-radius: var(--radius-card); }
 .insight-lead { margin: 0; font-size: var(--text-heading); line-height: 1.35; font-weight: 600; }
 .insight-lead::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: var(--space-2); border-radius: 50%; background: var(--tone); vertical-align: middle; }
 .insight-detail { color: var(--muted); }

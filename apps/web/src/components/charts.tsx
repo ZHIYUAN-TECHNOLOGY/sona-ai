@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 
+import { formatNumber } from "@/lib/format";
 import { useReveal } from "@/lib/motion";
 
 import { bandXs, linePath, nearest, pointXs, scale, ticks, yDomain, type Point } from "./chart-scale";
@@ -7,6 +8,8 @@ import "../styles/components.css";
 import "../styles/data.css";
 
 const W = 600;
+// Axis ticks fit the 36px gutter: "1,284", then "12K" from ten thousand.
+const axis = { format: (n: number) => new Intl.NumberFormat("en-MY", { maximumFractionDigits: Math.abs(n) >= 100 ? 0 : 1, notation: Math.abs(n) >= 10_000 ? "compact" : "standard" }).format(n) };
 const LEFT = 44;
 const RIGHT = W - 16;
 const TOP = 24;
@@ -76,7 +79,7 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
         {ticks(domain).map((t, i) => (
           <g key={i}>
             <line className="chart-grid" x1={LEFT} x2={RIGHT} y1={y(t)} y2={y(t)} />
-            <text x={LEFT - 8} y={y(t) + 4} textAnchor="end">{t}</text>
+            <text x={LEFT - 8} y={y(t) + 4} textAnchor="end">{axis.format(t)}</text>
           </g>
         ))}
         {goal ? (
@@ -86,11 +89,11 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
           </g>
         ) : null}
         {children}
-        {showValues ? points.map((p, i) => <text key={i} className="chart-value" x={xs[i]} y={(ys[i] ?? 0) - 10} textAnchor="middle">{p.y}</text>) : null}
+        {showValues ? points.map((p, i) => <text key={i} className="chart-value" x={xs[i]} y={(ys[i] ?? 0) - 10} textAnchor="middle">{formatNumber(p.y)}</text>) : null}
         {shown ? <circle className="chart-active" cx={ax} cy={ay} r={7} /> : null}
         {points.map((p, i) =>
-          // Every label up to 12 points; beyond that only the ends, so they never collide.
-          points.length <= 12 || i === 0 || i === last ? (
+          // Every label while they fit side by side (about 7 units a character); beyond that only the ends.
+          points.length * (Math.max(...points.map(q => q.x.length)) * 7 + 12) <= RIGHT - LEFT || i === 0 || i === last ? (
             <text key={i} x={xs[i]} y={height - 8} textAnchor="middle">{p.x}</text>
           ) : null,
         )}
@@ -182,16 +185,17 @@ export function SegmentBar({ label, segments }: { label: string; segments: Segme
   const figure = useRef<HTMLElement>(null);
   const total = segments.reduce((sum, s) => sum + s.value, 0);
   useReveal(figure, ".seg", { scaleX: 0, transformOrigin: "0% 50%" }, total);
+  if (total === 0) return <figure className="chart" aria-label={label}><p className="chart-empty">No data yet</p></figure>;
   return (
     <figure className="chart seg-chart" ref={figure} aria-label={label}>
       <div className="seg-bar" aria-hidden="true">
-        {segments.map(s => (s.value > 0 ? <span key={s.label} className="seg" data-chart-tone={s.tone} style={{ flexGrow: s.value }} title={`${s.label}: ${s.value} of ${total}`} /> : null))}
+        {segments.map(s => (s.value > 0 ? <span key={s.label} className="seg" data-chart-tone={s.tone} style={{ flexGrow: s.value }} title={`${s.label}: ${formatNumber(s.value)} of ${formatNumber(total)}`} /> : null))}
       </div>
       <dl className="seg-legend">
         {segments.map(s => (
           <div key={s.label} data-empty={s.value === 0 ? "" : undefined}>
             <dt><span className="seg-key" data-chart-tone={s.tone} />{s.label}</dt>
-            <dd className="num">{s.value}</dd>
+            <dd className="num">{formatNumber(s.value)}</dd>
           </div>
         ))}
       </dl>
@@ -208,11 +212,11 @@ export function BarList({ label, rows, tone = "blue", unit }: { label: string; r
   return (
     <figure className="chart" ref={figure} aria-label={label}>
       <ol className="bar-list">
-        {rows.map(r => (
-          <li key={r.label}>
+        {rows.map((r, i) => (
+          <li key={i}>
             <span className="bar-name" title={r.label}>{r.label}</span>
             <span className="bar-track" aria-hidden="true"><span className="bar-fill" data-chart-tone={tone} style={{ width: `${(r.value / max) * 100}%` }} /></span>
-            <span className="bar-value num">{r.value}{unit ? ` ${r.value === 1 ? unit.replace(/s$/, "") : unit}` : ""}</span>
+            <span className="bar-value num">{formatNumber(r.value)}{unit ? ` ${r.value === 1 ? unit.replace(/s$/, "") : unit}` : ""}</span>
           </li>
         ))}
       </ol>

@@ -1,6 +1,7 @@
 import { useId, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type KeyboardEvent, type ReactNode, type SelectHTMLAttributes } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
 
+import { countOf, formatNumber } from "@/lib/format";
 import { EASE_OUT, gsap, moves, useGSAP } from "@/lib/motion";
 
 import { Avatar } from "./avatar";
@@ -120,9 +121,9 @@ function Count({ to }: { to: number }) {
     const from = { n: shown.current };
     shown.current = to;
     // Only counts count up. A measured value (3.1 mmol/L) is shown as it is, never rounded or passed through other numbers on the way.
-    if (moves() && el.current && Number.isInteger(to)) gsap.to(from, { n: to, duration: 0.7, ease: EASE_OUT, onUpdate: () => { el.current!.textContent = String(Math.round(from.n)); }, onComplete: () => { el.current!.textContent = String(to); } });
+    if (moves() && el.current && Number.isInteger(to)) gsap.to(from, { n: to, duration: 0.7, ease: EASE_OUT, onUpdate: () => { el.current!.textContent = formatNumber(Math.round(from.n)); }, onComplete: () => { el.current!.textContent = formatNumber(to); } });
   }, { dependencies: [to] });
-  return <span ref={el}>{to}</span>;
+  return <span ref={el}>{formatNumber(to)}</span>;
 }
 
 type StatCardProps = {
@@ -154,7 +155,7 @@ export function StatCard({ title, value, unit, caption, chip, tone = "neutral", 
         {action ? <IconButton icon="arrow-up-right" label={label} size="sm" {...target} /> : null}
       </div>
       <div className="stat-body">
-        <p className="stat-value">{typeof value === "number" ? <Count to={value} /> : <span>{value}</span>}{unit ? <span className="stat-unit" title={typeof unit === "string" ? unit : undefined}>{unit}</span> : null}</p>
+        <p className="stat-value">{typeof value === "number" ? <Count to={value} /> : <span>{value}</span>}{unit && !(typeof value === "string" && !/\d/.test(value)) ? <span className="stat-unit" title={typeof unit === "string" ? unit : undefined}>{unit}</span> : null}</p>
         {chip ? <Chip tone={tone}>{chip}</Chip> : null}
         {done === undefined ? null : (
           <svg className="stat-arc" viewBox="0 0 100 56" role="img" aria-label={`${Math.round(done)}%`}>
@@ -237,7 +238,7 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: { tabs:
       {tabs.map((tab) => (
         <button key={tab.id} type="button" role="tab" className="tab" data-tab={tab.id} aria-selected={tab.id === value} tabIndex={tab.id === value ? 0 : -1} onClick={() => onChange(tab.id)}>
           {tab.label}
-          {tab.count === undefined ? null : <span className="tab-count">{tab.count}</span>}
+          {tab.count === undefined ? null : <span className="tab-count">{formatNumber(tab.count)}</span>}
         </button>
       ))}
     </div>
@@ -269,8 +270,8 @@ export function ListRow({ title, caption, avatar, icon, leading, trailing, onCli
     <>
       {leading ?? (avatar ? <Avatar name={avatar} size="md" /> : icon ? <span className="list-tile"><Icon name={icon} size={20} /></span> : null)}
       <span className="list-text">
-        <span className="list-title">{title}</span>
-        {caption ? <span className="list-caption">{caption}</span> : null}
+        <span className="list-title" title={typeof title === "string" ? title : undefined}>{title}</span>
+        {caption ? <span className="list-caption" title={typeof caption === "string" ? caption : undefined}>{caption}</span> : null}
       </span>
       {trailing ?? (linked || onClick ? <Icon name="chevron-right" size={18} className="list-chevron" /> : null)}
     </>
@@ -294,12 +295,15 @@ export function pageRange(page: number, pageSize: number, total: number): [numbe
   return total === 0 ? [0, 0] : [(page - 1) * pageSize + 1, Math.min(page * pageSize, total)];
 }
 
-/** Round previous/next with "Showing X of Y". `page` is 1-based. */
-export function Pager({ page, pageSize, total, onPage, noun }: { page: number; pageSize: number; total: number; onPage: (page: number) => void; noun?: string }) {
+/** Round previous/next with "Showing X of Y". `page` is 1-based. `noun` is the plural, or `[one, other]` ("1 patient"). Nothing at 0 rows. */
+export function Pager({ page, pageSize, total, onPage, noun }: { page: number; pageSize: number; total: number; onPage: (page: number) => void; noun?: string | [string, string] }) {
   const [from, to] = pageRange(page, pageSize, total);
+  if (total === 0) return null;
+  const [one, other] = typeof noun === "string" ? [noun, noun] : (noun ?? ["", ""]);
+  const of = countOf(total, one, other).trim();
   return (
     <nav className="pager" aria-label="Pages">
-      <p className="pager-count" aria-live="polite">Showing {from === to ? to : `${from}–${to}`} of {total}{noun ? ` ${noun}` : ""}</p>
+      <p className="pager-count" aria-live="polite">Showing {from === to ? formatNumber(to) : `${formatNumber(from)}–${formatNumber(to)}`} of {of}</p>
       <IconButton icon="chevron-left" label="Previous page" disabled={page <= 1} onClick={() => onPage(page - 1)} />
       <IconButton icon="chevron-right" label="Next page" disabled={to >= total} onClick={() => onPage(page + 1)} />
     </nav>
