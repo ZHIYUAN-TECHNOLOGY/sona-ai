@@ -8,7 +8,7 @@ import { basetenModels, basetenReranker } from "@sona-ai/api/baseten-models";
 import type { EncounterStore } from "@sona-ai/api/context";
 import type { Watches } from "@sona-ai/api/watches";
 import { workersEmbedder } from "@sona-ai/api/workers-models";
-import { hosted } from "@sona-ai/api/sagemaker";
+import { awsOf, endpointsOf, hosted, sagemakerEmbedder } from "@sona-ai/api/sagemaker";
 import { ingest, reindex, search, stubEmbedder, type Reranker } from "@sona-ai/retrieval/retrieval";
 
 import { ENV } from "./env.server";
@@ -50,11 +50,13 @@ export async function createContext({ context }: CreateContextOptions): Promise<
 
 /**
  * The retrieval library over `db`, for the routes and for Sona Care's voice agents (which search the hospital's patient
- * leaflets, and those are never reranked). EmbeddingGemma on Workers AI; the hashed stub only where the Worker has no AI
- * binding. Switching between them needs one `library.reindex`, since stored vectors from the other one do not compare.
+ * leaflets, and those are never reranked). EmbeddingGemma on its box in Malaysia when SAGEMAKER_ENDPOINTS names it
+ * (embed=sona-embed), else on Workers AI; the hashed stub only where the Worker has no AI binding. Switching to or from
+ * the stub needs one `library.reindex`, since its vectors do not compare; the box and Workers AI run the same weights.
  */
 export function libraryOf(db: ApiContext["db"], env: Env, reranker?: Reranker): NonNullable<ApiContext["library"]> {
-  const embedder = env.AI ? workersEmbedder(env.AI) : stubEmbedder;
+  const aws = awsOf(env), box = endpointsOf(env.SAGEMAKER_ENDPOINTS ?? "").embed;
+  const embedder = aws && box ? sagemakerEmbedder({ ...aws, endpoint: box }) : env.AI ? workersEmbedder(env.AI) : stubEmbedder;
   return {
     ingest: (doc, text) => ingest(db, doc, text, embedder),
     search: input => search(db, input, embedder, reranker),

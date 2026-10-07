@@ -1,4 +1,5 @@
 import { BOXES, type Baseten, type Box } from "./baseten-models";
+import { embedderOver, type Embedder } from "./workers-models";
 
 /**
  * The same boxes on Amazon SageMaker in Malaysia (packages/infra/aws): a fetcher for `boxes()` that sends a moved box's
@@ -18,13 +19,14 @@ export type SageMaker = {
   secretAccessKey: string;
   /** With temporary credentials (a local test with `aws login`). */
   sessionToken?: string;
-  /** The boxes that have moved, and their endpoint names: { brain: "sona-brain", pii: "lambda:sona-pii" }. */
-  endpoints: Partial<Record<Box, string>>;
+  /** The boxes that have moved, and their endpoint names: { brain: "sona-brain", pii: "lambda:sona-pii" }; "embed" is the
+   * library's embedder, which has no Baseten box (packages/infra/aws/embed). */
+  endpoints: Partial<Record<Box | "embed", string>>;
 };
 
-/** "brain=sona-brain,voice=sona-voice" (the SAGEMAKER_ENDPOINTS setting) as the endpoints of a SageMaker. */
+/** "brain=sona-brain,voice=sona-voice,embed=sona-embed" (the SAGEMAKER_ENDPOINTS setting) as the endpoints of a SageMaker. */
 export function endpointsOf(setting: string): SageMaker["endpoints"] {
-  const pairs = setting.split(",").map(p => p.trim().split("=")).filter(p => p.length === 2 && p[0]! in BOXES && p[1]);
+  const pairs = setting.split(",").map(p => p.trim().split("=")).filter(p => p.length === 2 && (p[0]! in BOXES || p[0] === "embed") && p[1]);
   return Object.fromEntries(pairs);
 }
 
@@ -48,6 +50,21 @@ export function hosted(env: HostingEnv, fetcher: typeof fetch = fetch): Baseten 
   const endpoints = endpointsOf(env.SAGEMAKER_ENDPOINTS ?? ""), aws = awsOf(env);
   if (!Object.keys(endpoints).length || !aws) return { apiKey: env.BASETEN_API_KEY };
   return { apiKey: env.BASETEN_API_KEY, fetcher: sagemakerFetcher({ ...aws, endpoints }, fetcher) };
+}
+
+/**
+ * The library's embedder on its SageMaker box (packages/infra/aws/embed): the texts Workers AI took, {text: [...]},
+ * signed to the endpoint's one route, the vectors back in the same shape.
+ */
+export function sagemakerEmbedder(sm: Omit<SageMaker, "endpoints"> & { endpoint: string }, fetcher: typeof fetch = fetch, now: () => Date = () => new Date()): Embedder {
+  const url = `https://runtime.sagemaker.${sm.region}.amazonaws.com/endpoints/${encodeURIComponent(sm.endpoint)}/invocations`;
+  return embedderOver(sm.endpoint, async (text, _as, signal) => {
+    const body = new TextEncoder().encode(JSON.stringify({ text }));
+    const res = await fetcher(url, { method: "POST", body, headers: await signed(sm, "sagemaker", url, body, "application/json", now()), signal });
+    if (!res.ok) throw new Error(`${sm.endpoint} answered ${res.status}`);
+    return res.json();
+  // A CPU box: a batch of 20 sections takes up to ~15 s (measured 7 Oct on ml.c6i.large), so smaller batches wait longer.
+  }, { batch: 20, timeoutMs: { query: 3000, document: 60_000 } });
 }
 
 const BASETEN = /^https:\/\/model-([a-z0-9]+)\.api\.baseten\.co\/environments\/production\/(wake|sync\/health|sync\/.+)$/;

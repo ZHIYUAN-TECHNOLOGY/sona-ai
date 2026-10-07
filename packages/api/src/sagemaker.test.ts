@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { BOXES } from "./baseten-models";
-import { endpointsOf, hosted, payloads, sagemakerFetcher, sagemakerLive, signed } from "./sagemaker";
+import { endpointsOf, hosted, payloads, sagemakerEmbedder, sagemakerFetcher, sagemakerLive, signed } from "./sagemaker";
 
 const creds = { region: "us-east-1", accessKeyId: "AKIDEXAMPLE", secretAccessKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY" };
 
@@ -13,9 +13,28 @@ test("a POST is signed as AWS's own Signature V4 test suite signs it (post-x-www
   expect(headers["x-amz-date"]).toBe("20150830T123600Z");
 });
 
-test("the setting names the moved boxes; anything else in it is dropped", () => {
-  expect(endpointsOf("brain=sona-brain, voice=sona-voice,nobox=x,bad")).toEqual({ brain: "sona-brain", voice: "sona-voice" });
+test("the setting names the moved boxes and the embedder; anything else in it is dropped", () => {
+  expect(endpointsOf("brain=sona-brain, voice=sona-voice,embed=sona-embed,nobox=x,bad")).toEqual({ brain: "sona-brain", voice: "sona-voice", embed: "sona-embed" });
   expect(endpointsOf("")).toEqual({});
+});
+
+test("the embedder on its box: prompted texts signed to the endpoint, vectors back; a short or broken answer throws", async () => {
+  const seen: { url: string; init?: RequestInit }[] = [];
+  const vector = Array.from({ length: 768 }, () => 0.1);
+  const fetcher = (async (url: RequestInfo | URL, init?: RequestInit) => {
+    seen.push({ url: String(url), init });
+    const n = (JSON.parse(new TextDecoder().decode(init!.body as Uint8Array)) as { text: string[] }).text.length;
+    return Response.json({ data: Array.from({ length: n }, () => vector) });
+  }) as typeof fetch;
+  const embed = sagemakerEmbedder({ ...creds, region: "ap-southeast-5", endpoint: "sona-embed" }, fetcher, () => new Date("2026-10-07T00:00:00Z"));
+  expect(await embed(["Boleh berhenti antibiotik?", "肾脏感染"], "query")).toEqual([vector, vector]);
+  expect(seen[0]!.url).toBe("https://runtime.sagemaker.ap-southeast-5.amazonaws.com/endpoints/sona-embed/invocations");
+  expect(new TextDecoder().decode(seen[0]!.init!.body as Uint8Array)).toBe(JSON.stringify({ text: ["task: search result | query: Boleh berhenti antibiotik?", "task: search result | query: 肾脏感染"] }));
+  expect((seen[0]!.init!.headers as Record<string, string>).Authorization).toStartWith("AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261007/ap-southeast-5/sagemaker/aws4_request");
+  const broken = sagemakerEmbedder({ ...creds, region: "ap-southeast-5", endpoint: "sona-embed" }, (async () => Response.json({ data: [[1, 2]] })) as typeof fetch);
+  await expect(broken(["q"], "query")).rejects.toThrow("sona-embed answered out of shape");
+  const down = sagemakerEmbedder({ ...creds, region: "ap-southeast-5", endpoint: "sona-embed" }, (async () => new Response("no", { status: 503 })) as typeof fetch);
+  await expect(down(["q"], "query")).rejects.toThrow("sona-embed answered 503");
 });
 
 test("a moved box's call goes to its SageMaker endpoint, signed; other boxes stay on Baseten; health and wake answer here", async () => {

@@ -56,8 +56,8 @@ export function workersModels(ai: WorkersAi, fallback: Models = stubModels): Mod
 }
 
 /**
- * EmbeddingGemma-300M (Google, 768 dimensions, 100+ languages): the library's embedder. Workers AI runs it next to
- * the Worker, so there is no box to wake and no cold start.
+ * EmbeddingGemma-300M (Google, 768 dimensions, 100+ languages): the library's embedder, on Workers AI next to the
+ * Worker, or on its own always-on box in Malaysia with the other models (SAGEMAKER_ENDPOINTS names it, embed=sona-embed).
  */
 export const EMBED_MODEL = "@cf/google/embeddinggemma-300m";
 const DIMS = 768;
@@ -72,23 +72,31 @@ const PROMPT = { query: "task: search result | query: ", document: "title: none 
 const EMBED_TIMEOUT_MS = { query: 3000, document: 15_000 } as const;
 
 /**
- * Texts to EmbeddingGemma vectors, 100 a call. Throws when Workers AI fails, is slow or answers out of shape, so
- * retrieval can fall back: keywords alone for a search, no vector for a stored section until the next re-index.
- * ponytail: Workers AI reads the first ~2,048 tokens of a text (measured 1 Oct), so a section longer than ~1,500 words
+ * Texts to EmbeddingGemma vectors, 100 a call, over `run`: the prompted texts in, {data: vectors} out (Workers AI's
+ * shape, which the SageMaker box keeps, packages/api/src/sagemaker.ts). Throws when the model fails, is slow or answers
+ * out of shape, so retrieval can fall back: keywords alone for a search, no vector for a stored section until the next
+ * re-index.
+ * ponytail: the model reads the first ~2,048 tokens of a text (measured 1 Oct), so a section longer than ~1,500 words
  * is embedded by its start; split long sections into overlapping chunks if recall on long documents suffers.
  */
-export function workersEmbedder(ai: WorkersAi): Embedder {
+export function embedderOver(name: string, run: (text: string[], as: "query" | "document", signal: AbortSignal) => Promise<unknown>,
+  limits: { batch: number; timeoutMs: Record<"query" | "document", number> } = { batch: EMBED_BATCH, timeoutMs: EMBED_TIMEOUT_MS }): Embedder {
   return async (texts, as) => {
     const vectors: number[][] = [];
-    for (let i = 0; i < texts.length; i += EMBED_BATCH) {
-      const batch = texts.slice(i, i + EMBED_BATCH);
-      const out = await ai.run(EMBED_MODEL, { text: batch.map(t => PROMPT[as] + t) }, { signal: AbortSignal.timeout(EMBED_TIMEOUT_MS[as]) }) as { data?: unknown } | undefined;
+    for (let i = 0; i < texts.length; i += limits.batch) {
+      const batch = texts.slice(i, i + limits.batch);
+      const out = await run(batch.map(t => PROMPT[as] + t), as, AbortSignal.timeout(limits.timeoutMs[as])) as { data?: unknown } | undefined;
       const data = out?.data;
       if (!Array.isArray(data) || data.length !== batch.length || !data.every(v => Array.isArray(v) && v.length === DIMS && v.every(Number.isFinite))) {
-        throw new Error(`${EMBED_MODEL} answered out of shape`);
+        throw new Error(`${name} answered out of shape`);
       }
       vectors.push(...data as number[][]);
     }
     return vectors;
   };
+}
+
+/** The embedder on Workers AI, next to the Worker. */
+export function workersEmbedder(ai: WorkersAi): Embedder {
+  return embedderOver(EMBED_MODEL, (text, _as, signal) => ai.run(EMBED_MODEL, { text }, { signal }));
 }
