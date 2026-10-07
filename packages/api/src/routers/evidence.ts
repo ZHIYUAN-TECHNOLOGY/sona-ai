@@ -132,8 +132,10 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   const [{ articles, pubmed }, { passages, found }] = await Promise.all([articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored)), passagesFor(context, hospitalId, input.question)]);
   // Authored answers show their reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.
   const summary = (pmid: string) => (authored ? STUDIES.find(s => s.pmid === pmid)?.finding : undefined);
-  const studies: Reference[] = articles.map((a, i) => ({ n: i + 1, id: `pmid:${a.pmid}`, kind: "study", design: a.kind, title: a.title, year: a.year, from: a.journal, text: summary(a.pmid) ?? a.conclusion, url: pubmedUrl({ pmid: a.pmid, query: a.title }), pmid: a.pmid }));
-  const references: Reference[] = [...studies, ...passages.map((p, i) => referenceOf(p, studies.length + i + 1))];
+  // The patient's own films lead: a question that found her X-ray is about her, and the studies are the background.
+  const films = passages.filter(p => p.kind === "xray"), rest = passages.filter(p => p.kind !== "xray");
+  const studies: Reference[] = articles.map((a, i) => ({ n: films.length + i + 1, id: `pmid:${a.pmid}`, kind: "study", design: a.kind, title: a.title, year: a.year, from: a.journal, text: summary(a.pmid) ?? a.conclusion, url: pubmedUrl({ pmid: a.pmid, query: a.title }), pmid: a.pmid }));
+  const references: Reference[] = [...films.map((p, i) => referenceOf(p, i + 1)), ...studies, ...rest.map((p, i) => referenceOf(p, films.length + studies.length + i + 1))];
   yield { type: "step", step: "read", studies: studies.length, passages: passages.length, references } as EvidenceStep;
   // A configured model reads each study's whole abstract (the card shows its conclusion), and a quote may come from any part of it.
   const abstract = new Map(articles.map(a => [a.pmid, a.abstract]));
@@ -142,8 +144,8 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   let claims: Claim[], followUps: string[], source: string, waking: number | undefined, general: string | undefined, bottomLine: string | undefined, cutShort = false, patientPoints: PatientPoint[] = [];
   if (authored) {
     // Authored cites number the three rehearsed studies; renumber them to where each study landed, so a missing study drops its claims.
-    const at = (n: number) => studies.findIndex(s => s.pmid === STUDIES[n - 1]?.pmid) + 1;
-    claims = sourcedClaims(authored.claims.map(c => ({ ...c, cites: c.cites.map(at) })), studies.length);
+    const at = (n: number) => studies.find(s => s.pmid === STUDIES[n - 1]?.pmid)?.n ?? 0;
+    claims = sourcedClaims(authored.claims.map(c => ({ ...c, cites: c.cites.map(at) })), films.length + studies.length);
     followUps = authored.followUps; source = "cached"; bottomLine = claims.length ? authored.bottomLine : undefined;
   } else {
     yield { type: "step", step: "write" } as EvidenceStep;
