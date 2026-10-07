@@ -2,7 +2,7 @@ import { ORPCError } from "@orpc/client";
 import { can } from "@sona-ai/api/roles";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import { Icon } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
@@ -233,7 +233,7 @@ function Page() {
             {stream ? <video ref={video} className="xr-video" autoPlay playsInline muted />
               : shown ? (
                 <div className="xr-scroll" ref={pan.scroller}>
-                  <div className="xr-image" style={zoom > 1 ? { width: `${zoom * 100}%` } : undefined}>
+                  <div className="xr-image" data-zoomed={zoom > 1 || undefined} style={{ "--xr-zoom": zoom } as CSSProperties}>
                     <img src={shown} alt="Chest X-ray added for this visit" draggable={false} />
                     <FindingMarks findings={onImage} />
                   </div>

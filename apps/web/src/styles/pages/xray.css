@@ -15,8 +15,10 @@
 .xr-stage[data-pan="dragging"] .xr-scroll { scroll-behavior: auto; }
 /* ponytail: at fit size a film wider than the stage letterboxes inside its box, so drawn boxes drift; size the wrapper from naturalWidth if that shows up. */
 .xr-image { position: relative; width: fit-content; margin: 0 auto; }
-.xr-image img { display: block; height: var(--xr-fit); max-width: 100%; object-fit: contain; border-radius: var(--radius-control); }
-.xr-image[style] img { width: 100%; height: auto; }
+/* Zoom scales the film's height from its fit size (width follows its own shape), so zoom 1 is exactly the first render:
+   the old rule keyed on [style], which React leaves behind as style="" after a zoom, so the film never came back. */
+.xr-image img { display: block; height: calc(var(--xr-fit) * var(--xr-zoom, 1)); max-width: 100%; object-fit: contain; border-radius: var(--radius-control); }
+.xr-image[data-zoomed] img { max-width: none; }
 .xr-video { display: block; max-width: 100%; max-height: var(--xr-fit); border-radius: var(--radius-control); }
 
 .xr-drop { display: grid; justify-items: center; gap: var(--space-2); align-self: stretch; justify-self: stretch; align-content: center; padding: var(--space-6); border: 1.5px dashed color-mix(in srgb, var(--surface) 35%, transparent); border-radius: var(--radius-control); text-align: center; transition: border-color var(--quick) var(--ease), background var(--quick) var(--ease); }
