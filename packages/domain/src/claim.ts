@@ -63,6 +63,8 @@ export function noteFor(state: ClaimState): Sentence[] {
  */
 export const ORGANISM_UNKNOWN: Sentence = { id: "organism", text: "Organism not identified." };
 export const ivReason = (why: string): Sentence => ({ id: "iv", text: `IV first: ${why.trim()}` });
+/** The note with a fix's sentence saved to it: at the end, replacing an earlier answer to the same criterion. */
+export const withFix = (note: Sentence[], fix: Sentence): Sentence[] => [...note.filter(s => s.id !== fix.id), fix];
 
 type Criterion = { id: string; label: string; applies?: RegExp; met: RegExp; missing: string };
 /**
