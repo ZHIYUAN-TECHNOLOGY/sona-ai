@@ -89,8 +89,10 @@ function Letter({ encounterId }: { encounterId: string }) {
   const input = { encounterId };
   const status = useQuery(orpc.claim.status.queryOptions({ input }));
   const codes = useQuery(orpc.claim.suggestCodes.queryOptions({ input, staleTime: Infinity }));
-  const refresh = () => Promise.all([queryClient.invalidateQueries({ queryKey: orpc.claim.status.key() }), queryClient.invalidateQueries({ queryKey: orpc.claim.suggestCodes.key() })]);
+  // A fix saves a sentence to the note, so the note, its checks and the codes suggested over it are all read again.
+  const refresh = () => Promise.all([orpc.claim.status, orpc.claim.suggestCodes, orpc.note.get].map(q => queryClient.invalidateQueries({ queryKey: q.key() })));
   const fix = useMutation(orpc.claim.update.mutationOptions({ onSuccess: refresh }));
+  const [why, setWhy] = useState("");
   const send = useMutation(orpc.claim.send.mutationOptions({ onSuccess: refresh }));
   const mayChange = can(me.role, "claim.update");
   const maySend = can(me.role, "claim.send");
@@ -111,6 +113,7 @@ function Letter({ encounterId }: { encounterId: string }) {
   const s = status.data;
   if (!s) return <><PageHeader title="Guarantee letter" breadcrumb={CRUMBS} /><Loaded query={status}>{() => null}</Loaded></>;
   const draft = s.status === "draft";
+  const open = s.checks?.filter(c => c.status === "blocked") ?? [];
   const blockers = send.error ? blockersOf(send.error) : [];
   const reviewUrl = s.reviewUrl;
 
@@ -135,7 +138,8 @@ function Letter({ encounterId }: { encounterId: string }) {
   return (
     <>
       <PageHeader title="Guarantee letter" breadcrumb={CRUMBS} lead={NEEDS_EYE[s.status] ? <Signal tone={NEEDS_EYE[s.status]}>{leadOf(s)}</Signal> : leadOf(s)}
-        actions={draft && maySend ? <Button variant="primary" icon="arrow-right" pending={send.isPending} onClick={sendNow}>Accept codes and send</Button> : undefined} />
+        actions={draft && maySend ? <Button variant="primary" icon="arrow-right" pending={send.isPending} disabled={open.length > 0} onClick={sendNow}>
+          {open.length ? `Resolve ${open.length} to send` : "Accept codes and send"}</Button> : undefined} />
       {patient ? <PatientStrip name={patient.name} meta={patient.subtitle} /> : null}
       <WithRail rail={<RightRail label="What to decide">{insight}</RightRail>}>
         <Card title="Claim status">
@@ -149,6 +153,32 @@ function Letter({ encounterId }: { encounterId: string }) {
             ))}
           </ol>
         </Card>
+        {draft && s.checks?.length ? (
+          <Card title="Insurer's checklist">
+            <ul className="gl-checks">
+              {s.checks.map(c => (
+                <li key={c.id} className="gl-check" data-state={c.status}>
+                  <span className="gl-mark">{c.status === "passed" ? <Icon name="check" size={16} label="Met" /> : <Icon name="alert" size={16} label="Open" />}</span>
+                  <div className="gl-check-body">
+                    <span className="gl-step-label">{c.label}</span>
+                    <span className="gl-muted">{c.detail}</span>
+                    {c.status === "blocked" && mayChange && c.id === "organism" ? (
+                      <div className="gl-row"><Button size="sm" variant="secondary" pending={fix.isPending} onClick={() => fix.mutate({ encounterId, organismConfirmed: true })}>Add “Organism not identified.”</Button></div>
+                    ) : null}
+                    {c.status === "blocked" && mayChange && c.id === "iv" ? (
+                      <div className="gl-doc-body">
+                        <Field label="Why oral was not used first">{control => <textarea {...control} className="gl-text" value={why} onChange={e => setWhy(e.target.value)} />}</Field>
+                        <div className="gl-row"><Button size="sm" variant="secondary" pending={fix.isPending} disabled={!why.trim()}
+                          onClick={() => fix.mutate({ encounterId, ivReasonAdded: true, ivReason: why }, { onSuccess: () => setWhy("") })}>Add to note</Button></div>
+                      </div>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {fix.error ? <p className="gl-error" role="alert">{say(fix.error)}</p> : null}
+          </Card>
+        ) : null}
         <div id="gl-codes"><Card title="Suggested codes">
           <Loaded query={codes} empty="No codes suggested.">
             {c => (
@@ -158,14 +188,6 @@ function Letter({ encounterId }: { encounterId: string }) {
               </>
             )}
           </Loaded>
-          {draft && mayChange ? (
-            <div className="gl-row">
-              <p className="gl-muted">Change the codes by adding to the note:</p>
-              <Button size="sm" variant="secondary" pending={fix.isPending} onClick={() => fix.mutate({ encounterId, organismConfirmed: true })}>Confirm the organism</Button>
-              <Button size="sm" variant="secondary" pending={fix.isPending} onClick={() => fix.mutate({ encounterId, ivReasonAdded: true })}>Add the reason for IV treatment</Button>
-            </div>
-          ) : null}
-          {fix.error ? <p className="gl-error" role="alert">{say(fix.error)}</p> : null}
         </Card></div>
         {s.status === "denied" ? mayAppeal ? <Appeal encounterId={encounterId} approvedBy={me.userId} onSent={refresh} />
           : <Card title="Appeal"><p className="gl-muted">Your role cannot appeal a denied guarantee letter.</p></Card> : null}

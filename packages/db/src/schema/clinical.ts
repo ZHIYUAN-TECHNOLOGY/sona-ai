@@ -195,7 +195,7 @@ export const drugs = pgTable("drugs", {
 export const documents = pgTable("documents", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id"), title: text("title").notNull(), source: text("source").notNull(),
   year: integer("year").notNull(), license: text("license"), uploadedBy: text("uploaded_by"), createdAt: created(),
-  ownerId: text("owner_id"), kind: text("kind", { enum: ["text", "pdf", "pubmed", "leaflet"] }).default("text").notNull(),
+  ownerId: text("owner_id"), kind: text("kind", { enum: ["text", "pdf", "pubmed", "leaflet", "scan"] }).default("text").notNull(),
 });
 
 export const chunks = pgTable("chunks", {

@@ -3,11 +3,14 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { api, errorText, requestId, useLive } from ".";
 import { useLiveChanges } from "./channel";
+import type { PageType, ScanRead } from "./picked";
 
 export type LibraryDocument = Awaited<ReturnType<AppRouterClient["library"]["list"]>>[number];
 export type LibraryScope = "me" | "hospital";
 export type ArticlePreview = Awaited<ReturnType<AppRouterClient["library"]["previewArticle"]>>;
+/** `pages`: how many checked pages a scan added. */
 export type Added = Awaited<ReturnType<AppRouterClient["library"]["add"]>> & { pages?: number };
+type Failure = { error: string; retryable: boolean; reason?: string };
 
 /** The doctor's library in live mode: their own sources and the hospital's shared ones. Re-read whenever the screen comes back into view (after the add sheet closes) or a colleague changes it. */
 export function useLiveLibrary() {
@@ -43,17 +46,28 @@ async function base64Of(uri: string) {
  */
 export function useAddSource() {
   const [id, setId] = useState(requestId);
-  const run = async (write: (requestId: string) => Promise<Added>): Promise<{ added: Added } | { error: string; retryable: boolean; reason?: string }> => {
-    try { const added = await write(id); setId(requestId()); return { added }; }
-    // A refusal about the source itself (patient details, a scan) fails the same way again; a dropped or busy server may not.
-    catch (e) {
-      const { code, data } = e as { code?: string; data?: { reason?: string } };
-      return { error: errorText(e), retryable: !["BAD_REQUEST", "NOT_FOUND", "CONFLICT", "FORBIDDEN"].includes(code ?? ""), reason: data?.reason };
-    }
+  // A refusal about the source itself (patient details, a scan) fails the same way again; a dropped or busy server may not.
+  const failure = (e: unknown): Failure => {
+    const { code, data } = e as { code?: string; data?: { reason?: string } };
+    return { error: errorText(e), retryable: !["BAD_REQUEST", "NOT_FOUND", "CONFLICT", "FORBIDDEN"].includes(code ?? ""), reason: data?.reason };
+  };
+  const run = async (write: (requestId: string) => Promise<Added>): Promise<{ added: Added } | Failure> => {
+    try { const added = await write(id); setId(requestId()); return { added }; } catch (e) { return failure(e); }
   };
   return {
-    pdf: (scope: LibraryScope, file: { uri: string; name: string }) => run(async requestId =>
-      api.library.addPdf({ requestId, scope, title: file.name.replace(/\.pdf$/i, "").trim() || "Untitled PDF", dataBase64: await base64Of(file.uri) })),
+    /** A text PDF. A scan is refused with `reason: "scan"`, and is then read for review with `read`. */
+    pdf: (scope: LibraryScope, title: string, uri: string) => run(async requestId =>
+      api.library.addPdf({ requestId, scope, title, dataBase64: await base64Of(uri) })),
+    /** A scanned PDF or photos of printed pages (in the order picked), read by MedGemma for the doctor to check. Saves nothing. */
+    read: async (source: { pdf: string } | { images: { file: { uri: string }; contentType: PageType }[] }): Promise<{ read: ScanRead } | Failure> => {
+      try {
+        return { read: await api.library.readScan("pdf" in source ? { pdf: { dataBase64: await base64Of(source.pdf) } }
+          : { images: await Promise.all(source.images.map(async ({ file, contentType }) => ({ dataBase64: await base64Of(file.uri), contentType }))) }) };
+      } catch (e) { return failure(e); }
+    },
+    /** The text the doctor checked, page by page, under the same request ID as the upload. */
+    scan: (scope: LibraryScope, title: string, read: ScanRead, pages: string[]) => run(requestId =>
+      api.library.addScan({ requestId, scope, title, source: read.source, model: read.model, pages })),
     text: (scope: LibraryScope, title: string, text: string) => run(requestId =>
       api.library.add({ requestId, scope, title, text, source: scope === "me" ? "Added by you" : "Added by your hospital", year: new Date().getFullYear() })),
     article: (scope: LibraryScope, pmid: string) => run(requestId => api.library.importArticle({ requestId, scope, pmid })),

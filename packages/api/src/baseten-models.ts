@@ -501,7 +501,7 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
   // sees, the PII box de-identifies, box ① writes the rest; the stub-only methods are not hosted, so nothing is starting for them.
   const withWaking = Object.entries(hosted).map(([method, run]) => {
     const box: Box = method === "transcribe" || method === "speak" ? "voice"
-      : ["xrayRead", "readMedicinePhoto", "incidentalFindings", "readHandwrittenNote"].includes(method) ? "xray"
+      : ["xrayRead", "readMedicinePhoto", "incidentalFindings", "readHandwrittenNote", "readDocumentPage"].includes(method) ? "xray"
       : method === "deidentify" ? "pii" : "brain";
     return [method, async (input: never) => {
       const answer = await (run as (input: never) => Promise<Origin>)(input);

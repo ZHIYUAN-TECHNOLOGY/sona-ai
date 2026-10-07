@@ -33,6 +33,17 @@ test("Sona Care's quick answers read as the patient meant them, in each language
   expect(["Better", "About the same", "Lebih baik", "Sama", "好一些", "差不多"].map(readReply)).toEqual(["fine", "fine", "fine", "fine", "fine", "fine"]);
 });
 
+test("a warning sign the patient says is gone does not count; one that is back still does", () => {
+  const recovering = "Feeling better. No fever since yesterday and the cough is less. I finished the azithromycin this morning. Still a little tired on the stairs.";
+  expect(readReply(recovering)).toBe("fine");
+  expect(replyFlag("Amelia", "worse", recovering)?.title).toBe("Amelia: feeling worse after discharge");
+  expect(["not breathless", "Without chest pain today", "The fever has settled", "no more fever", "Denies chest pain", "tak demam lagi", "没有发烧"].map(readReply))
+    .toEqual(["fine", "fine", "fine", "fine", "fine", "fine", "fine"]);
+  expect(["The fever is back", "No better, the fever came back", "breathless again", "chest pain", "I fainted", "demam balik"].map(readReply))
+    .toEqual(["worse", "worse", "worse", "urgent", "urgent", "worse"]);
+  expect(replyFlag("Amelia", "worse", "No fever but breathless on the stairs")?.title).toBe("Amelia: breathing worse after discharge");
+});
+
 test("a Malay reply saying the chest hurts, in either word order, is urgent", () => {
   expect(replyFlag("Amelia", "urgent", "Dada saya sakit sejak pagi")).toMatchObject({ title: "Amelia: chest pain after discharge", label: "urgent" });
 });

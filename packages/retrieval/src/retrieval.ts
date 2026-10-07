@@ -15,7 +15,7 @@ export type Embedder = (texts: string[], as: "query" | "document") => Promise<nu
 /** Relevance score per passage for the query, higher is better (bge-reranker-v2-m3 in box ②). */
 export type Reranker = (query: string, passages: string[]) => Promise<number[]>;
 
-export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" | "leaflet" };
+export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" | "leaflet" | "scan" };
 
 const DIMS = 768;
 

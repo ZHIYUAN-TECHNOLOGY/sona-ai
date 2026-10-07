@@ -141,6 +141,11 @@ export type Models = {
    * every item (scan.apply). `patient` is de-identified by the route before a real model sees it.
    */
   readHandwrittenNote(input: { image: Uint8Array; contentType: string; patient: { name: string; knownMedicines: string[] } }): Answer<HandwrittenNote>;
+  /**
+   * One page of a scanned document or a photographed leaflet, transcribed word for word for the library; "" when it holds
+   * no text. `unsure` holds the words the model nearly read differently, for staff to check against the page.
+   */
+  readDocumentPage(input: { image: Uint8Array; contentType: string }): Answer<{ text: string; unsure: string[] }>;
   /** Sona Care: a photo of a medicine box or letter read as one medicine, for the care team to check. */
   readMedicinePhoto(input: { image?: Uint8Array; contentType?: string }): Answer<{ name: string; dose?: string; frequency?: string }>;
   /**
@@ -220,6 +225,8 @@ export const stubModels: Models = {
   // ponytail: the stub has no eyes; it returns what the sample note says, whatever the photo. MedGemma reads
   // photos through the Baseten adapter (./vision-models), with the same shape.
   readHandwrittenNote: () => fixture(structuredClone(SAMPLE_NOTE)),
+  // Nothing is read without the model: the library route refuses the scan rather than store an empty page.
+  readDocumentPage: () => fixture({ text: "", unsure: [] }),
   // ponytail: the sample box's words (a synthetic reading); the same vision model reads real photos.
   readMedicinePhoto: () => fixture({ name: "Cetirizine", dose: "10 mg", frequency: "once at night" }),
   // ponytail: no reader, so the captured words stand as the history and the rest stays the clinician's; Gemma drafts through the Baseten adapter.

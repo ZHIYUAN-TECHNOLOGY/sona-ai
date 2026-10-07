@@ -110,6 +110,9 @@ Remember "left" refers to the patient's left side where the heart is and on the 
 Query: Where is ${what}? Output the final answer in the format "Final Answer: X". where X is a JSON list of objects. The object needs a "box_2d" and "label" key. Answer:`;
 const ZONE = /^(right|left) (upper|middle|mid|lower) zone$/i;
 
+const DOCUMENT_PAGE = `This is one page of a printed hospital document: a guideline, a leaflet or a reference. Transcribe every word printed on it exactly as written, in the language it is written in (English, Malay, Chinese or mixed). Never translate, summarise or add anything.
+Keep each heading on its own line starting with "## ". Mark a word you cannot read as [?].
+If the page has no text, answer exactly: NO TEXT`;
 const NOTE_READ = `This is a photo of a handwritten hospital note: a ward-round note, a drug chart or a referral letter.
 Transcribe only the handwriting, line by line, exactly as written: keep abbreviations, numbers, symbols and line breaks. Leave out printed headings.
 Answer with the transcription only.`;
@@ -166,13 +169,18 @@ export function readingOf(tokens: Token[]) {
     pending = false;
   }
   const trimmed = text.trim(), shift = text.indexOf(trimmed);
-  const unsure = [...trimmed.matchAll(/\S+/g)].flatMap(m => {
+  // A word is a run between spaces; Chinese has no spaces, so there each character is its own word and doubted
+  // neighbours are joined, or one doubted token would mark a whole sentence.
+  const unsure: { at: number; word: string }[] = [];
+  for (const m of trimmed.matchAll(/[\p{Script=Han}]|[^\s\p{Script=Han}\u3000-\u303f\uff00-\uffef]+/gu)) {
     const from = shift + m.index!, to = from + m[0].length;
-    if (!doubtedAt.some(at => at >= from && at < to)) return [];
+    if (!doubtedAt.some(at => at >= from && at < to)) continue;
     // The word without punctuation around it ("base." is "base"), so the app can find it in the sections too.
     const word = m[0].replace(/^[^\p{L}\d]+|[^\p{L}\d%]+$/gu, "");
-    return word ? [{ at: m.index! + m[0].indexOf(word), word }] : [];
-  });
+    if (!word) continue;
+    const at = m.index! + m[0].indexOf(word), last = unsure.at(-1);
+    if (last && last.at + last.word.length === at) last.word += word; else unsure.push({ at, word });
+  }
   const lines: HandwrittenNote["lines"] = [];
   let at = 0;
   for (const u of unsure) {
@@ -223,7 +231,7 @@ export function sortedNote(read: string, unsure: string[], sorted: Record<string
   return { sections, medicines, tasks, ...followUp && numbersFrom(read, followUp) ? { followUp: { in: followUp } } : {} };
 }
 
-export function visionModels(look: Look, model: string, fallback: Models): Pick<Models, "readMedicinePhoto" | "incidentalFindings" | "readHandwrittenNote"> {
+export function visionModels(look: Look, model: string, fallback: Models): Pick<Models, "readMedicinePhoto" | "incidentalFindings" | "readHandwrittenNote" | "readDocumentPage"> {
   return {
     // A quick read first. When it nearly read the medicine itself as another word ("AMIODIPINE" for AMLODIPINE on a
     // blurred strip), it looks again, thinking first (slower, steadier on print), and a different name that passes wins.
@@ -294,6 +302,17 @@ export function visionModels(look: Look, model: string, fallback: Models): Pick<
         }
       } catch { /* the sample note below, labelled fixture */ }
       return fallback.readHandwrittenNote(input);
+    },
+
+    // A page read word for word; "NO TEXT" is how the model says the page is blank, which is not a failure. The doubted
+    // words come from token probabilities, as on a handwritten note: on a Chinese page it once wrote nonsense with confidence.
+    async readDocumentPage(input) {
+      try {
+        const page = await look({ image: { bytes: input.image, contentType: input.contentType }, prompt: DOCUMENT_PAGE, maxTokens: 1500, logprobs: true });
+        const { text, unsure } = page.tokens?.length ? readingOf(page.tokens) : { text: afterThought(page.text).trim(), unsure: [] };
+        return text === "NO TEXT" ? { text: "", unsure: [], source: "model", model } : { text, unsure, source: "model", model };
+      } catch { /* nothing read, labelled fixture */ }
+      return fallback.readDocumentPage(input);
     },
   };
 }
