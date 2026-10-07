@@ -27,7 +27,7 @@ import { api } from "@/features/live";
 import { threadBefore, useLiveEvidence, type EvidenceStep, type ServerEvidence, type Turn } from "@/features/live/evidence-sync";
 import { wakingOf } from "@/features/live/waking";
 import { basis, calmTerms, fallbackNote, forPatient, searchedLine, sections, stepLines, strength, unanswered } from "./answer";
-import { dataUri, filmMarkers, leadImage } from "./film";
+import { dataUri, filmMarkers, leadImage, openLabels } from "./film";
 import { authoredAnswer, authoredReferences, curb65, quotedClaims, severityApplies, type Claim, type Reference } from "./model";
 
 /*
@@ -358,19 +358,20 @@ function SourceCard({ source, index, pos, left, width, step, flash }: { source: 
  * often), shown as it is stored with the findings read from it ringed at their points. No zoom here: the film opens the
  * visit's imaging screen, where the viewer already has pinch, torch and the findings list. Nothing moves while idle.
  */
-type FilmData = { uri: string; markers: ImageMarker[] };
+export type FilmData = { uri: string; markers: ImageMarker[]; open: string[] };
 const films = new Map<string, Promise<FilmData>>();
 function filmOf(encounterId: string) {
   let film = films.get(encounterId);
   if (!film) {
-    film = Promise.all([api.xray.image({ encounterId }), api.findings.list({ encounterId })]).then(([image, findings]) => ({ uri: dataUri(image), markers: filmMarkers(findings, image.key) }));
+    film = Promise.all([api.xray.image({ encounterId }), api.findings.list({ encounterId })]).then(([image, findings]) => ({ uri: dataUri(image), markers: filmMarkers(findings, image.key), open: openLabels(findings, image.key) }));
     // A failed fetch is not kept, so the next answer about this visit asks again.
     film.catch(() => films.delete(encounterId));
     films.set(encounterId, film);
   }
   return film;
 }
-function useFilm(encounterId?: string) {
+/** A visit's film with its marks, once per session (`filmOf`); the imaging card's Compare row shares it. */
+export function useFilm(encounterId?: string) {
   const [film, setFilm] = useState<FilmData | "failed">();
   useEffect(() => {
     if (!encounterId) { setFilm("failed"); return; }
@@ -382,23 +383,27 @@ function useFilm(encounterId?: string) {
 }
 
 const RING = 24;
+/** A film's pixels filling their box, its findings ringed at their points; no zoom, nothing moves. */
+export function RingedFilm({ film }: { film: FilmData }) {
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const [aspect, setAspect] = useState(0);
+  return <View style={{ flex: 1 }} onLayout={e => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+    <Image source={{ uri: film.uri }} contentFit="contain" style={{ flex: 1 }} transition={0} onLoad={e => { if (e.source.width && e.source.height) setAspect(e.source.width / e.source.height); }} />
+    {aspect > 0 && box.w > 0 && film.markers.map(m => { const [px, py] = markerAt(box.w, box.h, aspect, m.x, m.y);
+      return <View key={m.id} pointerEvents="none" style={{ position: "absolute", left: px - RING / 2, top: py - RING / 2, width: RING, height: RING, borderRadius: RING / 2, borderWidth: 2, alignItems: "center", justifyContent: "center", borderColor: "#9CC0FF", backgroundColor: "rgba(36,91,204,0.3)" }}>
+        <Text style={{ ...type.caption, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{m.n}</Text>
+      </View>; })}
+  </View>;
+}
 /** The film with its findings ringed, dark while it loads (its title in place of the film), one line when it cannot be shown; tapping opens the visit's imaging screen. */
 function Film({ reference, style }: { reference: Reference; style: { flex: number } | { height: number } }) {
   const film = useFilm(reference.encounterId);
-  const [box, setBox] = useState({ w: 0, h: 0 });
-  const [aspect, setAspect] = useState(0);
   const markers = film && film !== "failed" ? film.markers : [];
   const open = () => router.push({ pathname: "/xray", params: { encounterId: reference.encounterId } });
   return <Pressable accessibilityRole="imagebutton" accessibilityLabel={`${reference.title}${markers.length ? `, ${markers.length} findings marked` : ""}`} accessibilityHint="Opens the visit's imaging" onPress={open} style={[VIEWING, style]}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98} style={{ flex: 1 }}>
     {film === "failed" ? <Text style={{ ...type.footnote, color: palette.line, margin: 12 }}>Film not available</Text>
       : !film ? <Text numberOfLines={2} style={{ ...type.footnote, color: palette.line, margin: 12 }}>{reference.title}</Text>
-      : <View style={{ flex: 1 }} onLayout={e => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-        <Image source={{ uri: film.uri }} contentFit="contain" style={{ flex: 1 }} transition={0} onLoad={e => { if (e.source.width && e.source.height) setAspect(e.source.width / e.source.height); }} />
-        {aspect > 0 && box.w > 0 && markers.map(m => { const [px, py] = markerAt(box.w, box.h, aspect, m.x, m.y);
-          return <View key={m.id} pointerEvents="none" style={{ position: "absolute", left: px - RING / 2, top: py - RING / 2, width: RING, height: RING, borderRadius: RING / 2, borderWidth: 2, alignItems: "center", justifyContent: "center", borderColor: "#9CC0FF", backgroundColor: "rgba(36,91,204,0.3)" }}>
-            <Text style={{ ...type.caption, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{m.n}</Text>
-          </View>; })}
-      </View>}
+      : <RingedFilm film={film} />}
     <ImageEdge />
   </PressScale>}</Pressable>;
 }
