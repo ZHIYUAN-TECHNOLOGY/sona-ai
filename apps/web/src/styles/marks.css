@@ -1,0 +1,3 @@
+/* Finding marks drawn over a film (features/imaging/marks.tsx), shared by /pro/xray and the evidence film card. Tokens only. */
+.xr-box { position: absolute; display: block; border: 2px solid var(--blue); border-radius: var(--space-1); }
+.xr-box span { position: absolute; top: 0; left: 0; padding: 0 var(--space-1); background: var(--blue); color: var(--surface); font-size: var(--text-small); }

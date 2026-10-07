@@ -36,6 +36,9 @@ export function apply(turn: Turn, event: StreamEvent): Turn {
   return event.step === "write" ? { ...turn, step: "Reading the sources and writing the answer" } : turn;
 }
 
+/** The number of the film that leads an answer, when its first source is a patient's X-ray: the page picks it before the clinician does. */
+export const leadFilm = (references: Reference[]) => (references[0]?.kind === "image" ? references[0].n : undefined);
+
 /** The earlier turns the way the router expects them: at most four, answered ones only, the answer as plain text. */
 export const threadOf = (turns: Turn[]) =>
   turns
