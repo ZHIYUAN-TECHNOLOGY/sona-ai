@@ -212,7 +212,7 @@ export function BarList({ label, rows, tone = "blue", unit }: { label: string; r
           <li key={r.label}>
             <span className="bar-name" title={r.label}>{r.label}</span>
             <span className="bar-track" aria-hidden="true"><span className="bar-fill" data-chart-tone={tone} style={{ width: `${(r.value / max) * 100}%` }} /></span>
-            <span className="bar-value num">{r.value}{unit ? ` ${unit}` : ""}</span>
+            <span className="bar-value num">{r.value}{unit ? ` ${r.value === 1 ? unit.replace(/s$/, "") : unit}` : ""}</span>
           </li>
         ))}
       </ol>

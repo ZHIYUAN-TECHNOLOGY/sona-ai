@@ -18,7 +18,7 @@ export type PatientRow = Awaited<ReturnType<typeof client.patients.list>>[number
 /** The ward's own word for the bed when admitted; otherwise whether the record is complete. */
 export function StatusChip({ patient }: { patient: PatientRow }) {
   const status = patient.ward?.status;
-  if (status === "fit") return <Chip tone="done">Fit to go</Chip>;
+  if (status === "fit") return <Chip tone="done">Medically fit</Chip>;
   if (status === "watch") return <Chip tone="soon">Watch</Chip>;
   if (status === "stable") return <Chip>Stable</Chip>;
   if (patient.incomplete) return <Chip tone="soon">Record incomplete</Chip>;
@@ -35,7 +35,7 @@ const inTab: Record<PatientTab, (p: PatientRow) => boolean> = {
   fit: (p) => p.ward?.status === "fit",
   incomplete: (p) => !!p.incomplete,
 };
-const TAB_LABEL: Record<PatientTab, string> = { all: "All", ward: "On a ward", watch: "Watch", fit: "Fit to go", incomplete: "Incomplete" };
+const TAB_LABEL: Record<PatientTab, string> = { all: "All", ward: "On a ward", watch: "Watch", fit: "Medically fit", incomplete: "Incomplete" };
 
 /** In the list a chip means "look here"; calm states are quiet text. A patient fit to go also shows how long they have waited. */
 function ListStatus({ patient }: { patient: PatientRow }) {
@@ -79,9 +79,9 @@ export function firstToSee(rows: PatientRow[]) {
   if (fit.length) {
     const hours = patient.ward?.waitingHours;
     return {
-      patient, tone: "info" as const, label: "Fit to go", title: `${patient.name} is fit to go`,
+      patient, tone: "info" as const, label: "Medically fit", title: `${patient.name} is medically fit`,
       lead: sbar?.a ?? patient.complaint ?? "The ward marks this patient fit for discharge.",
-      evidence: [...place, ...(hours ? [{ icon: "clock", text: `Waiting ${plural(hours, "hour")}` } as Fact] : []), ...others(fit.length, "fit to go")],
+      evidence: [...place, ...(hours ? [{ icon: "clock", text: `Waiting ${plural(hours, "hour")}` } as Fact] : []), ...others(fit.length, "medically fit")],
       step: sbar?.r ?? "Review before discharge",
     };
   }
@@ -125,7 +125,7 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
   const filter = (t: PatientTab) => ({ onSelect: () => pick(tab === t ? "all" : t), selected: t !== "all" && tab === t });
   const lead = isPending ? "Everyone registered at this hospital." : (
     <>
-      {count("watch") ? <Signal tone="soon">{count("watch")} on watch</Signal> : "No one on watch"} · {count("fit")} fit to go · {count("ward")} of {plural(all.length, "patient")} on a ward
+      {count("watch") ? <Signal tone="soon">{count("watch")} on watch</Signal> : "No one on watch"} · {count("fit")} medically fit · {count("ward")} of {plural(all.length, "patient")} on a ward
     </>
   );
 
@@ -167,7 +167,7 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
       <PageHeader title="Patients" lead={lead} />
       <StatRow>
         <StatCard title="Patients" value={stat("all")} caption="Registered at this hospital" {...filter("all")} />
-        <StatCard title="On a ward" value={stat("ward")} caption={`${count("fit")} fit to go`} {...filter("ward")} />
+        <StatCard title="On a ward" value={stat("ward")} caption={`${count("fit")} medically fit`} {...filter("ward")} />
         <StatCard title="On watch" value={stat("watch")} chip={count("watch") ? "Needs a look" : undefined} tone="soon" caption="Marked watch by the ward" {...filter("watch")} />
         <StatCard title="Record incomplete" value={stat("incomplete")} chip={count("incomplete") ? "To complete" : undefined} tone="soon" caption="Details missing" {...filter("incomplete")} />
       </StatRow>
@@ -180,7 +180,7 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
               <Card title="Patients by state">
                 <SegmentBar label="Patients by state" segments={[
                   { label: "On watch", value: mix.watch, tone: "amber" },
-                  { label: "Fit to go", value: mix.fit, tone: "green" },
+                  { label: "Medically fit", value: mix.fit, tone: "green" },
                   { label: "Record incomplete", value: mix.incomplete, tone: "blue" },
                   { label: "Everyone else", value: mix.rest, tone: "neutral" },
                 ]} />

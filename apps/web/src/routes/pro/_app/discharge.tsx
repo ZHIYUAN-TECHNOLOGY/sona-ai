@@ -36,20 +36,20 @@ function Chooser() {
   const mark = (id: string): Mark | undefined => {
     const s = by.get(id);
     if (!s) return undefined;
-    const why = s.kind === "blocked" ? `waiting on ${s.blockers.map(b => b.label).join(", ")}` : s.kind === "fit" ? "nothing is holding it" : s.kind === "watch" ? "being watched" : "not fit to go yet";
-    return { rank: dischargeRank(s), reason: `${s.bed} · ${why}`, chip: s.kind === "fit" ? <Chip tone="done">Ready to go</Chip> : s.kind === "blocked" ? <Chip tone="soon">Blocked</Chip> : s.kind === "watch" ? <Status tone="info">On watch</Status> : <Status>Not fit yet</Status> };
+    const why = s.kind === "blocked" ? `discharge barriers: ${s.blockers.map(b => b.label).join(", ")}` : s.kind === "fit" ? "no discharge barrier" : s.kind === "watch" ? "being watched" : "not medically fit yet";
+    return { rank: dischargeRank(s), reason: `${s.bed} · ${why}`, chip: s.kind === "fit" ? <Chip tone="done">Ready for discharge</Chip> : s.kind === "blocked" ? <Chip tone="soon">Blocked</Chip> : s.kind === "watch" ? <Status tone="info">On watch</Status> : <Status>Not fit yet</Status> };
   };
 
   return (
     <>
       <PageHeader title="Discharge"
         lead={beds.isPending ? "Reading the ward…" : !beds.data ? "The ward could not be read, so this list is not ranked. Open a plan to see what is holding the bed."
-          : fit + blocked === 0 ? "Nobody is fit to go home yet."
-          : <>{fit ? <Signal tone="done">{fit} ready to go</Signal> : "Nobody is ready to go"} · {blocked ? <Signal tone="soon">{blocked} fit but blocked</Signal> : "nobody is blocked"}</>}
+          : fit + blocked === 0 ? "Nobody is medically fit for discharge yet."
+          : <>{fit ? <Signal tone="done">{fit} ready for discharge</Signal> : "Nobody is ready for discharge"} · {blocked ? <Signal tone="soon">{blocked} medically fit, with barriers</Signal> : "nobody is blocked"}</>}
         actions={beds.data ? <Button to="/pro/ward" icon="bed">Open the ward</Button> : undefined} />
       {beds.data ? (
         <StatRow>
-          <StatCard title="Ready to go" value={fit} caption="Fit, with nothing holding the bed" chip={fit ? "Approve next" : undefined} tone="done" onSelect={toggle("fit")} selected={group === "fit"} />
+          <StatCard title="Ready for discharge" value={fit} caption="Medically fit, no discharge barrier" chip={fit ? "Approve next" : undefined} tone="done" onSelect={toggle("fit")} selected={group === "fit"} />
           <StatCard title="Blocked" value={blocked} caption="Fit, but something holds the bed" chip={blocked ? "Clear first" : undefined} tone="soon" onSelect={toggle("blocked")} selected={group === "blocked"} />
           <StatCard title="On the ward" value={by.size} caption="Admitted patients with a bed" />
         </StatRow>
@@ -58,7 +58,7 @@ function Chooser() {
         <div className="chart-row">
           <Card title="The ward by readiness to go home">
             <SegmentBar label="Patients by readiness to go home" segments={[
-              { label: "Ready to go", value: fit, tone: "green" },
+              { label: "Ready for discharge", value: fit, tone: "green" },
               { label: "Fit but blocked", value: blocked, tone: "amber" },
               { label: "On watch", value: watched, tone: "blue" },
               { label: "Not fit yet", value: by.size - fit - blocked - watched, tone: "neutral" },
@@ -67,7 +67,7 @@ function Chooser() {
         </div>
       ) : null}
       <PatientPicker link={openPlan} mark={mark} only={group ? id => by.get(id)?.kind === group : undefined}
-        title={group === "fit" ? "Ready to go" : group === "blocked" ? "Blocked" : "Patients, nearest to going home first"} />
+        title={group === "fit" ? "Ready for discharge" : group === "blocked" ? "Blocked" : "Patients, nearest to going home first"} />
     </>
   );
 }
