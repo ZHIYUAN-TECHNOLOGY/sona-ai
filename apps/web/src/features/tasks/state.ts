@@ -26,9 +26,12 @@ export function groupTasks<T extends TaskLike>(tasks: T[], me: string, on: strin
   };
 }
 
+/** A due date to sort by: the ISO date, or "9" (after every date) when undated or written in words ("Before discharge"). */
+export const dueKey = (due: string | null) => due && /^\d{4}-\d{2}-\d{2}$/.test(due) ? due : "9";
+
 /** What needs doing first: open before done, then the earliest due date, undated last. Overdue tasks lead. */
 export const rankTasks = <T extends TaskLike>(tasks: T[]) =>
-  tasks.toSorted((a, b) => Number(a.completed) - Number(b.completed) || (a.due ?? "9").localeCompare(b.due ?? "9"));
+  tasks.toSorted((a, b) => Number(a.completed) - Number(b.completed) || dueKey(a.due).localeCompare(dueKey(b.due)));
 
 export const matchesTask = (t: TaskLike, q: string) =>
   !q || [t.title, t.owner, t.encounterId ?? "ward", sourceOf(t.kind).label].some(s => s.toLowerCase().includes(q));
