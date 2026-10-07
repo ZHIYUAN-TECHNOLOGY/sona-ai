@@ -9,9 +9,12 @@ const lead = (word: string) => {
   return /^\p{L}/u.test(first) ? first.toLocaleUpperCase() : "";
 };
 
-/** First and last name's first letters ("Dr", "Jr", "III" skipped); "" when the name has no letters (show an icon). */
+// Titles before a name, any number of them: "Tan Sri Dato' Seri Haji …". "Tan" alone is a surname, so only "Tan Sri".
+const titles = /^(?:(?:(?:dato|datuk|datin)['’]?(?:\s+(?:seri|sri|paduka))?|(?:tan|puan)\s+sri|haji|hajah|hj|hjh|dr|mr|mrs|ms|prof)\.?\s+)+/i;
+
+/** First and last name's first letters (titles such as "Dr" or "Dato'" and "Jr", "III" skipped); "" when the name has no letters (show an icon). */
 export const initials = (name: string) => {
-  const words = name.replace(/^(dr|mr|mrs|ms|prof)\.?\s+/i, "").replace(/[\s,]+(jr|sr|ii|iii|iv)\.?$/i, "").trim().split(/\s+/).map(lead).filter(Boolean);
+  const words = name.trim().replace(titles, "").replace(/[\s,]+(jr|sr|ii|iii|iv)\.?$/i, "").trim().split(/\s+/).map(lead).filter(Boolean);
   return (words[0] ?? "") + (words.length > 1 ? words.at(-1)! : "");
 };
 /** A hue that stays the same for the same name. */

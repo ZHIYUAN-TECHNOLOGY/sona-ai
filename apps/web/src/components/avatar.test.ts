@@ -17,6 +17,18 @@ test("initials take whole letters from the first and last name", () => {
   expect(initials("👩🏽‍💻")).toBe("");
 });
 
+test("initials skip Malaysian honorifics, however many lead the name", () => {
+  expect(initials("Dato' Seri Ahmad Zulkifli bin Abdullah")).toBe("AA");
+  expect(initials("Datin Siti Nurhaliza")).toBe("SN");
+  expect(initials("Datuk Lim Kok Wing")).toBe("LW");
+  expect(initials("Tan Sri Dato’ Haji Muhyiddin Yassin")).toBe("MY");
+  expect(initials("Puan Sri Hajah Rosmah Mansor")).toBe("RM");
+  expect(initials("Hjh. Aminah Ismail")).toBe("AI");
+  expect(initials("Prof. Dr Kamala Devi")).toBe("KD");
+  expect(initials("Tan Wei Ming")).toBe("TM");
+  expect(initials("Dato'")).toBe("D");
+});
+
 test("numbers and counted nouns", () => {
   expect(formatNumber(1284)).toBe("1,284");
   expect(formatNumber(3.14159)).toBe("3.14159");
