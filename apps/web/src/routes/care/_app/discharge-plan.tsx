@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { Icon } from "@/components/icon";
@@ -25,6 +26,7 @@ function Page() {
   const visits = useQuery(orpc.care.followUps.queryOptions({ input: { lang } }));
   const checkIns = useQuery(orpc.care.checkIns.list.queryOptions());
   const clock = useQuery(orpc.care.clock.queryOptions());
+  const [pdf, setPdf] = useState<"idle" | "busy" | { error: string }>("idle");
 
   const empty = (lead: string, body: ReactNode) => <>
     <PageHeader title="Discharge plan" lead={lead} />
@@ -44,13 +46,27 @@ function Page() {
   const step = stepOf({ checkInWaiting: Boolean(checkIns.data && currentCheckIn(checkIns.data)), nextCheckInAt: checkIns.data ? nextCheckIn(checkIns.data)?.dueAt : undefined, visits: visits.data ?? [], meds: active, now });
   const medWords = `${active.length} ${active.length === 1 ? "medicine" : "medicines"} to take`;
 
+  // The PDF kit and its engine load on the first click, so they stay out of the page's own chunk.
+  const downloadPlan = async () => {
+    setPdf("busy");
+    try {
+      const [{ DischargePlanDocument }, { renderPdf, downloadPdf }] = await Promise.all([import("@/features/discharge/plan-pdf"), import("@/lib/pdf/render")]);
+      const { blob } = await renderPdf(<DischargePlanDocument plan={p} lang={lang} visits={visits.data ?? []} />, { title: "Discharge plan" });
+      downloadPdf("discharge-plan.pdf", blob);
+      setPdf("idle");
+    } catch (e) {
+      setPdf({ error: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
   return (
     <>
       <PageHeader
         title="Discharge plan"
         lead={[`You went home on ${longDay(p.dischargedAt)}.`, active.length ? `${medWords}.` : "", nextVisit ? `Next visit: ${weekDay(nextVisit.date)}.` : ""].filter(Boolean).join(" ")}
-        actions={<><Button className="no-print" icon="download" onClick={() => window.print()}>Download PDF</Button><Button variant="primary" className="no-print" to="/care/ask">Ask Sona about my plan</Button></>}
+        actions={<><Button className="no-print" icon="download" disabled={pdf === "busy"} onClick={() => { void downloadPlan(); }}>{pdf === "busy" ? "Making the PDF…" : "Download PDF"}</Button><Button variant="primary" className="no-print" to="/care/ask">Ask Sona about my plan</Button></>}
       />
+      {typeof pdf === "object" && <p className="dp-muted" role="alert">We could not make the PDF. {pdf.error}</p>}
       {active.length || nextVisit || clock.data ? <StatRow>
         {active.length ? <StatCard title="Medicines to take" value={active.length} caption={p.medicines.stopped.length ? `${p.medicines.stopped.length} stopped` : "As your plan says"} /> : null}
         {nextVisit ? <StatCard title="Next follow-up" value={shortDay(nextVisit.date)} caption={nextVisit.title} /> : null}
