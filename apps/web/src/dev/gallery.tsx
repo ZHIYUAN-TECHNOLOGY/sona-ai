@@ -9,6 +9,7 @@ import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader, PatientStrip } from "@/components/page";
 import { Avatar, Button, Card, Chip, DetailList, ListCard, ListRow, Pager, Select, Skeleton, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 
+import { AiGallery } from "./ai-gallery";
 import { rows } from "./worst-case/fixture";
 
 type Mode = "demo" | "worst" | "empty" | "one" | "huge";
@@ -77,6 +78,7 @@ export default function Gallery() {
       <EmptyState icon="inbox" title={worst ? "Nobody on the Cardiothoracic and Vascular Surgery ward is waiting on a decision from you right now" : "Nothing needs you"} action={<Button>{worst ? "Paramètres de confidentialité" : "Refresh"}</Button>}>
         {worst ? "When a result comes back, a patient writes in, or a nurse flags a blocker, it lands here first, ranked by what needs you soonest." : "Nothing is waiting."}
       </EmptyState>
+      <AiGallery worst={worst} />
       <Card title="Charts">
         <LineChart label="Potassium" unit="mmol/L" points={points} goal={{ value: 5 }} band={{ low: 3.5, high: 5 }} />
         <BarChart label="Admissions" points={points.slice(0, mode === "huge" ? 1000 : 12)} showValues={!worst || mode === "worst"} />
