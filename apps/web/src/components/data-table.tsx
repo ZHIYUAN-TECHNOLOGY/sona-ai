@@ -42,7 +42,7 @@ export function PersonCell({ name, detail, size = "md" }: { name: string; detail
     <span className="cell-person">
       <Avatar name={name} size={size} />
       <span className="cell-person-text">
-        <span className="cell-person-name" title={name}>{name}</span>
+        <span className="cell-person-name" title={name} dir="auto">{name}</span>
         {detail ? <span className="cell-muted" title={typeof detail === "string" ? detail : undefined}>{detail}</span> : null}
       </span>
     </span>

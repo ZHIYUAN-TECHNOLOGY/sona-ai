@@ -25,7 +25,7 @@
 .row-action { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap); padding: 0 var(--space-4); border: 0; border-radius: var(--radius-pill); background: none; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; transition: background var(--quick) var(--ease), color var(--quick) var(--ease); }
 .row-action:hover { background: var(--fill-hover); }
 .row-action:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
-tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
+tr[data-selected] .row-action { color: var(--ink); }
 :is(.pro, .care) .table th { height: 44px; font-size: var(--text-overline); letter-spacing: var(--track-overline); text-transform: uppercase; border-bottom-color: var(--hairline); }
 :is(.pro, .care) .table td { height: 71px; border-bottom-color: var(--hairline); }
 /* Sort buttons do not inherit type from the header cell by default. */
@@ -164,7 +164,6 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 :is(.pro, .care) .card > .table-wrap { margin: 0 calc(var(--pad-card) * -1) calc(var(--space-3) * -1); padding: 0; background: none; box-shadow: none; }
 :is(.pro, .care) .card > .table-wrap > .table-toolbar { padding: 0 var(--pad-card) var(--space-3); }
 :is(.pro, .care) .table tbody tr[data-selected] > * { border-radius: 0; }
-:is(.pro, .care) .table tbody tr[data-selected] > :first-child { box-shadow: inset 3px 0 0 var(--ink); }
 
 /* Sona card on glass: quiet parts are muted, the suggested step is a tinted block, and its button is the card's one filled control. */
 :is(.pro, .care) .insight :is(.insight-meta, .insight-foot, .insight-detail, .insight-detail summary) { color: var(--muted); }
@@ -249,3 +248,7 @@ tr[data-selected] .row-action { background: var(--ink); color: var(--surface); }
 .pro .table .ptl-reason { display: grid; }
 .pro .table .ptl-reason > * { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .pro .table .ptl-reason strong { font-weight: 600; }
+
+/* Every row's action looks the same; the selected row is told apart by its fill alone. The action column never shrinks. */
+.pro .table .table-action { width: 1%; }
+.pro .table .row-action { flex: none; }

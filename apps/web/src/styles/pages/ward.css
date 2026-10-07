@@ -19,3 +19,10 @@
 .ward-gap { margin: var(--space-3) 0; }
 /* Five tabs share the toolbar with the search, so the search gives way. */
 .ward-search { max-inline-size: 11rem; }
+/* Worst-case data: the bed column has a cap and its second line ends with "…" (full text on hover and in the side
+   panel), so names, barriers and the action keep their room. A row is two lines at most. */
+.ward-bed { max-width: 16ch; }
+.ward-bed > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ward-waits { min-width: 18ch; max-width: 34ch; }
+.ward-waits > :first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ward-more { color: var(--muted); font-weight: 500; }

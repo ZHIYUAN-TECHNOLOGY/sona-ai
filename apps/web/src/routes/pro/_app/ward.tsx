@@ -8,8 +8,10 @@ import { BarChart } from "@/components/charts";
 import { DataTable, PersonCell, RowAction, TableToolbar, type Column } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
-import { Button, Card, Chip, ListCard, ListRow, SearchField, Select, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, ListCard, ListRow, Pager, SearchField, Select, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { revealRail, RightRail, WithRail } from "@/components/rail";
+import { DataToggle } from "@/features/dev/data-toggle";
+import { devBeds } from "@/features/dev/ward-fixtures";
 import { freeBy, Loaded, rankBeds, unownedOn } from "@/features/ward/state";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/ward.css";
@@ -19,6 +21,7 @@ export const Route = createFileRoute("/pro/_app/ward")({ component: Page });
 type Tab = "all" | "blocked" | "unowned" | "watch" | "free";
 const STATUS = { fit: "Medically fit", watch: "Being watched", stable: "Stable", empty: "Empty", free: "Free" };
 const hour = (at: Date | string) => new Date(at).toLocaleTimeString("en-GB", { hour: "2-digit", timeZone: "Asia/Kuala_Lumpur" }) + ":00";
+const PAGE_SIZE = 50;
 const s = (count: number) => count === 1 ? "" : "s";
 
 function Page() {
@@ -28,6 +31,7 @@ function Page() {
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<string>();
+  const [page, setPage] = useState(1);
   // Four independent reads, started together.
   const beds = useQuery(orpc.ward.beds.queryOptions());
   const forecast = useQuery(orpc.ward.forecast.queryOptions());
@@ -40,9 +44,11 @@ function Page() {
   const assign = useMutation(orpc.ward.assignOwner.mutationOptions({ onSuccess: refreshOwners }));
   const unassign = useMutation(orpc.ward.unassignOwner.mutationOptions({ onSuccess: refreshOwners }));
 
+  // Dev-only: `?data=worst|empty|one|many` swaps in worst-case beds where the API's would be.
+  const bedsData = devBeds() ?? beds.data;
   type BedRow = NonNullable<typeof beds.data>[number];
   // Ranked so the beds that need someone come first; every tab and the detail card follow this order.
-  const all = rankBeds(beds.data ?? [], owners);
+  const all = rankBeds(bedsData ?? [], owners);
   const blocked = all.filter(b => b.blockers.length > 0);
   const noOwner = all.filter(b => unownedOn(b, owners) > 0);
   const unowned = noOwner.reduce((sum, b) => sum + unownedOn(b, owners), 0);
@@ -57,6 +63,8 @@ function Page() {
   const groups: Record<Tab, BedRow[]> = { all, blocked, unowned: noOwner, watch: all.filter(b => b.status === "watch"), free: all.filter(b => !b.name) };
   const q = search.trim().toLowerCase();
   const rows = groups[tab].filter(b => !q || `${b.bed} ${b.name ?? ""} ${b.blockers.map(x => x.label).join(" ")}`.toLowerCase().includes(q));
+  // 50 beds a page: a ward of hundreds stays quick to draw and to scan; a new tab or search starts on page 1.
+  const current = Math.min(page, Math.max(1, Math.ceil(rows.length / PAGE_SIZE)));
   const bed = all.find(b => b.bed === picked) ?? all[0];
   // The suggested next step once this bed's blockers all have an owner.
   const nextBed = bed && unownedOn(bed, owners) === 0 ? noOwner[0] : undefined;
@@ -68,19 +76,20 @@ function Page() {
   };
 
   const columns: Column<BedRow>[] = [
-    { key: "bed", header: "Bed", cell: b => <span className="ward-bed"><strong>{b.bed}</strong>{b.predicted ? <span className="ward-muted">{freeBy(b.predicted)}</span> : null}</span>, sort: (x, y) => x.bed.localeCompare(y.bed, undefined, { numeric: true }) },
+    { key: "bed", header: "Bed", cell: b => <span className="ward-bed"><strong title={b.bed}>{b.bed}</strong>{b.predicted ? <span className="ward-muted" title={freeBy(b.predicted)}>{freeBy(b.predicted)}</span> : null}</span>, sort: (x, y) => x.bed.localeCompare(y.bed, undefined, { numeric: true }) },
     { key: "patient", header: "Patient", cell: b => b.name ? <PersonCell name={b.name} detail={b.meta} /> : <span className="ward-muted">No patient</span> },
     {
       key: "waits", header: "Discharge barrier", cell: b => b.blockers.length === 0 ? (b.status === "watch" ? <Status tone="info">Being watched</Status> : b.name ? <Status tone="done">Nothing blocking</Status> : <Status>Free</Status>) : (
-        <span className="ward-waits"><span>{b.blockers.map(x => x.label).join(", ")}</span>{ownerLine(b)}</span>
+        <span className="ward-waits"><span title={b.blockers.map(x => x.label).join(", ")}>{b.blockers[0]!.label}{b.blockers.length > 1 ? <span className="ward-more"> +{b.blockers.length - 1} more</span> : null}</span>{ownerLine(b)}</span>
       ),
     },
   ];
 
   return (
     <>
+      <DataToggle />
       <PageHeader title="Ward"
-        lead={beds.data ? (
+        lead={bedsData ? (
           <>
             {occupied} of {all.length} beds occupied ·{" "}
             {blocked.length ? <Signal tone="soon">{blocked.length} blocked</Signal> : "none blocked"} ·{" "}
@@ -88,7 +97,7 @@ function Page() {
           </>
         ) : "Loading the ward…"}
         status={mayAssign ? undefined : "Your role can see the ward but cannot assign discharge barriers."} />
-      {beds.data ? (
+      {bedsData ? (
         <>
         <StatRow>
           <StatCard title="Beds occupied" value={occupied} unit={`of ${all.length}`} progress={all.length ? occupied / all.length : 0} feature onSelect={() => setTab("all")} selected={tab === "all"} />
@@ -150,11 +159,12 @@ function Page() {
       )}>
         <Loaded query={beds} what="the ward" empty="No beds on this ward yet.">
           {() => (
-            <DataTable columns={columns} rows={rows} rowKey={b => b.bed} selectedKey={bed?.bed} onRowOpen={b => setPicked(b.bed)}
-              empty={q ? `No bed matches "${search}".` : "No beds in this state."} count={`Showing ${rows.length} of ${all.length} beds`}
+            <DataTable columns={columns} rows={rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)} rowKey={b => b.bed} selectedKey={bed?.bed} onRowOpen={b => setPicked(b.bed)}
+              empty={q ? `No bed matches "${search}".` : "No beds in this state."} footer={rows.length > PAGE_SIZE ? <Pager page={current} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} noun="beds" /> : undefined}
+              count={rows.length > PAGE_SIZE ? undefined : `Showing ${rows.length} of ${all.length} beds`}
               toolbar={(
-                <TableToolbar end={<SearchField className="ward-search" label="Search bed, patient or discharge barrier" placeholder="Search beds" value={search} onChange={e => setSearch(e.target.value)} />}>
-                  <Tabs label="Beds by state" value={tab} onChange={setTab} tabs={[
+                <TableToolbar end={<SearchField className="ward-search" label="Search bed, patient or discharge barrier" placeholder="Search beds" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />}>
+                  <Tabs label="Beds by state" value={tab} onChange={t => { setTab(t); setPage(1); }} tabs={[
                     { id: "all", label: "All", count: all.length }, { id: "blocked", label: "Blocked", count: blocked.length },
                     { id: "unowned", label: "Unassigned", count: noOwner.length },
                     { id: "watch", label: "Watch", count: groups.watch.length }, { id: "free", label: "Free", count: groups.free.length },
