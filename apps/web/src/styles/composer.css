@@ -1,0 +1,82 @@
+/* Composer: where a question to Sona is written (the Sona panel, its full screen, the chat pages). Floating glass, a
+   pill on one line that grows into a rounded card as the text wraps (to six lines). Its edge is alive
+   (components/ai/composer-ring.tsx): a liquid-metal line in Sona's blues that wanders, wakes when the pointer comes near
+   or the box is focused, flows while Sona works and pulses with the voice. The send button is the one filled control:
+   a metallic blue circle with a dotted glint once there is something to send, a quiet glass circle before. */
+.ai-composer {
+  --level: 0; --composer-button: 36px; --composer-pad: 6px;
+  position: relative; isolation: isolate; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px;
+  padding: var(--composer-pad) var(--composer-pad) var(--composer-pad) var(--space-4);
+  border-radius: calc(var(--composer-button) / 2 + var(--composer-pad));
+  background: var(--glass-float); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 1px 2px rgb(29 31 35 / 0.04), 0 8px 24px rgb(36 91 204 / 0.1);
+  transition: box-shadow 200ms var(--ai-ease);
+}
+.ai-composer:focus-within { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 1px 2px rgb(29 31 35 / 0.04), 0 10px 32px rgb(36 91 204 / 0.18); }
+/* Keyboard focus: the edge brightens, and a quiet outline says where the keys go. */
+.ai-composer:has(.ai-composer-input:focus-visible) { outline: 2px solid color-mix(in srgb, var(--blue) 40%, transparent); outline-offset: 4px; }
+
+/* The living edge: a canvas a little larger than the box, under the text and buttons. */
+.ai-composer-ring { position: absolute; inset: -14px; z-index: -1; pointer-events: none; }
+.ai-composer-ring canvas { display: block; width: 100%; height: 100%; }
+/* Without WebGL2: a still metallic ring in CSS that brightens with focus. */
+.ai-composer-ring[data-fallback] {
+  inset: 0; padding: 1px; border-radius: inherit; opacity: 0.5; transition: opacity 200ms var(--ai-ease);
+  background: conic-gradient(from 200deg, var(--blue), #6CC7F5, #DCE9FF, var(--blue) 40%, #1B47A6 60%, #8FBCFF 80%, var(--blue));
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.ai-composer:focus-within .ai-composer-ring[data-fallback] { opacity: 1; }
+
+.ai-composer-status { flex-basis: 100%; margin: 0; padding: var(--space-1) 0 0; font-size: 12px; line-height: 1.4; color: var(--muted); }
+.ai-composer-status:empty { display: none; }
+.ai-composer-status[data-error] { color: var(--ink); font-weight: 600; }
+.ai-composer-input {
+  flex: 1; min-width: 0; resize: none; margin: 0; padding: 8px 0; border: 0; outline: 0; overflow-y: hidden;
+  background: transparent; color: var(--ink); font: inherit; font-size: 14px; line-height: 20px;
+}
+.ai-composer-input:focus-visible { outline: 0; }
+.ai-composer-input::placeholder { color: var(--placeholder); }
+
+/* Round buttons: quiet glass circles. The filled face is a layer that fades in, so nothing shifts. */
+.ai-composer-button {
+  position: relative; isolation: isolate; flex: none; display: grid; place-items: center;
+  width: var(--composer-button); height: var(--composer-button); padding: 0; border: 0; border-radius: 50%;
+  background: var(--glass-float); color: var(--muted); cursor: pointer; touch-action: manipulation;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 0 0 1px rgb(29 31 35 / 0.07), 0 1px 2px rgb(29 31 35 / 0.05);
+  transition: transform 120ms var(--ai-ease), color 160ms ease, box-shadow 160ms ease;
+}
+.ai-composer-button::before, .ai-composer-send::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; opacity: 0; pointer-events: none; transition: opacity 180ms var(--ai-ease); }
+/* Metal blue: a light from above on a blue sphere, a bright top rim and a darker lower rim. */
+.ai-composer-button::before {
+  background: radial-gradient(120% 70% at 50% 0%, rgb(255 255 255 / 0.5), rgb(255 255 255 / 0) 60%), linear-gradient(180deg, color-mix(in srgb, var(--blue), #fff 22%), var(--blue) 50%, color-mix(in srgb, var(--blue), #0E2A66 45%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55), inset 0 -1px 1px rgb(14 42 102 / 0.35), 0 0 0 1px rgb(14 42 102 / 0.18), 0 3px 10px rgb(36 91 204 / 0.3);
+}
+/* The dotted glint, top left (design-direction.md: the same as the phone composer's send). */
+.ai-composer-send::after {
+  color: #fff; background: var(--dither) 0 0 / 4px 4px;
+  mask: radial-gradient(circle at 28% 22%, #000, transparent 48%);
+}
+.ai-composer-button:disabled { color: var(--placeholder); cursor: default; }
+.ai-composer-button:active:not(:disabled) { transform: scale(0.96); }
+@media (hover: hover) { .ai-composer-mic:hover:not(:disabled) { color: var(--ink); } }
+.ai-composer-send:not(:disabled) { color: #fff; box-shadow: none; }
+.ai-composer-send:not(:disabled)::before { opacity: 1; }
+.ai-composer-send:not(:disabled)::after { opacity: 0.45; }
+/* Listening: the mic is the blue circle, with a ring that swells with the voice. */
+.ai-composer[data-phase="listening"] .ai-composer-mic { color: #fff; box-shadow: 0 0 0 calc(2px + var(--level) * 6px) rgb(36 91 204 / 0.2); }
+.ai-composer[data-phase="listening"] .ai-composer-mic::before { opacity: 1; }
+.ai-composer[data-phase="transcribing"] .ai-composer-mic { animation: composer-wait 1.2s var(--ai-ease) infinite alternate; }
+@keyframes composer-wait { to { opacity: 0.35; } }
+
+/* Sona Care: sized for patients, the buttons at the tap size. */
+.care .ai-composer { --composer-button: var(--tap); }
+.care .ai-composer-input { padding-block: 12px; font-size: var(--text-body); line-height: 24px; }
+.care .ai-composer-status { font-size: var(--text-small); }
+/* A chat page's composer, under its thread at the thread's width. */
+.ai-composer-dock { flex: none; width: 100%; max-width: 760px; margin-inline: auto; padding: var(--space-2) var(--space-4) var(--space-4); }
+
+@media (prefers-reduced-transparency: reduce) { .ai-composer { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .ai-composer-button:active:not(:disabled) { transform: none; }
+  .ai-composer[data-phase="transcribing"] .ai-composer-mic { animation: none; }
+}

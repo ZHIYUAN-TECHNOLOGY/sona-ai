@@ -1,12 +1,15 @@
-import { useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/icon";
-import { SonaGlow } from "@/components/sona-glow";
 import { client } from "@/lib/orpc";
 import { type Recording, startRecording } from "@/lib/recorder";
 import { plain } from "@/lib/sona";
 import { toBase64, WAV_HEADER, WAV_RATE } from "@/lib/wav";
 import "@/styles/ai.css";
+import "@/styles/composer.css";
+
+import { fitHeight } from "./composer-motion";
+import { ComposerRing } from "./composer-ring";
 
 type Phase = "idle" | "listening" | "transcribing";
 const STATUS: Record<Phase, string> = { idle: "", listening: "Listening. Tap the mic when you're done.", transcribing: "Writing down what you said…" };
@@ -15,6 +18,14 @@ const LANGUAGES = ["en", "ms", "zh"] as const;
 
 /** Puts the cursor in the composer on screen (the panel's, or a chat page's own), after the next paint. */
 export const focusComposer = () => requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>(".ai-composer-input")?.focus());
+
+function fitInput(el: HTMLTextAreaElement) {
+  el.style.height = "auto";
+  const style = getComputedStyle(el);
+  const { height, scrolls } = fitHeight(el.scrollHeight, parseFloat(style.lineHeight), parseFloat(style.paddingTop) + parseFloat(style.paddingBottom));
+  el.style.height = `${height}px`;
+  el.style.overflowY = scrolls ? "auto" : "hidden";
+}
 
 /**
  * Where a question to Sona is written: type, or tap the mic, speak and tap it again (what was heard fills the box to
@@ -25,11 +36,22 @@ export function Composer({ app, onSend, busy, placeholder = "Ask Sona" }: { app:
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState("");
+  const [focused, setFocused] = useState(false);
   const form = useRef<HTMLFormElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const level = useRef(0);
   const recording = useRef<Promise<Recording> | null>(null);
   const writing = useRef(false);
+
+  // The box grows with the text to six lines, then scrolls; a change of width rewraps it.
+  useLayoutEffect(() => fitInput(input.current!), [text]);
+  useEffect(() => {
+    const el = input.current!;
+    let width = el.offsetWidth;
+    const rewrap = new ResizeObserver(() => { if (el.offsetWidth !== width) { width = el.offsetWidth; fitInput(el); } });
+    rewrap.observe(el);
+    return () => rewrap.disconnect();
+  }, []);
 
   const question = text.trim();
   const canSend = question.length >= (app === "care" ? 2 : 1) && !busy; // the servers' own minimums
@@ -45,7 +67,7 @@ export function Composer({ app, onSend, busy, placeholder = "Ask Sona" }: { app:
     if (recording.current || writing.current) return;
     setError("");
     setPhase("listening");
-    // The level moves a CSS variable and a ref (the glow reads it), not state: it changes many times a second.
+    // The level moves a CSS variable and a ref (the mic's ring and the living edge read them), not state: it changes many times a second.
     const started = startRecording(heard => {
       level.current = heard;
       form.current?.style.setProperty("--level", heard.toFixed(2));
@@ -85,8 +107,15 @@ export function Composer({ app, onSend, busy, placeholder = "Ask Sona" }: { app:
   }
 
   return (
-    <form ref={form} className="ai-composer" data-phase={phase} onSubmit={event => { event.preventDefault(); send(); }}>
-      <SonaGlow app={app} listening={phase === "listening"} level={level} />
+    <form
+      ref={form}
+      className="ai-composer"
+      data-phase={phase}
+      onSubmit={event => { event.preventDefault(); send(); }}
+      onFocus={() => setFocused(true)}
+      onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
+    >
+      <ComposerRing app={app} focused={focused} working={!!busy || phase === "transcribing"} recording={phase === "listening"} level={level} />
       <p className="ai-composer-status" data-error={error ? "" : undefined} aria-live="polite">{error || STATUS[phase]}</p>
       {/* `sona-bar-input` stays as a hook: Sona Care's Ask page focuses it from "Ask a follow-up". */}
       <textarea
