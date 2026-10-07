@@ -1,0 +1,63 @@
+/* The Sona orb (components/sona-orb.tsx): a glass sphere with a living aurora, after the iPhone's Aurora core orb.
+   The canvas draws the glass; the glyph is crisp SVG on top; a soft blue glow behind rises with the state.
+   Motion: the glyph morphs on a spring-like ease (0.45 s, slight overshoot and turn); the button lifts to 1.06 on
+   hover or focus and presses to 0.96. Nothing moves at rest. */
+:is(.pro, .care) { --orb-spring: cubic-bezier(0.34, 1.4, 0.64, 1); --orb-ink: var(--navy); }
+
+.sona-orb-visual { position: relative; isolation: isolate; display: grid; place-items: center; flex: none; border-radius: 50%; color: var(--orb-ink); background-size: 100% 100%; }
+.sona-orb-visual > canvas { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; }
+/* The glow behind: two layers' worth of shadow would animate box-shadow; one pre-blurred disc fades instead. */
+.sona-orb-visual::before {
+  content: ""; position: absolute; inset: -32%; z-index: -1; border-radius: 50%; opacity: 0; pointer-events: none;
+  background: radial-gradient(closest-side, rgb(46 107 224 / 0.42), rgb(77 170 240 / 0.16) 60%, rgb(46 107 224 / 0) 100%);
+  transition: opacity 600ms var(--sona-ease, ease-out), scale 600ms var(--sona-ease, ease-out);
+}
+.sona-orb-visual[data-state="hover"]::before { opacity: 0.55; }
+.sona-orb-visual[data-state="thinking"]::before { opacity: 0.8; }
+.sona-orb-visual[data-state="answered"]::before { opacity: 1; scale: 1.15; transition-duration: 300ms; }
+
+/* Without WebGL 2: the same sphere in CSS, still. */
+.sona-orb-visual[data-gl="off"] > canvas, .sona-orb-mark[data-gl="off"] {
+  background:
+    radial-gradient(28% 18% at 34% 24%, rgb(255 255 255 / 0.95), rgb(255 255 255 / 0)),
+    radial-gradient(90% 55% at 55% 92%, rgb(36 91 204 / 0.5), rgb(77 194 230 / 0.25) 55%, rgb(77 194 230 / 0) 80%),
+    radial-gradient(closest-side, #F4F6FD 70%, #E3EAF9 96%, rgb(36 91 204 / 0.55));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.7);
+}
+
+/* The glyph: three shapes in one SVG; the state's shape springs in, the others shrink away with a slight turn. */
+.sona-orb-glyph { position: relative; width: 40%; height: 40%; overflow: visible; }
+.sona-orb-glyph > * {
+  transform-box: view-box; transform-origin: 12px 12px; opacity: 0; scale: 0.55; rotate: -25deg;
+  transition: opacity 200ms ease-out, scale 450ms var(--orb-spring), rotate 450ms var(--orb-spring);
+}
+.sona-orb-spark, .sona-orb-dots { fill: currentColor; }
+.sona-orb-check { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+:is([data-glyph="spark"] .sona-orb-spark, [data-glyph="dots"] .sona-orb-dots, [data-glyph="check"] .sona-orb-check) { opacity: 1; scale: 1; rotate: 0deg; }
+/* Thinking: the three dots rise in turn. */
+[data-glyph="dots"] .sona-orb-dots circle { animation: sona-orb-rise 900ms ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+[data-glyph="dots"] .sona-orb-dots circle:nth-child(2) { animation-delay: 150ms; }
+[data-glyph="dots"] .sona-orb-dots circle:nth-child(3) { animation-delay: 300ms; }
+@keyframes sona-orb-rise { 0%, 100% { translate: 0 1.6px; opacity: 0.45; } 50% { translate: 0 -1.6px; opacity: 1; } }
+
+/* Closed Sona panel: the orb in the bottom-right corner, with a dot when an answer arrived while it was closed. */
+.sona-orb {
+  position: fixed; right: var(--space-5); bottom: var(--space-5); z-index: 20; display: grid; place-items: center; width: 56px; height: 56px;
+  padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer;
+  box-shadow: 0 8px 24px rgb(36 91 204 / 0.2), 0 2px 6px rgb(29 31 35 / 0.12);
+  transition: scale 300ms var(--orb-spring), opacity 200ms var(--sona-ease);
+}
+@starting-style { .sona-orb { opacity: 0; scale: 0.9; } }
+.sona-orb[data-state="hover"] { scale: 1.06; }
+@media (hover: hover) { .sona-orb:hover { scale: 1.06; } }
+.sona-orb:active, .sona-orb[data-state="press"] { scale: 0.96; transition-duration: 120ms; }
+.sona-orb:focus-visible { outline: 0; box-shadow: var(--focus-ring), 0 8px 24px rgb(36 91 204 / 0.2); }
+.sona-orb-badge { position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); box-shadow: inset 0 0 0 4px var(--blue), 0 0 0 2px var(--surface); }
+@media (max-width: 860px) { .sona-orb { right: var(--space-4); bottom: max(var(--space-4), env(safe-area-inset-bottom)); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sona-orb, .sona-orb-visual::before, .sona-orb-glyph > * { transition: none; }
+  .sona-orb:active, .sona-orb[data-state] { scale: none; }
+  [data-glyph="dots"] .sona-orb-dots circle { animation: none; }
+}
+@media print { .sona-orb { display: none !important; } }

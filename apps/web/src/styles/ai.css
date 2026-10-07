@@ -39,11 +39,8 @@
 .ai-answer { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
 .ai-answer-head { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--text-small); line-height: 1.3; font-weight: 600; color: var(--ink); }
 .ai-by { font-weight: 400; color: var(--muted); }
-.ai-mark {
-  display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%;
-  background: var(--ai-gradient); color: var(--on-ai); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 1px 3px rgb(36 91 204 / 0.3);
-}
-.ai-answer-body { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; padding-left: 30px; }
+/* Under Sona's mark (the 28 px still orb) and the gap. */
+.ai-answer-body { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; padding-left: 36px; }
 @media (max-width: 520px) { .ai-answer-body { padding-left: 0; } }
 
 /* Shimmer: a light sweeping across muted text, at rest when done or under Reduce Motion. */

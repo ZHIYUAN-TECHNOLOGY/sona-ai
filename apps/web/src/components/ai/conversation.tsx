@@ -1,6 +1,7 @@
 import { Children, type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/icon";
+import { SonaOrbMark } from "@/components/sona-orb";
 import "@/styles/ai.css";
 
 const NEAR = 48; // px from the bottom that still counts as "at the newest turn"
@@ -55,10 +56,8 @@ export function Conversation({ label = "Sona's answers", className, children }: 
   );
 }
 
-/** Sona's mark beside an answer: a small blue disc with the sparkle. Decorative. */
-export function SonaMark() {
-  return <span className="ai-mark" aria-hidden="true"><Icon name="sparkle" size={12} /></span>;
-}
+/** Sona's mark beside an answer: the Sona orb, small and still (components/sona-orb.tsx). Decorative. */
+export const SonaMark = SonaOrbMark;
 
 /**
  * One question and its answer. The question is a compact bubble on the right; Sona's answer sits on the left with no

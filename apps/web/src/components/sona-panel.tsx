@@ -1,8 +1,8 @@
-import { Composer, focusComposer, SonaMark, Suggestions } from "@/components/ai";
+import { Composer, focusComposer, Suggestions } from "@/components/ai";
 import { SonaTurns, useSona } from "@/lib/sona";
 
-import { Icon } from "./icon";
 import { IconButton } from "./primitives";
+import { SonaOrbButton, SonaOrbMark } from "./sona-orb";
 import "@/styles/sona-panel.css";
 
 // What the empty panel offers, one press each.
@@ -17,7 +17,7 @@ export const SHORTCUT = mac ? "⌘K" : "Ctrl+K";
 
 /**
  * Sona beside every page: a docked panel on the right (open by default) with the page's turns and the composer, a
- * round orb in the corner when closed (a dot when an answer arrived meanwhile), or the whole main area at the Evidence
+ * glass orb in the corner when closed (components/sona-orb.tsx: it thinks, blooms when an answer arrives, then shows a dot), or the whole main area at the Evidence
  * page's width when expanded. Docked and expanded are the same element, so a draft survives the switch.
  */
 export function SonaPanel({ app, label }: { app: "pro" | "care"; /** What the page is about, for the header chip. */ label: string }) {
@@ -25,11 +25,9 @@ export function SonaPanel({ app, label }: { app: "pro" | "care"; /** What the pa
 
   if (panel === "closed")
     return (
-      <button type="button" className="sona-orb" aria-label={`Ask Sona (${SHORTCUT})${unseen ? ", new answer" : ""}`} title={`Ask Sona · ${SHORTCUT}`}
-        onClick={() => { setPanel("open"); focusComposer(); }}>
-        <Icon name="sparkle" size={24} />
-        {unseen ? <span className="sona-orb-badge" aria-hidden="true" /> : null}
-      </button>
+      <SonaOrbButton app={app} pending={turns.some(turn => turn.state === "pending")} unseen={unseen}
+        aria-label={`Ask Sona (${SHORTCUT})${unseen ? ", new answer" : ""}`} title={`Ask Sona · ${SHORTCUT}`}
+        onClick={() => { setPanel("open"); focusComposer(); }} />
     );
 
   const expanded = panel === "expanded";
@@ -37,7 +35,7 @@ export function SonaPanel({ app, label }: { app: "pro" | "care"; /** What the pa
   return (
     <aside className="sona-panel" data-mode={panel} aria-label="Sona">
       <header className="sona-panel-head">
-        <SonaMark />
+        <SonaOrbMark app={app} />
         <h2>Sona</h2>
         <span className="sona-panel-context" title={label}>{label}</span>
         <IconButton className="sona-panel-expand" icon={expanded ? "collapse" : "expand"} label={expanded ? "Back to the side panel" : "Full screen"} variant="quiet" size="sm"

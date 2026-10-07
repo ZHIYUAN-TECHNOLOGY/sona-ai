@@ -1,9 +1,11 @@
 // Dev only: Sona's answer kit (components/ai) in every state, with Sona content. Rendered by the dev gallery.
 import type { Claim, Reference } from "@sona-ai/domain/evidence";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Artifact, Conversation, Notice, type Phase, Response, RuleAnswer, type RuleRow, Sources, Steps, Suggestions, Turn } from "@/components/ai";
 import { Button, Card, Tabs } from "@/components/primitives";
+import { SonaOrb, SonaOrbMark } from "@/components/sona-orb";
+import { BLOOM_MS, type OrbState } from "@/lib/sona-orb";
 
 const LONG_Q = "Amelia Tan, 67, bed 4B-12, admitted overnight with right lower lobe community-acquired pneumonia: what is her CURB-65, does she need to stay in, and when can she switch to oral antibiotics if her fever settles?";
 const REFS: Reference[] = [
@@ -33,6 +35,35 @@ function DemoFilm({ big }: { big?: boolean }) {
   return <span aria-hidden="true" style={{ display: "block", width: "100%", height: big ? undefined : "100%", aspectRatio: big ? "1" : undefined, borderRadius: big ? 12 : undefined, background: "radial-gradient(40% 55% at 33% 50%, #9aa3ad, transparent 70%), radial-gradient(40% 55% at 67% 50%, #8c96a1, transparent 70%), radial-gradient(60% 30% at 70% 72%, #c9ced4, transparent 70%), #15181c" }} />;
 }
 
+type OrbDemo = OrbState | "press";
+const ORB_STATES: OrbDemo[] = ["rest", "hover", "thinking", "answered", "press"];
+
+/** The Sona orb in each state; Answered plays the bloom once, then rests with the dot, as in the corner. */
+function OrbGallery() {
+  const [state, setState] = useState<OrbDemo>("rest");
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    setSettled(false);
+    if (state !== "answered") return;
+    const id = setTimeout(() => setSettled(true), BLOOM_MS);
+    return () => clearTimeout(id);
+  }, [state]);
+  const shown: OrbState = state === "press" ? "hover" : state === "answered" && settled ? "rest" : state;
+  return (
+    <Card title="Sona orb">
+      <Tabs label="Orb state" value={state} onChange={setState} tabs={ORB_STATES.map(s => ({ id: s, label: s[0]!.toUpperCase() + s.slice(1) }))} />
+      <div className="pro" style={{ display: "flex", alignItems: "center", gap: 32, padding: 32, borderRadius: 16, background: "var(--canvas)" }}>
+        <span className="sona-orb" data-state={state} style={{ position: "relative", right: "auto", bottom: "auto" }}>
+          <SonaOrb app="pro" state={shown} />
+          {state === "answered" && settled ? <span className="sona-orb-badge" aria-hidden="true" /> : null}
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}><SonaOrbMark />Sona</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}><SonaOrbMark app="care" />Sona Care</span>
+      </div>
+    </Card>
+  );
+}
+
 export function AiGallery({ worst }: { worst?: boolean }) {
   const [look, setLook] = useState<"pro" | "care">("pro");
   const [phase, setPhase] = useState<Phase>("read");
@@ -45,6 +76,7 @@ export function AiGallery({ worst }: { worst?: boolean }) {
 
   return (
     <>
+    <OrbGallery />
     <Card title="Sona answer kit">
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
         <Tabs label="Look" value={look} onChange={setLook} tabs={[{ id: "pro", label: "Pro glass" }, { id: "care", label: "Light" }]} />

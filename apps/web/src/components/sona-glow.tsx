@@ -1,5 +1,7 @@
 import { type RefObject, useEffect, useRef } from "react";
 
+import { BAYER, compile, PALETTE } from "@/lib/sona-gl";
+
 // The phone apps' voice glow (apps/care/lib/voice-glow.tsx), the same shader in GLSL, drawn inside the bar: dots on a
 // 2px grid, ordered (Bayer 8x8) dithering, rising from the bar's bottom edge. Four soft lobes wave along it and bloom
 // with `level`, the voice. `on` fades it in and out.
@@ -13,9 +15,7 @@ uniform vec2 res;
 uniform float t, level, on, pitch;
 uniform vec3 deep, mid, hot;
 
-float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
-float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
-float bayer8(vec2 a) { return bayer4(0.5 * a) * 0.25 + bayer2(a); }
+${BAYER}
 
 float lobes(float x) {
   float h = 0.0;
@@ -46,33 +46,8 @@ void main() {
 }`;
 const VERTEX = "attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }";
 
-// Lilac at the faint edge, the app's blue in the core: Sona Pro's blue, Sona Care's azure.
-const PALETTE = {
-  pro: { deep: [0.141, 0.357, 0.8], mid: [0.42, 0.46, 0.92], hot: [0.62, 0.76, 0.95] },
-  care: { deep: [0.145, 0.388, 0.922], mid: [0.62, 0.52, 0.945], hot: [0.78, 0.68, 0.975] },
-};
 const PITCH = 2;
 const EASE = 6; // per second: the glow follows the voice within a fifth of a second
-
-function compile(gl: WebGLRenderingContext) {
-  const program = gl.createProgram();
-  for (const [type, source] of [[gl.VERTEX_SHADER, VERTEX], [gl.FRAGMENT_SHADER, FRAGMENT]] as const) {
-    const shader = gl.createShader(type)!;
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    gl.attachShader(program, shader);
-  }
-  gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
-  gl.useProgram(program);
-  // One triangle that covers the canvas.
-  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  const p = gl.getAttribLocation(program, "p");
-  gl.enableVertexAttribArray(p);
-  gl.vertexAttribPointer(p, 2, gl.FLOAT, false, 0, 0);
-  return program;
-}
 
 /**
  * The dithered glow inside the Sona bar: the bar's answer to a voice. Nothing is drawn until the mic hears; then dots
@@ -89,7 +64,7 @@ export function SonaGlow({ app, listening, level }: { app: "pro" | "care"; liste
   useEffect(() => {
     const el = canvas.current;
     const gl = el?.getContext("webgl", { premultipliedAlpha: true, antialias: false });
-    const program = gl ? compile(gl) : null;
+    const program = gl ? compile(gl, VERTEX, FRAGMENT) : null;
     if (!el || !gl || !program) return;
     const uniform = (name: string) => gl.getUniformLocation(program, name);
     const palette = PALETTE[app];
