@@ -2,7 +2,7 @@ import { ORPCError } from "@orpc/client";
 import { can } from "@sona-ai/api/roles";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
@@ -10,9 +10,11 @@ import { PageHeader } from "@/components/page";
 import { Button, Card, Chip, Field, ListCard, ListRow, Select, Signal, Skeleton } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { useVisitAsk } from "@/features/evidence/ask";
-import { usePan, ZOOM } from "@/features/imaging/pan";
 import { Compare } from "@/features/imaging/compare";
-import { FindingMarks, filmUrl, onImage as readFrom } from "@/features/imaging/marks";
+import { FilmArtifact, type PanelFilm } from "@/features/imaging/film-artifact";
+import { FilmStage, ZoomSlider } from "@/features/imaging/film-stage";
+import { filmTitle, testOf } from "@/features/imaging/films";
+import { filmUrl, onImage as readFrom } from "@/features/imaging/marks";
 import { messageOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
 import "@/styles/pages/xray.css";
@@ -23,8 +25,6 @@ export const Route = createFileRoute("/pro/_app/xray")({
   component: Page,
 });
 
-/** The follow-up test as the API writes it on the visit (findings.ts testOf). */
-const testOf = (action?: string | null) => action?.split(/,| at /)[0]?.trim() || "follow-up test";
 /** A visit with no X-ray yet answers NOT_FOUND: that is the empty state, not an error to show. */
 const missing = (error: unknown) => error instanceof ORPCError && error.code === "NOT_FOUND";
 const when = (at: Date | string) => new Date(at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" });
@@ -101,7 +101,8 @@ function Page() {
   const [over, setOver] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
   const decision = useRef<HTMLDivElement>(null);
-  const pan = usePan(zoom, setZoom);
+  // A compared film opens in the film panel; "Make this the current view" loads it here.
+  const [peek, setPeek] = useState<PanelFilm>();
   const take = (file?: Blob | null) => { if (file && encounterId && mayUpload) upload.mutate(file); };
 
   // Anything the server does not mark as read by the model (a fixture, a waking model) is shown as a sample.
@@ -218,27 +219,16 @@ function Page() {
                 {patients.data?.map(p => <option key={p.encounterId} value={p.encounterId}>{p.name}</option>)}
               </Select>
             )}</Field>
-            {shown && (
-              <label className="xr-zoom">Zoom
-                <input type="range" min={ZOOM.min} max={ZOOM.max} step={0.25} value={zoom} onChange={e => setZoom(Number(e.target.value))} />
-              </label>
-            )}
+            {shown && <ZoomSlider zoom={zoom} setZoom={setZoom} />}
           </div>
           {patients.isError && <p className="xr-error" role="alert">{messageOf(patients.error)}</p>}
           <input ref={picker} className="xr-file" type="file" accept="image/*" aria-label="Choose an X-ray image" tabIndex={-1} disabled={upload.isPending}
             onChange={e => { take(e.target.files?.[0]); e.target.value = ""; }} />
-          <div className="xr-stage" data-over={over || undefined} {...shown && !stream && { ...pan.stage, "data-pan": pan.dragging ? "dragging" : "", title: "Drag to move · double-click or pinch to zoom" }}
+          <FilmStage src={stream ? undefined : shown} alt="Chest X-ray added for this visit" findings={onImage} zoom={zoom} setZoom={setZoom} data-over={over || undefined}
             onDragOver={e => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
             onDrop={e => { e.preventDefault(); setOver(false); take(e.dataTransfer.files[0]); }}>
             {stream ? <video ref={video} className="xr-video" autoPlay playsInline muted />
-              : shown ? (
-                <div className="xr-scroll" ref={pan.scroller}>
-                  <div className="xr-image" data-zoomed={zoom > 1 || undefined} style={{ "--xr-zoom": zoom } as CSSProperties}>
-                    <img src={shown} alt="Chest X-ray added for this visit" draggable={false} />
-                    <FindingMarks findings={onImage} />
-                  </div>
-                </div>
-              ) : (
+              : shown ? null : (
                 <div className="xr-drop">
                   <Icon name="scan" size={32} />
                   {encounterId && (read.isPending || (hasImage && stored.isPending)) ? <Skeleton width={220} height={18} /> : (
@@ -253,7 +243,7 @@ function Page() {
                 </div>
               )}
             {upload.isPending && <p className="xr-progress" role="status">Sending the image…</p>}
-          </div>
+          </FilmStage>
           {upload.isError && <p className="xr-error" role="alert"><Icon name="alert" size={16} /> The image was not accepted: {messageOf(upload.error)}</p>}
           {cameraError && <p className="xr-error" role="alert">{cameraError}</p>}
           {encounterId && mayUpload && (
@@ -267,7 +257,9 @@ function Page() {
             </div>
           )}
         </Card>
-        {data && <Compare encounterId={encounterId} patientId={patients.data?.find(p => p.encounterId === encounterId)?.id} />}
+        {data && <Compare encounterId={encounterId} patientId={patients.data?.find(p => p.encounterId === encounterId)?.id}
+          onOpen={f => setPeek({ encounterId: f.encounterId, title: filmTitle({ name: f.patientName, at: f.uploadedAt }), patientId: f.patientId })} />}
+        <FilmArtifact film={peek} onClose={() => setPeek(undefined)} goLabel="Make this the current view" />
         {data && (data.findings.length > 4 || all.length > onImage.length) ? (
           <ListCard title="More from the draft">
             {data.findings.slice(4).map((f, i) => <ListRow key={`d${i}`} icon="scan" title={f} />)}
