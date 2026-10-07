@@ -197,7 +197,7 @@ function AddSource({ onAdded, onReview, notice }: { onAdded: () => unknown; onRe
         </div>
         <Field label="Text" hint="No patient details: Sona checks and refuses them.">{c => <textarea {...c} name="text" required maxLength={200000} />}</Field>
       </>}
-      {mode === "pdf" && <Field label="PDF or photos of the pages" hint={`One PDF up to about 10 MB, or up to ${MAX_PAGES} JPEG or PNG photos in page order. Scans are read by MedGemma.`}>{c => <input {...c} name="file" type="file" accept="application/pdf,image/jpeg,image/png" multiple required />}</Field>}
+      {mode === "pdf" && <Field label="PDF or photos of the pages" hint={`One PDF up to about 10 MB, or up to ${MAX_PAGES} JPEG or PNG photos in page order. Scans are read by Sona Vision.`}>{c => <input {...c} name="file" type="file" accept="application/pdf,image/jpeg,image/png" multiple required />}</Field>}
       {mode === "article" && <Field label="Article reference" hint="A PubMed ID, link or DOI. You see it before it is added.">{c => <input {...c} name="ref" required maxLength={500} readOnly={Boolean(preview)} />}</Field>}
       {preview && (
         <div>

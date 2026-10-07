@@ -1,4 +1,5 @@
 import { can } from "@sona-ai/api/roles";
+import { modelName } from "@sona-ai/domain/model-names";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -40,7 +41,7 @@ function ReplyPanel({ patientId, name, waiting }: { patientId: string; name: str
         ? [
             { text: "The patient's message" },
             { text: <>Triage: {d.label} · {triageBy(d.triagedBy)}</> },
-            ...(d.source === "model" ? [{ text: `Drafted by Sona (${d.model})` }] : []),
+            ...(d.source === "model" ? [{ text: `Drafted by ${modelName(d.model)}` }] : []),
           ]
         : undefined}
       sources={d ? 2 : undefined}

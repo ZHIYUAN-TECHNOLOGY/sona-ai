@@ -1,5 +1,5 @@
 import { Caption, ErrorLine, PressScale } from "@/components/sona/parts";
-import { emptyReadText } from "@/components/sona/sample-label";
+import { emptyReadText, modelName } from "@/components/sona/sample-label";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
@@ -27,7 +27,7 @@ const BAND: Record<RiskBand, { label: string; ink: string; fill: string }> = {
 };
 
 /** Where the findings came from, honestly: authored fixtures are never presented as a reading, and a model's is never a validated one. */
-const provenance = (f: Finding) => f.source === "fixture" ? "Unvalidated · not read from this image" : `Not a validated read · marked by ${f.source}`;
+const provenance = (f: Finding) => f.source === "fixture" ? "Unvalidated · not read from this image" : `Not a validated read · marked by ${modelName(f.source)}`;
 
 /**
  * `read` (live: findings.status for the visit's film) and `onRead` (detect again, for a role that may) are for the
