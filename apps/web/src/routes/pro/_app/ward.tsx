@@ -17,7 +17,7 @@ import "@/styles/pages/ward.css";
 export const Route = createFileRoute("/pro/_app/ward")({ component: Page });
 
 type Tab = "all" | "blocked" | "unowned" | "watch" | "free";
-const STATUS = { fit: "Fit for discharge", watch: "Being watched", stable: "Stable", empty: "Empty", free: "Free" };
+const STATUS = { fit: "Medically fit", watch: "Being watched", stable: "Stable", empty: "Empty", free: "Free" };
 const hour = (at: Date | string) => new Date(at).toLocaleTimeString("en-GB", { hour: "2-digit", timeZone: "Asia/Kuala_Lumpur" }) + ":00";
 const s = (count: number) => count === 1 ? "" : "s";
 
@@ -71,15 +71,15 @@ function Page() {
   const assigned = assign.isSuccess && bed?.blockers.some(x => x.id === assign.variables.blockerId) ? assign.variables.owner : undefined;
   const ownerLine = (b: BedRow) => {
     const open = unownedOn(b, owners);
-    if (open === 0) return <Status tone="soon">Owner: {[...new Set(b.blockers.map(x => owners.get(x.id)))].join(", ")}</Status>;
-    return <span className="ward-unowned">{open === b.blockers.length ? "No owner yet" : `${open} of ${b.blockers.length} without an owner`}</span>;
+    if (open === 0) return <Status tone="soon">Assigned to {[...new Set(b.blockers.map(x => owners.get(x.id)))].join(", ")}</Status>;
+    return <span className="ward-unowned">{open === b.blockers.length ? "Unassigned" : `${open} of ${b.blockers.length} unassigned`}</span>;
   };
 
   const columns: Column<BedRow>[] = [
     { key: "bed", header: "Bed", cell: b => <span className="ward-bed"><strong>{b.bed}</strong>{b.predicted ? <span className="ward-muted">{freeBy(b.predicted)}</span> : null}</span>, sort: (x, y) => x.bed.localeCompare(y.bed, undefined, { numeric: true }) },
     { key: "patient", header: "Patient", cell: b => b.name ? <PersonCell name={b.name} detail={b.meta} /> : <span className="ward-muted">No patient</span> },
     {
-      key: "waits", header: "Waiting on", cell: b => b.blockers.length === 0 ? (b.status === "watch" ? <Status tone="info">Being watched</Status> : b.name ? <Status tone="done">Nothing blocking</Status> : <Status>Free</Status>) : (
+      key: "waits", header: "Discharge barrier", cell: b => b.blockers.length === 0 ? (b.status === "watch" ? <Status tone="info">Being watched</Status> : b.name ? <Status tone="done">Nothing blocking</Status> : <Status>Free</Status>) : (
         <span className="ward-waits"><span>{b.blockers.map(x => x.label).join(", ")}</span>{ownerLine(b)}</span>
       ),
     },
@@ -92,30 +92,30 @@ function Page() {
           <>
             {occupied} of {all.length} beds occupied ·{" "}
             {blocked.length ? <Signal tone="soon">{blocked.length} blocked</Signal> : "none blocked"} ·{" "}
-            {unowned ? <Signal tone="urgent">{unowned} blocker{s(unowned)} without an owner</Signal> : "every blocker has an owner"}
+            {unowned ? <Signal tone="urgent">{unowned} discharge barrier{s(unowned)} unassigned</Signal> : "every discharge barrier is assigned"}
           </>
         ) : "Loading the ward…"}
-        status={mayAssign ? undefined : "Your role can see the ward but cannot assign blocker owners."} />
+        status={mayAssign ? undefined : "Your role can see the ward but cannot assign discharge barriers."} />
       {beds.data ? (
         <>
         <StatRow>
           <StatCard title="Beds occupied" value={occupied} unit={`of ${all.length}`} progress={all.length ? occupied / all.length : 0} feature onSelect={() => setTab("all")} selected={tab === "all"} />
-          <StatCard title="Blocked" value={blocked.length} unit="beds" caption={blocked.length ? `Waiting on ${blocked.flatMap(b => b.blockers).length} things` : "No bed is blocked"} chip={blocked.length ? "Needs action" : undefined} tone="soon" onSelect={() => setTab("blocked")} selected={tab === "blocked"} />
-          <StatCard title="No owner" value={unowned} caption={unowned ? `Blocker${s(unowned)} on ${noOwner.length} bed${s(noOwner.length)}` : "Every blocker has an owner"} chip={unowned ? "Assign owner" : undefined} tone="urgent" onSelect={() => setTab("unowned")} selected={tab === "unowned"} />
+          <StatCard title="Blocked" value={blocked.length} unit="beds" caption={blocked.length ? `${blocked.flatMap(b => b.blockers).length} discharge barriers` : "No bed is blocked"} chip={blocked.length ? "Needs action" : undefined} tone="soon" onSelect={() => setTab("blocked")} selected={tab === "blocked"} />
+          <StatCard title="Unassigned" value={unowned} caption={unowned ? `Barrier${s(unowned)} on ${noOwner.length} bed${s(noOwner.length)}` : "Every barrier is assigned"} chip={unowned ? "Assign" : undefined} tone="urgent" onSelect={() => setTab("unowned")} selected={tab === "unowned"} />
           <StatCard title="Free" value={groups.free.length} unit="now" caption={forecast.data ? `${forecast.data.today.count} due for discharge today` : undefined} onSelect={() => setTab("free")} selected={tab === "free"} />
         </StatRow>
         <div className="chart-row">
           <Card title="Beds by state">
             <SegmentBar label="Beds by state" segments={[
-              { label: "Blocked, no owner", value: states.unowned, tone: "red" },
-              { label: "Blocked, owned", value: states.blocked, tone: "amber" },
+              { label: "Blocked, unassigned", value: states.unowned, tone: "red" },
+              { label: "Blocked, assigned", value: states.blocked, tone: "amber" },
               { label: "On watch only", value: states.watch, tone: "blue" },
               { label: "Nothing blocking", value: states.clear, tone: "green" },
               { label: "Free", value: states.free, tone: "neutral" },
             ]} />
           </Card>
-          <Card title="What beds are waiting on">
-            {holding.length ? <BarList label="Beds waiting on each blocker" rows={holding} tone="amber" unit="beds" /> : <p className="ward-muted">Nothing is holding a bed.</p>}
+          <Card title="Discharge barriers">
+            {holding.length ? <BarList label="Beds held by each discharge barrier" rows={holding} tone="amber" unit="beds" /> : <p className="ward-muted">Nothing is holding a bed.</p>}
           </Card>
         </div>
         </>
@@ -127,28 +127,28 @@ function Page() {
               {bed.name ? <PersonCell name={bed.name} detail={bed.meta} /> : <p className="ward-muted">No patient in this bed.</p>}
               <dl className="ward-counts ward-gap">
                 <dt>Status</dt><dd>{STATUS[bed.status]}</dd>
-                <dt>Expected free</dt><dd>{bed.predicted || "Not forecast"}</dd>
+                <dt>Expected discharge</dt><dd>{bed.predicted || "Not forecast"}</dd>
               </dl>
-              {bed.blockers.length === 0 ? <p className="ward-muted">Nothing is blocking this bed.</p> : (
+              {bed.blockers.length === 0 ? <p className="ward-muted">No discharge barrier.</p> : (
                 <ul className="ward-plain ward-stack">
                   {bed.blockers.map(x => (
                     <li key={x.id} className="ward-blocker">
                       <span className="ward-waits"><strong>{x.label}</strong><span className="ward-muted">{x.detail}</span></span>
                       {mayAssign ? (
-                        <Select className="ward-owner" label={`Owner for ${bed.bed}: ${x.label}`} value={owners.get(x.id) ?? ""} disabled={assign.isPending || unassign.isPending}
+                        <Select className="ward-owner" label={`Assign ${bed.bed}: ${x.label}`} value={owners.get(x.id) ?? ""} disabled={assign.isPending || unassign.isPending}
                           onChange={e => e.target.value ? assign.mutate({ blockerId: x.id, owner: e.target.value as Owner }) : unassign.mutate({ blockerId: x.id })}>
-                          {owners.has(x.id) ? <option value="">No owner</option> : <option value="" disabled>Assign owner</option>}
+                          {owners.has(x.id) ? <option value="">Unassigned</option> : <option value="" disabled>Assign to</option>}
                           {OWNERS.map(o => <option key={o} value={o}>{o}</option>)}
                         </Select>
-                      ) : <span className="ward-muted">Owner: {owners.get(x.id) ?? "none yet"}</span>}
+                      ) : <span className="ward-muted">{owners.has(x.id) ? `Assigned to ${owners.get(x.id)}` : "Unassigned"}</span>}
                     </li>
                   ))}
                 </ul>
               )}
-              {assign.error ? <p className="ward-error" role="alert">Could not assign the owner: {assign.error.message}</p> : null}
-              {unassign.error ? <p className="ward-error" role="alert">Could not clear the owner: {unassign.error.message}</p> : null}
-              {assigned ? <p className="ward-done" role="status"><Chip tone="done" icon="check">Owner assigned</Chip> {assigned} now has it as a task.</p> : null}
-              {nextBed ? <Button variant="secondary" size="sm" icon="arrow-right" onClick={() => setPicked(nextBed.bed)}>Next: {nextBed.bed}, {unownedOn(nextBed, owners)} without an owner</Button> : null}
+              {assign.error ? <p className="ward-error" role="alert">Could not assign it: {assign.error.message}</p> : null}
+              {unassign.error ? <p className="ward-error" role="alert">Could not unassign it: {unassign.error.message}</p> : null}
+              {assigned ? <p className="ward-done" role="status"><Chip tone="done" icon="check">Assigned</Chip> {assigned} now has it as a task.</p> : null}
+              {nextBed ? <Button variant="secondary" size="sm" icon="arrow-right" onClick={() => setPicked(nextBed.bed)}>Next: {nextBed.bed}, {unownedOn(nextBed, owners)} unassigned</Button> : null}
             </Card>
           ) : null}
           {brief?.lines?.[0] ? (
@@ -156,8 +156,8 @@ function Page() {
               evidence={brief.lines.slice(1).map(text => ({ icon: "bed" as const, text }))}
               next={blocked.length ? { label: "Show blocked beds", onAct: () => setTab("blocked") } : undefined} />
           ) : null}
-          <Card title="Beds expected free, by hour">
-            {points.length > 0 ? <BarChart points={points} label="Beds expected free, by hour" unit="beds" height={140} /> : <p className="ward-muted">{forecast.isPending ? "Loading the forecast…" : forecast.error ? `No forecast: ${forecast.error.message}` : "No bed is forecast to free up."}</p>}
+          <Card title="Expected discharges, by hour">
+            {points.length > 0 ? <BarChart points={points} label="Expected discharges, by hour" unit="beds" height={140} /> : <p className="ward-muted">{forecast.isPending ? "Loading the forecast…" : forecast.error ? `No forecast: ${forecast.error.message}` : "No bed is forecast to free up."}</p>}
             {forecast.data?.unlock ? <p className="ward-muted">Biggest unlock: {forecast.data.unlock.line}</p> : null}
           </Card>
           {ops.data ? (
@@ -175,10 +175,10 @@ function Page() {
             <DataTable columns={columns} rows={rows} rowKey={b => b.bed} selectedKey={bed?.bed} onRowOpen={b => setPicked(b.bed)}
               empty={q ? `No bed matches "${search}".` : "No beds in this state."} count={`Showing ${rows.length} of ${all.length} beds`}
               toolbar={(
-                <TableToolbar end={<SearchField className="ward-search" label="Search bed, patient or blocker" placeholder="Search beds" value={search} onChange={e => setSearch(e.target.value)} />}>
+                <TableToolbar end={<SearchField className="ward-search" label="Search bed, patient or discharge barrier" placeholder="Search beds" value={search} onChange={e => setSearch(e.target.value)} />}>
                   <Tabs label="Beds by state" value={tab} onChange={setTab} tabs={[
                     { id: "all", label: "All", count: all.length }, { id: "blocked", label: "Blocked", count: blocked.length },
-                    { id: "unowned", label: "No owner", count: noOwner.length },
+                    { id: "unowned", label: "Unassigned", count: noOwner.length },
                     { id: "watch", label: "Watch", count: groups.watch.length }, { id: "free", label: "Free", count: groups.free.length },
                   ]} />
                 </TableToolbar>

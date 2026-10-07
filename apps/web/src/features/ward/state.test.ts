@@ -23,7 +23,7 @@ test("beds rank by need: no owner, blocked, watched, the rest; ties keep their o
 });
 
 test("a forecast reads as a phrase", () => {
-  expect(["11:00", "Once cleared", "Tomorrow", "Awaiting rehab"].map(freeBy)).toEqual(["Free 11:00", "Free once cleared", "Free tomorrow", "Awaiting rehab"]);
+  expect(["11:00", "Once cleared", "Tomorrow", "Awaiting rehab"].map(freeBy)).toEqual(["Discharge 11:00", "Discharge once cleared", "Discharge tomorrow", "Awaiting rehab"]);
 });
 
 test("filters", () => {

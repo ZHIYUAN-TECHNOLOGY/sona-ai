@@ -26,8 +26,8 @@ export const rankBeds = <T extends BedLike>(beds: T[], owners: ReadonlyMap<strin
   return [...beds].sort((a, b) => need(b) - need(a));
 };
 
-/** A bed's forecast as a phrase: a time or a day reads "Free 11:00"; anything else ("Awaiting rehab") stands alone. */
-export const freeBy = (predicted: string) => /^(\d|now|tomorrow|in |once )/i.test(predicted) ? `Free ${predicted[0]!.toLowerCase()}${predicted.slice(1)}` : predicted;
+/** A bed's forecast as a phrase: a time or a day reads "Discharge 11:00"; anything else ("Awaiting rehab") stands alone. */
+export const freeBy = (predicted: string) => /^(\d|now|tomorrow|in |once )/i.test(predicted) ? `Discharge ${predicted[0]!.toLowerCase()}${predicted.slice(1)}` : predicted;
 
 export type TaskFilter ="mine" | "all" | "overdue";
 type TaskLike = { owner: string; due: string | null; completed: boolean };

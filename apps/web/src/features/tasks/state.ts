@@ -10,7 +10,7 @@ const SOURCES: Record<string, { label: string; icon: IconName }> = {
   "check-in": { label: "Patient check-in", icon: "alert" },
   message: { label: "Patient message", icon: "send" },
   followup: { label: "Visit follow-up", icon: "clock" },
-  "blocker-owner": { label: "Discharge blocker", icon: "alert" },
+  "blocker-owner": { label: "Discharge barrier", icon: "alert" },
   "coding-query": { label: "Coding query", icon: "edit" },
   discharge: { label: "Discharge plan", icon: "check" },
   finding: { label: "Result finding", icon: "activity" },
