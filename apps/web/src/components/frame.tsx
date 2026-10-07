@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { type ReactNode, useRef } from "react";
 
+import { formatNumber } from "@/lib/format";
 import { EASE_OUT, gsap, moves, useGSAP } from "@/lib/motion";
 
 import { signOut } from "@/lib/session";
@@ -32,7 +33,7 @@ export function Frame({ app, brand, groups, who, name, instead }: { app: "pro" |
               <Link key={item.to} to={item.to} className="frame-link" title={item.label} activeProps={{ "aria-current": "page" }}>
                 <Icon name={item.icon} />
                 <span className="frame-label">{item.label}</span>
-                {item.count ? <span className="frame-count">{item.count}</span> : null}
+                {item.count ? <span className="frame-count">{formatNumber(item.count)}</span> : null}
               </Link>
             ))}
           </div>
@@ -40,7 +41,7 @@ export function Frame({ app, brand, groups, who, name, instead }: { app: "pro" |
         </div>
         <div className="frame-who">
           {name ? <Avatar name={name} size="sm" /> : null}
-          <span className="frame-who-text frame-label">{name ? <strong>{name}</strong> : null}<span>{who}</span></span>
+          <span className="frame-who-text frame-label" title={name ? `${name}, ${who}` : who}>{name ? <strong>{name}</strong> : null}<span>{who}</span></span>
           <button type="button" className="frame-out" onClick={() => signOut(app)} title="Sign out"><Icon name="sign-out" size={18} /><span className="frame-out-text">Sign out</span></button>
         </div>
       </nav>

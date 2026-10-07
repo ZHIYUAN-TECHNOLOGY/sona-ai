@@ -9,13 +9,16 @@
 .avatar { border: 0; }
 
 /* Chip */
+/* A chip or button keeps one line and its own width, and wraps only when longer than its whole container. */
+.chip, .btn { flex-shrink: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.btn { text-align: center; }
 .chip { gap: var(--space-1); min-height: var(--chip-h); padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-pill); font-size: var(--text-small); font-weight: 600; }
 .chip[data-tone="neutral"] { border-color: transparent; }
 .chip[data-variant="solid"] { background: var(--tone); color: var(--surface); }
 .chip[data-variant="outline"] { background: transparent; border-color: currentColor; }
 
 /* Button: quiet fill by default, ink pill primary, outline secondary. */
-.btn { gap: var(--space-2); min-height: var(--tap); padding: 0 18px; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--fill-field); color: var(--ink); white-space: nowrap; transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease), transform var(--quick) var(--ease); }
+.btn { gap: var(--space-2); min-height: var(--tap); padding: 0 18px; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--fill-field); color: var(--ink); transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease), transform var(--quick) var(--ease); }
 .btn[data-size="sm"] { min-height: 32px; padding: 0 14px; font-size: var(--text-small); }
 .btn[data-size="lg"] { min-height: var(--pill-h); padding: 0 var(--space-5); }
 .btn:hover { opacity: 1; background: var(--fill-selected); }
@@ -49,8 +52,8 @@
 /* Card */
 .card { gap: var(--space-4); padding: var(--pad-card); border: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-card); min-width: 0; }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-.card-title { font-size: var(--text-title); letter-spacing: var(--track-tight); }
-.card-action { color: var(--muted); font-size: var(--text-small); font-weight: 600; text-decoration: none; border-radius: var(--space-1); }
+.card-title { min-width: 0; overflow-wrap: anywhere; font-size: var(--text-title); letter-spacing: var(--track-tight); }
+.card-action { flex: none; white-space: nowrap; color: var(--muted); font-size: var(--text-small); font-weight: 600; text-decoration: none; border-radius: var(--space-1); }
 .card-action:hover { color: var(--ink); text-decoration: underline; }
 
 /* Stat: a compact glance tile. The title, the number with its chip, one caption. */
@@ -60,7 +63,7 @@
 .stat-head { display: flex; align-items: center; gap: var(--space-2); min-height: 32px; }
 .stat-title { flex: 1; min-width: 0; margin: 0; font-size: var(--text-body); font-weight: 500; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stat-body { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-1) var(--space-3); margin-top: auto; min-width: 0; }
-.stat-value { display: flex; align-items: baseline; min-width: 0; margin: 0; font-size: var(--text-stat); line-height: 1; font-weight: 500; letter-spacing: var(--track-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stat-value { display: flex; align-items: baseline; min-width: 0; margin: 0; font-size: var(--text-stat); line-height: 1; font-weight: 500; letter-spacing: var(--track-display); font-variant-numeric: tabular-nums; flex-wrap: wrap; }
 .stat-unit { min-width: 0; margin-left: var(--space-1); font-size: var(--text-body); line-height: 1.4; letter-spacing: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
 .stat-caption { margin: 0; font-size: var(--text-small); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stat-body .chip { flex: none; margin: 0 0 var(--space-1) auto; }
@@ -116,7 +119,7 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 /* Page header */
 .page-header { display: flex; flex-direction: column; gap: var(--space-2); }
 .page-header-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); }
-.page-header h1 { margin: 0; font-size: var(--text-page); line-height: 1.15; font-weight: 600; letter-spacing: var(--track-display); }
+.page-header h1 { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: var(--text-page); line-height: 1.15; font-weight: 600; letter-spacing: var(--track-display); }
 .page-header > p { margin: 0; color: var(--muted); }
 .page-status { font-size: var(--text-small); color: var(--muted); }
 .page-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-left: auto; align-self: center; }
@@ -128,14 +131,15 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 /* Patient strip */
 .patient-strip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); padding: var(--space-4) var(--space-5); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
 .patient-strip-text { min-width: 0; }
-.patient-strip h2 { margin: 0; font-size: var(--text-heading); line-height: 1.3; font-weight: 600; }
+.patient-strip h2 { margin: 0; overflow-wrap: anywhere; font-size: var(--text-heading); line-height: 1.3; font-weight: 600; }
 .patient-strip p { margin: 0; font-size: var(--text-small); color: var(--muted); }
-.patient-strip-tabs { flex: 1; min-width: 0; margin-left: var(--space-4); }
+.patient-strip-tabs { flex: 1 1 320px; min-width: 0; margin-left: var(--space-4); }
 .patient-strip-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-left: auto; }
 
 /* Empty, skeleton, pager */
 .empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-6) var(--space-5); border-radius: var(--radius-group); color: var(--muted); text-align: center; }
 .empty-icon { display: inline-grid; place-items: center; width: var(--pill-h); height: var(--pill-h); border-radius: 50%; background: var(--fill-field); }
+.empty .btn { align-self: center; }
 .empty-title { margin: 0; color: var(--ink); font-weight: 600; }
 .skeleton { display: block; border-radius: var(--space-2); background: var(--fill-selected); animation: skeleton 1.4s ease-in-out infinite; }
 @keyframes skeleton { 50% { opacity: 0.45; } }
@@ -144,7 +148,7 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 
 /* Visual repair against the reference (looked at, not guessed). */
 /* Chips: uppercase and tracked; a neutral chip is an outline, not a grey fill. */
-:is(.pro, .care) .chip { font-size: var(--text-overline); line-height: 1; letter-spacing: var(--track-overline); text-transform: uppercase; white-space: nowrap; }
+:is(.pro, .care) .chip { font-size: var(--text-overline); line-height: 1.2; letter-spacing: var(--track-overline); text-transform: uppercase; }
 :is(.pro, .care) .chip[data-tone="neutral"]:not([data-variant="solid"]) { background: transparent; border-color: var(--line); color: var(--muted); }
 /* A quiet button keeps a hairline: its fill alone disappears on the canvas. */
 .btn-quiet { border-color: var(--line); }

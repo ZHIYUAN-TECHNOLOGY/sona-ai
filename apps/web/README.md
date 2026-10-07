@@ -29,7 +29,8 @@ export default [
 `fixture` checks each value against the procedure's output type. A value may be a function of the call's input. A
 missing state falls back to `worst`; a page file replaces a `*-session.ts` seed for the same procedure. Values must be
 plausible or the schema's own limit (long Malay and hyphenated names, unbreakable emails, 1 and 1,284, missing optional
-fields), never `aaaa…`: the rules and values are in the break-ui catalog.
+fields), never `aaaa…`: the rules and values are in the break-ui catalog. On a page, write numbers with
+`formatNumber(1284)` ("1,284") and counted nouns with `countOf(n, "patient")` ("1 patient") from `@/lib/format`.
 
 ## Building a page
 

@@ -1,6 +1,8 @@
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 
+import { formatNumber } from "@/lib/format";
+
 import { Avatar } from "./avatar";
 import { Icon } from "./icon";
 import "../styles/components.css";
@@ -66,7 +68,7 @@ export function TableToolbar({ children, end }: { children?: ReactNode; end?: Re
 
 /** A reading with its unit in muted text. */
 export function ValueCell({ value, unit }: { value: ReactNode; unit?: ReactNode }) {
-  return <span className="cell-value">{value}{unit ? <span className="cell-muted"> {unit}</span> : null}</span>;
+  return <span className="cell-value">{typeof value === "number" ? formatNumber(value) : value}{unit ? <span className="cell-muted"> {unit}</span> : null}</span>;
 }
 
 /** The row's action: text and an arrow; an ink pill on the selected row. */
