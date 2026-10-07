@@ -1,3 +1,4 @@
+import { modelName } from "@sona-ai/domain/model-names";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -10,6 +11,9 @@ import { countOf, formatNumber } from "@/lib/format";
 import { client, orpc } from "@/lib/orpc";
 import "@/styles/pages/library.css";
 import "@/styles/pages/training-data.css";
+
+/** "rules", or the model that removed the names, by Sona's name for it. */
+const deidentifiedBy = (by: string) => by === "rules" ? by : modelName(by);
 
 type Sample = Awaited<ReturnType<typeof client.training.samples>>[number];
 type Status = Sample["status"];
@@ -60,7 +64,7 @@ export function Review() {
   const columns: Column<Sample>[] = [
     { key: "input", header: "Asked", cell: r => <div className="td-clip">{r.input}</div> },
     { key: "output", header: "Answered", cell: r => <div className="td-clip td-muted">{r.output}</div> },
-    { key: "deidentifier", header: "De-identified by", cell: r => <span className="td-muted td-deid">{r.deidentifier}</span>, sort: (a, b) => a.deidentifier.localeCompare(b.deidentifier) },
+    { key: "deidentifier", header: "De-identified by", cell: r => <span className="td-muted td-deid">{deidentifiedBy(r.deidentifier)}</span>, sort: (a, b) => a.deidentifier.localeCompare(b.deidentifier) },
     { key: "status", header: "Status", cell: r => <span className="td-status"><StatusText status={r.status} /></span> },
   ];
 
@@ -118,7 +122,7 @@ export function Review() {
               <dl className="td-detail">
                 <dt>Asked</dt><dd className="td-long" tabIndex={0}>{open.input}</dd>
                 <dt>Answered</dt><dd className="td-long" tabIndex={0}>{open.output}</dd>
-                <dt>De-identified by</dt><dd>{open.deidentifier}</dd>
+                <dt>De-identified by</dt><dd>{deidentifiedBy(open.deidentifier)}</dd>
                 <dt>Status</dt><dd><StatusText status={open.status} /></dd>
               </dl>
               {open.status === "blocked" ? <p className="td-muted">Blocked because patient details were found. It cannot be approved.</p>

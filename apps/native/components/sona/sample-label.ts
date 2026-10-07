@@ -1,5 +1,6 @@
 import { unanswered } from "@/features/clinical/judge-answer";
 import { startingLabel } from "@/features/live/waking";
+import { modelName } from "@sona-ai/domain/model-names";
 
 /**
  * SampleLabel's words for an answer no model gave (`source: "fixture"`). Pure, so the wording is tested without the app.
@@ -31,9 +32,8 @@ export function labelMeaning({ judge, model = false, rule = false, waking, error
   return `An authored example, shown ${error ? "because the model could not be reached" : waking ? "until the model has started" : "until the AI model is switched on"}.`;
 }
 
-const MODEL_NAMES: [RegExp, string][] = [[/^medgemma/i, "MedGemma"], [/^gemma/i, "Gemma"], [/asr/i, "Sona speech"]];
-/** A hosted model's plain name for its label ("gemma-4-26b-a4b" → "Gemma"). */
-export const modelName = (id?: string) => MODEL_NAMES.find(([re]) => id && re.test(id))?.[1] ?? "a hosted model";
+/** A hosted model's shown name for its label: Sona's own, never the base model's ("gemma-4-26b-a4b" → "Sona Med"). */
+export { modelName };
 
 // As the check-in follow-up writes a time: the hospital's clock (Malaysia), whatever the phone's.
 const WHEN = { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" } as const;
@@ -54,11 +54,11 @@ type By = { source: string; model?: string; decidedBy?: string };
 export const readerText = (by?: By) =>
   !by || by.source === "unknown" ? undefined : by.source === "none" ? "Not triaged" : by.source === "fixture" ? "Rule-based" : by.decidedBy === "rules" ? "Safety rule" : undefined;
 
-/** Who made something kept as sent (a letter's codes, an appeal): "<verb> Gemma", "Rule-based", or no claim when it was not kept. */
+/** Who made something kept as sent (a letter's codes, an appeal): "<verb> Sona Med", "Rule-based", or no claim when it was not kept. */
 export const keptByText = (by: By | undefined, verb: string) => by?.source === "model" ? `${verb} ${modelName(by.model)}` : by?.source === "fixture" ? "Rule-based" : undefined;
 
 /** Who took the patient's name out before a hosted model read a scan (scan.read's `deidentifier`); nothing when nothing left the server ("none"). */
-export const deidentifiedText = (by?: string) => !by || by === "none" ? undefined : `Name removed before reading · ${by === "rules" ? "Rule-based" : by}`;
+export const deidentifiedText = (by?: string) => !by || by === "none" ? undefined : `Name removed before reading · ${by === "rules" ? "Rule-based" : modelName(by)}`;
 
 /**
  * An empty findings list, said as what it is (findings.status): a model read the film and found nothing, or no model
