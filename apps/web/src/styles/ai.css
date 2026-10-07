@@ -135,7 +135,20 @@ a.ai-source-title .icon { display: inline-block; margin-left: 4px; vertical-alig
 .ai-source-thumb > :is(img, canvas, video) { width: 100%; height: 100%; object-fit: cover; }
 
 /* Suggestions: one row of chips that scrolls sideways. */
-.ai-suggestions { display: flex; gap: var(--space-2); margin: -4px; padding: 4px; overflow-x: auto; scrollbar-width: none; }
+.ai-suggestions-wrap { position: relative; min-width: 0; max-width: 100%; }
+.ai-suggestions { display: flex; gap: var(--space-2); margin: -4px; padding: 4px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; scroll-padding-inline: 40px; }
+/* The edge that hides chips fades, so the row reads as "more this way". */
+.ai-suggestions-wrap[data-right] .ai-suggestions { mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
+.ai-suggestions-wrap[data-left] .ai-suggestions { mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent); }
+.ai-suggestions-wrap[data-left][data-right] .ai-suggestions { mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent); }
+.ai-suggestions-arrow {
+  position: absolute; top: 50%; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 999px;
+  background: var(--surface); box-shadow: var(--ai-panel-edge); color: var(--ink); cursor: pointer; transform: translateY(-50%);
+  transition: transform 120ms var(--ai-ease);
+}
+.ai-suggestions-arrow[data-side="left"] { left: 0; }
+.ai-suggestions-arrow[data-side="right"] { right: 0; }
+.ai-suggestions-arrow:active { transform: translateY(-50%) scale(0.94); }
 .ai-suggestions::-webkit-scrollbar { display: none; }
 .ai-suggestion {
   display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 34px; padding: 0 12px 0 14px; border: 0; border-radius: 999px;

@@ -103,16 +103,46 @@ export function Notice({ kind, children, action }: { kind: "thinking" | "error" 
   );
 }
 
-/** Follow-up questions as a row of chips that scrolls sideways; tapping one asks it. Nothing when there are none. */
+/**
+ * Follow-up questions as a row of chips that scrolls sideways; tapping one asks it. Nothing when there are none.
+ * A mouse has no sideways wheel, so the row also scrolls with the ordinary wheel while it can, shows arrows at an edge
+ * that hides chips, and fades that edge.
+ */
 export function Suggestions({ items, onPick, label = "Ask next" }: { items: string[]; onPick: (question: string) => void; label?: string }) {
+  const row = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
+  useEffect(() => {
+    const el = row.current;
+    if (!el) return;
+    const measure = () => setEdges({ left: el.scrollLeft > 1, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 1 });
+    // A vertical wheel moves the row while it has room that way; at its end the page scrolls as usual.
+    const wheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      const room = e.deltaY > 0 ? el.scrollWidth - el.clientWidth - el.scrollLeft : el.scrollLeft;
+      if (room <= 1) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    measure();
+    const seen = new ResizeObserver(measure);
+    seen.observe(el);
+    el.addEventListener("scroll", measure, { passive: true });
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => { seen.disconnect(); el.removeEventListener("scroll", measure); el.removeEventListener("wheel", wheel); };
+  }, [items]);
   if (!items.length) return null;
+  const page = (by: 1 | -1) => row.current?.scrollBy({ left: by * row.current.clientWidth * 0.8, behavior: reduced() ? "auto" : "smooth" });
   return (
-    <div className="ai-suggestions" role="group" aria-label={label}>
-      {items.map(q => (
-        <button key={q} type="button" className="ai-suggestion" onClick={() => onPick(q)}>
-          <span>{q}</span><Icon name="arrow-up-right" size={14} />
-        </button>
-      ))}
+    <div className="ai-suggestions-wrap" data-left={edges.left || undefined} data-right={edges.right || undefined}>
+      <div ref={row} className="ai-suggestions" role="group" aria-label={label}>
+        {items.map(q => (
+          <button key={q} type="button" className="ai-suggestion" onClick={() => onPick(q)}>
+            <span>{q}</span><Icon name="arrow-up-right" size={14} />
+          </button>
+        ))}
+      </div>
+      {edges.left && <button type="button" className="ai-suggestions-arrow" data-side="left" aria-label="Earlier suggestions" tabIndex={-1} onClick={() => page(-1)}><Icon name="chevron-left" size={16} /></button>}
+      {edges.right && <button type="button" className="ai-suggestions-arrow" data-side="right" aria-label="More suggestions" tabIndex={-1} onClick={() => page(1)}><Icon name="chevron-right" size={16} /></button>}
     </div>
   );
 }
