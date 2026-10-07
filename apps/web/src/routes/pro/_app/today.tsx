@@ -135,7 +135,7 @@ function Page() {
         />
       </StatRow>
 
-      <WithRail
+      <WithRail first="rail"
         rail={
           <RightRail label="Next steps">
             {day.data ? (

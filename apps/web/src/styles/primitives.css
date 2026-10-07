@@ -113,12 +113,26 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 .list-row[data-wrap] > .list-text ~ * { margin-inline-start: auto; }
 .list-row[data-wrap] :is(.list-title, .list-caption) { overflow: visible; white-space: normal; }
 
-/* Main column (~69%) + right rail (~31%) */
+/* Pages answer to their own width, not the window's: the Sona panel docked beside the page takes ~400 px, so a wide
+   window can still hold a narrow page. Page layout uses `@container page (…)`; viewport queries stay for the window
+   (sidebar, phone). The evidence page keeps a fixed reading panel, which a container would trap; print is left alone. */
+.frame-page { container: page / inline-size; }
+.frame-page:has(.ev-page) { container-type: normal; }
+@media print { .frame-page { container-type: normal; } }
+
+/* Main column (~69%) + right rail (~31%). Under 900 px of page the rail drops below; with `first` its first card (the
+   page's insight or decision) leads the page and the rest of the rail still follows the main column; `first="rail"` leads with all of it. */
 .with-rail { display: grid; grid-template-columns: minmax(0, 69fr) minmax(0, 31fr); gap: var(--gap-card); align-items: start; }
 .with-rail-main, .with-rail-side, .rail { display: flex; flex-direction: column; gap: var(--gap-card); min-width: 0; }
-@media (max-width: 1080px) { .with-rail { grid-template-columns: minmax(0, 1fr); } }
+@container page (max-width: 900px) {
+  .with-rail { grid-template-columns: minmax(0, 1fr); }
+  .with-rail[data-first="rail"] > .with-rail-side { order: -1; }
+  .with-rail[data-first="card"] > .with-rail-side, .with-rail[data-first="card"] > .with-rail-side > .rail { display: contents; }
+  .with-rail[data-first="card"] > .with-rail-side > .rail > * { order: 1; }
+  .with-rail[data-first="card"] > .with-rail-side > .rail > :first-child { order: -1; }
+}
 /* Sona Pro: the rail (insight, then the review panel) stays in view while the list scrolls, and scrolls by itself when it is taller than the page. The side padding keeps card shadows from being clipped. */
-@media (min-width: 1081px) {
+@container page (min-width: 901px) {
   .pro .with-rail-side { position: sticky; top: var(--space-5); max-height: calc(100dvh - var(--space-3) * 2 - var(--space-5)); margin: 0 calc(var(--space-3) * -1); padding: 0 var(--space-3) var(--sona-bar-clearance); overflow-y: auto; scrollbar-width: none; }
   .pro .with-rail-side::-webkit-scrollbar { display: none; }
   .pro .with-rail[data-follow] > .with-rail-side { position: static; max-height: none; overflow: visible; padding-bottom: 0; }
@@ -221,6 +235,8 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 
 /* Stats: one strip of figures to read across, not a row of cards. Label, figure, caption; the flag sits by the label. */
 :is(.pro, .care) .stat-row { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0; border-radius: var(--radius-card); background: var(--glass-sheet); box-shadow: var(--shadow-card); overflow: hidden; }
+/* Four figures that cannot sit in one row read as two by two, never three and one left over. */
+@container page (max-width: 760px) { :is(.pro, .care) .stat-row:has(> :nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 :is(.pro, .care) .stat-row .stat { display: flex; flex-direction: column; gap: 2px; padding: var(--space-4) var(--pad-card); border-radius: 0; background: none; box-shadow: -1px 0 0 var(--hairline), 0 -1px 0 var(--hairline); }
 :is(.pro, .care) .stat-row:has(.stat-head) .stat:not(:has(.stat-head)) { padding-top: var(--space-4); }
 :is(.pro, .care) .stat-row .stat[data-feature] { background: linear-gradient(180deg, color-mix(in srgb, var(--blue-wash) 60%, transparent), transparent); }

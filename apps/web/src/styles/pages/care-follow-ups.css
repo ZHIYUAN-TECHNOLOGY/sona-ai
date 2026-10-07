@@ -40,7 +40,7 @@
 .fu-hero p { margin: 0; }
 .fu-hero-title { margin: 0; font-size: var(--text-panel); line-height: 1.25; overflow-wrap: break-word; }
 .fu-cols { gap: var(--gap-card); }
-@media (min-width: 1100px) {
+@container page (min-width: 960px) {
   .fu-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .fu-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .fu-cols[data-two] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -77,11 +77,11 @@
 .fu-steps > li[data-done] { color: var(--ink); }
 .fu-steps > li[aria-current] { color: var(--ink); font-weight: 600; border-color: var(--blue); background: var(--blue-wash); }
 .fu-review p { max-width: 70ch; }
-@media (min-width: 1100px) {
+@container page (min-width: 960px) {
   .fu-top { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: stretch; }
   .fu-cols[data-cal] { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
 }
-@media (min-width: 1500px) {
+@container page (min-width: 1180px) {
   .fu-cal { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--space-5, var(--space-4)); align-items: start; }
   .fu-cal-picked { padding-top: 0; border-top: 0; padding-left: var(--space-4); border-left: 1px solid var(--line); min-height: 100%; align-content: start; }
 }

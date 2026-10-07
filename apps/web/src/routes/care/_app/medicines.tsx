@@ -101,7 +101,7 @@ function Page() {
   return (
     <>
       <PageHeader title="Medicines" lead={today.length ? (left ? `${left} ${left === 1 ? "dose" : "doses"} left today.${nextTime}` : "All of today's doses are taken.") : `Nothing due today.${nextTime}`} />
-      <WithRail rail={
+      <WithRail first rail={
         <RightRail label="Medicine help">
           {meds.length > 0 ? <InsightCard label="Sona" title={insight.title} lead={insight.lead} next={insight.next}
             evidence={duePast ? [{ icon: "pill", text: `Last 7 days: ${formatNumber(weekDone)} of ${countOf(duePast, "dose")} marked taken${weekMissed ? `, ${formatNumber(weekMissed)} not marked` : ""}` }] : undefined} /> : null}

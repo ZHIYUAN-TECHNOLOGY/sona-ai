@@ -67,7 +67,7 @@ function Page() {
           <StatCard title="Stable" value={all.length - watch.length} caption="Not on watch" onSelect={() => setTab("stable")} selected={tab === "stable"} />
         </StatRow>
       ) : null}
-      <WithRail rail={
+      <WithRail first rail={
         <RightRail label="Hand over">
           <Card title="Hand over to">
             {!mayAccept ? <p className="ho-muted">Your role can read the handover but cannot accept one.</p> : (

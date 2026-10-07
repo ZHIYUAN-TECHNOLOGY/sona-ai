@@ -25,3 +25,5 @@ td:has(> .tasks-title) { width: 100%; }
 .tasks-error { margin: 0; color: var(--red); font-size: var(--text-small); }
 .tasks-detail-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .tasks-actions { margin-bottom: var(--space-3); }
+/* A narrow page: the columns give up their spare width so Mark done stays in view without scrolling sideways. */
+@container page (max-width: 720px) { .tasks-title { min-width: 8rem; } .tasks-source { min-width: 5rem; } .tasks-owner { max-width: 7rem; } }

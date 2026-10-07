@@ -40,7 +40,7 @@
 .dp-pick .list-caption { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; }
 /* The title wraps beside the search rather than running under it; on a phone the search drops below the title. */
 .dp-pick > .card-head .card-title { padding-right: calc(13rem + var(--space-3)); }
-@media (max-width: 40rem) {
+@container page (max-width: 600px) {
   .dp-pick > .dp-pick-head { position: static; padding: 0 0 var(--space-3); }
   .dp-pick > .dp-pick-head .search-field { width: 100%; }
   .dp-pick > .card-head .card-title { padding-right: 0; }

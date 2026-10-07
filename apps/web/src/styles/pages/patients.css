@@ -14,7 +14,7 @@
 .pt-timeline time { color: var(--muted); font-variant-numeric: tabular-nums; }
 
 
-@media (max-width: 40rem) {
+@container page (max-width: 600px) {
   .pt-timeline li { grid-template-columns: 1fr; gap: 0; }
 }
 

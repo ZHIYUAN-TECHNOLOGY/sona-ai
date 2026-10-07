@@ -114,7 +114,7 @@ function Page() {
       />
       {errors}
       {doneLines}
-      <WithRail
+      <WithRail first
         rail={open
           ? (
             <RightRail label="Why this needs review">

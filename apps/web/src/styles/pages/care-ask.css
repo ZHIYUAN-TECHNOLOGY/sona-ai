@@ -7,9 +7,10 @@
 .frame-page.frame-page:has(> .ask-page) > .sona-thread { grid-column: 1; grid-row: 3; }
 .ask-page > .ask-welcome { grid-column: 1 / -1; grid-row: 4; }
 .ask-page > .rail { grid-column: 2; grid-row: 2 / span 3; min-width: 0; width: auto; display: grid; gap: var(--gap-card); }
-@media (max-width: 1000px) {
-  .frame-page.frame-page:has(> .ask-page) { grid-template-columns: minmax(0, 1fr); }
-  .ask-page > .rail { grid-column: 1; grid-row: 5; }
+/* A narrow page: everything spans both tracks, the rail under the conversation (the grid is the container itself, so its children move). */
+@container page (max-width: 880px) {
+  .ask-page > .ask-stage, .frame-page.frame-page:has(> .ask-page) > .sona-thread { grid-column: 1 / -1; }
+  .ask-page > .rail { grid-column: 1 / -1; grid-row: 5; }
 }
 
 /* The welcome shows until a question is asked or a call starts; the rail list takes over then (never both). */
@@ -83,7 +84,7 @@
 .ask-next, .ask-failed { scroll-margin-bottom: calc(var(--tap) * 3); }
 /* Only the newest failure offers "Try again"; the rail of suggestions stays in view beside a long conversation. */
 .sona-turn:not(:last-child) .ask-failed .btn { display: none; }
-@media (min-width: 1001px) { .ask-page > .rail { position: sticky; top: var(--space-4); } }
+@container page (min-width: 881px) { .ask-page > .rail { position: sticky; top: var(--space-4); } }
 /* An answer keeps its line breaks (lists, paragraphs); a long link or question wraps inside its bubble. */
 .ask-answer { white-space: pre-line; }
 .frame-page.frame-page:has(> .ask-page) > .sona-thread :is(.sona-turn-q, .sona-turn-a) { overflow-wrap: anywhere; }

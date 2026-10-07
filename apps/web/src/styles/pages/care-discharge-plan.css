@@ -2,8 +2,7 @@
 .dp-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--gap-card); align-items: start; }
 .dp-col { display: flex; flex-direction: column; gap: var(--gap-card); min-width: 0; }
 /* One column: the rail (warning first) goes above the document so the warning stays in view. */
-@media (max-width: 1180px) { .dp-grid { grid-template-columns: minmax(0, 1fr); } .dp-grid > .dp-col { order: -1; } }
-@media (max-width: 760px) { .dp-grid { grid-template-columns: minmax(0, 1fr); } }
+@container page (max-width: 870px) { .dp-grid { grid-template-columns: minmax(0, 1fr); } .dp-grid > .dp-col { order: -1; } }
 
 .card.dp-doc { display: flex; flex-direction: column; gap: var(--space-5); }
 .dp-doc section { display: flex; flex-direction: column; gap: var(--space-3); }

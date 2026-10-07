@@ -8,7 +8,7 @@
 .po-chart-pick { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-3); }
 
 .po-history { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); }
-@media (max-width: 44rem) { .po-history { grid-template-columns: minmax(0, 1fr); } }
+@container page (max-width: 660px) { .po-history { grid-template-columns: minmax(0, 1fr); } }
 .po-history dt { color: var(--muted); font-size: var(--text-small); margin-bottom: var(--space-1); }
 .po-history dd { margin: 0; }
 .po-meter { width: 100%; margin: var(--space-2) 0; accent-color: var(--green); }

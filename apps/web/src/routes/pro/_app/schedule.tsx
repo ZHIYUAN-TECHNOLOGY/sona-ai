@@ -91,7 +91,7 @@ function Page() {
         </StatRow>
       )}
 
-      <WithRail
+      <WithRail first
         rail={loading || failed ? null : (
           <RightRail label="Schedule check and details">
           <InsightCard

@@ -25,12 +25,12 @@
 .vs-blank { min-height: min(52vh, 26rem); justify-content: center; }
 .vs-blank .empty { max-width: 34rem; margin-inline: auto; font-size: max(17px, 1em); line-height: 1.5; }
 
-@media (min-width: 901px) {
+@container page (min-width: 780px) {
   .vs-split[data-panel] { grid-template-columns: minmax(0, 44rem) minmax(20rem, 1fr); }
   .vs-split:not([data-panel]) .vs-rail { max-width: 44rem; }
 }
 /* Very wide: the rail has room for the panel and the help card side by side, so nothing stretches. */
-@media (min-width: 1700px) { .vs-split[data-panel] .vs-rail { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; } }
+@container page (min-width: 1380px) { .vs-split[data-panel] .vs-rail { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; } }
 /* "Download PDF" is the browser's print: only the summary, black on white. */
 @media print {
   .frame-side, .frame-bar, .sona-bar, .vs-page > :not(.vs-split), .vs-split > :not(.vs-full) { display: none !important; }
