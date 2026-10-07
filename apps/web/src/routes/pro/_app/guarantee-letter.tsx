@@ -109,6 +109,22 @@ function Letter({ encounterId }: { encounterId: string }) {
   const patient = usePatient(encounterId);
   const CRUMBS = crumbs(patient?.name);
   const sources = cited.length || undefined;
+  // The PDF carries the appeal draft as fetched; the Appeal card below shares this query, so edits typed there are not in it.
+  const appealDraft = useQuery(orpc.claim.appealDraft.queryOptions({ input, staleTime: Infinity, enabled: status.data?.status === "denied" }));
+  const [pdf, setPdf] = useState<"idle" | "busy" | { error: string }>("idle");
+  // The PDF kit and its engine load on the first click, so they stay out of the page's own chunk.
+  const downloadLetter = async () => {
+    if (!status.data || !codes.data) return;
+    setPdf("busy");
+    try {
+      const [{ GuaranteeLetterDocument }, { renderPdf, downloadPdf }] = await Promise.all([import("@/features/guarantee-letter/letter-pdf"), import("@/lib/pdf/render")]);
+      const { blob } = await renderPdf(<GuaranteeLetterDocument patient={patient} status={status.data} codes={codes.data.codes} sentences={codes.data.sentences} appeal={appealDraft.data?.letter} />, { title: "Guarantee letter" });
+      downloadPdf(`guarantee-letter-${patient?.id ?? encounterId}.pdf`, blob);
+      setPdf("idle");
+    } catch (e) {
+      setPdf({ error: e instanceof Error ? e.message : String(e) });
+    }
+  };
 
   const s = status.data;
   if (!s) return <><PageHeader title="Guarantee letter" breadcrumb={CRUMBS} /><Loaded query={status}>{() => null}</Loaded></>;
@@ -138,8 +154,12 @@ function Letter({ encounterId }: { encounterId: string }) {
   return (
     <>
       <PageHeader title="Guarantee letter" breadcrumb={CRUMBS} lead={NEEDS_EYE[s.status] ? <Signal tone={NEEDS_EYE[s.status]}>{leadOf(s)}</Signal> : leadOf(s)}
-        actions={draft && maySend ? <Button variant="primary" icon="arrow-right" pending={send.isPending} disabled={open.length > 0} onClick={sendNow}>
-          {open.length ? `Resolve ${open.length} to send` : "Accept codes and send"}</Button> : undefined} />
+        actions={<>
+          <Button icon="download" disabled={pdf === "busy" || !codes.data} onClick={() => { void downloadLetter(); }}>{pdf === "busy" ? "Making the PDF…" : "Download PDF"}</Button>
+          {draft && maySend ? <Button variant="primary" icon="arrow-right" pending={send.isPending} disabled={open.length > 0} onClick={sendNow}>
+            {open.length ? `Resolve ${open.length} to send` : "Accept codes and send"}</Button> : null}
+        </>} />
+      {typeof pdf === "object" ? <p className="gl-error" role="alert">We could not make the PDF. {pdf.error}</p> : null}
       {patient ? <PatientStrip name={patient.name} meta={patient.subtitle} /> : null}
       <WithRail rail={<RightRail label="What to decide">{insight}</RightRail>}>
         <Card title="Claim status">
