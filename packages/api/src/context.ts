@@ -36,6 +36,8 @@ export type Context = {
   announce?: (hospitalId: string, change: Change) => Promise<void>;
   /** The retrieval library: the Worker passes packages/retrieval's ingest and search, which import this package, so they come in here. */
   library?: Library;
+  /** BiomedCLIP on the embedder's box (packages/infra/aws/embed): films and film queries as vectors, for xray.similar. Absent, that route is unavailable. */
+  imageEmbedder?: ImageEmbedder;
   /** DEMO_SIGN_IN=1 (staging only): Sona Care's sign-in shows the seeded demo phone and its fixed code (care.demoSignIn). */
   demoSignIn?: boolean;
   /** The Baseten key (and, in tests, a fake fetch) for routes that call a box directly: ask.route (Laya), ask.free (Gemma). Absent: they answer fixture. */
@@ -46,6 +48,12 @@ export type Context = {
   watches?: Watches;
   /** The Worker's waitUntil: work that finishes after the answer is sent (the access trail). Absent (tests), it is awaited. */
   waitUntil?: (promise: Promise<unknown>) => void;
+};
+
+/** Images (the uploaded bytes) and text queries to BiomedCLIP's shared 512-d space, normalised, so either compares by cosine. */
+export type ImageEmbedder = {
+  images(bytes: Uint8Array[]): Promise<number[][]>;
+  text(queries: string[]): Promise<number[][]>;
 };
 
 export type { FollowUp };

@@ -1,7 +1,8 @@
 #!/bin/bash
 # The embedder on SageMaker, Malaysia: bring the endpoint up on one small CPU instance, embed a question and a batch
-# of sections the way the Worker does, time them, and leave it running (search has no box to wake). DOWN=1 takes it
-# down at the end instead. ml.c6i.large (2 vCPU, 4 GB) as Laya; TYPE= another instance.
+# of sections the way the Worker does, and a film and a phrase through BiomedCLIP, time them, and leave it running (search has no box to wake). DOWN=1 takes it
+# down at the end instead. ml.c6i.xlarge (4 vCPU, 8 GB, ~$0.24/h): EmbeddingGemma and BiomedCLIP together ran the 4 GB of
+# ml.c6i.large out at start (7 Oct); TYPE= another instance.
 # Usage: AWS_PROFILE=sona bash test.sh   (the image comes from buildspec.yml; the weights are at embed/300m/ in S3)
 set -u
 export AWS_DEFAULT_REGION=ap-southeast-5 AWS_SDK_UA_APP_ID=AWSSkill-SageMaker
@@ -20,7 +21,7 @@ aws sagemaker create-model --model-name $V --execution-role-arn "arn:aws:iam::${
   --primary-container "{\"Image\":\"${A}.dkr.ecr.ap-southeast-5.amazonaws.com/sona/embed:300m\",\"ModelDataSource\":{\"S3DataSource\":{\"S3Uri\":\"s3://${B}/embed/300m/\",\"S3DataType\":\"S3Prefix\",\"CompressionType\":\"None\"}}}" \
   --query ModelArn --output text || exit 1
 aws sagemaker create-endpoint-config --endpoint-config-name $V --production-variants \
-  "VariantName=main,ModelName=$V,InstanceType=${TYPE:-ml.c6i.large},InitialInstanceCount=1,ContainerStartupHealthCheckTimeoutInSeconds=600" \
+  "VariantName=main,ModelName=$V,InstanceType=${TYPE:-ml.c6i.xlarge},InitialInstanceCount=1,ContainerStartupHealthCheckTimeoutInSeconds=600" \
   --query EndpointConfigArn --output text || exit 1
 T0=$(date +%s)
 if aws sagemaker describe-endpoint --endpoint-name $N > /dev/null 2>&1; then
@@ -54,3 +55,7 @@ print(json.dumps({"text": [s] * 25}))
 PY
 T=$(date +%s%N); aws sagemaker-runtime invoke-endpoint --endpoint-name $N --content-type application/json --body "fileb://$OUT/sections.json" "$OUT/sections.out" > /dev/null \
   && echo "25 sections of ~600 tokens: $(( ($(date +%s%N) - T) / 1000000 )) ms" || { echo "sections: FAILED"; head -c 300 "$OUT/sections.out"; }
+# BiomedCLIP: the app's sample chest film (apps/native/features/imaging/assets) and a phrase, each a 512-d vector.
+FILM="$(dirname "$0")/../../../../apps/native/features/imaging/assets/normal-pa-chest.jpg"
+embed film "{\"image\":[\"$(base64 < "$FILM" | tr -d '\n')\"]}"
+embed phrase '{"image_text":["pleural effusion on the left"]}'

@@ -21,7 +21,7 @@ export const TEXT_MODEL = "@cf/aisingapore/gemma-sea-lion-v4-27b-it";
 const WHISPER_LANGUAGE: Record<Language, string> = { en: "en", ms: "ms", zh: "zh" };
 
 /** Base64 without Node's Buffer (chunked, so a long recording does not overflow the call stack). */
-function base64(bytes: Uint8Array) {
+export function base64(bytes: Uint8Array) {
   let s = "";
   for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return btoa(s);

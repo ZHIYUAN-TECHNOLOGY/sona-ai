@@ -244,6 +244,16 @@ export const findings = pgTable("findings", {
   source: text("source").notNull(), taskId: text("task_id"), dueAt: timestamp("due_at"), createdAt: created(),
 }, t => [uniqueIndex("findings_encounter_kind").on(t.encounterId, t.kind), index("findings_hospital").on(t.hospitalId, t.patientId)]);
 
+/**
+ * Each uploaded X-ray's BiomedCLIP vector (512-d, normalised), keyed by its upload key, so "films like this one" and
+ * "films with effusion on the left" are a cosine search over the hospital's films (routers/xray.ts, xray.similar). A
+ * film with no row was uploaded while the embedder was down, and stays unindexed until it is uploaded again.
+ */
+export const imageVectors = pgTable("image_vectors", {
+  key: text("key").primaryKey(), hospitalId: text("hospital_id").notNull(), encounterId: text("encounter_id").notNull(), patientId: text("patient_id").notNull(),
+  embedding: vector("embedding", { dimensions: 512 }).notNull(), createdAt: created(),
+}, t => [index("image_vectors_embedding_hnsw").using("hnsw", t.embedding.op("vector_cosine_ops")), index("image_vectors_hospital").on(t.hospitalId)]);
+
 /** Demo flow 7: messages after discharge on day 2 and day 7, in the leaflet's language, through a simulated inbox. */
 export const checkIns = pgTable("check_ins", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(), encounterId: text("encounter_id").notNull(),
