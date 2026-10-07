@@ -7,3 +7,7 @@
 .ptl-reason { display: grid; min-width: 12rem; }
 .ptl-reason .cell-clamp { color: var(--muted); font-size: var(--text-small); }
 .ptl-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+/* The five filters keep their width; the search drops to its own line before the last tab is cut off (they still scroll at 320px). */
+.ptl-card .table-toolbar-row { flex-wrap: wrap; }
+.ptl-card .table-toolbar-start { flex: 1 0 auto; }
+.ptl-card .table-toolbar-end { margin-left: auto; }

@@ -22,5 +22,5 @@ test("direction compares the latest value with the one before it by date", () =>
   const [potassium, weight, sodium] = topSeries(all);
   expect(direction(potassium!)).toBe("Up from 4.1");
   expect(direction(weight!)).toBe("Unchanged from 70");
-  expect(direction(sodium!)).toBe("Only value on record");
+  expect(direction(sodium!)).toBe("One value");
 });
