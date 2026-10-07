@@ -3,6 +3,7 @@ import { user } from "@sona-ai/db/schema/auth";
 import { appointments, encounters, labResults, observations, patients, tasks } from "@sona-ai/db/schema/clinical";
 import type { DemoPatient } from "@sona-ai/domain/demo-patients";
 import { criticalOf, criticalWhy } from "@sona-ai/domain/critical";
+import { rangeFlagOf, rangeWhy } from "@sona-ai/domain/lab-ranges";
 import { and, asc, desc, eq, gte, isNull, lt, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 
@@ -38,29 +39,36 @@ export const createTask = protectedProcedure.input(taskCreateSchema).handler(asy
 /** The hospital's lab results with the patient's name and who acknowledged each, newest first (lab rows are scoped through their patient). */
 export const listResults = async (db: Context["db"], hospitalId: string, where?: ReturnType<typeof eq>) => (await db.select({
   id: labResults.id, patientId: labResults.patientId, patientName: patients.name, test: labResults.test, value: labResults.value,
-  unit: labResults.unit, flag: labResults.flag, receivedAt: labResults.receivedAt, acknowledgedBy: labResults.acknowledgedBy, acknowledgedAt: labResults.acknowledgedAt,
+  unit: labResults.unit, flag: labResults.flag, sex: patients.sex, receivedAt: labResults.receivedAt, acknowledgedBy: labResults.acknowledgedBy, acknowledgedAt: labResults.acknowledgedAt,
   acknowledgedByName: user.name,
 }).from(labResults).innerJoin(patients, eq(patients.id, labResults.patientId)).leftJoin(user, eq(user.id, labResults.acknowledgedBy))
   .where(and(eq(patients.hospitalId, hospitalId), where)).orderBy(desc(labResults.receivedAt)))
-  // `why` is the call-now rule's own reason, only when that rule is what set the stored flag (no reference ranges are held anywhere, so none are returned).
-  .map(r => ({ ...r, critical: Boolean(r.flag?.startsWith("critical")), why: r.flag && r.flag === criticalOf(r) ? criticalWhy(r) : undefined }));
+  // `why` is the rule's own reason (the call-now limit, or the usual adult range), only when that rule agrees with the stored flag.
+  .map(({ sex, ...r }) => ({ ...r, critical: Boolean(r.flag?.startsWith("critical")),
+    why: !r.flag ? undefined : r.flag === criticalOf(r) ? criticalWhy(r) : r.flag === rangeFlagOf({ ...r, sex }) ? rangeWhy({ ...r, sex }) : undefined }));
 
 // A result with no unit (a culture's text) is one: a sender that fills every field sends `unit: ""`, which means none, not a bad request.
-const resultInput = z.object({ patientId: z.string().min(1), test: z.string().trim().min(1), value: z.string().trim().min(1), unit: z.string().trim().optional().transform(unit => unit || undefined) });
+// The lab's own flag, when it sends one, in the words the apps read ("H"/"L"/"N" are the usual HL7 codes); anything else is refused.
+const LAB_FLAGS: Record<string, "high" | "low" | "normal"> = { h: "high", high: "high", l: "low", low: "low", n: "normal", normal: "normal" };
+const resultInput = z.object({
+  patientId: z.string().min(1), test: z.string().trim().min(1), value: z.string().trim().min(1), unit: z.string().trim().optional().transform(unit => unit || undefined),
+  flag: z.string().trim().optional().transform(f => f ? LAB_FLAGS[f.toLowerCase()] ?? f : undefined).pipe(z.enum(["high", "low", "normal"]).optional()),
+});
 
 /**
- * A result arrives for one of the hospital's patients, flagged critical by rule when it is past a call-now limit.
+ * A result arrives for one of the hospital's patients, flagged critical by rule when it is past a call-now limit;
+ * otherwise it keeps the lab's own flag, or, when the lab sent none, high or low against the usual adult range.
  * The one path for a result, whoever sends it: the lab's system (labFeed) or a signed-in clinician (results.receive).
  */
 async function receiveResult(context: Pick<Context, "db" | "now">, hospitalId: string, input: z.infer<typeof resultInput>) {
   const { db } = context;
-  const [patient] = await db.select({ id: patients.id }).from(patients).where(and(eq(patients.id, input.patientId), eq(patients.hospitalId, hospitalId)));
+  const [patient] = await db.select({ id: patients.id, sex: patients.sex }).from(patients).where(and(eq(patients.id, input.patientId), eq(patients.hospitalId, hospitalId)));
   if (!patient) throw new ORPCError("NOT_FOUND", { message: `No patient ${input.patientId}` });
   // A sample the lab was still running (a ward and discharge blocker) is filled in place, keeping its ID; anything else is a new result.
   const [pending] = await db.select({ id: labResults.id }).from(labResults)
     .where(and(eq(labResults.patientId, input.patientId), eq(labResults.flag, "pending"), sql`lower(${labResults.test}) = lower(${input.test})`)).orderBy(asc(labResults.receivedAt)).limit(1);
   const id = pending?.id ?? `lab-${crypto.randomUUID()}`;
-  const values = { value: input.value, unit: input.unit, flag: criticalOf(input) ?? null, receivedAt: clockOf(context) };
+  const values = { value: input.value, unit: input.unit, flag: criticalOf(input) ?? input.flag ?? rangeFlagOf({ ...input, sex: patient.sex }) ?? null, receivedAt: clockOf(context) };
   if (pending) await db.update(labResults).set(values).where(eq(labResults.id, id));
   else await db.insert(labResults).values({ id, patientId: input.patientId, test: input.test, sourceId: id, ...values });
   const [result] = await listResults(db, hospitalId, eq(labResults.id, id));
