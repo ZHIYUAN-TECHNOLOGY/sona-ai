@@ -184,3 +184,46 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 :is(.link, .care :is(.card, .list-card, .insight, .detail-list, .empty) a:not([class])):hover { text-decoration: underline; text-underline-offset: 3px; }
 :is(.link, .care :is(.card, .list-card, .insight, .detail-list, .empty) a:not([class])):focus-visible { outline: 0; box-shadow: var(--focus-ring); }
 .care .insight a:not([class]) { color: var(--on-ai); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- Surfaces (glance-to-decision pass) ----
+   A page has three kinds of surface, by job, so they stop looking alike:
+   sheet (the default card: a glass sheet for the page's working content), flat (a labelled group on the canvas,
+   for reference detail that needs no box) and well (a recessed area for something to fill in). */
+:is(.pro, .care) :is(.card, .patient-strip, .stat) { background: var(--glass-sheet); box-shadow: var(--shadow-card); }
+:is(.pro, .care) .card { gap: var(--space-3); }
+:is(.pro, .care) .card-title { font-size: var(--text-title); font-weight: 600; letter-spacing: 0; }
+:is(.pro, .care) .card[data-variant="flat"] { padding: var(--space-2) var(--space-1) 0; background: none; box-shadow: none; border-radius: 0; }
+:is(.pro, .care) .card[data-variant="flat"] > .card-head { padding-bottom: var(--space-2); border-bottom: 1px solid var(--line); }
+:is(.pro, .care) .card[data-variant="flat"] .card-title { font-size: var(--text-overline); letter-spacing: var(--track-overline); text-transform: uppercase; color: var(--muted); }
+:is(.pro, .care) .card[data-variant="well"] { background: var(--fill-field); box-shadow: inset 0 1px 2px rgb(29 31 35 / 0.06); }
+/* An empty state inside a card is a line, not a second card. */
+:is(.pro, .care) .card .empty { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-3); justify-items: start; align-items: center; padding: var(--space-2) 0; background: none; border-radius: 0; text-align: left; font-size: var(--text-small); }
+:is(.pro, .care) .card .empty-icon { grid-row: span 2; width: var(--avatar-md); height: var(--avatar-md); }
+:is(.pro, .care) .card .empty > :not(.empty-icon) { grid-column: 2; }
+:is(.pro, .care) .card .empty:not(:has(.empty-icon)) { display: block; }
+
+/* Stats: one strip of figures to read across, not a row of cards. Label, figure, caption; the flag sits by the label. */
+:is(.pro, .care) .stat-row { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0; border-radius: var(--radius-card); background: var(--glass-sheet); box-shadow: var(--shadow-card); overflow: hidden; }
+:is(.pro, .care) .stat-row .stat { display: flex; flex-direction: column; gap: 2px; padding: var(--space-4) var(--pad-card); border-radius: 0; background: none; box-shadow: -1px 0 0 var(--hairline), 0 -1px 0 var(--hairline); }
+:is(.pro, .care) .stat-row:has(.stat-head) .stat:not(:has(.stat-head)) { padding-top: var(--space-4); }
+:is(.pro, .care) .stat-row .stat[data-feature] { background: linear-gradient(180deg, color-mix(in srgb, var(--blue-wash) 60%, transparent), transparent); }
+:is(.pro, .care) .stat-row .stat-head { min-height: 0; }
+:is(.pro, .care) .stat-row .stat-title { font-size: var(--text-small); font-weight: 500; letter-spacing: 0; color: var(--muted); -webkit-line-clamp: 1; }
+:is(.pro, .care) .stat-row .stat-body { margin-top: 0; align-items: center; }
+:is(.pro, .care) .stat-row .stat-value { font-size: var(--text-stat); line-height: 1.2; font-weight: 600; letter-spacing: var(--track-tight); }
+:is(.pro, .care) .stat-row .stat-unit { font-size: var(--text-small); font-weight: 500; }
+:is(.pro, .care) .stat-row .stat-caption { -webkit-line-clamp: 1; }
+:is(.pro, .care) .stat-row .stat-arc { width: 52px; }
+:is(.pro, .care) .stat-row .stat-arc path { stroke: var(--fill-selected); }
+:is(.pro, .care) .stat-row .stat-head .icon-btn { width: 24px; height: 24px; border-color: transparent; background: none; }
+/* The patient strip is the page's identity bar: tighter, and the name leads. */
+:is(.pro, .care) .patient-strip { padding: var(--space-3) var(--pad-card); }
+:is(.pro, .care) .page-header h1 { font-weight: 600; letter-spacing: var(--track-tight); }
+/* Header actions are ordinary controls: the page title leads, not its buttons. */
+:is(.pro, .care) .page-actions .btn { min-height: var(--field-h); padding: 0 var(--space-4); }
+:is(.pro, .care) .page-actions .icon-btn { width: var(--field-h); height: var(--field-h); }
+/* Glass: sheets blur what is behind them (the page's wash and halftone, and each other when they overlap). */
+:is(.pro, .care) :is(.card:not([data-variant]), .card[data-variant="sheet"], .patient-strip, .stat-row, .table-wrap) { backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }
+:is(.pro, .care) .table-wrap { background: var(--glass-sheet); box-shadow: var(--shadow-card); }
+:is(.pro, .care) :is(.btn-secondary, .icon-btn:not(.icon-btn-ink, .icon-btn-quiet), .search-field, .select) { background: var(--glass-float); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-rim), var(--edge); border-color: transparent; }
+@media (prefers-reduced-transparency: reduce) { :is(.pro, .care) :is(.card, .patient-strip, .stat-row, .table-wrap, .btn-secondary, .icon-btn, .search-field, .select) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; } }

@@ -6,7 +6,7 @@ import { DataTable, PersonCell, RowAction, TableToolbar, ValueCell, type Column 
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, SearchField, Signal, Tabs } from "@/components/primitives";
-import { WithRail } from "@/components/rail";
+import { revealRail, WithRail } from "@/components/rail";
 import { PriorityCell, ResultRail } from "@/features/results/result-rail";
 import { inTab, summary, type Tab } from "@/features/results/tabs";
 import { byTriage, isNormal } from "@/features/results/triage";
@@ -69,6 +69,7 @@ function Page() {
 
   const n = summary(sorted);
   const pickTab = (t: Tab) => { setTab(t); setSelectedId(undefined); };
+  const review = (id: string) => { setSelectedId(id); revealRail("result-rail"); };
   return (
     <>
       <PageHeader
@@ -113,7 +114,7 @@ function Page() {
         <DataTable
           columns={columns} rows={shown} rowKey={r => r.id} selectedKey={selected?.id} loading={list.isPending}
           onRowOpen={r => setSelectedId(r.id)}
-          rowAction={r => <RowAction onClick={() => setSelectedId(r.id)}>Review</RowAction>}
+          rowAction={r => <RowAction onClick={() => review(r.id)}>Review</RowAction>}
           toolbar={(
             <TableToolbar end={<SearchField label="Search results" placeholder="Search patient or test" value={query} onChange={e => setQuery(e.target.value)} />}>
               <Tabs

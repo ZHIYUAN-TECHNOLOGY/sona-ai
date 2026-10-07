@@ -9,7 +9,7 @@ import { DataTable, PersonCell, RowAction, TableToolbar, type Column } from "@/c
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow, SearchField, Select, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
-import { RightRail, WithRail } from "@/components/rail";
+import { revealRail, RightRail, WithRail } from "@/components/rail";
 import { freeBy, Loaded, rankBeds, unownedOn } from "@/features/ward/state";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/ward.css";
@@ -121,7 +121,7 @@ function Page() {
         </>
       ) : null}
       <WithRail rail={(
-        <RightRail label="Bed detail, huddle brief and forecast">
+        <RightRail label="Bed detail, huddle brief and forecast" id="ward-rail">
           {bed ? (
             <Card title={bed.bed}>
               {bed.name ? <PersonCell name={bed.name} detail={bed.meta} /> : <p className="ward-muted">No patient in this bed.</p>}
@@ -183,7 +183,7 @@ function Page() {
                   ]} />
                 </TableToolbar>
               )}
-              rowAction={b => <RowAction onClick={() => setPicked(b.bed)}>{b.blockers.length ? "Review" : "Open"}</RowAction>} />
+              rowAction={b => <RowAction onClick={() => { setPicked(b.bed); revealRail("ward-rail"); }}>{b.blockers.length ? "Review" : "Open"}</RowAction>} />
           )}
         </Loaded>
       </WithRail>

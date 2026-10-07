@@ -15,8 +15,10 @@ export const say = (error: unknown) => (error instanceof Error && error.message 
 
 /** The blocked checks a refusal carries (`discharge.request`, `claim.send`), when it carries any. */
 export function blockersOf(error: unknown): { label: string; detail?: string }[] {
-  const list = (error as { data?: { blockers?: unknown } } | null)?.data?.blockers;
-  return Array.isArray(list) ? list.filter((b): b is { label: string; detail?: string } => typeof b?.label === "string") : [];
+  const data = (error as { data?: { blockers?: unknown; open?: unknown } } | null)?.data;
+  // A discharge refusal lists blockers; a claim refusal lists the open criteria by name.
+  if (Array.isArray(data?.blockers)) return data.blockers.filter((b): b is { label: string; detail?: string } => typeof b?.label === "string");
+  return Array.isArray(data?.open) ? data.open.filter((o): o is string => typeof o === "string").map(label => ({ label })) : [];
 }
 
 /** Model answers the server labels as a fixture are shown as a sample, as the phone app does. */

@@ -56,7 +56,7 @@ export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }
       : allowed ? [] : [{ icon: "user" as const, text: `Only a doctor can acknowledge. Tell the doctor on call${row.critical ? " now" : ""}.` }]),
   ];
   return (
-    <RightRail label="Selected result">
+    <RightRail label="Selected result" id="result-rail">
       <InsightCard
         label="Why this is flagged"
         tone={row.critical ? "urgent" : isFlagged(row.flag) ? "soon" : "info"}

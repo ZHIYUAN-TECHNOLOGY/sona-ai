@@ -96,10 +96,11 @@ export function SearchField({ label, className, ...rest }: Omit<InputHTMLAttribu
 }
 
 /** A white surface with an optional title and a corner action link. */
-export function Card({ title, action, className, children }: { title?: string; action?: CornerAction; className?: string; children: ReactNode }) {
+/** `variant`: "sheet" (default, the page's working content), "flat" (a labelled group on the canvas, for reference detail) or "well" (a recessed area to fill in). */
+export function Card({ title, action, className, variant, children }: { title?: string; action?: CornerAction; className?: string; variant?: "sheet" | "flat" | "well"; children: ReactNode }) {
   const { label, ...target } = action ?? { label: "" };
   return (
-    <section className={`card${className ? ` ${className}` : ""}`}>
+    <section className={`card${className ? ` ${className}` : ""}`} data-variant={variant}>
       {title || action ? (
         <div className="card-head">
           {title ? <h2 className="card-title">{title}</h2> : <span />}
@@ -118,7 +119,8 @@ function Count({ to }: { to: number }) {
   useGSAP(() => {
     const from = { n: shown.current };
     shown.current = to;
-    if (moves() && el.current) gsap.to(from, { n: to, duration: 0.7, ease: EASE_OUT, onUpdate: () => { el.current!.textContent = String(Math.round(from.n)); } });
+    // Only counts count up. A measured value (3.1 mmol/L) is shown as it is, never rounded or passed through other numbers on the way.
+    if (moves() && el.current && Number.isInteger(to)) gsap.to(from, { n: to, duration: 0.7, ease: EASE_OUT, onUpdate: () => { el.current!.textContent = String(Math.round(from.n)); }, onComplete: () => { el.current!.textContent = String(to); } });
   }, { dependencies: [to] });
   return <span ref={el}>{to}</span>;
 }

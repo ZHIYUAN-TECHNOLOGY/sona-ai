@@ -52,6 +52,8 @@ export function DemoClock() {
                 <Button variant="secondary" disabled={!s.available.includes("now") || jump.isPending} aria-pressed={choice === "now"} onClick={() => pick("now")}>Back to now</Button>
               </div>
             </div>
+            {/* The jumps count from a discharge; say so instead of leaving them disabled with no reason. */}
+            {!s.dischargedAt ? <p className="settings-label">The check-in and review jumps open once a patient at this hospital is discharged.</p> : null}
             {choice ? (
               <div className="settings-review">
                 <p>

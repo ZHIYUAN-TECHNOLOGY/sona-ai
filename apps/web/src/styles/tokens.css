@@ -83,3 +83,29 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .icon { flex: none; display: block; }
 /* Sona Care on the shared shell: patient sizes. Small text never under 15px, fields and pills at the 48px tap size. */
 .care { --radius-card: 28px; --text-small: 15px; --text-overline: 13px; --field-h: 48px; --chip-h: 30px; --avatar-sm: 36px; --side-width: 264px; }
+
+/* Surfaces (glance-to-decision pass). One family of corners, working-screen type sizes, and the two materials
+   every surface is made of: liquid glass (a lit rim over a translucent sheet) and halftone dither (Sona's mark,
+   kept to the page's atmosphere and the Sona insight). */
+:is(.pro, .care) {
+  --radius-shell: 24px; --radius-card: 20px; --radius-group: 14px; --radius-control: 10px;
+  --pad-card: 20px; --text-title: 16px; --text-page: 28px; --text-stat: 30px;
+  --glass-sheet: linear-gradient(180deg, rgb(255 255 255 / 0.78), rgb(255 255 255 / 0.56));
+  --glass-float: linear-gradient(180deg, rgb(255 255 255 / 0.56), rgb(255 255 255 / 0.34));
+  --ai-accent: linear-gradient(90deg, #8FBCFF, #C4A8FF);
+  --glass-rim: inset 0 1px 0 rgb(255 255 255 / 0.98), inset 0 0 0 1px rgb(255 255 255 / 0.55);
+  --edge: 0 0 0 1px rgb(29 31 35 / 0.06);
+  --shadow-card: var(--glass-rim), var(--edge), 0 1px 2px rgb(29 31 35 / 0.04);
+  --shadow-float: var(--glass-rim), var(--edge), 0 10px 32px rgb(29 31 35 / 0.1);
+  --dither: radial-gradient(circle at center, currentColor 0.9px, transparent 1.3px);
+  --dither-size: 6px 6px;
+}
+:is(.pro, .care) { --glass-blur: saturate(180%) blur(22px); --shadow-card: var(--glass-rim), var(--edge), 0 1px 2px rgb(29 31 35 / 0.04), 0 8px 24px rgb(29 31 35 / 0.05); }
+/* Clinical terms: one colour per kind, the same five the phone apps use (rules in apps/native/components/sona/marked-terms.ts). */
+.mark { padding: 0 0.28em; border-radius: 0.4em; font-weight: 500; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.mark[data-mark="alert"] { color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }
+.mark[data-mark="medicine"] { color: #5A3DB8; background: rgb(110 80 210 / 0.11); }
+.mark[data-mark="finding"] { color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); }
+.mark[data-mark="symptom"] { color: #1E4FB8; background: rgb(36 91 204 / 0.1); }
+.mark[data-mark="caution"] { color: var(--amber); background: color-mix(in srgb, var(--amber) 14%, transparent); }
+.mark-key { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--text-small); }
