@@ -1,4 +1,5 @@
 import { can } from "@sona-ai/api/roles";
+import { DENIAL_REASONS } from "@sona-ai/domain/claim";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -11,6 +12,7 @@ import { RightRail, WithRail } from "@/components/rail";
 import { Button, Card, Chip, Field, Signal, type Tone } from "@/components/primitives";
 import { letterHold, standings } from "@/features/discharge/rank";
 import { blockersOf, Loaded, type Mark, oneParam, Origin, PatientPicker, say, usePatient } from "@/features/discharge/shared";
+import { countOf, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/discharge.css";
 import "@/styles/pages/guarantee-letter.css";
@@ -40,7 +42,7 @@ function Chooser() {
     <>
       <PageHeader title="Guarantee letter"
         lead={!beds.data ? "Choose a patient to see where their insurer claim stands."
-          : holding ? <><Signal tone="soon">{holding} guarantee letter{holding === 1 ? " is" : "s are"} holding a bed</Signal>. Open {holding === 1 ? "it" : "those"} first.</>
+          : holding ? <><Signal tone="soon">{formatNumber(holding)} guarantee letter{holding === 1 ? " is" : "s are"} holding a bed</Signal>. Open {holding === 1 ? "it" : "those"} first.</>
           : "No guarantee letter is holding a bed. Open a patient to see where their claim stands."} />
       <PatientPicker link={openLetter} mark={mark} title={holding ? "Patients, letters holding a bed first" : "Patients"} />
     </>
@@ -81,6 +83,9 @@ const leadOf = (s: Claim) =>
     : s.status === "appealed" ? `Denied, and the appeal went${s.appealedAt ? ` on ${day(s.appealedAt)}` : ""}. The insurer has not answered yet.` : s.status;
 
 /** The statuses whose lead needs the eye: a denial, an insurer's question, an approval. The rest stay plain. */
+/** A free-text answer short enough to lead the rail, or the plain line that stands in for it. */
+const brief = (text: string, instead: string) => (text.length <= 160 ? text : instead);
+
 const NEEDS_EYE: Record<string, Tone | undefined> = { denied: "urgent", queried: "soon", approved: "done" };
 
 function Letter({ encounterId }: { encounterId: string }) {
@@ -99,16 +104,17 @@ function Letter({ encounterId }: { encounterId: string }) {
   const mayAppeal = can(me.role, "claim.appeal");
   const sendNow = () => send.mutate({ encounterId, requestId: crypto.randomUUID(), approvedBy: me.userId });
   const cited = codes.data?.codes ?? [];
-  const count = (n: number) => `${n} code${n === 1 ? "" : "s"}`;
   const offTable = cited.filter(c => c.inTable === false).length;
   /** Two facts about the codes; the table below lists them. */
   const evidence = cited.length ? [
-    { icon: "file" as const, text: `${count(cited.filter(c => c.evidence).length)} cite the note` },
-    { icon: offTable ? "alert" as const : "check" as const, text: `${offTable} not in the ICD-10 table` },
+    { icon: "file" as const, text: `${countOf(cited.filter(c => c.evidence).length, "code")} cite the note` },
+    { icon: offTable ? "alert" as const : "check" as const, text: `${formatNumber(offTable)} not in the ICD-10 table` },
   ] : [];
   const patient = usePatient(encounterId);
   const CRUMBS = crumbs(patient?.name);
   const sources = cited.length || undefined;
+  // A note with nothing to code leaves nothing to send: say so instead of asking to check zero codes.
+  const uncoded = codes.data !== undefined && !cited.length;
   // The PDF carries the appeal draft as fetched; the Appeal card below shares this query, so edits typed there are not in it.
   const appealDraft = useQuery(orpc.claim.appealDraft.queryOptions({ input, staleTime: Infinity, enabled: status.data?.status === "denied" }));
   const [pdf, setPdf] = useState<"idle" | "busy" | { error: string }>("idle");
@@ -132,17 +138,20 @@ function Letter({ encounterId }: { encounterId: string }) {
   const open = s.checks?.filter(c => c.status === "blocked") ?? [];
   const blockers = send.error ? blockersOf(send.error) : [];
   const reviewUrl = s.reviewUrl;
+  // The insurer writes freely; a long question or reason leads the rail in a line and reads in full in its own card.
+  const said = s.query ? { title: "Insurer's question", text: s.query, lead: brief(s.query, "The insurer has a question before it decides; read it in full under the claim status.") }
+    : s.denial ? { title: `Insurer's reason · ${s.denial.code}`, text: s.denial.reason, note: s.denial.note, lead: brief(s.denial.reason, `${DENIAL_REASONS.find(d => d.code === s.denial?.code)?.reason ?? "Denied"}. The insurer's full reason is under the claim status.`) } : undefined;
 
   const insight = send.error ? <InsightCard tone="urgent" label="Not sent" lead={say(send.error)} sources={blockers.length || undefined}
       evidence={blockers.map(b => ({ icon: "alert" as const, text: b.detail ? `${b.label}: ${b.detail}` : b.label }))} />
-    : s.query ? <InsightCard tone="soon" label="Insurer's question" lead={s.query} evidence={evidence} sources={sources}
+    : s.query ? <InsightCard tone="soon" label="Insurer's question" lead={said?.lead ?? s.query} evidence={evidence} sources={sources}
       next={reviewUrl ? { label: "Open the insurer's page", step: "Answer there", onAct: () => window.open(reviewUrl, "_blank", "noopener") } : undefined} />
-    : s.denial ? <InsightCard tone={s.status === "denied" ? "urgent" : "info"} label={`Denial reason · ${s.denial.code}`} lead={`${s.denial.reason}${s.denial.note ? ` ${s.denial.note}` : ""}`}
+    : s.denial ? <InsightCard tone={s.status === "denied" ? "urgent" : "info"} label={`Denial reason · ${s.denial.code}`} lead={said?.lead ?? s.denial.reason}
       evidence={evidence} sources={sources}
       next={s.status === "denied" && mayAppeal ? { label: "Review the appeal draft", step: "Edit, then send", onAct: () => document.getElementById("gl-appeal")?.scrollIntoView({ behavior: "smooth" }) } : undefined} />
     : <InsightCard tone={s.status === "approved" ? "done" : "info"} label="Next step" evidence={evidence} sources={sources}
-      lead={draft ? (maySend ? `${cited.length} ${cited.length === 1 ? "code is" : "codes are"} ready. Check each against the note before you send.` : "Only a doctor can send this letter.") : leadOf(s)}
-      next={draft && maySend ? { label: "Review the codes", step: "Check each code first, then accept and send at the top", onAct: () => document.getElementById("gl-codes")?.scrollIntoView({ behavior: "smooth" }) } : undefined} />;
+      lead={draft ? (uncoded ? "The note has nothing to code yet, so there is nothing to send. Save the visit's note first." : maySend ? `${formatNumber(cited.length)} ${cited.length === 1 ? "code is" : "codes are"} ready. Check each against the note before you send.` : "Only a doctor can send this letter.") : leadOf(s)}
+      next={draft && maySend && !uncoded ? { label: "Review the codes", step: "Check each code first, then accept and send at the top", onAct: () => document.getElementById("gl-codes")?.scrollIntoView({ behavior: "smooth" }) } : undefined} />;
 
   const columns: Column<(typeof cited)[number]>[] = [
     { key: "code", header: "Code", cell: c => <span className="gl-code">{c.code}</span> },
@@ -156,7 +165,7 @@ function Letter({ encounterId }: { encounterId: string }) {
       <PageHeader title="Guarantee letter" breadcrumb={CRUMBS} lead={NEEDS_EYE[s.status] ? <Signal tone={NEEDS_EYE[s.status]}>{leadOf(s)}</Signal> : leadOf(s)}
         actions={<>
           <Button icon="download" disabled={pdf === "busy" || !codes.data} onClick={() => { void downloadLetter(); }}>{pdf === "busy" ? "Making the PDF…" : "Download PDF"}</Button>
-          {draft && maySend ? <Button variant="primary" icon="arrow-right" pending={send.isPending} disabled={open.length > 0} onClick={sendNow}>
+          {draft && maySend ? <Button variant="primary" icon="arrow-right" pending={send.isPending} disabled={open.length > 0 || uncoded} onClick={sendNow}>
             {open.length ? `Resolve ${open.length} to send` : "Accept codes and send"}</Button> : null}
         </>} />
       {typeof pdf === "object" ? <p className="gl-error" role="alert">We could not make the PDF. {pdf.error}</p> : null}
@@ -173,6 +182,13 @@ function Letter({ encounterId }: { encounterId: string }) {
             ))}
           </ol>
         </Card>
+        {/* The insurer's own words in full; the rail shows their first lines. */}
+        {said && (said.lead !== said.text || said.note) ? (
+          <Card title={said.title}>
+            <p className="gl-said">{said.text}</p>
+            {said.note ? <p className="gl-muted">{said.note}</p> : null}
+          </Card>
+        ) : null}
         {draft && s.checks?.length ? (
           <Card title="Insurer's checklist">
             <ul className="gl-checks">

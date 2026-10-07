@@ -11,3 +11,4 @@ test("search matches every word across fields, any case", () => {
 });
 
 test("ringgit drops the unit", () => expect(ringgit(63000)).toBe("630"));
+test("ringgit keeps both sen digits and groups thousands", () => expect([ringgit(128456050), ringgit(100), ringgit(5)]).toEqual(["1,284,560.50", "1", "0.05"]));

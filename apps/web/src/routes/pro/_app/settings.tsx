@@ -8,6 +8,7 @@ import { DemoClock } from "@/features/settings/demo-clock";
 import { offsetText, roleAreas } from "@/features/settings/rules";
 import { Section } from "@/features/settings/section";
 import { Watches } from "@/features/settings/watches";
+import { countOf } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import { signOut } from "@/lib/session";
 import "@/styles/pages/settings.css";
@@ -23,7 +24,7 @@ function Page() {
   const clock = useQuery(orpc.demo.status.queryOptions({ refetchInterval: 60_000 })).data;
   const lead = !watches && !clock ? "Your account, your watches and the demo hospital's clock." : (
     <>
-      {watches ? `${watches.length} ${watches.length === 1 ? "watch" : "watches"} running` : null}
+      {watches ? `${countOf(watches.length, "watch", "watches")} running` : null}
       {watches && clock ? " · " : null}
       {clock ? (clock.offsetMs ? <Signal tone="soon">demo clock {offsetText(clock.offsetMs)}</Signal> : "demo clock on real time") : null}
     </>

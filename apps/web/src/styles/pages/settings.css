@@ -60,4 +60,9 @@
   .settings-rows > div, .settings-row { grid-template-columns: 1fr; gap: var(--space-2); }
   .settings-jumps { justify-content: flex-start; }
   .settings-account, .settings-watches > li, .settings-submit { flex-wrap: wrap; }
+  /* The text keeps a readable width, so Stop watching and Sign out drop under it instead of squeezing it to a word a line. */
+  .settings-watch-body, .settings-account > div { flex: 1 1 12rem; }
+  /* The jumps wrap inside the card instead of pushing the whole card past the screen. */
+  .settings-jumps, .settings-segment { min-width: 0; }
+  .settings-segment { flex-wrap: wrap; border-radius: var(--radius-control); }
 }
