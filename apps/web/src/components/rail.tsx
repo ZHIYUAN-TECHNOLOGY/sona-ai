@@ -18,9 +18,10 @@ export function RightRail({ label, id, children }: { label: string; id?: string;
 }
 
 /** Main column plus a rail; the rail stays in view while the main column scrolls, and drops below on narrow screens. Pass a `<RightRail>` as `rail`. */
-export function WithRail({ rail, children }: { rail: ReactNode; children: ReactNode }) {
+/** `follow`: the rail scrolls with the page (a document such as a visit note), instead of staying in view with its own scroll (a list and its detail). */
+export function WithRail({ rail, follow, children }: { rail: ReactNode; follow?: boolean; children: ReactNode }) {
   return (
-    <div className="with-rail">
+    <div className="with-rail" data-follow={follow || undefined}>
       <div className="with-rail-main">{children}</div>
       <div className="with-rail-side">{rail}</div>
     </div>

@@ -145,7 +145,7 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
               {patient.vitals?.slice(0, Math.max(0, 3 - top.length)).map((v) => <StatCard key={v.label} title={v.label} value={v.value} caption="Latest reading" />)}
             </StatRow>
           ) : null}
-          <WithRail rail={
+          <WithRail follow rail={
             <RightRail label="Record at a glance">
               <PatientResults patientId={patient.id} limit={3} />
               <Medicines items={patient.medicines?.slice(0, 4)} more={() => setTab("medicines")} total={patient.medicines?.length ?? 0} />

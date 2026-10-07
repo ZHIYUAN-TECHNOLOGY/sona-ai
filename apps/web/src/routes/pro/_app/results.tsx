@@ -1,12 +1,12 @@
 import { can } from "@sona-ai/api/roles";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { DataTable, PersonCell, RowAction, TableToolbar, ValueCell, type Column } from "@/components/data-table";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, SearchField, Signal, Tabs } from "@/components/primitives";
-import { revealRail, WithRail } from "@/components/rail";
+import { WithRail } from "@/components/rail";
 import { PriorityCell, ResultRail } from "@/features/results/result-rail";
 import { inTab, summary, type Tab } from "@/features/results/tabs";
 import { byTriage, isNormal } from "@/features/results/triage";
@@ -20,6 +20,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 function Page() {
   const { me } = Route.useRouteContext();
+  const navigate = useNavigate();
   const allowed = can(me.role, "results.acknowledge");
   const queryClient = useQueryClient();
   const list = useQuery(orpc.results.list.queryOptions({ input: {} }));
@@ -69,7 +70,6 @@ function Page() {
 
   const n = summary(sorted);
   const pickTab = (t: Tab) => { setTab(t); setSelectedId(undefined); };
-  const review = (id: string) => { setSelectedId(id); revealRail("result-rail"); };
   return (
     <>
       <PageHeader
@@ -114,7 +114,7 @@ function Page() {
         <DataTable
           columns={columns} rows={shown} rowKey={r => r.id} selectedKey={selected?.id} loading={list.isPending}
           onRowOpen={r => setSelectedId(r.id)}
-          rowAction={r => <RowAction onClick={() => review(r.id)}>Review</RowAction>}
+          rowAction={r => <RowAction onClick={() => navigate({ to: "/pro/results/$resultId", params: { resultId: r.id } })}>Review</RowAction>}
           toolbar={(
             <TableToolbar end={<SearchField label="Search results" placeholder="Search patient or test" value={query} onChange={e => setQuery(e.target.value)} />}>
               <Tabs

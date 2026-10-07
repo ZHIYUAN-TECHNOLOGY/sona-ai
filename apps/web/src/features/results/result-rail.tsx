@@ -43,32 +43,40 @@ type Props = {
   onAcknowledge: (row: ResultRow) => void;
 };
 
-export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }: Props) {
+/** Why a result is flagged, what it rests on, and Acknowledge: the decision on a result. `band` lays it across a page. */
+export function ResultInsight({ row, rows, allowed, pending, onAcknowledge, band }: Omit<Props, "error"> & { band?: boolean }) {
   const series = seriesFor(rows, row);
   const earlier = series.length > 1 ? series[series.length - 2] : undefined;
   const unit = row.unit ? ` ${row.unit}` : "";
   const evidence = [
     { icon: "flask" as const, text: `${row.patientName} · ${row.test} ${valueOf(row)}, ${row.why ? `flagged ${row.flag}` : row.flag ? `flagged ${row.flag} by the lab` : "no flag from the lab"}` },
     ...(earlier ? [{ icon: "activity" as const, text: `${series.length} values on record; the one before was ${earlier.y}${unit} on ${earlier.x}` }] : []),
-    // When it arrived is on the card below, and the Acknowledge button says it is waiting: neither is repeated here.
     ...(row.acknowledgedAt
       ? [{ icon: "check" as const, text: `Acknowledged by ${row.acknowledgedByName ?? "a doctor"}, ${when(row.acknowledgedAt)}` }]
       : allowed ? [] : [{ icon: "user" as const, text: `Only a doctor can acknowledge. Tell the doctor on call${row.critical ? " now" : ""}.` }]),
   ];
   return (
+    <InsightCard
+      band={band}
+      label="Why this is flagged"
+      tone={row.critical ? "urgent" : isFlagged(row.flag) ? "soon" : "info"}
+      title={row.critical ? "Must not be missed" : isFlagged(row.flag) ? "Needs review" : isNormal(row.flag) ? "Routine" : "Not judged yet"}
+      lead={row.why ?? derived(row)}
+      meta={!row.why ? "From the lab flag" : row.critical ? "Call-now rule" : "Usual adult range"}
+      evidence={evidence}
+      sources={evidence.length}
+      next={!row.acknowledgedAt && allowed && !pending
+        ? { label: isNormal(row.flag) ? "Acknowledge normal" : "Acknowledge", step: "Records you as the doctor who saw this result.", onAct: () => onAcknowledge(row) }
+        : undefined}
+    />
+  );
+}
+
+export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }: Props) {
+  const series = seriesFor(rows, row);
+  return (
     <RightRail label="Selected result" id="result-rail">
-      <InsightCard
-        label="Why this is flagged"
-        tone={row.critical ? "urgent" : isFlagged(row.flag) ? "soon" : "info"}
-        title={row.critical ? "Must not be missed" : isFlagged(row.flag) ? "Needs review" : isNormal(row.flag) ? "Routine" : "Not judged yet"}
-        lead={row.why ?? derived(row)}
-        meta={!row.why ? "From the lab flag" : row.critical ? "Call-now rule" : "Usual adult range"}
-        evidence={evidence}
-        sources={evidence.length}
-        next={!row.acknowledgedAt && allowed && !pending
-          ? { label: isNormal(row.flag) ? "Acknowledge normal" : "Acknowledge", step: "Records you as the doctor who saw this result.", onAct: () => onAcknowledge(row) }
-          : undefined}
-      />
+      <ResultInsight row={row} rows={rows} allowed={allowed} pending={pending} onAcknowledge={onAcknowledge} />
       <Card>
         <div className="results-detail-head">
           <Avatar name={row.patientName} />

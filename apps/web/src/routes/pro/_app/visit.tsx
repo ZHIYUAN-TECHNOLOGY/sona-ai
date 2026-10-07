@@ -43,7 +43,7 @@ function Page() {
         <PatientStrip name={patient.name} meta={`${patient.sex.charAt(0).toUpperCase()}, ${patient.age} · ${patient.id}${patient.complaint ? ` · ${patient.complaint}` : ""}`}
           chips={patient.allergies ? <span className="visit-allergy" title={`Allergy: ${patient.allergies}`}><Chip tone="red" icon="alert">Allergy: {shortAllergy(patient.allergies)}</Chip></span> : <span className="visit-muted">No allergies recorded</span>} />
       ) : null}
-      <WithRail rail={
+      <WithRail follow rail={
         <RightRail label="The medicine order and Sona AI">
           {/* The decision first, so its checks and buttons are in view; what the record says sits under it. */}
           <div id="visit-orders">
