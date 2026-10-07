@@ -84,3 +84,6 @@
 /* Only the newest failure offers "Try again"; the rail of suggestions stays in view beside a long conversation. */
 .sona-turn:not(:last-child) .ask-failed .btn { display: none; }
 @media (min-width: 1001px) { .ask-page > .rail { position: sticky; top: var(--space-4); } }
+/* An answer keeps its line breaks (lists, paragraphs); a long link or question wraps inside its bubble. */
+.ask-answer { white-space: pre-line; }
+.frame-page.frame-page:has(> .ask-page) > .sona-thread :is(.sona-turn-q, .sona-turn-a) { overflow-wrap: anywhere; }
