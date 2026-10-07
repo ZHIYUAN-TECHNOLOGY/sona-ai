@@ -32,7 +32,7 @@
 .ci-quote { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; }
 .ci-said-urgent { color: var(--red); font-weight: 600; }
 
-@media (max-width: 900px) { .ci-cols { grid-template-columns: 1fr; } .ci-detail { padding-left: var(--space-3); } }
+@container page (max-width: 760px) { .ci-cols { grid-template-columns: 1fr; } .ci-detail { padding-left: var(--space-3); } }
 @media (prefers-reduced-motion: reduce) { .ci-row .list-chevron { transition: none; } }
 .reply-live:empty { position: absolute; }
 .check-ins .list-caption { white-space: normal; }

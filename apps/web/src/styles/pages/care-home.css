@@ -15,4 +15,4 @@
 .care-home-col { display: flex; flex-direction: column; gap: var(--gap-card); min-width: 0; }
 .care-home-status { padding: var(--space-3) var(--space-5); color: var(--muted); }
 .care-home-status:empty { display: none; }
-@media (max-width: 900px) { .care-home-grid { grid-template-columns: minmax(0, 1fr); } }
+@container page (max-width: 780px) { .care-home-grid { grid-template-columns: minmax(0, 1fr); } }

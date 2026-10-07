@@ -7,3 +7,5 @@
 .ptl-reason { display: grid; min-width: 12rem; }
 .ptl-reason .cell-clamp { color: var(--muted); font-size: var(--text-small); }
 .ptl-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+/* A narrow page: the reason gives up width first, so the row action stays in view. */
+@container page (max-width: 720px) { .ptl-reason { min-width: 9rem; } }

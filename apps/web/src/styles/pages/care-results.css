@@ -5,10 +5,10 @@
 /* The summary beside the three stat cards; they stack on a narrow screen. */
 .res-top { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--gap-card); align-items: start; }
 .res-top .stat-row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
-@media (max-width: 1100px) {
+@container page (max-width: 900px) {
   .res-top, .res-page .with-rail { grid-template-columns: minmax(0, 1fr); }
 }
-@media (max-width: 640px) {
+@container page (max-width: 600px) {
   .res-top .stat-row { grid-auto-flow: row; }
 }
 
@@ -18,10 +18,10 @@
 /* A written result ("Mixed growth of >3 organisms…") wraps in its cell, so Status and Received stay on screen. */
 .res-page td .cell-value { display: inline-block; max-width: 22ch; }
 .res-page td .chip { overflow-wrap: normal; }
-/* On a phone each result is a short stack (test and date, then value and status), so nothing scrolls sideways. */
+/* In a narrow column each result is a short stack (test and date, then value and status), so nothing scrolls sideways. */
 .res-page .with-rail-main { container-type: inline-size; }
 .res-when { display: none; }
-@container (max-width: 560px) {
+@container (max-width: 760px) {
   .res-page .table thead, .res-page .table :is(th, td):nth-child(n + 4) { display: none; }
   .res-page .table, .res-page .table tbody { display: block; }
   .res-page .table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) max-content; align-items: center; gap: var(--space-1) var(--space-3); height: auto; padding: var(--space-3); }

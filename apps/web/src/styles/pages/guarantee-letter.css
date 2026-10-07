@@ -26,7 +26,16 @@
 .gl-text:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
 .gl-doc-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--hairline); }
 
-@media (max-width: 720px) { .gl-steps { grid-auto-flow: row; } .gl-step::after { display: none; } }
+/* Four steps keep their row down to a phone-wide page; then each step is a line, its mark beside the label. */
+@container page (max-width: 460px) {
+  .gl-steps { grid-auto-flow: row; }
+  .gl-step { grid-template-columns: 28px minmax(0, 1fr); column-gap: var(--space-3); align-items: center; }
+  .gl-step > :not(.gl-mark) { grid-column: 2; }
+  .gl-mark { grid-row: span 2; }
+  .gl-step::after { display: none; }
+}
+/* A narrow page: the citation gives up width first, so the code's kind stays in view. */
+@container page (max-width: 720px) { .gl-cite { min-width: 10rem; } }
 
 /* The insurer's checklist: a met criterion is calm with a check, an open one amber with what it is missing. */
 .gl-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }

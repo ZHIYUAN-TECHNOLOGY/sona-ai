@@ -63,7 +63,7 @@
 .sr-check[data-on] { border-color: var(--green); background: var(--green-wash); color: var(--green); }
 .sr-check[data-on] .sr-check-box { background: var(--green); border-color: var(--green); color: var(--surface); }
 
-@media (max-width: 900px) {
+@container page (max-width: 760px) {
   .sr-body { grid-template-columns: 1fr; }
   .sr-viewer { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; height: 70vh; }
   .sr-thumbs { grid-row: 3; grid-column: 1; flex-direction: row; }

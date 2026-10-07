@@ -115,7 +115,7 @@ function Visit({ encounterId }: { encounterId: string }) {
         {({ plan: p }) => (
           <>
             {patient ? <PatientStrip name={patient.name} meta={patient.subtitle} chips={p.bed ? <Chip>{p.bed}</Chip> : undefined} /> : null}
-            <WithRail rail={
+            <WithRail first rail={
               <RightRail label="Sona insight">
                 <InsightCard label="Sona insight" title={done ? "Discharge approved" : clear ? "Ready to approve" : "Not ready yet"} sources={checks.length || 1}
                   lead={clear ? `Every discharge check has passed for ${bed}.` : `${things(blocked.length)} to clear before ${bed} can be released.`}
@@ -139,7 +139,7 @@ function Visit({ encounterId }: { encounterId: string }) {
                     <section>
                       <h2 className="dp-over">Take-home medicines</h2>
                       {p.meds.length
-                        ? <div>{p.meds.map((m, i) => { const [name, ...rest] = words(m); return <ListRow key={i} icon="pill" title={name ?? "Medicine"} caption={rest.join(" · ")} />; })}</div>
+                        ? <ul className="list">{p.meds.map((m, i) => { const [name, ...rest] = words(m); return <ListRow key={i} icon="pill" title={name ?? "Medicine"} caption={rest.join(" · ")} />; })}</ul>
                         : <p className="dp-note">None recorded.</p>}
                       {mayEdit ? (
                         <div className="dp-foot">

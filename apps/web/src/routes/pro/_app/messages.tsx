@@ -81,10 +81,13 @@ function Page() {
   const visible = (filter === "waiting" ? waiting : threads).filter(t => !needle || `${t.name} ${t.lastText ?? ""}`.toLowerCase().includes(needle));
   const selected = visible.find(t => t.patientId === (picked ?? patient)) ?? visible[0];
   const urgent = waiting.filter(t => t.label === "urgent").length;
-  // One column below 1000px: the thread opens under the whole inbox, so a picked row brings it into view.
+  // On a narrow page the thread opens under the whole inbox, so a picked row brings it into view.
   const pick = (id: string) => {
     setPicked(id);
-    if (window.matchMedia("(max-width: 1000px)").matches) requestAnimationFrame(() => document.querySelector(".msg-panes > .msg-thread")?.scrollIntoView({ block: "start" }));
+    requestAnimationFrame(() => {
+      const inbox = document.querySelector(".msg-panes > .msg-inbox"), thread = document.querySelector(".msg-panes > .msg-thread");
+      if (inbox && thread && thread.getBoundingClientRect().top >= inbox.getBoundingClientRect().bottom) thread.scrollIntoView({ block: "start" });
+    });
   };
   const lead = (
     <>

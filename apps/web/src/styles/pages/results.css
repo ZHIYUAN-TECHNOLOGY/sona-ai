@@ -12,6 +12,6 @@
 .results-confirm { display: flex; align-items: center; gap: var(--space-2); }
 .results-error { color: var(--red); margin: var(--space-2) 0 0; }
 /* On a laptop the Received column gives way; the rail's detail card still shows when the result arrived. */
-@media (max-width: 1480px) {
+@container page (max-width: 1212px) {
   .table:has(.results-received) th:nth-child(5), .table td:has(> .results-received) { display: none; }
 }

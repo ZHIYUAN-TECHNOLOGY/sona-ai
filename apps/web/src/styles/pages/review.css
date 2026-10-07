@@ -1,6 +1,11 @@
 /* Review queue: a queue list, the open item as a document, one Sona panel in the rail. Reply drafts reuse messages.css. */
 .rv-body { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: var(--gap-card); align-items: start; }
-@media (max-width: 860px) { .rv-body { grid-template-columns: minmax(0, 1fr); } }
+@container page (max-width: 600px) { .rv-body { grid-template-columns: minmax(0, 1fr); } }
+/* The queue and the open draft need the width: until the page is wide, Sona's panel sits above them instead of beside. */
+@container page (max-width: 1250px) {
+  .with-rail:has(.rv-body) { grid-template-columns: minmax(0, 1fr); }
+  .with-rail:has(.rv-body) > .with-rail-side { order: -1; position: static; max-height: none; margin: 0; padding: 0; overflow: visible; }
+}
 .rv-queue { display: contents; } .rv-queue > :first-child { grid-column: 1 / -1; }
 .rv-queue .chip, .rv-doc .chip { flex: none; }
 .rv-strip strong { flex: 1 1 0; min-width: 12ch; overflow-wrap: anywhere; }

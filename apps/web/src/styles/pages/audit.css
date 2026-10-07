@@ -14,3 +14,4 @@ td:has(> .au-gap) { width: 100%; }
 .au-facts dd { margin: 0; color: var(--ink); text-align: right; }
 .au-note { margin: 0; color: var(--muted); font-size: var(--text-small); }
 .au-note[role="alert"] { color: var(--red); }
+@container page (max-width: 720px) { .au-patient { min-width: 8rem; } }

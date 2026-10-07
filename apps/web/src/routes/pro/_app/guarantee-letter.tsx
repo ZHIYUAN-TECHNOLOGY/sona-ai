@@ -170,7 +170,7 @@ function Letter({ encounterId }: { encounterId: string }) {
         </>} />
       {typeof pdf === "object" ? <p className="gl-error" role="alert">We could not make the PDF. {pdf.error}</p> : null}
       {patient ? <PatientStrip name={patient.name} meta={patient.subtitle} /> : null}
-      <WithRail rail={<RightRail label="What to decide">{insight}</RightRail>}>
+      <WithRail first rail={<RightRail label="What to decide">{insight}</RightRail>}>
         <Card title="Claim status">
           <ol className="gl-steps">
             {stepsOf(s).map((step, i) => (

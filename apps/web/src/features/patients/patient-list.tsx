@@ -178,7 +178,7 @@ export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: Pati
         <StatCard title="Record incomplete" value={stat("incomplete")} tone="soon" caption="Details missing" {...filter("incomplete")} />
       </StatRow>
       {insight ? (
-        <WithRail
+        <WithRail first
           rail={
             <RightRail label="Who to see first">
               <InsightCard label={insight.label} title={insight.title} lead={insight.lead} tone={insight.tone} evidence={insight.evidence}
