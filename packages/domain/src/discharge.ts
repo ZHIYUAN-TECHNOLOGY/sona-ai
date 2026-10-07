@@ -16,7 +16,7 @@ import type { Encounter, Patient, PrescriptionCheck, Task } from "./types";
 export type Language = "ms" | "en" | "zh";
 export type FollowUp = "1w" | "2w" | "4w";
 /** `checkInDays`: the check-in days the doctor chose (sorted); unset until changed, when the condition's suggestion applies (defaultCheckInDays). */
-export type DischargeState = { glReceived: boolean; medsConfirmed: boolean; followUp?: FollowUp; language: Language; checkInDays?: number[]; dischargedAt?: string; savedMinutes?: number };
+export type DischargeState = { glReceived: boolean; medsConfirmed: boolean; followUp?: FollowUp; language: Language; checkInDays?: number[]; dischargedAt?: string; savedMinutes?: number; summary?: string };
 export type MedChange = { name: string; change: "changed" | "new" | "stopped" | "unchanged"; detail: string };
 /** One recorded observation: its latest reading and when it was taken (ISO). */
 export type Vital = { kind: string; value: number; unit: string; at: string };

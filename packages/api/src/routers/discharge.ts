@@ -29,9 +29,10 @@ const modelDraft = (encounterId: string) => and(eq(provenance.encounterId, encou
  * The visit's plan as its own rows give it: the patient's record, the bed and fit time from their admission, the
  * guarantee letter that stay waits on, the chart's latest reading of each observation, and whether a model's draft is
  * stored. `waits` is the rest of what the ward shows as blocking the bed (ward.ts, bedBlockers): pending results and
- * a ride still to arrange. What the app shows (discharge.plan) and what the server checks (discharge.request) are this one read.
+ * a ride still to arrange. `state` is the saved discharge state and `checks` the readiness list: what the app shows
+ * (discharge.plan) and what the server checks (discharge.request) are this one read, so they can never disagree.
  */
-async function visitPlan(db: Context["db"], encounter: EncounterSnapshot) {
+async function visitPlan(db: Context["db"], hospitalId: string, encounter: EncounterSnapshot, at: Date) {
   const { encounterId } = encounter;
   const [row] = await db.select({ patient: patients, admission: admissions }).from(encounters)
     .innerJoin(patients, eq(patients.id, encounters.patientId))
@@ -44,6 +45,7 @@ async function visitPlan(db: Context["db"], encounter: EncounterSnapshot) {
     db.select({ id: provenance.id }).from(provenance).where(modelDraft(encounterId)).limit(1),
     db.select({ id: labResults.id, test: labResults.test }).from(labResults).where(and(eq(labResults.patientId, patient.id), eq(labResults.flag, "pending"))),
   ]);
+  const openFindings = await listFindings(db, hospitalId, at, and(eq(findings.encounterId, encounterId), eq(findings.status, "open"))); // lane F6
   const gl = letters[0];
   // Oldest first, so the last reading of each kind is the one kept.
   const latest = [...new Map(chart.map(o => [o.kind, o])).values()];
@@ -57,7 +59,9 @@ async function visitPlan(db: Context["db"], encounter: EncounterSnapshot) {
     ...pending.map(r => ({ id: `result-${r.id}`, label: r.test, detail: "Pending" })),
     ...(transport ? [{ id: "transport", ...transport }] : []),
   ];
-  return { patient, admission, gl, person, plan: planFor({ ...person, bed: admission?.bed, visit }), waits };
+  const plan = planFor({ ...person, bed: admission?.bed, visit });
+  const state: DischargeState = { ...EMPTY_DISCHARGE, ...encounter.state.discharge, glReceived: !gl || gl.status === "received" };
+  return { patient, admission, gl, person, plan, waits, state, openFindings, checks: dischargeChecks(state, plan, openFindings, waits) };
 }
 
 /**
@@ -76,10 +80,11 @@ export const dischargeRouter = {
     return answerOnce(context.db, input.encounterId, "discharge-draft", asked,
       async () => ({ ...await (context.models ?? stubModels).draftDischarge(asked), language: input.language }), () => recordSources(patient));
   }),
-  /** The discharge card's plan and what else holds the bed, read from the visit's rows (visitPlan): the same facts discharge.request checks. */
-  plan: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context: { db, hospitalId }, input }) => {
-    const { plan, waits } = await visitPlan(db, await loadEncounter(db, hospitalId, input.encounterId));
-    return { plan, waits };
+  /** The discharge card's plan, what else holds the bed, the saved choices and the readiness checks discharge.request enforces (visitPlan). */
+  plan: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
+    const { db, hospitalId } = context;
+    const { plan, waits, state, checks } = await visitPlan(db, hospitalId, await loadEncounter(db, hospitalId, input.encounterId), clockOf(context));
+    return { plan, waits, state: { ...state, checkInDays: checkInDaysOf(state, plan) }, checks };
   }),
   /** Inline fixes on the discharge card. They do not touch prescribing, so the revision stays put. */
   update: protectedProcedure.input(dischargeUpdateSchema).handler(async ({ context: { db, hospitalId }, input }) => {
@@ -100,21 +105,19 @@ export const dischargeRouter = {
     if (prior) return prior;
 
     // The patient's own plan, from their record and this visit's rows: its blockers and take-home list are what the server checks.
-    const { patient, admission, gl, person, plan, waits } = await visitPlan(db, encounter);
-    if (!admission) throw new ORPCError("PRECONDITION_FAILED", { message: "The patient is not admitted" });
-    const saved: DischargeState = { ...EMPTY_DISCHARGE, ...encounter.state.discharge, glReceived: !gl || gl.status === "received" };
-    // The check-in days go with the discharge: the ones sent now, else the saved pick, else the condition's suggestion.
-    const state: DischargeState = { ...saved, checkInDays: input.checkInDays ?? checkInDaysOf(saved, plan) };
     // The context's clock, so the check-in schedule follows a test's (or the demo's) day, not the wall clock.
     const at = clockOf(context);
+    const { patient, admission, person, plan, waits, state: saved, openFindings, checks } = await visitPlan(db, hospitalId, encounter, at);
+    if (!admission) throw new ORPCError("PRECONDITION_FAILED", { message: "The patient is not admitted" });
+    // The check-in days go with the discharge: the ones sent now, else the saved pick, else the condition's suggestion.
+    const state: DischargeState = { ...saved, checkInDays: input.checkInDays ?? checkInDaysOf(saved, plan) };
     // A bed nobody marked fit has no wait to count from, so its receipt claims no minutes saved.
     const fitAt = admission.fitAt ?? undefined;
-    const openFindings = await listFindings(db, hospitalId, at, and(eq(findings.encounterId, input.encounterId), eq(findings.status, "open"))); // lane F6
     // The domain guard decides; the refusal carries the blocked checks so the app can show them.
     const decision = decideDischarge(state, plan, input, fitAt, at, openFindings, waits);
     if (decision.status === "refused") throw new ORPCError("PRECONDITION_FAILED", {
       message: decision.reason === "unapproved" ? "Discharge needs a named approver" : "Discharge is blocked",
-      data: { reason: decision.reason, blockers: dischargeChecks(state, plan, openFindings, waits).filter(c => c.status === "blocked") },
+      data: { reason: decision.reason, blockers: checks.filter(c => c.status === "blocked") },
     });
     const { savedMinutes } = decision;
     const followUps = dischargeTasks(person, state, plan, at);

@@ -53,8 +53,9 @@ test("results list one patient's results when asked, and a rule-flagged result s
 
   const hers = await api.results.list({ patientId: "SYN-1042" });
   expect(hers.map(r => [r.id, r.why])).toEqual([[critical.id, "Potassium 6.8 mmol/L is above the call-now limit of 6 mmol/L"]]);
-  // A flag no rule set (the seeded "low") carries no reason; the filters combine; another hospital sees nothing.
-  expect((await api.results.list({ patientId: "SYN-1086" })).map(r => [r.test, r.why])).toEqual([["Potassium", undefined], ["Hb", undefined]]);
+  // A seeded "low" the usual adult range agrees with says which range (his, for Hb); the filters combine; another hospital sees nothing.
+  expect((await api.results.list({ patientId: "SYN-1086" })).map(r => [r.test, r.why])).toEqual([
+    ["Potassium", "Potassium 3.1 mmol/L is below the usual adult range of 3.5 to 5.1 mmol/L"], ["Hb", "Hb 9.8 g/dL is below the usual adult range of 13.5 to 17.5 g/dL"]]);
   expect(await api.results.list({ patientId: "SYN-1086", unacknowledged: true })).toHaveLength(2);
   expect((await api.results.list()).length).toBe(3);
   expect(await as("dr-other").results.list({ patientId: "SYN-1042" })).toEqual([]);

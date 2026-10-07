@@ -103,6 +103,16 @@ test("a result entered by a signed-in clinician past a call-now limit arrives fl
   expect((await (await otherHospital(db, as)).results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" }).catch(e => e)).code).toBe("NOT_FOUND");
 });
 
+test("a result outside the usual adult range arrives flagged high or low, a lab's own flag is kept as sent, and critical still wins", async () => {
+  const { api } = await signedIn();
+  expect(await api.results.receive({ patientId: "SYN-1042", test: "CRP", value: "86", unit: "mg/L" }))
+    .toMatchObject({ flag: "high", critical: false, why: "CRP 86 mg/L is above the usual adult range of up to 5 mg/L" });
+  expect(await api.results.receive({ patientId: "SYN-1042", test: "CRP", value: "86", unit: "mg/L", flag: "normal" })).toMatchObject({ flag: "normal" });
+  expect(await api.results.receive({ patientId: "SYN-1042", test: "Troponin", value: "40", unit: "ng/L", flag: "H" })).toMatchObject({ flag: "high", why: undefined });
+  expect(await api.results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L", flag: "low" })).toMatchObject({ flag: "critical low", critical: true });
+  expect((await api.results.receive({ patientId: "SYN-1042", test: "CRP", value: "86", unit: "mg/L", flag: "abnormal-ish" }).catch(e => e)).code).toBe("BAD_REQUEST");
+});
+
 test("the lab's own system posts a result with its shared secret: refused without the right one, closed while no secret is set, and a right one lands as results.receive does and is announced", async () => {
   const { api, db, clock } = await signedIn();
   const SECRET = "lab-secret-for-this-test-only";
