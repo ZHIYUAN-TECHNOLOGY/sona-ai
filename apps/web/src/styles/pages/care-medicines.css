@@ -49,3 +49,19 @@
 .med-saved { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted); }
 .med-status .med-note { display: block; }
 .med-week i[data-state="missed"], .med-legend i[data-state="missed"] { background: var(--amber-wash); }
+
+/* Worst case: long medicine names wrap whole (no mid-word ellipsis); the status drops under the name when the row is narrow. */
+.med-page { container-type: inline-size; }
+.med-page .list-title, .med-page .list-caption { text-overflow: clip; overflow-wrap: anywhere; }
+.med-page .list-text { flex-basis: 10rem; }
+.med-page .list-text ~ * { margin-inline-start: auto; }
+.med-week { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.med-count { display: grid; justify-items: center; color: var(--muted); font-size: 15px; text-align: center; }
+.med-count strong { color: var(--ink); font-size: 17px; }
+/* A phone-width week reads as one row per day. */
+@container (max-width: 520px) {
+  .med-week { grid-template-columns: minmax(0, 1fr); }
+  .med-week li { grid-template-columns: 3.5rem minmax(0, 1fr); justify-items: start; align-items: center; padding: var(--space-2) var(--space-3); }
+  .med-dots { display: flex; flex-wrap: wrap; }
+  .med-count { display: block; text-align: start; }
+}
