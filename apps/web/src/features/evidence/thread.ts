@@ -40,7 +40,11 @@ export function apply(turn: Turn, event: StreamEvent): Turn {
 export const leadFilm = (references: Reference[]) => (references[0]?.kind === "image" ? references[0].n : undefined);
 
 /** The film an answer carries in place (a page's Sona thread): the leading source, when it is a visit's X-ray. */
-export const answerFilm = (references: Reference[]) => (leadFilm(references) && references[0]?.encounterId ? references[0] : undefined);
+/** The film that leads an answer; on a patient's page (`encounterId`) only that visit's own film, never another patient's. */
+export const answerFilm = (references: Reference[], encounterId?: string) => {
+  const film = leadFilm(references) && references[0]?.encounterId ? references[0] : undefined;
+  return film && (!encounterId || film.encounterId === encounterId) ? film : undefined;
+};
 
 /** The earlier turns the way the router expects them: at most four, answered ones only, the answer as plain text. */
 export const threadOf = (turns: Turn[]) =>

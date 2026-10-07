@@ -38,7 +38,7 @@ async function askCare(question: string): Promise<ReactNode> {
 // ponytail: the ask spec's plain text only (lead, rows, review). Its actions are op strings the page owns, so rows show
 // as plain rows; a page that wants them registers its own handler with useSonaAsk. The server reads the hospital's
 // Today, Ward and Tasks itself (scope "web") and always answers, by rule when the model is off.
-async function askPro(question: string): Promise<ReactNode> {
+export async function askPro(question: string): Promise<ReactNode> {
   const res = (await client.ask.free({ scope: "web", question })) as {
     waking?: number;
     spec?: { root: string; elements: Record<string, { type: string; props: Record<string, unknown>; children?: string[] }> };
