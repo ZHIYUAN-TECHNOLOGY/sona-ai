@@ -1,5 +1,7 @@
 import { ErrorLine, Press, PressScale } from "@/components/sona/parts";
 import * as WebBrowser from "expo-web-browser";
+import { Image } from "expo-image";
+import { router } from "expo-router";
 import { QuestionList } from "@/components/sona/list";
 import { MarkedText, TINT, segments, type Mark } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
@@ -19,9 +21,13 @@ import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { StreamedLead } from "@/features/encounter/conversation";
 import type { Patient } from "@/features/encounter/types";
+import { ImageEdge, VIEWING, type ImageMarker } from "@/features/imaging/viewer";
+import { markerAt } from "@/features/imaging/zoom";
+import { api } from "@/features/live";
 import { threadBefore, useLiveEvidence, type EvidenceStep, type ServerEvidence, type Turn } from "@/features/live/evidence-sync";
 import { wakingOf } from "@/features/live/waking";
 import { basis, calmTerms, fallbackNote, forPatient, searchedLine, sections, stepLines, strength, unanswered } from "./answer";
+import { dataUri, filmMarkers, leadImage } from "./film";
 import { authoredAnswer, authoredReferences, curb65, quotedClaims, severityApplies, type Claim, type Reference } from "./model";
 
 /*
@@ -94,6 +100,8 @@ function Answer({ question, encounterId, answerKey, thread, patient, lead = fals
   const fallback = failed ? undefined : fallbackNote(data);
   // Tied to the patient once the server's CURB-65 is in (or, without the server, the chart's own).
   const mine = patient && !writing && forPatient(question, patient.name.split(" ")[0]!, data ? data.curb65 : curb65(patient));
+  // An answer about the patient's X-ray leads with the film itself, its findings ringed, above the claims.
+  const film = shown && leadImage(shown.references);
 
   return <View style={{ gap: 14 }}>
     {/* The steps, folded to one line: writing while the answer streams in, then what was searched, read and cited. */}
@@ -108,6 +116,7 @@ function Answer({ question, encounterId, answerKey, thread, patient, lead = fals
         {rests ? <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{rests}</Text> : null}
         {mine && <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>{mine}</Text>}
       </Animated.View>}
+      {film && <Animated.View entering={at(2)}><FilmLead reference={film} /></Animated.View>}
       {!shown ? <Text style={{ ...type.callout, color: palette.muted }}>Live mode answers this question from PubMed and your library. Switch it on in Settings.</Text>
         : shown.enough ? sections(shown.claims).map((section, i) => <Animated.View key={section.topic} entering={at(3 + i)} style={{ gap: 10 }}>
           {section.title && <Text style={{ ...type.overline, color: palette.muted }}>{section.title}</Text>}
@@ -333,7 +342,8 @@ function SourceCard({ source, index, pos, left, width, step, flash }: { source: 
         <Text numberOfLines={1} style={{ ...type.caption, flex: 1, color: palette.muted, fontVariant: ["tabular-nums"] }}>{source.year}{source.from ? ` · ${source.from}` : ""}</Text>
       </View>
       <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{source.title}</Text>
-      <MarkedText selectable={false} text={source.text} style={{ ...type.footnote, flex: 1, color: palette.ink }} />
+      {/* An image source is the film, small, with its findings ringed; the reading stays in the lead and the imaging screen. */}
+      {source.kind === "image" ? <Film reference={source} style={{ flex: 1 }} /> : <MarkedText selectable={false} text={source.text} style={{ ...type.footnote, flex: 1, color: palette.ink }} />}
       {source.url ? <Pressable accessibilityRole="link" accessibilityLabel={`Open the PubMed abstract for ${source.title}`} hitSlop={8} onPress={() => { void WebBrowser.openBrowserAsync(source.url!).catch(() => {}); }} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
         <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Open abstract</Text>
         <Icon name="arrow.up.right" size={10} color={palette.blue} />
@@ -341,6 +351,66 @@ function SourceCard({ source, index, pos, left, width, step, flash }: { source: 
     </Surface>
     <Animated.View pointerEvents="none" style={[{ position: "absolute", inset: 0, borderRadius: radius.group, borderWidth: 2, borderColor: palette.blue, backgroundColor: "rgba(36,91,204,0.06)" }, ring]} />
   </Animated.View>;
+}
+
+/*
+ * The patient's film in the answer: fetched once per visit for the session (the bytes are large, and an answer re-renders
+ * often), shown as it is stored with the findings read from it ringed at their points. No zoom here: the film opens the
+ * visit's imaging screen, where the viewer already has pinch, torch and the findings list. Nothing moves while idle.
+ */
+type FilmData = { uri: string; markers: ImageMarker[] };
+const films = new Map<string, Promise<FilmData>>();
+function filmOf(encounterId: string) {
+  let film = films.get(encounterId);
+  if (!film) {
+    film = Promise.all([api.xray.image({ encounterId }), api.findings.list({ encounterId })]).then(([image, findings]) => ({ uri: dataUri(image), markers: filmMarkers(findings, image.key) }));
+    // A failed fetch is not kept, so the next answer about this visit asks again.
+    film.catch(() => films.delete(encounterId));
+    films.set(encounterId, film);
+  }
+  return film;
+}
+function useFilm(encounterId?: string) {
+  const [film, setFilm] = useState<FilmData | "failed">();
+  useEffect(() => {
+    if (!encounterId) { setFilm("failed"); return; }
+    let gone = false;
+    filmOf(encounterId).then(f => { if (!gone) setFilm(f); }, () => { if (!gone) setFilm("failed"); });
+    return () => { gone = true; };
+  }, [encounterId]);
+  return film;
+}
+
+const RING = 24;
+/** The film with its findings ringed, dark while it loads (its title in place of the film), one line when it cannot be shown; tapping opens the visit's imaging screen. */
+function Film({ reference, style }: { reference: Reference; style: { flex: number } | { height: number } }) {
+  const film = useFilm(reference.encounterId);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const [aspect, setAspect] = useState(0);
+  const markers = film && film !== "failed" ? film.markers : [];
+  const open = () => router.push({ pathname: "/xray", params: { encounterId: reference.encounterId } });
+  return <Pressable accessibilityRole="imagebutton" accessibilityLabel={`${reference.title}${markers.length ? `, ${markers.length} findings marked` : ""}`} accessibilityHint="Opens the visit's imaging" onPress={open} style={[VIEWING, style]}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98} style={{ flex: 1 }}>
+    {film === "failed" ? <Text style={{ ...type.footnote, color: palette.line, margin: 12 }}>Film not available</Text>
+      : !film ? <Text numberOfLines={2} style={{ ...type.footnote, color: palette.line, margin: 12 }}>{reference.title}</Text>
+      : <View style={{ flex: 1 }} onLayout={e => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+        <Image source={{ uri: film.uri }} contentFit="contain" style={{ flex: 1 }} transition={0} onLoad={e => { if (e.source.width && e.source.height) setAspect(e.source.width / e.source.height); }} />
+        {aspect > 0 && box.w > 0 && markers.map(m => { const [px, py] = markerAt(box.w, box.h, aspect, m.x, m.y);
+          return <View key={m.id} pointerEvents="none" style={{ position: "absolute", left: px - RING / 2, top: py - RING / 2, width: RING, height: RING, borderRadius: RING / 2, borderWidth: 2, alignItems: "center", justifyContent: "center", borderColor: "#9CC0FF", backgroundColor: "rgba(36,91,204,0.3)" }}>
+            <Text style={{ ...type.caption, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{m.n}</Text>
+          </View>; })}
+      </View>}
+    <ImageEdge />
+  </PressScale>}</Pressable>;
+}
+
+/** The film as the answer's lead: its title, the film with its findings ringed, and the reading in two lines that open on a tap. */
+function FilmLead({ reference }: { reference: Reference }) {
+  const [more, setMore] = useState(false);
+  return <View style={{ gap: 8 }}>
+    <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{reference.title}</Text>
+    <Film reference={reference} style={{ height: 220 }} />
+    <Text selectable numberOfLines={more ? undefined : 2} onPress={() => setMore(m => !m)} accessibilityRole="button" accessibilityState={{ expanded: more }} accessibilityHint={more ? "Shows less of the reading" : "Shows the whole reading"} style={{ ...type.footnote, color: palette.muted }}>{reference.text}</Text>
+  </View>;
 }
 
 const R = 34, C = 2 * Math.PI * R, SWEEP = 0.75;
