@@ -30,4 +30,11 @@
 /* Twenty sources with PubMed-length titles made the rail thousands of pixels tall: each shows three lines until it is picked. */
 .ev-source:not([data-picked="true"]) :is(.ev-source-title, .ev-source-text) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
 .ev-source > a { display: inline-block; padding: 0 var(--space-3) var(--space-3); font-size: var(--text-small); color: var(--blue); }
+
+/* A cited X-ray: the film leads the card, findings boxed on it (marks.css), the reading one line until picked. */
+.ev-film-image { position: relative; display: block; margin: var(--space-2) 0; border-radius: var(--radius-control); overflow: hidden; background: var(--ink); transition: transform var(--quick) var(--ease); }
+.ev-film-image img { display: block; width: 100%; height: auto; }
+.ev-film-wait { display: grid; place-items: center; aspect-ratio: 4 / 5; padding: var(--space-4); font-size: var(--text-small); color: var(--placeholder); background: var(--fill-selected); text-align: center; }
+.ev-film > button:active .ev-film-image { transform: scale(0.97); }
+.ev-film:not([data-picked="true"]) .ev-source-text { -webkit-line-clamp: 1; line-clamp: 1; }
 .ev-decide { margin: var(--space-3) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--hairline); font-size: var(--text-small); color: var(--muted); }

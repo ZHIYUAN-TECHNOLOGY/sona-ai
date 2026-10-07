@@ -9,11 +9,16 @@ import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
 import { Button, Card, Chip, Field, ListCard, ListRow, Select, Signal, Skeleton } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
-import { boxStyle, messageOf, toBase64 } from "@/features/library/files";
+import { FindingMarks, filmUrl, onImage as readFrom } from "@/features/imaging/marks";
+import { messageOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
 import "@/styles/pages/xray.css";
 
-export const Route = createFileRoute("/pro/_app/xray")({ component: Page });
+export const Route = createFileRoute("/pro/_app/xray")({
+  // An answer's "Open film" link preselects the visit it cites.
+  validateSearch: (search: Record<string, unknown>): { encounter?: string } => (typeof search.encounter === "string" && search.encounter ? { encounter: search.encounter } : {}),
+  component: Page,
+});
 
 /** The follow-up test as the API writes it on the visit (findings.ts testOf). */
 const testOf = (action?: string | null) => action?.split(/,| at /)[0]?.trim() || "follow-up test";
@@ -26,8 +31,8 @@ function Page() {
   const mayUpload = can(me.role, "xray.upload");
   const queryClient = useQueryClient();
   const patients = useQuery(orpc.patients.list.queryOptions());
-  const [encounterId, setEncounterId] = useState("");
-  // The image sent from this browser, by storage key: the server has no way to send a stored image back.
+  const [encounterId, setEncounterId] = useState(Route.useSearch().encounter ?? "");
+  // The image sent from this browser, by storage key: shown at once, before the stored copy is fetched back.
   const [sent, setSent] = useState<{ key: string; url: string }>();
   const [zoom, setZoom] = useState(1);
   const [stream, setStream] = useState<MediaStream>();
@@ -61,10 +66,11 @@ function Page() {
   };
 
   const data = read.data;
-  const shown = data && sent?.key === data.key ? sent.url : undefined;
-  // Only findings the server marked as read from this very image are drawn on it.
+  // A film added elsewhere, or in an earlier session, comes back from storage.
+  const stored = useQuery({ ...orpc.xray.image.queryOptions({ input: { encounterId } }), enabled: Boolean(data) && sent?.key !== data?.key, retry: false, staleTime: Infinity });
+  const shown = !data ? undefined : sent?.key === data.key ? sent.url : stored.data && stored.data.key === data.key ? filmUrl(stored.data) : undefined;
   const all = findings.data ?? [];
-  const onImage = data ? all.filter(f => f.imageKey === data.key && f.status !== "dismissed") : [];
+  const onImage = readFrom(all, data?.key);
 
   const mayDetect = can(me.role, "findings.detect");
   const mayDecide = can(me.role, "findings.track");
@@ -219,17 +225,17 @@ function Page() {
                 <div className="xr-scroll">
                   <div className="xr-image" style={zoom > 1 ? { width: `${zoom * 100}%` } : undefined}>
                     <img src={shown} alt="Chest X-ray added for this visit" />
-                    {onImage.map((f, i) => f.location.box && <div key={f.id} className="xr-box" style={boxStyle(f.location.box)}><span>{i + 1}</span></div>)}
+                    <FindingMarks findings={onImage} />
                   </div>
                 </div>
               ) : (
                 <div className="xr-drop">
                   <Icon name="scan" size={32} />
-                  {encounterId && read.isPending ? <Skeleton width={220} height={18} /> : (
+                  {encounterId && (read.isPending || (hasImage && stored.isPending)) ? <Skeleton width={220} height={18} /> : (
                     <>
-                      <strong>{!encounterId ? "Choose a patient first" : hasImage ? "This visit's X-ray was added elsewhere" : mayUpload ? "Drop a chest X-ray here" : "No X-ray for this visit yet"}</strong>
+                      <strong>{!encounterId ? "Choose a patient first" : hasImage ? "This visit's X-ray could not be fetched" : mayUpload ? "Drop a chest X-ray here" : "No X-ray for this visit yet"}</strong>
                       <span>{!encounterId ? "Then drop a chest X-ray here or choose a file."
-                        : hasImage ? "It cannot be shown in this browser yet. Add it again here to see it."
+                        : hasImage ? "Try again, or add it again here to see it."
                         : mayUpload ? "Or choose a file, or take a picture. PNG or JPEG."
                         : "Only doctors can add an X-ray."}</span>
                     </>
