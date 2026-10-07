@@ -22,7 +22,8 @@
 .visit-section { display: grid; gap: var(--space-2); margin-bottom: var(--space-3); }
 .visit-section label { font-size: var(--text-overline); font-weight: 600; letter-spacing: var(--track-overline); text-transform: uppercase; color: var(--muted); }
 .visit-note textarea, .visit-orders input { width: 100%; font: inherit; line-height: var(--line-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); }
-.visit-note textarea { resize: none; field-sizing: content; min-height: 4.5rem; }
+/* A dictated section grows with its text up to most of the screen, then scrolls, so the next section stays in reach. */
+.visit-note textarea { resize: none; field-sizing: content; min-height: 4.5rem; max-height: 60vh; }
 .visit-note textarea[readonly] { background: var(--canvas); }
 .visit-note textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
 .visit-proposal { display: flex; gap: var(--space-3); align-items: flex-start; justify-content: space-between; background: var(--blue-wash); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); }
@@ -42,8 +43,14 @@
 /* Medicine entry in the orders rail */
 .visit-row-actions { display: inline-flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: flex-end; }
 /* In the narrow rail a medicine's name keeps its room: the chip and buttons drop under it. */
-.visit-med-list .list-row { flex-wrap: wrap; }
-.visit-med-list .list-text { flex: 1 1 9rem; }
+.visit-orders .list-row { flex-wrap: wrap; }
+.visit-orders .list-text { flex: 1 1 9rem; }
 .visit-med-list .visit-row-actions { margin-left: auto; }
+/* The order to place reads in full; a listed medicine and its form take two lines before they cut. */
+.visit-orders :is(.list-title, .list-caption) { white-space: normal; overflow-wrap: anywhere; }
+.visit-med-list :is(.list-title, .list-caption) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.visit-med-more { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; }
+/* The next patient's name never makes the header's button wider than the header. */
+.visit-next-name { display: inline-block; max-width: min(16rem, 30vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 .visit-med-form { display: grid; gap: var(--space-3); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--hairline); }
 .visit-check { display: flex; gap: var(--space-2); align-items: flex-start; font-size: var(--text-sm, 0.875rem); }
