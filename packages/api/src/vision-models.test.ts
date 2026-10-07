@@ -112,6 +112,8 @@ test("the transcription marks each word the model nearly read differently, and l
   expect(unsureWords({ lines })).toEqual(["4mg", "oedema"]);
   // A gap the model nearly filled with a digit ("11/52"?) marks the word after it.
   expect(readingOf([tok("swelling"), tok(" ", [["1", 0.11]]), tok("1/52")]).unsure).toEqual(["1/52"]);
+  // Chinese has no spaces: only the doubted characters are marked, neighbours joined, never the whole sentence.
+  expect(readingOf([tok("请立即"), tok("拔", [["拨", 0.4]]), tok("打", [["电", 0.2]]), tok("999。"), tok("伤口保持干燥。")]).unsure).toEqual(["拔打"]);
   // Cut off while still thinking: there is no transcription.
   expect(readingOf([tok("<unused94>"), tok("thought about it")]).text).toBe("");
 });

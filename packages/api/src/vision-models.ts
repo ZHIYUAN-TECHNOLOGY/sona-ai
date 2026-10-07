@@ -169,13 +169,18 @@ export function readingOf(tokens: Token[]) {
     pending = false;
   }
   const trimmed = text.trim(), shift = text.indexOf(trimmed);
-  const unsure = [...trimmed.matchAll(/\S+/g)].flatMap(m => {
+  // A word is a run between spaces; Chinese has no spaces, so there each character is its own word and doubted
+  // neighbours are joined, or one doubted token would mark a whole sentence.
+  const unsure: { at: number; word: string }[] = [];
+  for (const m of trimmed.matchAll(/[\p{Script=Han}]|[^\s\p{Script=Han}\u3000-\u303f\uff00-\uffef]+/gu)) {
     const from = shift + m.index!, to = from + m[0].length;
-    if (!doubtedAt.some(at => at >= from && at < to)) return [];
+    if (!doubtedAt.some(at => at >= from && at < to)) continue;
     // The word without punctuation around it ("base." is "base"), so the app can find it in the sections too.
     const word = m[0].replace(/^[^\p{L}\d]+|[^\p{L}\d%]+$/gu, "");
-    return word ? [{ at: m.index! + m[0].indexOf(word), word }] : [];
-  });
+    if (!word) continue;
+    const at = m.index! + m[0].indexOf(word), last = unsure.at(-1);
+    if (last && last.at + last.word.length === at) last.word += word; else unsure.push({ at, word });
+  }
   const lines: HandwrittenNote["lines"] = [];
   let at = 0;
   for (const u of unsure) {
