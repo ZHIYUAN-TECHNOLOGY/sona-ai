@@ -7,7 +7,7 @@ import "@/styles/sona-orb.css";
 type App = "pro" | "care";
 
 // The iPhone's Aurora core orb (apps/native/components/sona/glass-orb.tsx) in GLSL: a clear glass sphere holding a
-// halftone aurora (Bayer-dithered dots, as in sona-glow) that curls around its inside; a fixed window highlight, a
+// halftone aurora (Bayer-dithered dots) that curls around its inside; a fixed window highlight, a
 // crescent reflection, a bright rim and a faint cool iridescence. `energy` raises and brightens the aurora, `ang` turns
 // it round the glass, `bloom` is the answered flash. y runs down, as on the phone.
 const FRAGMENT = `#version 300 es

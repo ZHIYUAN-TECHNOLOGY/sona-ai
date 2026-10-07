@@ -1,4 +1,4 @@
-// What Sona's two shaders share (components/sona-glow.tsx, components/sona-orb.tsx): ordered dithering, the palette and
+// What Sona's shaders share (components/sona-orb.tsx, and the composer's ring): ordered dithering, the palette and
 // a one-triangle program. The GLSL below is valid in both WebGL 1 and WebGL 2 (`#version 300 es`) shaders.
 
 /** Bayer 8x8 ordered dither: a threshold in [0, 1) per cell, so dots thin out evenly as the light fades. */
