@@ -30,7 +30,7 @@
 .lib-detail dd { margin: 0; text-align: right; }
 .lib-year { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; min-width: max-content; }
 /* A 250-character title wraps; the year, its chip and the row's buttons keep their own width beside it. */
-.lib-year .chip, tr:has(.lib-title) .table-action .btn { white-space: nowrap; }
+.lib-year .chip { white-space: nowrap; }
 /* Publisher and year share a row, so the add button stays in view in the rail. */
 .lib-pair { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem; gap: var(--space-2); }
 .lib-add textarea { min-height: 7rem; }

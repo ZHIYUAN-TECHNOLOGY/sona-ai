@@ -24,7 +24,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
   --green: #15803D; --amber: #C2410C; --red: #C81E2E; /* red: only "call the hospital now" */
   --green-wash: #F0FDF4; --amber-wash: #FFF7ED; --red-wash: #FEF2F2;
   --font: "Plus Jakarta Sans", system-ui, sans-serif;
-  --text-body: 17px; --line-body: 26px; --tap: 48px;
+  --text-body: 1.0625rem; --line-body: 1.625rem; --tap: 48px; /* 17px / 26px, in rem so 200% text scales */
 }
 
 .pro, .care {
@@ -85,7 +85,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 }
 .icon { flex: none; display: block; }
 /* Sona Care on the shared shell: patient sizes. Small text never under 15px, fields and pills at the 48px tap size. */
-.care { --radius-card: 28px; --text-small: 15px; --text-overline: 13px; --field-h: 48px; --chip-h: 30px; --avatar-sm: 36px; --side-width: 264px; }
+.care { --radius-card: 28px; --text-small: 0.9375rem; --field-h: 48px; --chip-h: 30px; --avatar-sm: 36px; --side-width: 264px; }
 
 /* Surfaces (glance-to-decision pass). One family of corners, working-screen type sizes, and the two materials
    every surface is made of: liquid glass (a lit rim over a translucent sheet) and halftone dither (Sona's mark,
@@ -104,6 +104,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
   --dither-size: 6px 6px;
 }
 :is(.pro, .care) { --glass-blur: saturate(180%) blur(22px); --shadow-card: var(--glass-rim), var(--edge), 0 1px 2px rgb(29 31 35 / 0.04), 0 8px 24px rgb(29 31 35 / 0.05); }
+/* Sona Care keeps patient sizes after the shared pass above: overlines and chips at 15px, card titles at 19px (rem, so 200% text scales). */
+.care { --text-overline: 0.9375rem; --text-title: 1.1875rem; }
 /* Clinical terms: one colour per kind, the same five the phone apps use (rules in apps/native/components/sona/marked-terms.ts). */
 .mark { padding: 0 0.28em; border-radius: 0.4em; font-weight: 500; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .mark[data-mark="alert"] { color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }

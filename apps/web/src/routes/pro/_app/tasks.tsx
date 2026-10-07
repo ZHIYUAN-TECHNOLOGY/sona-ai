@@ -6,7 +6,7 @@ import { useState, type FormEvent } from "react";
 import { TableToolbar, TextCell, DataTable, PersonCell, type Column } from "@/components/data-table";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Chip, Field, Pager, SearchField, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, Field, SearchField, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { dueKey, dueLabel, groupTasks, matchesTask, rankTasks, sourceOf, type TaskTab } from "@/features/tasks/state";
 import { isOverdue, today } from "@/features/ward/state";
@@ -20,7 +20,6 @@ const EMPTY: Record<TaskTab, string> = {
   open: "No open tasks. The ward is caught up.", mine: "No open task is yours.", dueToday: "Nothing is due today.", overdue: "Nothing is overdue.",
   done: "No task has been marked done yet.", all: "No tasks yet.",
 };
-const PAGE_SIZE = 50;
 
 function Page() {
   const { me } = Route.useRouteContext();
@@ -36,7 +35,6 @@ function Page() {
   const update = useMutation(orpc.tasks.update.mutationOptions(refresh));
   const [tab, setTab] = useState<TaskTab>("open");
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
   const [picked, setPicked] = useState<string>();
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const create = useMutation(orpc.tasks.create.mutationOptions({
@@ -55,8 +53,7 @@ function Page() {
   const task = rows.find(t => t.id === picked) ?? rows[0];
   const nextOpen = rows.find(t => !t.completed);
   const error = create.error ?? complete.error ?? update.error;
-  const pick = (next: TaskTab) => { setTab(next); setSettled([]); setPage(1); };
-  const current = Math.min(page, Math.max(1, Math.ceil(rows.length / PAGE_SIZE)));
+  const pick = (next: TaskTab) => { setTab(next); setSettled([]); };
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -65,7 +62,7 @@ function Page() {
     create.mutate({ encounterId: String(f.get("encounterId")), title: String(f.get("title")), owner: String(f.get("owner")), ...(due ? { due } : {}), requestId }, { onSuccess: () => form.reset() });
   };
   const markDone = (t: Task, variant?: "primary") => mayComplete && !t.completed
-    ? <Button className="tasks-done" size="sm" icon="check" variant={variant} pending={complete.isPending && complete.variables?.taskId === t.id} onClick={() => complete.mutate({ taskId: t.id })}>Mark done</Button>
+    ? <Button size="sm" icon="check" variant={variant} pending={complete.isPending && complete.variables?.taskId === t.id} onClick={() => complete.mutate({ taskId: t.id })}>Mark done</Button>
     : null;
 
   const columns: Column<Task>[] = [
@@ -156,12 +153,11 @@ function Page() {
         {list.error ? (
           <Card><EmptyState icon="alert" title="Tasks could not load">{list.error.message}</EmptyState></Card>
         ) : (
-          <DataTable columns={columns} rows={rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)} rowKey={t => t.id} loading={list.isPending} selectedKey={task?.id} onRowOpen={t => setPicked(t.id)}
+          <DataTable columns={columns} rows={rows} pageSize={50} noun={["task", "tasks"]} rowKey={t => t.id} loading={list.isPending} selectedKey={task?.id} onRowOpen={t => setPicked(t.id)}
             empty={<EmptyState icon="check" title={q ? `No task matches "${search}".` : EMPTY[tab]} />}
-            count={list.data && all.length > 0 && rows.length <= PAGE_SIZE ? `Showing ${formatNumber(rows.length)} of ${countOf(all.length, "task")}` : undefined}
-            footer={rows.length > PAGE_SIZE ? <Pager page={current} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} noun={["task", "tasks"]} /> : undefined}
+            count={list.data && all.length > 0 ? `Showing ${formatNumber(rows.length)} of ${countOf(all.length, "task")}` : undefined}
             toolbar={(
-              <TableToolbar end={<SearchField label="Search tasks" placeholder="Search tasks" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />}>
+              <TableToolbar end={<SearchField label="Search tasks" placeholder="Search tasks" value={search} onChange={e => setSearch(e.target.value)} />}>
                 <Tabs label="Tasks by state" value={tab} onChange={pick} tabs={[
                   { id: "open", label: "Open", count: groups.open.length }, { id: "mine", label: "Mine", count: groups.mine.length },
                   { id: "dueToday", label: "Due today", count: groups.dueToday.length },

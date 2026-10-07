@@ -16,8 +16,7 @@
 .res-page tbody tr { height: 56px; }
 .res-test { font-weight: 600; }
 /* A written result ("Mixed growth of >3 organisms…") wraps in its cell, so Status and Received stay on screen. */
-.res-page td .cell-value { display: inline-block; max-width: 22ch; white-space: normal; overflow-wrap: break-word; }
-.res-page td .cell-value .cell-muted { white-space: nowrap; }
+.res-page td .cell-value { display: inline-block; max-width: 22ch; }
 .res-page td .chip { overflow-wrap: normal; }
 /* On a phone each result is a short stack (test and date, then value and status), so nothing scrolls sideways. */
 .res-page .with-rail-main { container-type: inline-size; }

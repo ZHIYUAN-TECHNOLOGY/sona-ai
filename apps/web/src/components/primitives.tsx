@@ -164,7 +164,7 @@ export function StatCard({ title, value, unit, caption, chip, tone = "neutral", 
           </svg>
         )}
       </div>
-      {caption ? <p className="stat-caption">{caption}</p> : null}
+      {caption ? <p className="stat-caption" title={typeof caption === "string" ? caption : undefined}>{caption}</p> : null}
       {onSelect ? <button type="button" className="stat-select" aria-pressed={Boolean(selected)} aria-label={`Show ${title}`} onClick={onSelect} /> : null}
     </section>
   );
@@ -253,6 +253,10 @@ export function ListCard({ title, action, children }: { title?: string; action?:
 type ListRowProps = Target & {
   title: ReactNode;
   caption?: ReactNode;
+  /** Hover text for a caption that is not a plain string (a string caption is its own). */
+  captionTitle?: string;
+  /** Title and caption wrap instead of ending in "…"; the trailing part drops below them on a narrow row. */
+  wrap?: boolean;
   /** Leading: a person's name for an avatar, an icon tile, or any node. */
   avatar?: string;
   icon?: IconName;
@@ -264,23 +268,23 @@ type ListRowProps = Target & {
   disabled?: boolean;
 };
 
-export function ListRow({ title, caption, avatar, icon, leading, trailing, onClick, selected, disabled, ...target }: ListRowProps) {
+export function ListRow({ title, caption, captionTitle, wrap, avatar, icon, leading, trailing, onClick, selected, disabled, ...target }: ListRowProps) {
   const linked = Boolean(target.to || target.href);
   const body = (
     <>
       {leading ?? (avatar ? <Avatar name={avatar} size="md" /> : icon ? <span className="list-tile"><Icon name={icon} size={20} /></span> : null)}
       <span className="list-text">
         <span className="list-title" title={typeof title === "string" ? title : undefined}>{title}</span>
-        {caption ? <span className="list-caption" title={typeof caption === "string" ? caption : undefined}>{caption}</span> : null}
+        {caption ? <span className="list-caption" title={captionTitle ?? (typeof caption === "string" ? caption : undefined)}>{caption}</span> : null}
       </span>
       {trailing ?? (linked || onClick ? <Icon name="chevron-right" size={18} className="list-chevron" /> : null)}
     </>
   );
   return (
     <li>
-      {linked ? <Anchor {...target} className="list-row" aria-current={selected ? "page" : undefined}>{body}</Anchor>
-        : onClick ? <button type="button" className="list-row" onClick={onClick} disabled={disabled} aria-pressed={selected}>{body}</button>
-        : <div className="list-row">{body}</div>}
+      {linked ? <Anchor {...target} className="list-row" data-wrap={wrap || undefined} aria-current={selected ? "page" : undefined}>{body}</Anchor>
+        : onClick ? <button type="button" className="list-row" data-wrap={wrap || undefined} onClick={onClick} disabled={disabled} aria-pressed={selected}>{body}</button>
+        : <div className="list-row" data-wrap={wrap || undefined}>{body}</div>}
     </li>
   );
 }

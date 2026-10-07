@@ -3,16 +3,9 @@
 .care-home-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--gap-card); align-items: start; }
 .care-home-quiet { color: var(--muted); white-space: nowrap; }
 .care-home-act { color: var(--blue); font-weight: 600; white-space: nowrap; }
-/* Patients read this: nothing on the page under the small size. */
-.care-home .chip.chip.chip, .care-home .stat-caption, .care-home .list-caption, .care-home .insight-overline, .care-home .insight-label { font-size: var(--text-small); }
 .care-home .list > li > .empty { border: 0; }
-/* Medicine and visit names are read in full, never cut: rows wrap, and on a narrow screen the button drops below the name.
-   A caption (time first) keeps to three lines. */
-.care-home .list-row { flex-wrap: wrap; }
-.care-home .list-text { flex: 1 1 160px; }
-.care-home .list-row > .list-text ~ * { margin-left: auto; }
-.care-home .list-title { overflow: visible; white-space: normal; overflow-wrap: break-word; line-height: 1.35; }
-.care-home .list-caption { display: -webkit-box; white-space: normal; overflow-wrap: break-word; line-height: 1.35; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+/* Rows wrap (ListRow `wrap`); a caption (time first) keeps to three lines. */
+.care-home .list-row[data-wrap] .list-caption { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .care-home .stat-row .stat .stat-caption { display: -webkit-box; white-space: normal; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 
 .care-home p { margin: 0; }

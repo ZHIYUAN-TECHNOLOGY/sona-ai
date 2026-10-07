@@ -154,6 +154,7 @@ function Page() {
                   {shown.slice(0, limit).map(e => (
                     <ListRow
                       key={e.key}
+                      wrap
                       avatar={e.name}
                       title={e.name}
                       caption={e.caption}

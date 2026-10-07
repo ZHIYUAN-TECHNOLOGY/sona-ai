@@ -6,7 +6,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type Column, DataTable, PersonCell, RowAction, TableToolbar } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Chip, ListCard, ListRow, Pager, SearchField, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, ListCard, ListRow, SearchField, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { BookingRequests } from "@/features/today/booking-requests";
 import { dateKey, hourOf, longLabel, timeOf } from "@/features/today/time";
@@ -18,7 +18,6 @@ export const Route = createFileRoute("/pro/_app/today")({ component: Page });
 
 type Visit = Awaited<ReturnType<typeof client.day.list>>[number];
 
-const PAGE_SIZE = 50;
 /** The rail names this many incomplete records; the rest are one tap away in the table's Incomplete tab. */
 const RAIL_CAP = 5;
 
@@ -27,7 +26,6 @@ type Filter = "all" | "upcoming" | "earlier" | "incomplete";
 function Page() {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
   const { me } = Route.useRouteContext();
   const navigate = useNavigate();
   const today = dateKey(new Date());
@@ -64,16 +62,15 @@ function Page() {
     .filter(v => `${v.patientName} ${v.kind}`.toLowerCase().includes(query.trim().toLowerCase()));
   const hour = hourOf(new Date());
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  const current = Math.min(page, Math.max(1, Math.ceil(shown.length / PAGE_SIZE)));
   const time = (v: Visit) => timeOf(new Date(v.startsAt));
-  const pick = (to: Filter) => { setFilter(to); setPage(1); };
+  const pick = (to: Filter) => setFilter(to);
   const toggle = (to: Filter) => pick(filter === to ? "all" : to);
   const alsoIncomplete = others.slice(0, RAIL_CAP).map(v => v.patientName).join(", ") + (others.length > RAIL_CAP ? ` and ${countOf(others.length - RAIL_CAP, "other")}` : "");
   const calm = day.data && !incomplete.length && (!seesRequests || (requests.data && !waiting.length));
 
   const columns: Column<Visit>[] = [
     { key: "time", header: "Time", cell: v => <span className="today-time">{time(v)}</span> },
-    { key: "patient", header: "Patient", cell: v => <PersonCell name={v.patientName} detail={v.kind} /> },
+    { key: "patient", header: "Patient", minWidth: "13rem", cell: v => <PersonCell name={v.patientName} detail={v.kind} /> },
     {
       key: "status", header: "Status", cell: v =>
         v.incomplete ? <Chip tone="soon">Record incomplete</Chip>
@@ -180,7 +177,7 @@ function Page() {
               <DataTable
                 loading={day.isPending}
                 toolbar={
-                  <TableToolbar end={<SearchField label="Search today's visits" placeholder="Search visits" value={query} onChange={e => { setQuery(e.target.value); setPage(1); }} />}>
+                  <TableToolbar end={<SearchField label="Search today's visits" placeholder="Search visits" value={query} onChange={e => setQuery(e.target.value)} />}>
                     <Tabs<Filter>
                       label="Filter visits"
                       value={filter}
@@ -195,8 +192,9 @@ function Page() {
                   </TableToolbar>
                 }
                 columns={columns}
-                rows={shown.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)}
-                footer={shown.length > PAGE_SIZE ? <Pager page={current} pageSize={PAGE_SIZE} total={shown.length} onPage={setPage} noun={["visit", "visits"]} /> : undefined}
+                rows={shown}
+                pageSize={50}
+                noun={["visit", "visits"]}
                 rowKey={v => v.id}
                 selectedKey={next?.id}
                 onRowOpen={open}

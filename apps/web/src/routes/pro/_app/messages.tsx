@@ -107,6 +107,8 @@ function Page() {
                 {visible.slice(0, limit).map(t => (
                   <ListRow
                     key={t.patientId}
+                    wrap
+                    captionTitle={t.lastPhoto ? `Photo · ${t.lastPhoto}` : t.lastText}
                     avatar={t.name}
                     selected={t.patientId === selected?.patientId}
                     onClick={() => pick(t.patientId)}

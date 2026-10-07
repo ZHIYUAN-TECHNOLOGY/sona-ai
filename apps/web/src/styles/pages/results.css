@@ -2,8 +2,6 @@
 .results-detail-chip { margin-top: var(--space-2); }
 .results-muted { color: var(--muted); margin: 0; }
 .results-value { font-variant-numeric: tabular-nums; }
-/* A lab value can be words ("Haemolysed — repeat", a culture's report): it wraps instead of widening the table. */
-.results-value .cell-value { white-space: normal; }
 .results-value[data-critical] { color: var(--red); font-weight: 600; }
 .results-received { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .results-footnote { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); margin: 0; }

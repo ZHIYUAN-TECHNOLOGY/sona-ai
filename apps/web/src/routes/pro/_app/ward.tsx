@@ -8,7 +8,7 @@ import { BarChart } from "@/components/charts";
 import { DataTable, PersonCell, RowAction, TableToolbar, type Column } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
-import { Button, Card, Chip, ListCard, ListRow, Pager, SearchField, Select, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
+import { Button, Card, Chip, ListCard, ListRow, SearchField, Select, Signal, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { revealRail, RightRail, WithRail } from "@/components/rail";
 import { freeBy, Loaded, rankBeds, unownedOn } from "@/features/ward/state";
 import { countOf, formatNumber } from "@/lib/format";
@@ -20,7 +20,6 @@ export const Route = createFileRoute("/pro/_app/ward")({ component: Page });
 type Tab = "all" | "blocked" | "unowned" | "watch" | "free";
 const STATUS = { fit: "Medically fit", watch: "Being watched", stable: "Stable", empty: "Empty", free: "Free" };
 const hour = (at: Date | string) => new Date(at).toLocaleTimeString("en-GB", { hour: "2-digit", timeZone: "Asia/Kuala_Lumpur" }) + ":00";
-const PAGE_SIZE = 50;
 
 function Page() {
   const { me } = Route.useRouteContext();
@@ -29,7 +28,6 @@ function Page() {
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<string>();
-  const [page, setPage] = useState(1);
   // Four independent reads, started together.
   const beds = useQuery(orpc.ward.beds.queryOptions());
   const forecast = useQuery(orpc.ward.forecast.queryOptions());
@@ -60,7 +58,6 @@ function Page() {
   const q = search.trim().toLowerCase();
   const rows = groups[tab].filter(b => !q || `${b.bed} ${b.name ?? ""} ${b.blockers.map(x => x.label).join(" ")}`.toLowerCase().includes(q));
   // 50 beds a page: a ward of hundreds stays quick to draw and to scan; a new tab or search starts on page 1.
-  const current = Math.min(page, Math.max(1, Math.ceil(rows.length / PAGE_SIZE)));
   const bed = all.find(b => b.bed === picked) ?? all[0];
   // The suggested next step once this bed's blockers all have an owner.
   const nextBed = bed && unownedOn(bed, owners) === 0 ? noOwner[0] : undefined;
@@ -154,12 +151,12 @@ function Page() {
       )}>
         <Loaded query={beds} what="the ward" empty="No beds on this ward yet.">
           {() => (
-            <DataTable columns={columns} rows={rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)} rowKey={b => b.bed} selectedKey={bed?.bed} onRowOpen={b => setPicked(b.bed)}
-              empty={q ? `No bed matches "${search}".` : "No beds in this state."} footer={rows.length > PAGE_SIZE ? <Pager page={current} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} noun="beds" /> : undefined}
-              count={rows.length > PAGE_SIZE ? undefined : `Showing ${formatNumber(rows.length)} of ${countOf(all.length, "bed")}`}
+            <DataTable columns={columns} rows={rows} pageSize={50} noun={["bed", "beds"]} rowKey={b => b.bed} selectedKey={bed?.bed} onRowOpen={b => setPicked(b.bed)}
+              empty={q ? `No bed matches "${search}".` : "No beds in this state."}
+              count={`Showing ${formatNumber(rows.length)} of ${countOf(all.length, "bed")}`}
               toolbar={(
-                <TableToolbar end={<SearchField className="ward-search" label="Search bed, patient or discharge barrier" placeholder="Search beds" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />}>
-                  <Tabs label="Beds by state" value={tab} onChange={t => { setTab(t); setPage(1); }} tabs={[
+                <TableToolbar end={<SearchField label="Search bed, patient or discharge barrier" placeholder="Search beds" value={search} onChange={e => setSearch(e.target.value)} />}>
+                  <Tabs label="Beds by state" value={tab} onChange={setTab} tabs={[
                     { id: "all", label: "All", count: all.length }, { id: "blocked", label: "Blocked", count: blocked.length },
                     { id: "unowned", label: "Unassigned", count: noOwner.length },
                     { id: "watch", label: "Watch", count: groups.watch.length }, { id: "free", label: "Free", count: groups.free.length },

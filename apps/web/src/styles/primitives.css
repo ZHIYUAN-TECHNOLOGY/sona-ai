@@ -10,7 +10,9 @@
 
 /* Chip */
 /* A chip or button keeps one line and its own width, and wraps only when longer than its whole container. */
+/* A button breaks only a word longer than its line (break-word), so it never shrinks to a letter a line in a tight table cell. */
 .chip, .btn { flex-shrink: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.btn { overflow-wrap: break-word; }
 .btn { text-align: center; }
 .chip { gap: var(--space-1); min-height: var(--chip-h); padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-pill); font-size: var(--text-small); font-weight: 600; }
 .chip[data-tone="neutral"] { border-color: transparent; }
@@ -85,7 +87,8 @@
 .signal { color: var(--tone); font-weight: 600; }
 
 /* Tabs */
-.tabs { display: flex; gap: var(--space-5); overflow-x: auto; }
+/* Tabs wrap to a second line rather than scroll out of view with no hint (a narrow rail, 200% text). */
+.tabs { display: flex; flex-wrap: wrap; gap: 0 var(--space-5); }
 .tab { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap); padding: 0; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font-weight: 600; white-space: nowrap; cursor: pointer; transition: color var(--quick) var(--ease), border-color var(--quick) var(--ease); }
 .tab:hover { color: var(--ink); }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
@@ -101,9 +104,14 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 .list-row:disabled { opacity: 0.45; pointer-events: none; }
 .list-tile { display: inline-grid; place-items: center; flex: none; width: var(--avatar-md); height: var(--avatar-md); border-radius: var(--radius-control); background: var(--fill-field); color: var(--muted); }
 .list-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.list-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.list-caption { font-size: var(--text-small); line-height: 18px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: anywhere; }
+.list-caption { font-size: var(--text-small); line-height: 1.35; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list-chevron { flex: none; color: var(--placeholder); }
+/* ListRow `wrap`: names read in full. Title and caption wrap, and on a narrow screen the trailing part drops below them. */
+.list-row[data-wrap] { flex-wrap: wrap; }
+.list-row[data-wrap] > .list-text { flex: 1 1 10rem; }
+.list-row[data-wrap] > .list-text ~ * { margin-inline-start: auto; }
+.list-row[data-wrap] :is(.list-title, .list-caption) { overflow: visible; white-space: normal; }
 
 /* Main column (~69%) + right rail (~31%) */
 .with-rail { display: grid; grid-template-columns: minmax(0, 69fr) minmax(0, 31fr); gap: var(--gap-card); align-items: start; }
@@ -239,3 +247,5 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 /* An empty page state starts where the page's content starts, not floating mid-page. */
 /* A page with nothing yet shows its empty state where the content starts, not floating mid-page. */
 .care :is(.ci-alone, .dp-alone, .meds-alone, .res-alone) { margin-inline: 0; }
+/* A pressed or selected button is ink, also over the glass secondary fill above. */
+:is(.pro, .care) :is(.btn[aria-pressed="true"], .btn[aria-selected="true"]) { background: var(--ink); color: var(--surface); }

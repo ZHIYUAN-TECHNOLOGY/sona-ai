@@ -1,7 +1,6 @@
 /* Sona Care follow-ups: 17px body, 48px targets, amber waiting, green confirmed, no red. */
 .fu { font-size: max(17px, 1rem); display: grid; gap: var(--space-4); }
 .fu .btn, .fu-doctor, .fu-pill, .fu-input { min-height: max(48px, var(--tap)); font-size: inherit; }
-.fu .chip.chip.chip, .fu .insight-overline, .fu .insight-label { font-size: var(--text-small); }
 .fu-muted { color: var(--muted); }
 .fu .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
@@ -19,10 +18,6 @@
 .fu-list > li > .list-row { padding-inline: 0; }
 /* A visit's name, doctor and room are read in full: rows wrap instead of cutting them off. */
 .fu-list > li { line-height: 1.35; }
-.fu-list :is(.list-title, .list-caption) { overflow: visible; white-space: normal; overflow-wrap: break-word; line-height: 1.35; }
-.fu-list .list-row { flex-wrap: wrap; }
-.fu-list .list-text { flex: 1 1 160px; }
-.fu-list .list-text ~ * { margin-left: auto; }
 .fu-list > li > div:first-child:not(.list-row) { display: grid; gap: var(--space-1); min-width: 0; }
 .fu-side { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 
@@ -51,7 +46,7 @@
   .fu-cols[data-two] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .fu-visits { display: grid; gap: var(--space-2); align-content: start; }
-.fu-visits .tabs { justify-self: start; max-width: 100%; flex-wrap: wrap; column-gap: var(--space-5); }
+.fu-visits .tabs { justify-self: start; max-width: 100%; }
 .fu-list > li { flex-wrap: nowrap; }
 .fu-cal-day { position: relative; width: 100%; aspect-ratio: 1; min-height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: inherit; font: inherit; cursor: pointer; }
 .fu-cal-day:hover { background: var(--canvas); }

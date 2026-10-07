@@ -117,7 +117,7 @@ function Page() {
           {meds.length + medicines.stopped.length === 0 ? <Card title="Your medicines"><p>Your plan lists no medicines to take at home.</p></Card> : (
             <ListCard title="Your medicines">
               {GROUPS.flatMap(group => medicines[group].map(m => (
-                <ListRow key={`${group}-${m.name}`} icon="pill"
+                <ListRow key={`${group}-${m.name}`} wrap icon="pill"
                   title={<><span className="med-name">{m.name}</span> <span className="med-dose">{m.line}</span></>}
                   caption={group === "stopped" ? "Stopped. Do not take this one." : m.finished ? "Finished. No more doses." : m.take ? `${m.take}${m.at?.length ? `, at ${times.format(m.at)}` : ""}` : group === "new" ? "New for you" : group === "changed" ? "The dose changed" : undefined}
                   trailing={group === "stopped" ? <Chip>Stopped</Chip> : m.finished ? <Chip>Finished</Chip> : (today.some(d => d.name === m.name) ? <DoseStatus doses={today.filter(d => d.name === m.name)} now={now} confirming={confirming} primaryKey={primaryKey} pendingKey={pendingKey} busy={take.isPending} ask={setConfirming} take={markTaken} /> : null) ?? (group === "new" ? <Chip tone="info">New</Chip> : group === "changed" ? <Chip tone="soon">Changed</Chip> : undefined)} />

@@ -19,12 +19,6 @@
 .ward-num { font-variant-numeric: tabular-nums; }
 .ward-plain { list-style: none; padding: 0; margin: 0; }
 .ward-gap { margin: var(--space-3) 0; }
-.ward-search { max-inline-size: 11rem; }
-/* Five tabs with four-digit counts and the search do not share one line beside the rail: the search moves under the
-   tabs instead of the last tab sliding out of view. */
-.table-toolbar-row:has(.ward-search) { flex-wrap: wrap; }
-.table-toolbar-row:has(.ward-search) > .table-toolbar-start { flex: 0 1 auto; }
-.table-toolbar-row:has(.ward-search) > .table-toolbar-end { flex: 1 0 auto; }
 /* The bed's name is one line ending in "…" (full text on hover and in the side panel). Its forecast is a time the
    reader compares, so it never ends in "…": the column keeps room for "Discharge tomorrow", and free text
    ("Awaiting nursing home placement …") wraps to two lines before it clamps. */
@@ -37,4 +31,4 @@
 .ward-more { flex: none; color: var(--muted); font-weight: 500; }
 /* The side panel is where a name is read in full: it wraps there instead of ending in "…". */
 .ward-detail .cell-person { max-width: none; }
-.ward-detail .cell-person-name { white-space: normal; overflow-wrap: anywhere; }
+.ward-detail .cell-person-name { display: block; }

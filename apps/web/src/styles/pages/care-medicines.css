@@ -14,8 +14,7 @@
 .med-video { width: 100%; max-width: 480px; border-radius: var(--radius-md); background: var(--ink); }
 .med-input { width: 100%; min-height: 48px; padding: 0 var(--space-3); font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); }
 .med-page, .med-photo { display: grid; gap: var(--space-4); font-size: max(17px, var(--text-md, 17px)); line-height: 1.5; }
-.med-page .list-row { min-height: 72px; flex-wrap: wrap; }
-.med-page .list-title, .med-page .list-caption { white-space: normal; }
+.med-page .list-row { min-height: 72px; }
 .med-page .list-title { font-size: 17px; }
 .med-page .list-caption { font-size: 15px; }
 .med-name { font-weight: 500; }
@@ -50,11 +49,7 @@
 .med-status .med-note { display: block; }
 .med-week i[data-state="missed"], .med-legend i[data-state="missed"] { background: var(--amber-wash); }
 
-/* Worst case: long medicine names wrap whole (no mid-word ellipsis); the status drops under the name when the row is narrow. */
 .med-page { container-type: inline-size; }
-.med-page .list-title, .med-page .list-caption { text-overflow: clip; overflow-wrap: anywhere; }
-.med-page .list-text { flex-basis: 10rem; }
-.med-page .list-text ~ * { margin-inline-start: auto; }
 .med-week { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .med-count { display: grid; justify-items: center; color: var(--muted); font-size: 15px; text-align: center; }
 .med-count strong { color: var(--ink); font-size: 17px; }

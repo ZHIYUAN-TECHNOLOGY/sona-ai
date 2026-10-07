@@ -131,7 +131,7 @@ function Page() {
                 {upcoming.map(v => {
                   const d = booked.get(v.id);
                   return (
-                    <ListRow key={v.id} icon="calendar" title={v.title}
+                    <ListRow key={v.id} wrap icon="calendar" title={v.title}
                       caption={`${whenWords(v.date, lang)}${d ? ` · ${d.doctorName} · ${d.room}` : ""}`}
                       trailing={
                         <span className="fu-row-end">
