@@ -1,5 +1,3 @@
-import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
-
 import { fixture, rows } from "./fixture";
 
 // /pro/check-ins: the check-ins, the patient names they are joined to, and one visit's follow-up timeline.
@@ -32,7 +30,8 @@ const checkIn = (i: number) => {
   const sent = i % 7 !== 6, replied = sent && i % 5 !== 4;
   const day = DAYS[i % DAYS.length]!;
   return {
-    id: `ci-${i}`, patientId: `p-${i}`, encounterId: `e-${i}`, day, language, message: MESSAGE[language],
+    // p-8's record is not in patients.list (pro-patients.ts): the list falls back to showing the id.
+    id: `ci-${i}`, patientId: i === 8 ? "p-unlisted" : `p-${i}`, encounterId: `e-${i}`, day, language, message: MESSAGE[language],
     dueAt: at(i * 61 - 60), sentAt: sent ? at(i * 61) : null,
     replies: replied
       ? [
@@ -48,8 +47,6 @@ const checkIn = (i: number) => {
   };
 };
 
-// The list joins names from patients.list; a missing patient falls back to the id, so one id is left out.
-const patients = (n: number) => rows(n, i => ({ ...DEMO_PATIENTS[0]!, id: `p-${i}`, encounterId: `e-${i}`, name: NAMES[i % NAMES.length]! })).filter(p => p.id !== "p-8");
 
 const followUp = {
   timeline: [
@@ -63,6 +60,5 @@ const followUp = {
 
 export default [
   fixture("checkIns.list", { worst: rows(24, checkIn), empty: [], one: rows(1, checkIn), huge: rows(1000, checkIn) }),
-  fixture("patients.list", { worst: patients(24), empty: [], one: patients(1), huge: patients(1000) }),
   fixture("checkIns.followUp", { worst: followUp, empty: null, one: { timeline: followUp.timeline.slice(0, 1), next: null } }),
 ];

@@ -1,12 +1,7 @@
 import { fixture, rows } from "./fixture";
-import session from "./pro-session";
 
-// Training data: management only, so on this page the seeded doctor signs in as management (every other page keeps
-// the seed). The samples list is a function of its status filter, as the server's is; the server returns the newest 200.
-const seed = session.find(f => f.path === "clinician.me")!.modes;
-const onPage = () => window.location.pathname === "/pro/training-data";
-type Me = { userId: string; name: string; email: string; role: "nurse" | "doctor" | "bed-manager" | "management"; label: string };
-const me = (mode: "worst" | "one") => (): Me => ({ ...(seed[mode] ?? seed.worst) as Me, ...(onPage() ? { role: "management" as const, label: "Hospital Director, Clinical Governance and Quality Improvement" } : {}) });
+// Training data: management only; pro-session.ts signs the seeded doctor in as management on this page.
+// The samples list is a function of its status filter, as the server's is; the server returns the newest 200.
 
 const STATUSES = ["pending", "blocked", "approved", "excluded", "withdrawn"] as const;
 const INPUTS = [
@@ -27,7 +22,6 @@ const sample = (i: number, status?: (typeof STATUSES)[number]) => ({
 const samples = (n: number) => (input?: { status?: (typeof STATUSES)[number] }) => rows(n, i => sample(i, input?.status));
 
 export default [
-  fixture("clinician.me", { worst: me("worst"), one: me("one") }),
   fixture("training.status", {
     worst: { contributes: true, counts: { pending: 1_284, approved: 12_345, blocked: 1, excluded: 0, withdrawn: 37 }, ready: 1_284_560, lastDataset: { version: 128, rows: 1_000_000, exportedAt: new Date(Date.UTC(2026, 8, 30)) } },
     one: { contributes: true, counts: { pending: 1, approved: 1, blocked: 1, excluded: 1, withdrawn: 1 }, ready: 1, lastDataset: { version: 1, rows: 1, exportedAt: new Date(Date.UTC(2026, 8, 30)) } },

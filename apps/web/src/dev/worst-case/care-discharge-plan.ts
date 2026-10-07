@@ -1,11 +1,11 @@
-import { fixture, rows } from "./fixture";
+import { fixture } from "./fixture";
 
-// Sona Care's discharge plan (care.discharge, also read by Medicines), follow-ups and check-ins.
+// Sona Care's discharge plan (care.discharge, also read by Home and Medicines). Its visits are in care-follow-ups.ts,
+// its check-ins in care-check-ins.ts.
 // Worst: a Chinese-language plan, 400 days after discharge, 18 take-home medicines four times a day, 12 warning signs.
 const DAY = 86_400_000, NOW = Date.now();
 const ago = (days: number) => new Date(NOW - days * DAY);
 const FOUR = ["08:00", "12:00", "18:00", "22:00"];
-const PATIENT = "9f8e7d6c-5b4a-4c3d-8e2f-1a0b9c8d7e6f", VISIT = "enc-9f8e7d6c-5b4a-4c3d-8e2f-1a0b9c8d7e6f";
 
 type Med = { name: string; line: string; take?: string; at?: string[]; doses?: number; endsAt?: Date; finished?: boolean };
 const four = (name: string, line: string, take = "每次一片，饭后服用"): Med => ({ name, line, take, at: FOUR });
@@ -76,36 +76,10 @@ export const WORST_DISCHARGED_DAYS = 400, ONE_DISCHARGED_DAYS = 1;
 export const ONE_MEDS: typeof WORST_MEDS = { new: [{ name: "Paracetamol 1 g", line: "For pain or fever", take: "2 tablets", at: ["08:00"] }], changed: [], continue: [], stopped: [] };
 const NONE: typeof WORST_MEDS = { new: [], changed: [], continue: [], stopped: [] };
 
-const visit = (id: string, days: number, title: string, why: string) => {
-  const inDays = Math.round(days);
-  return { id, date: new Date(NOW + days * DAY), title, short: title, why, inDays, status: inDays < 0 ? "missed" as const : inDays <= 7 ? "due-soon" as const : "upcoming" as const };
-};
-
-const checkIn = (day: number, sent: boolean, i = day) => ({
-  id: `ci-${i}`, patientId: PATIENT, encounterId: VISIT, day, language: "zh" as const, message: "您好，今天感觉怎么样？呼吸和脚肿有没有变化？",
-  dueAt: ago(WORST_DISCHARGED_DAYS - day), sentAt: sent ? ago(WORST_DISCHARGED_DAYS - day) : null, replies: [],
-});
-
 export default [
   fixture("care.discharge", {
     worst: plan(WORST_DISCHARGED_DAYS, WORST_MEDS, WARNING_SIGNS, [2, 7, 14, 30, 60, 90, 180, 365], LEAFLET_ZH),
     empty: plan(0, NONE, [], []),
     one: plan(ONE_DISCHARGED_DAYS, ONE_MEDS, ["Fever over 38°C"], [2], "You had a chest infection."),
-  }),
-  fixture("care.followUps", {
-    worst: [
-      visit("recall:f-1", -12, "Echocardiogram (heart ultrasound) at the Cardiology Clinic, Block C, Level 3", "Your doctor asked for this test to see how well your heart pumps after the change in your water tablets."),
-      visit("discharge-review", 3, "心脏科门诊复诊", "检查您的心脏和药物。"),
-      visit("appt-2", 21, "Renal profile and HbA1c blood test", "To check your kidneys and sugar on the new medicines."),
-      visit("appt-3", 120, "Diabetes clinic", "A routine review."),
-    ],
-    empty: [],
-    one: [visit("discharge-review", 6, "Clinic review", "To check you are getting better.")],
-    huge: rows(40, i => visit(`appt-${i}`, i * 9 - 30, `Clinic review ${i + 1}`, "A routine review.")),
-  }),
-  fixture("care.checkIns.list", {
-    worst: [checkIn(2, true), checkIn(7, true), checkIn(14, true), checkIn(30, true), checkIn(60, true), checkIn(90, true), checkIn(180, true), checkIn(365, true), checkIn(400, false)],
-    empty: [],
-    one: [checkIn(2, false)],
   }),
 ];

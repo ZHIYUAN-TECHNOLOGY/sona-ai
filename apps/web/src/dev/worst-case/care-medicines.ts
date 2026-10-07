@@ -20,6 +20,4 @@ export default [
     one: taken(ONE_MEDS, ONE_DISCHARGED_DAYS, 1e9),
     huge: taken(WORST_MEDS, WORST_DISCHARGED_DAYS, 1e9),
   }),
-  // ponytail: the hospital's demo clock at real time; other Care pages read it too.
-  fixture("care.clock", { worst: { offsetMs: 0 } }),
 ];

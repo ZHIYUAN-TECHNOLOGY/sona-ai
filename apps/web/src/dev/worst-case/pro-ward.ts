@@ -3,7 +3,7 @@ import type { Bed } from "@sona-ai/domain/ward";
 import { fixture, rows } from "./fixture";
 
 // /pro/ward (and the discharge picker, which ranks from the same beds). Patient ids are `p-<i>` and visits `e-<i>`,
-// as in pro-session.ts, so the patients list and every other page's rows line up with the same people.
+// as in patients.list (pro-patients.ts), so every page's rows line up with the same people.
 export const NAMES = [
   "Aleksandra Wiśniewska-Kowalczyk", "Jo", "Christopher Alexander Montgomery III", "نور الهدى عبد الرحمن", "王秀英", "Đặng Thị Ngọc Hân",
   "Siti Nur Aisyah binti Mohd Khairuddin", "Muthukumaran a/l Subramaniam Pillai", "Seán O'Brien-Ó Súilleabháin", "🦊 Fox", "Lim Wei Jie", "Priya Nair",

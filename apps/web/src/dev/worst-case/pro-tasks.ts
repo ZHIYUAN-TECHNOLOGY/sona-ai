@@ -3,7 +3,7 @@ import { today } from "@/features/ward/state";
 
 import { fixture, rows } from "./fixture";
 
-// /pro/tasks (replaces the pro-session.ts seed; the sidebar badge counts open tasks, so most stay open). Titles reach
+// /pro/tasks (also the sidebar badge, which counts open tasks, so most stay open). Titles reach
 // the create limit of 200, owners the 80 the form allows, due is free text up to 40 when a discharge plan writes it.
 const on = today();
 const ME = "Dr Aleksandra Wiśniewska-Kowalczyk"; // clinician.me in pro-session.ts

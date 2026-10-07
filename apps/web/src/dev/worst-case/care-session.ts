@@ -1,7 +1,8 @@
 import { fixture } from "./fixture";
 
-// Who is signed in to Sona Care: every Care page needs it, so it is seeded here.
+// Who is signed in to Sona Care and the hospital's demo clock (real time): every Care page reads them, so they are seeded here.
 export default [
+  fixture("care.clock", { worst: { offsetMs: 0 } }),
   fixture("care.me", {
     worst: {
       patientId: "9f8e7d6c-5b4a-4c3d-8e2f-1a0b9c8d7e6f",

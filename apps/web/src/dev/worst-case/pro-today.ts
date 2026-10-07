@@ -3,8 +3,8 @@ import { dateKey } from "@/features/today/time";
 import { fixture, rows } from "./fixture";
 
 // /pro/today and /pro/schedule read the same day.list (one call per date). Rows are built for whatever date is asked,
-// in the hospital's time (+08:00), so "now" splits them into earlier and upcoming. patients.list (encounters to open)
-// is seeded in pro-session.ts: p-3 and p-9 have no visit record, so their rows offer nothing to open.
+// in the hospital's time (+08:00), so "now" splits them into earlier and upcoming. /pro/visit lists the same rows.
+// patients.list (encounters to open) is in pro-patients.ts: p-9 and p-13 have no visit record, so their rows offer nothing to open.
 const NAMES = [
   "Siti Nur Aisyah binti Mohd Khairuddin", "J", "Christopher Alexander Montgomery III", "Đặng Thị Ngọc Hân", "王秀英",
   "Seán O'Brien-Ó Súilleabháin", "Muthukumaran a/l Subramaniam Pillai", "Nurul Izzati binti Abdul Rahman", "Lim Wei Jie",

@@ -4,15 +4,14 @@ import { TANSTACK_QUERY_OPERATION_CONTEXT_SYMBOL } from "@orpc/tanstack-query";
 import { type Mode, MODES, type Registered } from "./fixture";
 
 // Each pro-*.ts / care-*.ts file default-exports an array of fixture(...) entries; add a file, no edit here.
-// The *-session.ts seeds load first, so a page's own file replaces a seed it also registers.
-const files = Object.entries(import.meta.glob<{ default: Registered[] }>(["./pro-*.ts", "./care-*.ts"], { eager: true }))
-  .sort(([a], [b]) => Number(b.endsWith("-session.ts")) - Number(a.endsWith("-session.ts")));
+// Every file loads on every page, so a procedure is registered in exactly one file; pages that read it share it.
+const files = Object.entries(import.meta.glob<{ default: Registered[] }>(["./pro-*.ts", "./care-*.ts"], { eager: true }));
 
 export const fixtures: Record<string, Registered["modes"]> = {};
 const from: Record<string, string> = {};
 for (const [file, { default: entries }] of files) {
   for (const { path, modes } of entries) {
-    if (from[path] && !from[path].endsWith("-session.ts")) console.warn(`[worst-case] ${path} is in ${from[path]} and ${file}; ${file} wins`);
+    if (from[path]) console.warn(`[worst-case] ${path} is in ${from[path]} and ${file}; ${file} wins`);
     fixtures[path] = modes;
     from[path] = file;
   }

@@ -1,10 +1,12 @@
 import type { client } from "@/lib/orpc";
 
 import { fixture, rows } from "./fixture";
+import { nameOf } from "./pro-ward";
 
 // patients.list: every column is `text` with no length limit (packages/db/src/schema/clinical.ts `patients`), age and sex
 // are NOT NULL, so a record with neither known arrives as age 0 and sex "". The overview (pro-patient.ts) and the
 // visit page (pro-visit.ts) read this same list; their fixture patient is SYN-1001 / encounter visit-1001.
+// This is the only patients.list: the ward's patients p-<i> (below) are the ones every other Pro page points at.
 type Patient = Awaited<ReturnType<typeof client.patients.list>>[number];
 
 const base = (i: number): Patient => ({
@@ -37,7 +39,7 @@ const MEDS = [
   "Prednisolone 30 mg once daily for 5 days, then stop", "Doxycycline 100 mg twice daily for 7 days", "Nicotine patch 21 mg/24 h daily", "Ondansetron 4 mg as needed",
 ];
 
-const worst: Patient[] = [
+const listed: Patient[] = [
   {
     ...base(0), age: 67, sex: "Female", allergies: ALLERGIES, medicines: MEDS,
     subtitle: "Bed 4B-12 · Ward 4B Medical (Respiratory and Infectious Diseases), Hospital Canselor Tuanku Muhriz UKM",
@@ -73,11 +75,23 @@ const worst: Patient[] = [
   ...rows(27, (i) => base(10 + i)),
 ];
 
+// The ward's patients, p-<i> with visit e-<i>, named as on the ward (pro-ward.ts): ward.beds, today's visits, results,
+// check-ins, discharge, the guarantee letter, audit and X-ray all point at these ids. p-9 and p-13 have no visit record yet.
+const SUBTITLE = ["Community-acquired pneumonia with type 2 respiratory failure, step-down from HDU", "Asthma", "Fall at home, fractured neck of femur, day 9 after hemiarthroplasty", "", "Cellulitis"];
+const onWard = (i: number): Patient => ({
+  ...base(i), id: `p-${i}`, encounterId: i === 9 || i === 13 ? "" : `e-${i}`, name: nameOf(i), age: 18 + (i * 7) % 83, sex: i % 2 ? "Male" : "Female",
+  subtitle: SUBTITLE[i % SUBTITLE.length]!, incomplete: i % 5 === 3,
+});
+
 export default [
   fixture("patients.list", {
-    worst,
+    worst: [...listed, ...rows(60, onWard)],
     empty: [],
-    one: [{ ...base(0), name: "Jo", age: 1, sex: "Male", ward: { status: "fit", waitingHours: 1 } }],
-    huge: rows(1000, (i) => ({ ...base(i), ward: i % 3 ? { status: "stable" as const } : { status: "watch" as const }, incomplete: i % 7 === 0 })),
+    // One patient, with the id the other pages' single rows point at.
+    one: [{ ...base(0), id: "p-0", encounterId: "e-0", name: "Jo", age: 1, sex: "Male", ward: { status: "fit", waitingHours: 1 } }],
+    huge: [
+      ...rows(1000, (i) => ({ ...base(i), ward: i % 3 ? { status: "stable" as const } : { status: "watch" as const }, incomplete: i % 7 === 0 })),
+      ...rows(1000, onWard),
+    ],
   }),
 ];

@@ -1,6 +1,6 @@
 import { fixture, rows } from "./fixture";
 
-// The patient overview, /pro/patients/SYN-1001 (patients.list is in pro-patients.ts; results.list uses the pro-session seed).
+// The patient overview, /pro/patients/SYN-1001 (patients.list is in pro-patients.ts; results.list is in pro-results.ts).
 // Every value here is unbounded text or an unbounded list on the server (timelineOf, adherenceOf, patients.trends).
 const NOW = Date.UTC(2026, 9, 7, 1, 0);
 const daysAgo = (d: number) => new Date(NOW - d * 86_400_000);
@@ -28,6 +28,7 @@ const EVENTS = [
   "Admitted to Ward 4B Medical (Respiratory and Infectious Diseases) from the Emergency Department",
   "Potassium 6.8 mmol/L, critical; spironolactone stopped", "Echo", "Seen in the heart failure clinic by Dr Aleksandra Wiśniewska-Kowalczyk",
 ];
+const NEXT_VISIT = { id: "appt-9", at: new Date(Date.now() + 9 * 86_400_000), title: "Follow-up at the Klinik Pakar Perubatan Dalaman dan Kardiologi, Aras 4, Bangunan Klinik Pakar" };
 const timeline = (n: number) => rows(n, (i) => ({
   id: `ev-${i}`, at: daysAgo(i * 3), title: EVENTS[i % EVENTS.length]!,
   detail: i % 4 === 0 ? "Brought in by her son after two nights sleeping upright; given IV furosemide 80 mg and oxygen 2 L in ED; bed requested at 02:14 and allocated at 09:40." : i % 4 === 2 ? undefined : "Ordered by Dr Jo",
@@ -56,7 +57,8 @@ export default [
     empty: { source: "fixture", lines: [] },
     one: { source: "fixture", lines: ["Nothing new since the last visit."] },
   }),
-  fixture("encounter.timeline", { worst: timeline(60), empty: [], one: timeline(1), huge: timeline(1000) }),
+  // The next booked visit leads, as X-ray's recall reads it.
+  fixture("encounter.timeline", { worst: [NEXT_VISIT, ...timeline(60)], empty: [], one: timeline(1), huge: timeline(1000) }),
   fixture("adherence.get", {
     worst: { due: 1284, taken: 1259, missed: doses(12), late: doses(13).slice(12), line: "Missed 12 doses since discharge, mostly the bedtime insulin glargine on weekends." },
     empty: { due: 0, taken: 0, missed: [], late: [], line: "" },

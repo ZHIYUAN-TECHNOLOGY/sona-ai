@@ -1,18 +1,14 @@
 import { ORPCError } from "@orpc/client";
 
-import { fixture, rows } from "./fixture";
+import { fixture } from "./fixture";
+import { nameOf } from "./pro-ward";
 
 // /pro/xray. Findings are unique per (encounter, kind) and kind is nodule, cardiomegaly or effusion, so a visit holds at most
 // three; their label, zone and the draft read's lines are unbounded text. xray.upload answers the same key xray.read
 // does, so an image chosen in the browser shows with the finding boxes drawn on it.
-const NAMES = ["Siti Nur Aisyah binti Mohd Khairuddin", "Jo", "Christopher Alexander Montgomery III", "Đặng Thị Ngọc Hân", "王秀英", "Rajeswari a/p Subramaniam Thevarajan"];
 const KEY = "h-ukm/xray/e-0/9f8e7d6c-5b4a-4c3d-8e2f-1a0b9c8d7e6f";
 const now = Date.UTC(2026, 9, 7, 1, 0);
 
-const patient = (i: number) => ({
-  id: `p-${i}`, encounterId: `e-${i}`, name: i < NAMES.length ? NAMES[i]! : `${NAMES[i % NAMES.length]} (${i})`, initials: "SN", age: 67, sex: "F",
-  subtitle: "", complaint: "Breathless on exertion for three weeks", history: [], family: "", social: "", allergies: null, medicines: [], vitals: [], sources: [], incomplete: false,
-});
 const READ = [
   "Ill-defined 14 mm opacity projected over the right upper zone, partly obscured by the anterior end of the right first rib; a nodule cannot be excluded and comparison with any prior imaging is advised.",
   "Cardiothoracic ratio about 0.58 on this PA film, suggesting cardiomegaly.",
@@ -24,7 +20,7 @@ const READ = [
 ];
 const finding = (kind: "nodule" | "cardiomegaly" | "effusion", over: object = {}) => ({
   id: `f-${kind}`, hospitalId: "h-ukm", patientId: "p-0", encounterId: "e-0", imageKey: KEY, kind, ruleId: `rule-${kind}`, status: "open" as const,
-  source: "medgemma-4b", taskId: null, dueAt: null, createdAt: new Date(now), patientName: NAMES[0]!, owner: null, intervalDays: 90, overdue: false, validated: false as const,
+  source: "medgemma-4b", taskId: null, dueAt: null, createdAt: new Date(now), patientName: nameOf(0), owner: null, intervalDays: 90, overdue: false, validated: false as const,
   ...{
     nodule: { label: "Solid pulmonary nodule, right upper zone, partly obscured by the first rib", sizeMm: 14, riskBand: "high" as const, location: { x: 0.3, y: 0.25, zone: "Right upper zone, posterior segment, behind the anterior end of the first rib", box: [180, 220, 330, 380] as [number, number, number, number] }, action: "Repeat CT thorax with contrast at 3 months, compared with today's film" },
     cardiomegaly: { label: "Cardiomegaly", sizeMm: null, riskBand: "intermediate" as const, location: { x: 0.5, y: 0.6, zone: "Heart", box: [450, 330, 780, 760] as [number, number, number, number] }, action: "Echocardiogram at the cardiology clinic" },
@@ -32,10 +28,8 @@ const finding = (kind: "nodule" | "cardiomegaly" | "effusion", over: object = {}
   }[kind],
   ...over,
 });
-const visit = { id: "appt-9", at: new Date(Date.now() + 9 * 86_400_000), title: "Follow-up at the Klinik Pakar Perubatan Dalaman dan Kardiologi, Aras 4, Bangunan Klinik Pakar" };
 
 export default [
-  fixture("patients.list", { worst: rows(NAMES.length, patient), empty: [], one: rows(1, patient), huge: rows(1000, patient) }),
   fixture("xray.read", {
     // Only the first patient's visit has a film; any other answers NOT_FOUND as the router does.
     worst: ({ encounterId }) => {
@@ -56,5 +50,4 @@ export default [
     empty: null,
     one: { source: "fixture", readAt: new Date(now), imageKey: KEY, found: 1 },
   }),
-  fixture("encounter.timeline", { worst: [visit], empty: [] }),
 ];

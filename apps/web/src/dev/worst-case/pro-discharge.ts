@@ -1,16 +1,9 @@
 import type { MedChange } from "@sona-ai/domain/discharge";
 
 import { fixture, rows } from "./fixture";
-import { nameOf, WORST_BEDS } from "./pro-ward";
 
-// /pro/discharge: the picker ranks patients.list by the ward's beds (pro-ward.ts registers ward.beds); a plan opens
+// /pro/discharge: the picker ranks patients.list (pro-patients.ts) by the ward's beds (pro-ward.ts); a plan opens
 // with ?encounterId=e-<i>. Patient ids p-<i> match the beds' patientIds.
-const SUBTITLE = ["Community-acquired pneumonia with type 2 respiratory failure, step-down from HDU", "Asthma", "Fall at home, fractured neck of femur, day 9 after hemiarthroplasty", "", "Cellulitis"];
-const patient = (i: number) => ({
-  id: `p-${i}`, encounterId: `e-${i}`, name: nameOf(i), initials: "", age: 18 + (i * 7) % 83, sex: i % 2 ? "Male" : "Female", subtitle: SUBTITLE[i % SUBTITLE.length]!,
-  complaint: "Cough and fever", history: [], family: "", social: "", allergies: null, medicines: [], vitals: [], sources: [], incomplete: i % 5 === 3,
-});
-const patients = (n: number) => rows(n, patient);
 
 const MEDS: MedChange[] = [
   { name: "Insulin glargine (Lantus SoloStar) 100 units/mL prefilled pen", change: "changed", detail: "24 units subcutaneously at 22:00 nightly, was 18 units; check fingerprick glucose before breakfast and dinner" },
@@ -41,7 +34,6 @@ const plan = (blocked: number, passed: number, meds: number, long: boolean) => (
 });
 
 export default [
-  fixture("patients.list", { worst: patients(WORST_BEDS.length), empty: [], one: patients(1), huge: patients(1000) }),
   fixture("discharge.plan", { worst: plan(8, 3, 25, true), empty: plan(0, 0, 0, false), one: plan(0, 1, 1, false) }),
   fixture("discharge.draft", {
     worst: input => ({ summary: `${LONG}\n\n${LONG}\n\n${LONG}`, leaflet: LONG, language: input.language, source: "model" as const, model: "medgemma-27b" }),

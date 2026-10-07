@@ -14,8 +14,8 @@ Dev only. Add `?data=worst|empty|one|huge` to any `/pro` or `/care` address, or 
 screen (**Demo / Worst case / Empty / One / 1,000 rows**). The oRPC link (`src/lib/orpc.ts`) then answers every
 procedure that has a fixture in `src/dev/worst-case/` without the network; the rest still go to the server, and a
 write (mutation) with no fixture succeeds without the server. Demo is the real server. Production builds contain none
-of it. Who is signed in (`clinician.me`, `care.me`) and the sidebar badges are seeded in `pro-session.ts` and
-`care-session.ts`, so a page renders with no backend. `/pro/dev-gallery` shows every shared component in each state.
+of it. Who is signed in (`clinician.me`, `care.me`) is in `pro-session.ts` and `care-session.ts`, so a page renders
+with no backend. `/pro/dev-gallery` shows every shared component in each state.
 
 To add fixtures for a page, create `src/dev/worst-case/pro-<page>.ts` or `care-<page>.ts` (picked up by name):
 
@@ -27,7 +27,8 @@ export default [
 ```
 
 `fixture` checks each value against the procedure's output type. A value may be a function of the call's input. A
-missing state falls back to `worst`; a page file replaces a `*-session.ts` seed for the same procedure. Values must be
+missing state falls back to `worst`. Every file loads on every page, so register a procedure in one file only (the
+console warns on a second) and let other pages read it. Values must be
 plausible or the schema's own limit (long Malay and hyphenated names, unbreakable emails, 1 and 1,284, missing optional
 fields), never `aaaa…`: the rules and values are in the break-ui catalog. On a page, write numbers with
 `formatNumber(1284)` ("1,284") and counted nouns with `countOf(n, "patient")` ("1 patient") from `@/lib/format`.

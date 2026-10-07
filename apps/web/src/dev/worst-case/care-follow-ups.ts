@@ -1,6 +1,6 @@
 import { fixture, rows } from "./fixture";
 
-// Follow-ups (/care/follow-ups): visits, the patient's booking requests, the clinic clock and visit prep.
+// Follow-ups (/care/follow-ups): visits (also read by Home and the discharge plan), the patient's booking requests and visit prep.
 // Every column here is unbounded text in the schema (doctors, booking_requests, appointments).
 
 const DAY = 86_400_000, MYT = 8 * 3600_000;
@@ -22,7 +22,6 @@ const SAME_DAY = ["08:00", "08:30", "09:00", "09:15", "10:00", "10:45", "11:30",
 const SAME_DAY_TITLES = ["Ujian fungsi paru-paru (spirometri) dan ujian tindak balas bronkodilator", "Blood test", "Chest X-ray", "ECG", "Klinik Pakar Respiratori", "Echocardiogram", "Dietitian", "Pharmacy counselling", "Physiotherapy", "Sleep clinic", "Ophthalmology", "Diabetes education"];
 
 export default [
-  fixture("care.clock", { worst: { offsetMs: 0 } }),
   fixture("care.followUps", {
     worst: [
       ...[-40, -21, -9, -2].map((d, i) => visit(`past-${i}`, d, "10:30", i === 0 ? "Pemeriksaan semula selepas discaj dari wad perubatan" : "Clinic review", "To check how you are healing.", i % 2 ? "missed" : "attended")),

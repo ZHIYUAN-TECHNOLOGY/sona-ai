@@ -1,20 +1,9 @@
 import { fixture, rows } from "./fixture";
 
-// /pro/visit (today's visits) and /pro/visit?encounterId=visit-1001 (patients.list is in pro-patients.ts, the briefing in
+// /pro/visit (today's visits: day.list in pro-today.ts) and /pro/visit?encounterId=visit-1001 (patients.list is in pro-patients.ts, the briefing in
 // pro-patient.ts). Note sentences, medicine entries and appointment kinds are unbounded text (`notes.sentences` jsonb,
 // `appointments.kind` text); the scribe's transcript lines are capped at 4,000 characters (toLines), the size used here.
 const NOW = Date.UTC(2026, 9, 7, 1, 0);
-const NAMES = [
-  "Tengku Puteri Nur Aisyah Zahratul 'Ain binti Tengku Muhammad Faris Iskandar Shah Al-Hajjah", "Jo", "Đặng Thị Ngọc Hân", "王秀英",
-  "Christopher Alexander Montgomery III", "Seán O'Brien-Ó Súilleabháin", "Muthukumaran a/l Subramaniam Ramasamy Pillai",
-];
-const KINDS = ["follow-up", "pre-operative assessment for coronary artery bypass grafting (CABG) with the cardiothoracic team", "new", "review"];
-
-// Patients SYN-1001… have a visit record; every fifth booking is a walk-in with no record yet.
-const visit = (i: number) => ({
-  id: `appt-${i}`, patientId: i % 5 === 4 ? `WALKIN-${i}` : `SYN-${1001 + (i % 37)}`, patientName: NAMES[i % NAMES.length]!, initials: "",
-  incomplete: i % 3 === 1, kind: KINDS[i % KINDS.length]!, startsAt: new Date(NOW + (i - 4) * 15 * 60_000),
-});
 
 // A history section dictated in full: 4,000 characters, the longest line the scribe accepts.
 const HISTORY = (
@@ -67,12 +56,6 @@ export default [
       id: "rx-1285", kind: "prescription", encounterId: "visit-1001", approvedBy: "u-9f8e7d6c", createdAt: new Date(NOW), revision: 1285, requestId: "web-rx-visit-1001-r1285-9f8e7d6c-5b4a-4c3d-8e2f-1a0b9c8d7e6f", approvedByName: "Dr Aleksandra Wiśniewska-Kowalczyk",
       payload: { medication: "Ceftriaxone", dose: "2", unit: "g", route: "intravenous", frequency: "once daily", duration: "7 days", indication: "community-acquired pneumonia with a penicillin anaphylaxis on record", sourceVersion: "Malaysian CPG Management of Pneumonia in Adults, 3rd edition (2024) · v3.2", checks: rows(11, (i) => `check-${i}`) },
     },
-  }),
-  fixture("day.list", {
-    worst: rows(37, visit),
-    empty: [],
-    one: [{ ...visit(0), patientName: "Jo", kind: "review", incomplete: false }],
-    huge: rows(1000, visit),
   }),
   fixture("note.get", {
     worst: ({ encounterId }) => ({ encounterId, revision: 1284, sentences: SENTENCES }),
