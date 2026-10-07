@@ -17,3 +17,5 @@ type FindingRow = { id: string; imageKey: string | null; label: string; status: 
 /** The findings read from this film (same stored key), numbered in order and without the dismissed ones. */
 export const filmMarkers = (findings: FindingRow[], key: string): ImageMarker[] =>
   findings.filter(f => f.imageKey === key && f.status !== "dismissed").map((f, i) => ({ id: f.id, n: i + 1, x: f.location.x, y: f.location.y, label: f.label, box: f.location.box ?? undefined }));
+/** The labels still open on this film, so a compared film can show which of its findings are yet to be followed up. */
+export const openLabels = (findings: FindingRow[], key: string) => findings.filter(f => f.imageKey === key && f.status === "open").map(f => f.label);

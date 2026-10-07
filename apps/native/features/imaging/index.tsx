@@ -4,7 +4,7 @@ import { Image, type ImageSource } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Linking, Pressable, View } from "react-native";
+import { Linking, Pressable, TextInput, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
 import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
@@ -18,11 +18,14 @@ import { Action, Chip, Expand, Glass, Icon, Insight, Notice, pillStyle, Reveal, 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEncounterSelect } from "@/features/encounter/store";
 import { sameShallow } from "@/features/live/keep-same";
-import type { Encounter, FeatureProps } from "@/features/encounter/types";
+import type { Encounter, FeatureProps, Patient } from "@/features/encounter/types";
+import { RingedFilm, useFilm } from "@/features/evidence";
 import { FindingsCard } from "@/features/findings";
 import { onImage } from "@/features/findings/model";
 import { useFindings } from "@/features/live/findings-sync";
 import { useRole } from "@/features/live/roles";
+import { api } from "@/features/live";
+import { filmDate, groupFilms, type SimilarFilm } from "./compare";
 import { useXrayAttach, useXrayReading, useXrayUploadOf } from "./use-upload";
 import { takeXray } from "@/features/library/scan-state";
 import { teachingImage, type TeachingImage } from "./fixture";
@@ -57,9 +60,11 @@ export function XrayCard({ patient, onOpen, onRequest, result }: FeatureProps) {
   // any other image is never shown here. Demo mode, and an image that was never sent, keep the honest sample.
   const reading = useXrayReading(patient.encounterId, attachment?.uri);
   const server = useXrayAttach();
+  // A compared film (an earlier one of this patient's, or a similar one) takes today's place until "Back to today's film".
+  const [shown, setShown] = useState<SimilarFilm>();
   const openOriginal = () => { if (result && (attachment || referenceImage)) router.push({ pathname: "/xray", params: { recordCardId: result.id, patientId: result.patientId } }); else onOpen("xray"); };
   return <View style={{ gap: 18 }}>
-    <View style={{ gap: 8 }}>
+    {shown ? <ComparedFilm film={shown} onBack={() => { haptic(); setShown(undefined); }} /> : <View style={{ gap: 8 }}>
       <Preview source={imageSource} label={attachment ? "Selected local teaching image" : referenceImage ? "Reference radiograph, unrelated to this patient" : "Add a teaching image"} onPress={openOriginal} />
       {attachment && <Caption icon={null}>{attachment.name} · {reading?.saving ? "saving to your hospital’s storage" : reading && !reading.failed ? "in your hospital’s storage" : "local, not uploaded or analysed"}</Caption>}
       {!attachment && referenceImage && <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -67,12 +72,14 @@ export function XrayCard({ patient, onOpen, onRequest, result }: FeatureProps) {
         <SourceLink label="Source" onPress={() => { void Linking.openURL(referenceImage.sourceUrl).catch(() => setSourceError(true)); }} />
       </View>}
       {sourceError && <Notice warning>The source page could not be opened. Attribution remains available here.</Notice>}
-    </View>
+    </View>}
     {sections < 2 && <AnalysisStatus interrupted={interrupted} />}
     {sections >= 2 && <Reveal>{reading ? <ModelRead reading={reading} onRetry={attachment && server.live ? () => server.attach(patient.encounterId, attachment) : undefined} /> : <Findings scenario={scenario} attachment={Boolean(attachment)} summary={referenceImage?.referenceSummary} />}</Reveal>}
     {sections === 2 && !interrupted && <Caption icon={null}>Completing provenance and limitations…</Caption>}
     {/* Live, the sample's limits show only under a sample: a model's reading, a wait or a failure each say their own. */}
     {sections >= 3 && (!reading || reading.data?.source === "fixture") && <Reveal><Limits sample={Boolean(attachment) || scenario !== "reference"} waking={wakingOf(reading?.data)} detail="The original stays available to inspect." /></Reveal>}
+    {/* Live, once this visit's film is in storage: what to set beside it. Demo mode has no hospital of films. */}
+    {sections >= 3 && server.live && attachment && <Reveal><Compare patient={patient} shown={shown?.encounterId} onShow={film => { haptic(); setShown(film); }} /></Reveal>}
     {superseded && <Notice>This response preserves an earlier image and scenario. New requests use the current encounter image.</Notice>}
     {(interrupted || sections >= 3 && scenario !== "reference") && <View style={{ alignSelf: "flex-start" }}>
       <Action label={superseded ? "Analyse current encounter image" : "Retry analysis"} secondary icon="arrow.clockwise" disabled={busy} onPress={() => onRequest("xray")} />
@@ -94,6 +101,83 @@ function Preview({ source, label, onPress }: { source?: ImageSource | number; la
       <ImageEdge />
     </PressScale>}</Pressable>
   </Animated.View>;
+}
+
+type Similar = Awaited<ReturnType<typeof api.xray.similar>>;
+/**
+ * "Is this nodule new?": this patient's earlier films, then the hospital's films most like today's, each with what was
+ * read on it (open findings highlighted); a phrase at the row's end finds films by words instead. A tap sets one in
+ * today's place (`onShow`), a second tap or "Back to today's film" restores it. Placeholders, no spinners; nothing moves.
+ */
+function Compare({ patient, shown, onShow }: { patient: Patient; shown?: string; onShow: (film?: SimilarFilm) => void }) {
+  const [text, setText] = useState("");
+  const [asked, setAsked] = useState(""); // the phrase searched; empty means films like today's
+  const [result, setResult] = useState<Similar | "off" | "failed">();
+  useEffect(() => {
+    let gone = false;
+    setResult(undefined);
+    api.xray.similar(asked ? { text: asked } : { encounterId: patient.encounterId })
+      .then(r => { if (!gone) setResult(r); }, e => { if (!gone) setResult((e as { code?: string } | undefined)?.code === "SERVICE_UNAVAILABLE" ? "off" : "failed"); });
+    return () => { gone = true; };
+  }, [asked, patient.encounterId]);
+  const found = typeof result === "object" ? result : undefined;
+  const groups = found && groupFilms(found.films, patient.id, patient.encounterId);
+  const line = result === "off" ? "Film search is off"
+    : result === "failed" ? "Films could not be fetched"
+    : found && !found.indexed ? "Not indexed yet; re-upload to compare"
+    : groups && !groups.earlier.length && !groups.similar.length ? (asked ? `No films found for “${asked}”` : "No other films in this hospital yet")
+    : undefined;
+  const row = (label: string, films: SimilarFilm[]) => films.length > 0 && <View style={{ gap: 6 }}>
+    <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>{label}</Text>
+    <View style={{ flexDirection: "row", gap: 10 }}>{films.map(f => <Tile key={f.encounterId} film={f} shown={shown === f.encounterId} onPress={() => onShow(shown === f.encounterId ? undefined : f)} />)}</View>
+  </View>;
+  return <View style={{ gap: 10 }}>
+    <Text accessibilityRole="header" style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Compare</Text>
+    {line && <Caption icon={null}>{line}</Caption>}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16, alignItems: "flex-start" }}>
+      {groups && row(asked ? "This patient" : "This patient’s earlier films", groups.earlier)}
+      {groups && row(asked ? "In this hospital" : "Similar films in this hospital", groups.similar)}
+      <TextInput value={text} onChangeText={t => { setText(t); if (!t.trim()) setAsked(""); }} onSubmitEditing={() => setAsked(text.trim())} returnKeyType="search" clearButtonMode="while-editing" autoCapitalize="none" autoCorrect={false}
+        accessibilityLabel="Find films by words" placeholder="Find films: effusion on the left" placeholderTextColor={palette.placeholder}
+        style={{ width: 220, minHeight: 44, borderRadius: radius.control, paddingHorizontal: 14, fontSize: type.footnote.fontSize, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+    </ScrollView>
+  </View>;
+}
+
+const TILE = 116;
+/** One film to compare: grey with its date until its pixels arrive, then the film ringed; whose, when, and what was read on it. */
+function Tile({ film, shown, onPress }: { film: SimilarFilm; shown: boolean; onPress: () => void }) {
+  const data = useFilm(film.encounterId);
+  const ready = data && data !== "failed" ? data : undefined;
+  const date = filmDate(film.uploadedAt);
+  return <Pressable accessibilityRole="imagebutton" accessibilityLabel={`${film.patientName}, ${date}${film.findings.length ? `, ${film.findings.join(", ")}` : ""}`} accessibilityState={{ selected: shown }} accessibilityHint={shown ? "Back to today’s film" : "Shows this film in place of today’s"} onPress={onPress} style={{ width: TILE, gap: 5 }}>{({ pressed }) => <>
+    <PressScale pressed={pressed} scale={0.97} style={{ ...VIEWING, height: TILE * 0.8, backgroundColor: ready ? palette.ink : palette.line, borderWidth: 2, borderColor: shown ? palette.blue : "transparent" }}>
+      {ready ? <RingedFilm film={ready} /> : <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.caption, color: palette.muted }}>{data === "failed" ? "Not available" : date}</Text></View>}
+      <ImageEdge />
+    </PressScale>
+    <Text numberOfLines={1} style={{ ...type.caption, fontWeight: "600", color: palette.ink }}>{film.patientName}</Text>
+    <Text style={{ ...type.caption, color: palette.muted }}>{date}</Text>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+      {film.findings.map((label, i) => { const open = ready?.open.includes(label);
+        return <Text key={i} numberOfLines={1} style={{ ...type.caption, overflow: "hidden", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 9, color: open ? palette.blue : palette.muted, backgroundColor: open ? "#E6EEFC" : "rgba(20,28,40,0.05)" }}>{label}</Text>; })}
+    </View>
+  </>}</Pressable>;
+}
+
+/** The compared film in today's place, with its own marks, and the way back one tap away. */
+function ComparedFilm({ film, onBack }: { film: SimilarFilm; onBack: () => void }) {
+  const data = useFilm(film.encounterId);
+  const date = filmDate(film.uploadedAt);
+  return <View style={{ gap: 8 }}>
+    <View accessible accessibilityLabel={`${film.patientName}, ${date}`} style={{ ...VIEWING, aspectRatio: 1.25 }}>
+      {data && data !== "failed" ? <RingedFilm film={data} /> : <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.callout, color: palette.line }}>{data === "failed" ? "Film not available" : date}</Text></View>}
+      <ImageEdge />
+    </View>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <Chip label="Back to today’s film" icon={<Icon name="arrow.uturn.backward" size={14} />} onPress={onBack} />
+      <Caption icon={null}>{film.patientName} · {date}{film.findings.length ? ` · ${film.findings.join(", ")}` : ""}</Caption>
+    </View>
+  </View>;
 }
 
 /** While the fixture streams: a quiet status with a halftone sweep beside the image, never over its pixels. */
