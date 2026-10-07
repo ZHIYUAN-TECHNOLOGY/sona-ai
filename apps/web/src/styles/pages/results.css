@@ -1,4 +1,4 @@
-.results-priority { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
+.results-priority { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
 .results-detail-chip { margin-top: var(--space-2); }
 .results-muted { color: var(--muted); margin: 0; }
 .results-value { font-variant-numeric: tabular-nums; }
@@ -8,7 +8,7 @@
 .results-detail-head { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4); }
 .results-detail-head > div { flex: 1; min-width: 0; }
 .results-detail-title { font: inherit; font-weight: 600; margin: 0 0 var(--space-1); }
-.results-detail-actions { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); }
+.results-detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-3); }
 .results-confirm { display: flex; align-items: center; gap: var(--space-2); }
 .results-error { color: var(--red); margin: var(--space-2) 0 0; }
 /* On a laptop the Received column gives way; the rail's detail card still shows when the result arrived. */

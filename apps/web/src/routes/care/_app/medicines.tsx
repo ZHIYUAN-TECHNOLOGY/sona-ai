@@ -9,6 +9,7 @@ import { Button, Card, Chip, ListCard, ListRow, StatCard, StatRow } from "@/comp
 import { RightRail, WithRail } from "@/components/rail";
 import { type Dose, dosesToday, dueSoon, early, langOf, nextDose, timeOf, weekDots, whenWords } from "@/features/care-medicines/model";
 import { MedicinePhoto } from "@/features/care-medicines/photo";
+import { countOf, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-medicines.css";
 
@@ -16,7 +17,13 @@ export const Route = createFileRoute("/care/_app/medicines")({ component: Page }
 
 const GROUPS = ["new", "changed", "continue", "stopped"] as const;
 const DOT_WORDS = { done: "taken", missed: "not marked", upcoming: "to come" };
+/** More doses in a day than this read as a count, not a column of dots. */
+const DOT_MAX = 8;
 const lang = langOf(typeof navigator === "undefined" ? undefined : navigator.language);
+const times = new Intl.ListFormat(lang, { type: "conjunction" });
+/** "Mon: 52 taken, 8 not marked" */
+const dayWords = (x: string, dots: { state: keyof typeof DOT_WORDS }[]) =>
+  `${x}: ${dots.length ? (Object.keys(DOT_WORDS) as (keyof typeof DOT_WORDS)[]).flatMap(k => { const n = dots.filter(d => d.state === k).length; return n ? [`${n} ${DOT_WORDS[k]}`] : []; }).join(", ") : "no doses"}`;
 
 type RowProps = { doses: Dose[]; now: Date; confirming?: string; primaryKey?: string; pendingKey?: string; busy: boolean; ask: (key?: string) => void; take: (key: string) => void };
 
@@ -97,7 +104,7 @@ function Page() {
       <WithRail rail={
         <RightRail label="Medicine help">
           {meds.length > 0 ? <InsightCard label="Sona" title={insight.title} lead={insight.lead} next={insight.next}
-            evidence={duePast ? [{ icon: "pill", text: `Last 7 days: ${weekDone} of ${duePast} doses marked taken${weekMissed ? `, ${weekMissed} not marked` : ""}` }] : undefined} /> : null}
+            evidence={duePast ? [{ icon: "pill", text: `Last 7 days: ${formatNumber(weekDone)} of ${countOf(duePast, "dose")} marked taken${weekMissed ? `, ${formatNumber(weekMissed)} not marked` : ""}` }] : undefined} /> : null}
           <MedicinePhoto />
         </RightRail>
       }>
@@ -110,9 +117,9 @@ function Page() {
           {meds.length + medicines.stopped.length === 0 ? <Card title="Your medicines"><p>Your plan lists no medicines to take at home.</p></Card> : (
             <ListCard title="Your medicines">
               {GROUPS.flatMap(group => medicines[group].map(m => (
-                <ListRow key={`${group}-${m.name}`} icon="pill"
+                <ListRow key={`${group}-${m.name}`} wrap icon="pill"
                   title={<><span className="med-name">{m.name}</span> <span className="med-dose">{m.line}</span></>}
-                  caption={group === "stopped" ? "Stopped. Do not take this one." : m.finished ? "Finished. No more doses." : m.take ? `${m.take}${m.at?.length ? `, at ${m.at.join(" and ")}` : ""}` : group === "new" ? "New for you" : group === "changed" ? "The dose changed" : undefined}
+                  caption={group === "stopped" ? "Stopped. Do not take this one." : m.finished ? "Finished. No more doses." : m.take ? `${m.take}${m.at?.length ? `, at ${times.format(m.at)}` : ""}` : group === "new" ? "New for you" : group === "changed" ? "The dose changed" : undefined}
                   trailing={group === "stopped" ? <Chip>Stopped</Chip> : m.finished ? <Chip>Finished</Chip> : (today.some(d => d.name === m.name) ? <DoseStatus doses={today.filter(d => d.name === m.name)} now={now} confirming={confirming} primaryKey={primaryKey} pendingKey={pendingKey} busy={take.isPending} ask={setConfirming} take={markTaken} /> : null) ?? (group === "new" ? <Chip tone="info">New</Chip> : group === "changed" ? <Chip tone="soon">Changed</Chip> : undefined)} />
               )))}
             </ListCard>
@@ -120,9 +127,9 @@ function Page() {
           {dots.length > 0 ? <Card title="This week">
             <ol className="med-week">
               {week.map(d => (
-                <li key={d.x} data-today={d.today || undefined} aria-label={`${d.x}: ${d.dots.length ? d.dots.map(x => DOT_WORDS[x.state]).join(", ") : "no doses"}`}>
+                <li key={d.x} data-today={d.today || undefined} aria-label={dayWords(d.x, d.dots)}>
                   <span className="med-day">{d.x}</span>
-                  <span className="med-dots">{d.dots.length ? d.dots.map(x => <i key={x.key} data-state={x.state}>{x.state === "done" ? <Icon name="check" size={14} /> : null}</i>) : <span className="med-muted">–</span>}</span>
+                  <span className="med-dots">{d.dots.length > DOT_MAX ? <span className="med-count"><strong>{d.dots.filter(x => x.state === "done").length}</strong> of {d.dots.length}</span> : d.dots.length ? d.dots.map(x => <i key={x.key} data-state={x.state}>{x.state === "done" ? <Icon name="check" size={14} /> : null}</i>) : <span className="med-muted">–</span>}</span>
                 </li>
               ))}
             </ol>

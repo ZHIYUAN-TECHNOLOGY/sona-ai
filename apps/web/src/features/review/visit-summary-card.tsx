@@ -5,6 +5,7 @@ import { type MouseEvent, useState } from "react";
 
 import { Icon } from "@/components/icon";
 import { Avatar, Button, Card, Chip } from "@/components/primitives";
+import { countOf } from "@/lib/format";
 import { type client, orpc } from "@/lib/orpc";
 
 import { splitMarkers } from "./markers";
@@ -123,7 +124,8 @@ export function VisitSummaryCard({ item, role, onDone }: { item: SummaryItem; ro
           ? (
             <div className="rv-confirm" data-tone="soon" role="group" aria-label="Confirm sending">
               <p>
-                {failing.length === 1 ? "1 check did not pass" : `${failing.length} checks did not pass`}: {failing.map(c => c.label).join("; ")}.
+                {/* A few are named here; more than that is a wall of text, and the list sits just above. */}
+                {countOf(failing.length, "check")} did not pass{failing.length > 3 ? " (listed above)" : `: ${failing.map(c => c.label).join("; ")}`}.
                 {" "}Send this summary to {item.patient.name} anyway?
               </p>
               <div className="msg-actions">

@@ -39,9 +39,11 @@
 /* Sona Care: the same card at patient sizes, with a blue pill to go on. */
 .care.sign-in { font-size: var(--text-body); }
 .care .sign-in-card { max-width: 460px; gap: var(--space-5); }
-.care .sign-in-brand { font-size: 19px; }
-.care .sign-in-card label { font-size: 16px; color: var(--ink); }
-.care .sign-in-card input { min-height: 56px; font-size: 19px; }
+.care .sign-in-brand { font-size: 1.1875rem; }
+.care .sign-in-card label { font-size: 1.0625rem; color: var(--ink); }
+.care .sign-in-card input { min-height: 56px; font-size: 1.1875rem; }
 .care .sign-in-card button { min-height: 52px; }
 .care .sign-in-primary { background: var(--blue); }
-.care .sign-in-error { font-size: 16px; }
+.care .sign-in-error { font-size: 1.0625rem; }
+/* A 320px phone: the card's side padding gives the fields their width back. */
+@media (max-width: 360px) { :is(.pro, .care) .sign-in-card { padding-inline: var(--space-4); } }

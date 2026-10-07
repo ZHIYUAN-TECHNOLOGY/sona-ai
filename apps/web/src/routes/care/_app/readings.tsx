@@ -9,6 +9,7 @@ import { Button, Card } from "@/components/primitives";
 import { browserLang, dayWords, whenWords } from "@/features/care-follow-ups/dates";
 import { AddForm, listOptions } from "@/features/care-readings/add-form";
 import { changeWords, rangeWords, since, valueWords, type Kind } from "@/features/care-readings/readings";
+import { countOf, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/care-readings.css";
 
@@ -18,6 +19,8 @@ const lang = browserLang();
 const DAY = 86_400_000;
 const WINDOWS = [7, 30, 90] as const;
 const LOG_CAP = 10;
+/** Past this many dots the numbers over them overlap; the axis and the list carry the values. */
+const VALUES_MAX = 14;
 /** "up 9 since 5 Oct, 8:00 am"; when both readings share a time, "up 9 from the reading before"; with one reading, just its time. */
 const changeLine = (change: string | undefined, before: string, last: string) =>
   !change ? last : before === last ? change.replace(/ since$/, " from the reading before") : `${change} ${before}`;
@@ -55,11 +58,11 @@ function Page() {
   // The measure on the chart: the one picked, else the first one logged.
   const main = all.find(s => s.kind === picked) ?? all[0];
   const points = shown.find(s => s.kind === main?.kind)?.points ?? [];
-  // Under the line: the day, or the time when a day has more than one reading.
+  // Under the line: the day, or the time when every reading shown is from one day (twice-daily readings would otherwise read as bare times).
   const days_ = points.map(p => dayWords(new Date(p.at), lang).replace(/^[^ ]+ /, ""));
-  const xOf = (i: number) => (days_.indexOf(days_[i]!) !== days_.lastIndexOf(days_[i]!) ? timeOf(points[i]!.at) : days_[i]!);
+  const xOf = (i: number) => (days_[0] === days_.at(-1) && points.length > 1 ? timeOf(points[i]!.at) : days_[i]!);
   const chart = (name: string, ys: (number | undefined)[]) => (
-    <LineChart height={220} showValues unit={main?.unit} label={`${name}, last ${days} days`}
+    <LineChart height={220} showValues={points.length <= VALUES_MAX} unit={main?.unit} label={`${name}, last ${days} days`}
       points={points.flatMap((_, i) => (ys[i] == null ? [] : [{ x: xOf(i), y: ys[i]! }]))} />
   );
 
@@ -71,7 +74,7 @@ function Page() {
   const addedToday = newest ? new Date(newest.p.at).toDateString() === new Date(now).toDateString() : false;
   const insight = weekCount === 0
     ? "No readings in the last 7 days."
-    : `${weekCount} ${weekCount === 1 ? "reading" : "readings"} this week. ${weekMain ? rangeWords(weekMain, weekMain.points) : ""}`.trim();
+    : `${countOf(weekCount, "reading")} this week. ${weekMain ? rangeWords(weekMain, weekMain.points) : ""}`.trim();
 
   return (
     <div className="rd">
@@ -134,7 +137,7 @@ function Page() {
                   </li>
                 ))}
               </ul>
-              {log.length > LOG_CAP && !showAll ? <Button className="rd-more" onClick={() => setShowAll(true)}>Show all {log.length}</Button> : null}
+              {log.length > LOG_CAP && !showAll ? <Button className="rd-more" onClick={() => setShowAll(true)}>Show all {formatNumber(log.length)}</Button> : null}
             </Card>
           ) : null}
         </div>

@@ -3,9 +3,10 @@
 .care-home-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--gap-card); align-items: start; }
 .care-home-quiet { color: var(--muted); white-space: nowrap; }
 .care-home-act { color: var(--blue); font-weight: 600; white-space: nowrap; }
-/* Patients read this: nothing on the page under the small size. */
-.care-home .chip.chip.chip, .care-home .stat-caption, .care-home .list-caption, .care-home .insight-overline, .care-home .insight-label { font-size: var(--text-small); }
 .care-home .list > li > .empty { border: 0; }
+/* Rows wrap (ListRow `wrap`); a caption (time first) keeps to three lines. */
+.care-home .list-row[data-wrap] .list-caption { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.care-home .stat-row .stat .stat-caption { display: -webkit-box; white-space: normal; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 
 .care-home p { margin: 0; }
 .care-home-call { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--space-5); background: var(--red-wash); border: 1px solid var(--red); border-radius: var(--radius-card); }

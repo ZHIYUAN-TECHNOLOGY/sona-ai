@@ -2,9 +2,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, type ReactNode, useState } from "react";
 
 import { Button, Chip, Field } from "@/components/primitives";
+import { countOf, formatNumber } from "@/lib/format";
 import { type client, orpc } from "@/lib/orpc";
 
 import { labelTone, triageBy } from "./format";
+
+/** messages.reply takes 1,000 characters; a model's draft is unbounded. */
+const MAX_REPLY = 1000;
 
 export type Draft = NonNullable<Awaited<ReturnType<typeof client.messages.draft>>>;
 
@@ -41,22 +45,26 @@ export function ReplyEditor({ patientId, draft, sendLabel = "Send reply", extra,
   const queryClient = useQueryClient();
   // One id per draft shown, so a retried send is the same send.
   const [requestId] = useState(() => crypto.randomUUID());
+  // A draft longer than a reply may be is said before sending, not by a failed send.
+  const [text, setText] = useState(draft?.text ?? "");
+  const length = text.trim().length;
+  const over = length - MAX_REPLY;
   const done = () => queryClient.invalidateQueries({ queryKey: orpc.messages.key() });
   const reply = useMutation(orpc.messages.reply.mutationOptions({ onSuccess: () => { onSent?.(); return done(); } }));
   const handle = useMutation(orpc.messages.handle.mutationOptions({ onSuccess: done }));
   const send = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const text = String(new FormData(e.currentTarget).get("text") ?? "").trim();
-    if (text) reply.mutate({ patientId, text, requestId });
+    if (length && over <= 0) reply.mutate({ patientId, text: text.trim(), requestId });
   };
-  const error = reply.error ?? handle.error;
+  const error = (reply.error ?? handle.error)?.message
+    ?? (over > 0 ? `${formatNumber(length)} characters: a reply can be ${formatNumber(MAX_REPLY)}. Shorten it by ${countOf(over, "character")} before sending.` : undefined);
   return (
     <form className="msg-editor" onSubmit={send}>
-      <Field label={draft ? "Check before sending" : "Reply"} error={error?.message}>
-        {c => <textarea {...c} name="text" rows={6} maxLength={1000} required defaultValue={draft?.text ?? ""} />}
+      <Field label={draft ? "Check before sending" : "Reply"} error={error}>
+        {c => <textarea {...c} name="text" rows={6} maxLength={MAX_REPLY} required value={text} onChange={e => setText(e.target.value)} />}
       </Field>
       <div className="msg-actions">
-        <Button type="submit" variant="primary" pending={reply.isPending}>{sendLabel}</Button>
+        <Button type="submit" variant="primary" pending={reply.isPending} disabled={over > 0}>{sendLabel}</Button>
         {draft ? <Button pending={handle.isPending} onClick={() => handle.mutate({ patientId })}>Mark handled</Button> : null}
         {extra}
       </div>

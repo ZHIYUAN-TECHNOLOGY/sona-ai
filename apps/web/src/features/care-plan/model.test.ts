@@ -11,6 +11,7 @@ test("discharge plan helpers: next step, first sentence, days since", () => {
   expect(nextOf({ tone: "done", title: "", text: "" })).toBeUndefined();
   expect(firstSentence("You had a chest infection. Rest at home.")).toBe("You had a chest infection.");
   expect(firstSentence("No full stop")).toBe("No full stop");
+  expect(firstSentence("您因心力衰竭住院十二天。出院后请每天称体重。")).toBe("您因心力衰竭住院十二天。");
   expect(daysSince("2026-10-01T10:00:00Z", new Date("2026-10-04T09:00:00Z"))).toBe(2);
   expect(daysSince("2026-10-05T10:00:00Z", new Date("2026-10-04T09:00:00Z"))).toBe(0);
 });

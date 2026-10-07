@@ -18,8 +18,8 @@
   .pt-timeline li { grid-template-columns: 1fr; gap: 0; }
 }
 
-.pt-labs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-3); }
-.pt-labs h3 { margin: 0 0 var(--space-1); font-size: 1rem; }
+.pt-labs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: var(--space-3); }
+.pt-labs h3 { margin: 0 0 var(--space-1); font-size: 1rem; overflow-wrap: anywhere; }
 .pt-labs p { margin: 0; }
 
 /* Sona Care join code on the patient overview */

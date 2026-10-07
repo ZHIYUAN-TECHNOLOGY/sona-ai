@@ -2,19 +2,27 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { Button } from "@/components/primitives";
+import { countOf } from "@/lib/format";
 import { client, orpc } from "@/lib/orpc";
 
 import { whenOf } from "./time";
 
 export type BookingRequest = Awaited<ReturnType<typeof client.bookings.list>>[number];
 
-/** Booking requests waiting for an answer. Each is read in full, then confirmed or declined where it sits. */
+/** The soonest requests shown before "Show all"; a long queue would otherwise bury the rest of the rail. */
+const CAP = 5;
+
+/** Booking requests waiting for an answer, soonest first. Each is read in full, then confirmed or declined where it sits. */
 export function BookingRequests({ requests, canDecide }: { requests: BookingRequest[]; canDecide: boolean }) {
+  const [all, setAll] = useState(false);
   if (!requests.length) return null;
   return (
-    <ul className="today-requests">
-      {requests.map(r => <Request key={r.id} request={r} canDecide={canDecide} />)}
-    </ul>
+    <>
+      <ul className="today-requests">
+        {(all ? requests : requests.slice(0, CAP)).map(r => <Request key={r.id} request={r} canDecide={canDecide} />)}
+      </ul>
+      {!all && requests.length > CAP ? <Button size="sm" onClick={() => setAll(true)}>Show all {countOf(requests.length, "request")}</Button> : null}
+    </>
   );
 }
 
@@ -36,7 +44,7 @@ function Request({ request: r, canDecide }: { request: BookingRequest; canDecide
       <p className="today-request-who">{r.patientName}</p>
       <p>{r.doctorName}, {r.specialty}</p>
       <p>{whenOf(new Date(r.startsAt))}{r.room ? ` · ${r.room}` : ""}</p>
-      {r.reason ? <p className="today-quiet">“{r.reason}”</p> : null}
+      {r.reason ? <p className="today-quiet today-reason">“{r.reason}”</p> : null}
       {canDecide ? (
         declining ? (
           <form

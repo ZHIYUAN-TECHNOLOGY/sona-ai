@@ -15,6 +15,12 @@ function toE164(typed: string) {
   return /^1\d{8,9}$/.test(digits) ? `+60${digits}` : undefined;
 }
 
+/** +60123456789 as a patient writes it, 012-345 6789 (011-2345 6789 for the longer numbers), so they can check it. */
+function toNational(e164: string) {
+  const n = `0${e164.slice(3)}`;
+  return `${n.slice(0, 3)}-${n.slice(3, -4)} ${n.slice(-4)}`;
+}
+
 function SignIn() {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
@@ -50,7 +56,7 @@ function SignIn() {
       <div className="sign-in-brand"><span className="sign-in-brand-tile"><Icon name="activity" size={22} /></span>Sona Care</div>
       {sentTo ? <>
         <h1>Enter your code</h1>
-        <p>We sent a 6-digit code to {sentTo}.</p>
+        <p>We sent a 6-digit code to {toNational(sentTo)}.</p>
         <form onSubmit={verify}>
           <label htmlFor="code">6-digit code</label>
           <input id="code" name="code" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} required autoFocus
@@ -70,7 +76,7 @@ function SignIn() {
           <label htmlFor="phone">Mobile number (+60)</label>
           <input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel-national" required autoFocus placeholder="012-345 6789"
             value={phone} onChange={e => setPhone(e.target.value)} />
-          {demo ? <button type="button" className="sign-in-quiet" onClick={() => setPhone(`0${demo.phone.slice(3)}`)}>Demo number: 0{demo.phone.slice(3)}</button> : null}
+          {demo ? <button type="button" className="sign-in-quiet" onClick={() => setPhone(toNational(demo.phone))}>Demo number: {toNational(demo.phone)}</button> : null}
           {alert}
           <button type="submit" className="sign-in-primary" disabled={busy || !number}>{busy ? "Sending…" : "Send code"}</button>
         </form>

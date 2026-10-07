@@ -4,6 +4,7 @@ import { LineChart } from "@/components/charts";
 import { Card, ListCard, ListRow } from "@/components/primitives";
 import { FlagChip, valueOf, when } from "@/features/results/result-rail";
 import { byTriage } from "@/features/results/triage";
+import { formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 
 import { allSeries, chartPoints, latestOf, type Series } from "./trends";
@@ -11,7 +12,7 @@ import { allSeries, chartPoints, latestOf, type Series } from "./trends";
 // The stat row, the main chart and the lab charts read the same query; TanStack Query sends it once. Only mounted for clinical-read roles.
 export const useTrends = (patientId: string, enabled = true) => useQuery({ ...orpc.patients.trends.queryOptions({ input: { patientId } }), select: allSeries, enabled });
 
-const valueWithUnit = (s: Series) => `${latestOf(s).value}${s.unit ? ` ${s.unit}` : ""}`;
+const valueWithUnit = (s: Series) => `${formatNumber(latestOf(s).value)}${s.unit ? ` ${s.unit}` : ""}`;
 
 /** One chart per lab test with at least two values; a single value is shown as a value. */
 export function LabCharts({ patientId }: { patientId: string }) {

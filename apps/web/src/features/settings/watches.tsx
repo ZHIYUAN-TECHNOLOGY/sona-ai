@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { Icon } from "@/components/icon";
 import { EmptyState } from "@/components/page";
 import { Button, Field, Skeleton } from "@/components/primitives";
+import { formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 
 import { hospitalTime, hourLabel } from "./rules";
@@ -33,8 +34,10 @@ function Latest({ last, hour }: { last: Last; hour: number }) {
   return (
     <p className="settings-muted">
       {last.unanswered !== undefined ? "Sona couldn't answer this from the results and tasks."
-        : last.source === "fixture" ? "Sona's model isn't switched on here, so there is no answer yet."
+        // A model still starting answers as a fixture with `waking`, so that is read before "not switched on".
         : last.waking && !last.retried ? "Sona's model is starting. This is asked again in about 5 min."
+        : last.waking ? `Sona's model wasn't ready. This is asked again at ${hourLabel(hour)}.`
+        : last.source === "fixture" ? "Sona's model isn't switched on here, so there is no answer yet."
         : `Sona's model wasn't ready. This is asked again at ${hourLabel(hour)}.`}
     </p>
   );
@@ -61,7 +64,7 @@ export function Watches({ role }: { role: Role }) {
 
   return (
     <Section title="Watches" description="Questions Sona asks once a day and answers on Today. A watch only reads; it never changes a record."
-      aside={list.data ? <span className="settings-muted">{watches.length} of {MAX_WATCHES}</span> : undefined}>
+      aside={list.data ? <span className="settings-muted">{formatNumber(watches.length)} of {MAX_WATCHES}</span> : undefined}>
       {list.isPending ? <Skeleton height={48} />
         : list.isError ? <EmptyState icon="clock" title="Your watches couldn't be read"><span role="alert">{list.error.message}</span></EmptyState>
         : watches.length === 0 ? <EmptyState icon="clock" title="No watches yet">Start one below and Sona asks it every day.</EmptyState>

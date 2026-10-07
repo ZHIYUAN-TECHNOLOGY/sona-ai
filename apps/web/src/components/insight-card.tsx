@@ -1,6 +1,8 @@
 import type { LinkProps } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { countOf } from "@/lib/format";
+
 import { Icon, type IconName } from "./icon";
 import { Anchor, type Target, type Tone } from "./primitives";
 import "../styles/components.css";
@@ -79,7 +81,7 @@ export function InsightCard({ lead, next, sources, tone = "info", children, labe
       {sources === undefined ? null : (
         <footer className="insight-foot">
           <Icon name="shield-check" size={16} />
-          You decide · {sources} {sources === 1 ? "source" : "sources"}
+          You decide · {countOf(sources, "source")}
         </footer>
       )}
     </article>

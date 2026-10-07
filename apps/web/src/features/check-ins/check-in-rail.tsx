@@ -21,7 +21,7 @@ export function CheckInRail({ row, role }: { row: Row; role: Role }) {
   const task = row.reply?.task;
 
   return (
-    <RightRail label="Selected check-in">
+    <RightRail label="Selected check-in" id="check-in-rail">
       <Card title={`${row.patientName} · day ${row.day}`}>
         <div className="check-ins-exchange">
           <p className="check-ins-muted">Sona asked{row.sentAt ? ` · ${when(row.sentAt)}` : ""}</p>
@@ -45,7 +45,8 @@ export function CheckInRail({ row, role }: { row: Row; role: Role }) {
           : followUp.isError ? <p className="check-ins-error" role="alert">{followUp.error.message} <Button size="sm" onClick={() => followUp.refetch()}>Try again</Button></p>
           : followUp.data ? (
             <ul className="check-ins-timeline">
-              {followUp.data.timeline.map(e => <li key={e.at + e.text} data-tone={e.tone}><span className="check-ins-muted">{when(e.at)}</span> {e.text}</li>)}
+              {/* The timeline only grows, and the agent can log the same line twice: the position keys it. */}
+              {followUp.data.timeline.map((e, i) => <li key={i} data-tone={e.tone}><span className="check-ins-muted">{when(e.at)}</span> {e.text}</li>)}
               {followUp.data.next ? <li><span className="check-ins-muted">Next · {when(followUp.data.next.at)}</span> {followUp.data.next.text}</li> : null}
             </ul>
           ) : <p className="check-ins-muted">Sona's follow-up has not started for this visit yet.</p>}

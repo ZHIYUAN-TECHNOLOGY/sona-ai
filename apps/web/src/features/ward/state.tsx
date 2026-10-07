@@ -32,8 +32,8 @@ export const freeBy = (predicted: string) => /^(\d|now|tomorrow|in |once )/i.tes
 export type TaskFilter ="mine" | "all" | "overdue";
 type TaskLike = { owner: string; due: string | null; completed: boolean };
 
-/** Overdue: open, dated, and the date has passed. ISO dates compare as strings. */
-export const isOverdue = (t: TaskLike, on: string) => !t.completed && t.due !== null && t.due < on;
+/** Overdue: open, dated, and the date has passed. ISO dates compare as strings; a written due ("1 day after discharge") is never overdue. */
+export const isOverdue = (t: TaskLike, on: string) => !t.completed && t.due !== null && /^\d{4}-\d{2}-\d{2}$/.test(t.due) && t.due < on;
 
 export const filterTasks = <T extends TaskLike>(tasks: T[], filter: TaskFilter, me: string, on: string) =>
   filter === "all" ? tasks : filter === "mine" ? tasks.filter(t => t.owner === me) : tasks.filter(t => isOverdue(t, on));

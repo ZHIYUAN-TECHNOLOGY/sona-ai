@@ -20,6 +20,9 @@ function topics(tags: string[], specialty: string) {
   return kept.slice(0, 3);
 }
 
+/** "Bahasa Melayu, English and Tamil". */
+const languages = new Intl.ListFormat("en", { type: "conjunction" });
+
 const urgent = (
   <section className="ct-urgent" aria-labelledby="ct-urgent-title">
     <h2 id="ct-urgent-title">In an emergency</h2>
@@ -68,7 +71,9 @@ function Page() {
           <EmptyState title="No one is listed yet">You can still write to the ward in Messages.</EmptyState>
         ) : (
           <ul className="ct-grid">
-            {team.map(d => (
+            {team.map(d => {
+              const ask = topics(d.tags, d.specialty);
+              return (
               <li key={d.id}>
                 <Card className="ct-person">
                   <div className="ct-who">
@@ -78,19 +83,20 @@ function Page() {
                       <p className="ct-role">{d.specialty} doctor</p>
                     </div>
                   </div>
-                  <p className="ct-about">{d.about}</p>
-                  {topics(d.tags, d.specialty).length ? (
+                  {d.about ? <p className="ct-about">{d.about}</p> : null}
+                  {ask.length ? (
                     <div className="ct-ask">
                       <h3>Ask about</h3>
-                      <ul>{topics(d.tags, d.specialty).map(t => <li key={t}>{t}</li>)}</ul>
+                      <ul>{ask.map(t => <li key={t}>{t}</li>)}</ul>
                     </div>
                   ) : null}
                   <p className="ct-foot">
-                    Find them in {d.room}.{d.languages.length ? ` Speaks ${d.languages.join(", ")}.` : ""}
+                    Find them in {d.room}.{d.languages.length ? ` Speaks ${languages.format(d.languages)}.` : ""}
                   </p>
                 </Card>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </WithRail>
