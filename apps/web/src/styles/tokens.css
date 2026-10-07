@@ -9,6 +9,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .pro {
   --canvas: #F5F6F8; --surface: #FFFFFF; --ink: #1D1F23; --muted: #59616B; --placeholder: #8A929E;
   --blue: #245BCC; --blue-wash: #D5E5FC; --line: #D8DBE0;
+  /* A field edge, darker than --line: a 1px line of --line on white was barely there (user, 7 Oct). */
+  --line-field: #C5CAD2;
   --green: #0F6E66; --amber: #8B5518; --red: #A23E3E;
   --green-wash: #E3F1EF; --amber-wash: #F6EBDD; --red-wash: #F6E4E4;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
@@ -18,6 +20,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .care {
   --canvas: #FAFAFA; --surface: #FFFFFF; --ink: #1F1F1F; --muted: #4E4E4E; --placeholder: #646462;
   --blue: #2563EB; --blue-wash: #EFF6FF; --line: #EBEBEB;
+  --line-field: #D4D4D4;
   --green: #15803D; --amber: #C2410C; --red: #C81E2E; /* red: only "call the hospital now" */
   --green-wash: #F0FDF4; --amber-wash: #FFF7ED; --red-wash: #FEF2F2;
   --font: "Plus Jakarta Sans", system-ui, sans-serif;
