@@ -60,6 +60,8 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
   }
   const y = scale(domain, [height - BOTTOM, TOP]);
   const last = points.length - 1;
+  const grid = ticks(domain);
+  const step = grid.length > 1 && Math.abs(y(grid[0]!) - y(grid[1]!)) / k < 20 ? 2 : 1;
   // "7%" and "7°C" read closed up; every other unit takes a space.
   const suffix = unit ? (/^[%°]/.test(unit) ? unit : ` ${unit}`) : "";
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
@@ -86,10 +88,11 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
         onPointerMove={onMove} onPointerLeave={() => setActive(null)}
         onFocus={() => setActive((a) => a ?? last)} onBlur={() => setActive(null)} onKeyDown={onKey}
       >
-        {ticks(domain).map((t, i) => (
+        {grid.map((t, i) => (
           <g key={i}>
             <line className="chart-grid" x1={LEFT} x2={RIGHT} y1={y(t)} y2={y(t)} />
-            <text x={LEFT - 8} y={y(t) + 4} textAnchor="end">{axis.format(t)}</text>
+            {/* A chart drawn short (a phone) labels every other line from the top, so 12px labels do not touch each other or the dates. */}
+            {(grid.length - 1 - i) % step ? null : <text x={LEFT - 8} y={y(t) + 4} textAnchor="end">{axis.format(t)}</text>}
           </g>
         ))}
         {goal ? (
