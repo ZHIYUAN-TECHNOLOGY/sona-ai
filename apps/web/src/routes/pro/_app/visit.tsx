@@ -17,6 +17,7 @@ import { countOf } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import { Reasoning } from "@/features/visit-tools/reasoning";
 import { Scan } from "@/features/visit-tools/scan";
+import { useSonaContext } from "@/lib/sona";
 import "@/styles/pages/visit.css";
 import "@/styles/pages/visit-tools.css";
 
@@ -35,6 +36,8 @@ function Page() {
   const [actions, setActions] = useState<HTMLElement | null>(null);
   // "What did her X-ray show?" in the Sona bar is answered here, the film under the question.
   useVisitAsk(encounterId, can(me.role, "evidence.stream"));
+  const named = patients.data?.find(p => p.encounterId === encounterId)?.name;
+  useSonaContext(named && `Visit · ${named}`);
   if (!encounterId) return <Pick patients={patients} />;
   if (!can(me.role, "note.get")) return <><PageHeader title="Visit" /><EmptyState>Your role cannot read clinical notes.</EmptyState></>;
   const patient = patients.data?.find(p => p.encounterId === encounterId);

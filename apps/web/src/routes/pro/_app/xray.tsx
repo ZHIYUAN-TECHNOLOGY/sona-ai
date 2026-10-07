@@ -17,6 +17,7 @@ import { filmTitle, testOf } from "@/features/imaging/films";
 import { filmUrl, onImage as readFrom } from "@/features/imaging/marks";
 import { messageOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
+import { useSonaContext } from "@/lib/sona";
 import "@/styles/pages/xray.css";
 
 export const Route = createFileRoute("/pro/_app/xray")({
@@ -41,6 +42,8 @@ function Page() {
   if (wanted !== followed) { setFollowed(wanted); if (wanted) setEncounterId(wanted); }
   // "Is this nodule new?" in the Sona bar is answered here, the film under the question.
   useVisitAsk(encounterId, can(me.role, "evidence.stream"));
+  const named = patients.data?.find(p => p.encounterId === encounterId)?.name;
+  useSonaContext(named && `X-ray · ${named}`);
   // The image sent from this browser, by storage key: shown at once, before the stored copy is fetched back.
   const [sent, setSent] = useState<{ key: string; url: string }>();
   const [zoom, setZoom] = useState(1);
