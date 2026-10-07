@@ -109,6 +109,7 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "library.list": [ALL, "see the library"],
   "library.add": [OVERSIGHT, "add to the library"],
   "library.addPdf": [OVERSIGHT, "add to the library"],
+  "library.addImages": [OVERSIGHT, "add to the library"],
   "library.previewArticle": [OVERSIGHT, "add to the library"],
   "library.importArticle": [OVERSIGHT, "add to the library"],
   "library.remove": [OVERSIGHT, "remove from the library"],

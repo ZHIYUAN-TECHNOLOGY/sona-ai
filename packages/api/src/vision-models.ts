@@ -110,6 +110,9 @@ Remember "left" refers to the patient's left side where the heart is and on the 
 Query: Where is ${what}? Output the final answer in the format "Final Answer: X". where X is a JSON list of objects. The object needs a "box_2d" and "label" key. Answer:`;
 const ZONE = /^(right|left) (upper|middle|mid|lower) zone$/i;
 
+const DOCUMENT_PAGE = `This is one page of a printed hospital document: a guideline, a leaflet or a reference. Transcribe every word printed on it exactly as written, in the language it is written in (English, Malay, Chinese or mixed). Never translate, summarise or add anything.
+Keep each heading on its own line starting with "## ". Mark a word you cannot read as [?].
+If the page has no text, answer exactly: NO TEXT`;
 const NOTE_READ = `This is a photo of a handwritten hospital note: a ward-round note, a drug chart or a referral letter.
 Transcribe only the handwriting, line by line, exactly as written: keep abbreviations, numbers, symbols and line breaks. Leave out printed headings.
 Answer with the transcription only.`;
@@ -223,7 +226,7 @@ export function sortedNote(read: string, unsure: string[], sorted: Record<string
   return { sections, medicines, tasks, ...followUp && numbersFrom(read, followUp) ? { followUp: { in: followUp } } : {} };
 }
 
-export function visionModels(look: Look, model: string, fallback: Models): Pick<Models, "readMedicinePhoto" | "incidentalFindings" | "readHandwrittenNote"> {
+export function visionModels(look: Look, model: string, fallback: Models): Pick<Models, "readMedicinePhoto" | "incidentalFindings" | "readHandwrittenNote" | "readDocumentPage"> {
   return {
     // A quick read first. When it nearly read the medicine itself as another word ("AMIODIPINE" for AMLODIPINE on a
     // blurred strip), it looks again, thinking first (slower, steadier on print), and a different name that passes wins.
@@ -294,6 +297,15 @@ export function visionModels(look: Look, model: string, fallback: Models): Pick<
         }
       } catch { /* the sample note below, labelled fixture */ }
       return fallback.readHandwrittenNote(input);
+    },
+
+    // A page read word for word; "NO TEXT" is how the model says the page is blank, which is not a failure.
+    async readDocumentPage(input) {
+      try {
+        const text = afterThought((await look({ image: { bytes: input.image, contentType: input.contentType }, prompt: DOCUMENT_PAGE, maxTokens: 1500 })).text).trim();
+        return { text: text === "NO TEXT" ? "" : text, source: "model", model };
+      } catch { /* nothing read, labelled fixture */ }
+      return fallback.readDocumentPage(input);
     },
   };
 }

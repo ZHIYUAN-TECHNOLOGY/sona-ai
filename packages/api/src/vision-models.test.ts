@@ -143,3 +143,11 @@ test("an unreadable photo or an unsortable reply gives the sample note, labelled
   expect(await eyes(() => ({ text: "", tokens: [tok("<unused94>"), tok("thought")] })).models.readHandwrittenNote(input)).toEqual(sample);
   expect(await eyes(ask => ask.image ? { text: "", tokens: NOTE_TOKENS } : "Sorry, I cannot.").models.readHandwrittenNote(input)).toEqual(sample);
 });
+
+test("a document page is read word for word: a blank page reads as no text, and a failed read falls back to the stub", async () => {
+  const page = eyes(() => "<unused94>thought<unused95>## Ubat\nAmbil selepas makan.\n");
+  expect(await page.models.readDocumentPage({ image, contentType })).toEqual({ text: "## Ubat\nAmbil selepas makan.", ...fromModel });
+  expect(page.asks[0]).toMatchObject({ image: { bytes: image, contentType }, maxTokens: 1500 });
+  expect(await eyes(() => "NO TEXT").models.readDocumentPage({ image, contentType })).toEqual({ text: "", ...fromModel });
+  expect(await eyes(() => { throw new Error("down"); }).models.readDocumentPage({ image, contentType })).toEqual({ text: "", source: "fixture" });
+});

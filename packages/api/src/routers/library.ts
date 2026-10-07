@@ -6,7 +6,8 @@ import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
-import { pdfText } from "../pdf";
+import { stubModels } from "../models";
+import { pdfPageImages, pdfText } from "../pdf";
 import { fetchAbstract, resolveArticle } from "../pubmed";
 
 /**
@@ -45,7 +46,7 @@ async function patientDetailsIn(context: Authed, text: string): Promise<Identity
  * Checks for patient details, then indexes. Replay-safe: the document ID comes from the request, so a
  * retry replaces rather than duplicates, but never someone else's document.
  */
-async function save(context: Authed, input: { requestId: string; scope: "me" | "hospital" }, fields: { title: string; source: string; year: number; license?: string | null; kind: "text" | "pdf" | "pubmed" }, text: string) {
+async function save(context: Authed, input: { requestId: string; scope: "me" | "hospital" }, fields: { title: string; source: string; year: number; license?: string | null; kind: "text" | "pdf" | "pubmed" | "scan" }, text: string) {
   const kinds = await patientDetailsIn(context, text);
   if (kinds.length) throw new ORPCError("BAD_REQUEST", {
     message: `This source contains ${kinds.map(k => DETAIL[k]).join(" and ")}. Remove patient details, then add it again.`,
@@ -66,6 +67,28 @@ async function article(context: Context, pmid: string) {
   return found;
 }
 
+/**
+ * Page images read into text by MedGemma (box ③), two at a time, each under a "# Page n" heading like a PDF's text.
+ * Refuses rather than store an empty source: while the reader is starting, or when it found no words on any page.
+ */
+async function readScan(context: Context, images: { image: Uint8Array; contentType: string }[]) {
+  const models = context.models ?? stubModels;
+  const read: Awaited<ReturnType<typeof models.readDocumentPage>>[] = [];
+  for (let i = 0; i < images.length; i += 2) read.push(...await Promise.all(images.slice(i, i + 2).map(page => models.readDocumentPage(page))));
+  const byModel = read.find(r => r.source === "model");
+  if (byModel?.source !== "model") {
+    const waking = read.map(r => r.source === "fixture" ? r.waking : undefined).find(Boolean);
+    throw new ORPCError("PRECONDITION_FAILED", { message: `The scan reader is starting. Try again in ${waking ? `about ${waking} min` : "a few minutes"}.`, data: { reason: "reader-off" } });
+  }
+  if (!read.some(r => r.text.trim())) throw new ORPCError("BAD_REQUEST", { message: "No text could be read from this scan.", data: { reason: "no-text" } });
+  return { model: byModel.model, text: read.map((r, i) => r.text.trim() && `# Page ${i + 1}\n${r.text.trim()}`).filter(Boolean).join("\n\n") };
+}
+
+const title = z.string().trim().min(1).max(200);
+const base64 = (min: number) => z.string().min(min).max(14_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/, "Not base64");
+const bytesOf = (b64: string) => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+const pagesOf = (n: number) => `${n} page${n === 1 ? "" : "s"}`;
+
 export const libraryRouter = {
   /** Pasted text; # or numbered headings become sections. */
   add: protectedProcedure.input(z.object({
@@ -74,16 +97,26 @@ export const libraryRouter = {
   })).handler(({ context, input }) =>
     save(context, input, { title: input.title, source: input.source, year: input.year, license: input.license ?? null, kind: "text" }, input.text)),
 
-  /** A PDF: its text is read here and indexed one section per page; the file itself is not kept. */
-  addPdf: protectedProcedure.input(z.object({
-    requestId, scope, title: z.string().trim().min(1).max(200),
-    dataBase64: z.string().min(1).max(14_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/, "Not base64"),
-  })).handler(async ({ context, input }) => {
-    const bytes = Uint8Array.from(atob(input.dataBase64), c => c.charCodeAt(0));
+  /** A PDF: its text is read here and indexed one section per page; a scan's pages are read by the vision model. The file itself is not kept. */
+  addPdf: protectedProcedure.input(z.object({ requestId, scope, title, dataBase64: base64(1) })).handler(async ({ context, input }) => {
+    const bytes = bytesOf(input.dataBase64);
     if (new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") throw new ORPCError("BAD_REQUEST", { message: "This file is not a PDF", data: { reason: "not-pdf" } });
     const { pages, text } = await pdfText(bytes).catch(() => { throw new ORPCError("BAD_REQUEST", { message: "This PDF could not be read. It may be locked with a password.", data: { reason: "unreadable" } }); });
-    if (!text) throw new ORPCError("BAD_REQUEST", { message: "This PDF has no text to read. It looks like a scan, and scans are not supported yet.", data: { reason: "no-text" } });
-    return { ...await save(context, input, { title: input.title, source: `PDF, ${pages} page${pages === 1 ? "" : "s"}`, year: clockOf(context).getFullYear(), kind: "pdf" }, text), pages };
+    if (text) return { ...await save(context, input, { title: input.title, source: `PDF, ${pagesOf(pages)}`, year: clockOf(context).getFullYear(), kind: "pdf" }, text), pages };
+    const { images } = await pdfPageImages(bytes);
+    if (!images.length) throw new ORPCError("BAD_REQUEST", { message: "No text could be read from this scan.", data: { reason: "no-text" } });
+    const scan = await readScan(context, images.map(image => ({ image, contentType: "image/png" })));
+    return { ...await save(context, input, { title: input.title, source: `Scanned PDF, ${pagesOf(images.length)}, read by ${scan.model}`, year: clockOf(context).getFullYear(), kind: "scan" }, scan.text), pages: images.length, read: "scan" as const };
+  }),
+
+  /** Photos of a printed page or leaflet, one page each, read by the vision model; the photos are not kept. */
+  addImages: protectedProcedure.input(z.object({
+    requestId, scope, title,
+    images: z.array(z.object({ dataBase64: base64(16), contentType: z.enum(["image/jpeg", "image/png"]) })).min(1).max(10),
+  })).handler(async ({ context, input }) => {
+    const scan = await readScan(context, input.images.map(i => ({ image: bytesOf(i.dataBase64), contentType: i.contentType })));
+    const pages = input.images.length;
+    return { ...await save(context, input, { title: input.title, source: `Photo, ${pagesOf(pages)}, read by ${scan.model}`, year: clockOf(context).getFullYear(), kind: "scan" }, scan.text), pages, read: "scan" as const };
   }),
 
   /** What a pasted PMID, DOI or PubMed link points to, shown to the doctor before anything is added. */
@@ -108,7 +141,7 @@ export const libraryRouter = {
   list: protectedProcedure.handler(({ context }) =>
     context.db.select({
       id: documents.id, title: documents.title, source: documents.source, year: documents.year, license: documents.license, uploadedBy: documents.uploadedBy, createdAt: documents.createdAt,
-      kind: sql<"text" | "pdf" | "pubmed">`${documents.kind}`, scope: sql<"me" | "hospital">`case when ${documents.ownerId} is null then 'hospital' else 'me' end`,
+      kind: sql<"text" | "pdf" | "pubmed" | "scan">`${documents.kind}`, scope: sql<"me" | "hospital">`case when ${documents.ownerId} is null then 'hospital' else 'me' end`,
       sections: sql<number>`(select count(*)::int from chunks c where c.document_id = "documents"."id")`,
     }).from(documents)
       .where(and(eq(documents.hospitalId, context.hospitalId), ne(documents.kind, "leaflet"), or(isNull(documents.ownerId), eq(documents.ownerId, context.session.user.id))))

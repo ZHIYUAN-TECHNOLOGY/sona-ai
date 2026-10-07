@@ -65,7 +65,7 @@ export type Mail = {
 };
 
 /** A library document; hospitalId empty is the shared library, set is one hospital's own; ownerId set is one doctor's private source. */
-export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" | "leaflet" };
+export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" | "leaflet" | "scan" };
 export type Library = {
   /** Stores the document and its sections; re-ingesting the same ID replaces them. Returns the section count. */
   ingest(doc: LibraryDocument, text: string): Promise<number>;
