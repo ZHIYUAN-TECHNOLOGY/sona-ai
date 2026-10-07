@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/page";
 import { Button, Card, Chip, Field, ListCard, ListRow, Select, Signal, Skeleton } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { useVisitAsk } from "@/features/evidence/ask";
+import { usePan, ZOOM } from "@/features/imaging/pan";
 import { Compare } from "@/features/imaging/compare";
 import { FindingMarks, filmUrl, onImage as readFrom } from "@/features/imaging/marks";
 import { messageOf, toBase64 } from "@/features/library/files";
@@ -100,6 +101,7 @@ function Page() {
   const [over, setOver] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
   const decision = useRef<HTMLDivElement>(null);
+  const pan = usePan(zoom, setZoom);
   const take = (file?: Blob | null) => { if (file && encounterId && mayUpload) upload.mutate(file); };
 
   // Anything the server does not mark as read by the model (a fixture, a waking model) is shown as a sample.
@@ -218,21 +220,21 @@ function Page() {
             )}</Field>
             {shown && (
               <label className="xr-zoom">Zoom
-                <input type="range" min={1} max={4} step={0.25} value={zoom} onChange={e => setZoom(Number(e.target.value))} />
+                <input type="range" min={ZOOM.min} max={ZOOM.max} step={0.25} value={zoom} onChange={e => setZoom(Number(e.target.value))} />
               </label>
             )}
           </div>
           {patients.isError && <p className="xr-error" role="alert">{messageOf(patients.error)}</p>}
           <input ref={picker} className="xr-file" type="file" accept="image/*" aria-label="Choose an X-ray image" tabIndex={-1} disabled={upload.isPending}
             onChange={e => { take(e.target.files?.[0]); e.target.value = ""; }} />
-          <div className="xr-stage" data-over={over || undefined}
+          <div className="xr-stage" data-over={over || undefined} {...shown && !stream && { ...pan.stage, "data-pan": pan.dragging ? "dragging" : "", title: "Drag to move · double-click or pinch to zoom" }}
             onDragOver={e => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
             onDrop={e => { e.preventDefault(); setOver(false); take(e.dataTransfer.files[0]); }}>
             {stream ? <video ref={video} className="xr-video" autoPlay playsInline muted />
               : shown ? (
-                <div className="xr-scroll">
+                <div className="xr-scroll" ref={pan.scroller}>
                   <div className="xr-image" style={zoom > 1 ? { width: `${zoom * 100}%` } : undefined}>
-                    <img src={shown} alt="Chest X-ray added for this visit" />
+                    <img src={shown} alt="Chest X-ray added for this visit" draggable={false} />
                     <FindingMarks findings={onImage} />
                   </div>
                 </div>

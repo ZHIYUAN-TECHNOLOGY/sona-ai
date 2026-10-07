@@ -9,6 +9,10 @@
 /* The dark neutral stage the film sits on. */
 .xr-stage { --xr-fit: calc(56vh - 2 * var(--space-4)); position: relative; display: grid; place-items: center; min-height: 340px; padding: var(--space-4); border-radius: var(--radius-group); background: var(--ink); color: var(--surface); overflow: hidden; }
 .xr-scroll { max-width: 100%; max-height: var(--xr-fit); overflow: auto; border-radius: var(--radius-control); }
+/* The whole stage is the film's handle (features/imaging/pan.ts): an open hand, closed while dragging; no text selection mid-drag. */
+.xr-stage[data-pan] { cursor: grab; user-select: none; touch-action: none; }
+.xr-stage[data-pan="dragging"] { cursor: grabbing; }
+.xr-stage[data-pan="dragging"] .xr-scroll { scroll-behavior: auto; }
 /* ponytail: at fit size a film wider than the stage letterboxes inside its box, so drawn boxes drift; size the wrapper from naturalWidth if that shows up. */
 .xr-image { position: relative; width: fit-content; margin: 0 auto; }
 .xr-image img { display: block; height: var(--xr-fit); max-width: 100%; object-fit: contain; border-radius: var(--radius-control); }
