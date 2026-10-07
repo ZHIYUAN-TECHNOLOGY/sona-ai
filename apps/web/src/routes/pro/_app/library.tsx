@@ -8,7 +8,7 @@ import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, Field, SearchField, Select, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
-import { isStale, MAX_PAGES, messageOf, type PageType, splitPicked, titleOf, toBase64 } from "@/features/library/files";
+import { isStale, MAX_PAGES, messageOf, splitPicked, titleOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
 import "@/styles/pages/library.css";
 
@@ -16,13 +16,8 @@ export const Route = createFileRoute("/pro/_app/library")({ component: Page });
 
 type Doc = Awaited<ReturnType<typeof client.library.list>>[number];
 type Preview = Awaited<ReturnType<typeof client.library.previewArticle>>;
-// "scan" is listed ahead of the server: pages MedGemma read from a scanned PDF or photos.
-const KIND: Record<Doc["kind"] | "scan", string> = { text: "Text", pdf: "PDF", pubmed: "Article", scan: "Scan" };
-
-// TODO(merge): use client.library.addImages once the server lands, and drop this wrapper.
-type AddImagesInput = { requestId: string; scope: "me" | "hospital"; title: string; images: { dataBase64: string; contentType: PageType }[] };
-type Saved = Awaited<ReturnType<typeof client.library.addPdf>> & { read?: "scan" };
-const addImages = (input: AddImagesInput): Promise<Saved> => (client.library as any).addImages(input);
+// "scan": pages MedGemma read from a scanned PDF or photos.
+const KIND: Record<Doc["kind"], string> = { text: "Text", pdf: "PDF", pubmed: "Article", scan: "Scan" };
 
 type Scope = "all" | "hospital" | "me" | "check";
 const MODES = [{ id: "text", label: "Paste text" }, { id: "pdf", label: "PDF or photos" }, { id: "article", label: "Article" }] as const;
@@ -142,7 +137,7 @@ function AddSource({ onAdded }: { onAdded: () => unknown }) {
         if ("error" in picked) throw new Error(picked.error);
         if ("pdf" in picked) return client.library.addPdf({ requestId, scope, title: title || titleOf(picked.pdf.name), dataBase64: await toBase64(picked.pdf) });
         const images = await Promise.all(picked.images.map(async ({ file, contentType }) => ({ dataBase64: await toBase64(file), contentType })));
-        return addImages({ requestId, scope, title: title || titleOf(picked.images[0]!.file.name), images });
+        return client.library.addImages({ requestId, scope, title: title || titleOf(picked.images[0]!.file.name), images });
       }
       if (!preview) { setPreview(await client.library.previewArticle({ ref: String(form.get("ref")) })); return undefined; }
       return client.library.importArticle({ requestId, scope, pmid: preview.pmid });

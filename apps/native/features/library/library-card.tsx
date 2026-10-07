@@ -8,7 +8,7 @@ import { palette, type } from "@/components/sona/theme";
 import { Action, Body, Card, glass, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { useLiveLibrary, type LibraryDocument } from "@/features/live/library-sync";
 
-const KIND_ICON: Record<LibraryDocument["kind"], string> = { pdf: "doc.richtext", pubmed: "books.vertical", text: "text.alignleft" };
+const KIND_ICON: Record<LibraryDocument["kind"], string> = { pdf: "doc.richtext", pubmed: "books.vertical", text: "text.alignleft", scan: "doc.viewfinder" };
 
 /**
  * Live mode: the sources evidence answers cite beside PubMed. The doctor's own (private by default)
