@@ -8,7 +8,7 @@ import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, Field, SearchField, Select, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
-import { isStale, messageOf, toBase64 } from "@/features/library/files";
+import { isStale, MAX_PAGES, messageOf, type PageType, splitPicked, titleOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
 import "@/styles/pages/library.css";
 
@@ -16,10 +16,16 @@ export const Route = createFileRoute("/pro/_app/library")({ component: Page });
 
 type Doc = Awaited<ReturnType<typeof client.library.list>>[number];
 type Preview = Awaited<ReturnType<typeof client.library.previewArticle>>;
-const KIND = { text: "Text", pdf: "PDF", pubmed: "Article" } as const;
+// "scan" is listed ahead of the server: pages MedGemma read from a scanned PDF or photos.
+const KIND: Record<Doc["kind"] | "scan", string> = { text: "Text", pdf: "PDF", pubmed: "Article", scan: "Scan" };
+
+// TODO(merge): use client.library.addImages once the server lands, and drop this wrapper.
+type AddImagesInput = { requestId: string; scope: "me" | "hospital"; title: string; images: { dataBase64: string; contentType: PageType }[] };
+type Saved = Awaited<ReturnType<typeof client.library.addPdf>> & { read?: "scan" };
+const addImages = (input: AddImagesInput): Promise<Saved> => (client.library as any).addImages(input);
 
 type Scope = "all" | "hospital" | "me" | "check";
-const MODES = [{ id: "text", label: "Paste text" }, { id: "pdf", label: "PDF file" }, { id: "article", label: "Article" }] as const;
+const MODES = [{ id: "text", label: "Paste text" }, { id: "pdf", label: "PDF or photos" }, { id: "article", label: "Article" }] as const;
 const who = (d: Doc) => (d.scope === "hospital" ? "Whole hospital" : "Only you");
 
 const columns: Column<Doc>[] = [
@@ -125,29 +131,38 @@ function AddSource({ onAdded }: { onAdded: () => unknown }) {
   // One ID per source, kept across retries so a retry replaces rather than duplicates.
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [preview, setPreview] = useState<Preview>();
-  const [done, setDone] = useState<string>();
+  const [done, setDone] = useState<{ text: string; scan: boolean }>();
   const add = useMutation({
     mutationFn: async (form: FormData) => {
-      const title = String(form.get("title") ?? "");
+      const title = String(form.get("title") ?? "").trim();
       if (mode === "text") return client.library.add({ requestId, scope, title, source: String(form.get("source")), year: Number(form.get("year")), text: String(form.get("text")) });
-      if (mode === "pdf") return client.library.addPdf({ requestId, scope, title, dataBase64: await toBase64(form.get("file") as File) });
+      if (mode === "pdf") {
+        // Refused here, before anything is sent, so the reason shows in the same place as the server's.
+        const picked = splitPicked(form.getAll("file") as File[]);
+        if ("error" in picked) throw new Error(picked.error);
+        if ("pdf" in picked) return client.library.addPdf({ requestId, scope, title: title || titleOf(picked.pdf.name), dataBase64: await toBase64(picked.pdf) });
+        const images = await Promise.all(picked.images.map(async ({ file, contentType }) => ({ dataBase64: await toBase64(file), contentType })));
+        return addImages({ requestId, scope, title: title || titleOf(picked.images[0]!.file.name), images });
+      }
       if (!preview) { setPreview(await client.library.previewArticle({ ref: String(form.get("ref")) })); return undefined; }
       return client.library.importArticle({ requestId, scope, pmid: preview.pmid });
     },
     onSuccess: saved => {
       if (!saved) return;
-      setDone(`Added "${saved.title}" (${saved.sections} sections).`);
+      setDone({ text: `Added "${saved.title}" (${saved.sections} sections).`, scan: "read" in saved && saved.read === "scan" });
       setPreview(undefined);
       setRequestId(crypto.randomUUID());
       return onAdded();
     },
   });
   const pick = (m: typeof mode) => { setMode(m); setPreview(undefined); setDone(undefined); add.reset(); };
+  // Photos are always read page by page by MedGemma, which takes a while; a PDF only turns out to be a scan afterwards.
+  const reading = add.isPending && mode === "pdf" && (add.variables?.getAll("file") as File[] | undefined)?.some(f => f.type.startsWith("image/"));
 
   return (
     <form className="lib-form lib-add" key={requestId + mode} onSubmit={e => { e.preventDefault(); setDone(undefined); add.mutate(new FormData(e.currentTarget)); }}>
       <Tabs label="How to add" tabs={[...MODES]} value={mode} onChange={pick} />
-      {mode !== "article" && <Field label="Title">{c => <input {...c} name="title" required maxLength={200} />}</Field>}
+      {mode !== "article" && <Field label="Title" hint={mode === "pdf" ? "Left blank, the first file's name is used." : undefined}>{c => <input {...c} name="title" required={mode === "text"} maxLength={200} />}</Field>}
       {mode === "text" && <>
         <div className="lib-pair">
           <Field label="Published by">{c => <input {...c} name="source" required maxLength={200} />}</Field>
@@ -155,7 +170,7 @@ function AddSource({ onAdded }: { onAdded: () => unknown }) {
         </div>
         <Field label="Text" hint="No patient details: Sona checks and refuses them.">{c => <textarea {...c} name="text" required maxLength={200000} />}</Field>
       </>}
-      {mode === "pdf" && <Field label="PDF file" hint="Up to about 10 MB.">{c => <input {...c} name="file" type="file" accept="application/pdf" required />}</Field>}
+      {mode === "pdf" && <Field label="PDF or photos of the pages" hint={`One PDF up to about 10 MB, or up to ${MAX_PAGES} JPEG or PNG photos in page order. Scans are read by MedGemma.`}>{c => <input {...c} name="file" type="file" accept="application/pdf,image/jpeg,image/png" multiple required />}</Field>}
       {mode === "article" && <Field label="Article reference" hint="A PubMed ID, link or DOI. You see it before it is added.">{c => <input {...c} name="ref" required maxLength={500} readOnly={Boolean(preview)} />}</Field>}
       {preview && (
         <div>
@@ -168,11 +183,12 @@ function AddSource({ onAdded }: { onAdded: () => unknown }) {
           <option value="me">Only I can use it</option>
       </Select>
       <div className="lib-row">
-        <Button type="submit" variant="primary" pending={add.isPending}>{mode !== "article" ? "Add to library" : preview ? "Confirm and add" : "Preview article"}</Button>
+        <Button type="submit" variant="primary" pending={add.isPending}>{reading ? "Reading pages…" : mode !== "article" ? "Add to library" : preview ? "Confirm and add" : "Preview article"}</Button>
         {preview && <Button onClick={() => setPreview(undefined)}>Choose another</Button>}
       </div>
       {add.isError && <p className="lib-error" role="alert">{messageOf(add.error)}</p>}
-      {done ? <p role="status"><Signal tone="done">{done}</Signal> Sona answers from it now.</p> : null}
+      {done ? <p role="status"><Signal tone="done">{done.text}</Signal> Sona answers from it now.</p> : null}
+      {done?.scan && <p className="lib-note">Read from a scan by MedGemma. Check the text against the original.</p>}
     </form>
   );
 }
