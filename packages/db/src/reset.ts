@@ -1,7 +1,7 @@
 import { and, eq, inArray, like, notInArray } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
-import { admissions, appointments, bookingRequests, hospitals, pushTokens, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples, user } from "./schema";
+import { admissions, appointments, bookingRequests, hospitals, pushTokens, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, observations, patients, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples, user, visitSummaries } from "./schema";
 import { DEMO_HOSPITAL, SEED_LAB_IDS, seedDemo, seedDemoNote, TEST_PATIENT } from "./seed";
 
 type AnyDb = PgAsyncDatabase<any, any>;
@@ -45,7 +45,12 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
     // Results that arrived during the run (the simulated lab feed) go; the seeded ones become unacknowledged again.
     await db.delete(labResults).where(and(inArray(labResults.patientId, people), notInArray(labResults.id, SEED_LAB_IDS)));
     await db.update(labResults).set({ acknowledgedBy: null, acknowledgedAt: null }).where(inArray(labResults.patientId, people));
+    // Sona Care: readings patients added at home, and the questions they saved for a visit.
+    await db.delete(observations).where(and(inArray(observations.patientId, people), eq(observations.source, "patient")));
   }
+  await db.update(appointments).set({ prep: null }).where(eq(appointments.hospitalId, DEMO_HOSPITAL));
+  // After-visit summaries, drafted or approved, come from note saves during a run.
+  await db.delete(visitSummaries).where(eq(visitSummaries.hospitalId, DEMO_HOSPITAL));
   const beds = (await db.select({ id: admissions.id }).from(admissions).where(eq(admissions.hospitalId, DEMO_HOSPITAL))).map(a => a.id);
   await db.update(admissions).set({ dischargedAt: null, fitAt: null }).where(eq(admissions.hospitalId, DEMO_HOSPITAL));
   if (beds.length) await db.update(guaranteeLetters).set({ status: "requested", receivedAt: null }).where(inArray(guaranteeLetters.admissionId, beds));

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
-import { admissions, appointments, auditItems, careCodes, careLinks, careMessages, patients, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, hospitals, notes, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples } from "./schema";
+import { admissions, appointments, auditItems, careCodes, careLinks, careMessages, patients, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, hospitals, notes, observations, visitSummaries, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples } from "./schema";
 import { resetDemo } from "./reset";
 import { DEMO_HOSPITAL, seedDemo, seedTestPatient, TEST_PATIENT } from "./seed";
 import { createTestDb } from "./testing";
@@ -23,6 +23,8 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
   await db.insert(tasks).values({ id: "t1", hospitalId: DEMO_HOSPITAL, encounterId: "visit-1042", kind: "check-in", title: "Amelia: fever returned", owner: "Attending doctor" });
   await db.insert(findings).values({ id: "f1", hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042", encounterId: "visit-1042", kind: "nodule", label: "9 mm nodule", location: { x: 0.3, y: 0.3, zone: "right upper zone" }, riskBand: "high", source: "fixture" });
   await db.insert(appointments).values({ id: "recall:f1", patientId: "SYN-1042", hospitalId: DEMO_HOSPITAL, startsAt: now, kind: "recall: CT chest" });
+  await db.insert(observations).values({ id: "home-1", patientId: "SYN-1042", kind: "heart_rate", value: 72, unit: "bpm", sourceId: "home-1", source: "patient", observedAt: now });
+  await db.insert(visitSummaries).values({ id: "vs-1", hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042", encounterId: "visit-1042", text: "t", whatChanged: [], sources: [], checks: [], origin: "fixture", createdAt: now });
   await db.insert(checkIns).values({ id: "ci1", hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042", encounterId: "visit-1042", day: 2, language: "ms", message: "Hai", dueAt: now });
   await db.insert(checkInReplies).values({ id: "cr1", checkInId: "ci1", text: "demam balik", label: "worse", source: "fixture" });
   await db.insert(handoverAcceptances).values({ id: "h1", hospitalId: DEMO_HOSPITAL, fromUser: "u1", toUser: "Dr Lim", cardIds: ["x"] });
@@ -41,7 +43,8 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
 
   await resetDemo(db, now);
 
-  for (const table of [claims, receipts, tasks, findings, checkIns, checkInReplies, handoverAcceptances, auditItems, provenance, careCodes, careLinks, careMessages, trainingSamples, trainingDatasets, trainingConsents]) expect(await count(db, table)).toBe(0);
+  for (const table of [claims, receipts, tasks, findings, checkIns, checkInReplies, handoverAcceptances, auditItems, provenance, careCodes, careLinks, careMessages, trainingSamples, trainingDatasets, trainingConsents, visitSummaries]) expect(await count(db, table)).toBe(0);
+  expect((await db.select().from(observations)).filter(o => o.source === "patient")).toEqual([]);
   expect((await db.select().from(hospitals)).map(h => h.contributesTraining)).toEqual([false]);
   const visits = await db.select().from(encounters);
   expect(visits.filter(e => e.id.startsWith("visit-10")).map(e => [e.id, e.revision, e.state]).sort()).toEqual([["visit-1042", 1, {}], ["visit-1086", 1, {}]]);
