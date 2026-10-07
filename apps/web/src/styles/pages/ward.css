@@ -26,3 +26,7 @@
 .ward-waits { min-width: 18ch; max-width: 34ch; }
 .ward-waits > :first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ward-more { color: var(--muted); font-weight: 500; }
+/* In a narrow side panel a barrier's name wraps beside its menu instead of running under it. */
+.ward-blocker > :first-child { min-width: 0; overflow-wrap: anywhere; }
+.ward-blocker .ward-owner { inline-size: 8.5rem; }
+.ward-blocker > :first-child, .ward-blocker > :first-child * { white-space: normal; text-overflow: clip; overflow: visible; }
