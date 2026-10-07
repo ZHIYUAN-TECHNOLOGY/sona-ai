@@ -1,32 +1,36 @@
 import { can } from "@sona-ai/api/roles";
+import type { Reference } from "@sona-ai/domain/evidence";
 import { createFileRoute } from "@tanstack/react-router";
-import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+import { Artifact, Conversation, InlineCitation, Notice, Response, SonaMark, Sources, Steps, Suggestions, Turn as AnswerTurn } from "@/components/ai";
+import { plural } from "@/components/ai/summary";
+import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
-import { Button, Card, Chip, Skeleton } from "@/components/primitives";
-import { RightRail, WithRail } from "@/components/rail";
+import { Button, Chip } from "@/components/primitives";
 import { askVisit } from "@/features/evidence/ask";
 import { FilmCard } from "@/features/evidence/film-card";
-import { type Turn, apply, leadFilm, newTurn, sampleLabel, threadOf } from "@/features/evidence/thread";
+import { type Turn, apply, leadFilm, newTurn, phaseOf, sampleLabel, threadOf } from "@/features/evidence/thread";
 import { useSonaAsk } from "@/lib/sona";
 import "@/styles/pages/evidence.css";
 
 export const Route = createFileRoute("/pro/_app/evidence")({ component: Page });
 
-// The phone app's rehearsed question and its first two follow-ups.
 // This page has no patient open, so its examples name the condition, never "this patient".
-const EXAMPLES = ["Do steroids help in community-acquired pneumonia?", "When is oral antibiotic step-down safe in pneumonia?", "Which adults with pneumonia can be treated at home?"];
+const EXAMPLES = ["CURB-65 of 2: admit or treat at home?", "Antibiotic for pyelonephritis in pregnancy?", "When to repeat a chest X-ray after pneumonia?"];
 type Picked = { turn: string; n: number };
+const wide = () => matchMedia("(min-width: 860px)").matches;
 
 function Page() {
   const { me } = Route.useRouteContext();
   const mayAsk = can(me.role, "evidence.stream");
   const [turns, setTurns] = useState<Turn[]>([]);
-  const [draft, setDraft] = useState("");
   const [picked, setPicked] = useState<Picked | null>(null);
+  const [reading, setReading] = useState(false);
   const latest = useRef(turns);
   const busy = useRef(false);
   useEffect(() => { latest.current = turns; }, [turns]);
+  const pick = useCallback((next: Picked) => { setPicked(next); setReading(true); }, []);
 
   // One model call per question, only when the clinician asks. Returns false when it was not asked or failed.
   const ask = useCallback(async (asked: string) => {
@@ -38,12 +42,12 @@ function Page() {
     const change = (next: (turn: Turn) => Turn) => setTurns(all => all.map(t => (t.id === id ? next(t) : t)));
     // A retry replaces the failed turn instead of leaving it above the new one.
     setTurns(all => [...all.filter(t => !t.failed), newTurn(id, question)]);
-    setPicked(null);
+    setReading(false);
     try {
       await askVisit(undefined, question, event => {
         change(t => apply(t, event));
-        // A question about a patient's X-ray is answered by the film: it is picked, so its reading shows, before the clinician asks.
-        if (event.type === "step" && event.step === "read") { const n = leadFilm(event.references); if (n) setPicked({ turn: id, n }); }
+        // A question about a patient's X-ray is answered by the film: on a wide screen it opens beside the answer before the clinician asks.
+        if (event.type === "step" && event.step === "read" && wide()) { const n = leadFilm(event.references); if (n) pick({ turn: id, n }); }
       }, thread);
       return true;
     } catch {
@@ -52,27 +56,13 @@ function Page() {
     } finally {
       busy.current = false;
     }
-  }, []);
+  }, [pick]);
 
-  // The bottom Sona bar asks the same thread.
+  // The Sona bar below is this page's composer: it asks the same thread.
   useSonaAsk(useCallback(async (question: string) => {
     if (!mayAsk) return "Your role cannot ask for evidence. A doctor or nurse can.";
     return (await ask(question)) ? "Answered in the thread on this page." : "Not asked: Sona is still on the last question, or it failed. See the thread.";
   }, [ask, mayAsk]));
-
-  useEffect(() => {
-    if (picked) document.getElementById(`ev-source-${picked.turn}-${picked.n}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [picked]);
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    void ask(draft);
-    setDraft("");
-  };
-  const reading = turns.some(t => !t.answer && !t.failed);
-  // The rail shows the sources of the turn being reviewed: the one last chosen, else the newest with sources, else the
-  // newest, so an answer with none says so instead of leaving the rail blank.
-  const shown = turns.find(t => t.id === picked?.turn) ?? turns.findLast(t => t.references.length > 0) ?? turns.at(-1);
 
   if (!mayAsk)
     return (
@@ -82,96 +72,104 @@ function Page() {
       </>
     );
 
+  const busyNow = turns.some(t => !t.answer && !t.failed);
+  const source = turns.find(t => t.id === picked?.turn);
+  const ref = source?.references.find(r => r.n === picked?.n);
   return (
-    <>
-      <PageHeader title="Evidence" lead="Ask a clinical question. Sona answers from studies and the hospital library, each claim with its source." />
-      <form className="ev-ask" onSubmit={submit}>
-        <input aria-label="Ask a clinical question" placeholder="Ask a clinical question" maxLength={500} value={draft} onChange={e => setDraft(e.target.value)} />
-        <Button type="submit" variant="primary" icon="search" pending={reading} disabled={!draft.trim()}>Ask</Button>
-      </form>
+    <div className="ev-page" data-reading={reading && ref ? "" : undefined}>
+      <PageHeader title="Evidence" />
       {turns.length === 0 ? (
-        <EmptyState icon="book" title="No questions yet">
-          Try one of these, or ask your own.
-          <span className="ev-chips">{EXAMPLES.map(q => <Button key={q} size="sm" variant="secondary" onClick={() => void ask(q)}>{q}</Button>)}</span>
-        </EmptyState>
+        <div className="ev-start">
+          <SonaMark />
+          <h2>Ask a clinical question</h2>
+          <p>Sona answers from PubMed and the hospital library, every claim with its source. You decide.</p>
+          <Suggestions items={EXAMPLES} onPick={q => void ask(q)} label="Example questions" />
+        </div>
       ) : (
-        <WithRail rail={<RightRail label="Sources">{shown && <Sources turn={shown} picked={picked} onPick={setPicked} />}</RightRail>}>
-          <div className="ev-thread" aria-live="polite">
-            {turns.map((turn, i) => <TurnCard key={turn.id} turn={turn} picked={picked} onPick={setPicked} onAsk={ask} last={i === turns.length - 1 && !reading} />)}
-          </div>
-        </WithRail>
+        <Conversation label="Evidence answers" className="ev-conversation">
+          {turns.map((turn, i) => (
+            <TurnView key={turn.id} turn={turn} last={i === turns.length - 1 && !busyNow} picked={reading && picked?.turn === turn.id ? picked.n : undefined}
+              onPick={n => pick({ turn: turn.id, n })} onAsk={q => void ask(q)} />
+          ))}
+        </Conversation>
       )}
-    </>
+      <Artifact open={reading && !!ref} onClose={() => setReading(false)} title={ref?.title ?? "Source"}
+        subtitle={ref && [`Source ${ref.n}`, ref.from, ref.year].filter(Boolean).join(" · ")}
+        actions={ref?.url && <a className="ev-pubmed" href={ref.url} target="_blank" rel="noreferrer">Open on PubMed<Icon name="external" size={12} /></a>}>
+        {ref && source && <Reading turn={source} reference={ref} />}
+      </Artifact>
+    </div>
   );
 }
 
-type Pick = { picked: Picked | null; onPick: (picked: Picked) => void };
-
-function TurnCard({ turn, picked, onPick, onAsk, last }: Pick & { turn: Turn; onAsk: (question: string) => void; last: boolean }) {
-  const { answer } = turn;
-  const mine = picked?.turn === turn.id ? picked.n : undefined;
+function TurnView({ turn, last, picked, onPick, onAsk }: { turn: Turn; last: boolean; picked?: number; onPick: (n: number) => void; onAsk: (question: string) => void }) {
+  const { answer, references } = turn;
   const label = answer && sampleLabel(answer);
+  const points = answer?.patientPoints ?? [];
+  const byN = new Map(references.map(r => [r.n, r]));
+  const film = (r: Reference) => r.encounterId ? <FilmCard reference={r} encounterId={r.encounterId} picked={picked === r.n} onPick={() => onPick(r.n)} /> : null;
+  const asked = answer?.claims.length ? answer.followUps : [];
   return (
-    <Card>
-      <h2 className="ev-question">{turn.question}</h2>
-      {label && <Chip tone="soon">{label}</Chip>}
-      {turn.bottomLine && <p className="ev-bottom">{turn.bottomLine}</p>}
-      <ol className="ev-claims">
-        {turn.claims.map((claim, i) => (
-          <li key={i} className="ev-claim" data-cited={mine !== undefined && claim.cites.includes(mine)}>
-            {claim.text}
-            {claim.cites.map(n => (
-              <button key={n} type="button" className="ev-mark" aria-pressed={mine === n} aria-label={`Source ${n}`} onClick={() => onPick({ turn: turn.id, n })}>{n}</button>
-            ))}
-          </li>
-        ))}
-      </ol>
+    <AnswerTurn question={turn.question} by={answer && !label ? answer.source : undefined}>
       {turn.failed ? (
-        <EmptyState icon="alert" title="No answer" action={<Button icon="refresh" onClick={() => onAsk(turn.question)}>Try again</Button>}>{turn.failed}</EmptyState>
-      ) : !answer ? (
-        <div className="ev-reading" role="status">
-          {turn.step}
-          <Skeleton height={14} width="80%" />
-          <Skeleton height={14} width="55%" />
-        </div>
+        <Notice kind="error" action={<Button size="sm" icon="refresh" onClick={() => onAsk(turn.question)}>Try again</Button>}>{turn.failed}</Notice>
       ) : (
         <>
-          {answer.claims.length === 0 && <p className="ev-note">The sources did not answer this question.</p>}
-          {answer.claims.length === 0 && answer.general && <p className="ev-note">General knowledge, not from the sources: {answer.general}</p>}
-          {"cutShort" in answer && answer.cutShort && <p className="ev-note">The answer was cut short. Ask again for the rest.</p>}
-          {answer.pubmed === "unavailable" && <p className="ev-note">PubMed could not be reached, so no studies were read.</p>}
-          {last && answer.followUps.length > 0 && (
-            <div className="ev-chips">{answer.followUps.map(q => <Button key={q} size="sm" variant="secondary" onClick={() => onAsk(q)}>{q}</Button>)}</div>
+          <Steps phase={phaseOf(turn)} sources={references.length || undefined} />
+          {label && <span className="ev-label"><Chip tone="soon">{label}</Chip></span>}
+          {(answer || turn.bottomLine || turn.claims.length > 0) && (
+            <Response bottomLine={turn.bottomLine} claims={turn.claims} references={references} onCite={onPick}>
+              {points.length > 0 && (
+                <section className="ev-points" aria-label="For this patient">
+                  <h4>For this patient</h4>
+                  <ul>
+                    {points.map((p, i) => (
+                      <li key={i}>{p.text}<span className="ai-cites">{p.cites.map(n => <InlineCitation key={n} n={n} reference={byN.get(n)} onSelect={onPick} />)}</span>
+                        <span className="ev-fact">From the record: “{p.fact}”</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {answer && answer.claims.length === 0 && (
+                <Notice kind="empty" action={last ? <Suggestions items={answer.followUps.length ? answer.followUps : EXAMPLES} onPick={onAsk} /> : undefined}>
+                  {answer.general ? `The sources did not answer this. General knowledge, not from the sources: ${answer.general}` : "The sources did not answer this question."}
+                </Notice>
+              )}
+              {answer && "cutShort" in answer && answer.cutShort && <p className="ev-note">The answer was cut short. Ask again for the rest.</p>}
+              {answer?.pubmed === "unavailable" && <p className="ev-note">PubMed could not be reached, so no studies were read.</p>}
+              {answer && <Sources references={references} image={film} onSelect={onPick} label={`Used ${plural(references.length, "source")} · You decide`} />}
+              {last && <Suggestions items={asked} onPick={onAsk} />}
+            </Response>
           )}
         </>
       )}
-    </Card>
+    </AnswerTurn>
   );
 }
 
-function Sources({ turn, picked, onPick }: Pick & { turn: Turn }) {
-  const n = turn.references.length;
+/** The picked source, to read before deciding: its design (how strong it is), the text, and the claims it was cited for. */
+function Reading({ turn, reference: r }: { turn: Turn; reference: Reference }) {
+  if (r.kind === "image" && r.encounterId) return <FilmCard reference={r} encounterId={r.encounterId} picked />;
+  const cited = turn.claims.filter(c => c.cites.includes(r.n));
   return (
-    <Card title="Sources">
-      {n === 0 ? (
-        <p className="ev-note">{turn.answer ? "No sources were found for this question." : "Sources appear here once Sona has found them."}</p>
-      ) : (
-        <ol className="ev-sources">
-          {turn.references.map(ref => (ref.kind === "image" && ref.encounterId
-            ? <FilmCard key={ref.n} as="li" id={`ev-source-${turn.id}-${ref.n}`} reference={ref} encounterId={ref.encounterId} picked={picked?.turn === turn.id && picked.n === ref.n} onPick={() => onPick({ turn: turn.id, n: ref.n })} />
-            : (
-              <li key={ref.n} id={`ev-source-${turn.id}-${ref.n}`} className="ev-source" data-picked={picked?.turn === turn.id && picked.n === ref.n}>
-                <button type="button" aria-pressed={picked?.turn === turn.id && picked.n === ref.n} onClick={() => onPick({ turn: turn.id, n: ref.n })}>
-                  <span className="ev-source-meta">{ref.n} · {ref.design} · {ref.year}</span>
-                  <span className="ev-source-title">{ref.title}</span>
-                  <span className="ev-source-text">{ref.text}</span>
-                </button>
-                {ref.url && <a href={ref.url} target="_blank" rel="noreferrer">Open on PubMed</a>}
-              </li>
-            )))}
-        </ol>
+    <div className="ev-reading">
+      <Chip>{r.design}</Chip>
+      <section>
+        <h3>{r.kind === "study" ? "From the study" : `From the library${r.section ? ` · ${r.section}` : ""}`}</h3>
+        <p>{r.text}</p>
+      </section>
+      {cited.length > 0 && (
+        <section>
+          <h3>Cited for</h3>
+          <ul>
+            {cited.map((c, i) => {
+              const quote = c.quotes?.find(q => q.n === r.n);
+              return <li key={i}>{c.text}{quote && <blockquote>“{quote.text}”</blockquote>}</li>;
+            })}
+          </ul>
+        </section>
       )}
-      <p className="ev-decide">You decide · {n} {n === 1 ? "source" : "sources"}</p>
-    </Card>
+    </div>
   );
 }

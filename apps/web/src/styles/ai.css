@@ -201,3 +201,7 @@ button.ai-rule-row:active { transform: scale(0.99); }
   button.ai-rule-row:hover { background: var(--fill-hover); }
   button.ai-rule-row:hover .ai-rule-go { transform: translateX(2px); color: var(--ink); }
 }
+
+/* Sources with onSelect: the title is a button that opens the source in place. */
+button.ai-source-title { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+@media (hover: hover) { button.ai-source-title:hover { color: var(--blue); } }

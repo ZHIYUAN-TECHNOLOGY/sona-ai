@@ -108,9 +108,10 @@ export function Response({ bottomLine, claims, references = [], onCite, children
 /**
  * The sources behind an answer, folded into one row ("Used 7 sources" with a badge per kind) that opens to the list:
  * number, title (linked out when it has a URL, e.g. PubMed), from · year · design, two lines of it. An image source
- * shows `image(reference)` in its thumbnail slot (the film), or a placeholder. Each row is `[data-source="n"]`.
+ * shows `image(reference)` in its thumbnail slot (the film), or a placeholder. Each row is `[data-source="n"]`. With
+ * `onSelect` the title opens the source in place (e.g. an Artifact panel, which carries the outward link) instead.
  */
-export function Sources({ references, defaultOpen = false, image, label }: { references: Reference[]; defaultOpen?: boolean; image?: (reference: Reference) => ReactNode; label?: string }) {
+export function Sources({ references, defaultOpen = false, image, label, onSelect }: { references: Reference[]; defaultOpen?: boolean; image?: (reference: Reference) => ReactNode; label?: string; onSelect?: (n: number) => void }) {
   const id = useId();
   const [open, setOpen] = useState(defaultOpen);
   if (!references.length) return null;
@@ -128,7 +129,9 @@ export function Sources({ references, defaultOpen = false, image, label }: { ref
           <li key={r.n} className="ai-source" data-source={r.n} tabIndex={-1}>
             <span className="ai-source-n"><span className="visually-hidden">Source </span>{r.n}</span>
             <span className="ai-source-text">
-              {r.url ? (
+              {onSelect ? (
+                <button type="button" className="ai-source-title" onClick={() => onSelect(r.n)}>{r.title}</button>
+              ) : r.url ? (
                 <a className="ai-source-title" href={r.url} target="_blank" rel="noreferrer">{r.title}<Icon name="external" size={12} /><span className="visually-hidden"> (opens in a new tab)</span></a>
               ) : <span className="ai-source-title">{r.title}</span>}
               <span className="ai-meta">{meta(r)}</span>

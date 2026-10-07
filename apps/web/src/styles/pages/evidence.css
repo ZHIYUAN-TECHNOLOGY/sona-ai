@@ -1,43 +1,61 @@
-.ev-ask { display: flex; gap: var(--space-2); align-items: center; }
-.ev-ask input {
-  flex: 1; min-width: 0; min-height: var(--tap); padding: 0 var(--space-4); font: inherit; font-size: var(--text-body); color: var(--ink);
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-control);
-}
-.ev-ask input:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+/* Evidence page: one centred conversation that fills the page above the Sona bar (its composer), and scrolls itself. */
+:is(.pro, .care) .frame-scroll:has(.ev-page) { display: flex; flex-direction: column; padding-bottom: 0; }
+.frame-page:has(.ev-page) { flex: 1; min-height: 0; }
+.ev-page { --ev-column: 760px; --ev-panel: 480px; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-2); transition: padding-right 260ms var(--ai-drawer); }
+.ev-page > .page-header, .ev-conversation .ai-conversation-content { width: 100%; max-width: var(--ev-column); margin-inline: auto; }
+.ev-page > .page-header { padding-inline: var(--space-4); }
+.ev-conversation { flex: 1; min-height: 0; margin-inline: calc(-1 * var(--space-5)); }
+.ev-conversation .ai-conversation-content { padding-bottom: var(--sona-bar-clearance); }
+.ev-conversation .ai-conversation-scroll { mask-image: linear-gradient(to bottom, transparent, #000 var(--space-4)); }
+.ev-conversation .ai-latest { bottom: calc(var(--sona-bar-clearance) - var(--space-6)); }
+/* The picked source opens in a panel on the right; on a wide screen the conversation moves left to sit beside it. */
+@media (min-width: 860px) { .ev-page .ai-artifact { width: var(--ev-panel); } }
+@media (min-width: 1100px) { .ev-page[data-reading] { padding-right: calc(var(--ev-panel) + 4px); } }
+@media (prefers-reduced-motion: reduce) { .ev-page { transition: none; } }
 
-.ev-thread { display: flex; flex-direction: column; gap: var(--gap-card); }
-.ev-question { margin: 0 0 var(--space-3); font-size: var(--text-body); font-weight: 600; color: var(--ink); }
-.ev-bottom { margin: 0 0 var(--space-3); font-weight: 600; line-height: var(--line-body); }
-.ev-claims { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-2); }
-.ev-claim { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); line-height: var(--line-body); transition: background 0.2s var(--ease); }
-.ev-claim[data-cited="true"] { background: var(--blue-wash); }
-.ev-mark {
-  margin-left: var(--space-1); padding: 0 var(--space-1); min-width: 24px; font: inherit; font-size: var(--text-small); font-variant-numeric: tabular-nums;
-  color: var(--blue); background: none; border: 1px solid var(--line); border-radius: var(--radius-pill); cursor: pointer;
-}
-.ev-mark[aria-pressed="true"] { color: var(--surface); background: var(--blue); border-color: var(--blue); }
-.ev-note { margin: var(--space-3) 0 0; font-size: var(--text-small); color: var(--muted); }
-.ev-reading { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); font-size: var(--text-small); color: var(--muted); }
-.ev-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+/* Before the first question: a quiet start, three example questions stacked under it. */
+.ev-start { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); max-width: 32rem; margin: auto; padding-bottom: var(--sona-bar-clearance); text-align: center; }
+.ev-start h2 { margin: 0; font-size: var(--text-title); font-weight: 600; letter-spacing: -0.01em; }
+.ev-start p { margin: 0; color: var(--muted); line-height: var(--line-body); text-wrap: pretty; }
+.ev-start .ai-suggestions { flex-direction: column; align-items: center; margin-top: var(--space-2); overflow: visible; }
 
-.ev-sources { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-2); }
+.ev-label { display: flex; }
+.ev-note { margin: 0; font-size: var(--text-small); color: var(--muted); }
+.ev-points { display: flex; flex-direction: column; gap: var(--space-2); padding-left: var(--space-3); border-left: 2px solid var(--blue); }
+.ev-points h4 { margin: 0; font-size: var(--text-small); font-weight: 600; color: var(--blue); }
+.ev-points ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: var(--space-2); line-height: var(--line-body); }
+.ev-fact { display: block; font-size: var(--text-small); color: var(--muted); }
+
+/* The panel's reading of a source. */
+.ev-pubmed { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-small); font-weight: 600; color: var(--blue); text-decoration: none; white-space: nowrap; }
+.ev-reading { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); line-height: var(--line-body); }
+.ev-reading section { display: flex; flex-direction: column; gap: var(--space-1); }
+.ev-reading h3 { margin: 0; font-size: var(--text-small); font-weight: 600; color: var(--muted); }
+.ev-reading p { margin: 0; text-wrap: pretty; }
+.ev-reading ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: var(--space-3); }
+.ev-reading blockquote { margin: var(--space-1) 0 0; padding-left: var(--space-3); border-left: 2px solid var(--blue); font-size: var(--text-small); color: var(--muted); }
+
+/* A cited X-ray (FilmCard): the film leads the card, findings boxed on it (marks.css), the reading one line until picked. */
 .ev-source { border: 1px solid var(--line); border-radius: var(--radius-sm); transition: background 0.2s var(--ease); }
 .ev-source[data-picked="true"] { background: var(--blue-wash); border-color: var(--blue); }
 .ev-source > button { display: block; width: 100%; padding: var(--space-3); font: inherit; text-align: left; color: var(--ink); background: none; border: 0; cursor: pointer; }
 .ev-source-meta { font-size: var(--text-small); color: var(--muted); }
 .ev-source-title { display: block; margin: var(--space-1) 0; font-weight: 600; }
 .ev-source-text { display: block; font-size: var(--text-small); line-height: var(--line-body); color: var(--muted); }
-/* Twenty sources with PubMed-length titles made the rail thousands of pixels tall: each shows three lines until it is picked. */
 .ev-source:not([data-picked="true"]) :is(.ev-source-title, .ev-source-text) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
 .ev-source > a { display: inline-block; padding: 0 var(--space-3) var(--space-3); font-size: var(--text-small); color: var(--blue); }
-
-/* A cited X-ray: the film leads the card, findings boxed on it (marks.css), the reading one line until picked. */
 .ev-film-image { position: relative; display: block; margin: var(--space-2) 0; border-radius: var(--radius-control); overflow: hidden; background: var(--ink); transition: transform var(--quick) var(--ease); }
 .ev-film-image img { display: block; width: 100%; height: auto; }
 .ev-film-wait { display: grid; place-items: center; aspect-ratio: 4 / 5; padding: var(--space-4); font-size: var(--text-small); color: var(--placeholder); background: var(--fill-selected); text-align: center; }
 .ev-film > button:active .ev-film-image { transform: scale(0.97); }
-/* The same card without a pick (a page's Sona thread): plain body, and no wider than the rail would show it. */
+/* The same card without a pick (a page's Sona thread, the reading panel): plain body. */
 .ev-film-body { display: block; padding: var(--space-3); }
 .sona-turn-a .ev-film { max-width: 24rem; margin-top: var(--space-3); }
 .ev-film:not([data-picked="true"]) .ev-source-text { -webkit-line-clamp: 1; line-clamp: 1; }
-.ev-decide { margin: var(--space-3) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--hairline); font-size: var(--text-small); color: var(--muted); }
+/* In a source row's thumbnail the card is only its film: tapping it opens the film in the panel. */
+.ai-source-thumb .ev-film { width: 100%; height: 100%; border: 0; border-radius: 0; }
+.ai-source-thumb .ev-film > button { height: 100%; padding: 0; }
+.ai-source-thumb .ev-film :is(.ev-source-meta, .ev-source-title, .ev-source-text), .ai-source-thumb .ev-film > a { display: none; }
+.ai-source-thumb .ev-film-image { height: 100%; margin: 0; border-radius: 0; }
+.ai-source-thumb .ev-film-image img { height: 100%; object-fit: cover; }
+.ai-source-thumb .ev-film-wait { aspect-ratio: auto; padding: 0; font-size: 0; }

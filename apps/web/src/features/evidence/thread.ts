@@ -61,3 +61,10 @@ export function sampleLabel(answer: Pick<Answer, "source"> & { waking?: number }
   if (minutes <= 0) return "Sample answer";
   return `Sample for now · Sona's model is starting, ${minutes <= 1 ? "about a minute" : `about ${minutes} min`}. Ask again then.`;
 }
+
+/** Where a turn's answer is, for its steps line: done once answered, writing once the write step or a claim arrived, reading once sources came. */
+export function phaseOf(turn: Turn): "search" | "read" | "write" | "done" {
+  if (turn.answer || turn.failed) return "done";
+  if (turn.bottomLine || turn.claims.length || turn.step.includes("writing")) return "write";
+  return turn.step.startsWith("Reading") ? "read" : "search";
+}
