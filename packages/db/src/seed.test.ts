@@ -27,8 +27,9 @@ test("two more test clinicians are seeded signed up and already members of the d
   await seedTestStaff(db);
   const staff = await db.select({ name: user.name, email: user.email, role: hospitalMembers.role, hospitalId: hospitalMembers.hospitalId })
     .from(hospitalMembers).innerJoin(user, eq(user.id, hospitalMembers.userId)).orderBy(user.email);
-  expect(staff).toEqual([TEST_DOCTOR_2, TEST_NURSE_2].map(({ name, email, role }) => ({ name, email, role, hospitalId: DEMO_HOSPITAL })));
-  expect((await db.select().from(account)).map(a => [a.userId, a.providerId]).sort()).toEqual([[TEST_DOCTOR_2.id, "credential"], [TEST_NURSE_2.id, "credential"]]);
+  const all = [TEST_DOCTOR, TEST_NURSE, TEST_BED_MANAGER, TEST_MANAGER, TEST_DOCTOR_2, TEST_NURSE_2];
+  expect(staff).toEqual(all.toSorted((a, b) => (a.email < b.email ? -1 : 1)).map(({ name, email, role }) => ({ name, email, role, hospitalId: DEMO_HOSPITAL })));
+  expect((await db.select().from(account)).map(a => [a.userId, a.providerId]).sort()).toEqual(all.map(a => [a.id, "credential"]).sort());
 });
 
 test("each synthetic test clinician joins the demo hospital with its own role", () => {

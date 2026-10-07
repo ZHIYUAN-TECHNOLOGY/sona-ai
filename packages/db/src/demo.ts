@@ -8,10 +8,10 @@ export const DEMO_HOSPITAL = "demo";
  * ponytail: a fixed map for the demo; an admin invite step replaces it.
  */
 export const DEMO_CLINICIANS: Record<string, "doctor" | "nurse" | "bed-manager" | "management"> = {
-  "dr.test@sona.test": "doctor",
-  "nurse.test@sona.test": "nurse",
-  "beds.test@sona.test": "bed-manager",
-  "manager.test@sona.test": "management",
+  "doctor@sona.com": "doctor",
+  "nurse@sona.com": "nurse",
+  "bed-manager@sona.com": "bed-manager",
+  "management@sona.com": "management",
 };
 
 /**

@@ -120,7 +120,7 @@ test("Sona Care's own routes never write the clinician access trail", async () =
 
 test("the trail is hospital-scoped, newest first, names who, and collapses back-to-back reads", async () => {
   const { db, doctor, manager, other, clock } = await world();
-  await db.insert(user).values([{ id: "doctor", name: "Dr Test Aisyah", email: "dr.test@sona.test" }, { id: "management", name: "Test Manager Farah", email: "manager.test@sona.test" }]);
+  await db.insert(user).values([{ id: "doctor", name: "Dr Test Aisyah", email: "doctor@sona.com" }, { id: "management", name: "Test Manager Farah", email: "management@sona.com" }]);
   await doctor.encounter.get({ encounterId: "visit-1042" });
   clock.now = new Date(clock.now.getTime() + 60_000);
   await doctor.encounter.get({ encounterId: "visit-1042" });
