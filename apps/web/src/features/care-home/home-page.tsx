@@ -4,6 +4,7 @@ import { type IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Chip, ListCard, ListRow, StatCard, StatRow } from "@/components/primitives";
+import { countOf } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 
 import { dayLead, dosesToday, inDaysWords, langOf, nextStep, partOfDay } from "./model";
@@ -72,7 +73,7 @@ export function CareHome({ firstName }: { firstName: string }) {
 
   // What the next step rests on: the same numbers the cards below show.
   const evidence: { icon: IconName; text: string }[] = [
-    ...(doses.length ? [{ icon: "pill" as const, text: `${done} of ${doses.length} doses taken today` }] : []),
+    ...(doses.length ? [{ icon: "pill" as const, text: `${done} of ${countOf(doses.length, "dose")} taken today` }] : []),
     ...(visit && step.kind !== "visit" ? [{ icon: "calendar" as const, text: `${visit.title} ${inDaysWords(visit.inDays)}` }] : []),
     ...(step.kind === "check-in" ? []
       : waitingCount ? [{ icon: "clipboard" as const, text: waitingCount === 1 ? "1 check-in waiting" : `${waitingCount} check-ins waiting` }]
@@ -116,7 +117,7 @@ export function CareHome({ firstName }: { firstName: string }) {
   // The row that is the panel's next step carries no second button for the same action.
   const rows = [
     ...doses.map(d => ({ at: d.dueAt.getTime(), row: (
-      <ListRow key={d.key} icon="pill" title={d.name} caption={`${d.line} · ${timeOf(d.dueAt)}`}
+      <ListRow key={d.key} icon="pill" title={d.name} caption={`${timeOf(d.dueAt)} · ${d.line}`}
         trailing={d.taken ? <span className="care-home-quiet">Taken</span>
           : d.key === stepDoseKey ? <Chip tone="amber">Due</Chip>
           : <Button pending={take.isPending && take.variables.key === d.key} disabled={take.isPending} onClick={() => take.mutate({ key: d.key })}>I took it</Button>} />
