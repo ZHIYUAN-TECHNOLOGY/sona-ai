@@ -54,11 +54,11 @@ void main() {
   col = mix(col, vec3(1.0), spec * 0.8);
 
   float spot = pow(b, 3.0) * 1.3 + 0.08;
-  float w = (0.55 + 0.45 * glow + 0.6 * level) * scale;
+  float w = (0.45 + 0.2 * glow + 0.6 * level) * scale; // a hairline; the voice thickens it
   float line = 1.0 - smoothstep(w * 0.5, w + 0.8 * scale, abs(d + 0.35 * scale));
-  float halo = d > 0.0 ? exp(-d / ((2.0 + 4.0 * glow + 4.0 * level) * scale)) * (0.06 + 0.5 * glow + 0.4 * level) * spot : 0.0;
-  float inner = d < 0.0 ? exp(d / (2.5 * scale)) * 0.2 * glow * spot : 0.0;
-  float a = line * ((0.45 + 0.55 * glow) * (0.55 + 0.45 * b) + spec * 0.5) + halo + inner + near * 0.25 * exp(-abs(d) / (6.0 * scale));
+  float halo = d > 0.0 ? exp(-d / ((1.2 + 1.6 * glow + 4.0 * level) * scale)) * (0.02 + 0.14 * glow + 0.4 * level) * spot : 0.0;
+  float inner = d < 0.0 ? exp(d / (2.0 * scale)) * 0.06 * glow * spot : 0.0;
+  float a = line * ((0.3 + 0.4 * glow) * (0.55 + 0.45 * b) + spec * 0.35) + halo + inner + near * 0.1 * exp(-abs(d) / (4.0 * scale));
   a = clamp(a, 0.0, 1.0) * (1.0 - smoothstep(7.0 * scale, 13.0 * scale, d)); // gone before the canvas edge
   o = vec4(col * a, a);
 }`;

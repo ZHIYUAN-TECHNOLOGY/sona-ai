@@ -9,12 +9,11 @@
   padding: var(--composer-pad) var(--composer-pad) var(--composer-pad) var(--space-4);
   border-radius: calc(var(--composer-button) / 2 + var(--composer-pad));
   background: var(--glass-float); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 1px 2px rgb(29 31 35 / 0.04), 0 8px 24px rgb(36 91 204 / 0.1);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 0 0 1px rgb(29 31 35 / 0.06), 0 4px 14px rgb(29 31 35 / 0.05);
   transition: box-shadow 200ms var(--ai-ease);
 }
-.ai-composer:focus-within { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 1px 2px rgb(29 31 35 / 0.04), 0 10px 32px rgb(36 91 204 / 0.18); }
-/* Keyboard focus: the edge brightens, and a quiet outline says where the keys go. */
-.ai-composer:has(.ai-composer-input:focus-visible) { outline: 2px solid color-mix(in srgb, var(--blue) 40%, transparent); outline-offset: 4px; }
+.ai-composer:focus-within { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 0 0 1px color-mix(in srgb, var(--blue) 28%, transparent), 0 4px 16px rgb(36 91 204 / 0.08); }
+/* Focus: a 1px blue hairline on the box (above) and the edge brightening; no second outline floating around it. */
 
 /* The living edge: a canvas a little larger than the box, under the text and buttons. */
 .ai-composer-ring { position: absolute; inset: -14px; z-index: -1; pointer-events: none; }
@@ -41,15 +40,15 @@
 .ai-composer-button {
   position: relative; isolation: isolate; flex: none; display: grid; place-items: center;
   width: var(--composer-button); height: var(--composer-button); padding: 0; border: 0; border-radius: 50%;
-  background: var(--glass-float); color: var(--muted); cursor: pointer; touch-action: manipulation;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 0 0 1px rgb(29 31 35 / 0.07), 0 1px 2px rgb(29 31 35 / 0.05);
+  background: transparent; color: var(--muted); cursor: pointer; touch-action: manipulation;
+  box-shadow: none;
   transition: transform 120ms var(--ai-ease), color 160ms ease, box-shadow 160ms ease;
 }
 .ai-composer-button::before, .ai-composer-send::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; opacity: 0; pointer-events: none; transition: opacity 180ms var(--ai-ease); }
 /* Metal blue: a light from above on a blue sphere, a bright top rim and a darker lower rim. */
 .ai-composer-button::before {
   background: radial-gradient(120% 70% at 50% 0%, rgb(255 255 255 / 0.5), rgb(255 255 255 / 0) 60%), linear-gradient(180deg, color-mix(in srgb, var(--blue), #fff 22%), var(--blue) 50%, color-mix(in srgb, var(--blue), #0E2A66 45%));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55), inset 0 -1px 1px rgb(14 42 102 / 0.35), 0 0 0 1px rgb(14 42 102 / 0.18), 0 3px 10px rgb(36 91 204 / 0.3);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 1px 3px rgb(36 91 204 / 0.25);
 }
 /* The dotted glint, top left (design-direction.md: the same as the phone composer's send). */
 .ai-composer-send::after {
@@ -57,6 +56,9 @@
   mask: radial-gradient(circle at 28% 22%, #000, transparent 48%);
 }
 .ai-composer-button:disabled { color: var(--placeholder); cursor: default; }
+/* Send before there is anything to send: a pale filled circle, so its place reads without a border. */
+.ai-composer-send:disabled { background: var(--fill-field); }
+@media (hover: hover) { .ai-composer-mic:hover:not(:disabled) { background: var(--fill-hover); } }
 .ai-composer-button:active:not(:disabled) { transform: scale(0.96); }
 @media (hover: hover) { .ai-composer-mic:hover:not(:disabled) { color: var(--ink); } }
 .ai-composer-send:not(:disabled) { color: #fff; box-shadow: none; }
