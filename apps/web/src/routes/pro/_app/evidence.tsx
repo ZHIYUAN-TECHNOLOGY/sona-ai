@@ -1,15 +1,13 @@
 import { can } from "@sona-ai/api/roles";
-import type { Reference } from "@sona-ai/domain/evidence";
-import { useQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, Skeleton } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
-import { type StreamEvent, type Turn, apply, leadFilm, newTurn, sampleLabel, threadOf } from "@/features/evidence/thread";
-import { FindingMarks, filmUrl, onImage } from "@/features/imaging/marks";
-import { client, orpc } from "@/lib/orpc";
+import { askVisit } from "@/features/evidence/ask";
+import { FilmCard } from "@/features/evidence/film-card";
+import { type Turn, apply, leadFilm, newTurn, sampleLabel, threadOf } from "@/features/evidence/thread";
 import { useSonaAsk } from "@/lib/sona";
 import "@/styles/pages/evidence.css";
 
@@ -42,12 +40,11 @@ function Page() {
     setTurns(all => [...all.filter(t => !t.failed), newTurn(id, question)]);
     setPicked(null);
     try {
-      for await (const raw of await client.evidence.stream({ question, thread })) {
-        const event = raw as StreamEvent;
+      await askVisit(undefined, question, event => {
         change(t => apply(t, event));
         // A question about a patient's X-ray is answered by the film: it is picked, so its reading shows, before the clinician asks.
         if (event.type === "step" && event.step === "read") { const n = leadFilm(event.references); if (n) setPicked({ turn: id, n }); }
-      }
+      }, thread);
       return true;
     } catch {
       change(t => ({ ...t, failed: "Sona could not answer just now. Nothing was saved from this question." }));
@@ -161,7 +158,7 @@ function Sources({ turn, picked, onPick }: Pick & { turn: Turn }) {
       ) : (
         <ol className="ev-sources">
           {turn.references.map(ref => (ref.kind === "image" && ref.encounterId
-            ? <FilmSource key={ref.n} turn={turn} reference={ref} encounterId={ref.encounterId} picked={picked} onPick={onPick} />
+            ? <FilmCard key={ref.n} as="li" id={`ev-source-${turn.id}-${ref.n}`} reference={ref} encounterId={ref.encounterId} picked={picked?.turn === turn.id && picked.n === ref.n} onPick={() => onPick({ turn: turn.id, n: ref.n })} />
             : (
               <li key={ref.n} id={`ev-source-${turn.id}-${ref.n}`} className="ev-source" data-picked={picked?.turn === turn.id && picked.n === ref.n}>
                 <button type="button" aria-pressed={picked?.turn === turn.id && picked.n === ref.n} onClick={() => onPick({ turn: turn.id, n: ref.n })}>
@@ -176,35 +173,5 @@ function Sources({ turn, picked, onPick }: Pick & { turn: Turn }) {
       )}
       <p className="ev-decide">You decide · {n} {n === 1 ? "source" : "sources"}</p>
     </Card>
-  );
-}
-
-/**
- * A patient's X-ray the answer cites: the film itself, its findings marked as /pro/xray marks them, the reading under
- * it. Picked like any source. A grey card with the title stands in while the film loads; no spinner.
- */
-function FilmSource({ turn, reference, encounterId, picked, onPick }: Pick & { turn: Turn; reference: Reference; encounterId: string }) {
-  const input = { encounterId };
-  // Up to 10 MB per film: fetched once per visit and kept, not refetched on every focus.
-  const film = useQuery({ ...orpc.xray.image.queryOptions({ input }), retry: false, staleTime: Infinity });
-  const findings = useQuery({ ...orpc.findings.list.queryOptions({ input }), staleTime: Infinity });
-  const on = picked?.turn === turn.id && picked.n === reference.n;
-  return (
-    <li id={`ev-source-${turn.id}-${reference.n}`} className="ev-source ev-film" data-picked={on}>
-      <button type="button" aria-pressed={on} onClick={() => onPick({ turn: turn.id, n: reference.n })}>
-        <span className="ev-source-meta">{reference.n} · {reference.design} · {reference.year}</span>
-        {film.data ? (
-          <span className="ev-film-image">
-            <img src={filmUrl(film.data)} alt={reference.title} />
-            <FindingMarks findings={onImage(findings.data ?? [], film.data.key)} />
-          </span>
-        ) : (
-          <span className="ev-film-image ev-film-wait" aria-busy={film.isPending}>{film.isError ? "Film not available" : reference.title}</span>
-        )}
-        <span className="ev-source-title">{reference.title}</span>
-        <span className="ev-source-text">{reference.text}</span>
-      </button>
-      <Link to="/pro/xray" search={{ encounter: encounterId }}>Open film</Link>
-    </li>
   );
 }

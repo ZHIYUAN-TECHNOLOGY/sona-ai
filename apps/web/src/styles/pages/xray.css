@@ -40,3 +40,19 @@
 .xr-step-only .insight-act { display: none; }
 .xr-review { display: grid; gap: var(--space-1); }
 .xr-review p { margin: 0; }
+
+/* The Compare card: a quiet find box, then small films in a grid that packs at phone width. */
+.xr-find input { width: 100%; min-height: var(--tap); padding: 0 var(--space-4); font: inherit; font-size: var(--text-body); color: var(--ink); background: var(--fill-field); border: 1px solid transparent; border-radius: var(--radius-control); }
+.xr-find input:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; background: var(--surface); }
+.xr-group { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+.xr-group-title { margin: 0; font-size: var(--text-small); font-weight: 600; color: var(--muted); }
+.xr-films { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.xr-film > a { display: grid; gap: var(--space-1); color: var(--ink); text-decoration: none; transition: transform var(--quick) var(--ease); }
+.xr-film > a:active { transform: scale(0.97); }
+.xr-film > a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: var(--radius-control); }
+.xr-thumb { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--radius-control); background: var(--fill-selected); }
+/* Once the film is in, the box takes the film's own shape so the drawn marks sit where they were read. */
+.xr-thumb:has(img) { aspect-ratio: auto; background: var(--ink); }
+.xr-thumb img { display: block; width: 100%; height: auto; }
+.xr-film-who { margin-top: var(--space-1); font-weight: 600; font-size: var(--text-small); }
+.xr-film-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }

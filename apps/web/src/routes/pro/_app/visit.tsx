@@ -8,6 +8,7 @@ import { InsightCard } from "@/components/insight-card";
 import { EmptyState, PageHeader, PatientStrip } from "@/components/page";
 import { Button, Card, Chip, Signal, Skeleton } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
+import { useVisitAsk } from "@/features/evidence/ask";
 import { allergyChip, patientMeta } from "@/features/patients/patient-list";
 import { Note } from "@/features/visit/note";
 import { Orders } from "@/features/visit/orders";
@@ -32,6 +33,8 @@ function Page() {
   const patients = useQuery(orpc.patients.list.queryOptions());
   // Where the note puts its save button: the page's main action lives in the header.
   const [actions, setActions] = useState<HTMLElement | null>(null);
+  // "What did her X-ray show?" in the Sona bar is answered here, the film under the question.
+  useVisitAsk(encounterId, can(me.role, "evidence.stream"));
   if (!encounterId) return <Pick patients={patients} />;
   if (!can(me.role, "note.get")) return <><PageHeader title="Visit" /><EmptyState>Your role cannot read clinical notes.</EmptyState></>;
   const patient = patients.data?.find(p => p.encounterId === encounterId);

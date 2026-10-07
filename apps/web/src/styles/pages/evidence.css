@@ -36,5 +36,8 @@
 .ev-film-image img { display: block; width: 100%; height: auto; }
 .ev-film-wait { display: grid; place-items: center; aspect-ratio: 4 / 5; padding: var(--space-4); font-size: var(--text-small); color: var(--placeholder); background: var(--fill-selected); text-align: center; }
 .ev-film > button:active .ev-film-image { transform: scale(0.97); }
+/* The same card without a pick (a page's Sona thread): plain body, and no wider than the rail would show it. */
+.ev-film-body { display: block; padding: var(--space-3); }
+.sona-turn-a .ev-film { max-width: 24rem; margin-top: var(--space-3); }
 .ev-film:not([data-picked="true"]) .ev-source-text { -webkit-line-clamp: 1; line-clamp: 1; }
 .ev-decide { margin: var(--space-3) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--hairline); font-size: var(--text-small); color: var(--muted); }

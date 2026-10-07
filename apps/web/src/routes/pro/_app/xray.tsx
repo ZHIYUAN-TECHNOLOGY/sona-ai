@@ -9,6 +9,8 @@ import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
 import { Button, Card, Chip, Field, ListCard, ListRow, Select, Signal, Skeleton } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
+import { useVisitAsk } from "@/features/evidence/ask";
+import { Compare } from "@/features/imaging/compare";
 import { FindingMarks, filmUrl, onImage as readFrom } from "@/features/imaging/marks";
 import { messageOf, toBase64 } from "@/features/library/files";
 import { client, orpc } from "@/lib/orpc";
@@ -31,7 +33,13 @@ function Page() {
   const mayUpload = can(me.role, "xray.upload");
   const queryClient = useQueryClient();
   const patients = useQuery(orpc.patients.list.queryOptions());
-  const [encounterId, setEncounterId] = useState(Route.useSearch().encounter ?? "");
+  const wanted = Route.useSearch().encounter;
+  const [encounterId, setEncounterId] = useState(wanted ?? "");
+  // A compared film's link lands on this same page: the new search selects its visit.
+  const [followed, setFollowed] = useState(wanted);
+  if (wanted !== followed) { setFollowed(wanted); if (wanted) setEncounterId(wanted); }
+  // "Is this nodule new?" in the Sona bar is answered here, the film under the question.
+  useVisitAsk(encounterId, can(me.role, "evidence.stream"));
   // The image sent from this browser, by storage key: shown at once, before the stored copy is fetched back.
   const [sent, setSent] = useState<{ key: string; url: string }>();
   const [zoom, setZoom] = useState(1);
@@ -257,6 +265,7 @@ function Page() {
             </div>
           )}
         </Card>
+        {data && <Compare encounterId={encounterId} patientId={patients.data?.find(p => p.encounterId === encounterId)?.id} />}
         {data && (data.findings.length > 4 || all.length > onImage.length) ? (
           <ListCard title="More from the draft">
             {data.findings.slice(4).map((f, i) => <ListRow key={`d${i}`} icon="scan" title={f} />)}

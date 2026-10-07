@@ -1,7 +1,7 @@
 // @ts-expect-error apps/web has no bun types yet; add @types/bun and drop this line
 import { expect, test } from "bun:test";
 
-import { type Answer, apply, leadFilm, newTurn, sampleLabel, threadOf } from "./thread";
+import { type Answer, answerFilm, apply, leadFilm, newTurn, sampleLabel, threadOf } from "./thread";
 
 const claim = { text: "Steroids are not routine.", cites: [1] };
 const answer = { bottomLine: "Not routinely.", claims: [claim], references: [], source: "gemma" } as unknown as Answer;
@@ -23,6 +23,10 @@ test("a film leads the answer only when it is the first source", () => {
   expect(leadFilm([film, { ...study, n: 2 }])).toBe(1);
   expect(leadFilm([study, { ...film, n: 2 }])).toBeUndefined();
   expect(leadFilm([])).toBeUndefined();
+  // In place, the film needs its visit: a leading image without one is text only.
+  expect(answerFilm([film, { ...study, n: 2 }])).toBe(film);
+  expect(answerFilm([study, { ...film, n: 2 }])).toBeUndefined();
+  expect(answerFilm([{ ...film, encounterId: undefined }])).toBeUndefined();
 });
 
 test("a sample says it is a sample, and when the model is starting", () => {
