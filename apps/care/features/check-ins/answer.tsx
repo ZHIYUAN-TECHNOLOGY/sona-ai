@@ -111,7 +111,7 @@ function FollowUp({ language, text, feeling: f, busy, onSend }: { language: Lang
     : writing ? <Animated.View entering={enter(0)} style={{ gap: 8 }}>
       {/* One composer like ChatGPT's and Claude's: the words, the mic and send inside the same box. */}
       <Composer value={words} onChangeText={setWords} placeholder={copy.placeholder} label={copy.more} autoFocus busy={busy}
-        canSend={!!words.trim() && !busy && listen.state === "idle"} onSend={() => { if (words.trim() && !busy) onSend(replyText(text, words)); }}
+        canSend={!!words.trim() && !busy && listen.state !== "listening" && listen.state !== "reading"} onSend={() => { if (words.trim() && !busy) onSend(replyText(text, words)); }}
         pill={listen.state === "listening" || listen.state === "reading" ? <Dictation listen={listen} /> : undefined}
         alongside={<MicButton listen={listen} label={t("ci.sayIt")} quiet />} />
       {listen.error ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{listen.error}</Text> : null}
