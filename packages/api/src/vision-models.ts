@@ -299,11 +299,13 @@ export function visionModels(look: Look, model: string, fallback: Models): Pick<
       return fallback.readHandwrittenNote(input);
     },
 
-    // A page read word for word; "NO TEXT" is how the model says the page is blank, which is not a failure.
+    // A page read word for word; "NO TEXT" is how the model says the page is blank, which is not a failure. The doubted
+    // words come from token probabilities, as on a handwritten note: on a Chinese page it once wrote nonsense with confidence.
     async readDocumentPage(input) {
       try {
-        const text = afterThought((await look({ image: { bytes: input.image, contentType: input.contentType }, prompt: DOCUMENT_PAGE, maxTokens: 1500 })).text).trim();
-        return { text: text === "NO TEXT" ? "" : text, source: "model", model };
+        const page = await look({ image: { bytes: input.image, contentType: input.contentType }, prompt: DOCUMENT_PAGE, maxTokens: 1500, logprobs: true });
+        const { text, unsure } = page.tokens?.length ? readingOf(page.tokens) : { text: afterThought(page.text).trim(), unsure: [] };
+        return text === "NO TEXT" ? { text: "", unsure: [], source: "model", model } : { text, unsure, source: "model", model };
       } catch { /* nothing read, labelled fixture */ }
       return fallback.readDocumentPage(input);
     },

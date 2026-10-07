@@ -146,8 +146,14 @@ test("an unreadable photo or an unsortable reply gives the sample note, labelled
 
 test("a document page is read word for word: a blank page reads as no text, and a failed read falls back to the stub", async () => {
   const page = eyes(() => "<unused94>thought<unused95>## Ubat\nAmbil selepas makan.\n");
-  expect(await page.models.readDocumentPage({ image, contentType })).toEqual({ text: "## Ubat\nAmbil selepas makan.", ...fromModel });
-  expect(page.asks[0]).toMatchObject({ image: { bytes: image, contentType }, maxTokens: 1500 });
-  expect(await eyes(() => "NO TEXT").models.readDocumentPage({ image, contentType })).toEqual({ text: "", ...fromModel });
-  expect(await eyes(() => { throw new Error("down"); }).models.readDocumentPage({ image, contentType })).toEqual({ text: "", source: "fixture" });
+  expect(await page.models.readDocumentPage({ image, contentType })).toEqual({ text: "## Ubat\nAmbil selepas makan.", unsure: [], ...fromModel });
+  expect(page.asks[0]).toMatchObject({ image: { bytes: image, contentType }, maxTokens: 1500, logprobs: true });
+  expect(await eyes(() => "NO TEXT").models.readDocumentPage({ image, contentType })).toEqual({ text: "", unsure: [], ...fromModel });
+  expect(await eyes(() => ({ text: "", tokens: [tok("NO"), tok(" TEXT")] })).models.readDocumentPage({ image, contentType })).toEqual({ text: "", unsure: [], ...fromModel });
+  expect(await eyes(() => { throw new Error("down"); }).models.readDocumentPage({ image, contentType })).toEqual({ text: "", unsure: [], source: "fixture" });
+});
+
+test("a document page marks each word the model nearly read differently, so staff check it against the page", async () => {
+  const tokens = [tok("<unused94>"), tok("thought"), tok("<unused95>"), tok("Jangan"), tok(" makan", [["minum", 0.3]]), tok(" dua"), tok(" kali.")];
+  expect(await eyes(() => ({ text: "", tokens })).models.readDocumentPage({ image, contentType })).toEqual({ text: "Jangan makan dua kali.", unsure: ["makan"], ...fromModel });
 });
