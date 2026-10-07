@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { BOXES } from "./baseten-models";
-import { endpointsOf, hosted, payloads, sagemakerEmbedder, sagemakerFetcher, sagemakerLive, signed } from "./sagemaker";
+import { endpointsOf, hosted, payloads, sagemakerEmbedder, sagemakerFetcher, sagemakerImageEmbedder, sagemakerLive, signed } from "./sagemaker";
 
 const creds = { region: "us-east-1", accessKeyId: "AKIDEXAMPLE", secretAccessKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY" };
 
@@ -35,6 +35,26 @@ test("the embedder on its box: prompted texts signed to the endpoint, vectors ba
   await expect(broken(["q"], "query")).rejects.toThrow("sona-embed answered out of shape");
   const down = sagemakerEmbedder({ ...creds, region: "ap-southeast-5", endpoint: "sona-embed" }, (async () => new Response("no", { status: 503 })) as typeof fetch);
   await expect(down(["q"], "query")).rejects.toThrow("sona-embed answered 503");
+});
+
+test("the films' embedder on the same box: images as base64 and phrases as image_text, 512-d vectors back; a short answer throws", async () => {
+  const seen: string[] = [];
+  const vector = Array.from({ length: 512 }, () => 0.1);
+  const fetcher = (async (_url: RequestInfo | URL, init?: RequestInit) => {
+    const body = JSON.parse(new TextDecoder().decode(init!.body as Uint8Array)) as { image?: string[]; image_text?: string[] };
+    seen.push(JSON.stringify(body));
+    return Response.json({ data: (body.image ?? body.image_text)!.map(() => vector) });
+  }) as typeof fetch;
+  const embed = sagemakerImageEmbedder({ ...creds, region: "ap-southeast-5", endpoint: "sona-embed" }, fetcher, () => new Date("2026-10-07T00:00:00Z"));
+  expect(await embed.images([new Uint8Array([137, 80, 78, 71]), new Uint8Array([255, 216])])).toEqual([vector, vector]);
+  expect(seen[0]).toBe(JSON.stringify({ image: ["iVBORw==", "/9g="] }));
+  expect(await embed.text(["effusion on the left"])).toEqual([vector]);
+  expect(seen[1]).toBe(JSON.stringify({ image_text: ["effusion on the left"] }));
+  // 45 films go as 20, 20 and 5.
+  expect((await embed.images(Array.from({ length: 45 }, () => new Uint8Array([1])))).length).toBe(45);
+  expect(seen.slice(2).map(s => (JSON.parse(s) as { image: string[] }).image.length)).toEqual([20, 20, 5]);
+  const broken = sagemakerImageEmbedder({ ...creds, region: "ap-southeast-5", endpoint: "sona-embed" }, (async () => Response.json({ data: [[1, 2]] })) as typeof fetch);
+  await expect(broken.text(["q"])).rejects.toThrow("sona-embed answered out of shape");
 });
 
 test("a moved box's call goes to its SageMaker endpoint, signed; other boxes stay on Baseten; health and wake answer here", async () => {

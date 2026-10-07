@@ -1,5 +1,6 @@
 import { BOXES, type Baseten, type Box } from "./baseten-models";
-import { embedderOver, type Embedder } from "./workers-models";
+import type { ImageEmbedder } from "./context";
+import { base64, embedderOver, type Embedder } from "./workers-models";
 
 /**
  * The same boxes on Amazon SageMaker in Malaysia (packages/infra/aws): a fetcher for `boxes()` that sends a moved box's
@@ -65,6 +66,31 @@ export function sagemakerEmbedder(sm: Omit<SageMaker, "endpoints"> & { endpoint:
     return res.json();
   // A CPU box: a batch of 20 sections takes up to ~15 s (measured 7 Oct on ml.c6i.large), so smaller batches wait longer.
   }, { batch: 20, timeoutMs: { query: 3000, document: 60_000 } });
+}
+
+/**
+ * BiomedCLIP on the same box: films as base64 ({image: [...]}) or film queries ({image_text: [...]}) to the endpoint,
+ * 512-d vectors back in the same order; 20 a call (the box's limit), 30 s each (ViT-B/16 on 2 vCPUs, ~0.5 s a film).
+ * Throws on a bad answer, so an upload can carry on without its vector.
+ */
+export function sagemakerImageEmbedder(sm: Omit<SageMaker, "endpoints"> & { endpoint: string }, fetcher: typeof fetch = fetch, now: () => Date = () => new Date()): ImageEmbedder {
+  const url = `https://runtime.sagemaker.${sm.region}.amazonaws.com/endpoints/${encodeURIComponent(sm.endpoint)}/invocations`;
+  const run = async (field: "image" | "image_text", items: string[]) => {
+    const vectors: number[][] = [];
+    for (let i = 0; i < items.length; i += 20) {
+      const batch = items.slice(i, i + 20), body = new TextEncoder().encode(JSON.stringify({ [field]: batch }));
+      const res = await fetcher(url, { method: "POST", body, headers: await signed(sm, "sagemaker", url, body, "application/json", now()), signal: AbortSignal.timeout(30_000) });
+      if (!res.ok) throw new Error(`${sm.endpoint} answered ${res.status}`);
+      const data = ((await res.json()) as { data?: unknown }).data;
+      if (!Array.isArray(data) || data.length !== batch.length || !data.every(v => Array.isArray(v) && v.length === 512 && v.every(Number.isFinite))) throw new Error(`${sm.endpoint} answered out of shape`);
+      vectors.push(...data as number[][]);
+    }
+    return vectors;
+  };
+  return {
+    images: bytes => run("image", bytes.map(base64)),
+    text: queries => run("image_text", queries),
+  };
 }
 
 const BASETEN = /^https:\/\/model-([a-z0-9]+)\.api\.baseten\.co\/environments\/production\/(wake|sync\/health|sync\/.+)$/;

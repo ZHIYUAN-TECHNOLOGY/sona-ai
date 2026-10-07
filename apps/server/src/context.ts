@@ -8,7 +8,7 @@ import { basetenModels, basetenReranker } from "@sona-ai/api/baseten-models";
 import type { EncounterStore } from "@sona-ai/api/context";
 import type { Watches } from "@sona-ai/api/watches";
 import { workersEmbedder } from "@sona-ai/api/workers-models";
-import { awsOf, endpointsOf, hosted, sagemakerEmbedder } from "@sona-ai/api/sagemaker";
+import { awsOf, endpointsOf, hosted, sagemakerEmbedder, sagemakerImageEmbedder } from "@sona-ai/api/sagemaker";
 import { ingest, reindex, search, stubEmbedder, type Reranker } from "@sona-ai/retrieval/retrieval";
 
 import { ENV } from "./env.server";
@@ -40,6 +40,7 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     mail: mailOf(context.env as Env),
     announce: announcer(context.env as Env),
     library: libraryOf(db, context.env as Env, baseten && basetenReranker(baseten)),
+    imageEmbedder: imageEmbedderOf(context.env as Env),
     // Staging only: Sona Care's sign-in shows the seeded demo phone and its fixed code.
     demoSignIn: ENV.DEMO_SIGN_IN === "1",
     followUps: followUpAgents(context.env as Env),
@@ -62,6 +63,12 @@ export function libraryOf(db: ApiContext["db"], env: Env, reranker?: Reranker): 
     search: input => search(db, input, embedder, reranker),
     reindex: hospitalId => reindex(db, embedder, hospitalId),
   };
+}
+
+/** BiomedCLIP on the embedder's box, the same one as libraryOf's (embed=sona-embed); none without it, and xray.similar says so. */
+export function imageEmbedderOf(env: Env): ApiContext["imageEmbedder"] {
+  const aws = awsOf(env), box = endpointsOf(env.SAGEMAKER_ENDPOINTS ?? "").embed;
+  return aws && box ? sagemakerImageEmbedder({ ...aws, endpoint: box }) : undefined;
 }
 
 /** Sona's follow-up: each discharged visit's own check-in agent (./agents/check-in.ts), named by the visit. */

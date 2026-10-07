@@ -2,7 +2,11 @@
 # 57c266a740f537b4dc058e1b0cda161fd15afa75 (gated on Hugging Face: accepted terms needed), were copied to
 # s3://$BUCKET/embed/300m/ from a Hugging Face cache by hand:
 #   aws s3 sync ~/.cache/huggingface/hub/models--google--embeddinggemma-300m/snapshots/57c266a7*/ s3://$BUCKET/embed/300m/ --follow-symlinks
-# Build context: this folder (zipped to s3://$BUCKET/build/embed-src.zip, CodeBuild project sona-embed-image).
+# BiomedCLIP (microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224, open weights) sits under the same prefix at
+# s3://$BUCKET/embed/300m/biomedclip/ (open_clip_config.json, open_clip_pytorch_model.bin, and bert/ with the text
+# tower's config.json, vocab.txt and tokenizer_config.json from microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext),
+# so one model prefix lands it at /opt/ml/model/biomedclip/ beside EmbeddingGemma; the image's tag stays 300m.
+# Build context: this folder (zipped flat to s3://$BUCKET/build/embed-src.zip, CodeBuild project sona-embed-image).
 version: 0.2
 phases:
   build:
