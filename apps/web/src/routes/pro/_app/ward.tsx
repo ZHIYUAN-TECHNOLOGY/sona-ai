@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { BarChart, BarList } from "@/components/charts";
+import { BarChart } from "@/components/charts";
 import { DataTable, PersonCell, RowAction, TableToolbar, type Column } from "@/components/data-table";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
@@ -55,10 +55,6 @@ function Page() {
 
   const occupied = all.filter(b => b.name).length;
   const groups: Record<Tab, BedRow[]> = { all, blocked, unowned: noOwner, watch: all.filter(b => b.status === "watch"), free: all.filter(b => !b.name) };
-  // How many beds wait on each kind of discharge barrier.
-  const waits = new Map<string, number>();
-  for (const b of all) for (const x of b.blockers) waits.set(x.label, (waits.get(x.label) ?? 0) + 1);
-  const holding = [...waits].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
   const q = search.trim().toLowerCase();
   const rows = groups[tab].filter(b => !q || `${b.bed} ${b.name ?? ""} ${b.blockers.map(x => x.label).join(" ")}`.toLowerCase().includes(q));
   const bed = all.find(b => b.bed === picked) ?? all[0];
@@ -100,11 +96,6 @@ function Page() {
           <StatCard title="Unassigned" value={unowned} caption={unowned ? `Barrier${s(unowned)} on ${noOwner.length} bed${s(noOwner.length)}` : "Every barrier is assigned"} tone="urgent" onSelect={() => setTab("unowned")} selected={tab === "unowned"} />
           <StatCard title="Free" value={groups.free.length} unit="now" caption={forecast.data ? `${forecast.data.today.count} due for discharge today` : undefined} onSelect={() => setTab("free")} selected={tab === "free"} />
         </StatRow>
-        <div className="chart-row">
-          <Card title="Discharge barriers">
-            {holding.length ? <BarList label="Beds held by each discharge barrier" rows={holding} tone="amber" unit="beds" /> : <p className="ward-muted">Nothing is holding a bed.</p>}
-          </Card>
-        </div>
         </>
       ) : null}
       <WithRail rail={(
