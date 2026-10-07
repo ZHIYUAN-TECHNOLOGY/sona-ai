@@ -29,3 +29,9 @@
 .lib-pair { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem; gap: var(--space-2); }
 .lib-add textarea { min-height: 7rem; }
 .lib-add p { margin: 0; }
+
+/* A scan under review: each page beside the text read from it, stacked when the column is narrow. */
+.lib-scan { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.lib-scan li { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--space-2); align-items: start; }
+.lib-scan img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius-control); }
+.lib-unsure { color: var(--amber); font-size: var(--text-small); margin: var(--space-1) 0 0; }

@@ -23,3 +23,13 @@ export function splitPicked<T extends Picked>(files: readonly T[]): { pdf: T } |
 
 /** A title from a file's name, for when none is given. */
 export const titleOf = (name: string) => name.replace(/\.(pdf|jpe?g|png)$/i, "").trim();
+
+/** One page as `library.readScan` read it: the text to check, words the reader was unsure of, and the page it read (bare base64). */
+export type ScanPage = { text: string; unsure: string[]; image: string; contentType: PageType };
+export type ScanRead = { pages: ScanPage[]; model: string; source: "pdf" | "photo" };
+
+/** The checked text of each page for `library.addScan`: pages left empty are dropped, and nothing goes up when every page is empty. */
+export function scanPages(texts: readonly string[]): { pages: string[] } | { error: string } {
+  const pages = texts.map(t => t.trim()).filter(Boolean);
+  return pages.length ? { pages } : { error: "Every page is empty. Type the text of at least one page, or cancel." };
+}

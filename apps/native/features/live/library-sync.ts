@@ -3,13 +3,19 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { api, errorText, requestId, useLive } from ".";
 import { useLiveChanges } from "./channel";
-import { titleOf, type PageType } from "./picked";
+import type { PageType, ScanRead } from "./picked";
 
 export type LibraryDocument = Awaited<ReturnType<AppRouterClient["library"]["list"]>>[number];
 export type LibraryScope = "me" | "hospital";
 export type ArticlePreview = Awaited<ReturnType<AppRouterClient["library"]["previewArticle"]>>;
-/** `read: "scan"` when MedGemma read the pages (a scanned PDF or photos), so the doctor is asked to check the text. */
-export type Added = Awaited<ReturnType<AppRouterClient["library"]["add"]>> & { pages?: number; read?: "scan" };
+/** `pages`: how many checked pages a scan added. */
+export type Added = Awaited<ReturnType<AppRouterClient["library"]["add"]>> & { pages?: number };
+type Failure = { error: string; retryable: boolean; reason?: string };
+// TODO(merge): use api.library.readScan/addScan once the server lands
+const scanApi = api.library as unknown as {
+  readScan(input: { pdf: { dataBase64: string } } | { images: { dataBase64: string; contentType: PageType }[] }): Promise<ScanRead>;
+  addScan(input: { requestId: string; scope: LibraryScope; title: string; source: ScanRead["source"]; model: string; pages: string[] }): Promise<Added & { pages: number }>;
+};
 
 /** The doctor's library in live mode: their own sources and the hospital's shared ones. Re-read whenever the screen comes back into view (after the add sheet closes) or a colleague changes it. */
 export function useLiveLibrary() {
@@ -45,21 +51,28 @@ async function base64Of(uri: string) {
  */
 export function useAddSource() {
   const [id, setId] = useState(requestId);
-  const run = async (write: (requestId: string) => Promise<Added>): Promise<{ added: Added } | { error: string; retryable: boolean; reason?: string }> => {
-    try { const added = await write(id); setId(requestId()); return { added }; }
-    // A refusal about the source itself (patient details, a scan) fails the same way again; a dropped or busy server may not.
-    catch (e) {
-      const { code, data } = e as { code?: string; data?: { reason?: string } };
-      return { error: errorText(e), retryable: !["BAD_REQUEST", "NOT_FOUND", "CONFLICT", "FORBIDDEN"].includes(code ?? ""), reason: data?.reason };
-    }
+  // A refusal about the source itself (patient details, a scan) fails the same way again; a dropped or busy server may not.
+  const failure = (e: unknown): Failure => {
+    const { code, data } = e as { code?: string; data?: { reason?: string } };
+    return { error: errorText(e), retryable: !["BAD_REQUEST", "NOT_FOUND", "CONFLICT", "FORBIDDEN"].includes(code ?? ""), reason: data?.reason };
+  };
+  const run = async (write: (requestId: string) => Promise<Added>): Promise<{ added: Added } | Failure> => {
+    try { const added = await write(id); setId(requestId()); return { added }; } catch (e) { return failure(e); }
   };
   return {
-    pdf: (scope: LibraryScope, file: { uri: string; name: string }) => run(async requestId =>
-      api.library.addPdf({ requestId, scope, title: titleOf(file.name) || "Untitled PDF", dataBase64: await base64Of(file.uri) })),
-    /** Photos of printed pages, in the order picked, as one source titled after the first. */
-    images: (scope: LibraryScope, files: { file: { uri: string; name: string }; contentType: PageType }[]) => run(async requestId =>
-      api.library.addImages({ requestId, scope, title: titleOf(files[0]?.file.name ?? "") || "Untitled pages",
-        images: await Promise.all(files.map(async ({ file, contentType }) => ({ dataBase64: await base64Of(file.uri), contentType }))) })),
+    /** A text PDF. A scan is refused with `reason: "scan"`, and is then read for review with `read`. */
+    pdf: (scope: LibraryScope, title: string, uri: string) => run(async requestId =>
+      api.library.addPdf({ requestId, scope, title, dataBase64: await base64Of(uri) })),
+    /** A scanned PDF or photos of printed pages (in the order picked), read by MedGemma for the doctor to check. Saves nothing. */
+    read: async (source: { pdf: string } | { images: { file: { uri: string }; contentType: PageType }[] }): Promise<{ read: ScanRead } | Failure> => {
+      try {
+        return { read: await scanApi.readScan("pdf" in source ? { pdf: { dataBase64: await base64Of(source.pdf) } }
+          : { images: await Promise.all(source.images.map(async ({ file, contentType }) => ({ dataBase64: await base64Of(file.uri), contentType }))) }) };
+      } catch (e) { return failure(e); }
+    },
+    /** The text the doctor checked, page by page, under the same request ID as the upload. */
+    scan: (scope: LibraryScope, title: string, read: ScanRead, pages: string[]) => run(requestId =>
+      scanApi.addScan({ requestId, scope, title, source: read.source, model: read.model, pages })),
     text: (scope: LibraryScope, title: string, text: string) => run(requestId =>
       api.library.add({ requestId, scope, title, text, source: scope === "me" ? "Added by you" : "Added by your hospital", year: new Date().getFullYear() })),
     article: (scope: LibraryScope, pmid: string) => run(requestId => api.library.importArticle({ requestId, scope, pmid })),
