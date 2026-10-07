@@ -176,9 +176,12 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 .detail-list > div:first-child { border-top: 0; }
 .detail-list dt { font-size: var(--text-small); color: var(--muted); }
 .detail-list dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.select { height: var(--field-h); max-width: 100%; padding: 0 var(--space-4); border: 1px solid var(--line-field); border-radius: var(--radius-pill); background: var(--fill-field); color: var(--ink); font: inherit; cursor: pointer; }
+/* Our own chevron: the browser's sits on the edge of a pill; this one keeps the field's side gutter (space-4), like the text. */
+.select { height: var(--field-h); max-width: 100%; padding: 0 calc(var(--space-4) + 20px) 0 var(--space-4); border: 1px solid var(--line-field); border-radius: var(--radius-pill); background: var(--fill-field); color: var(--ink); font: inherit; cursor: pointer; appearance: none; }
+/* Its own rule, so the glass and focus backgrounds below (shorthands) keep the chevron. */
+.select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%2359616B' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right var(--space-4) center; }
 .select:hover { border-color: var(--placeholder); }
-.select:focus-visible { outline: 0; background: var(--surface); border-color: var(--blue); }
+.select:focus-visible { outline: 0; background-color: var(--surface); border-color: var(--blue); }
 .select:disabled { cursor: default; opacity: 0.5; }
 
 /* Sona Pro surfaces are content glass over the canvas's colour fields (tokens.css: --glass-surface, --shadow-card). */
@@ -240,6 +243,8 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 :is(.pro, .care) :is(.card:not([data-variant]), .card[data-variant="sheet"], .patient-strip, .stat-row, .table-wrap) { backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }
 :is(.pro, .care) .table-wrap { background: var(--glass-sheet); box-shadow: var(--shadow-card); }
 :is(.pro, .care) :is(.btn-secondary, .icon-btn:not(.icon-btn-ink, .icon-btn-quiet), .search-field, .select) { background: var(--glass-float); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-rim), var(--edge); border-color: transparent; }
+/* The chevron over the glass (the rule above is a shorthand, which drops it). */
+:is(.pro, .care) .select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%2359616B' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"), var(--glass-float); background-repeat: no-repeat; background-position: right var(--space-4) center, center; }
 @media (prefers-reduced-transparency: reduce) { :is(.pro, .care) :is(.card, .patient-strip, .stat-row, .table-wrap, .btn-secondary, .icon-btn, .search-field, .select) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 /* A list card's empty line sits on the title's edge, like its rows; an arc at 0% draws nothing, not a dot. */
 :is(.pro, .care) .list .empty { padding-inline: var(--space-3); }
