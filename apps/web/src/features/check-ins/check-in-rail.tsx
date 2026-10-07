@@ -94,7 +94,7 @@ export function CheckInRail({ row, role }: { row: Row; role: Role }) {
 
       <p className="check-ins-line">
         <Button to="/pro/patients/$patientId" params={{ patientId: row.patientId }} icon="users">Open patient</Button>
-        <Button to="/pro/messages">Open messages</Button>
+        <Button to="/pro/messages" search={{ patient: row.patientId }}>Open messages</Button>
       </p>
     </RightRail>
   );

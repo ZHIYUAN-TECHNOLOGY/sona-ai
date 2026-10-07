@@ -7,6 +7,7 @@ import { EmptyState, PageHeader } from "@/components/page";
 import { Avatar, Button, Card, Chip, Field, Select, Signal, Skeleton, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { orpc } from "@/lib/orpc";
+import { Marked, MarkKey } from "@/components/marked";
 import "@/styles/pages/handover.css";
 
 type State = "all" | "watch" | "stable";
@@ -40,6 +41,13 @@ function Page() {
   const toggle = (id: string) => setHeld(prev => flip(prev, id));
   // Watch rows start open and stable rows closed; this holds the ones the reader flipped.
   const [flipped, setFlipped] = useState<ReadonlySet<string>>(new Set());
+  const isOpen = (c: { id: string; priority: string }) => (c.priority === "watch") !== flipped.has(c.id);
+  // The toolbar acts on the rows in view: tick or untick them all, open or fold them all.
+  const pickable = shown.filter(c => !done.has(c.id));
+  const picked = pickable.filter(c => !held.has(c.id)).length;
+  const pickAll = (on: boolean) => setHeld(prev => { const next = new Set(prev); for (const c of pickable) { if (on) next.delete(c.id); else next.add(c.id); } return next; });
+  const allOpen = shown.length > 0 && shown.every(isOpen);
+  const openAll = (on: boolean) => setFlipped(prev => { const next = new Set(prev); for (const c of shown) { if ((c.priority === "watch") === on) next.delete(c.id); else next.add(c.id); } return next; });
 
   return (
     <>
@@ -105,6 +113,22 @@ function Page() {
               { id: "stable", label: "Stable", count: all.length - watch.length },
             ]} />
           </div>
+          {shown.length > 0 && (
+            <div className="ho-bulk" role="toolbar" aria-label="Rows in view">
+              {mayAccept && (
+                <label className="ho-bulk-pick">
+                  <input type="checkbox" className="ho-check" checked={pickable.length > 0 && picked === pickable.length} disabled={pickable.length === 0}
+                    ref={el => { if (el) el.indeterminate = picked > 0 && picked < pickable.length; }} onChange={e => pickAll(e.target.checked)} />
+                  <span>{picked} of {pickable.length} selected</span>
+                </label>
+              )}
+              {mayAccept && watch.length > 0 && watch.length < all.length && (
+                <Button size="sm" onClick={() => setHeld(new Set(all.filter(c => c.priority !== "watch").map(c => c.id)))}>Only those to watch</Button>
+              )}
+              <Button size="sm" onClick={() => openAll(!allOpen)}>{allOpen ? "Fold all" : "Open all"}</Button>
+              <MarkKey />
+            </div>
+          )}
           {cards.isPending ? (
             <div className="ho-loading" aria-busy="true" aria-label="Loading the handover">
               {[0, 1, 2].map(i => <Skeleton key={i} height={96} />)}
@@ -130,12 +154,12 @@ function Page() {
                       : c.priority === "watch" ? <Chip tone="soon">Watch</Chip>
                       : held.has(c.id) ? <Status tone="soon">Held back</Status> : <Status tone="done">Stable</Status>}
                   </div>
-                  <details className="ho-more" open={(c.priority === "watch") !== flipped.has(c.id)}>
-                    <summary onClick={e => { e.preventDefault(); setFlipped(prev => flip(prev, c.id)); }}>{c.situation}</summary>
+                  <details className="ho-more" open={isOpen(c)}>
+                    <summary onClick={e => { e.preventDefault(); setFlipped(prev => flip(prev, c.id)); }}><span><Marked text={c.situation} /></span></summary>
                   <dl className="ho-sbar">
-                    <dt>Background</dt><dd>{c.background}</dd>
-                    <dt>Assessment</dt><dd>{c.assessment}</dd>
-                    {c.recommendation.length > 0 && <><dt>To do</dt><dd><ul>{c.recommendation.map(r => <li key={r}>{r}</li>)}</ul></dd></>}
+                    <dt>Background</dt><dd><Marked text={c.background} /></dd>
+                    <dt>Assessment</dt><dd><Marked text={c.assessment} /></dd>
+                    {c.recommendation.length > 0 && <><dt>To do</dt><dd><ul>{c.recommendation.map(r => <li key={r}><Marked text={r} /></li>)}</ul></dd></>}
                   </dl>
                   {c.sources.length > 0 && <p className="ho-muted">You decide · {c.sources.length} source{c.sources.length === 1 ? "" : "s"}</p>}
                   </details>

@@ -343,6 +343,18 @@ Empty `points` draws the chart's own empty state. Charts draw in when their data
 - Page-only styles go in `src/styles/pages/<page>.css`, using tokens.
 - Do not edit: anything in `src/components/`, any `src/styles/*.css` outside `src/styles/pages/`, or `src/nav.ts`. If a shared piece is missing something, say so in your report.
 
+### Surfaces and page order (glance to decision)
+
+Every page reads top to bottom in one order: header (where things stand, in one line) → the Sona insight that leads the page, as a band (`<InsightCard band … />`) → `StatRow` (one strip of figures, not separate cards) → `WithRail` (the working table or record on the left, context for the selected thing on the right). No free-form grids of cards.
+
+- `Card` has three looks by job: default sheet (working content), `variant="flat"` (a labelled group on the canvas, for reference detail that needs no box) and `variant="well"` (a recessed area to fill in). Do not box everything: if proximity or a hairline does the job, use `flat`.
+- `InsightCard` is Sona's surface and the only place liquid highlight and halftone dither meet; one per view. Use `band` for the insight that leads a page; without it the card is sized for the rail (an insight about the selected row).
+- `StatRow` draws one glass strip with a cell per `StatCard`: label, figure, caption, the flag beside the figure. Keep it to figures a clinician compares at a glance (2 to 5).
+- An `EmptyState` inside a `Card` is a single line with its icon, not a second card. Leave out a card that would only say "nothing yet" unless the absence itself matters.
+- Clinical text (a complaint, a history, an assessment, a to-do) goes through `<Marked text={…} />` from `@/components/marked`: it colours terms by kind with the phone apps' own rules (must not miss red, medicine violet, diagnosis teal, symptom blue, unconfirmed amber). Show `<MarkKey />` once on a page that uses it.
+- A table in a `Card` runs to the card's edges; cells carry their own padding. Do not add padding or negative margins around a `DataTable`.
+- The page's atmosphere (blue wash, halftone corner) and the glass sidebar come from the frame. Do not add gradients, glows or dither in page CSS.
+
 ### Shared additions (design-system fixes)
 
 - `DataTable`: the table scrolls sideways inside its card (`.table-scroll`) and is never wider than it. `PersonCell` keeps name and caption on one line each with an ellipsis (full text in `title`) and sizes to its content between 150px and 220px. Header labels never wrap. Inside a `Card` the table drops its own padding, so the toolbar starts where any card content starts. The action column is as narrow as its content.

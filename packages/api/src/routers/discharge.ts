@@ -40,7 +40,7 @@ async function visitPlan(db: Context["db"], encounter: EncounterSnapshot) {
   const { patient, admission } = row!;
   const [letters, chart, drafts, pending] = await Promise.all([
     admission ? db.select().from(guaranteeLetters).where(eq(guaranteeLetters.admissionId, admission.id)) : [],
-    db.select().from(observations).where(eq(observations.patientId, patient.id)).orderBy(asc(observations.observedAt)),
+    db.select().from(observations).where(and(eq(observations.patientId, patient.id), eq(observations.source, "clinical"))).orderBy(asc(observations.observedAt)),
     db.select({ id: provenance.id }).from(provenance).where(modelDraft(encounterId)).limit(1),
     db.select({ id: labResults.id, test: labResults.test }).from(labResults).where(and(eq(labResults.patientId, patient.id), eq(labResults.flag, "pending"))),
   ]);

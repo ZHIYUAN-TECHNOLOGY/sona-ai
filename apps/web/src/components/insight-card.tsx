@@ -32,11 +32,13 @@ type Props = {
   title?: string;
   /** What the insight rests on, one row each. */
   evidence?: { icon?: IconName; text: ReactNode }[];
+  /** Lays the card across the page: what stands, what it rests on, what to do. For the one insight that leads a page. */
+  band?: boolean;
 };
 
-export function InsightCard({ lead, next, sources, tone = "info", children, label, meta, title, evidence }: Props) {
+export function InsightCard({ lead, next, sources, tone = "info", children, label, meta, title, evidence, band }: Props) {
   return (
-    <article className="insight glass halftone" data-tone={tone}>
+    <article className="insight" data-tone={tone} data-band={band || undefined}>
       {label || meta ? (
         <header className="insight-head">
           {label ? <span className="insight-label">{label}</span> : null}

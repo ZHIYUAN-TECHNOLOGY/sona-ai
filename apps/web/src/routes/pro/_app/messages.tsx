@@ -13,7 +13,11 @@ import { orpc } from "@/lib/orpc";
 
 import "@/styles/pages/messages.css";
 
-export const Route = createFileRoute("/pro/_app/messages")({ component: Page });
+export const Route = createFileRoute("/pro/_app/messages")({
+  // `patient` opens that patient's thread, so "Message" from a record or a check-in lands on the right conversation.
+  validateSearch: (search: Record<string, unknown>): { patient?: string } => typeof search.patient === "string" && search.patient ? { patient: search.patient } : {},
+  component: Page,
+});
 
 /** The page's one Sona panel: the drafted reply with why and what it stands on, sent only by the clinician who has read it. */
 function ReplyPanel({ patientId, name, waiting }: { patientId: string; name: string; waiting: boolean }) {
@@ -51,6 +55,8 @@ type Filter = "waiting" | "all";
 function Page() {
   const { me } = Route.useRouteContext();
   const inbox = useQuery(orpc.messages.inbox.queryOptions());
+  // Read before any early return: hooks run in the same order on every render.
+  const { patient } = Route.useSearch();
   const [picked, setPicked] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
@@ -68,7 +74,7 @@ function Page() {
   const oldest = waiting.reduce<(typeof waiting)[number] | undefined>((a, t) => (!a || new Date(t.waitingSince!) < new Date(a.waitingSince!) ? t : a), undefined);
   const needle = q.trim().toLowerCase();
   const visible = (filter === "waiting" ? waiting : threads).filter(t => !needle || `${t.name} ${t.lastText ?? ""}`.toLowerCase().includes(needle));
-  const selected = visible.find(t => t.patientId === picked) ?? visible[0];
+  const selected = visible.find(t => t.patientId === (picked ?? patient)) ?? visible[0];
   const urgent = waiting.filter(t => t.label === "urgent").length;
   const lead = (
     <>

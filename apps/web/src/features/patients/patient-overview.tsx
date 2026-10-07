@@ -7,6 +7,7 @@ import { Fragment, type ReactNode, useState } from "react";
 import { LineChart } from "@/components/charts";
 import type { IconName } from "@/components/icon";
 import { InsightCard } from "@/components/insight-card";
+import { Marked } from "@/components/marked";
 import { EmptyState, PageHeader, PatientStrip } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
@@ -96,7 +97,7 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
           canRead ? (
             <>
               {/* With doses behind, the summary's suggested step is the Message button. */}
-              {behind ? null : <Button to="/pro/messages" icon="message" variant="secondary">Message</Button>}
+              {behind ? null : <Button to="/pro/messages" search={{ patient: patient.id }} icon="message" variant="secondary">Message</Button>}
               {/* The visit page reads encounterId from the URL itself. */}
               {visit ? <Button {...visit} variant="primary" icon="arrow-right">Open the visit</Button> : null}
             </>
@@ -121,6 +122,19 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
         </EmptyState>
       ) : tab === "overview" ? (
         <>
+            {/* The header already opens the visit: without doses behind, the suggested step is text only. */}
+            <div className={behind ? "po-wrap" : "po-wrap po-step-only"}>
+            <InsightCard
+              band
+              label="Pre-visit summary"
+              title={behind ? `${behind} ${behind === 1 ? "dose needs" : "doses need"} a word` : `Before you see ${patient.name.split(" ")[0]}`}
+              lead={!hasVisit ? "No visit on record, so there is no briefing yet." : briefing.isPending ? "Sona is reading the record…" : briefing.error ? `No briefing: ${briefing.error.message}` : (briefing.data.lines[0] ?? "The briefing came back empty.")}
+              evidence={evidence}
+              sources={sources || undefined}
+              next={behind ? { label: "Message", step: "Ask about the doses that are behind.", to: "/pro/messages", search: { patient: patient.id } } : visit ? { label: "Open the visit", step: "Read the record before the visit.", ...visit } : undefined}
+              meta={briefing.data?.source === "fixture" ? <Chip tone="soon">Sample answer</Chip> : undefined}
+            />
+            </div>
           {top.length || a?.due || patient.vitals?.length ? (
             <StatRow>
               {top.map((s) => {
@@ -131,28 +145,15 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
               {patient.vitals?.slice(0, Math.max(0, 3 - top.length)).map((v) => <StatCard key={v.label} title={v.label} value={v.value} caption="Latest reading" />)}
             </StatRow>
           ) : null}
-          <WithRail
-            rail={
-              <RightRail label="Summary and medicines">
-                <div className={behind ? "po-wrap" : "po-wrap po-step-only"}>
-                <InsightCard
-                  label="Pre-visit summary"
-                  title={behind ? `${behind} ${behind === 1 ? "dose needs" : "doses need"} a word` : "Before the visit"}
-                  lead={!hasVisit ? "No visit on record, so there is no briefing yet." : briefing.isPending ? "Sona is reading the record…" : briefing.error ? `No briefing: ${briefing.error.message}` : (briefing.data.lines[0] ?? "The briefing came back empty.")}
-                  evidence={evidence}
-                  sources={sources || undefined}
-                  next={behind ? { label: "Message", step: "Ask about the doses that are behind.", to: "/pro/messages" } : visit ? { label: "Open the visit", step: sbar?.r ?? "Read the record before the visit.", ...visit } : undefined}
-                  meta={briefing.data?.source === "fixture" ? <Chip tone="soon">Sample answer</Chip> : undefined}
-                />
-                </div>
-                <Medicines items={patient.medicines?.slice(0, 4)} more={() => setTab("medicines")} total={patient.medicines?.length ?? 0} />
-                <TakeHome patient={patient} />
-              </RightRail>
-            }
-          >
-            <Card title={main ? main.name : "Trend"}>
-              {main ? (
-                <>
+          <WithRail rail={
+            <RightRail label="Record at a glance">
+              <PatientResults patientId={patient.id} limit={3} />
+              <Medicines items={patient.medicines?.slice(0, 4)} more={() => setTab("medicines")} total={patient.medicines?.length ?? 0} />
+              <TakeHome patient={patient} />
+            </RightRail>
+          }>
+            {main ? (
+              <Card title={main.name}>
                   <p className="po-caption">
                     {latestOf(main).value}{main.unit ? ` ${main.unit}` : ""} · {direction(main)} · {when(latestOf(main).at)}
                   </p>
@@ -163,22 +164,16 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
                       {charted.map((s) => <Button key={`${s.lab}${s.name}`} size="sm" variant={s === main ? "secondary" : "quiet"} aria-pressed={s === main} onClick={() => setPicked(s.name)}>{s.name}</Button>)}
                     </div>
                   ) : null}
-                </>
-              ) : (
-                <p className="pt-muted">
-                  {trends.error ? `Could not be loaded: ${trends.error.message}` : trends.isPending ? "Loading the trend…" : "No trend yet. A chart appears here once a measure has two values in the last 12 months."}
-                </p>
-              )}
-            </Card>
-            <PatientResults patientId={patient.id} limit={3} />
-            <Card title="History">
-              <dl className="po-history">
-                <div><dt>Presenting complaint</dt><dd>{patient.complaint || "Not recorded."}</dd></div>
-                <div><dt>Medical history</dt><dd>{patient.history?.length ? patient.history.join(", ") : "None recorded."}</dd></div>
-                <div><dt>Family history</dt><dd>{patient.family || "None recorded."}</dd></div>
-                <div><dt>Social history</dt><dd>{patient.social || "None recorded."}</dd></div>
-              </dl>
-            </Card>
+              </Card>
+            ) : null}
+          <Card title="History">
+            <dl className="po-history">
+              <div><dt>Presenting complaint</dt><dd><Marked text={patient.complaint || "Not recorded."} /></dd></div>
+              <div><dt>Medical history</dt><dd><Marked text={patient.history?.length ? patient.history.join(", ") : "None recorded."} /></dd></div>
+              <div><dt>Family history</dt><dd><Marked text={patient.family || "None recorded."} /></dd></div>
+              <div><dt>Social history</dt><dd><Marked text={patient.social || "None recorded."} /></dd></div>
+            </dl>
+          </Card>
           </WithRail>
         </>
       ) : tab === "timeline" ? (
