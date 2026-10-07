@@ -35,10 +35,11 @@ async function askCare(question: string): Promise<ReactNode> {
   );
 }
 
-// ponytail: the ask spec's plain text only (lead, rows, review). Its actions are op strings the page owns;
-// a page that wants them registers its own handler with useSonaAsk.
+// ponytail: the ask spec's plain text only (lead, rows, review). Its actions are op strings the page owns, so rows show
+// as plain rows; a page that wants them registers its own handler with useSonaAsk. The server reads the hospital's
+// Today, Ward and Tasks itself (scope "web") and always answers, by rule when the model is off.
 async function askPro(question: string): Promise<ReactNode> {
-  const res = (await client.ask.free({ scope: "web", question, context: { lines: [], rows: [] } })) as {
+  const res = (await client.ask.free({ scope: "web", question })) as {
     waking?: number;
     spec?: { root: string; elements: Record<string, { type: string; props: Record<string, unknown>; children?: string[] }> };
   };
@@ -94,13 +95,22 @@ export function useSonaAsk(handler?: SonaHandler): (question: string) => void {
   return sona.ask;
 }
 
-/** The thread, in the page: each question with its answer, "thinking" or what went wrong. Nothing when empty. */
+/** Whether a question is still waiting on its answer, for the bar to say so where the click was. */
+export const useSonaThinking = () => use(ThreadContext).some(turn => turn.state === "pending");
+
+/**
+ * The thread, in the page: each question with its answer, "thinking" or what went wrong. Nothing when empty. The bar is
+ * pinned under a page that scrolls, so the newest turn is brought into view when asked and again when answered.
+ */
 export function SonaAnswers() {
   const turns = use(ThreadContext);
+  const newest = useRef<HTMLElement>(null);
+  const last = turns.at(-1);
+  useEffect(() => { newest.current?.scrollIntoView({ block: "nearest" }); }, [last?.id, last?.state]);
   return (
     <section className="sona-thread" aria-label="Sona's answers" aria-live="polite">
       {turns.map(turn => (
-        <article key={turn.id} className="sona-turn" data-state={turn.state}>
+        <article key={turn.id} ref={turn === last ? newest : undefined} className="sona-turn" data-state={turn.state}>
           <h2 className="sona-turn-q">{turn.question}</h2>
           <div className="sona-turn-a" role={turn.state === "error" ? "alert" : undefined}>
             {turn.state === "pending" ? <p className="sona-turn-note">Sona is thinking…</p> : turn.answer}
