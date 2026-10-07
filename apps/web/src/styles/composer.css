@@ -38,9 +38,10 @@
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 :is(.sona-panel-head, .sona-panel-foot, .frame-main > .ai-composer-dock) { position: relative; z-index: 2; }
-/* The glow: dots rising from the box's bottom edge, above it while the voice is loud, faded at both ends. */
+/* The glow: dots rising from the box's bottom edge, inside the box (clipped to its rounded shape, never spilling over
+   the conversation), faded at both ends and soft enough that the words stay readable over it. */
 .voice-glow {
-  position: absolute; left: 0; bottom: 0; z-index: -1; width: 100%; height: calc(100% + 88px); opacity: 0.85; pointer-events: none;
+  position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; border-radius: inherit; opacity: 0.6; pointer-events: none;
   mask: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); -webkit-mask: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
 }
 /* Without WebGPU or WebGL 2: still dots in a soft mound, shown while listening. */
