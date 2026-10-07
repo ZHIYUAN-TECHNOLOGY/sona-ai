@@ -1,4 +1,4 @@
-/* The page frame every page sits in: sidebar, main column with an optional right rail, Sona bar at the bottom. */
+/* The page frame every page sits in: sidebar, main column with an optional right rail, Sona on the right. */
 .frame { display: grid; grid-template-columns: 240px minmax(0, 1fr); height: 100vh; }
 .frame-side { display: flex; flex-direction: column; gap: var(--space-5); padding: var(--space-5) var(--space-3); border-right: 1px solid var(--line); overflow-y: auto; }
 .frame-brand { padding: 0 var(--space-3); font-size: var(--text-heading); font-weight: 600; letter-spacing: -0.3px; }
@@ -11,9 +11,6 @@
 .frame-main { position: relative; display: flex; flex-direction: column; min-width: 0; height: 100vh; }
 .frame-scroll { flex: 1; overflow-y: auto; padding: var(--space-5) var(--space-6) 120px; }
 .frame-page { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-5); }
-/* The page fades out under the bar, so rows never show through the glass. */
-.frame-bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; padding: var(--space-6) var(--space-6) var(--space-4); background: linear-gradient(to top, var(--canvas) 60%, transparent); pointer-events: none; }
-.frame-bar > * { pointer-events: auto; }
 
 .page-header h1 { margin: 0; font-size: var(--text-display); line-height: 35px; letter-spacing: -0.6px; font-weight: 600; }
 .page-header p { margin: var(--space-1) 0 0; color: var(--muted); }
@@ -57,7 +54,7 @@
 :is(.pro, .care) .frame-out:disabled { opacity: 0.4; cursor: default; }
 :is(.pro, .care) .frame-out-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 :is(.pro, .care) .frame-scroll { padding: var(--space-5) var(--space-5) var(--sona-bar-clearance); }
-/* The page takes the whole width beside the sidebar, and the Sona bar centres over it. */
+/* The page takes the whole width between the sidebar and Sona. */
 :is(.pro, .care) .frame-page { max-width: none; margin: 0; gap: var(--gap-card); }
 :is(.pro, .care) .page-header h1 { font-size: var(--text-page); line-height: 1.15; letter-spacing: var(--track-display); font-weight: 500; }
 @media (max-height: 800px) { :is(.pro, .care) .frame-link { min-height: 30px; } :is(.pro, .care) .frame-groups { gap: var(--space-2); } }
@@ -96,6 +93,12 @@
 }
 @media (max-width: 1100px) and (max-height: 800px) { :is(.pro, .care) .frame-link { min-height: 30px; } }
 @media (max-width: 860px) { :is(.pro, .care) .frame-scroll { padding-inline: var(--space-4); } }
+/* Sona docked on the right (sona-panel.css): a third column while the panel is open. Closed, the page keeps its width
+   and leaves room at the bottom for the orb; full screen, the panel takes the page's column. */
+:is(.pro, .care).frame[data-sona="open"] { grid-template-columns: var(--side-width) minmax(0, 1fr) var(--sona-width); }
+:is(.pro, .care).frame[data-sona="closed"] { --sona-bar-clearance: 96px; }
+@media (max-width: 1100px) { :is(.pro, .care).frame[data-sona="open"] { grid-template-columns: var(--rail-width) minmax(0, 1fr) var(--sona-width); } }
+@media (max-width: 860px) { :is(.pro, .care).frame[data-sona] { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { :is(.pro, .care) .frame-link { transition: none; } :is(.pro, .care) .frame-link:active { transform: none; } }
 /* The page and the sidebar scroll without a visible scrollbar (wheel, trackpad and keys still work). */
 .frame-scroll, .frame-groups { scrollbar-width: none; }

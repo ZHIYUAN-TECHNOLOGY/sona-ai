@@ -30,6 +30,8 @@ const PATHS = {
   "chevron-down": "M6 9l6 6 6-6",
   check: "M5 12.5l4.5 4.5L19 7",
   x: "M6 6l12 12M18 6L6 18",
+  expand: "M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7",
+  collapse: "M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7",
   mic: "M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3M6 11a6 6 0 0 0 12 0M12 17v4",
   send: "M12 19V5M6 11l6-6 6 6",
   filter: "M4 5h16l-6 7.5V19l-4-2v-4.5z",

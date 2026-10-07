@@ -1,29 +1,32 @@
 import type { Reference } from "@sona-ai/domain/evidence";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { createContext, isValidElement, type KeyboardEvent, type ReactNode, type RefObject, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, isValidElement, type ReactNode, type RefObject, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Conversation, Notice, Response, RuleAnswer, Shimmer, Sources, Steps, Suggestions, Turn as Asked } from "@/components/ai";
-import { plural } from "@/components/ai/summary";
-import { Icon } from "@/components/icon";
+import { Conversation, Notice, Response, RuleAnswer, Sources, Steps, Suggestions, Turn as Asked } from "@/components/ai";
 import { Button } from "@/components/primitives";
 import { FilmCard } from "@/features/evidence/film-card";
 import { answerFilm, sampleLabel } from "@/features/evidence/thread";
 
 import { client } from "./orpc";
 import { type FreeAnswer, phaseOf, rowPatient, rulesAnswer, type SonaAnswer } from "./sona-answer";
+import { PANEL_KEY, type PanelState, parsePanel } from "./sona-panel";
 
 export type { SonaAnswer } from "./sona-answer";
 
 type App = "pro" | "care";
 /**
- * A page's own answer to a question from the Sona bar: a typed answer (`SonaAnswer`), plain text, or the page's own JSX.
+ * A page's own answer to a question from the Sona panel: a typed answer (`SonaAnswer`), plain text, or the page's own JSX.
  * `update` shows the answer so far while it is still coming (a streamed answer's steps). Throw to show an error.
  */
 export type SonaHandler = (question: string, update: (answer: SonaAnswer) => void) => Promise<SonaAnswer | ReactNode>;
 type Turn = { id: number; question: string; state: "pending" | "done" | "error"; answer?: SonaAnswer; error?: string };
 
-const AskContext = createContext<{ ask: (question: string) => void; handler: RefObject<SonaHandler | null>; setOpen: (open: boolean) => void } | null>(null);
-const ThreadContext = createContext<{ turns: Turn[]; open: boolean }>({ turns: [], open: true });
+type Ask = { ask: (question: string) => void; handler: RefObject<SonaHandler | null>; setPanel: (panel: PanelState) => void; setContext: (label?: string) => void };
+type Thread = { turns: Turn[]; panel: PanelState; /** An answer arrived while the panel was closed. */ unseen: boolean; /** What the page said it is about (`useSonaContext`). */ context?: string };
+const AskContext = createContext<Ask | null>(null);
+const ThreadContext = createContext<Thread>({ turns: [], panel: "open", unseen: false });
+
+const storedPanel = (): PanelState => { try { return parsePanel(localStorage.getItem(PANEL_KEY)); } catch { return "open"; } };
 
 /**
  * What went wrong, in plain words. A server refusal written for people (it carries a `data.code`) and our own
@@ -45,7 +48,7 @@ async function askCare(question: string): Promise<SonaAnswer> {
   return { kind: "text", text, ...(res.sources?.length ? { note: `From: ${res.sources.map(source => source.title).join(", ")}` } : {}) };
 }
 
-/** The Sona bar's default in Sona Pro: the server reads the hospital's Today, Ward and Tasks itself (scope "web") and answers, by rule when the model is off. */
+/** The Sona panel's default in Sona Pro: the server reads the hospital's Today, Ward and Tasks itself (scope "web") and answers, by rule when the model is off. */
 export async function askPro(question: string): Promise<SonaAnswer> {
   const res = (await client.ask.free({ scope: "web", question })) as FreeAnswer;
   const answer = rulesAnswer(res);
@@ -55,7 +58,11 @@ export async function askPro(question: string): Promise<SonaAnswer> {
 
 export function SonaProvider({ app, children }: { app: App; children: ReactNode }) {
   const [turns, setTurns] = useState<Turn[]>([]);
-  const [open, setOpen] = useState(true);
+  // The panel's state (open, closed to the orb, full screen) is the reader's: kept per browser and across pages.
+  const [panel, setPanelState] = useState(storedPanel);
+  const [unseen, setUnseen] = useState(false);
+  const [context, setContext] = useState<string>();
+  const closed = useRef(panel === "closed");
   const handler = useRef<SonaHandler | null>(null);
   const page = useRef(0);
   const asked = useRef(0);
@@ -66,26 +73,34 @@ export function SonaProvider({ app, children }: { app: App; children: ReactNode 
   if (shown !== path) { setShown(path); setTurns([]); }
   useEffect(() => { page.current++; }, [path]);
 
+  const setPanel = useCallback((next: PanelState) => {
+    closed.current = next === "closed";
+    setPanelState(next);
+    if (next !== "closed") setUnseen(false);
+    try { localStorage.setItem(PANEL_KEY, next); } catch { /* storage blocked: the choice lasts this visit */ }
+  }, []);
+
   const ask = useCallback((question: string) => {
     const id = ++asked.current, from = page.current;
     const settle = (turn: Partial<Turn>) => { if (from === page.current) setTurns(all => all.map(t => (t.id === id ? { ...t, ...turn } : t))); };
+    // A settled answer the reader cannot see (the panel is closed) puts a badge on the orb.
+    const end = (turn: Partial<Turn>) => { settle(turn); if (from === page.current && closed.current) setUnseen(true); };
     // Asking again replaces a question that failed.
     setTurns(all => [...all.filter(t => t.state !== "error"), { id, question, state: "pending" }]);
-    setOpen(true);
     (handler.current ?? (app === "care" ? askCare : askPro))(question, answer => settle({ answer })).then(
-      answer => settle({ state: "done", answer: asAnswer(answer) }),
-      e => settle({ state: "error", error: plain(e) }),
+      answer => end({ state: "done", answer: asAnswer(answer) }),
+      e => end({ state: "error", error: plain(e) }),
     );
   }, [app]);
 
-  const value = useMemo(() => ({ ask, handler, setOpen }), [ask]);
-  const thread = useMemo(() => ({ turns, open }), [turns, open]);
+  const value = useMemo(() => ({ ask, handler, setPanel, setContext }), [ask, setPanel]);
+  const thread = useMemo(() => ({ turns, panel, unseen, context }), [turns, panel, unseen, context]);
   return <AskContext value={value}><ThreadContext value={thread}>{children}</ThreadContext></AskContext>;
 }
 
 /**
- * In the Sona bar: `const ask = useSonaAsk()`. In a page: `useSonaAsk(handler)` makes the page answer what is
- * sent from the bar while it is mounted; without one the app's default answers (care.ask, ask.free).
+ * In the Sona panel: `const ask = useSonaAsk()`. In a page: `useSonaAsk(handler)` makes the page answer what is
+ * sent from the panel while it is mounted; without one the app's default answers (care.ask, ask.free).
  */
 export function useSonaAsk(handler?: SonaHandler): (question: string) => void {
   const sona = use(AskContext);
@@ -99,11 +114,18 @@ export function useSonaAsk(handler?: SonaHandler): (question: string) => void {
   return sona.ask;
 }
 
-/** For the bar: whether a question is still waiting on its answer, and how to fold the answer panel away (Escape). */
-export function useSonaPanel() {
-  const { turns } = use(ThreadContext);
-  const { setOpen } = use(AskContext)!;
-  return { thinking: turns.some(turn => turn.state === "pending"), collapse: () => setOpen(false) };
+/** For the Sona panel and the frame: the turns, the panel's state and how to change it, what the page is about, and `ask`. */
+export function useSona() {
+  return { ...use(ThreadContext), ...use(AskContext)! };
+}
+
+/** On a page about one thing: names it in the Sona panel's header ("X-ray · Amelia Tan") while the page is mounted. */
+export function useSonaContext(label: string | undefined) {
+  const { setContext } = use(AskContext)!;
+  useEffect(() => {
+    setContext(label);
+    return () => setContext(undefined);
+  }, [label, setContext]);
 }
 
 const paragraphs = (text: string) => text.split(/\n{2,}/).map((line, i) => <p key={i}>{line}</p>);
@@ -153,40 +175,19 @@ function Answer({ turn, ask }: { turn: Turn; ask: (q: string) => void }) {
   return <RuleAnswer lead={answer.lead} rows={answer.rows} heading={answer.heading} onOpen={open} />;
 }
 
-/**
- * Sona Pro's answers, docked just above the Sona bar where the question was asked: a glass panel of turns that follows
- * the newest, folding to a slim pill (its button, or Escape). Nothing until the first question; a new page starts empty.
- */
-export function SonaAnswers() {
-  const { turns, open } = use(ThreadContext);
-  const { ask, setOpen } = use(AskContext)!;
+/** The page's turns as a thread that follows the newest: the Sona panel's body. Nothing until the first question. */
+export function SonaTurns({ className }: { className?: string }) {
+  const { turns } = use(ThreadContext);
+  const { ask } = use(AskContext)!;
   if (!turns.length) return null;
-  if (!open) {
-    const thinking = turns.some(turn => turn.state === "pending");
-    return (
-      <button type="button" className="sona-dock-pill glass" aria-expanded="false" onClick={() => setOpen(true)}>
-        {thinking ? <Shimmer>Sona is thinking</Shimmer> : plural(turns.length, "answer")}
-        <span aria-hidden="true">·</span>Show<Icon name="chevron-down" size={14} />
-      </button>
-    );
-  }
-  const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
   return (
-    <section className="sona-dock glass" aria-label="Sona's answers" onKeyDown={onKeyDown}>
-      <header className="sona-dock-head">
-        <span>On this page</span>
-        <button type="button" className="sona-dock-hide" aria-expanded="true" aria-label="Hide Sona's answers" onClick={() => setOpen(false)}>
-          <Icon name="chevron-down" size={16} />
-        </button>
-      </header>
-      <Conversation className="sona-dock-log">
-        {turns.map(turn => (
-          <Asked key={turn.id} question={turn.question} by={turn.state === "done" ? byOf(turn.answer) : undefined}>
-            <Answer turn={turn} ask={ask} />
-          </Asked>
-        ))}
-      </Conversation>
-    </section>
+    <Conversation className={className}>
+      {turns.map(turn => (
+        <Asked key={turn.id} question={turn.question} by={turn.state === "done" ? byOf(turn.answer) : undefined}>
+          <Answer turn={turn} ask={ask} />
+        </Asked>
+      ))}
+    </Conversation>
   );
 }
 

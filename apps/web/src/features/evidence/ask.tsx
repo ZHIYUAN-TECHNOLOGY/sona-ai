@@ -6,7 +6,7 @@ import { askPro, type SonaHandler, useSonaAsk } from "@/lib/sona";
 
 type Thread = { question: string; answer: string }[];
 
-/** The Sona bar's day and ward questions, in English and Malay (the server answers them by rules: packages/api/src/ask-context.ts). */
+/** The Sona panel's day and ward questions, in English and Malay (the server answers them by rules: packages/api/src/ask-context.ts). */
 const ABOUT_THE_DAY = /\b(needs? me( first)?|beds?|blocked|due (today|now)|my (day|tasks)|tasks?|katil|tersekat|hari ini|perlu saya)\b/i;
 
 /** One `evidence.stream` call, each event applied as it lands. The evidence page passes no visit but its thread; a patient's page the reverse. */
@@ -15,7 +15,7 @@ export async function askVisit(encounterId: string | undefined, question: string
 }
 
 /**
- * On a patient's page: the Sona bar's questions are answered for this visit, in place, each step shown as it happens
+ * On a patient's page: the Sona panel's questions are answered for this visit, in place, each step shown as it happens
  * and the film under the question when the answer is an X-ray. Without a visit, or a role that may not ask, the app's
  * default answers.
  */

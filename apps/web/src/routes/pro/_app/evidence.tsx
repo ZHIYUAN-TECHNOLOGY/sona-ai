@@ -3,7 +3,7 @@ import type { Reference } from "@sona-ai/domain/evidence";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Artifact, Conversation, InlineCitation, Notice, Response, SonaMark, Sources, Steps, Suggestions, Turn as AnswerTurn } from "@/components/ai";
+import { Artifact, Composer, Conversation, InlineCitation, Notice, Response, SonaMark, Sources, Steps, Suggestions, Turn as AnswerTurn } from "@/components/ai";
 import { plural } from "@/components/ai/summary";
 import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
@@ -11,7 +11,6 @@ import { Button, Chip } from "@/components/primitives";
 import { askVisit } from "@/features/evidence/ask";
 import { FilmCard } from "@/features/evidence/film-card";
 import { type Turn, apply, leadFilm, newTurn, phaseOf, sampleLabel, threadOf } from "@/features/evidence/thread";
-import { useSonaAsk } from "@/lib/sona";
 import "@/styles/pages/evidence.css";
 
 export const Route = createFileRoute("/pro/_app/evidence")({ component: Page });
@@ -58,12 +57,6 @@ function Page() {
     }
   }, [pick]);
 
-  // The Sona bar below is this page's composer: it asks the same thread.
-  useSonaAsk(useCallback(async (question: string) => {
-    if (!mayAsk) return "Your role cannot ask for evidence. A doctor or nurse can.";
-    return (await ask(question)) ? "Answered in the thread on this page." : "Not asked: Sona is still on the last question, or it failed. See the thread.";
-  }, [ask, mayAsk]));
-
   if (!mayAsk)
     return (
       <>
@@ -93,6 +86,7 @@ function Page() {
           ))}
         </Conversation>
       )}
+      <div className="ai-composer-dock"><Composer app="pro" onSend={q => void ask(q)} busy={busyNow} placeholder="Ask a clinical question" /></div>
       <Artifact open={reading && !!ref} onClose={() => setReading(false)} title={ref?.title ?? "Source"}
         subtitle={ref && [`Source ${ref.n}`, ref.from, ref.year].filter(Boolean).join(" · ")}
         actions={ref?.url && <a className="ev-pubmed" href={ref.url} target="_blank" rel="noreferrer">Open on PubMed<Icon name="external" size={12} /></a>}>
