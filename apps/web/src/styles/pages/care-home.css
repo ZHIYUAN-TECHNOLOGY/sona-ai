@@ -9,10 +9,10 @@
 /* Medicine and visit names are read in full, never cut: rows wrap, and on a narrow screen the button drops below the name.
    A caption (time first) keeps to three lines. */
 .care-home .list-row { flex-wrap: wrap; }
-.care-home .list-text { flex: 1 1 10em; }
+.care-home .list-text { flex: 1 1 160px; }
 .care-home .list-row > .list-text ~ * { margin-left: auto; }
-.care-home .list-title { white-space: normal; overflow-wrap: break-word; }
-.care-home .list-caption { display: -webkit-box; white-space: normal; overflow-wrap: break-word; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.care-home .list-title { overflow: visible; white-space: normal; overflow-wrap: break-word; line-height: 1.35; }
+.care-home .list-caption { display: -webkit-box; white-space: normal; overflow-wrap: break-word; line-height: 1.35; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .care-home .stat-row .stat .stat-caption { display: -webkit-box; white-space: normal; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 
 .care-home p { margin: 0; }
