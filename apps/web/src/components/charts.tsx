@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 
 import { formatNumber } from "@/lib/format";
 import { useReveal } from "@/lib/motion";
@@ -41,6 +41,16 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
   useReveal(figure, ".chart-bar", { scaleY: 0, transformOrigin: "50% 100%" }, points.length);
   useReveal(figure, ".chart-line", { strokeDashoffset: 1, duration: 0.9 }, points.length);
   useReveal(figure, ".chart-dot, .chart-halo", { opacity: 0, delay: 0.3 }, points.length);
+  // The SVG scales to its box, text with it: `k` (viewBox units per CSS px) keeps labels at 12 CSS px however narrow the chart is.
+  const [k, setK] = useState(1);
+  const drawn = points.length > 0;
+  useEffect(() => {
+    const el = figure.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => { if (e?.contentRect.width) setK(W / e.contentRect.width); });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [drawn]);
   if (points.length === 0) {
     return (
       <figure className="chart" aria-label={label}>
@@ -70,7 +80,7 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
   const ax = active === null ? 0 : xs[active] ?? 0;
   const ay = active === null ? 0 : ys[active] ?? 0;
   return (
-    <figure className="chart" ref={figure}>
+    <figure className="chart" ref={figure} style={{ "--chart-k": k } as CSSProperties}>
       <svg
         viewBox={`0 0 ${W} ${height}`} role="img" aria-label={label} aria-describedby={`${id}-d`} tabIndex={0}
         onPointerMove={onMove} onPointerLeave={() => setActive(null)}
@@ -92,9 +102,9 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
         {showValues ? points.map((p, i) => <text key={i} className="chart-value" x={xs[i]} y={(ys[i] ?? 0) - 10} textAnchor="middle">{formatNumber(p.y)}</text>) : null}
         {shown ? <circle className="chart-active" cx={ax} cy={ay} r={7} /> : null}
         {points.map((p, i) =>
-          // Every label while they fit side by side (about 7 units a character); beyond that only the ends.
-          points.length * (Math.max(...points.map(q => q.x.length)) * 7 + 12) <= RIGHT - LEFT || i === 0 || i === last ? (
-            <text key={i} x={xs[i]} y={height - 8} textAnchor="middle">{p.x}</text>
+          // Every label while they fit side by side (about 7 CSS px a character); beyond that only the ends. The last ends at its point so it is never clipped.
+          points.length * (Math.max(...points.map(q => q.x.length)) * 7 + 12) * k <= RIGHT - LEFT || i === 0 || i === last ? (
+            <text key={i} x={xs[i]} y={height - 8} textAnchor={i === last && i > 0 ? "end" : "middle"}>{p.x}</text>
           ) : null,
         )}
       </svg>
@@ -107,17 +117,20 @@ function ChartFrame({ points, label, unit, height, description, goal, showValues
       ) : null}
       <p id={`${id}-d`} className="visually-hidden">{description ?? `${points.length} values${unit ? ` in ${unit}` : ""}. Use the arrow keys to read each one.`}</p>
       <p className="visually-hidden" aria-live="polite">{shown && active !== null ? `${shown.x}: ${shown.y}${suffix}${describe ? `. ${describe(shown, active)}` : ""}` : ""}</p>
-      <table className="visually-hidden">
-        <caption>{label}</caption>
-        <tbody>
-          {points.map((p, i) => (
-            <tr key={i}>
-              <th scope="row">{p.x}</th>
-              <td>{p.y}{suffix}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* A table ignores the 1px box, so the wrapper is what hides it (500 points drew 12,000px of empty scroll). */}
+      <div className="visually-hidden">
+        <table>
+          <caption>{label}</caption>
+          <tbody>
+            {points.map((p, i) => (
+              <tr key={i}>
+                <th scope="row">{p.x}</th>
+                <td>{formatNumber(p.y)}{suffix}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }
@@ -136,7 +149,8 @@ export function LineChart({ height = 200, band, ...props }: ChartProps & { band?
       {band ? <rect className="chart-band" x={LEFT} width={RIGHT - LEFT} y={y(band.high)} height={y(band.low) - y(band.high)} /> : null}
       <path className="chart-line" d={linePath(xs, ys)} pathLength={1} />
       {last >= 0 ? <circle className="chart-halo" cx={xs[last]} cy={ys[last]} r={10} /> : null}
-      {points.map((p, i) => (
+      {/* Past ~60 points the dots merge into a bar of their own; the line and the last point's halo carry it. */}
+      {points.length > 60 ? null : points.map((p, i) => (
         <circle key={i} className="chart-dot" data-last={i === last ? "" : undefined} data-out={band && (p.y < band.low || p.y > band.high) ? "" : undefined} cx={xs[i]} cy={ys[i]} r={4} />
       ))}
     </ChartFrame>

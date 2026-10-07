@@ -64,7 +64,7 @@
 /* Charts */
 .chart { margin: 0; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-.chart text { font-size: 12px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.chart text { font-size: calc(12px * var(--chart-k, 1)); fill: var(--muted); font-variant-numeric: tabular-nums; }
 .chart-grid { stroke: var(--line); stroke-width: 1; }
 .chart-band { fill: var(--green-wash); }
 .chart-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }

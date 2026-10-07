@@ -18,7 +18,7 @@
 .rd-stats dt { color: var(--muted); font-size: var(--text-body); }
 .rd-stats dd { margin: 0; font-size: var(--text-body); color: var(--muted); font-variant-numeric: tabular-nums; }
 .rd-stats strong { color: var(--ink); font-size: var(--text-panel); font-weight: 600; margin-right: var(--space-2); }
-.rd .chart text { font-size: 15px; }
+.rd .chart text { font-size: calc(15px * var(--chart-k, 1)); }
 .rd-calm { max-width: 70ch; }
 .rd-more { align-self: flex-start; }
 
