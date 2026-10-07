@@ -227,3 +227,6 @@ a.list-row:hover, button.list-row:hover { background: var(--fill-hover); }
 :is(.pro, .care) .table-wrap { background: var(--glass-sheet); box-shadow: var(--shadow-card); }
 :is(.pro, .care) :is(.btn-secondary, .icon-btn:not(.icon-btn-ink, .icon-btn-quiet), .search-field, .select) { background: var(--glass-float); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-rim), var(--edge); border-color: transparent; }
 @media (prefers-reduced-transparency: reduce) { :is(.pro, .care) :is(.card, .patient-strip, .stat-row, .table-wrap, .btn-secondary, .icon-btn, .search-field, .select) { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+/* A list card's empty line sits on the title's edge, like its rows; an arc at 0% draws nothing, not a dot. */
+:is(.pro, .care) .list .empty { padding-inline: var(--space-3); }
+.stat-arc path[data-done][stroke-dasharray^="0 "] { display: none; }
