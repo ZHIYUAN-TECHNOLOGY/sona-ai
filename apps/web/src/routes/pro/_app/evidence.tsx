@@ -65,8 +65,9 @@ function Page() {
     setDraft("");
   };
   const reading = turns.some(t => !t.answer && !t.failed);
-  // The rail shows the sources of the turn being reviewed: the one last chosen, else the newest with sources.
-  const shown = turns.find(t => t.id === picked?.turn) ?? turns.findLast(t => t.references.length > 0);
+  // The rail shows the sources of the turn being reviewed: the one last chosen, else the newest with sources, else the
+  // newest, so an answer with none says so instead of leaving the rail blank.
+  const shown = turns.find(t => t.id === picked?.turn) ?? turns.findLast(t => t.references.length > 0) ?? turns.at(-1);
 
   if (!mayAsk)
     return (
