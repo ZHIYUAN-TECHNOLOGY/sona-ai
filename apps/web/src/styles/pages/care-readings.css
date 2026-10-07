@@ -54,3 +54,7 @@
 .rd-switch input { width: 24px; height: 24px; margin: 0; accent-color: var(--blue); }
 .rd-sees { padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-group); background: var(--canvas); }
 .rd-sees-text { margin: 0; white-space: pre-wrap; font-size: var(--text-body); }
+
+/* On a phone the 7 / 30 / 90 days switch shares the card's width instead of running past its edge. */
+.rd-seg { max-width: 100%; }
+.rd-seg button { flex: 1 1 auto; min-width: 0; padding-inline: clamp(var(--space-2), 2vw, var(--space-4)); }
