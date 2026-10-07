@@ -8,7 +8,9 @@
 .today-request { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3) 0; border-top: 1px solid var(--line); }
 .today-request p { margin: 0; }
 .today-request-who { font-weight: 600; }
-.today-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+.today-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+/* A patient's reason keeps the line breaks they typed. */
+.today-reason { white-space: pre-line; overflow-wrap: anywhere; }
 .today-decline label { display: flex; flex-direction: column; gap: var(--space-1); margin-top: var(--space-2); color: var(--muted); font-size: var(--text-small); }
 .today-decline textarea { font: inherit; color: var(--ink); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); resize: vertical; }
 
@@ -17,8 +19,9 @@
 /* Week calendar: a time gutter and seven day columns; blocks sit at their start time.
    `day.list` has no end time, so every block is one fixed height (half an hour), one line: name, then time.
    The hour is short enough that a working day fits a laptop screen without scrolling. */
-.week { --week-hour: 3.25rem; --week-gutter: 3.25rem; min-width: 0; }
-.week-head, .week-body { display: grid; grid-template-columns: var(--week-gutter) repeat(7, minmax(0, 1fr)); }
+.week { --week-hour: 3.25rem; --week-gutter: 3.25rem; min-width: 0; overflow-x: auto; }
+/* Seven readable days need ~36rem; a phone or 200% text scrolls the week sideways instead of crushing it. */
+.week-head, .week-body { display: grid; grid-template-columns: var(--week-gutter) repeat(7, minmax(0, 1fr)); min-width: 36rem; }
 .week-day { padding: var(--space-2) 0; text-align: center; font-size: var(--text-overline); font-weight: 600; text-transform: uppercase; letter-spacing: var(--track-overline); color: var(--muted); border-radius: var(--radius-control); white-space: nowrap; }
 .week-day[aria-current] { color: var(--surface); background: var(--ink); }
 .week-body { position: relative; margin-top: var(--space-3); }
