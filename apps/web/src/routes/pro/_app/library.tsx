@@ -10,6 +10,7 @@ import { Button, Card, Chip, Field, SearchField, Select, Signal, StatCard, StatR
 import { RightRail, WithRail } from "@/components/rail";
 import { isStale, MAX_PAGES, messageOf, type ScanRead, splitPicked, titleOf, toBase64 } from "@/features/library/files";
 import { ScanReviewPage } from "@/features/library/scan-review";
+import { countOf, formatNumber } from "@/lib/format";
 import { client, orpc } from "@/lib/orpc";
 import "@/styles/pages/library.css";
 
@@ -25,13 +26,15 @@ const KIND: Record<Doc["kind"], string> = { text: "Text", pdf: "PDF", pubmed: "A
 
 type Scope = "all" | "hospital" | "me" | "check";
 const MODES = [{ id: "text", label: "Paste text" }, { id: "pdf", label: "PDF or photos" }, { id: "article", label: "Article" }] as const;
+// A scan's source is how it came in ("pdf" or "photo"), not a publisher.
+const sourceOf = (d: Doc) => (d.kind !== "scan" ? d.source : d.source === "photo" ? "Photos of the pages" : "Scanned PDF");
 const who = (d: Doc) => (d.scope === "hospital" ? "Whole hospital" : "Only you");
 
 const columns: Column<Doc>[] = [
   { key: "title", header: "Source", cell: d => (
     <div className="lib-title">
       <span className="lib-file" aria-hidden><Icon name={d.kind === "pubmed" ? "book" : "file"} size={18} /></span>
-      <div><strong>{d.title}</strong><div className="lib-note">{d.source} · {KIND[d.kind]} · {d.sections} sections</div></div>
+      <div><strong title={d.title}>{d.title}</strong><div className="lib-note">{sourceOf(d)} · {KIND[d.kind]} · {countOf(d.sections, "section")}</div></div>
     </div>
   ), sort: (a, b) => a.title.localeCompare(b.title) },
   { key: "by", header: "Added by", cell: d => <>{d.uploadedBy ?? "Sona"}<div className="lib-note">{who(d)}</div></> },
@@ -55,7 +58,7 @@ function Page() {
   const [notice, setNotice] = useState<string>();
   const confirm = useMutation({
     mutationFn: (pages: string[]) => client.library.addScan({ requestId: review!.requestId, scope: review!.scope, title: review!.title, source: review!.read.source, model: review!.read.model, pages }),
-    onSuccess: saved => { setNotice(`Added "${saved.title}" (${saved.sections} sections). You checked the text against the original.`); setReview(undefined); return refresh(); },
+    onSuccess: saved => { setNotice(`Added "${saved.title}" (${countOf(saved.sections, "section")}). You checked the text against the original.`); setReview(undefined); return refresh(); },
   });
   if (review) return <ScanReviewPage read={review.read} pending={confirm.isPending} error={confirm.isError ? messageOf(confirm.error) : undefined}
     onConfirm={pages => confirm.mutate(pages)} onCancel={() => { setReview(undefined); confirm.reset(); }} />;
@@ -65,12 +68,12 @@ function Page() {
   const docs = [...(list.data ?? [])].sort((a, b) => a.year - b.year);
   const stale = docs.filter(d => isStale(d.year));
   const inTab = tab === "all" ? docs : tab === "check" ? stale : docs.filter(d => d.scope === tab);
-  const rows = q ? inTab.filter(d => `${d.title} ${d.source} ${d.year} ${KIND[d.kind]} ${d.uploadedBy ?? ""}`.toLowerCase().includes(q)) : inTab;
+  const rows = q ? inTab.filter(d => `${d.title} ${sourceOf(d)} ${d.year} ${KIND[d.kind]} ${d.uploadedBy ?? ""}`.toLowerCase().includes(q)) : inTab;
   const open = docs.find(d => d.id === openId);
   const shared = docs.filter(d => d.scope === "hospital").length;
   const lead = !list.data ? "The sources Sona answers from."
     : !docs.length ? <><Signal tone="soon">No sources yet</Signal> · Sona answers without your hospital's own guidance until one is added</>
-    : <>{docs.length} source{docs.length === 1 ? "" : "s"} Sona answers from · {stale.length ? <Signal tone="soon">{stale.length} over 5 years old to check</Signal> : <Signal tone="done">all from the last 5 years</Signal>}</>;
+    : <>{countOf(docs.length, "source")} Sona answers from · {stale.length ? <Signal tone="soon">{formatNumber(stale.length)} over 5 years old to check</Signal> : <Signal tone="done">all from the last 5 years</Signal>}</>;
 
   return (
     <>
@@ -78,7 +81,7 @@ function Page() {
       {docs.length > 0 && (
         <StatRow>
           <StatCard title="Sources" value={docs.length} caption="Sona answers from these" onSelect={() => setTab("all")} selected={tab === "all"} />
-          <StatCard title="Whole hospital" value={shared} unit={`of ${docs.length}`} caption="Every clinician's answers" onSelect={() => setTab("hospital")} selected={tab === "hospital"} />
+          <StatCard title="Whole hospital" value={shared} unit={`of ${formatNumber(docs.length)}`} caption="Every clinician's answers" onSelect={() => setTab("hospital")} selected={tab === "hospital"} />
           <StatCard title="Only you" value={docs.length - shared} caption="Private to your account" onSelect={() => setTab("me")} selected={tab === "me"} />
           <StatCard title="To check" value={stale.length} chip={stale.length ? "Over 5 years" : undefined} tone="soon" caption={stale.length ? `Oldest is from ${stale[0]!.year}` : "None older than 5 years"} onSelect={() => setTab("check")} selected={tab === "check"} />
         </StatRow>
@@ -89,10 +92,10 @@ function Page() {
             <Card title="Selected source">
               <strong>{open.title}</strong>
               <dl className="lib-detail">
-                <dt>Published by</dt><dd>{open.source}</dd>
+                <dt>Published by</dt><dd>{sourceOf(open)}</dd>
                 <dt>Kind</dt><dd>{KIND[open.kind]}</dd>
                 <dt>Year</dt><dd>{open.year}{isStale(open.year) ? " · check it is still current" : ""}</dd>
-                <dt>Sections</dt><dd>{open.sections}</dd>
+                <dt>Sections</dt><dd>{formatNumber(open.sections)}</dd>
                 <dt>Added by</dt><dd>{open.uploadedBy ?? "Sona"}</dd>
                 <dt>Who can use it</dt><dd>{who(open)}</dd>
               </dl>
@@ -107,7 +110,7 @@ function Page() {
           {list.isError ? <EmptyState icon="alert" title="The library could not be shown">{messageOf(list.error)}</EmptyState> : (
             <DataTable columns={columns} rows={rows} rowKey={d => d.id} loading={list.isPending}
               selectedKey={openId} onRowOpen={d => setOpenId(d.id)}
-              count={docs.length ? `Showing ${rows.length} of ${docs.length}` : undefined}
+              count={docs.length ? `Showing ${formatNumber(rows.length)} of ${formatNumber(docs.length)}` : undefined}
               toolbar={
                 <TableToolbar end={<SearchField label="Search the library" placeholder="Search title, kind, year or who added it" value={search} onChange={e => setSearch(e.target.value)} />}>
                   <Tabs label="Who can use the source" value={tab} onChange={setTab} tabs={[
@@ -144,7 +147,7 @@ function AddSource({ onAdded, onReview, notice }: { onAdded: () => unknown; onRe
   // A PDF only turns out to be a scan once the server refuses it as text; from then on the pages are being read.
   const [scanning, setScanning] = useState(false);
   const added = (saved: Added) => {
-    setDone(`Added "${saved.title}" (${saved.sections} sections).`);
+    setDone(`Added "${saved.title}" (${countOf(saved.sections, "section")}).`);
     setPreview(undefined);
     setRequestId(crypto.randomUUID());
     return onAdded();
@@ -199,7 +202,7 @@ function AddSource({ onAdded, onReview, notice }: { onAdded: () => unknown; onRe
       {preview && (
         <div>
           <strong>{preview.title}</strong>
-          <div className="lib-note">{preview.journal} · {preview.year} · {preview.sections} sections · <a href={preview.url} target="_blank" rel="noreferrer">Open on PubMed</a></div>
+          <div className="lib-note">{preview.journal} · {preview.year} · {countOf(preview.sections, "section")} · <a href={preview.url} target="_blank" rel="noreferrer">Open on PubMed</a></div>
         </div>
       )}
       <Select label="Who can use it" value={scope} onChange={e => setScope(e.target.value as typeof scope)}>

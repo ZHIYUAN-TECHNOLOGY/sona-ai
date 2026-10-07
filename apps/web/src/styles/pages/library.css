@@ -18,13 +18,19 @@
 .xray-box span { position: absolute; top: 0; left: 0; padding: 0 var(--space-1); background: var(--blue); color: var(--surface); font-size: var(--text-sm, 0.875rem); }
 .xray-findings { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-4); }
 
-.lib-title { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.lib-title { display: flex; align-items: center; gap: var(--space-3); min-width: 13rem; }
+/* A camera file name has no spaces: it breaks where it must, so the year and Remove stay in the table. */
+.lib-title > div { min-width: 0; overflow-wrap: anywhere; }
+/* Three lines of a long title in the row; the whole title is in Selected source. */
+.lib-title strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
 .lib-file { flex: none; display: grid; place-items: center; width: var(--avatar-md); height: var(--avatar-md); border-radius: var(--radius-control); background: var(--fill-selected); color: var(--muted); }
 .lib-num { font-variant-numeric: tabular-nums; }
 .lib-detail { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: var(--space-4) 0 0; font-size: var(--text-small); }
 .lib-detail dt { color: var(--muted); }
 .lib-detail dd { margin: 0; text-align: right; }
-.lib-year { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
+.lib-year { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; min-width: max-content; }
+/* A 250-character title wraps; the year, its chip and the row's buttons keep their own width beside it. */
+.lib-year .chip, tr:has(.lib-title) .table-action .btn { white-space: nowrap; }
 /* Publisher and year share a row, so the add button stays in view in the rail. */
 .lib-pair { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem; gap: var(--space-2); }
 .lib-add textarea { min-height: 7rem; }
