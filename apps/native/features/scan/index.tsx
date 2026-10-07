@@ -9,7 +9,7 @@ import { AccessibilityInfo, Keyboard, Pressable, TextInput, View, useWindowDimen
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { CaptureScan } from "@/components/sona/capture-scan";
 import { SampleLabel } from "@/components/sona/model-answer";
-import { deidentifiedText } from "@/components/sona/sample-label";
+import { deidentifiedText, modelName } from "@/components/sona/sample-label";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
@@ -225,7 +225,7 @@ function PhotoHeader({ photo, settled, source }: { photo: Photo; settled: boolea
         {settled && <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 4, duration: 300 })} style={{ flex: 1, gap: 3 }}>
           <Text style={{ ...type.headline, color: palette.ink }}>{photo.sample ? "Sample ward-round note" : "Your photo"}</Text>
           {source?.source === "fixture" ? <SampleLabel source="fixture" waking={wakingOf(source)} what="handwriting" />
-            : source && <Text style={{ ...type.footnote, color: palette.muted }}>Read by {source.model} · check every item</Text>}
+            : source && <Text style={{ ...type.footnote, color: palette.muted }}>Read by {modelName(source.model)} · check every item</Text>}
           {deidentifiedText(source?.deidentifier) && <Text style={{ ...type.caption, color: palette.muted }}>{deidentifiedText(source?.deidentifier)}</Text>}
           <Text style={{ ...type.caption, color: palette.blue }}>{words ? `${words} ${words === 1 ? "word" : "words"} to check · ` : ""}{open ? "Hide original" : "Tap to compare"}</Text>
         </Animated.View>}

@@ -5,6 +5,8 @@ import { Button, Chip, Field } from "@/components/primitives";
 import { countOf, formatNumber } from "@/lib/format";
 import { type client, orpc } from "@/lib/orpc";
 
+import { modelName } from "@sona-ai/domain/model-names";
+
 import { labelTone, triageBy } from "./format";
 
 /** messages.reply takes 1,000 characters; a model's draft is unbounded. */
@@ -19,7 +21,7 @@ export function DraftChecks({ draft }: { draft: Draft }) {
       <li><Chip tone={labelTone(draft.label)}>{draft.label}</Chip> {triageBy(draft.triagedBy)}</li>
       <li>
         {draft.source === "model"
-          ? <>Drafted by Sona ({draft.model})</>
+          ? <>Drafted by {modelName(draft.model)}</>
           : <><Chip>Sample</Chip> {draft.waking ? "The model is waking, so this was written from rules" : "Written from rules, not by a model"}</>}
       </li>
     </ul>

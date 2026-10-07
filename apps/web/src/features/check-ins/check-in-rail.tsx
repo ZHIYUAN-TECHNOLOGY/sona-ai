@@ -1,4 +1,5 @@
 import { can, type Role } from "@sona-ai/api/roles";
+import { modelName } from "@sona-ai/domain/model-names";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button, Card, Chip, Field } from "@/components/primitives";
@@ -32,7 +33,7 @@ export function CheckInRail({ row, role }: { row: Row; role: Role }) {
               <p>{r.text}</p>
               <p className="check-ins-line">
                 <Chip tone={LABEL[r.label].tone}>{LABEL[r.label].text}</Chip>
-                <span className="check-ins-muted">Read by {r.decidedBy === "rules" ? `the urgent-words rule${r.source === "fixture" ? "" : ` (over ${r.source})`}` : r.source}</span>
+                <span className="check-ins-muted">Read by {r.decidedBy === "rules" ? `the urgent-words rule${r.source === "fixture" ? "" : ` (over ${modelName(r.source)})`}` : r.source === "fixture" ? r.source : modelName(r.source)}</span>
               </p>
               {r.task ? <p className="check-ins-muted">{r.task.completed ? "Closed" : "Flagged for the care team"}: {r.task.title}</p> : null}
             </div>

@@ -143,7 +143,7 @@ export function TrainingScreen() {
       <Text style={{ ...type.footnote, color: palette.muted }}>Only patients who opted in are captured. Names, IC and phone numbers are replaced before a sample reaches this screen.</Text>
       {switchError && <ErrorLine text={switchError} />}
     </Surface>}
-    {status && <Caption icon="info.circle">Export only — fine-tuning on Baseten isn't connected yet</Caption>}
+    {status && <Caption icon="info.circle">Export only — fine-tuning isn't connected yet</Caption>}
     <View style={{ height: ASK_SPACE }} />
   </Screen></WithSona>;
 }
