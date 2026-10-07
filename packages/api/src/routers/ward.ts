@@ -50,7 +50,7 @@ export async function liveBeds(db: Context["db"], hospitalId: string): Promise<(
 }
 
 /** Each blocker's owner, from the blocker-owner tasks. */
-async function ownersOf(db: Context["db"], hospitalId: string): Promise<Record<string, Owner>> {
+export async function ownersOf(db: Context["db"], hospitalId: string): Promise<Record<string, Owner>> {
   const owned = await db.select({ sourceId: tasks.sourceId, owner: tasks.owner }).from(tasks).where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.kind, "blocker-owner")));
   return Object.fromEntries(owned.filter(t => t.sourceId).map(t => [t.sourceId!, t.owner as Owner]));
 }

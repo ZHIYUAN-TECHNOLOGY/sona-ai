@@ -4,7 +4,7 @@ import { EASE_OUT, gsap, moves, useGSAP } from "@/lib/motion";
 
 import { client } from "@/lib/orpc";
 import { type Recording, startRecording } from "@/lib/recorder";
-import { plain, useSonaAsk } from "@/lib/sona";
+import { plain, useSonaAsk, useSonaThinking } from "@/lib/sona";
 import { toBase64, WAV_HEADER, WAV_RATE } from "@/lib/wav";
 
 import { SonaGlow } from "./sona-glow";
@@ -61,6 +61,8 @@ const sendIcon = (
  */
 export function SonaBar({ app }: { app: "pro" | "care" }) {
   const ask = useSonaAsk();
+  // The answer lands in the page, which may be scrolled away: the bar says it is coming where the click was.
+  const thinking = useSonaThinking();
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState("");
@@ -140,7 +142,7 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
       onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
     >
       <SonaGlow app={app} listening={phase === "listening"} level={level} />
-      <p className="sona-bar-status" data-error={error ? "" : undefined} aria-live="polite">{error || STATUS[phase]}</p>
+      <p className="sona-bar-status" data-error={error ? "" : undefined} aria-live="polite">{error || STATUS[phase] || (thinking ? "Sona is thinking…" : "")}</p>
       <div className="sona-bar-row">
         <div className="sona-bar-field">
           <input

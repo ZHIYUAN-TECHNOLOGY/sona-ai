@@ -83,12 +83,20 @@ export function groundedSpec(spec: unknown, context: AskContext, question = ""):
 
 /**
  * What the page itself says, as one lead: its lines (each without the question it answers, "Who needs me now? …"),
- * whole, for as many as a lead holds (280 characters); nothing when the page says nothing.
+ * whole, for as many as a lead holds (280 characters); nothing when the page says nothing. Given a `question`, only
+ * the lines and rows sharing one of its telling words (a name, a test, "potassium"), so the model being off still
+ * answers "Is Daniel's potassium back?" from the page, and a question the page says nothing about gets nothing.
  */
-function pageLines(context: AskContext) {
+export function pageLines(context: AskContext, question?: string) {
+  const asked = question === undefined ? undefined : [...words(question)].filter(w => w.length >= 4 && !GLUE.has(w));
+  const hits = (text: string) => !asked || asked.some(w => words(text).has(w));
+  const rows = asked ? context.rows.filter(r => hits(`${r.title} ${r.detail}`)) : [];
   let text = "";
-  for (const line of context.lines.map(l => l.replace(/^[^?]*\?\s+/, ""))) { if (text.length + line.length + 1 > 280) break; text += `${text ? " " : ""}${line}`; }
-  return text ? checkAskSpec({ root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "AskLead", props: { text }, children: [] } } }) : null;
+  for (const line of context.lines.filter(hits).map(l => l.replace(/^[^?]*\?\s+/, ""))) { if (text.length + line.length + 1 > 280) break; text += `${text ? " " : ""}${line}`; }
+  if (!text && rows.length) text = "Here is what your pages show about that.";
+  if (!text) return null;
+  return checkAskSpec({ root: "f", elements: { f: { type: "AskColumn", props: {}, children: rows.length ? ["f-0", "f-1"] : ["f-0"] }, "f-0": { type: "AskLead", props: { text }, children: [] },
+    ...rows.length > 0 && { "f-1": { type: "AskRows", props: { rows }, children: [] } } } });
 }
 
 /**

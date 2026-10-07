@@ -1,5 +1,7 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
+import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
+import { tasks } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { beforeEach, expect, test } from "bun:test";
@@ -138,4 +140,65 @@ test("grounding: counts up to the page's rows, names from the data and a row wit
   expect(groundedSpec(spec("Daniel needs you: possible sepsis."), context)).toBeNull();
   expect(groundedSpec(spec("Daniel needs you: possible Sepsis."), context)).toBeNull();
   expect(groundedSpec(spec(""), context)).toBeNull(); // AskLead needs text
+});
+
+// Sona Pro web sends no page data (scope "web"): the server reads the hospital's Today, Ward and Tasks and always answers.
+async function webDoctor(baseten?: Baseten) {
+  const db = await createTestDb();
+  await seedDemo(db, new Date("2026-09-26T15:40:00+08:00"));
+  await addClinician(db, "dr-web");
+  await db.insert(tasks).values([
+    { id: "t-ours", hospitalId: DEMO_HOSPITAL, encounterId: "visit-1086", kind: "followup", title: "Repeat potassium", owner: "Nurse", due: "2026-09-25" },
+    { id: "t-theirs", hospitalId: "other-hospital", kind: "followup", title: "Another hospital's task", owner: "Nurse", due: "2026-09-25" },
+  ]);
+  return createRouterClient(appRouter, { context: { db, session: user("dr-web"), baseten } });
+}
+const web = (question: string) => ({ scope: "web", question });
+type Res = { spec?: { elements: Record<string, { type: string; props: Record<string, unknown> }> } };
+const rowsOf = (res: Res) => Object.values(res.spec?.elements ?? {}).flatMap(e => e.type === "AskRows" ? e.props.rows as { id: string; title: string; detail: string; tone: string }[] : []);
+const leadOf = (res: Res) => Object.values(res.spec?.elements ?? {}).find(e => e.type === "AskLead")?.props.text as string;
+
+test("web: the bar's three questions are answered by rule from the hospital's own data, with no model, in English or Malay", async () => {
+  const client = await webDoctor();
+  const needs = await client.ask.free(web("What needs me first?"));
+  expect(needs.source).toBe("rules");
+  const needRows = rowsOf(needs);
+  // Daniel's low potassium is waiting on a doctor: he leads, urgent; the overdue task is there too.
+  expect(needRows[0]).toMatchObject({ id: "SYN-1086", title: "Daniel Rahman", tone: "urgent" });
+  expect(needRows.some(r => r.id === "t-ours" && r.tone === "soon")).toBe(true);
+  expect(leadOf(needs)).toContain("most urgent first: Daniel Rahman");
+
+  const blocked = await client.ask.free(web("Which beds are blocked?"));
+  const bedRows = rowsOf(blocked);
+  expect(bedRows.length).toBeGreaterThan(0);
+  expect(bedRows.every(r => r.title.startsWith("Bed") && r.detail.includes("no owner"))).toBe(true);
+  expect(leadOf(blocked)).toMatch(/blocked, about \d+ bed-hours waiting/);
+
+  const due = await client.ask.free(web("What is due today?"));
+  expect(rowsOf(due).find(r => r.id === "t-ours")).toMatchObject({ title: "Repeat potassium", detail: "Daniel Rahman · Nurse · was due 2026-09-25" });
+
+  expect(rowsOf(await client.ask.free(web("Apa perlu saya buat dulu?")))).toEqual(needRows);
+  expect(rowsOf(await client.ask.free(web("Katil mana tersekat?")))).toEqual(bedRows);
+  expect(leadOf(await client.ask.free(web("Apa yang perlu hari ini?")))).toBe(leadOf(due));
+});
+
+test("web: another hospital's tasks never appear, in any answer or in the page data the model is given", async () => {
+  const client = await webDoctor();
+  for (const q of ["What needs me first?", "What is due today?", "Which beds are blocked?"]) expect(JSON.stringify(await client.ask.free(web(q)))).not.toContain("t-theirs");
+  const up = boxes(() => gemma({ general: "Nothing unusual.", evidence: false }));
+  await (await webDoctor(up.baseten)).ask.free(web("Anything odd tonight?"));
+  const sent = String(up.calls.find(c => c.url.endsWith("completions"))?.init.body);
+  expect(sent).toContain("Repeat potassium");
+  expect(sent).not.toContain("Another hospital");
+});
+
+test("web: with no model, another question answers from what the pages show that matches it, else one plain line that the model is off", async () => {
+  const client = await webDoctor();
+  const matched = await client.ask.free(web("Is Daniel's potassium back?"));
+  expect(matched.source).toBe("rules");
+  expect(rowsOf(matched).some(r => r.title === "Daniel Rahman")).toBe(true);
+  const off = await client.ask.free(web("Explain the parking policy"));
+  expect(off).toMatchObject({ source: "fixture" });
+  expect(leadOf(off)).toBe("Sona's assistant model is off right now; ask again when it is on, or open Today, Ward or Tasks.");
+  expect(rowsOf(off)).toEqual([]);
 });
