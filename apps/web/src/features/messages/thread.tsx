@@ -4,6 +4,7 @@ import { Fragment, useEffect, useState } from "react";
 import { Avatar } from "@/components/avatar";
 import { EmptyState } from "@/components/page";
 import { Button, Chip } from "@/components/primitives";
+import { countOf } from "@/lib/format";
 import { type client, orpc } from "@/lib/orpc";
 
 import { clock, triageBy } from "./format";
@@ -54,9 +55,13 @@ const dayOf = (at: Date | string) => {
 };
 const timeOf = (at: Date | string) => new Date(at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
+/** How many of the newest messages a thread opens with; the rest wait behind "Show earlier". */
+const RECENT = 30;
+
 export function Thread({ patientId, canResolve }: { patientId: string; canResolve: boolean }) {
   const thread = useQuery(orpc.messages.thread.queryOptions({ input: { patientId } }));
   const queryClient = useQueryClient();
+  const [all, setAll] = useState(false);
   // Opening a thread marks it seen on the server, so the inbox's unread counts are re-read once it has loaded.
   useEffect(() => {
     if (thread.dataUpdatedAt) void queryClient.invalidateQueries({ queryKey: orpc.messages.inbox.key() });
@@ -66,8 +71,12 @@ export function Thread({ patientId, canResolve }: { patientId: string; canResolv
   const { patient, messages } = thread.data;
   // The newest unanswered message carries the triage the header states.
   const open = messages.findLast(m => m.unanswered);
-  const bed = patient.bed ? (/^bed/i.test(patient.bed) ? patient.bed : `Bed ${patient.bed}`) : null;
+  // "Bed 4B-12" for a bare code; a full place ("Wad 4B Kardiologi, Katil 12") already says what it is.
+  const bed = patient.bed ? (/^bed|\s/i.test(patient.bed) ? patient.bed : `Bed ${patient.bed}`) : null;
   const triage = open ? `${open.triage ? `Triage: ${open.triage}` : "Not triaged: read it first"} · ${triageBy(open.triagedBy)}` : "Nothing waiting";
+  // A long thread opens on its newest messages, where the one waiting for a reply is.
+  const earlier = all ? 0 : Math.max(0, messages.length - RECENT);
+  const shown = messages.slice(earlier);
   return (
     <section className="msg-thread" aria-label={`Messages with ${patient.name}`}>
       <header className="msg-thread-head">
@@ -79,9 +88,10 @@ export function Thread({ patientId, canResolve }: { patientId: string; canResolv
       </header>
       {messages.length ? null : <EmptyState>No messages yet.</EmptyState>}
       <ol>
-        {messages.map((m, i) => (
+        {earlier ? <li className="msg-earlier"><Button onClick={() => setAll(true)}>Show {countOf(earlier, "earlier message")}</Button></li> : null}
+        {shown.map((m, i) => (
           <Fragment key={m.id}>
-            {i === 0 || dayOf(messages[i - 1]!.createdAt) !== dayOf(m.createdAt) ? <li className="msg-day">{dayOf(m.createdAt)}</li> : null}
+            {i === 0 || dayOf(shown[i - 1]!.createdAt) !== dayOf(m.createdAt) ? <li className="msg-day">{dayOf(m.createdAt)}</li> : null}
             <li className={m.from === "patient" ? "msg msg-in" : "msg msg-out"}>
               <p>{m.text}</p>
               <MedicinePhoto message={m} canResolve={canResolve} />
