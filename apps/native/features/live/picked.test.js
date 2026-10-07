@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { splitPicked, titleOf } from "./picked";
+import { scanPages, splitPicked, titleOf } from "./picked";
 
 test("picked files split into one PDF or the photos in order, and a mix, a stray type or too many photos are refused", () => {
   const f = (name, mimeType) => ({ name, mimeType });
@@ -11,4 +11,9 @@ test("picked files split into one PDF or the photos in order, and a mix, a stray
   expect(splitPicked([])).toHaveProperty("error");
   expect(splitPicked(Array.from({ length: 11 }, (_, i) => f(`p${i}.jpg`)))).toEqual({ error: "Up to 10 photos at a time; 11 were chosen." });
   expect(titleOf("Ward protocol.jpeg")).toBe("Ward protocol");
+});
+
+test("checked scan pages drop the empty ones, and all empty is refused", () => {
+  expect(scanPages(["  Dose 5 mg ", "", "  \n", "Page three"])).toEqual({ pages: ["Dose 5 mg", "Page three"] });
+  expect(scanPages(["", " "])).toEqual({ error: "Every page is empty. Type the text of at least one page, or cancel." });
 });

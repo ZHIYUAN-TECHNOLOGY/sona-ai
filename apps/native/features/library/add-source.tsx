@@ -1,7 +1,7 @@
 import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Linking, Pressable, TextInput, View } from "react-native";
+import { Image, Linking, Pressable, TextInput, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { LAYOUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Disclosure, ErrorLine, IconDisc, Mark, Press, TextLink } from "@/components/sona/parts";
@@ -10,7 +10,7 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, glass, Icon, pillStyle, Screen, useAccessibleEffects } from "@/components/sona/ui";
 import { JUDGE } from "@/features/live";
 import { useAddSource, type Added, type ArticlePreview, type LibraryScope } from "@/features/live/library-sync";
-import { splitPicked } from "@/features/live/picked";
+import { scanPages, splitPicked, titleOf, type ScanRead } from "@/features/live/picked";
 import { haptic } from "@/features/scribe/parts";
 
 /**
@@ -30,7 +30,10 @@ const SCOPES: { key: LibraryScope; label: string; icon: string; detail: string }
 ];
 
 // `pages`: photos going up, which MedGemma reads one page at a time, so the wait is longer and said so.
-type Status = { state: "working"; label: string; pages?: boolean } | { state: "done"; added: Added } | { state: "refused"; label: string; error: string; retry?: () => void; reason?: string };
+// `review`: a scan MedGemma read, which the doctor checks page by page before anything is saved; `checked` once they have.
+type Status = { state: "working"; label: string; pages?: boolean } | { state: "done"; added: Added; checked?: boolean } | { state: "refused"; label: string; error: string; retry?: () => void; reason?: string }
+  | { state: "review"; title: string; read: ScanRead };
+type Failure = { error: string; retryable: boolean; reason?: string };
 
 export function AddSourceScreen() {
   const [scope, setScope] = useState<LibraryScope>("me");
@@ -40,11 +43,21 @@ export function AddSourceScreen() {
   const add = useAddSource();
   const working = status?.state === "working";
 
-  const submit = async (label: string, write: () => Promise<{ added: Added } | { error: string; retryable: boolean; reason?: string }>, pages?: boolean) => {
+  // `onScan`: a PDF the server refuses as a scan is read for review instead of shown as an error.
+  const submit = async (label: string, write: () => Promise<{ added: Added } | Failure>, pages?: boolean, onScan?: () => void) => {
     setStatus({ state: "working", label, pages });
     const result = await write();
     if ("added" in result) { haptic("done"); setOpen(undefined); setStatus({ state: "done", added: result.added }); }
-    else { haptic("warn"); setStatus({ state: "refused", label, error: result.error, retry: result.retryable ? () => void submit(label, write, pages) : undefined, reason: result.reason }); }
+    else if (result.reason === "scan" && onScan) onScan();
+    else { haptic("warn"); setStatus({ state: "refused", label, error: result.error, retry: result.retryable ? () => void submit(label, write, pages, onScan) : undefined, reason: result.reason }); }
+  };
+
+  // Reading pages saves nothing: the doctor checks each one, then adds the checked text.
+  const readScan = async (label: string, title: string, read: () => Promise<{ read: ScanRead } | Failure>) => {
+    setStatus({ state: "working", label, pages: true });
+    const result = await read();
+    if ("read" in result) { haptic("done"); setStatus({ state: "review", title, read: result.read }); }
+    else { haptic("warn"); setStatus({ state: "refused", label, error: result.error, retry: result.retryable ? () => void readScan(label, title, read) : undefined, reason: result.reason }); }
   };
 
   // Sona's camera photographs each page and the doctor crops it straight; "What did you scan?" follows.
@@ -59,10 +72,11 @@ export function AddSourceScreen() {
     const split = splitPicked(picked.assets);
     const label = picked.assets[0]!.name;
     if ("error" in split) { haptic("warn"); setStatus({ state: "refused", label, error: split.error }); return; }
-    if ("images" in split) { void submit(label, () => add.images(scope, split.images), true); return; }
+    if ("images" in split) { void readScan(label, titleOf(label) || "Untitled pages", () => add.read({ images: split.images })); return; }
     const file = split.pdf;
     if (file.size && file.size > MAX_PDF_BYTES) { haptic("warn"); setStatus({ state: "refused", label: file.name, error: `This PDF is ${(file.size / 1048576).toFixed(1)} MB. The limit is 10 MB.` }); return; }
-    void submit(file.name, () => add.pdf(scope, { uri: file.uri, name: file.name }));
+    const title = titleOf(file.name) || "Untitled PDF";
+    void submit(file.name, () => add.pdf(scope, title, file.uri), false, () => void readScan(file.name, title, () => add.read({ pdf: file.uri })));
   };
 
   const rows = [
@@ -92,6 +106,15 @@ export function AddSourceScreen() {
       <PasteText disabled={working} onAdd={(title, text) => void submit(title, () => add.text(scope, title, text))} />
     </Disclosure>,
   ].filter(row => row !== false);
+
+  // The review takes the page's one surface until the doctor adds the checked text or cancels.
+  if (status?.state === "review") return <Screen>
+    <ScanReview read={status.read} onCancel={() => setStatus(undefined)} onAdd={async pages => {
+      const result = await add.scan(scope, status.title, status.read, pages);
+      if ("added" in result) { haptic("done"); setStatus({ state: "done", added: result.added, checked: true }); return undefined; }
+      haptic("warn"); return result.error;
+    }} />
+  </Screen>;
 
   // The native title says "Add a source"; the page opens on what adding one does.
   return <Screen>
@@ -184,6 +207,7 @@ function StatusPanel({ status, onAnother }: { status: Status; onAnother: () => v
   // The server now reads a scan with MedGemma itself, so its refusals ("no-text": nothing legible even then; "reader-off":
   // the reader is still starting) are shown in its own words, with Try again where waiting may help.
   const whose = (s: LibraryScope) => s === "me" ? "Only you can cite it." : "Everyone at your hospital can cite it.";
+  if (status.state === "review") return null;
   return <View accessibilityLiveRegion="polite" style={{ gap: 12, padding: 16, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white }}>
     <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
       <View style={{ paddingTop: 1 }}><Mark state={status.state === "working" ? "pending" : status.state === "done" ? "done" : "blocked"} size={22} /></View>
@@ -191,7 +215,7 @@ function StatusPanel({ status, onAnother }: { status: Status; onAnother: () => v
         <Text numberOfLines={2} style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>{status.state === "done" ? status.added.title : status.label}</Text>
         {status.state === "working" && <Text style={{ ...type.footnote, color: palette.muted }}>{status.pages ? "Reading pages…" : "Reading it, checking for patient details, cutting it into sections…"}</Text>}
         {status.state === "done" && <Text style={{ ...type.footnote, color: palette.muted }}>Added {status.added.sections} section{status.added.sections === 1 ? "" : "s"}{status.added.pages ? ` from ${status.added.pages} page${status.added.pages === 1 ? "" : "s"}` : ""}. {whose(status.added.scope)}</Text>}
-        {status.state === "done" && status.added.read === "scan" && <Text style={{ ...type.footnote, color: palette.muted }}>Read from a scan by MedGemma. Check the text against the original.</Text>}
+        {status.state === "done" && status.checked && <Text style={{ ...type.footnote, color: palette.muted }}>You checked the text against the original.</Text>}
         {status.state === "refused" && <Text selectable style={{ ...type.footnote, color: palette.red }}>{status.error}</Text>}
       </View>
     </View>
@@ -203,5 +227,39 @@ function StatusPanel({ status, onAnother }: { status: Status; onAnother: () => v
       {status.retry && <TextLink label="Try again" onPress={status.retry} />}
       <TextLink label="Choose something else" onPress={onAnother} />
     </View>}
+  </View>;
+}
+
+/**
+ * Review before deciding: each page MedGemma read, above the text it read, which the doctor checks and corrects.
+ * Nothing is saved until "Checked, add to library"; Cancel discards it all.
+ */
+function ScanReview({ read, onAdd, onCancel }: { read: ScanRead; onAdd: (pages: string[]) => Promise<string | undefined>; onCancel: () => void }) {
+  const [texts, setTexts] = useState(() => read.pages.map(p => p.text));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string>();
+  const n = read.pages.length;
+  const confirm = async () => {
+    const checked = scanPages(texts);
+    if ("error" in checked) { haptic("warn"); setError(checked.error); return; }
+    setSaving(true); setError(undefined);
+    const failed = await onAdd(checked.pages);
+    setSaving(false); setError(failed);
+  };
+  return <View accessibilityLiveRegion="polite" style={{ gap: 20, padding: 16, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white }}>
+    <Text style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>Check what Sona read before it is added. {n} page{n === 1 ? "" : "s"}.</Text>
+    {read.pages.map((page, i) => <View key={i} style={{ gap: 8 }}>
+      <Image source={{ uri: `data:${page.contentType};base64,${page.image}` }} resizeMode="contain" accessible accessibilityLabel={`Page ${i + 1} as uploaded`}
+        style={{ width: "100%", aspectRatio: 3 / 4, borderRadius: radius.control, backgroundColor: "rgba(20,28,40,0.05)" }} />
+      <TextInput multiline value={texts[i]} editable={!saving} placeholder="No text read on this page" placeholderTextColor={palette.placeholder}
+        onChangeText={v => setTexts(t => t.map((x, j) => (j === i ? v : x)))} accessibilityLabel={`Text Sona read on page ${i + 1}`}
+        style={{ ...field, minHeight: 140, textAlignVertical: "top" }} />
+      {page.unsure.length > 0 && <Text style={{ ...type.footnote, color: palette.amber }}>Sona was unsure of: {page.unsure.join(", ")}</Text>}
+    </View>)}
+    {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
+    <View style={{ gap: 10 }}>
+      <Action label={saving ? "Adding…" : "Checked, add to library"} disabled={saving} onPress={() => void confirm()} accessibilityLabel="Checked, add the text to the library" />
+      <Action label="Cancel" secondary disabled={saving} onPress={onCancel} accessibilityLabel="Cancel and discard what Sona read" />
+    </View>
   </View>;
 }
