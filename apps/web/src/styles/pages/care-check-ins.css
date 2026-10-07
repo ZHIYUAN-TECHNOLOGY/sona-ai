@@ -8,7 +8,7 @@
 .ci-over { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); color: var(--muted); }
 .ci-hero .field, .ci-hero .ci-muted, .reply-note, .reply-live { max-width: 70ch; }
 .ci-question { margin: 0; max-width: 34ch; font-size: var(--text-panel); line-height: 1.25; letter-spacing: var(--track-tight); }
-.ci-muted, .reply-note, .ci-state { margin: 0; color: var(--muted); }
+.ci-muted, .reply-note { margin: 0; color: var(--muted); }
 .card.ci-urgent { display: grid; gap: var(--space-4); justify-items: start; border-color: var(--red); background: var(--red-wash); }
 .ci-urgent p { margin: var(--space-2) 0 0; max-width: 70ch; }
 .ci-urgent-title { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--text-panel); color: var(--red); }
@@ -23,13 +23,16 @@
 .ci-row .list-row:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .ci-row .list-chevron { transition: transform var(--quick) var(--ease); }
 .ci-row [aria-expanded="true"] .list-chevron { transform: rotate(180deg); }
-.ci-state { flex: none; }
 .ci-detail { display: grid; gap: var(--space-2); padding: var(--space-2) var(--space-3) var(--space-4) calc(var(--space-3) * 2 + var(--avatar-md)); }
 .ci-detail p { margin: 0; }
-.ci-said { margin-left: var(--space-2); color: var(--muted); }
+.ci-reply { display: grid; gap: var(--space-1); }
+.ci-detail p, .ci-question, .ci-quote { overflow-wrap: anywhere; }
+.ci-said { color: var(--muted); font-weight: 600; }
+/* Her words were just sent; the rail shows their start, not a 1,000-character wall. */
+.ci-quote { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; }
 .ci-said-urgent { color: var(--red); font-weight: 600; }
 
 @media (max-width: 900px) { .ci-cols { grid-template-columns: 1fr; } .ci-detail { padding-left: var(--space-3); } }
 @media (prefers-reduced-motion: reduce) { .ci-row .list-chevron { transition: none; } }
 .reply-live:empty { position: absolute; }
-.ci-rail .list-caption { white-space: normal; }
+.check-ins .list-caption { white-space: normal; }
