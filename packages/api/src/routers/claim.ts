@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { searchIcd } from "@sona-ai/db/lookups";
 import { claims, encounters, icd10Codes, patients, provenance, receipts } from "@sona-ai/db/schema/clinical";
-import { INSURER, decideClaimSend, type Code, type DenialCode, type Sentence } from "@sona-ai/domain/claim";
+import { INSURER, ORGANISM_UNKNOWN, claimChecks, decideClaimSend, ivReason, withFix, type Code, type DenialCode, type Sentence } from "@sona-ai/domain/claim";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 
@@ -13,7 +13,7 @@ import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
 import { assertApprover } from "./hospital";
 import { loadEncounter, logAnswer } from "./encounter";
-import { latestNote } from "./note";
+import { latestNote, saveNote } from "./note";
 
 /**
  * Final guarantee letter, built on the visit's saved note: refused while the note leaves an insurer criterion
@@ -75,9 +75,15 @@ async function reviewedCodes(context: Context & { hospitalId: string }, encounte
 }
 
 export const claimRouter = {
-  update: protectedProcedure.input(claimUpdateSchema).handler(async ({ context: { db, hospitalId }, input }) => {
-    const { encounterId, ...patch } = input;
-    await loadEncounter(db, hospitalId, encounterId);
+  update: protectedProcedure.input(claimUpdateSchema).handler(async ({ context, input }) => {
+    const { db, hospitalId } = context;
+    const { encounterId, ivReason: why, ...patch } = input;
+    // Each fix saves its sentence to the visit's saved note as its next revision (with no note saved there is nothing to
+    // add to), and only a sentence the note does not already say, so a repeated fix adds nothing.
+    const note = await latestNote(db, hospitalId, encounterId);
+    const fixes = [...patch.organismConfirmed ? [ORGANISM_UNKNOWN] : [], ...patch.ivReasonAdded && why ? [ivReason(why)] : []]
+      .filter(f => !note.sentences.some(s => s.id === f.id && s.text === f.text));
+    if (note.revision && fixes.length) await saveNote(context, hospitalId, { encounterId, expectedRevision: note.revision, sentences: fixes.reduce(withFix, note.sentences) });
     await db.update(encounters)
       .set({ state: sql`jsonb_set(${encounters.state}, '{claim}', coalesce(${encounters.state}->'claim', '{}'::jsonb) || ${JSON.stringify(patch)}::jsonb)`, updatedAt: new Date() })
       .where(eq(encounters.id, encounterId));
@@ -142,8 +148,10 @@ export const claimRouter = {
   status: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;
     // Read together (every visit open asks); a visit outside the hospital still refuses before anything is returned.
-    const [, [claim]] = await Promise.all([loadEncounter(db, hospitalId, input.encounterId), db.select().from(claims).where(eq(claims.id, claimId(input.encounterId)))]);
-    if (!claim) return { status: "draft" as const };
+    const [note, [claim]] = await Promise.all([latestNote(db, hospitalId, input.encounterId), db.select().from(claims).where(eq(claims.id, claimId(input.encounterId)))]);
+    // The insurer's criteria read against the saved note now, so the doctor sees what is open before sending.
+    const checks = claimChecks(note.sentences);
+    if (!claim) return { status: "draft" as const, checks };
     const withInsurer = claim.status === "sent" || claim.status === "appealed";
     const link = claim.reviewToken && context.publicUrl && withInsurer ? reviewUrl(context.publicUrl, claim.reviewToken) : undefined;
     const denial = claim.denialCode && claim.denialReason && (claim.status === "denied" || claim.status === "appealed")
@@ -151,7 +159,7 @@ export const claimRouter = {
     // Who suggested the letter's codes and drafted the appeal that went, as each was frozen ("unknown" on a letter from before this was kept).
     const kept = { codes: (claim.codes as { source?: string }[])[0]?.source, appeal: (claim.appeal as { draftedBy?: string } | null)?.draftedBy };
     return { status: claim.status, approvedAt: claim.approvedAt?.toISOString(), reviewUrl: link, query: claim.status === "queried" ? claim.insurerNote ?? undefined : undefined, denial, appealedAt: claim.appealedAt?.toISOString(),
-      codedBy: originOf(kept.codes), appealDraftedBy: claim.appeal ? originOf(kept.appeal) : undefined };
+      codedBy: originOf(kept.codes), appealDraftedBy: claim.appeal ? originOf(kept.appeal) : undefined, checks };
   }),
 
   /**

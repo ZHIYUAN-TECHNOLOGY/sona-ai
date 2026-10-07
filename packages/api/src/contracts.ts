@@ -46,18 +46,22 @@ export type Observation = z.infer<typeof observationSchema>;
 export const checkInDaysSchema = z.array(z.number().int().min(1).max(30)).min(1).max(6)
   .refine(days => days.every((d, i) => i === 0 || d > days[i - 1]!), { message: "Check-in days must be unique and in order" });
 
-/** The discharge card's inline fixes: take-home medicines, follow-up, leaflet language, check-in days. */
+/** The discharge card's inline fixes: take-home medicines, follow-up, leaflet language, check-in days, the doctor's edited summary. */
 export const dischargeUpdateSchema = z.object({
   encounterId: z.string().min(1), medsConfirmed: z.boolean().optional(),
   followUp: z.enum(["1w", "2w", "4w"]).optional(), language: z.enum(["ms", "en", "zh"]).optional(),
-  checkInDays: checkInDaysSchema.optional(),
+  checkInDays: checkInDaysSchema.optional(), summary: z.string().trim().max(4000).optional(),
 });
 export type DischargeUpdate = z.infer<typeof dischargeUpdateSchema>;
 /** Discharge itself: the approved command, with the check-in days when the app sends them (else the saved pick, else the condition's). */
 export const dischargeRequestSchema = approvedCommandSchema.extend({ checkInDays: checkInDaysSchema.optional() });
 
 /** The guarantee letter's inline fixes, each adding its sentence to the note. */
-export const claimUpdateSchema = z.object({ encounterId: z.string().min(1), organismConfirmed: z.boolean().optional(), ivReasonAdded: z.boolean().optional() });
+export const claimUpdateSchema = z.object({
+  encounterId: z.string().min(1), organismConfirmed: z.boolean().optional(), ivReasonAdded: z.boolean().optional(),
+  /** The doctor's own words for why oral was not used first: the IV fix saves them, so it cannot go without them. */
+  ivReason: z.string().trim().min(1).max(500).optional(),
+}).refine(u => !u.ivReasonAdded || u.ivReason, { message: "Say why oral was not used first", path: ["ivReason"] });
 export type ClaimUpdate = z.infer<typeof claimUpdateSchema>;
 
 /** The doctor's appeal against a denied guarantee letter, as they edited it; each point cites a note sentence by id. */

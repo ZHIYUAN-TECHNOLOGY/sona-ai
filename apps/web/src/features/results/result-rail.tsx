@@ -48,7 +48,7 @@ export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }
   const earlier = series.length > 1 ? series[series.length - 2] : undefined;
   const unit = row.unit ? ` ${row.unit}` : "";
   const evidence = [
-    { icon: "flask" as const, text: `${row.patientName} · ${row.test} ${valueOf(row)}, ${row.flag ? `flagged ${row.flag} by the lab` : "no flag from the lab"}` },
+    { icon: "flask" as const, text: `${row.patientName} · ${row.test} ${valueOf(row)}, ${row.why ? `flagged ${row.flag}` : row.flag ? `flagged ${row.flag} by the lab` : "no flag from the lab"}` },
     ...(earlier ? [{ icon: "activity" as const, text: `${series.length} values on record; the one before was ${earlier.y}${unit} on ${earlier.x}` }] : []),
     // When it arrived is on the card below, and the Acknowledge button says it is waiting: neither is repeated here.
     ...(row.acknowledgedAt
@@ -62,7 +62,7 @@ export function ResultRail({ row, rows, allowed, pending, error, onAcknowledge }
         tone={row.critical ? "urgent" : isFlagged(row.flag) ? "soon" : "info"}
         title={row.critical ? "Must not be missed" : isFlagged(row.flag) ? "Needs review" : isNormal(row.flag) ? "Routine" : "Not judged yet"}
         lead={row.why ?? derived(row)}
-        meta={row.why ? "Call-now rule" : "From the lab flag"}
+        meta={!row.why ? "From the lab flag" : row.critical ? "Call-now rule" : "Usual adult range"}
         evidence={evidence}
         sources={evidence.length}
         next={!row.acknowledgedAt && allowed && !pending

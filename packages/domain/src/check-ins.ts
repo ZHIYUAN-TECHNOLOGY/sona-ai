@@ -63,13 +63,28 @@ export function checkInMessage(firstName: string, language: Language): string {
 }
 
 /**
- * The stub reader behind `classifyReply` (and the app's fixture): keywords in the three languages.
- * ponytail: a keyword rule standing in for Gemma; it cannot read negation ("no fever").
+ * A warning sign counts only when the patient says they have it now. Within one clause (split at punctuation and
+ * "and"/"but"), a match is skipped when a negation sits in the two words before it ("no fever since yesterday",
+ * "not breathless", "denies chest pain", "tak demam", "没有发烧") or the clause says it has passed right after it
+ * ("the fever has settled", "demam dah kebah", "烧退了"). "The fever is back", "breathless again" still count.
+ * ponytail: a word-window rule, not a parser; "I have not had a fever" (three words away) still reads as a mention.
+ */
+const CLAUSE_END = /[.,;!?。，；！？]|\b(?:and|but|dan|tapi|tetapi)\b|但/i;
+const NEGATED_BEFORE = /(?:\b(?:no|not|without|denies|denied|never|tiada|tak|tidak|takde|bukan)\b|n't|没有|没|不再|不|无)(?:\s+\S+){0,2}\s*$/i;
+const RESOLVED_AFTER = /^(?:'s)?\s*(?:(?:has|have|is|was)\s+)?(?:now\s+)?(?:gone|settled|stopped|resolved|subsided|went away|eased)\b|^\s*(?:dah|sudah|telah)?\s*(?:hilang|kebah|surut|reda)|^\s*(?:已经)?(?:退了|好了|没了)/i;
+const says = (pattern: RegExp, text: string) => text.split(CLAUSE_END).some((clause) =>
+  [...clause.matchAll(new RegExp(pattern.source, "gi"))].some((m) =>
+    !NEGATED_BEFORE.test(clause.slice(0, m.index)) && !RESOLVED_AFTER.test(clause.slice(m.index + m[0].length))));
+
+/**
+ * The stub reader behind `classifyReply` (and the app's fixture): keywords in the three languages, read with `says`.
+ * Words like "better" or "less" need no rule of their own: with no warning sign left, the reply is fine.
+ * ponytail: a keyword rule standing in for Gemma.
  */
 export function readReply(text: string): ReplyLabel {
-  if (/chest pain|pain in (my )?chest|sakit(\s+\S+){0,2}\s+dada|dada(\s+\S+){0,2}\s+(sakit|sesak|ketat)|cannot breathe|can't breathe|tak boleh bernafas|sesak nafas teruk|pengsan|faint|胸痛|呼吸困难|晕倒/i.test(text)) return "urgent";
+  if (says(/chest pain|pain in (my )?chest|sakit(\s+\S+){0,2}\s+dada|dada(\s+\S+){0,2}\s+(sakit|sesak|ketat)|cannot breathe|can't breathe|tak boleh bernafas|sesak nafas teruk|pengsan|faint|胸痛|呼吸困难|晕倒/i, text)) return "urgent";
   // "worse", "teruk" and "更差" cover Sona Care's quick "Worse" answer in each language.
-  return /fever|demam|发烧|breath|sesak|pain|sakit|worse|teruk|更差/i.test(text) ? "worse" : "fine";
+  return says(/fever|demam|发烧|breath|sesak|pain|sakit|worse|teruk|更差/i, text) ? "worse" : "fine";
 }
 
 const SYMPTOMS: [RegExp, string][] = [
@@ -84,7 +99,7 @@ export const reasonOf = (title: string) => title.replace(/^[^:]+:\s*/, "").repla
  */
 export function replyFlag(firstName: string, label: ReplyLabel, text: string, read?: string): { title: string; label: "worse" | "urgent"; score: number } | undefined {
   if (label === "fine") return undefined;
-  const symptom = read?.trim().toLowerCase().replace(/[.!]+$/, "") || (SYMPTOMS.find(([pattern]) => pattern.test(text))?.[1] ?? "feeling worse");
+  const symptom = read?.trim().toLowerCase().replace(/[.!]+$/, "") || (SYMPTOMS.find(([pattern]) => says(pattern, text))?.[1] ?? "feeling worse");
   // Above an unacknowledged lab result (100): a patient at home who is getting worse comes first.
   return { title: `${firstName}: ${symptom} after discharge`, label, score: label === "urgent" ? 120 : 105 };
 }

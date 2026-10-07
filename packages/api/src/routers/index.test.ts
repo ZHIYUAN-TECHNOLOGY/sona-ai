@@ -150,6 +150,25 @@ test("confirming take-home medicines and booking the follow-up through the API l
   expect(state.discharge).toMatchObject({ medsConfirmed: true, followUp: "2w", language: "en" });
 });
 
+test("discharge.plan returns the exact checks discharge.request enforces: with no waits, an unchosen follow-up still blocks both", async () => {
+  const { api, db } = await signedIn();
+  await db.update(guaranteeLetters).set({ status: "received", receivedAt: new Date() }).where(eq(guaranteeLetters.id, "gl-1042"));
+  await api.discharge.update({ encounterId: "visit-1042", medsConfirmed: true });
+  const { waits, checks, state } = await api.discharge.plan({ encounterId: "visit-1042" });
+  expect(waits).toEqual([]);
+  expect(state).toMatchObject({ medsConfirmed: true, glReceived: true });
+  expect(checks.filter(c => c.status === "blocked").map(c => c.id)).toEqual(["followup"]);
+  const refusal = await api.discharge.request(dischargeAmelia).then(() => null, (e: { data?: { blockers?: { id: string }[] } }) => e);
+  expect(refusal?.data?.blockers).toEqual(checks.filter(c => c.status === "blocked"));
+});
+
+test("the doctor's edited discharge summary is saved trimmed and comes back with the plan", async () => {
+  const { api } = await signedIn();
+  await api.discharge.update({ encounterId: "visit-1042", summary: "  Cellulitis, improving on oral antibiotics.  " });
+  expect((await api.discharge.plan({ encounterId: "visit-1042" })).state.summary).toBe("Cellulitis, improving on oral antibiotics.");
+  expect(await api.discharge.update({ encounterId: "visit-1042", summary: "x".repeat(4001) }).then(() => null, (e: { code?: string }) => e.code)).toBe("BAD_REQUEST");
+});
+
 test("a discharge approved by a blank name is refused as unapproved, before any blocker is considered", async () => {
   const { api } = await signedIn();
   const refusal = await api.discharge.request({ encounterId: "visit-1042", requestId: "r-blank", approvedBy: "   " }).then(() => null, (e: { code?: string; data?: { reason?: string } }) => e);
@@ -163,9 +182,26 @@ test("a claim is refused while the visit's saved note leaves a criterion open, a
   expect(await refused()).toEqual({ reason: "blocked", open: ["Severity score documented", "Imaging result attached"] });
   await api.note.save({ encounterId: "visit-1042", expectedRevision: 0, sentences: noteFor(EMPTY_CLAIM) });
   expect(await refused()).toEqual({ reason: "blocked", open: ["Organism documented", "Reason for IV antibiotics"] });
-  // The old switches on the claim no longer stand in for the note.
-  await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true, ivReasonAdded: true });
-  expect(await refused()).toEqual({ reason: "blocked", open: ["Organism documented", "Reason for IV antibiotics"] });
+  // The IV fix carries the doctor's own reason; without it nothing is written for them.
+  expect(await api.claim.update({ encounterId: "visit-1042", ivReasonAdded: true }).then(() => null, (e: { code?: string }) => e.code)).toBe("BAD_REQUEST");
+  expect((await api.claim.status({ encounterId: "visit-1042" })).checks?.map(c => c.status)).toEqual(["passed", "passed", "blocked", "blocked"]);
+});
+
+test("the claim's fixes save their sentences to the note as a new revision, once each, and then the claim sends", async () => {
+  const { api } = await signedIn();
+  // With no note saved there is nothing to add a sentence to.
+  await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true });
+  expect((await api.note.get({ encounterId: "visit-1042" })).revision).toBe(0);
+  await api.note.save({ encounterId: "visit-1042", expectedRevision: 0, sentences: noteFor(EMPTY_CLAIM) });
+  const fixes = { encounterId: "visit-1042", organismConfirmed: true, ivReasonAdded: true, ivReason: "vomiting on arrival, unable to keep oral tablets down." };
+  await api.claim.update(fixes);
+  await api.claim.update(fixes);
+  const note = await api.note.get({ encounterId: "visit-1042" });
+  expect(note.revision).toBe(2);
+  expect(note.sentences.slice(-2)).toEqual([ORGANISM_UNKNOWN, ivReason(fixes.ivReason)]);
+  expect((await api.claim.status({ encounterId: "visit-1042" })).checks?.every(c => c.status === "passed")).toBe(true);
+  await api.claim.send({ encounterId: "visit-1042", requestId: "c-fixed", approvedBy: "dr-aisyah" });
+  expect((await api.claim.status({ encounterId: "visit-1042" })).status).toBe("sent");
 });
 
 test("once documented, the claim is sent once; when the insurer approves, the discharge stops waiting on the guarantee letter", async () => {
