@@ -1,0 +1,72 @@
+/* A scan under review, on the whole page: the page large on the left, the text read on the right.
+   Colour carries meaning only: amber an unsure word, green a checked page, blue the current page. */
+.sr { display: flex; flex-direction: column; min-height: 100%; }
+.sr-bar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-group); }
+.sr-foot { top: auto; bottom: 0; margin-top: auto; justify-content: flex-end; flex-wrap: wrap; }
+.sr-head { flex: 1; min-width: 0; }
+.sr-head h1 { margin: 0; font-size: var(--text-title); font-weight: 600; letter-spacing: var(--track-tight); }
+.sr-head p, .sr-hint { margin: 0; color: var(--muted); font-size: var(--text-small); }
+.sr-row { display: flex; gap: var(--space-2); }
+.sr-foot .lib-error { margin: 0; font-size: var(--text-small); }
+
+.sr-body { display: grid; grid-template-columns: 58fr 42fr; gap: var(--space-4); padding: var(--space-4) 0; align-items: start; }
+
+/* The viewer: a quiet canvas frame that scrolls, the thumbnails down its side. */
+.sr-viewer { display: grid; grid-template-columns: minmax(0, 1fr) 72px; grid-template-rows: auto minmax(0, 1fr); gap: var(--space-2) var(--space-3); height: calc(100vh - 220px); min-height: 24rem; }
+.sr-viewer-bar { display: flex; align-items: center; justify-content: space-between; }
+.sr-num { font-weight: 600; font-variant-numeric: tabular-nums; }
+.sr-zoom { display: inline-flex; border: 1px solid var(--line-field); border-radius: var(--radius-control); overflow: hidden; }
+.sr-zoom-btn { min-width: var(--tap); min-height: var(--tap); padding: 0 var(--space-2); border: 0; background: var(--surface); cursor: pointer; font-variant-numeric: tabular-nums; transition: background var(--quick) var(--ease), transform var(--quick) var(--ease); }
+.sr-zoom-btn + .sr-zoom-btn { border-left: 1px solid var(--line); }
+.sr-zoom-btn:hover { background: var(--fill-hover); }
+.sr-zoom-btn:active { transform: scale(0.97); }
+.sr-zoom-btn:disabled { color: var(--placeholder); cursor: default; }
+.sr-zoom-reset { min-width: 4rem; font-size: var(--text-small); }
+.sr-stage { overflow: auto; background: var(--canvas-deep); border: 1px solid var(--line); border-radius: var(--radius-group); padding: var(--space-4); }
+.sr-stage > div { margin: 0 auto; min-width: 0; }
+.sr-stage img { display: block; width: 100%; height: auto; background: var(--surface); box-shadow: var(--shadow-card); }
+/* Page switch: an opacity settle only, no movement. */
+.sr-fade { animation: sr-fade 150ms ease-out; }
+@keyframes sr-fade { from { opacity: 0; } }
+
+.sr-thumbs { grid-row: 1 / -1; grid-column: 2; display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; overflow: auto; }
+.sr-thumb { position: relative; display: block; width: 100%; padding: 0; border: 2px solid transparent; border-radius: var(--radius-control); background: var(--surface); box-shadow: var(--edge); cursor: pointer; transition: transform var(--quick) var(--ease), border-color var(--quick) var(--ease); }
+.sr-thumb img { display: block; width: 100%; height: auto; border-radius: calc(var(--radius-control) - 2px); }
+.sr-thumb[aria-current] { border-color: var(--blue); }
+.sr-thumb-num { position: absolute; left: var(--space-1); bottom: var(--space-1); padding: 0 var(--space-1); border-radius: 4px; background: var(--ink); color: var(--surface); font-size: var(--text-overline); line-height: 16px; font-variant-numeric: tabular-nums; }
+.sr-thumb-unsure, .sr-thumb-done { position: absolute; top: var(--space-1); right: var(--space-1); display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; }
+.sr-thumb-unsure { width: 10px; height: 10px; background: var(--amber); box-shadow: 0 0 0 2px var(--surface); }
+.sr-thumb-done { background: var(--green); color: var(--surface); }
+@media (hover: hover) and (pointer: fine) { .sr-thumb:hover { transform: translateY(-2px); } }
+
+/* The text: the editor sits over a mirror with the same metrics, so highlights land under the words. */
+.sr-text { display: grid; gap: var(--space-3); align-content: start; }
+.sr-text .chip { justify-self: start; }
+.sr-editor { position: relative; min-height: 20rem; }
+.sr-editor textarea, .sr-mirror {
+  width: 100%; height: 100%; min-height: 20rem; margin: 0; padding: var(--space-3); font: inherit; line-height: var(--line-body);
+  white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--line-field); border-radius: var(--radius-control);
+  tab-size: 4;
+}
+.sr-mirror { position: absolute; inset: 0; overflow: hidden; color: transparent; background: var(--surface); border-color: transparent; }
+.sr-mirror mark { color: transparent; background: var(--amber-wash); box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 30%, transparent); border-radius: 3px; }
+.sr-editor textarea { position: relative; display: block; resize: vertical; background: transparent; color: var(--ink); }
+.sr-editor textarea::placeholder { color: var(--placeholder); }
+.sr-words { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.sr-words .chip { cursor: pointer; border: 0; transition: transform var(--quick) var(--ease); }
+.sr-words .chip:active { transform: scale(0.97); }
+.sr-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.sr-check { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap); padding: 0 var(--space-3) 0 var(--space-2); border: 1px solid var(--line-field); border-radius: var(--radius-pill); background: var(--surface); font-weight: 600; cursor: pointer; transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease), color var(--quick) var(--ease); }
+.sr-check input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.sr-check:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px; }
+.sr-check-box { display: grid; place-items: center; width: 20px; height: 20px; border: 1.5px solid var(--line-field); border-radius: 6px; color: transparent; transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease), color var(--quick) var(--ease); }
+.sr-check[data-on] { border-color: var(--green); background: var(--green-wash); color: var(--green); }
+.sr-check[data-on] .sr-check-box { background: var(--green); border-color: var(--green); color: var(--surface); }
+
+@media (max-width: 900px) {
+  .sr-body { grid-template-columns: 1fr; }
+  .sr-viewer { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; height: 70vh; }
+  .sr-thumbs { grid-row: 3; grid-column: 1; flex-direction: row; }
+  .sr-thumb { width: 56px; flex: none; }
+}
+@media (prefers-reduced-motion: reduce) { .sr-fade { animation: none; } }

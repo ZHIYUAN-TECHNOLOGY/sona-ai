@@ -58,3 +58,29 @@ export function scanPages(texts: readonly string[]): { pages: string[] } | { err
   const pages = texts.map(t => t.trim()).filter(Boolean);
   return pages.length ? { pages } : { error: "Every page is empty. Type the text of at least one page, or cancel." };
 }
+
+/**
+ * Splits `text` into runs, marking where an unsure word sits so the editor can highlight it in place.
+ * Latin words match whole (so "mg" never lights up inside "omg"); Chinese matches as a substring, since
+ * characters run together without spaces. Runs come back in text order; overlaps join.
+ */
+export function highlightSegments(text: string, unsure: readonly string[]): { text: string; unsure: boolean }[] {
+  const marks: [number, number][] = [];
+  for (const word of unsure) {
+    if (!word) continue;
+    const esc = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = /\p{Script=Han}/u.test(word) ? new RegExp(esc, "gu") : new RegExp(`(?<![\\p{L}\\p{N}])${esc}(?![\\p{L}\\p{N}])`, "giu");
+    for (const m of text.matchAll(re)) marks.push([m.index, m.index + m[0].length]);
+  }
+  marks.sort((a, b) => a[0] - b[0]);
+  const out: { text: string; unsure: boolean }[] = [];
+  let at = 0;
+  for (const [start, end] of marks) {
+    if (end <= at) continue;
+    if (start > at) out.push({ text: text.slice(at, start), unsure: false });
+    out.push({ text: text.slice(Math.max(start, at), end), unsure: true });
+    at = end;
+  }
+  if (at < text.length) out.push({ text: text.slice(at), unsure: false });
+  return out;
+}

@@ -1,7 +1,16 @@
 // @ts-ignore -- apps/web has no Bun types installed; drop this line once @types/bun is a devDependency.
 import { expect, test } from "bun:test";
 
-import { boxStyle, isStale, scanPages, splitPicked, titleOf } from "./files";
+import { boxStyle, highlightSegments, isStale, scanPages, splitPicked, titleOf } from "./files";
+
+test("unsure words are highlighted whole, Chinese by character, in text order", () => {
+  const text = "Take 5 mg omg 服用阿司匹林 daily";
+  const segs = highlightSegments(text, ["mg", "阿司", "daily"]);
+  expect(segs.filter(s => s.unsure).map(s => s.text)).toEqual(["mg", "阿司", "daily"]);
+  expect(segs.map(s => s.text).join("")).toBe(text);
+  expect(highlightSegments("nothing here", ["no"])).toEqual([{ text: "nothing here", unsure: false }]);
+  expect(highlightSegments("", ["x"])).toEqual([]);
+});
 
 test("boxes in thousandths and in fractions land on the same place", () => {
   const expected = { top: "29%", left: "26%", height: "10%", width: "8%" };

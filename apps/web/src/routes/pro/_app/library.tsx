@@ -8,7 +8,8 @@ import { Icon } from "@/components/icon";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, Field, SearchField, Select, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
-import { isStale, MAX_PAGES, messageOf, type ScanRead, scanPages, splitPicked, titleOf, toBase64 } from "@/features/library/files";
+import { isStale, MAX_PAGES, messageOf, type ScanRead, splitPicked, titleOf, toBase64 } from "@/features/library/files";
+import { ScanReviewPage } from "@/features/library/scan-review";
 import { client, orpc } from "@/lib/orpc";
 import "@/styles/pages/library.css";
 
@@ -17,8 +18,8 @@ export const Route = createFileRoute("/pro/_app/library")({ component: Page });
 type Doc = Awaited<ReturnType<typeof client.library.list>>[number];
 type Preview = Awaited<ReturnType<typeof client.library.previewArticle>>;
 type Added = Awaited<ReturnType<typeof client.library.add>>;
-/** A scan read by MedGemma, waiting for staff to check each page before anything is saved. */
-type Review = { title: string; read: ScanRead };
+/** A scan read by MedGemma, waiting for staff to check each page before anything is saved, with the upload's scope and request ID. */
+type Review = { title: string; read: ScanRead; scope: "me" | "hospital"; requestId: string };
 // "scan": pages MedGemma read from a scanned PDF or photos.
 const KIND: Record<Doc["kind"], string> = { text: "Text", pdf: "PDF", pubmed: "Article", scan: "Scan" };
 
@@ -49,6 +50,15 @@ function Page() {
   const [tab, setTab] = useState<Scope>("all");
   const [openId, setOpenId] = useState<string>();
   const remove = useMutation(orpc.library.remove.mutationOptions({ onSuccess: () => { setConfirming(undefined); return refresh(); } }));
+  // A scan under review takes the whole page; the done line waits for the Add card when the page comes back.
+  const [review, setReview] = useState<Review>();
+  const [notice, setNotice] = useState<string>();
+  const confirm = useMutation({
+    mutationFn: (pages: string[]) => client.library.addScan({ requestId: review!.requestId, scope: review!.scope, title: review!.title, source: review!.read.source, model: review!.read.model, pages }),
+    onSuccess: saved => { setNotice(`Added "${saved.title}" (${saved.sections} sections). You checked the text against the original.`); setReview(undefined); return refresh(); },
+  });
+  if (review) return <ScanReviewPage read={review.read} pending={confirm.isPending} error={confirm.isError ? messageOf(confirm.error) : undefined}
+    onConfirm={pages => confirm.mutate(pages)} onCancel={() => { setReview(undefined); confirm.reset(); }} />;
 
   const q = search.trim().toLowerCase();
   // Oldest first, so the sources to check lead the list.
@@ -89,7 +99,7 @@ function Page() {
             </Card>
           )}
           <Card title="Add a source">
-            {mayAdd ? <AddSource onAdded={refresh} /> : <p className="lib-note">Your role cannot add to the library. Ask a doctor or management.</p>}
+            {mayAdd ? <AddSource onAdded={refresh} onReview={setReview} notice={notice} /> : <p className="lib-note">Your role cannot add to the library. Ask a doctor or management.</p>}
           </Card>
         </RightRail>
       }>
@@ -123,20 +133,19 @@ function Page() {
   );
 }
 
-function AddSource({ onAdded }: { onAdded: () => unknown }) {
+/** `notice` is the done line of a scan confirmed on the review page, shown here once the card is back. */
+function AddSource({ onAdded, onReview, notice }: { onAdded: () => unknown; onReview: (review: Review) => void; notice?: string }) {
   const [mode, setMode] = useState<"text" | "pdf" | "article">("text");
   const [scope, setScope] = useState<"me" | "hospital">("hospital");
   // One ID per source, kept across retries so a retry replaces rather than duplicates.
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [preview, setPreview] = useState<Preview>();
-  const [done, setDone] = useState<string>();
-  const [review, setReview] = useState<Review>();
+  const [done, setDone] = useState(notice);
   // A PDF only turns out to be a scan once the server refuses it as text; from then on the pages are being read.
   const [scanning, setScanning] = useState(false);
-  const added = (saved: Added, checked = false) => {
-    setDone(`Added "${saved.title}" (${saved.sections} sections).${checked ? " You checked the text against the original." : ""}`);
+  const added = (saved: Added) => {
+    setDone(`Added "${saved.title}" (${saved.sections} sections).`);
     setPreview(undefined);
-    setReview(undefined);
     setRequestId(crypto.randomUUID());
     return onAdded();
   };
@@ -154,33 +163,25 @@ function AddSource({ onAdded }: { onAdded: () => unknown }) {
           try { return await client.library.addPdf({ requestId, scope, title: named, dataBase64 }); }
           catch (e) { if ((e as { data?: { reason?: string } }).data?.reason !== "scan") throw e; }
           setScanning(true);
-          return { title: named, read: await client.library.readScan({ pdf: { dataBase64 } }) };
+          return { title: named, read: await client.library.readScan({ pdf: { dataBase64 } }), scope, requestId };
         }
         const images = await Promise.all(picked.images.map(async ({ file, contentType }) => ({ dataBase64: await toBase64(file), contentType })));
-        return { title: title || titleOf(picked.images[0]!.file.name), read: await client.library.readScan({ images }) };
+        return { title: title || titleOf(picked.images[0]!.file.name), read: await client.library.readScan({ images }), scope, requestId };
       }
       if (!preview) { setPreview(await client.library.previewArticle({ ref: String(form.get("ref")) })); return undefined; }
       return client.library.importArticle({ requestId, scope, pmid: preview.pmid });
     },
     onSuccess: saved => {
       if (!saved) return;
-      if ("read" in saved) return setReview(saved);
+      if ("read" in saved) return onReview(saved);
       return added(saved);
     },
     onSettled: () => setScanning(false),
-  });
-  // The checked text, with the same request ID, scope and title as the upload.
-  const confirm = useMutation({
-    mutationFn: (pages: string[]) => client.library.addScan({ requestId, scope, title: review!.title, source: review!.read.source, model: review!.read.model, pages }),
-    onSuccess: saved => added(saved, true),
   });
   const pick = (m: typeof mode) => { setMode(m); setPreview(undefined); setDone(undefined); add.reset(); };
   // Photos are always read page by page by MedGemma, which takes a while.
   const readerOff = (add.error as { data?: { reason?: string } } | null)?.data?.reason === "reader-off";
   const reading = scanning || add.isPending && mode === "pdf" && (add.variables?.getAll("file") as File[] | undefined)?.some(f => f.type.startsWith("image/"));
-
-  if (review) return <ScanReview read={review.read} pending={confirm.isPending} error={confirm.isError ? messageOf(confirm.error) : undefined}
-    onConfirm={pages => confirm.mutate(pages)} onCancel={() => { setReview(undefined); confirm.reset(); }} />;
 
   return (
     <form className="lib-form lib-add" key={requestId + mode} onSubmit={e => { e.preventDefault(); setDone(undefined); add.mutate(new FormData(e.currentTarget)); }}>
@@ -211,43 +212,6 @@ function AddSource({ onAdded }: { onAdded: () => unknown }) {
       </div>
       {add.isError && <p className="lib-error" role="alert">{messageOf(add.error)}{readerOff && <> <Button size="sm" onClick={() => add.mutate(add.variables!)} aria-label="Try reading the pages again">Try again</Button></>}</p>}
       {done ? <p role="status"><Signal tone="done">{done}</Signal> Sona answers from it now.</p> : null}
-    </form>
-  );
-}
-
-/**
- * Review before deciding: each page MedGemma read sits beside the text it read, which staff check and correct.
- * Nothing is saved until "Checked, add to library"; Cancel discards it all.
- */
-function ScanReview({ read, pending, error, onConfirm, onCancel }: { read: ScanRead; pending: boolean; error?: string; onConfirm: (pages: string[]) => void; onCancel: () => void }) {
-  const [texts, setTexts] = useState(() => read.pages.map(p => p.text));
-  const [empty, setEmpty] = useState<string>();
-  const n = read.pages.length;
-  return (
-    <form className="lib-form" onSubmit={e => {
-      e.preventDefault();
-      const checked = scanPages(texts);
-      setEmpty("error" in checked ? checked.error : undefined);
-      if ("pages" in checked) onConfirm(checked.pages);
-    }}>
-      <p role="status"><strong>Check what Sona read before it is added.</strong> {n} page{n === 1 ? "" : "s"}.</p>
-      <ol className="lib-scan">
-        {read.pages.map((page, i) => (
-          <li key={i}>
-            <img src={`data:${page.contentType};base64,${page.image}`} alt={`Page ${i + 1} as uploaded`} />
-            <div>
-              <Field label={`Text on page ${i + 1}`}>{c => <textarea {...c} value={texts[i]} placeholder="No text read on this page" readOnly={pending}
-                onChange={e => setTexts(t => t.map((x, j) => (j === i ? e.target.value : x)))} />}</Field>
-              {page.unsure.length > 0 && <p className="lib-unsure">Sona was unsure of: {page.unsure.join(", ")}</p>}
-            </div>
-          </li>
-        ))}
-      </ol>
-      <div className="lib-row">
-        <Button type="submit" variant="primary" pending={pending} aria-label="Checked, add the text to the library">Checked, add to library</Button>
-        <Button onClick={onCancel} disabled={pending} aria-label="Cancel and discard what Sona read">Cancel</Button>
-      </div>
-      {(empty ?? error) && <p className="lib-error" role="alert">{empty ?? error}</p>}
     </form>
   );
 }
