@@ -10,6 +10,7 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, glass, Icon, pillStyle, Screen, useAccessibleEffects } from "@/components/sona/ui";
 import { JUDGE } from "@/features/live";
 import { useAddSource, type Added, type ArticlePreview, type LibraryScope } from "@/features/live/library-sync";
+import { splitPicked } from "@/features/live/picked";
 import { haptic } from "@/features/scribe/parts";
 
 /**
@@ -28,7 +29,8 @@ const SCOPES: { key: LibraryScope; label: string; icon: string; detail: string }
   { key: "hospital", label: "My hospital", icon: "building.2.fill", detail: "Every clinician at your hospital can see and cite it." },
 ];
 
-type Status = { state: "working"; label: string } | { state: "done"; added: Added } | { state: "refused"; label: string; error: string; retry?: () => void; reason?: string };
+// `pages`: photos going up, which MedGemma reads one page at a time, so the wait is longer and said so.
+type Status = { state: "working"; label: string; pages?: boolean } | { state: "done"; added: Added } | { state: "refused"; label: string; error: string; retry?: () => void; reason?: string };
 
 export function AddSourceScreen() {
   const [scope, setScope] = useState<LibraryScope>("me");
@@ -38,33 +40,38 @@ export function AddSourceScreen() {
   const add = useAddSource();
   const working = status?.state === "working";
 
-  const submit = async (label: string, write: () => Promise<{ added: Added } | { error: string; retryable: boolean; reason?: string }>) => {
-    setStatus({ state: "working", label });
+  const submit = async (label: string, write: () => Promise<{ added: Added } | { error: string; retryable: boolean; reason?: string }>, pages?: boolean) => {
+    setStatus({ state: "working", label, pages });
     const result = await write();
     if ("added" in result) { haptic("done"); setOpen(undefined); setStatus({ state: "done", added: result.added }); }
-    else { haptic("warn"); setStatus({ state: "refused", label, error: result.error, retry: result.retryable ? () => void submit(label, write) : undefined, reason: result.reason }); }
+    else { haptic("warn"); setStatus({ state: "refused", label, error: result.error, retry: result.retryable ? () => void submit(label, write, pages) : undefined, reason: result.reason }); }
   };
 
   // Sona's camera photographs each page and the doctor crops it straight; "What did you scan?" follows.
   const scan = () => { haptic("tap"); router.push({ pathname: "/library-scan", params: { scope } }); };
 
-  const pickPdf = async () => {
+  // One PDF, or up to 10 photos of printed pages in the order picked; a mix is refused in place before anything is sent.
+  const pickFiles = async () => {
     haptic("tap");
-    const picked = await DocumentPicker.getDocumentAsync({ type: "application/pdf", copyToCacheDirectory: true }).catch(() => undefined);
-    const file = picked && !picked.canceled ? picked.assets[0] : undefined;
-    if (!file) return;
+    const picked = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/jpeg", "image/png"], multiple: true, copyToCacheDirectory: true }).catch(() => undefined);
+    if (!picked || picked.canceled || !picked.assets.length) return;
     setOpen(undefined);
+    const split = splitPicked(picked.assets);
+    const label = picked.assets[0]!.name;
+    if ("error" in split) { haptic("warn"); setStatus({ state: "refused", label, error: split.error }); return; }
+    if ("images" in split) { void submit(label, () => add.images(scope, split.images), true); return; }
+    const file = split.pdf;
     if (file.size && file.size > MAX_PDF_BYTES) { haptic("warn"); setStatus({ state: "refused", label: file.name, error: `This PDF is ${(file.size / 1048576).toFixed(1)} MB. The limit is 10 MB.` }); return; }
     void submit(file.name, () => add.pdf(scope, { uri: file.uri, name: file.name }));
   };
 
   const rows = [
-    <Press key="pdf" onPress={() => void pickPdf()} disabled={working} accessibilityLabel="Upload a PDF" accessibilityHint="Opens Files to choose a PDF"
+    <Press key="pdf" onPress={() => void pickFiles()} disabled={working} accessibilityLabel="Upload a PDF or photos" accessibilityHint="Opens Files to choose a PDF, or photos of printed pages"
       style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, opacity: working ? 0.45 : 1 }}>
       <IconDisc icon="doc.richtext" />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ ...type.body, lineHeight: 22, fontWeight: "600", color: palette.ink }}>Upload a PDF</Text>
-        <Text style={{ ...type.subhead, color: palette.muted }}>A guideline, protocol or paper, up to 10 MB</Text>
+        <Text style={{ ...type.body, lineHeight: 22, fontWeight: "600", color: palette.ink }}>Upload a PDF or photos</Text>
+        <Text style={{ ...type.subhead, color: palette.muted }}>A PDF up to 10 MB, or up to 10 photos of its pages</Text>
       </View>
       <Icon name="chevron.right" size={12} color={palette.muted} />
     </Press>,
@@ -93,7 +100,7 @@ export function AddSourceScreen() {
     <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 14 }}>
       {rows.map((row, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: 60 + i * 45, distance: 8, duration: 280 })} style={i ? { borderTopWidth: 1, borderColor: glass.hairline } : undefined}>{row}</Animated.View>)}
     </Animated.View>
-    {status && <Expand><StatusPanel status={status} scope={scope} onAnother={() => setStatus(undefined)} /></Expand>}
+    {status && <Expand><StatusPanel status={status} onAnother={() => setStatus(undefined)} /></Expand>}
   </Screen>;
 }
 
@@ -173,26 +180,25 @@ function PasteText({ disabled, onAdd }: { disabled: boolean; onAdd: (title: stri
 }
 
 /** What the server is doing with the source, then what it added (or why it would not). */
-function StatusPanel({ status, scope, onAnother }: { status: Status; scope: LibraryScope; onAnother: () => void }) {
-  // A scan is not a dead end: it goes to OCR review (the reading itself is a labelled sample until the model is hosted).
-  // The judge build has no sample reading, so there a scanned PDF shows the server's refusal as it is.
-  const scan = !JUDGE && status.state === "refused" && status.reason === "no-text";
+function StatusPanel({ status, onAnother }: { status: Status; onAnother: () => void }) {
+  // The server now reads a scan with MedGemma itself, so its refusals ("no-text": nothing legible even then; "reader-off":
+  // the reader is still starting) are shown in its own words, with Try again where waiting may help.
   const whose = (s: LibraryScope) => s === "me" ? "Only you can cite it." : "Everyone at your hospital can cite it.";
   return <View accessibilityLiveRegion="polite" style={{ gap: 12, padding: 16, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white }}>
     <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
       <View style={{ paddingTop: 1 }}><Mark state={status.state === "working" ? "pending" : status.state === "done" ? "done" : "blocked"} size={22} /></View>
       <View style={{ flex: 1, gap: 3 }}>
         <Text numberOfLines={2} style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>{status.state === "done" ? status.added.title : status.label}</Text>
-        {status.state === "working" && <Text style={{ ...type.footnote, color: palette.muted }}>Reading it, checking for patient details, cutting it into sections…</Text>}
+        {status.state === "working" && <Text style={{ ...type.footnote, color: palette.muted }}>{status.pages ? "Reading pages…" : "Reading it, checking for patient details, cutting it into sections…"}</Text>}
         {status.state === "done" && <Text style={{ ...type.footnote, color: palette.muted }}>Added {status.added.sections} section{status.added.sections === 1 ? "" : "s"}{status.added.pages ? ` from ${status.added.pages} page${status.added.pages === 1 ? "" : "s"}` : ""}. {whose(status.added.scope)}</Text>}
-        {status.state === "refused" && <Text selectable style={{ ...type.footnote, color: scan ? palette.muted : palette.red }}>{scan ? "This PDF is a scan, so there is no text to read directly. OCR can read the pages for you to review." : status.error}</Text>}
+        {status.state === "done" && status.added.read === "scan" && <Text style={{ ...type.footnote, color: palette.muted }}>Read from a scan by MedGemma. Check the text against the original.</Text>}
+        {status.state === "refused" && <Text selectable style={{ ...type.footnote, color: palette.red }}>{status.error}</Text>}
       </View>
     </View>
     {status.state === "done" && <View style={{ flexDirection: "row", gap: 10 }}>
       <View style={{ flex: 1 }}><Action label="Done" onPress={() => router.back()} /></View>
       <View style={{ flex: 1 }}><Action label="Add another" secondary onPress={onAnother} /></View>
     </View>}
-    {scan && <Action label="Read it with OCR" icon="text.viewfinder" onPress={() => router.push({ pathname: "/library-ocr", params: { title: status.label.replace(/\.pdf$/i, ""), scope } })} />}
     {status.state === "refused" && <View style={{ flexDirection: "row", gap: 16 }}>
       {status.retry && <TextLink label="Try again" onPress={status.retry} />}
       <TextLink label="Choose something else" onPress={onAnother} />
