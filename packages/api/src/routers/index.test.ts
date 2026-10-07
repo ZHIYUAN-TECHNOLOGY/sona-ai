@@ -150,6 +150,25 @@ test("confirming take-home medicines and booking the follow-up through the API l
   expect(state.discharge).toMatchObject({ medsConfirmed: true, followUp: "2w", language: "en" });
 });
 
+test("discharge.plan returns the exact checks discharge.request enforces: with no waits, an unchosen follow-up still blocks both", async () => {
+  const { api, db } = await signedIn();
+  await db.update(guaranteeLetters).set({ status: "received", receivedAt: new Date() }).where(eq(guaranteeLetters.id, "gl-1042"));
+  await api.discharge.update({ encounterId: "visit-1042", medsConfirmed: true });
+  const { waits, checks, state } = await api.discharge.plan({ encounterId: "visit-1042" });
+  expect(waits).toEqual([]);
+  expect(state).toMatchObject({ medsConfirmed: true, glReceived: true });
+  expect(checks.filter(c => c.status === "blocked").map(c => c.id)).toEqual(["followup"]);
+  const refusal = await api.discharge.request(dischargeAmelia).then(() => null, (e: { data?: { blockers?: { id: string }[] } }) => e);
+  expect(refusal?.data?.blockers).toEqual(checks.filter(c => c.status === "blocked"));
+});
+
+test("the doctor's edited discharge summary is saved trimmed and comes back with the plan", async () => {
+  const { api } = await signedIn();
+  await api.discharge.update({ encounterId: "visit-1042", summary: "  Cellulitis, improving on oral antibiotics.  " });
+  expect((await api.discharge.plan({ encounterId: "visit-1042" })).state.summary).toBe("Cellulitis, improving on oral antibiotics.");
+  expect(await api.discharge.update({ encounterId: "visit-1042", summary: "x".repeat(4001) }).then(() => null, (e: { code?: string }) => e.code)).toBe("BAD_REQUEST");
+});
+
 test("a discharge approved by a blank name is refused as unapproved, before any blocker is considered", async () => {
   const { api } = await signedIn();
   const refusal = await api.discharge.request({ encounterId: "visit-1042", requestId: "r-blank", approvedBy: "   " }).then(() => null, (e: { code?: string; data?: { reason?: string } }) => e);
