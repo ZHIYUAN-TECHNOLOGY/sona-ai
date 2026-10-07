@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { appointments, encounters, patients, visitSummaries, type SummaryCheck, type SummarySource } from "@sona-ai/db/schema/clinical";
 import { and, desc, eq, gt } from "drizzle-orm";
+import { FOLLOW_UPS, type FollowUp } from "@sona-ai/domain/discharge";
 import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
@@ -43,6 +44,19 @@ export function checkSummary(text: string, input: VisitSummaryInput): SummaryChe
   ];
 }
 
+const dayIn = (at: Date) => at.toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
+const spoken = (at: Date) => at.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" });
+
+/**
+ * The follow-ups a summary may name: appointments on a later day than the visit (today's own appointment is the
+ * visit itself, not a follow-up), in words a patient reads ("Mon 12 Oct"), else the review the doctor chose at discharge.
+ */
+export function followUpsOf(coming: { kind: string; startsAt: Date }[], chosen: FollowUp | undefined, now: Date): string[] {
+  const later = coming.filter(a => dayIn(a.startsAt) > dayIn(now)).map(a => `${a.kind} on ${spoken(a.startsAt)}`);
+  const review = FOLLOW_UPS.find(f => f.id === chosen);
+  return later.length || !review ? later : [`Clinic review in about ${review.days / 7} week${review.days === 7 ? "" : "s"}`];
+}
+
 /** What the summary is drafted from: the note, the visit's medicine list (encounter state) and the patient's coming appointments. */
 async function visitInput(context: Pick<Context, "db" | "now">, hospitalId: string, encounterId: string, sections: { id: string; text: string }[]) {
   const { state } = await loadEncounter(context.db, hospitalId, encounterId);
@@ -53,7 +67,7 @@ async function visitInput(context: Pick<Context, "db" | "now">, hospitalId: stri
   const input: VisitSummaryInput = {
     sections: sections.filter(s => s.text.trim()),
     prescriptions: meds.map(m => ({ name: m.name, ...m.formulation && { detail: m.formulation }, ...m.change && { change: m.change }, ...m.from && { from: m.from } })),
-    followUps: coming.map(a => `${a.kind} on ${a.startsAt.toISOString().slice(0, 10)}`),
+    followUps: followUpsOf(coming, (state as { discharge?: { followUp?: FollowUp } }).discharge?.followUp, clockOf(context)),
   };
   return { patientId, input };
 }
