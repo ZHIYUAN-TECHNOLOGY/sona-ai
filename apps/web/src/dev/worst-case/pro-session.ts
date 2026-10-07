@@ -24,6 +24,12 @@ const summary =(i: number) => ({
   id: `vs-${i}`, kind: "visit-summary" as const, patient: { id: `p-${i}`, name: name(i) }, encounterId: `e-${i}`,
   text: "Your potassium was high, so we stopped the spironolactone.", whatChanged: [], sources: [], checks: [], origin: "model" as const, createdAt: at(i),
 });
+// Encounters for pages that open a visit from a patient id (/pro/today, /pro/schedule); /pro/patients' own file replaces it.
+// p-3 and p-9 have no visit record yet.
+const patient = (i: number) => ({
+  id: `p-${i}`, encounterId: i === 3 || i === 9 ? "" : `e-${i}`, name: name(i), initials: "CM", age: 30 + i, sex: i % 2 ? "F" : "M",
+  subtitle: "", complaint: "Chest tightness", history: [], family: "", social: "", allergies: null, medicines: [], vitals: [], sources: [], incomplete: i % 4 === 0,
+});
 const lists = <T,>(row: (i: number) => T, worst: number) => ({ worst: rows(worst, row), empty: [], one: rows(1, row), huge: rows(1000, row) });
 
 export default [
@@ -41,5 +47,6 @@ export default [
   fixture("tasks.list", lists(task, 1284)),
   fixture("results.list", lists(result, 37)),
   fixture("messages.inbox", { worst: inbox(12), empty: inbox(0), one: inbox(1), huge: inbox(1000) }),
+  fixture("patients.list", lists(patient, 40)),
   fixture("review.list", lists(summary, 3)),
 ];
