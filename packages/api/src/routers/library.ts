@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { documents, patients } from "@sona-ai/db/schema/clinical";
 import { deidentifyByRules, type IdentityKind } from "@sona-ai/domain/training";
-import { and, desc, eq, isNull, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, notInArray, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
@@ -89,7 +89,7 @@ const title = z.string().trim().min(1).max(200);
 const base64 = (min: number) => z.string().min(min).max(14_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/, "Not base64");
 const bytesOf = (b64: string) => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 /** In chunks, since spreading a whole page picture into one call overflows the stack. */
-const base64Of = (bytes: Uint8Array) => {
+export const base64Of = (bytes: Uint8Array) => {
   let s = "";
   for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return btoa(s);
@@ -167,7 +167,7 @@ export const libraryRouter = {
 
   /**
    * The hospital's shared sources and the caller's own, newest first. The hospital's patient leaflets (kind "leaflet",
-   * which Sona Care's answers read) are not a doctor's sources: they are neither listed here nor removed below.
+   * which Sona Care's answers read) and its patients' X-rays (kind "xray", routers/xray.ts) are not a doctor's sources: they are neither listed here nor removed below.
    * ponytail: nobody can see or edit the leaflets in Sona Pro yet (the seed puts them there); give them a screen of their own.
    */
   list: protectedProcedure.handler(({ context }) =>
@@ -176,7 +176,7 @@ export const libraryRouter = {
       kind: sql<"text" | "pdf" | "pubmed" | "scan">`${documents.kind}`, scope: sql<"me" | "hospital">`case when ${documents.ownerId} is null then 'hospital' else 'me' end`,
       sections: sql<number>`(select count(*)::int from chunks c where c.document_id = "documents"."id")`,
     }).from(documents)
-      .where(and(eq(documents.hospitalId, context.hospitalId), ne(documents.kind, "leaflet"), or(isNull(documents.ownerId), eq(documents.ownerId, context.session.user.id))))
+      .where(and(eq(documents.hospitalId, context.hospitalId), notInArray(documents.kind, ["leaflet", "xray"]), or(isNull(documents.ownerId), eq(documents.ownerId, context.session.user.id))))
       .orderBy(desc(documents.createdAt))),
 
   /**
@@ -187,7 +187,7 @@ export const libraryRouter = {
 
   /** Deletes a shared source of the hospital's or one of the caller's own; its sections go with it. */
   remove: protectedProcedure.input(z.object({ documentId: z.string().min(1) })).handler(async ({ context, input }) => {
-    const [gone] = await context.db.delete(documents).where(and(eq(documents.id, input.documentId), eq(documents.hospitalId, context.hospitalId), ne(documents.kind, "leaflet"), or(isNull(documents.ownerId), eq(documents.ownerId, context.session.user.id)))).returning({ id: documents.id });
+    const [gone] = await context.db.delete(documents).where(and(eq(documents.id, input.documentId), eq(documents.hospitalId, context.hospitalId), notInArray(documents.kind, ["leaflet", "xray"]), or(isNull(documents.ownerId), eq(documents.ownerId, context.session.user.id)))).returning({ id: documents.id });
     if (!gone) throw new ORPCError("NOT_FOUND", { message: `No document ${input.documentId} in your library` });
     return gone;
   }),

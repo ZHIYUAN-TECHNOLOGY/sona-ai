@@ -84,8 +84,13 @@ async function passagesFor(context: Context, hospitalId: string, question: strin
   if (!hits.length) return { passages: [], found };
   const docs = await context.db.select({ id: documents.id, title: documents.title }).from(documents).where(inArray(documents.id, hits.map(h => h.documentId)));
   const title = new Map(docs.map(d => [d.id, d.title]));
-  return { found, passages: hits.map(h => ({ id: h.sourceId, documentId: h.documentId, title: title.get(h.documentId) ?? h.tags.source, section: h.tags.section, from: h.tags.source, year: h.tags.year, text: h.text })) };
+  return { found, passages: hits.map(h => ({ id: h.sourceId, documentId: h.documentId, title: title.get(h.documentId) ?? h.tags.source, section: h.tags.section, from: h.tags.source, year: h.tags.year, text: h.text, kind: h.tags.kind })) };
 }
+type Passage = Awaited<ReturnType<typeof passagesFor>>["passages"][number];
+
+/** A passage as a numbered reference: a patient's X-ray (routers/xray.ts indexXray, id "xray:<visit>") is an image of that visit; anything else a library passage. */
+const referenceOf = ({ kind, ...p }: Passage, n: number): Reference =>
+  kind === "xray" ? { n, kind: "image", design: "Imaging", encounterId: p.documentId.slice("xray:".length), ...p } : { n, kind: "library", design: "Library", ...p };
 
 const turn = z.object({ question: z.string().trim().min(1).max(500), answer: z.string().max(4000) });
 /** A visit's question (`encounterId`: its patient's CURB-65 and the patient kept out of the search), or one asked anywhere else (no patient). */
@@ -119,7 +124,7 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   // Authored answers show their reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.
   const summary = (pmid: string) => (authored ? STUDIES.find(s => s.pmid === pmid)?.finding : undefined);
   const studies: Reference[] = articles.map((a, i) => ({ n: i + 1, id: `pmid:${a.pmid}`, kind: "study", design: a.kind, title: a.title, year: a.year, from: a.journal, text: summary(a.pmid) ?? a.conclusion, url: pubmedUrl({ pmid: a.pmid, query: a.title }), pmid: a.pmid }));
-  const references: Reference[] = [...studies, ...passages.map((p, i) => ({ n: studies.length + i + 1, kind: "library" as const, design: "Library" as const, ...p }))];
+  const references: Reference[] = [...studies, ...passages.map((p, i) => referenceOf(p, studies.length + i + 1))];
   yield { type: "step", step: "read", studies: studies.length, passages: passages.length, references } as EvidenceStep;
   // A configured model reads each study's whole abstract (the card shows its conclusion), and a quote may come from any part of it.
   const abstract = new Map(articles.map(a => [a.pmid, a.abstract]));

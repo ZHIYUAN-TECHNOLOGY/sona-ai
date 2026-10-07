@@ -11,6 +11,7 @@ import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
 import { stubModels, type Origin } from "../models";
 import { visitPrepBlock } from "./care-readings";
+import { xrayFacts } from "./xray";
 
 /**
  * Encounter state on the server. Postgres holds the snapshot and is the arbiter of revisions: every
@@ -65,16 +66,17 @@ const RESULTS_MAX = 12;
 /**
  * A patient's record as the lines a model reads, from what the briefing and its timeline read (recordOf, the chart, the
  * results): age and sex (never the name or the record number), why they came, history, allergy, medicines, the latest
- * reading of each observation and the latest results, each with its day. Nothing is told that no row holds. Only in the
+ * reading of each observation, the latest results and the X-rays with their readings (routers/xray.ts xrayFacts), each with its day. Nothing is told that no row holds. Only in the
  * caller's hospital: a patient of another hospital has no lines. Sona Care's answers (care-plan's recordText) and the
  * evidence answer's patient section (evidence.ts) read the same lines.
  */
 export async function recordFacts(db: Db, hospitalId: string, patientId: string): Promise<string[]> {
   const [row] = await db.select().from(patients).where(and(eq(patients.id, patientId), eq(patients.hospitalId, hospitalId)));
   if (!row) return [];
-  const [chart, labs] = await Promise.all([
+  const [chart, labs, films] = await Promise.all([
     db.select().from(observations).where(eq(observations.patientId, patientId)).orderBy(asc(observations.observedAt)),
     db.select().from(labResults).where(eq(labResults.patientId, patientId)).orderBy(desc(labResults.receivedAt)).limit(RESULTS_MAX),
+    xrayFacts(db, hospitalId, patientId),
   ]);
   const p = recordOf(row);
   // The last reading of each kind (rows come oldest first); a record with no chart rows keeps the vitals written at intake.
@@ -90,6 +92,7 @@ export async function recordFacts(db: Db, hospitalId: string, patientId: string)
       : p.vitals?.length ? `Observations at intake: ${p.vitals.map(v => `${v.label} ${v.value}`).join(" · ")}` : "",
     ...(labs.length ? ["Results:", ...labs.map(l => l.flag === "pending" ? `- ${l.test}: sent to the lab, result pending (${malaysiaDay(l.receivedAt)})`
       : `- ${[l.test, l.value, l.unit].filter(Boolean).join(" ")}${l.flag ? `, ${l.flag}` : ""} (${malaysiaDay(l.receivedAt)})`)] : []),
+    ...films,
     p.incomplete ? "The record is marked incomplete." : "",
   ].filter(Boolean);
 }

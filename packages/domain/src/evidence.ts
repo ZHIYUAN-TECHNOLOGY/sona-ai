@@ -24,10 +24,13 @@ export type Quote = { n: number; text: string };
  * the sentence that supports it (`quotes`, checked against the reference's own text, so the card can show the proof).
  */
 export type Claim = { text: string; cites: number[]; topic?: Topic; quotes?: Quote[] };
-/** One numbered source: PubMed studies first, then library passages. */
+/**
+ * One numbered source: PubMed studies first, then library passages. An "image" is a patient's X-ray found in the
+ * library by its reading: `encounterId` names the visit whose film the app fetches (xray.image).
+ */
 export type Reference = {
-  n: number; id: string; kind: "study" | "library"; design: StudyKind | "Library"; title: string; year: number; from?: string; text: string;
-  url?: string; pmid?: string; documentId?: string; section?: string;
+  n: number; id: string; kind: "study" | "library" | "image"; design: StudyKind | "Library" | "Imaging"; title: string; year: number; from?: string; text: string;
+  url?: string; pmid?: string; documentId?: string; section?: string; encounterId?: string;
 };
 
 export const STUDIES: Study[] = [

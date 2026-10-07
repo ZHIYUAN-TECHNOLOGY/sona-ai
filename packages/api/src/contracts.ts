@@ -27,7 +27,7 @@ export type DrugLookup = z.infer<typeof drugLookupSchema>;
 
 export const retrievalHitSchema = z.object({
   chunkId: z.string().min(1), documentId: z.string().min(1), sourceId: z.string().min(1), text: z.string(), score: z.number(),
-  tags: z.object({ source: z.string().min(1), year: z.number().int(), section: z.string().min(1), title: z.string().optional() }),
+  tags: z.object({ source: z.string().min(1), year: z.number().int(), section: z.string().min(1), title: z.string().optional(), kind: z.string().optional() }),
 });
 export type RetrievalHit = z.infer<typeof retrievalHitSchema>;
 

@@ -1,4 +1,5 @@
 import { createRouterClient } from "@orpc/server";
+import type { Context } from "@sona-ai/api/context";
 import { appRouter } from "@sona-ai/api/routers/index";
 import { hospitalMembers, hospitals, provenance } from "@sona-ai/db/schema/clinical";
 import { DEMO_HOSPITAL, seedDemo } from "@sona-ai/db/seed";
@@ -15,7 +16,7 @@ const user = (id: string) => ({
 /** PubMed unreachable, so every answer rests on the library alone. */
 const offline = (async () => { throw new Error("network unreachable"); }) as unknown as typeof fetch;
 
-async function signedIn(fetcher: typeof fetch = offline) {
+async function signedIn(fetcher: typeof fetch = offline, extra: Partial<Context> = {}) {
   const db = await createTestDb();
   await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
   await addClinician(db, "dr-aisyah");
@@ -27,7 +28,7 @@ async function signedIn(fetcher: typeof fetch = offline) {
     search: (input: Parameters<typeof search>[1]) => search(db, input, stubEmbedder),
     reindex: (hospitalId: string) => reindex(db, stubEmbedder, hospitalId),
   };
-  const as = (id: string | null) => createRouterClient(appRouter, { context: { db, session: id ? user(id) : null, library, fetch: fetcher } });
+  const as = (id: string | null) => createRouterClient(appRouter, { context: { db, session: id ? user(id) : null, library, fetch: fetcher, ...extra } });
   return { db, as, api: as("dr-aisyah") };
 }
 
@@ -169,4 +170,23 @@ test("importing while PubMed is down says so, and stores nothing", async () => {
   await expect(api.library.previewArticle({ ref: "36942789" })).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE" });
   await expect(api.library.importArticle({ requestId: "pm-1", pmid: "36942789" })).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE" });
   expect(await api.library.list()).toEqual([]);
+});
+
+test("a patient's X-ray is found by its reading, in Malay too, and comes back as an image of the visit, never as a listed source", async () => {
+  const objects = new Map<string, Uint8Array>();
+  const uploads = { put: async (key: string, bytes: Uint8Array) => { objects.set(key, bytes); }, get: async (key: string) => { const bytes = objects.get(key); return bytes ? { arrayBuffer: async () => bytes.slice().buffer } : null; } };
+  const { api, db } = await signedIn(offline, { uploads, now: () => new Date("2026-10-03T10:00:00+08:00") });
+  await api.xray.upload({ encounterId: "visit-1042", contentType: "image/png", dataBase64: Buffer.from([1]).toString("base64") });
+  await api.xray.read({ encounterId: "visit-1042" });
+  await api.findings.detect({ encounterId: "visit-1042" }); // Amelia's authored nodule and heart size
+  const hits = await search(db, { query: "pesakit dengan nodul", hospitalId: DEMO_HOSPITAL }, stubEmbedder);
+  expect(hits[0]).toMatchObject({ documentId: "xray:visit-1042", tags: { kind: "xray", source: "Imaging", year: 2026, title: "Chest X-ray: Amelia Tan, 3 Oct 2026" } });
+  // The answer hands the film back as an image reference naming the visit, with the reading as its text.
+  const r = await api.evidence.ask({ encounterId: "visit-1042", question: "Tunjukkan X-ray dada dia, ada nodul?" });
+  expect(r.references.find(x => x.kind === "image")).toMatchObject({ design: "Imaging", encounterId: "visit-1042", documentId: "xray:visit-1042", title: "Chest X-ray: Amelia Tan, 3 Oct 2026", from: "Imaging", year: 2026 });
+  expect(r.references.map(x => x.text).join("\n")).toContain("9 mm nodule, right upper zone 9 mm, right upper zone (open, CT chest due 1 Jan 2027, demo reading)");
+  // Not a doctor's source, not another hospital's, and never a patient's leaflet.
+  expect(await api.library.list()).toEqual([]);
+  expect(await search(db, { query: "nodul", hospitalId: "other" }, stubEmbedder)).toEqual([]);
+  expect(await search(db, { query: "nodul", hospitalId: DEMO_HOSPITAL, patient: true }, stubEmbedder)).toEqual([]);
 });

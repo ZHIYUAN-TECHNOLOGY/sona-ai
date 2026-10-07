@@ -44,9 +44,9 @@ export const searchedLine = (claims: Claim[], references: Reference[]) =>
 
 const DESIGN: Record<Reference["design"], [string, string]> = {
   Guideline: ["guideline", "guidelines"], Review: ["systematic review", "systematic reviews"], Trial: ["randomised trial", "randomised trials"],
-  "Narrative review": ["narrative review", "narrative reviews"], Study: ["study", "studies"], Library: ["library passage", "library passages"],
+  "Narrative review": ["narrative review", "narrative reviews"], Study: ["study", "studies"], Library: ["library passage", "library passages"], Imaging: ["X-ray", "X-rays"],
 };
-const ORDER: Reference["design"][] = ["Guideline", "Review", "Trial", "Narrative review", "Study", "Library"];
+const ORDER: Reference["design"][] = ["Guideline", "Review", "Trial", "Narrative review", "Study", "Library", "Imaging"];
 /** What the answer rests on, strongest first: "From 1 guideline and 2 randomised trials". */
 export function basis(claims: Claim[], references: Reference[]) {
   const used = cited(claims).flatMap(n => references.filter(r => r.n === n));

@@ -10,6 +10,7 @@ import { clockOf, type Context } from "../context";
 import { stubModels } from "../models";
 import { protectedProcedure } from "../index";
 import { tellPatient } from "../push";
+import { indexXray } from "./xray";
 
 /**
  * Demo flow 6: findings beyond the question an X-ray was taken for. The model only says what and
@@ -91,6 +92,7 @@ export const findingsRouter = {
       };
     // A repeat read may place the mark better (or add its box), on whichever image it read; status, rule and due date stay as they were.
     })).onConflictDoUpdate({ target: findings.id, set: { location: sql`excluded.location`, label: sql`excluded.label`, source: sql`excluded.source`, imageKey: sql`excluded.image_key` } });
+    await indexXray(context, visit.id);
     return listFindings(db, hospitalId, at, inArray(findings.id, ids));
   }),
   /**

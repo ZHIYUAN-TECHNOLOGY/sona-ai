@@ -15,7 +15,7 @@ export type Embedder = (texts: string[], as: "query" | "document") => Promise<nu
 /** Relevance score per passage for the query, higher is better (bge-reranker-v2-m3 in box ②). */
 export type Reranker = (query: string, passages: string[]) => Promise<number[]>;
 
-export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" | "leaflet" | "scan" };
+export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" | "leaflet" | "scan" | "xray" };
 
 const DIMS = 768;
 
@@ -100,7 +100,7 @@ const RRF_K = 60;
 const POOL = 50;
 const RERANK_POOL = 20; // the reranker sees the fused top 20 (the largest k)
 
-type Row = { id: string; document_id: string; source_id: string; section: string; text: string; source: string; year: number; title: string };
+type Row = { id: string; document_id: string; source_id: string; section: string; text: string; source: string; year: number; title: string; kind: string };
 
 /**
  * How a search was really made, carried on its hits: `retrieval` is "keywords" when the embedder failed and keywords
@@ -119,7 +119,7 @@ export type SearchReport = { retrieval: "hybrid" | "keywords"; ranked?: boolean 
  */
 export async function search(db: AnyDb, input: z.input<typeof searchInputSchema>, embedder: Embedder, reranker?: Reranker): Promise<RetrievalHit[] & SearchReport> {
   const { query, hospitalId, userId, k, patient } = searchInputSchema.parse(input);
-  const cols = sql`c.id, c.document_id, c.source_id, c.section, c.text, d.source, d.year, d.title`;
+  const cols = sql`c.id, c.document_id, c.source_id, c.section, c.text, d.source, d.year, d.title, d.kind`;
   // ponytail: scoped in the query, not by row-level security; add RLS policies when the Worker sets a per-request hospital.
   // A doctor's private sources are searched for that doctor only; with no caller, only shared ones.
   const scope = patient
@@ -154,7 +154,7 @@ export async function search(db: AnyDb, input: z.input<typeof searchInputSchema>
   }
   const hits = ranked.slice(0, k).map(({ row, score }) => ({
     chunkId: row.id, documentId: row.document_id, sourceId: row.source_id, text: row.text, score,
-    tags: { source: row.source, year: row.year, section: row.section, title: row.title },
+    tags: { source: row.source, year: row.year, section: row.section, title: row.title, kind: row.kind },
   }));
   // ponytail: the report rides on the array (it does not survive JSON), because `Library.search` is typed as hits alone
   // in packages/api's context; give it a `{ hits, ...report }` result when that type can change with its callers.
