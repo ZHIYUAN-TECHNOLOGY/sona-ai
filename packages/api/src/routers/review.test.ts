@@ -7,7 +7,7 @@ import { expect, test } from "bun:test";
 
 import { stubModels, type Models } from "../models";
 import { appRouter } from "./index";
-import { checkSummary } from "./review";
+import { checkSummary, followUpsOf } from "./review";
 
 const user = (id: string) => ({
   user: { id, name: id, email: `${id}@demo.test`, emailVerified: true, createdAt: new Date(), updatedAt: new Date() },
@@ -74,4 +74,14 @@ test("a failing check is reported: a medicine and a dose the visit never gave, a
   expect(Object.fromEntries(item!.checks.map(c => [c.id, c.ok]))).toEqual({ medicines: false, doses: false, sources: false, length: true });
   expect(item!.checks.find(c => c.id === "medicines")!.detail).toBe("warfarin");
   expect(checkSummary("x".repeat(1300), { sections: [], prescriptions: [], followUps: [] }).find(c => c.id === "length")!.ok).toBe(false);
+});
+
+test("a summary's follow-ups skip the visit's own appointment today, read as a patient would, and fall back to the chosen review", () => {
+  const now = new Date("2026-10-07T04:00:00Z"); // 12:00 in Malaysia
+  const today = { kind: "Clinic visit", startsAt: new Date("2026-10-07T06:34:00Z") };
+  const later = { kind: "Clinic review", startsAt: new Date("2026-10-12T01:00:00Z") };
+  expect(followUpsOf([today, later], "1w", now)).toEqual(["Clinic review on Mon 12 Oct"]);
+  expect(followUpsOf([today], "1w", now)).toEqual(["Clinic review in about 1 week"]);
+  expect(followUpsOf([today], "2w", now)).toEqual(["Clinic review in about 2 weeks"]);
+  expect(followUpsOf([today], undefined, now)).toEqual([]);
 });
