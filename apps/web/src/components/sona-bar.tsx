@@ -4,9 +4,10 @@ import { EASE_OUT, gsap, moves, useGSAP } from "@/lib/motion";
 
 import { client } from "@/lib/orpc";
 import { type Recording, startRecording } from "@/lib/recorder";
-import { plain, useSonaAsk, useSonaThinking } from "@/lib/sona";
+import { plain, useSonaAsk, useSonaPanel } from "@/lib/sona";
 import { toBase64, WAV_HEADER, WAV_RATE } from "@/lib/wav";
 
+import { Suggestions } from "./ai";
 import { SonaGlow } from "./sona-glow";
 import "@/styles/sona-bar.css";
 
@@ -61,8 +62,8 @@ const sendIcon = (
  */
 export function SonaBar({ app }: { app: "pro" | "care" }) {
   const ask = useSonaAsk();
-  // The answer lands in the page, which may be scrolled away: the bar says it is coming where the click was.
-  const thinking = useSonaThinking();
+  // While an answer is coming, a quiet line sweeps along the bar's top edge; Escape folds the answers away.
+  const { thinking, collapse } = useSonaPanel();
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState("");
@@ -137,12 +138,15 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
       className="sona-bar glass"
       data-phase={phase}
       data-open={open || undefined}
+      data-thinking={thinking || undefined}
+      aria-busy={thinking}
       onSubmit={send}
+      onKeyDown={event => { if (event.key === "Escape") collapse(); }}
       onFocus={() => setFocused(true)}
       onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
     >
       <SonaGlow app={app} listening={phase === "listening"} level={level} />
-      <p className="sona-bar-status" data-error={error ? "" : undefined} aria-live="polite">{error || STATUS[phase] || (thinking ? "Sona is thinking…" : "")}</p>
+      <p className="sona-bar-status" data-error={error ? "" : undefined} aria-live="polite">{error || STATUS[phase]}</p>
       <div className="sona-bar-row">
         <div className="sona-bar-field">
           <input
@@ -174,9 +178,7 @@ export function SonaBar({ app }: { app: "pro" | "care" }) {
       </div>
       <div className="sona-bar-more" inert={!open}>
         <div className="sona-bar-asks">
-          {questions.map(q => (
-            <button key={q} type="button" className="sona-bar-ask" onClick={() => { setError(""); ask(q); setText(""); input.current?.focus(); }}>{q}</button>
-          ))}
+          <Suggestions items={questions} label="Things to ask Sona" onPick={q => { setError(""); ask(q); setText(""); input.current?.focus(); }} />
         </div>
       </div>
     </form>

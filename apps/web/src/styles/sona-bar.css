@@ -13,9 +13,6 @@
 .sona-bar[data-open] .sona-bar-more { grid-template-rows: 1fr; }
 .sona-bar-asks { display: flex; flex-wrap: wrap; gap: var(--space-2); min-height: 0; overflow: hidden; opacity: 0; transform: translateY(12px); transition: opacity var(--quick) var(--ease), transform var(--settle) var(--ease), padding var(--settle) var(--ease); }
 .sona-bar[data-open] .sona-bar-asks { padding: var(--space-2) 0 var(--space-1); opacity: 1; transform: none; transition-delay: 80ms; }
-.sona-bar-ask { min-height: 32px; padding: 0 var(--space-3); border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--fill-field); color: var(--ink); font-size: var(--text-small); font-weight: 500; white-space: nowrap; cursor: pointer; transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease), transform var(--quick) var(--ease); }
-.sona-bar-ask:hover { background: var(--blue-wash); border-color: var(--blue); }
-.sona-bar-ask:active { transform: scale(var(--press)); }
 /* Listening: the bar itself glows with the voice, around the dithering inside it. */
 .sona-bar[data-phase="listening"] { box-shadow: 0 0 0 1px var(--blue), 0 0 calc(16px + var(--level) * 36px) rgb(36 91 204 / calc(0.18 + var(--level) * 0.3)); }
 .sona-bar:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
@@ -76,3 +73,31 @@
 .care .sona-bar-button { width: var(--tap); height: var(--tap); }
 .care .sona-bar-status { font-size: var(--text-small); }
 .care .sona-bar-hint { font-size: var(--text-body); }
+
+/* The bar's questions use the answer kit's suggestion chips. */
+.sona-bar-asks > .ai-suggestions { flex: 1; min-width: 0; }
+/* Waiting on an answer: a quiet line sweeps along the bar's top edge. Reduce Motion: the line, still. */
+.sona-bar[data-thinking]::after { content: ""; position: absolute; top: -1px; left: var(--space-5); right: var(--space-5); height: 2px; border-radius: 2px; pointer-events: none; background: linear-gradient(90deg, transparent, var(--blue), transparent) no-repeat; background-size: 40% 100%; animation: sona-sweep 1.6s var(--ease) infinite; }
+@keyframes sona-sweep { from { background-position: -70% 0; } to { background-position: 170% 0; } }
+@media (prefers-reduced-motion: reduce) { .sona-bar[data-thinking]::after { animation: none; background-size: 100% 100%; opacity: 0.5; } }
+
+/* Sona Pro's answers dock just above the bar, over the page where the question was asked. The bar's fade stays a
+   strip at the bottom; the gap opens while the bar's status plate shows, so it never covers the panel. */
+.pro .frame-bar { flex-direction: column; align-items: center; gap: var(--space-3); background-size: 100% 140px; background-position: bottom; background-repeat: no-repeat; }
+.pro .frame-bar:has(.sona-bar-status:not(:empty)) { gap: 44px; }
+.sona-dock { display: flex; flex-direction: column; width: min(640px, 100%); max-height: 60dvh; min-height: 0; border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 12px 40px rgb(29 31 35 / 0.14); transition: opacity 220ms var(--ease), transform 220ms var(--ease); }
+@starting-style { .sona-dock { opacity: 0; transform: translateY(8px); } }
+.sona-dock-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 0 var(--space-4); font-size: 12px; font-weight: 500; color: var(--muted); }
+.sona-dock-hide { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: var(--radius-control); background: none; color: var(--muted); cursor: pointer; }
+.sona-dock-hide:hover { background: var(--fill-hover); color: var(--ink); }
+:is(.sona-dock-hide, .sona-dock-pill):focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+.sona-dock-log { flex: 1; min-height: 0; }
+.sona-dock-log .ai-conversation-content { padding-top: var(--space-1); }
+.sona-dock-pill { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 14px; border-radius: var(--radius-pill); color: var(--ink); font-size: 12px; font-weight: 600; cursor: pointer; transition: transform var(--quick) var(--ease); }
+.sona-dock-pill:active { transform: scale(var(--press)); }
+.sona-dock-pill .icon { rotate: 180deg; color: var(--muted); }
+.sona-dock .ev-film { max-width: 22rem; }
+.sona-text, .sona-general { display: flex; flex-direction: column; gap: var(--space-2); }
+:is(.sona-text, .sona-general) p { margin: 0; overflow-wrap: anywhere; text-wrap: pretty; }
+.sona-note { font-size: var(--text-small); color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .sona-dock { transition: none; } }

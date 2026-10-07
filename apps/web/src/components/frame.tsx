@@ -5,7 +5,7 @@ import { formatNumber } from "@/lib/format";
 import { EASE_OUT, gsap, moves, useGSAP } from "@/lib/motion";
 
 import { signOut } from "@/lib/session";
-import { SonaAnswers, SonaProvider } from "@/lib/sona";
+import { SonaAnswers, SonaProvider, SonaThread } from "@/lib/sona";
 import type { NavGroup } from "@/nav";
 
 import { Avatar } from "./avatar";
@@ -51,13 +51,14 @@ export function Frame({ app, brand, groups, who, name, instead }: { app: "pro" |
             <div className="frame-page" ref={page}>
               {instead ?? (
                 <>
-                  <SonaAnswers />
+                  {app === "care" ? <SonaThread /> : null}
                   <Outlet />
                 </>
               )}
             </div>
           </main>
           <div className="frame-bar">
+            {app === "pro" ? <SonaAnswers /> : null}
             <SonaBar app={app} />
           </div>
         </SonaProvider>
