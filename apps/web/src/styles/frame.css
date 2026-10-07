@@ -34,11 +34,12 @@
 .frame-who-text strong { color: var(--ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .frame-out { display: inline-flex; align-items: center; gap: var(--space-2); }
 
-/* Sona Pro: one rounded shell on the pale canvas, a grouped sidebar inside it. */
-:is(.pro, .care).frame { grid-template-columns: var(--side-width) minmax(0, 1fr); padding: var(--space-3); background: var(--canvas-deep); overflow: hidden; }
-:is(.pro, .care).frame > .frame-side, :is(.pro, .care).frame > .frame-main { height: calc(100vh - 2 * var(--space-3)); background: var(--canvas); border: solid var(--surface); }
-:is(.pro, .care) .frame-side { gap: var(--space-4); padding: var(--space-4) var(--space-3); border-width: 1px 0 1px 1px; border-radius: var(--radius-shell) 0 0 var(--radius-shell); overflow: hidden; }
-:is(.pro, .care) .frame-main { border-width: 1px 1px 1px 0; border-radius: 0 var(--radius-shell) var(--radius-shell) 0; overflow: hidden; }
+/* Sona Pro and Care fill the window edge to edge (no framed shell around them, the user's call, 7 Oct): a grouped sidebar
+   and the page beside it, split by a hairline. */
+:is(.pro, .care).frame { grid-template-columns: var(--side-width) minmax(0, 1fr); height: 100dvh; padding: 0; background: var(--canvas); overflow: hidden; }
+:is(.pro, .care).frame > .frame-side, :is(.pro, .care).frame > .frame-main { height: 100dvh; background: var(--canvas); border: 0; border-radius: 0; }
+:is(.pro, .care) .frame-side { gap: var(--space-4); padding: var(--space-4) var(--space-3); overflow: hidden; }
+:is(.pro, .care) .frame-main { overflow: hidden; }
 :is(.pro, .care) .frame-brand { padding: 0 var(--space-1); font-size: 17px; letter-spacing: var(--track-tight); }
 :is(.pro, .care) .frame-groups { flex: 1; min-height: 0; gap: var(--space-3); overflow-y: auto; }
 :is(.pro, .care) .frame-group { gap: 1px; }
@@ -56,9 +57,8 @@
 :is(.pro, .care) .frame-out:disabled { opacity: 0.4; cursor: default; }
 :is(.pro, .care) .frame-out-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 :is(.pro, .care) .frame-scroll { padding: var(--space-5) var(--space-5) var(--sona-bar-clearance); }
-/* The page starts at the sidebar (not centred), and the Sona bar sits over the page column, not the window. */
-:is(.pro, .care) .frame-page { max-width: var(--page-max); margin: 0; gap: var(--gap-card); }
-:is(.pro, .care) .frame-bar { padding-right: max(var(--space-6), calc(100% - var(--page-max) - var(--space-4))); }
+/* The page takes the whole width beside the sidebar, and the Sona bar centres over it. */
+:is(.pro, .care) .frame-page { max-width: none; margin: 0; gap: var(--gap-card); }
 :is(.pro, .care) .page-header h1 { font-size: var(--text-page); line-height: 1.15; letter-spacing: var(--track-display); font-weight: 500; }
 @media (max-height: 800px) { :is(.pro, .care) .frame-link { min-height: 30px; } :is(.pro, .care) .frame-groups { gap: var(--space-2); } }
 /* Icon rail: labels leave the layout but stay for screen readers; group labels become hairlines. */
@@ -71,11 +71,10 @@
   :is(.pro, .care) .frame-group-label { height: 1px; margin: var(--space-1) var(--space-2); padding: 0; overflow: hidden; background: var(--hairline); font-size: 0; }
   :is(.pro, .care) .frame-who { flex-direction: column; padding-inline: 0; }
 }
-@media (max-width: 860px) { :is(.pro, .care).frame { grid-template-columns: minmax(0, 1fr); } :is(.pro, .care).frame > .frame-main { border-width: 1px; border-radius: var(--radius-shell); } }
+@media (max-width: 860px) { :is(.pro, .care).frame { grid-template-columns: minmax(0, 1fr); } }
 
-/* Looked at in a browser: the shell is one container (1px edge, a hairline between sidebar and page), and every group fits without the sidebar scrolling at 1440x900 and 1280x720. */
-:is(.pro, .care).frame > .frame-side { border-width: 1px 0 1px 1px; box-shadow: inset -1px 0 var(--hairline); }
-:is(.pro, .care).frame > .frame-main { border-width: 1px 1px 1px 0; }
+/* Looked at in a browser: a hairline between sidebar and page, and every group fits without the sidebar scrolling at 1440x900 and 1280x720. */
+:is(.pro, .care).frame > .frame-side { box-shadow: inset -1px 0 var(--hairline); }
 :is(.pro, .care) .frame-side { gap: var(--space-3); }
 :is(.pro, .care) .frame-groups { gap: 10px; }
 :is(.pro, .care) .frame-group-label { line-height: 14px; }
@@ -96,7 +95,7 @@
   :is(.pro, .care) .frame-who strong { font-size: inherit; }
 }
 @media (max-width: 1100px) and (max-height: 800px) { :is(.pro, .care) .frame-link { min-height: 30px; } }
-@media (max-width: 860px) { :is(.pro, .care).frame > .frame-main { border-width: 1px; } :is(.pro, .care) .frame-scroll { padding-inline: var(--space-4); } }
+@media (max-width: 860px) { :is(.pro, .care) .frame-scroll { padding-inline: var(--space-4); } }
 @media (prefers-reduced-motion: reduce) { :is(.pro, .care) .frame-link { transition: none; } :is(.pro, .care) .frame-link:active { transform: none; } }
 /* The page and the sidebar scroll without a visible scrollbar (wheel, trackpad and keys still work). */
 .frame-scroll, .frame-groups { scrollbar-width: none; }
