@@ -24,7 +24,7 @@ export function stepsSummary(sources?: number, seconds?: number) {
 
 /** The distinct kinds of an answer's sources, in a fixed order, for the stacked badges. */
 export const sourceKinds = (references: Pick<Reference, "kind">[]) =>
-  (["study", "library", "image"] as const).filter(kind => references.some(r => r.kind === kind));
+  (["study", "library", "image", "record"] as const).filter(kind => references.some(r => r.kind === kind));
 
 /** A rule answer's count line: how many rows need the clinician ("2 patients need you"). */
 export function ruleHeading(rows: { tone: RuleTone }[], noun: [string, string] = ["item", "items"]) {

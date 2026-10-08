@@ -129,26 +129,27 @@ test("with a model configured the rehearsed question is searched and written lik
   let seen: Parameters<Models["synthesiseEvidence"]>[0] | undefined;
   const models: Models = { ...stubModels, synthesiseEvidence: async input => {
     seen = input;
-    return { bottomLine: "It shortens time to stability.", claims: [{ text: "A randomised trial found prednisone shortened time to clinical stability.", cites: [1], topic: "evidence", quotes: [{ n: 1, text: RARE_HARMS }] }], followUps: ["At what dose?"], source: "model", model: "gemma-test" };
+    return { bottomLine: "It shortens time to stability.", claims: [{ text: "A randomised trial found prednisone shortened time to clinical stability.", cites: [2], topic: "evidence", quotes: [{ n: 2, text: RARE_HARMS }] }], followUps: ["At what dose?"], source: "model", model: "gemma-test" };
   } };
   const { api, db } = await signedIn(fetcher, true, models);
   const r = await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
   expect(state.calls.some(u => u.includes("esearch") && u.includes("steroids"))).toBe(true);
   // The model read the study's whole abstract (not its conclusion alone, nor the authored summary), with its journal and PMID.
   const whole = /^BACKGROUND: Clinical trials yielded[\s\S]*\nFINDINGS: [\s\S]*3·0 days[\s\S]*\nINTERPRETATION: Prednisone treatment for 7 days[^\n]*$/;
-  expect(seen).toMatchObject({ question: REHEARSED_Q, sources: [{ n: 1, design: "Trial", year: 2015, from: "Lancet", pmid: "25608756", text: expect.stringMatching(whole) }] });
+  // Her own record is source 1, ahead of the study.
+  expect(seen).toMatchObject({ question: REHEARSED_Q, sources: [{ n: 1, design: "Patient record" }, { n: 2, design: "Trial", year: 2015, from: "Lancet", pmid: "25608756", text: expect.stringMatching(whole) }] });
   expect({ source: r.source, enough: r.enough, bottomLine: r.bottomLine, followUps: r.followUps }).toEqual({ source: "gemma-test", enough: true, bottomLine: "It shortens time to stability.", followUps: ["At what dose?"] });
-  expect(bare(r.claims)).toEqual([{ text: "A randomised trial found prednisone shortened time to clinical stability.", cites: [1], topic: "evidence" }]);
+  expect(bare(r.claims)).toEqual([{ text: "A randomised trial found prednisone shortened time to clinical stability.", cites: [2], topic: "evidence" }]);
   // Its quote is from the abstract's findings: kept, because the abstract says it, while the source card still shows the conclusion.
-  expect(r.claims[0]!.quotes).toEqual([{ n: 1, text: RARE_HARMS }]);
-  expect(r.references[0]!.text).toStartWith("Prednisone treatment for 7 days");
+  expect(r.claims[0]!.quotes).toEqual([{ n: 2, text: RARE_HARMS }]);
+  expect(r.references[1]!.text).toStartWith("Prednisone treatment for 7 days");
   // With PubMed down, the saved copy is the whole abstract too.
   state.down = true;
   const offline = await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
-  expect([offline.pubmed, offline.references[0]!.text.slice(0, 31), offline.claims[0]!.quotes]).toEqual(["cached", "Prednisone treatment for 7 days", [{ n: 1, text: RARE_HARMS }]]);
-  expect(seen!.sources[0]!.text).toMatch(whole);
+  expect([offline.pubmed, offline.references[1]!.text.slice(0, 31), offline.claims[0]!.quotes]).toEqual(["cached", "Prednisone treatment for 7 days", [{ n: 2, text: RARE_HARMS }]]);
+  expect(seen!.sources[1]!.text).toMatch(whole);
   state.down = false;
-  expect(r.references.map(s => [s.pmid, s.text === STUDIES[1]!.finding])).toEqual([["25608756", false]]);
+  expect(r.references.filter(s => s.kind === "study").map(s => [s.pmid, s.text === STUDIES[1]!.finding])).toEqual([["25608756", false]]);
   expect((await db.select().from(provenance))[0]).toMatchObject({ model: "gemma-test" });
   // A suggested follow-up, word for word, is the model's too; and the stream says it is being written.
   expect((await api.evidence.ask({ encounterId: "visit-1042", question: FOLLOW_UPS[1]!.question, thread: [{ question: REHEARSED_Q, answer: "" }] })).source).toBe("gemma-test");
@@ -163,7 +164,7 @@ test("a configured model that does not answer is said as that: no claims, no aut
   const { api, db } = await signedIn(pubmed(["25608756"]).fetcher, true, models);
   for (const question of [REHEARSED_Q, "Does prednisone shorten time to stability?"]) {
     const r = await api.evidence.ask({ encounterId: "visit-1042", question });
-    expect(r).toMatchObject({ source: "fixture", waking: 12, enough: false, claims: [], followUps: [], references: [{ pmid: "25608756" }] });
+    expect(r).toMatchObject({ source: "fixture", waking: 12, enough: false, claims: [], followUps: [], references: [{ kind: "record" }, { pmid: "25608756" }] });
     expect([r.bottomLine, r.general]).toEqual([undefined, undefined]);
   }
   expect((await db.select().from(provenance)).map(p => p.model)).toEqual(["fixture", "fixture"]);
@@ -199,7 +200,7 @@ test("a model's uncited or out-of-range claims are all dropped, leaving not enou
   const thread = [{ question: "Is prednisone useful here?", answer: "A randomised trial found stability a day sooner." }];
   const r = await api.evidence.ask({ encounterId: "visit-1086", question: "What about the harms?", thread });
   expect({ claims: r.claims, enough: r.enough, source: r.source, followUps: r.followUps }).toEqual({ claims: [], enough: false, source: "gemma-test", followUps: ["a", "b", "c"] });
-  expect(seen).toMatchObject({ question: "What about the harms?", thread, sources: [{ n: 1, design: "Trial", year: 2015 }] });
+  expect(seen).toMatchObject({ question: "What about the harms?", thread, sources: [{ n: 1, design: "Patient record" }, { n: 2, design: "Trial", year: 2015 }] });
 });
 
 test("no source answers it: Gemma's general answer comes back instead, and only when no claim survives", async () => {
@@ -366,4 +367,27 @@ test("a model's answer streams part by part, each claim checked as it arrives: o
   const claim = events[4]!.type === "claim" ? events[4]!.claim : undefined;
   expect(claim).toMatchObject({ text: "Prednisone shortened time to stability.", cites: [1] });
   expect(claim?.quotes?.some(q => q.text.startsWith("An invented"))).toBeFalsy();
+});
+
+test("in a visit her own record is a numbered source: a question about her is answered and cited from it, with the visit's saved note, and her name never reaches the model", async () => {
+  // No study fits "brief me": PubMed finds nothing, so her record is the only source.
+  const { fetcher } = pubmed([]);
+  let seen: Parameters<Models["synthesiseEvidence"]>[0] | undefined;
+  const models: Models = { ...stubModels, synthesiseEvidence: async input => {
+    seen = input;
+    return { bottomLine: "A teacher with asthma and a penicillin allergy, seen for possible pneumonia.", claims: [{ text: "Her consultation suspects community-acquired pneumonia.", cites: [1], topic: "evidence", quotes: [{ n: 1, text: "possible community-acquired pneumonia." }] }], followUps: [], source: "model", model: "gemma-test" };
+  } };
+  const { api } = await signedIn(fetcher, true, models);
+  await api.note.save({ encounterId: "visit-1042", expectedRevision: 0, sentences: [{ id: "assessment", text: "Amelia Tan: possible community-acquired pneumonia." }, { id: "plan", text: "Chest X-ray today." }] });
+  const r = await api.evidence.ask({ encounterId: "visit-1042", question: "Brief me on Amelia" });
+  expect(r.references.map(s => [s.n, s.kind, s.title])).toEqual([[1, "record", "Patient record"]]);
+  expect({ enough: r.enough, cites: r.claims.map(c => c.cites), general: r.general }).toEqual({ enough: true, cites: [[1]], general: undefined });
+  // What she came with, her allergy and this visit's note, by facts, never by name.
+  const record = seen!.sources[0]!;
+  expect(record).toMatchObject({ n: 1, design: "Patient record" });
+  for (const fact of ["Came in with: Cough for five days", "Allergies: Penicillin", "Doctor's note for this visit", "possible community-acquired pneumonia. Chest X-ray today."]) expect(record.text).toContain(fact);
+  expect(`${record.text} ${seen!.question}`).not.toContain("Amelia");
+  expect(seen!.patient).toBe(record.text);
+  // Asked off a visit there is no record to cite.
+  expect((await api.evidence.ask({ question: "Brief me on Amelia" })).references).toEqual([]);
 });

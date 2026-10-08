@@ -136,19 +136,25 @@ test("the evidence answer asks Gemma with numbered sources and keeps only well-f
   expect(body.max_tokens).toBe(2000);
 });
 
-test("asked with a patient's record, the evidence prompt carries it after the sources and asks for a separate part about this patient; without one, neither", async () => {
+test("asked with a patient's record, the record is a numbered source the model answers questions about them from, and it asks for a separate part about this patient; without one, neither", async () => {
   const reply = '{"claims":[{"text":"A guideline recommends against routine steroids.","cites":[1]}],"forPatient":[{"text":"Her recorded asthma is a reason she may already be on steroids [1].","cites":[],"fact":"Asthma since childhood"},{"text":"no fact","cites":[1]}],"followUps":[]}';
   const { fetcher, calls } = fake({ [box("brain")]: chatReply(reply) });
   const input = { question: "Steroids in pneumonia?", thread: [], sources: [{ n: 1, design: "Guideline", year: 2019, title: "ATS/IDSA CAP", text: "Do not routinely use corticosteroids." }] };
-  const read = await basetenModels({ apiKey: "k", fetcher }).synthesiseEvidence({ ...input, patient: "Age 42, female.\nHistory: Asthma since childhood" });
+  // The route sends the record as a numbered source, and again as `patient` for the points it checks against it.
+  const record = "Age 42, female.\nHistory: Asthma since childhood";
+  const read = await basetenModels({ apiKey: "k", fetcher }).synthesiseEvidence({ ...input, sources: [...input.sources, { n: 2, design: "Patient record", title: "Patient record", text: record }], patient: record });
   // A point's citation is read as a claim's is (here from its own sentence); one with no fact is no point.
   expect(read).toMatchObject({ claims: [{ cites: [1] }], patientPoints: [{ text: "Her recorded asthma is a reason she may already be on steroids.", cites: [1], fact: "Asthma since childhood" }] });
   const [system, user] = JSON.parse(calls.at(-1)!.init.body as string).messages;
   expect(system.content).toContain('"forPatient"');
-  expect(user.content).toEndWith("Do not routinely use corticosteroids.\n\nPatient record:\nAge 42, female.\nHistory: Asthma since childhood");
+  expect(system.content).toContain('A question about the patient (brief me');
+  // Once, as its numbered source: never repeated after the sources.
+  expect(user.content).toEndWith("[2] (Patient record) Patient record\nAge 42, female.\nHistory: Asthma since childhood");
+  expect(user.content.split("Asthma since childhood").length).toBe(2);
   await basetenModels({ apiKey: "k", fetcher }).synthesiseEvidence(input);
   const [bare, asked] = JSON.parse(calls.at(-1)!.init.body as string).messages;
   expect(bare.content).not.toContain("forPatient");
+  expect(bare.content).toContain("Never state a fact about a patient that no source holds.");
   expect(asked.content).not.toContain("Patient record");
 });
 

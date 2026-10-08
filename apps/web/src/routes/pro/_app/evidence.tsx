@@ -150,7 +150,7 @@ function Reading({ turn, reference: r }: { turn: Turn; reference: Reference }) {
     <div className="ev-reading">
       <Chip>{r.design}</Chip>
       <section>
-        <h3>{r.kind === "study" ? "From the study" : `From the library${r.section ? ` · ${r.section}` : ""}`}</h3>
+        <h3>{r.kind === "study" ? "From the study" : r.kind === "record" ? "From the patient's record" : `From the library${r.section ? ` · ${r.section}` : ""}`}</h3>
         <p>{r.text}</p>
       </section>
       {cited.length > 0 && (
