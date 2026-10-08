@@ -5,9 +5,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/icon";
+import { ImageLoader } from "@/components/image-loader";
 import { InsightCard } from "@/components/insight-card";
 import { PageHeader } from "@/components/page";
-import { Button, Card, Chip, Field, ListCard, ListRow, Select, Signal, Skeleton } from "@/components/primitives";
+import { Button, Card, Chip, Field, ListCard, ListRow, Select, Signal } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
 import { useVisitAsk } from "@/features/evidence/ask";
 import { Compare } from "@/features/imaging/compare";
@@ -16,6 +17,7 @@ import { FilmStage, ZoomSlider } from "@/features/imaging/film-stage";
 import { filmTitle, testOf } from "@/features/imaging/films";
 import { filmUrl, onImage as readFrom } from "@/features/imaging/marks";
 import { messageOf, toBase64 } from "@/features/library/files";
+import { LOADER_COPY } from "@/lib/image-loader";
 import { client, orpc } from "@/lib/orpc";
 import { useSonaContext } from "@/lib/sona";
 import "@/styles/pages/xray.css";
@@ -83,6 +85,9 @@ function Page() {
   const shown = !data ? undefined : sent?.key === data.key ? sent.url : stored.data && stored.data.key === data.key ? filmUrl(stored.data) : undefined;
   const all = findings.data ?? [];
   const onImage = readFrom(all, data?.key);
+  // The stage's halftone: the film on its way (being sent, or fetched back), then a scan over it while a model reads it.
+  const filming = upload.isPending || (Boolean(encounterId) && !shown && (read.isFetching || (Boolean(data) && stored.isPending)));
+  const reading = Boolean(shown) && (detect.isPending || (sent?.key === data?.key && read.isFetching));
 
   const mayDetect = can(me.role, "findings.detect");
   const mayDecide = can(me.role, "findings.track");
@@ -231,21 +236,20 @@ function Page() {
             onDragOver={e => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
             onDrop={e => { e.preventDefault(); setOver(false); take(e.dataTransfer.files[0]); }}>
             {stream ? <video ref={video} className="xr-video" autoPlay playsInline muted />
-              : shown ? null : (
+              : shown || filming ? null : (
                 <div className="xr-drop">
                   <Icon name="scan" size={32} />
-                  {encounterId && (read.isPending || (hasImage && stored.isPending)) ? <Skeleton width={220} height={18} /> : (
-                    <>
-                      <strong>{!encounterId ? "Choose a patient first" : hasImage ? "This visit's X-ray could not be fetched" : mayUpload ? "Drop a chest X-ray here" : "No X-ray for this visit yet"}</strong>
-                      <span>{!encounterId ? "Then drop a chest X-ray here or choose a file."
-                        : hasImage ? "Try again, or add it again here to see it."
-                        : mayUpload ? "Or choose a file, or take a picture. PNG or JPEG."
-                        : "Only doctors can add an X-ray."}</span>
-                    </>
-                  )}
+                  <strong>{!encounterId ? "Choose a patient first" : hasImage ? "This visit's X-ray could not be fetched" : mayUpload ? "Drop a chest X-ray here" : "No X-ray for this visit yet"}</strong>
+                  <span>{!encounterId ? "Then drop a chest X-ray here or choose a file."
+                    : hasImage ? "Try again, or add it again here to see it."
+                    : mayUpload ? "Or choose a file, or take a picture. PNG or JPEG."
+                    : "Only doctors can add an X-ray."}</span>
                 </div>
               )}
-            {upload.isPending && <p className="xr-progress" role="status">Sending the image…</p>}
+            {encounterId && !stream && (
+              <ImageLoader fill state={filming ? "loading" : reading ? "reading" : "ready"}
+                messages={upload.isPending ? LOADER_COPY.upload : sent && !shown ? LOADER_COPY.read : undefined} />
+            )}
           </FilmStage>
           {upload.isError && <p className="xr-error" role="alert"><Icon name="alert" size={16} /> The image was not accepted: {messageOf(upload.error)}</p>}
           {cameraError && <p className="xr-error" role="alert">{cameraError}</p>}

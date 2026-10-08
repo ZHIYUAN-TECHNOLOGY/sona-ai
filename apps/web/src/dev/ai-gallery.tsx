@@ -3,9 +3,40 @@ import type { Claim, Reference } from "@sona-ai/domain/evidence";
 import { useEffect, useState } from "react";
 
 import { Artifact, Conversation, Notice, type Phase, Response, RuleAnswer, type RuleRow, Sources, Steps, Suggestions, Turn } from "@/components/ai";
+import { ImageLoader } from "@/components/image-loader";
 import { Button, Card, Tabs } from "@/components/primitives";
 import { SonaOrb, SonaOrbMark } from "@/components/sona-orb";
+import { LOADER_COPY, type LoaderState } from "@/lib/image-loader";
 import { BLOOM_MS, type OrbState } from "@/lib/sona-orb";
+import "@/styles/film.css";
+
+// A real chest X-ray (CC BY, apps/native/features/imaging/assets/PROVENANCE.md) and a drawn page for the loader.
+const XRAY = new URL("../../../native/features/imaging/assets/normal-pa-chest.jpg", import.meta.url).href;
+const PAGE = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400"><rect width="300" height="400" fill="#fff"/><g fill="#c9ced6">${Array.from({ length: 16 }, (_, i) => `<rect x="28" y="${48 + i * 20}" width="${i % 5 === 4 ? 140 : 244}" height="7" rx="3"/>`).join("")}</g><rect x="28" y="22" width="150" height="12" rx="4" fill="#59616b"/></svg>`)}`;
+const LOADER_STATES: { id: LoaderState | "upload"; label: string }[] = [
+  { id: "loading", label: "Loading" }, { id: "upload", label: "Sending" }, { id: "ready", label: "Ready (reveal)" }, { id: "reading", label: "Reading" }, { id: "failed", label: "Failed" },
+];
+
+/** The image loader in each state, on the film's dark ground and on the page; pick Ready after Loading to see the reveal. */
+function LoaderGallery() {
+  const [pick, setPick] = useState<LoaderState | "upload">("loading");
+  const state: LoaderState = pick === "upload" ? "loading" : pick;
+  const src = state === "ready" || state === "reading" ? XRAY : undefined;
+  return (
+    <Card title="Image loader">
+      <Tabs label="Loader state" value={pick} onChange={setPick} tabs={LOADER_STATES} />
+      <div className="pro" style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 24, padding: 24, borderRadius: 16, background: "var(--canvas)" }}>
+        <div style={{ width: 88 }}><ImageLoader className="film-thumb" src={src} state={state} alt="Chest X-ray" /></div>
+        <div style={{ width: 200 }}><ImageLoader className="film-thumb" src={src} state={state} alt="Chest X-ray" messages={pick === "upload" ? LOADER_COPY.upload : undefined} /></div>
+        <div className="xr-stage" style={{ flex: "1 1 320px", minHeight: 360 }}>
+          {src ? <img src={XRAY} alt="Chest X-ray" style={{ maxHeight: 320, borderRadius: 10 }} /> : null}
+          <ImageLoader fill state={state} messages={pick === "upload" ? LOADER_COPY.upload : undefined} />
+        </div>
+        <div style={{ width: 200 }}><ImageLoader className="film-thumb" tone="paper" src={src && PAGE} state={state} alt="A scanned page" /></div>
+      </div>
+    </Card>
+  );
+}
 
 const LONG_Q = "Amelia Tan, 67, bed 4B-12, admitted overnight with right lower lobe community-acquired pneumonia: what is her CURB-65, does she need to stay in, and when can she switch to oral antibiotics if her fever settles?";
 const REFS: Reference[] = [
@@ -77,6 +108,7 @@ export function AiGallery({ worst }: { worst?: boolean }) {
   return (
     <>
     <OrbGallery />
+    <LoaderGallery />
     <Card title="Sona answer kit">
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
         <Tabs label="Look" value={look} onChange={setLook} tabs={[{ id: "pro", label: "Pro glass" }, { id: "care", label: "Light" }]} />

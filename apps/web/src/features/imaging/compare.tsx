@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type FormEvent, useEffect, useState } from "react";
 
+import { ImageLoader } from "@/components/image-loader";
 import { Card, Chip } from "@/components/primitives";
 import { type SimilarFilm, groupFilms } from "@/features/imaging/films";
 import { FindingMarks, filmUrl, onImage } from "@/features/imaging/marks";
 import { messageOf } from "@/features/library/files";
+import { LOADER_COPY } from "@/lib/image-loader";
 import { orpc } from "@/lib/orpc";
 import "@/styles/film.css";
 
@@ -34,7 +36,7 @@ export function Compare({ encounterId, patientId, onOpen, plain }: { encounterId
         : similar.isError ? <p className="xr-error" role="alert">{messageOf(similar.error)}</p>
         : similar.data && !similar.data.indexed ? <p className="xr-note">This film is not indexed yet; re-upload to compare.</p>
         : similar.data && similar.data.films.length === 0 ? <p className="xr-note">{text ? "No films match that." : "No other films in this hospital to compare with yet."}</p>
-        : !similar.data ? <ul className="xr-films" aria-busy="true">{[0, 1, 2].map(i => <li key={i} className="xr-film"><span className="xr-thumb" /></li>)}</ul>
+        : !similar.data ? <ul className="xr-films">{[0, 1, 2].map(i => <li key={i} className="xr-film"><ImageLoader className="xr-thumb" state="loading" messages={LOADER_COPY.films} /></li>)}</ul>
         : (
           <>
             {!text && <Films title="This patient's earlier films" films={earlier} none="No earlier film for this patient." onOpen={onOpen} />}
@@ -73,7 +75,7 @@ function Films({ title, films, none, onOpen }: { title: string; films: SimilarFi
   );
 }
 
-/** The small film, fetched once it scrolls into view or is hovered; a grey box before. Films are big (up to 10 MB), so never all at once. */
+/** The small film, fetched once it scrolls into view or is hovered; Sona's halftone before. Films are big (up to 10 MB), so never all at once. */
 function Thumb({ encounterId, alt }: { encounterId: string; alt: string }) {
   const [box, setBox] = useState<HTMLElement | null>(null);
   const [seen, setSeen] = useState(false);
@@ -87,9 +89,10 @@ function Thumb({ encounterId, alt }: { encounterId: string; alt: string }) {
   const film = useQuery({ ...orpc.xray.image.queryOptions({ input }), enabled: seen, retry: false, staleTime: Infinity });
   const findings = useQuery({ ...orpc.findings.list.queryOptions({ input }), enabled: seen && Boolean(film.data), staleTime: Infinity });
   return (
-    <span ref={setBox} className="xr-thumb" onMouseEnter={() => setSeen(true)} onFocus={() => setSeen(true)}>
-      {film.data ? <><img src={filmUrl(film.data)} alt={alt} /><FindingMarks findings={onImage(findings.data ?? [], film.data.key)} /></>
-        : film.isError ? <span className="xr-note">Film not available</span> : null}
+    <span ref={setBox} onMouseEnter={() => setSeen(true)} onFocus={() => setSeen(true)}>
+      <ImageLoader className="xr-thumb" src={film.data && filmUrl(film.data)} alt={alt} state={film.isError ? "failed" : film.data ? "ready" : "loading"}>
+        {film.data && <FindingMarks findings={onImage(findings.data ?? [], film.data.key)} />}
+      </ImageLoader>
     </span>
   );
 }

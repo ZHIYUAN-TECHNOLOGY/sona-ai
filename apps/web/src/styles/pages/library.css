@@ -35,4 +35,8 @@
 .lib-pair { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem; gap: var(--space-2); }
 .lib-add textarea { min-height: 7rem; }
 .lib-add p { margin: 0; }
+/* The page being read (an ImageLoader): a 3:4 page, the photo fitted inside it. */
+.lib-scan { width: min(100%, 240px); aspect-ratio: 3 / 4; border-radius: var(--radius-control); background: var(--canvas); }
+.lib-scan .il-media { position: absolute; inset: 0; }
+.lib-scan img { width: 100%; height: 100%; object-fit: contain; }
 @container page (max-width: 720px) { .lib-title { min-width: 11rem; } }

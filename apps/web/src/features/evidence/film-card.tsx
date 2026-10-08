@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { Icon } from "@/components/icon";
+import { ImageLoader } from "@/components/image-loader";
 import { Chip } from "@/components/primitives";
 import { FilmArtifact } from "@/features/imaging/film-artifact";
 import { filmTitle, findingTone, readingOf } from "@/features/imaging/films";
@@ -14,7 +15,7 @@ import "@/styles/pages/evidence.css";
 /**
  * A patient's X-ray an answer cites, as a card that opens the film in place (FilmArtifact): a 4:5 thumbnail with the
  * findings boxed, the title line, the reading in two lines and the findings as chips. `size="thumb"` is the film alone,
- * for the Sources list's image slot. A quiet grey box stands in while the film loads; no spinner. `onPick` (the evidence
+ * for the Sources list's image slot. Sona's halftone stands in while the film loads (ImageLoader). `onPick` (the evidence
  * rail's source pick) runs on the same press; `as` and `id` place it in a list.
  */
 export function FilmCard({ as: Tag = "div", id, reference, encounterId, picked, onPick, size = "lead" }: { as?: "li" | "div"; id?: string; reference: Reference; encounterId: string; picked?: boolean; onPick?: () => void; size?: "lead" | "thumb" }) {
@@ -26,9 +27,9 @@ export function FilmCard({ as: Tag = "div", id, reference, encounterId, picked, 
   const title = filmTitle(reference.title);
   const marked = onImage(findings.data ?? [], film.data?.key);
   const thumb = (
-    <span className="film-thumb" aria-busy={film.isPending} data-failed={film.isError || undefined}>
-      {film.data ? <span><img src={filmUrl(film.data)} alt="" /><FindingMarks findings={marked} /></span> : film.isError ? "Film not available" : null}
-    </span>
+    <ImageLoader className="film-thumb" src={film.data && filmUrl(film.data)} state={film.isError ? "failed" : film.data ? "ready" : "loading"}>
+      <FindingMarks findings={marked} />
+    </ImageLoader>
   );
   return (
     <Tag id={id} className="ev-film film-holder" data-size={size}>
