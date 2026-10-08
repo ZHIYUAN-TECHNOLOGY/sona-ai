@@ -1,0 +1,300 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Where patient data goes",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      740
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Captured on a phone or browser"
+        },
+        "backend": {
+          "label": "Sona server"
+        },
+        "security": {
+          "label": "Sona Privacy"
+        },
+        "cloud": {
+          "label": "Model in Malaysia"
+        },
+        "database": {
+          "label": "Stored"
+        },
+        "external": {
+          "label": "Leaves Sona"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "audio",
+      "type": "frontend",
+      "label": "Visit audio",
+      "sublabel": "12-20 s WAV parts",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "images",
+      "type": "frontend",
+      "label": "Images",
+      "sublabel": "X-rays, scans, photos",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "words",
+      "type": "frontend",
+      "label": "Patient's words",
+      "sublabel": "messages, replies, calls",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Sona server",
+      "sublabel": "roles, access log",
+      "pos": [
+        340,
+        286
+      ],
+      "size": [
+        210,
+        80
+      ]
+    },
+    {
+      "id": "pg",
+      "type": "database",
+      "label": "Postgres",
+      "sublabel": "Neon, Singapore",
+      "pos": [
+        340,
+        60
+      ],
+      "size": [
+        210,
+        72
+      ]
+    },
+    {
+      "id": "insurer",
+      "type": "external",
+      "label": "Insurer page",
+      "sublabel": "codes + note sentences",
+      "pos": [
+        660,
+        60
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "speech",
+      "type": "cloud",
+      "label": "Sona Speech",
+      "sublabel": "audio in memory only",
+      "pos": [
+        980,
+        170
+      ],
+      "size": [
+        240,
+        72
+      ]
+    },
+    {
+      "id": "med",
+      "type": "cloud",
+      "label": "Sona Med + Vision",
+      "sublabel": "notes, codes, replies, reads",
+      "pos": [
+        980,
+        290
+      ],
+      "size": [
+        240,
+        72
+      ]
+    },
+    {
+      "id": "privacy",
+      "type": "security",
+      "label": "Sona Privacy",
+      "sublabel": "rules, + OpenMed for training",
+      "pos": [
+        660,
+        440
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "database",
+      "label": "R2 uploads",
+      "sublabel": "images, training JSONL",
+      "pos": [
+        340,
+        600
+      ],
+      "size": [
+        210,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "audio-server",
+      "from": "audio",
+      "to": "server",
+      "label": "base64 part",
+      "variant": "emphasis"
+    },
+    {
+      "id": "images-server",
+      "from": "images",
+      "to": "server",
+      "label": "bytes",
+      "labelAt": [
+        265,
+        326
+      ]
+    },
+    {
+      "id": "words-server",
+      "from": "words",
+      "to": "server",
+      "label": "text, audio"
+    },
+    {
+      "id": "server-pg",
+      "from": "server",
+      "to": "pg",
+      "label": "records, notes, transcripts",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pg-insurer",
+      "from": "pg",
+      "to": "insurer",
+      "label": "frozen claim"
+    },
+    {
+      "id": "server-speech",
+      "from": "server",
+      "to": "speech",
+      "label": "audio, not stored",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelSegment": 2
+    },
+    {
+      "id": "server-med",
+      "from": "server",
+      "to": "med",
+      "label": "as written",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelDx": 140
+    },
+    {
+      "id": "server-privacy",
+      "from": "server",
+      "to": "privacy",
+      "label": "evidence, training, scans",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "privacy-med",
+      "from": "privacy",
+      "to": "med",
+      "label": "unnamed",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "privacy-r2",
+      "from": "privacy",
+      "to": "r2",
+      "label": "de-identified",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "server-r2",
+      "from": "server",
+      "to": "r2",
+      "label": "images",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 150
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Not kept",
+      "items": [
+        "Visit audio: never written by the server or the speech box",
+        "The phone deletes each part once it is transcribed",
+        "Scanned library pages: only the staff-checked text is kept"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Kept, worth knowing",
+      "items": [
+        "Transcript turns are kept with the note draft (provenance)",
+        "Most model calls get text as written: notes, codes, appeals, replies",
+        "X-rays and scans stay in R2; check-in pushes go via Expo, the 999 one with the first name"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Residency today",
+      "items": [
+        "Models: Malaysia. Postgres: Singapore. Worker, R2: Cloudflare",
+        "Staging holds synthetic patients only"
+      ]
+    }
+  ]
+}

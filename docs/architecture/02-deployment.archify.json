@@ -1,0 +1,330 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sona deployment on staging",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      740
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Client"
+        },
+        "backend": {
+          "label": "Sona server"
+        },
+        "messagebus": {
+          "label": "Durable Objects"
+        },
+        "database": {
+          "label": "Storage"
+        },
+        "cloud": {
+          "label": "SageMaker endpoint"
+        },
+        "security": {
+          "label": "Sona Privacy (Lambda)"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "clients",
+      "type": "frontend",
+      "label": "Clients",
+      "sublabel": "2 iPhone apps, 2 web portals",
+      "pos": [
+        40,
+        318
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker \"server\"",
+      "sublabel": "Hono, oRPC, web assets",
+      "tag": "crons: hourly, 02:00 MYT",
+      "pos": [
+        340,
+        318
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "dos",
+      "type": "messagebus",
+      "label": "Durable Objects",
+      "sublabel": "2 live channels, 4 agents",
+      "pos": [
+        340,
+        110
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "database",
+      "label": "R2 \"uploads\"",
+      "sublabel": "X-rays, scans, photos, JSONL",
+      "pos": [
+        340,
+        540
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "neon",
+      "type": "database",
+      "label": "Neon Postgres",
+      "sublabel": "sona-ai-staging, pgvector",
+      "pos": [
+        40,
+        560
+      ],
+      "size": [
+        210,
+        72
+      ]
+    },
+    {
+      "id": "brain",
+      "type": "cloud",
+      "label": "sona-brain",
+      "sublabel": "Gemma 4 26B A4B INT4 \u00b7 g6.2xl",
+      "pos": [
+        900,
+        40
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "laya",
+      "type": "cloud",
+      "label": "sona-laya",
+      "sublabel": "Laya router \u00b7 c6i.large CPU",
+      "pos": [
+        900,
+        150
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "voice",
+      "type": "cloud",
+      "label": "sona-voice",
+      "sublabel": "ASR, diarizer, TTS, rerank \u00b7 g6.2xl",
+      "pos": [
+        900,
+        260
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "xray",
+      "type": "cloud",
+      "label": "sona-xray",
+      "sublabel": "MedGemma 1.5 4B FP8 \u00b7 g6.xl",
+      "pos": [
+        900,
+        370
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "embed",
+      "type": "cloud",
+      "label": "sona-embed",
+      "sublabel": "EmbeddingGemma + BiomedCLIP \u00b7 c6i.xl",
+      "pos": [
+        900,
+        480
+      ],
+      "size": [
+        320,
+        64
+      ]
+    },
+    {
+      "id": "pii",
+      "type": "security",
+      "label": "sona-pii",
+      "sublabel": "OpenMed PII 560M \u00b7 Lambda 6 GB",
+      "pos": [
+        900,
+        590
+      ],
+      "size": [
+        320,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cloudflare global network",
+      "wraps": [
+        "dos",
+        "worker",
+        "r2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Neon \u00b7 AWS ap-southeast-1 Singapore",
+      "wraps": [
+        "neon"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS ap-southeast-5 Malaysia",
+      "wraps": [
+        "brain",
+        "laya",
+        "voice",
+        "xray",
+        "embed",
+        "pii"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clients-worker",
+      "from": "clients",
+      "to": "worker",
+      "label": "HTTPS + WSS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "worker-dos",
+      "from": "worker",
+      "to": "dos",
+      "label": "stub calls",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        490,
+        250
+      ]
+    },
+    {
+      "id": "worker-r2",
+      "from": "worker",
+      "to": "r2",
+      "label": "binding",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        490,
+        465
+      ]
+    },
+    {
+      "id": "worker-neon",
+      "from": "worker",
+      "to": "neon",
+      "label": "SQL over HTTPS",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "worker-brain",
+      "from": "worker",
+      "to": "brain",
+      "label": "SigV4 invoke",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelSegment": 2
+    },
+    {
+      "id": "worker-laya",
+      "from": "worker",
+      "to": "laya",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "worker-voice",
+      "from": "worker",
+      "to": "voice",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "worker-xray",
+      "from": "worker",
+      "to": "xray",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "worker-embed",
+      "from": "worker",
+      "to": "embed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "worker-pii",
+      "from": "worker",
+      "to": "pii",
+      "label": "Lambda Invoke",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelSegment": 2
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "In Malaysia today",
+      "items": [
+        "All six model hosts: SageMaker and Lambda, ap-southeast-5",
+        "GPU endpoints are deleted between sessions; sona-embed stays up"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Not in Malaysia yet",
+      "items": [
+        "Database: Neon in Singapore",
+        "Worker, Durable Objects and R2: Cloudflare, no region pin",
+        "Staging only, synthetic patients"
+      ]
+    }
+  ]
+}

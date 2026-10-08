@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sona system context",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      720
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Person or outside system"
+        },
+        "frontend": {
+          "label": "Sona app"
+        },
+        "backend": {
+          "label": "Sona server"
+        },
+        "cloud": {
+          "label": "Sona models"
+        },
+        "database": {
+          "label": "Storage"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "staff",
+      "type": "external",
+      "label": "Hospital staff",
+      "sublabel": "doctor, nurse, bed manager",
+      "tag": "+ management",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "patient",
+      "type": "external",
+      "label": "Patient",
+      "sublabel": "after discharge",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "insurer",
+      "type": "external",
+      "label": "Insurer",
+      "sublabel": "no login, one link",
+      "pos": [
+        40,
+        560
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pro",
+      "type": "frontend",
+      "label": "Sona Pro",
+      "sublabel": "iPhone + web /pro",
+      "tag": "email + password",
+      "pos": [
+        290,
+        110
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "care",
+      "type": "frontend",
+      "label": "Sona Care",
+      "sublabel": "iPhone + web /care",
+      "tag": "phone OTP, Apple, Google",
+      "pos": [
+        290,
+        326
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "email",
+      "type": "external",
+      "label": "Cloudflare Email",
+      "sublabel": "to INSURER_EMAIL",
+      "pos": [
+        290,
+        560
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Sona server",
+      "sublabel": "Cloudflare Worker, oRPC",
+      "tag": "roles, access log, agents",
+      "pos": [
+        580,
+        318
+      ],
+      "size": [
+        200,
+        84
+      ]
+    },
+    {
+      "id": "models",
+      "type": "cloud",
+      "label": "Sona models",
+      "sublabel": "AWS Malaysia",
+      "tag": "Med, Vision, Speech, Voice, Privacy",
+      "pos": [
+        1000,
+        90
+      ],
+      "size": [
+        240,
+        72
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Neon Postgres",
+      "sublabel": "Singapore, pgvector",
+      "pos": [
+        1000,
+        220
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "pubmed",
+      "type": "external",
+      "label": "PubMed E-utilities",
+      "sublabel": "NCBI, public abstracts",
+      "pos": [
+        1000,
+        328
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "push",
+      "type": "external",
+      "label": "Expo push",
+      "sublabel": "exp.host, patients only",
+      "pos": [
+        1000,
+        460
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "lab",
+      "type": "external",
+      "label": "Lab system",
+      "sublabel": "POST /lab/results",
+      "tag": "shared secret",
+      "pos": [
+        1000,
+        580
+      ],
+      "size": [
+        240,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "staff-pro",
+      "from": "staff",
+      "to": "pro",
+      "label": "uses"
+    },
+    {
+      "id": "patient-care",
+      "from": "patient",
+      "to": "care",
+      "label": "uses"
+    },
+    {
+      "id": "pro-server",
+      "from": "pro",
+      "to": "server",
+      "label": "RPC + /live",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top",
+      "labelSegment": 0
+    },
+    {
+      "id": "care-server",
+      "from": "care",
+      "to": "server",
+      "label": "RPC + voice call",
+      "variant": "emphasis"
+    },
+    {
+      "id": "server-email",
+      "from": "server",
+      "to": "email",
+      "label": "GL + link"
+    },
+    {
+      "id": "email-insurer",
+      "from": "email",
+      "to": "insurer",
+      "label": "email"
+    },
+    {
+      "id": "insurer-server",
+      "from": "insurer",
+      "to": "server",
+      "label": "/insurer/token",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          135,
+          680
+        ],
+        [
+          680,
+          680
+        ]
+      ]
+    },
+    {
+      "id": "server-models",
+      "from": "server",
+      "to": "models",
+      "label": "SigV4",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelSegment": 2
+    },
+    {
+      "id": "server-db",
+      "from": "server",
+      "to": "db",
+      "label": "SQL, HTTPS",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelSegment": 2
+    },
+    {
+      "id": "server-pubmed",
+      "from": "server",
+      "to": "pubmed",
+      "label": "search",
+      "labelAt": [
+        945,
+        360
+      ]
+    },
+    {
+      "id": "server-push",
+      "from": "server",
+      "to": "push",
+      "label": "check-ins",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelSegment": 2
+    },
+    {
+      "id": "lab-server",
+      "from": "lab",
+      "to": "server",
+      "label": "results",
+      "fromSide": "left",
+      "toSide": "right",
+      "labelSegment": 0
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Who uses what",
+      "items": [
+        "Staff roles: doctor, nurse, bed-manager, management",
+        "Patients sign in to Sona Care, linked by care_links",
+        "Insurers get a 7-day link that decides once"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Staging only",
+      "items": [
+        "Synthetic patients, demo hospital",
+        "No live hospital system is connected",
+        "Lab feed is an endpoint; no real lab is connected"
+      ]
+    }
+  ]
+}

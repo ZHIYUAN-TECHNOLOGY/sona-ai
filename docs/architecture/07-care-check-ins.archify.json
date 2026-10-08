@@ -1,0 +1,205 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Sona Care check-ins and care-team tasks",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Doctor or nurse"
+        },
+        "messagebus": {
+          "label": "CheckInAgent (Durable Object)"
+        },
+        "backend": {
+          "label": "Sona server"
+        },
+        "cloud": {
+          "label": "Sona Med"
+        },
+        "frontend": {
+          "label": "Patient, Sona Care"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "staff",
+      "label": "Sona Pro \u00b7 care team"
+    },
+    {
+      "id": "server",
+      "label": "Sona server"
+    },
+    {
+      "id": "patient",
+      "label": "Sona Care \u00b7 patient"
+    }
+  ],
+  "mainPath": [
+    "discharge",
+    "schedule",
+    "agent",
+    "push",
+    "reply",
+    "classify",
+    "task",
+    "book"
+  ],
+  "nodes": [
+    {
+      "id": "discharge",
+      "lane": "staff",
+      "col": 0,
+      "type": "security",
+      "label": "Discharge",
+      "sublabel": "check-in days chosen",
+      "width": 150
+    },
+    {
+      "id": "schedule",
+      "lane": "server",
+      "col": 0,
+      "type": "backend",
+      "label": "Check-ins",
+      "sublabel": "10:00 MYT, e.g. day 2, 7",
+      "width": 160
+    },
+    {
+      "id": "agent",
+      "lane": "server",
+      "col": 1,
+      "type": "messagebus",
+      "label": "CheckInAgent",
+      "sublabel": "alarm, hourly cron, clock jump",
+      "width": 180
+    },
+    {
+      "id": "push",
+      "lane": "patient",
+      "col": 2,
+      "type": "frontend",
+      "label": "Check-in push",
+      "sublabel": "re-asked after 2 h silence",
+      "width": 170
+    },
+    {
+      "id": "reply",
+      "lane": "patient",
+      "col": 3,
+      "type": "frontend",
+      "label": "Reply",
+      "sublabel": "typed or spoken",
+      "width": 140
+    },
+    {
+      "id": "classify",
+      "lane": "server",
+      "col": 3,
+      "type": "cloud",
+      "label": "fine, worse, urgent",
+      "sublabel": "Gemma + red-flag words",
+      "width": 170
+    },
+    {
+      "id": "call999",
+      "lane": "patient",
+      "col": 4,
+      "type": "frontend",
+      "label": "Call 999 message",
+      "sublabel": "urgent only, + push",
+      "width": 160
+    },
+    {
+      "id": "task",
+      "lane": "staff",
+      "col": 4,
+      "type": "security",
+      "label": "Care-team task",
+      "sublabel": "owner: Attending doctor",
+      "width": 170
+    },
+    {
+      "id": "book",
+      "lane": "staff",
+      "col": 5,
+      "type": "security",
+      "label": "Book in",
+      "sublabel": "appointment + push",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "discharge-schedule",
+      "from": "discharge",
+      "to": "schedule",
+      "role": "main",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "schedule-agent",
+      "from": "schedule",
+      "to": "agent",
+      "label": "tick",
+      "role": "main"
+    },
+    {
+      "id": "agent-push",
+      "from": "agent",
+      "to": "push",
+      "label": "due",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "push-reply",
+      "from": "push",
+      "to": "reply",
+      "role": "main"
+    },
+    {
+      "id": "reply-classify",
+      "from": "reply",
+      "to": "classify",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "classify-task",
+      "from": "classify",
+      "to": "task",
+      "label": "worse or urgent",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "id": "classify-999",
+      "from": "classify",
+      "to": "call999",
+      "label": "urgent",
+      "variant": "security",
+      "role": "branch"
+    },
+    {
+      "id": "task-book",
+      "from": "task",
+      "to": "book",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Agent decisions (decideFollowUp)",
+      "items": [
+        "Re-ask the latest check-in after 2-24 h of silence",
+        "After worse: bring the next check-in forward to tomorrow",
+        "Demo clock: hospitals.clock_offset_ms moves 'now' for every route"
+      ]
+    }
+  ]
+}
