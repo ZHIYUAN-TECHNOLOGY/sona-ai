@@ -18,6 +18,8 @@ Each document has an explorable HTML diagram (light and dark, pan, zoom, search,
 | 08 | [Model seam and fallbacks](08-model-layer.md) · [diagram](08-model-layer.html) | How routes reach models, what happens when one is down, model names | Architecture | 8 Oct 2026, `cd76571b` |
 | 09 | [Evidence answers with citations](09-retrieval-evidence.md) · [diagram](09-retrieval-evidence.html) | Hybrid retrieval, reranking, PubMed, citation checks, X-ray similarity | Architecture | 8 Oct 2026, `cd76571b` |
 
+**Also in Sona Pro's brand:** the same nine diagrams redrawn with the diagram-design skill, light and dark, in [diagram-design/](diagram-design/README.md).
+
 Sona Care (the brief's item 6) is split into 06 and 07 because the live call and the check-in agent are separate mechanisms.
 
 ## Files

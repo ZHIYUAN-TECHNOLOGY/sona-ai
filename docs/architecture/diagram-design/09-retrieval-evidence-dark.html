@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evidence answers with citations</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:       #1d1f23;
+      --color-paper-2:     #2a2d33;
+      --color-ink:         #f5f6f8;
+      --color-muted:       #b4bac4;
+      --color-soft:        #8a929e;
+      --color-rule:        rgba(245,246,248,0.12);
+      --color-accent:      #5b8def;
+      --color-link:        #3fb3a6;
+      --color-card:        #25282d;
+      --font-sans:  'Inter', system-ui, sans-serif;
+      --font-serif: 'Instrument Serif', serif;
+      --font-mono:  'Geist Mono', ui-monospace, monospace;
+    }
+    body { font-family: var(--font-sans); background: var(--color-paper); color: var(--color-ink); min-height: 100vh; display: flex; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; color: var(--color-ink); margin-bottom: 0.5rem; }
+    .subtitle { font-size: 0.9375rem; line-height: 1.55; color: var(--color-muted); max-width: 72ch; margin-bottom: 1.5rem; }
+    .subtitle strong { color: var(--color-ink); font-weight: 600; }
+    .diagram { overflow-x: auto; }
+    svg { width: 100%; min-width: 900px; display: block; }
+    .cards { display: grid; grid-template-columns: 1.1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+    @media (max-width: 820px) { .cards { grid-template-columns: 1fr; } }
+    .card { background: var(--color-card); border: 1px solid var(--color-rule); border-radius: 6px; padding: 1.25rem; }
+    .card-eyebrow { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-soft); margin-bottom: 0.5rem; }
+    .card-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-rule); }
+    .card-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .card-dot.ink { background: var(--color-ink); } .card-dot.muted { background: var(--color-muted); }
+    .card-dot.accent { background: var(--color-accent); } .card-dot.link { background: var(--color-link); } .card-dot.soft { background: var(--color-soft); }
+    .card h3 { font-size: 0.875rem; font-weight: 600; color: var(--color-ink); }
+    .card ul { list-style: none; color: var(--color-muted); font-size: 0.8125rem; line-height: 1.55; }
+    .card li { margin-bottom: 0.35rem; padding-left: 0.875rem; position: relative; }
+    .card li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 4px; height: 4px; border-radius: 50%; background: var(--color-soft); }
+    code { font-family: var(--font-mono); font-size: 0.92em; color: var(--color-ink); }
+    .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--color-rule); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--color-soft); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Sona · Staging · Checked 8 Oct 2026 @ <span style="text-transform:none">cd76571b</span></p>
+    <h1>Evidence answers with citations</h1>
+    <p class="subtitle">Where an evidence answer's sources come from, how they are ranked, and how a claim earns its citation. <strong>Staging, synthetic patients only.</strong></p>
+    <div class="diagram">
+<svg viewBox="0 0 1140 624" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="retrieval-evidence-dark-title retrieval-evidence-dark-desc">
+<title id="retrieval-evidence-dark-title">Evidence answers with citations</title>
+<desc id="retrieval-evidence-dark-desc">Architecture diagram of an evidence answer: evidence.stream reads PubMed, the patient record and a hybrid full-text plus pgvector search (embedded on sona-embed, reranked on sona-voice) at once, Sona Med writes claims that cite numbered sources, and citation checks keep only claims whose citations hold before the answer and its sources are shown.</desc>
+<defs>
+<marker id="retrieval-evidence-dark-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#b4bac4"/></marker>
+<marker id="retrieval-evidence-dark-arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f5f6f8"/></marker>
+<marker id="retrieval-evidence-dark-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5b8def"/></marker>
+<marker id="retrieval-evidence-dark-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#3fb3a6"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#1d1f23"/>
+<!-- zones -->
+<!-- connectors (drawn before nodes) -->
+<path d="M240,192 L272,192 Q280,192 280,184 L280,96 Q280,88 288,88 L320,88" fill="none" stroke="#3fb3a6" stroke-width="1.2" marker-end="url(#retrieval-evidence-dark-arrow-link)"/>
+<path d="M240,208 L320,208" fill="none" stroke="#b4bac4" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#retrieval-evidence-dark-arrow)"/>
+<path d="M240,224 L272,224 Q280,224 280,232 L280,328 Q280,336 288,336 L320,336" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#retrieval-evidence-dark-arrow)"/>
+<path d="M376,384 L376,416 Q376,424 368,424 L300,424 Q292,424 292,432 L292,464" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#retrieval-evidence-dark-arrow)"/>
+<path d="M484,384 L484,416 Q484,424 492,424 L564,424 Q572,424 572,432 L572,464" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#retrieval-evidence-dark-arrow)"/>
+<path d="M540,88 L732,88 Q740,88 740,96 L740,168" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#retrieval-evidence-dark-arrow)"/>
+<path d="M540,208 L640,208" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#retrieval-evidence-dark-arrow)"/>
+<path d="M540,336 L732,336 Q740,336 740,328 L740,248" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#retrieval-evidence-dark-arrow)"/>
+<path d="M840,208 L900,208" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#retrieval-evidence-dark-arrow)"/>
+<path d="M1000,256 L1000,336" fill="none" stroke="#5b8def" stroke-width="1.4" marker-end="url(#retrieval-evidence-dark-arrow-accent)"/>
+<!-- connector labels -->
+<rect x="316" y="404" width="40" height="12" rx="2" fill="#1d1f23"/>
+<text x="336" y="413" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">QUERY</text>
+<rect x="504" y="404" width="48" height="12" rx="2" fill="#1d1f23"/>
+<text x="528" y="413" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">TOP 20</text>
+<rect x="608" y="68" width="64" height="12" rx="2" fill="#1d1f23"/>
+<text x="640" y="77" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">5 STUDIES</text>
+<rect x="596" y="316" width="88" height="12" rx="2" fill="#1d1f23"/>
+<text x="640" y="325" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">TOP 3 PASSAGES</text>
+<rect x="1008" y="290" width="72" height="12" rx="2" fill="#1d1f23"/>
+<text x="1044" y="299" fill="#5b8def" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">KEPT CLAIMS</text>
+<!-- nodes -->
+<g id="retrieval-evidence-dark-n-stream">
+<rect x="40" y="168" width="200" height="80" rx="6" fill="#1d1f23"/>
+<rect x="40" y="168" width="200" height="80" rx="6" fill="#2a2d33" stroke="#f5f6f8" stroke-width="1"/>
+<rect x="48" y="176" width="28" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.4)" stroke-width="0.8"/>
+<text x="62" y="185" fill="#f5f6f8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">oRPC</text>
+<text x="140" y="208" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">evidence.stream</text>
+<text x="140" y="224" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">question, typed or spoken</text>
+<text x="140" y="236" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">steps stream back</text>
+</g>
+<g id="retrieval-evidence-dark-n-pubmed">
+<rect x="320" y="48" width="220" height="80" rx="6" fill="#1d1f23"/>
+<rect x="320" y="48" width="220" height="80" rx="6" fill="rgba(245,246,248,0.03)" stroke="rgba(245,246,248,0.3)" stroke-width="1"/>
+<rect x="328" y="56" width="40" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.25)" stroke-width="0.8"/>
+<text x="348" y="65" fill="#b4bac4" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">PUBLIC</text>
+<text x="430" y="88" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">PubMed</text>
+<text x="430" y="104" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">esearch + efetch, 4 s a call</text>
+<text x="430" y="116" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">≤ 5 studies, cached 7 d</text>
+</g>
+<g id="retrieval-evidence-dark-n-record">
+<rect x="320" y="168" width="220" height="80" rx="6" fill="#1d1f23"/>
+<rect x="320" y="168" width="220" height="80" rx="6" fill="rgba(245,246,248,0.05)" stroke="#b4bac4" stroke-width="1"/>
+<rect x="328" y="176" width="48" height="12" rx="2" fill="none" stroke="rgba(180,186,196,0.5)" stroke-width="0.8"/>
+<text x="352" y="185" fill="#b4bac4" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">POSTGRES</text>
+<text x="430" y="208" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Patient record</text>
+<text x="430" y="224" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">only in a visit: facts + note</text>
+<text x="430" y="236" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">name, parts, MRN removed</text>
+</g>
+<g id="retrieval-evidence-dark-n-search">
+<rect x="320" y="288" width="220" height="96" rx="6" fill="#1d1f23"/>
+<rect x="320" y="288" width="220" height="96" rx="6" fill="#2a2d33" stroke="#f5f6f8" stroke-width="1"/>
+<rect x="328" y="296" width="52" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.4)" stroke-width="0.8"/>
+<text x="354" y="305" fill="#f5f6f8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">RETRIEVAL</text>
+<text x="430" y="328" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Hybrid search</text>
+<text x="430" y="344" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">FTS + pgvector, RRF k=60</text>
+<text x="430" y="356" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">chunks: tsvector + HNSW</text>
+<text x="430" y="368" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">50 each, fused</text>
+</g>
+<g id="retrieval-evidence-dark-n-embed">
+<rect x="200" y="464" width="184" height="80" rx="6" fill="#1d1f23"/>
+<rect x="200" y="464" width="184" height="80" rx="6" fill="rgba(245,246,248,0.03)" stroke="rgba(245,246,248,0.3)" stroke-width="1"/>
+<rect x="208" y="472" width="32" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.25)" stroke-width="0.8"/>
+<text x="224" y="481" fill="#b4bac4" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">MODEL</text>
+<text x="292" y="504" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">sona-embed</text>
+<text x="292" y="520" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">EmbeddingGemma, 768-d</text>
+</g>
+<g id="retrieval-evidence-dark-n-rerank">
+<rect x="480" y="464" width="184" height="80" rx="6" fill="#1d1f23"/>
+<rect x="480" y="464" width="184" height="80" rx="6" fill="rgba(245,246,248,0.03)" stroke="rgba(245,246,248,0.3)" stroke-width="1"/>
+<rect x="488" y="472" width="32" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.25)" stroke-width="0.8"/>
+<text x="504" y="481" fill="#b4bac4" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">MODEL</text>
+<text x="572" y="504" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">sona-voice rerank</text>
+<text x="572" y="520" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">bge-reranker, top 20</text>
+<text x="572" y="532" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">8 s; skipped on failure</text>
+</g>
+<g id="retrieval-evidence-dark-n-med">
+<rect x="640" y="168" width="200" height="80" rx="6" fill="#1d1f23"/>
+<rect x="640" y="168" width="200" height="80" rx="6" fill="rgba(245,246,248,0.03)" stroke="rgba(245,246,248,0.3)" stroke-width="1"/>
+<rect x="648" y="176" width="32" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.25)" stroke-width="0.8"/>
+<text x="664" y="185" fill="#b4bac4" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">MODEL</text>
+<text x="740" y="208" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Sona Med</text>
+<text x="740" y="224" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">writes claims citing [n]</text>
+</g>
+<g id="retrieval-evidence-dark-n-checks">
+<rect x="900" y="160" width="200" height="96" rx="6" fill="#1d1f23"/>
+<rect x="900" y="160" width="200" height="96" rx="6" fill="rgba(91,141,239,0.12)" stroke="#5b8def" stroke-width="1"/>
+<rect x="908" y="168" width="40" height="12" rx="2" fill="none" stroke="rgba(91,141,239,0.5)" stroke-width="0.8"/>
+<text x="928" y="177" fill="#5b8def" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CHECKS</text>
+<text x="1000" y="200" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Citation checks</text>
+<text x="1000" y="216" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">cites what it was shown</text>
+<text x="1000" y="228" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">quotes word for word</text>
+<text x="1000" y="240" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">patient points in record</text>
+</g>
+<g id="retrieval-evidence-dark-n-answer">
+<rect x="900" y="336" width="200" height="80" rx="6" fill="#1d1f23"/>
+<rect x="900" y="336" width="200" height="80" rx="6" fill="rgba(180,186,196,0.1)" stroke="#8a929e" stroke-width="1"/>
+<rect x="908" y="344" width="48" height="12" rx="2" fill="none" stroke="rgba(180,186,196,0.45)" stroke-width="0.8"/>
+<text x="932" y="353" fill="#b4bac4" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SONA PRO</text>
+<text x="1000" y="376" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Answer + sources</text>
+<text x="1000" y="392" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">films shown inline</text>
+<text x="1000" y="404" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">provenance row written</text>
+</g>
+<!-- legend -->
+<line x1="40" y1="576" x2="1100" y2="576" stroke="rgba(245,246,248,0.12)" stroke-width="0.8"/>
+<text x="40" y="596" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="112" y="588" width="16" height="12" rx="2" fill="#2a2d33" stroke="#f5f6f8" stroke-width="1"/>
+<text x="136" y="598" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Sona server</text>
+<rect x="208" y="588" width="16" height="12" rx="2" fill="rgba(245,246,248,0.05)" stroke="#b4bac4" stroke-width="1"/>
+<text x="232" y="598" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Postgres (Neon)</text>
+<rect x="324" y="588" width="16" height="12" rx="2" fill="rgba(245,246,248,0.03)" stroke="rgba(245,246,248,0.3)" stroke-width="1"/>
+<text x="348" y="598" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Model box or PubMed</text>
+<rect x="456" y="588" width="16" height="12" rx="2" fill="rgba(91,141,239,0.12)" stroke="#5b8def" stroke-width="1"/>
+<text x="480" y="598" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Citation checks</text>
+<rect x="572" y="588" width="16" height="12" rx="2" fill="rgba(180,186,196,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="596" y="598" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Sona Pro</text>
+<line x1="652" y1="594" x2="676" y2="594" stroke="#3fb3a6" stroke-width="1.2" marker-end="url(#retrieval-evidence-dark-arrow-link)"/>
+<text x="688" y="598" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Call to PubMed</text>
+<line x1="772" y1="594" x2="796" y2="594" stroke="#b4bac4" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#retrieval-evidence-dark-arrow)"/>
+<text x="808" y="598" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Only in a visit</text>
+<line x1="900" y1="594" x2="924" y2="594" stroke="#5b8def" stroke-width="1.4" marker-end="url(#retrieval-evidence-dark-arrow-accent)"/>
+<text x="936" y="598" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Kept claims</text>
+</svg>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <p class="card-eyebrow">Citation checks</p>
+        <div class="card-header"><span class="card-dot accent"></span><h3>How a claim keeps its citation</h3></div>
+        <ul><li><code>sourcedClaims</code> drops a claim that cites nothing it was shown, or a number out of range.</li><li><code>quotedClaims</code> keeps a quote only if the cited source contains it word for word.</li><li><code>recordedPoints</code> keeps a patient point only if its fact is in the record text.</li><li>Numbered sources run: the patient's X-ray films, the patient record, PubMed studies, then library passages. Each answer writes a provenance row.</li></ul>
+      </div>
+      <div class="card">
+        <p class="card-eyebrow">Sources, read at once</p>
+        <div class="card-header"><span class="card-dot ink"></span><h3>Search and ranking</h3></div>
+        <ul><li>PubMed first takes guidelines, systematic reviews, meta-analyses and RCTs with English abstracts, then tops up. Searches and abstracts are cached in Postgres; if PubMed fails, the cache answers.</li><li>Hybrid search: <code>plainto_tsquery('english')</code> with lexemes ORed, and pgvector cosine on 768-d EmbeddingGemma vectors, 50 each, fused by RRF (k = 60). bge-reranker reorders the fused top 20; the top 3 passages go on.</li><li><code>evidence.stream</code> streams search, read, write, bottom line and each claim; <code>evidence.ask</code> returns the whole answer. Sona Pro web and iPhone use it.</li></ul>
+      </div>
+      <div class="card">
+        <p class="card-eyebrow">Same embed box</p>
+        <div class="card-header"><span class="card-dot muted"></span><h3>X-ray similarity (BiomedCLIP)</h3></div>
+        <ul><li><code>xray.upload</code> stores the film in R2, indexes its reading as library document <code>xray:&lt;visit&gt;</code> (with Malay and Chinese terms) and stores a 512-d BiomedCLIP vector in <code>image_vectors</code>.</li><li><code>xray.similar</code> finds the hospital's nearest films from a film or from text. Only available when <code>sona-embed</code> is named.</li></ul>
+      </div>
+      <div class="card">
+        <p class="card-eyebrow">Known limits</p>
+        <div class="card-header"><span class="card-dot soft"></span><h3>Not yet</h3></div>
+        <ul><li>No reranker score floor, so weak passages can still be shown.</li><li>A film's library index includes the patient's name; passages are not de-identified before Sona Med.</li><li>Laya routing is used only by the iPhone app, and only after the regex router, which sends evidence questions straight here.</li></ul>
+      </div>
+    </div>
+    <div class="footer"><span>Facts: docs/architecture/09-retrieval-evidence.md</span><span>Checked against code at cd76571b · 8 Oct 2026</span></div>
+  </div>
+</body>
+</html>

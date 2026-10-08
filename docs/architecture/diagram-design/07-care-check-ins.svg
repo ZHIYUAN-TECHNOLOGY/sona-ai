@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1328 448" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="care-check-ins-title care-check-ins-desc">
+      <title id="care-check-ins-title">Sona Care check-ins and care-team tasks</title>
+      <desc id="care-check-ins-desc">Swimlane showing discharge scheduling check-ins, the CheckInAgent pushing them to the patient, the reply labelled fine, worse or urgent, and worse or urgent replies becoming a care-team task the doctor books in, with urgent replies also sending a call-999 message.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#59616b"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#245bcc"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f6e66"/></marker>
+        <marker id="arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1d1f23"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#f5f6f8"/>
+<!-- background: lanes, lifelines, frames -->
+<line x1="32" y1="32" x2="1296" y2="32" stroke="rgba(29,31,35,0.22)" stroke-width="1"/>
+<line x1="32" y1="136" x2="1296" y2="136" stroke="rgba(29,31,35,0.12)" stroke-width="1"/>
+<line x1="32" y1="240" x2="1296" y2="240" stroke="rgba(29,31,35,0.12)" stroke-width="1"/>
+<line x1="32" y1="344" x2="1296" y2="344" stroke="rgba(29,31,35,0.22)" stroke-width="1"/>
+<line x1="136" y1="32" x2="136" y2="344" stroke="rgba(29,31,35,0.22)" stroke-width="1"/>
+<text x="44" y="82" fill="#59616b" font-size="9" font-weight="500" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">SONA PRO</text>
+<text x="44" y="96" fill="#8a929e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">care team</text>
+<text x="44" y="186" fill="#59616b" font-size="9" font-weight="500" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">SONA SERVER</text>
+<text x="44" y="200" fill="#8a929e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">Worker + agent</text>
+<text x="44" y="290" fill="#59616b" font-size="9" font-weight="500" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">SONA CARE</text>
+<text x="44" y="304" fill="#8a929e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">patient</text>
+<!-- connectors (drawn before boxes) -->
+<path d="M 232 112 L 232 160" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 312 188 L 372 188" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 572 188 L 624 188 A 8 8 0 0 1 632 196 L 632 264" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 712 292 L 752 292" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 824 264 L 824 216" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 904 176 L 1012 176 A 8 8 0 0 0 1020 168 L 1020 112" fill="none" stroke="#245bcc" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<path d="M 904 200 L 1196 200 A 8 8 0 0 1 1204 208 L 1204 264" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 1100 84 L 1140 84" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- connector labels -->
+<rect x="328" y="168" width="32" height="12" rx="2" fill="#f5f6f8"/>
+<text x="344" y="178" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">TICK</text>
+<rect x="584" y="168" width="28" height="12" rx="2" fill="#f5f6f8"/>
+<text x="598" y="178" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">DUE</text>
+<rect x="912" y="156" width="84" height="12" rx="2" fill="#f5f6f8"/>
+<text x="954" y="166" fill="#245bcc" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">WORSE · URGENT</text>
+<rect x="1088" y="180" width="44" height="12" rx="2" fill="#f5f6f8"/>
+<text x="1110" y="190" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">URGENT</text>
+<!-- nodes -->
+<rect x="152" y="56" width="160" height="56" rx="6" fill="#f5f6f8"/>
+<rect x="152" y="56" width="160" height="56" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="232" y="80" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Discharge</text>
+<text x="232" y="96" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">check-in days chosen</text>
+<rect x="152" y="160" width="160" height="56" rx="6" fill="#f5f6f8"/>
+<rect x="152" y="160" width="160" height="56" rx="6" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="1"/>
+<text x="232" y="184" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Check-ins</text>
+<text x="232" y="200" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">10:00 MYT, e.g. day 2, 7</text>
+<rect x="372" y="160" width="200" height="56" rx="6" fill="#f5f6f8"/>
+<rect x="372" y="160" width="200" height="56" rx="6" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<text x="472" y="184" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">CheckInAgent</text>
+<text x="472" y="200" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">alarm, hourly cron, clock jump</text>
+<rect x="552" y="264" width="160" height="56" rx="6" fill="#f5f6f8"/>
+<rect x="552" y="264" width="160" height="56" rx="6" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="632" y="288" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Check-in push</text>
+<text x="632" y="304" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">re-asked after 2 h quiet</text>
+<rect x="752" y="264" width="144" height="56" rx="6" fill="#f5f6f8"/>
+<rect x="752" y="264" width="144" height="56" rx="6" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="824" y="288" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Reply</text>
+<text x="824" y="304" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">typed or spoken</text>
+<rect x="744" y="160" width="160" height="56" rx="6" fill="#f5f6f8"/>
+<rect x="744" y="160" width="160" height="56" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<text x="824" y="184" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">fine, worse, urgent</text>
+<text x="824" y="200" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Gemma + red-flag words</text>
+<rect x="940" y="56" width="160" height="56" rx="6" fill="#f5f6f8"/>
+<rect x="940" y="56" width="160" height="56" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="1020" y="80" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Care-team task</text>
+<text x="1020" y="96" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">owner: Attending doctor</text>
+<rect x="1132" y="264" width="144" height="56" rx="6" fill="#f5f6f8"/>
+<rect x="1132" y="264" width="144" height="56" rx="6" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="1204" y="288" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Call 999 message</text>
+<text x="1204" y="304" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">urgent only, + push</text>
+<rect x="1140" y="56" width="128" height="56" rx="6" fill="#f5f6f8"/>
+<rect x="1140" y="56" width="128" height="56" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="1204" y="80" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Book in</text>
+<text x="1204" y="96" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">appointment + push</text>
+<!-- legend -->
+<line x1="32" y1="376" x2="1296" y2="376" stroke="rgba(29,31,35,0.12)" stroke-width="0.8"/>
+<text x="32" y="396" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="32" y="407" width="16" height="12" rx="2" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="56" y="416" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Care-team step</text>
+<rect x="160" y="407" width="16" height="12" rx="2" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="1"/>
+<text x="184" y="416" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Scheduled rows</text>
+<rect x="288" y="407" width="16" height="12" rx="2" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<text x="312" y="416" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">CheckInAgent (Durable Object)</text>
+<rect x="496" y="407" width="16" height="12" rx="2" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<text x="520" y="416" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Labelled by Sona Med</text>
+<rect x="656" y="407" width="16" height="12" rx="2" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="680" y="416" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Patient, Sona Care</text>
+<line x1="804" y1="413" x2="832" y2="413" stroke="#245bcc" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="844" y="416" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Care-team hand-off</text>
+<text x="1296" y="416" fill="#8a929e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.12em">STAGING · SYNTHETIC DATA ONLY</text>
+    </svg>
