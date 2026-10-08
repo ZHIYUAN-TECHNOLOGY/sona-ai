@@ -35,7 +35,7 @@ function fitInput(el: HTMLTextAreaElement) {
  * Where a question to Sona is written: type, or tap the mic, speak and tap it again (what was heard fills the box to
  * check before sending). Listening is the phone's listening moment (docs/design-direction.md, the dock): a frosted veil
  * settles over the conversation, a dithered glow rises from the box's bottom edge with the voice, a caption says how to
- * send, the mic turns into a stop square and the edge pulses; stop and it all eases back while Sona reads the words.
+ * send, the mic turns into a stop square and the glass rim beats; stop and it all eases back while Sona reads the words.
  * Enter sends, Shift+Enter starts a new line, Escape lets go of the box. `busy` holds sending
  * while the last answer is still coming. One composer for the Sona panel, its full screen and the chat pages.
  */
@@ -115,7 +115,7 @@ export function Composer({ app, onSend, busy, placeholder = "Ask Sona" }: { app:
     setError("");
     setHeard("");
     setPhase(voiceNext(phase, "mic"));
-    // The level moves a CSS variable and a ref (the mic's ring and the living edge read them), not state: it changes many times a second.
+    // The level moves a CSS variable and a ref (the mic's ring and the glass rim read them), not state: it changes many times a second.
     const started = startRecording(heard => {
       level.current = heard;
       form.current?.style.setProperty("--level", heard.toFixed(2));

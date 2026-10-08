@@ -1,7 +1,7 @@
 /* Composer: where a question to Sona is written (the Sona panel, its full screen, the chat pages). Floating glass, a
-   pill on one line that grows into a rounded card as the text wraps (to six lines). Its edge is alive
-   (components/ai/composer-ring.tsx): a liquid-metal line in Sona's blues that wanders, wakes when the pointer comes near
-   or the box is focused, flows while Sona works and pulses with the voice. The send button is the one filled control:
+   pill on one line that grows into a rounded card as the text wraps (to six lines). Its edge is a living glass rim
+   (components/ai/composer-ring.tsx): a clear pane's lip at rest, brighter near the pointer, a ripple of light on focus,
+   a gentle wave while Sona works and a lub-dub heartbeat from the mic while listening. The send button is the one filled control:
    a metallic blue circle with a dotted glint once there is something to send, a quiet glass circle before. */
 .ai-composer {
   --level: 0; --composer-button: 36px; --composer-pad: 6px;
@@ -12,19 +12,19 @@
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 0 0 1px rgb(29 31 35 / 0.06), 0 4px 14px rgb(29 31 35 / 0.05);
   transition: box-shadow 200ms var(--ai-ease);
 }
-.ai-composer:focus-within { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 0 0 1px color-mix(in srgb, var(--blue) 28%, transparent), 0 4px 16px rgb(36 91 204 / 0.08); }
+.ai-composer:focus-within { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), 0 0 0 1px color-mix(in srgb, var(--blue) 16%, transparent), 0 4px 16px rgb(36 91 204 / 0.08); }
 /* Focus: a 1px blue hairline on the box (above) and the edge brightening; no second outline floating around it. */
 
-/* The living edge: a canvas a little larger than the box, under the text and buttons. */
+/* The glass rim: a canvas a little larger than the box, under the text and buttons. */
 .ai-composer-ring { position: absolute; inset: -14px; z-index: -1; pointer-events: none; }
 .ai-composer-ring canvas { display: block; width: 100%; height: 100%; }
-/* Without WebGL2: a still metallic ring in CSS that brightens with focus. */
+/* Without WebGL2: a still glass rim (a white lip on top, an ice band refracted along the bottom), brighter with focus
+   and while listening. */
 .ai-composer-ring[data-fallback] {
-  inset: 0; padding: 1px; border-radius: inherit; opacity: 0.5; transition: opacity 200ms var(--ai-ease);
-  background: conic-gradient(from 200deg, var(--blue), #6CC7F5, #DCE9FF, var(--blue) 40%, #1B47A6 60%, #8FBCFF 80%, var(--blue));
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  inset: 0; border-radius: inherit; opacity: 0.7; transition: opacity 200ms var(--ai-ease);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 -1px 0 rgb(255 255 255 / 0.6), inset 0 -4px 6px -2px rgb(208 228 255 / 0.55), 0 0 0 1px color-mix(in srgb, var(--blue) 14%, rgb(255 255 255 / 0.5));
 }
-.ai-composer:focus-within .ai-composer-ring[data-fallback] { opacity: 1; }
+.ai-composer:focus-within .ai-composer-ring[data-fallback], .ai-composer[data-phase="listening"] .ai-composer-ring[data-fallback] { opacity: 1; }
 
 /* A problem with the mic or the transcript, in the box's first line. */
 .ai-composer-status { flex-basis: 100%; margin: 0; padding: var(--space-1) 0 0; font-size: 12px; line-height: 1.4; color: var(--ink); font-weight: 600; }
