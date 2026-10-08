@@ -52,6 +52,12 @@ export type VoiceSegment = { voice: number; from: number; to: number; text: stri
  * box's own record of the voices so far (opaque, about 400 KB): sent with the next part, a person keeps their number.
  */
 export type Heard = { text: string; segments?: VoiceSegment[]; memory?: string };
+/**
+ * The voice memory the next part goes out with. A part where nothing was said (a silent start, a long pause) brings
+ * none worth keeping: a memory built on silence numbered the voices wrongly for the rest of a consultation. Neither does
+ * a part whose voices could not be told apart. In both, the last memory stands.
+ */
+export const nextMemory = (heard: Heard, last?: string) => heard.text.trim() && heard.memory ? heard.memory : last;
 export type SendDeps = { read: (uri: string) => Promise<string>; transcribe: (base64: string, memory?: string) => Promise<Heard>; remove: (uri: string) => void; wait: (ms: number) => Promise<void> };
 /**
  * One part to the speech model: sent, and on a failure tried once more. Heard, its audio is deleted; failed twice, the

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { newEncounter } from "@/features/encounter/fixtures";
-import { captionLine, captionLines, draftFrom, draftLines, draftOrigin, failedLine, HARD_MS, heardLine,isCaption, isQuiet, listen, mergeVoice, namesOf, nameVoice, placeCaption, ROLES, roleLabel, roleOf, scribeStore, sendPart, speechOff, turnLines, UNSURE, voicesOf, withCapturedDraft, withDraft, withPart } from "./live";
+import { captionLine, captionLines, draftFrom, draftLines, draftOrigin, failedLine, HARD_MS, heardLine,isCaption, isQuiet, listen, mergeVoice, namesOf, nameVoice, nextMemory, placeCaption, ROLES, roleLabel, roleOf, scribeStore, sendPart, speechOff, turnLines, UNSURE, voicesOf, withCapturedDraft, withDraft, withPart } from "./live";
 
 /**
  * Plays a recording through `listen` as the recorder does, ten level readings a second: speech around -30 dBFS, and
@@ -228,4 +228,10 @@ test("the insight line counts voices while recording, then people and the names 
   expect(heardLine([person(1, false)], true)).toEqual({ count: "1 person", names: "1 needs a name", open: 1 });
   expect(heardLine([person(1, false), person(2, false), person(3, true)], true)).toEqual({ count: "3 people", names: "2 need a name", open: 2 });
   expect(heardLine([person(1, true), person(2, true)], true)).toEqual({ count: "2 people", names: "all named", open: 0 });
+});
+
+test("a silent part or one with no voices keeps the last voice memory; a spoken part hands on its own", () => {
+  expect(nextMemory({ text: "  ", memory: "built-on-silence" }, "before")).toBe("before");
+  expect(nextMemory({ text: "Thank you, nurse." }, "before")).toBe("before");
+  expect(nextMemory({ text: "Thank you, nurse.", memory: "after" }, "before")).toBe("after");
 });

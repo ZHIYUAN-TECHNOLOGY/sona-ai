@@ -7,7 +7,7 @@ import { sameShallow } from "@/features/live/keep-same";
 import type { TranscriptLine } from "@/features/encounter/types";
 import { api, errorText } from "@/features/live";
 import { OPTIONS } from "@/features/live/voice-input";
-import { captionLines, draftLines, draftOrigin, listen, namesOf, placeCaption, scribeStore, sendPart, speechOff, withCapturedDraft, withDraft, withPart, type Listening, type LiveDraft, type Part, type SendDeps } from "./live";
+import { captionLines, draftLines, draftOrigin, listen, namesOf, nextMemory, placeCaption, scribeStore, sendPart, speechOff, withCapturedDraft, withDraft, withPart, type Listening, type LiveDraft, type Part, type SendDeps } from "./live";
 
 type Update = ReturnType<typeof useEncounter>["updateEncounter"];
 /** A visit's live parts, last draft and microphone state, re-read whenever they change. */
@@ -50,8 +50,7 @@ const inTurn = (owner: string, part: Part, update: Update) => {
 async function send(owner: string, part: Part, update: Update) {
   const result = await sendPart(part.uri!, deps, () => scribeStore.update(owner, withPart(part.n, { status: "retrying" })), scribeStore.get(owner).memory);
   if ("text" in result) {
-    // A part whose voices could not be told apart brings no memory: the last one stands.
-    scribeStore.update(owner, s => ({ ...withPart(part.n, { status: "done", uri: undefined, error: undefined, starting: undefined })(s), memory: result.memory ?? s.memory }));
+    scribeStore.update(owner, s => ({ ...withPart(part.n, { status: "done", uri: undefined, error: undefined, starting: undefined })(s), memory: nextMemory(result, s.memory) }));
     // New dialogue revises the visit, as a scripted line does: the note needs review again.
     if (result.text) update(c => ({ ...c, transcript: placeCaption(c.transcript, captionLines(part, result, namesOf(c.transcript))), noteReviewed: false }), true, owner);
     return;
