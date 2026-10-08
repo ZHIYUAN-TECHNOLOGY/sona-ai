@@ -78,8 +78,10 @@ async function articlesFor(db: Context["db"], fetcher: typeof fetch, terms: stri
  * are real either way, so they are still used, and the answer says so.
  * ponytail: the nearest passages come back with no relevance floor; add a reranker score floor when bge-reranker is on.
  */
-async function passagesFor(context: Context, hospitalId: string, question: string) {
-  const hits = context.library ? await context.library.search({ query: question, hospitalId, userId: context.session?.user.id, k: 3 }) : [];
+async function passagesFor(context: Context, hospitalId: string, question: string, patientId?: string) {
+  // A film is a patient's record, not evidence: only the visit's own patient's films may be found, never another's.
+  const films = patientId ? (await context.db.select({ id: encounters.id }).from(encounters).where(and(eq(encounters.patientId, patientId), eq(encounters.hospitalId, hospitalId)))).map(e => e.id) : [];
+  const hits = context.library ? await context.library.search({ query: question, hospitalId, userId: context.session?.user.id, k: 3, films }) : [];
   // packages/retrieval's search carries its report on the hits (SearchReport there; that package imports this one, so the type is not imported back).
   const { retrieval, ranked } = hits as { retrieval?: "hybrid" | "keywords"; ranked?: boolean };
   const found = { ...retrieval && { retrieval }, ...ranked !== undefined && { ranked } };
@@ -147,7 +149,7 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   // of its words) and the record number are taken out of the record and of the doctor's own words before they reach it.
   const unnamed = (text: string) => visit ? deidentifyByRules(text, { names: [visit.name, ...visit.name.split(/\s+/).filter(w => w.length > 2)], mrn: visit.patientId }).text : text;
   // PubMed, the library and the patient's record are read at once.
-  const [{ articles, pubmed }, { passages, found }, facts] = await Promise.all([articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored)), passagesFor(context, hospitalId, input.question),
+  const [{ articles, pubmed }, { passages, found }, facts] = await Promise.all([articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored)), passagesFor(context, hospitalId, input.question, visit?.patientId),
     // Only a model reads and cites it: authored and sample answers (no model configured) never do, so they list no record.
     visit && context.models ? recordText(db, hospitalId, visit.patientId, input.encounterId!).then(unnamed) : undefined]);
   // Authored answers show their reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.

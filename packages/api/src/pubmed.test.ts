@@ -75,12 +75,18 @@ function esearch(...answers: (string[] | Error)[]) {
 test("the best evidence is searched first and topped up from any study type; every term must match, never just one", async () => {
   const strict = esearch(["1", "2", "3"]);
   expect(await searchEvidence(["iv fluid", "dengue"], strict.fetcher)).toEqual(["1", "2", "3"]);
-  // One search; abbreviations spelled out, an English abstract required.
-  expect(strict.terms).toEqual(["(intravenous fluid) AND (dengue) AND (guideline[pt] OR systematic review[pt] OR meta-analysis[pt] OR randomized controlled trial[pt]) AND hasabstract AND english[la]"]);
+  // One search; abbreviations spelled out, every word in the title or abstract, an English abstract required.
+  expect(strict.terms).toEqual(["(intravenous[tiab] AND fluid[tiab]) AND (dengue[tiab]) AND (guideline[pt] OR systematic review[pt] OR meta-analysis[pt] OR randomized controlled trial[pt]) AND hasabstract AND english[la]"]);
 
   const topped = esearch(["1"], ["1", "4", "5"]);
   expect(await searchEvidence(["harms", "dengue"], topped.fetcher)).toEqual(["1", "4", "5"]);
-  expect(topped.terms[1]).toBe("(adverse effects) AND (dengue) AND hasabstract AND english[la]");
+  expect(topped.terms[1]).toBe("(adverse[tiab]) AND (dengue[tiab]) AND hasabstract AND english[la]");
+
+  // Staging, 8 Oct: searched anywhere, "pneumonia" matched MeSH and full-text mentions, and an Acinetobacter trial and a
+  // rhinosinusitis guideline were cited for pneumonia. Each word must be in the article's own title or abstract.
+  const pneumonia = esearch(["1", "2", "3"]);
+  await searchEvidence(searchTerms("What does the evidence say for pneumonia with a penicillin allergy?"), pneumonia.fetcher);
+  expect(pneumonia.terms[0]).toStartWith("(pneumonia[tiab]) AND (penicillin[tiab] AND allergy[tiab]) AND ");
 
   // Nothing has every term: no study, rather than one that matches a single word of the question.
   const none = esearch([], [], ["7"]);

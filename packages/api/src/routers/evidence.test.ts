@@ -279,7 +279,7 @@ test("PubMed is searched by the question's key terms, never the patient's name o
   const { api } = await signedIn(fetcher);
   const r = await api.evidence.ask({ encounterId: "visit-1042", question: "Should Amelia Tan (SYN-1042) get oseltamivir for her influenza?" });
   const searches = calls.filter(u => u.includes("esearch"));
-  expect(searches[0]).toContain("(oseltamivir) AND (influenza) AND");
+  expect(searches[0]).toContain("(oseltamivir[tiab]) AND (influenza[tiab]) AND");
   expect(searches.some(u => /amelia|tan\b|syn-1042/i.test(u))).toBe(false);
   expect(r.references.map(s => s.pmid)).toEqual(["25608756"]);
 });

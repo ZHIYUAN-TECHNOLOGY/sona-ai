@@ -77,7 +77,7 @@ export type LibraryDocument = { id: string; hospitalId: string | null; title: st
 export type Library = {
   /** Stores the document and its sections; re-ingesting the same ID replaces them. Returns the section count. */
   ingest(doc: LibraryDocument, text: string): Promise<number>;
-  /** Hybrid search over the shared library, the caller's hospital and the caller's own private sources; with `patient`, over the hospital's patient leaflets alone. */
+  /** Hybrid search over the shared library, the caller's hospital and the caller's own private sources; with `patient`, over the hospital's patient leaflets alone. Patients' films only for the visits in `films`. */
   search(input: SearchInput): Promise<RetrievalHit[]>;
   /** Re-embeds the shared library and the hospital's sources (after the embedding model changes). Returns the chunk count. */
   reindex(hospitalId: string): Promise<number>;

@@ -10,8 +10,9 @@ export type IcdCode = z.infer<typeof icdCodeSchema>;
 /**
  * Retrieval is always scoped to the caller's hospital (row-level security enforces it underneath). `patient`: the search
  * is for a patient's answer (Sona Care), so it reads that hospital's patient leaflets and nothing else in the library.
+ * A patient's chest X-ray (kind "xray") is a record, not evidence: it is found only when its visit is named in `films`.
  */
-export const searchInputSchema = z.object({ query: z.string().trim().min(1).max(500), hospitalId: z.string().min(1), userId: z.string().min(1).optional(), k: z.number().int().min(1).max(20).default(5), patient: z.boolean().optional() });
+export const searchInputSchema = z.object({ query: z.string().trim().min(1).max(500), hospitalId: z.string().min(1), userId: z.string().min(1).optional(), k: z.number().int().min(1).max(20).default(5), patient: z.boolean().optional(), films: z.array(z.string().min(1)).max(100).optional() });
 export type SearchInput = z.infer<typeof searchInputSchema>;
 
 /** A consequential action (discharge, sending a claim): replay-safe by requestId, and never without an approver. */

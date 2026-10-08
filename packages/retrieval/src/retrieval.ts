@@ -115,16 +115,19 @@ export type SearchReport = { retrieval: "hybrid" | "keywords"; ranked?: boolean 
  * the reranker fails, the fused order stands. Neither fails the search, and both are reported (SearchReport).
  * A patient's search (`patient`: Sona Care's answers) reads her own hospital's patient leaflets (kind "leaflet") and
  * nothing else: never the shared library, a guideline or a doctor's own source. Every other search leaves the leaflets
- * out, so the clinicians' evidence reads what it read before they were there.
+ * out, so the clinicians' evidence reads what it read before they were there. A patient's film (kind "xray", indexXray
+ * in packages/api) is a record, never evidence: it is found only when its visit is named in `films` (her own visits),
+ * else another patient's X-ray report outranks the guidelines for "pneumonia" (staging, 8 Oct 2026).
  */
 export async function search(db: AnyDb, input: z.input<typeof searchInputSchema>, embedder: Embedder, reranker?: Reranker): Promise<RetrievalHit[] & SearchReport> {
-  const { query, hospitalId, userId, k, patient } = searchInputSchema.parse(input);
+  const { query, hospitalId, userId, k, patient, films = [] } = searchInputSchema.parse(input);
   const cols = sql`c.id, c.document_id, c.source_id, c.section, c.text, d.source, d.year, d.title, d.kind`;
   // ponytail: scoped in the query, not by row-level security; add RLS policies when the Worker sets a per-request hospital.
   // A doctor's private sources are searched for that doctor only; with no caller, only shared ones.
+  const film = films.length ? sql`d.id in (${sql.join(films.map(f => sql`${`xray:${f}`}`), sql`, `)})` : sql`false`;
   const scope = patient
     ? sql`c.hospital_id = ${hospitalId} and d.hospital_id = ${hospitalId} and d.owner_id is null and d.kind = 'leaflet'`
-    : sql`(c.hospital_id is null or c.hospital_id = ${hospitalId}) and (d.owner_id is null or d.owner_id = ${userId ?? null}) and d.kind <> 'leaflet'`;
+    : sql`(c.hospital_id is null or c.hospital_id = ${hospitalId}) and (d.owner_id is null or d.owner_id = ${userId ?? null}) and d.kind <> 'leaflet' and (d.kind <> 'xray' or ${film})`;
   const from = sql`chunks c join documents d on d.id = c.document_id where ${scope}`;
   // OR the query's lexemes so a natural question matches any of its terms.
   const tsq = sql`replace(plainto_tsquery('english', ${query})::text, '&', '|')::tsquery`;

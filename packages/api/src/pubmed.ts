@@ -45,19 +45,19 @@ ada bagi mana kenapa jika kalau ah lah leh lor meh kan`.split(/\s+/));
 
 /**
  * Bedside abbreviations PubMed misreads ("iv" is a journal to it, "mi" the microbiology subheading), spelled
- * out; harm words as PubMed indexes them. ponytail: a hand list grown from failed searches; a Gemma rewrite
+ * out; harm words as abstracts word them. ponytail: a hand list grown from failed searches; a Gemma rewrite
  * of the question into MeSH terms replaces it if questions keep missing.
  */
 const SPELLED: Record<string, string> = {
   iv: "intravenous", im: "intramuscular", po: "oral", sc: "subcutaneous", gi: "gastrointestinal", bp: "blood pressure",
   mi: "myocardial infarction", pe: "pulmonary embolism", ed: "emergency department", cap: "community-acquired pneumonia",
-  harm: "adverse effects", harms: "adverse effects", harmful: "adverse effects", danger: "adverse effects", dangers: "adverse effects", dangerous: "adverse effects",
+  harm: "adverse", harms: "adverse", harmful: "adverse", danger: "adverse", dangers: "adverse", dangerous: "adverse",
 };
 
 /**
  * A question's key clinical terms as phrases, in order: the runs of words left once the filler and any
  * `drop` words (the patient's name and record number, which never leave the hospital) are taken out, so
- * PubMed's own term mapping still reads "heart failure" or "long qt" as one concept. Lowercased letters,
+ * "heart failure" or "long qt" stays one term. Lowercased letters,
  * digits and hyphens only, so nothing a doctor types becomes PubMed syntax ([pt], OR, quotes).
  * ponytail: English, plus Malay filler; a Malay or Chinese clinical term is not translated, so such a question finds little.
  */
@@ -92,7 +92,13 @@ export function searchTerms(question: string, earlier: string[] = [], drop: stri
 const STUDY_TYPES = "(guideline[pt] OR systematic review[pt] OR meta-analysis[pt] OR randomized controlled trial[pt])";
 // Something to cite: an abstract, in the language the clinicians read.
 const CITABLE = "hasabstract AND english[la]";
-const phrase = (term: string) => `(${term.split(" ").map(w => SPELLED[w] ?? w).join(" ")})`;
+/**
+ * Every word of a term in the article's own title or abstract ([tiab]). Left to PubMed's term mapping, "pneumonia" also
+ * matched MeSH and full-text mentions, so for "pneumonia with a penicillin allergy" relevance put an Acinetobacter trial
+ * and a rhinosinusitis guideline first, and the answer applied them to pneumonia (staging, 8 Oct 2026).
+ * ponytail: no synonyms or stemming ("allergic" is not "allergy"); a Gemma rewrite into MeSH terms widens it if questions miss.
+ */
+const phrase = (term: string) => `(${term.split(" ").flatMap(w => (SPELLED[w] ?? w).split(" ")).map(w => `${w}[tiab]`).join(" AND ")})`;
 
 /**
  * PubMed IDs for a clinical question's terms, best evidence first: all of them in a guideline, review or

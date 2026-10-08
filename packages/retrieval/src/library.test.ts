@@ -179,7 +179,7 @@ test("a patient's X-ray is found by its reading, in Malay too, and comes back as
   await api.xray.upload({ encounterId: "visit-1042", contentType: "image/png", dataBase64: Buffer.from([1]).toString("base64") });
   await api.xray.read({ encounterId: "visit-1042" });
   await api.findings.detect({ encounterId: "visit-1042" }); // Amelia's authored nodule and heart size
-  const hits = await search(db, { query: "pesakit dengan nodul", hospitalId: DEMO_HOSPITAL }, stubEmbedder);
+  const hits = await search(db, { query: "pesakit dengan nodul", hospitalId: DEMO_HOSPITAL, films: ["visit-1042"] }, stubEmbedder);
   expect(hits[0]).toMatchObject({ documentId: "xray:visit-1042", tags: { kind: "xray", source: "Imaging", year: 2026, title: "Chest X-ray: Amelia Tan, 3 Oct 2026" } });
   // The answer hands the film back as an image reference naming the visit, with the reading as its text.
   const r = await api.evidence.ask({ encounterId: "visit-1042", question: "Tunjukkan X-ray dada dia, ada nodul?" });
@@ -190,6 +190,27 @@ test("a patient's X-ray is found by its reading, in Malay too, and comes back as
   expect(r.references.map(x => x.text).join("\n")).toContain("9 mm nodule, right upper zone 9 mm, right upper zone (open, CT chest due 1 Jan 2027, demo reading)");
   // Not a doctor's source, not another hospital's, and never a patient's leaflet.
   expect(await api.library.list()).toEqual([]);
-  expect(await search(db, { query: "nodul", hospitalId: "other" }, stubEmbedder)).toEqual([]);
+  expect(await search(db, { query: "nodul", hospitalId: "other", films: ["visit-1042"] }, stubEmbedder)).toEqual([]);
   expect(await search(db, { query: "nodul", hospitalId: DEMO_HOSPITAL, patient: true }, stubEmbedder)).toEqual([]);
+});
+
+test("an evidence answer never cites another patient's X-ray: only the library's sources, and her own films in her own visit", async () => {
+  // Staging, 8 Oct: "What does the evidence say for pneumonia with a penicillin allergy?" cited three chest X-ray
+  // reports of one patient and no guideline, because every film is indexed in the library the answer searches.
+  const objects = new Map<string, Uint8Array>();
+  const uploads = { put: async (key: string, bytes: Uint8Array) => { objects.set(key, bytes); }, get: async (key: string) => { const bytes = objects.get(key); return bytes ? { arrayBuffer: async () => bytes.slice().buffer } : null; } };
+  const { api, db } = await signedIn(offline, { uploads, now: () => new Date("2026-10-03T10:00:00+08:00") });
+  await api.xray.upload({ encounterId: "visit-1042", contentType: "image/png", dataBase64: Buffer.from([1]).toString("base64") });
+  await api.xray.read({ encounterId: "visit-1042" });
+  await api.findings.detect({ encounterId: "visit-1042" }); // Amelia's nodule
+  const guide = await api.library.add({ requestId: "g-1", title: "Lung nodule follow-up (synthetic)", source: "Hospital radiology", year: 2026, text: "# Solid nodule\nA solid lung nodule of 8 mm or more is followed with CT chest in three months." });
+  const question = "What does the evidence say for a lung nodule on chest X-ray?";
+  for (const encounterId of [undefined, "visit-1086"]) {
+    const r = await api.evidence.ask({ encounterId, question });
+    expect(r.references.filter(x => x.kind !== "record").map(x => [x.kind, x.documentId])).toEqual([["library", guide.id]]);
+    expect(JSON.stringify(r.references)).not.toContain("Amelia");
+  }
+  // Nor does any other library search (it never names a film), while her own visit still hands back her film.
+  expect((await search(db, { query: "nodule chest X-ray", hospitalId: DEMO_HOSPITAL, userId: "dr-aisyah" }, stubEmbedder)).map(h => h.documentId)).toEqual([guide.id]);
+  expect((await api.evidence.ask({ encounterId: "visit-1042", question })).references.filter(x => x.kind === "image")).toHaveLength(1);
 });
