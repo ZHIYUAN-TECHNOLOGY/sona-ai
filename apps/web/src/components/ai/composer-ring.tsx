@@ -3,8 +3,8 @@ import { type RefObject, useEffect, useRef } from "react";
 import { BEAT_GAP, beatPeriod, beatStrength, RIPPLE_S, ringTarget, ripple } from "./composer-motion";
 
 // The composer's edge as liquid glass (docs/design-direction.md, "glass first"; the rim of components/sona-orb.tsx): a
-// pane's lip, not a coloured line. A pale cool hairline, a 1px white highlight along the top inside, and a soft ice band
-// along the bottom inside where light bends through the glass. `a` is arc length round the edge (px, so the long sides
+// pane's lip, not a coloured line. One cool hairline exactly on the box's edge (paler along the lit top) and a soft ice
+// band along the bottom inside where light bends through the glass; nothing else draws an edge. `a` is arc length round the edge (px, so the long sides
 // and the round ends move at one pace). Light moves along it: a ripple when the box is focused, a gentle wave while Sona
 // works (both swell the rim a touch, like water), and while listening a lub-dub heartbeat that travels out from the
 // mic both ways, its crest faintly Sona blue. The pointer brightens the nearest stretch.
@@ -22,7 +22,8 @@ float P;
 // Arc length to the edge point nearest p, counter-clockwise from the middle of the right end.
 float arc(vec2 p) {
   vec2 q = clamp(p, -c, c), v = p - q;
-  float th = atan(v.y, v.x);
+  // Inside the flat core v is 0 and atan(0, 0) is NaN on some GPUs, which painted a white box inside a tall composer.
+  float th = length(v) > 0.0 ? atan(v.y, v.x) : (p.y < 0.0 ? 1.5 * PI : 0.5 * PI);
   if (th < 0.0) th += 2.0 * PI;
   float s = th < 0.5 * PI ? q.y + c.x - q.x
           : th < PI ? c.y + c.x - q.x + c.y - q.y
@@ -58,7 +59,6 @@ void main() {
 
   float up = smoothstep(-0.2, 0.9, n.y), down = 1.0 - smoothstep(-0.9, 0.2, n.y);
   float lip = 1.0 - smoothstep(0.2 * u, 1.1 * u, abs(d + 0.5 * u));
-  float hi = 1.0 - smoothstep(0.1 * u, 0.9 * u, abs(d + 1.4 * u));
   float inner = d < 0.0 ? exp(d / (3.0 * u)) : 0.0;
   float halo = d > 0.0 ? exp(-d / ((2.0 + 3.0 * lift) * u)) : 0.0;
   float crest = smoothstep(0.3, 0.9, hb);
@@ -67,9 +67,8 @@ void main() {
 
   vec4 col = vec4(0.0);
   over(col, light, halo * (0.05 * glow + 0.45 * lift + 0.12 * near));
-  over(col, ice, inner * down * (0.35 + 0.15 * glow + 0.3 * lift));
-  over(col, mix(mix(tint, vec3(1.0), 0.55), tint, 0.5 * shine), lip * (0.2 + 0.12 * glow + 0.6 * lift + 0.25 * near));
-  over(col, vec3(1.0), hi * max(up, 0.5 * down) * (0.85 + 0.15 * glow));
+  over(col, ice, inner * down * (0.3 + 0.15 * glow + 0.3 * lift));
+  over(col, mix(mix(tint, vec3(1.0), 0.55 + 0.2 * up), tint, 0.5 * shine), lip * (0.4 - 0.12 * up + 0.2 * glow + 0.5 * lift + 0.25 * near));
   over(col, light, inner * (0.25 * lift + 0.1 * near));
   o = col * (1.0 - smoothstep(7.0 * u, 13.0 * u, d)); // gone before the canvas edge
 }`;

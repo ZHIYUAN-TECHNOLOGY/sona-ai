@@ -14,6 +14,14 @@ export function voiceNext(phase: VoicePhase, event: VoiceEvent): VoicePhase {
   return phase === "idle" ? "listening" : phase === "listening" ? "transcribing" : phase;
 }
 
+/** The line under the composer: a speech model that is starting is said calmly (`info`); only real failures are `error`. */
+export type VoiceStatus = { tone: "info" | "error"; text: string };
+export function voiceStatus(message: string, code?: string): VoiceStatus {
+  if (code !== "SPEECH_OFF") return { tone: "error", text: message };
+  const minutes = /about (\d+) min/.exec(message)?.[1];
+  return { tone: "info", text: /starting/.test(message) ? `Speech is warming up (about ${minutes ? `${minutes} min` : "a minute"}). Type for now.` : message };
+}
+
 /** The caption above the composer: how to send while listening, then what Sona is doing, then the words it heard. */
 export function captionFor(phase: VoicePhase, heard = "") {
   return phase === "listening" ? "Listening… tap the mic to send" : phase === "transcribing" ? "Reading what you said…" : heard;

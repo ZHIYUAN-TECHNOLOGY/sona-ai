@@ -1,7 +1,7 @@
 // @ts-expect-error apps/web has no bun types yet; add @types/bun and drop this line
 import { describe, expect, test } from "bun:test";
 
-import { captionFor, follow, pickRenderer, voiceNext } from "./voice";
+import { captionFor, follow, pickRenderer, voiceNext, voiceStatus } from "./voice";
 
 describe("voiceNext", () => {
   test("the mic opens, then closes into transcribing", () => {
@@ -49,5 +49,16 @@ describe("pickRenderer", () => {
     expect(pickRenderer({ gpu: true, webgl2: true })).toBe("webgpu");
     expect(pickRenderer({ gpu: false, webgl2: true })).toBe("webgl2");
     expect(pickRenderer({ gpu: false, webgl2: false })).toBe("css");
+  });
+});
+
+describe("voiceStatus", () => {
+  test("a speech model warming up is said calmly, not as an error", () => {
+    expect(voiceStatus("The speech model is starting. Try again in a minute, or type.", "SPEECH_OFF")).toEqual({ tone: "info", text: "Speech is warming up (about a minute). Type for now." });
+    expect(voiceStatus("The speech model is starting (about 30 min). Try again then, or type.", "SPEECH_OFF").text).toBe("Speech is warming up (about 30 min). Type for now.");
+    expect(voiceStatus("Speaking to Sona isn't switched on yet. Type instead.", "SPEECH_OFF")).toEqual({ tone: "info", text: "Speaking to Sona isn't switched on yet. Type instead." });
+  });
+  test("real failures keep their words and the error tone", () => {
+    expect(voiceStatus("Sona didn't catch that. Try again, or type.")).toEqual({ tone: "error", text: "Sona didn't catch that. Try again, or type." });
   });
 });

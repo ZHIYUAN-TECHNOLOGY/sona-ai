@@ -37,8 +37,14 @@ export function heartbeat(t: number, level: number) {
   return beatStrength(level) * Math.min(1, pulse(x) + 0.7 * pulse(x - BEAT_GAP));
 }
 
-/** The textarea's height for its content: at least one line, at most `lines` lines, scrolling past that. */
-export function fitHeight(scrollHeight: number, line: number, padding: number, lines = 6) {
-  const max = line * lines + padding;
-  return { height: Math.min(Math.max(scrollHeight, line + padding), max), scrolls: scrollHeight > max };
+/** The textarea's height for its content: at least `min` (one line), at most `max` px, scrolling past that. */
+export function fitHeight(scrollHeight: number, min: number, max: number) {
+  return { height: Math.min(Math.max(scrollHeight, min), max), scrolls: scrollHeight > max };
 }
+
+/** Whether the text takes its own full-width row over the mic and send: it has a new line, or is longer than `room`
+ * characters (what fits beside the buttons). Decided by the words, never by measuring the field, so it can't flicker. */
+export const stacks = (text: string, room: number) => text.includes("\n") || text.length > room;
+
+/** Which ends of a scrolling textarea fade: the top once scrolled down, the bottom while more is below. */
+export const fades = (top: number, scrollHeight: number, clientHeight: number) => ({ top: top > 1, bottom: top + clientHeight < scrollHeight - 1 });

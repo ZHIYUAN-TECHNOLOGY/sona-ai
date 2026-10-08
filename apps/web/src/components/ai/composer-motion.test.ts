@@ -1,7 +1,7 @@
 // @ts-expect-error apps/web has no bun types yet; add @types/bun and drop this line
 import { expect, test } from "bun:test";
 
-import { BEAT_GAP, beatPeriod, fitHeight, heartbeat, RIPPLE_S, ringTarget, ripple } from "./composer-motion";
+import { BEAT_GAP, beatPeriod, fades, fitHeight, heartbeat, RIPPLE_S, ringTarget, ripple, stacks } from "./composer-motion";
 
 const rest = { focused: false, near: false, working: false, recording: false, reduced: false };
 
@@ -39,10 +39,24 @@ test("the heartbeat is a lub-dub, then rest, stronger and quicker with the voice
   expect(beatPeriod(0)).toBeGreaterThan(beatPeriod(1));
 });
 
-test("the box holds one to six lines, then scrolls", () => {
-  expect(fitHeight(0, 20, 20)).toEqual({ height: 40, scrolls: false });
-  expect(fitHeight(80, 20, 20)).toEqual({ height: 80, scrolls: false });
-  expect(fitHeight(140, 20, 20)).toEqual({ height: 140, scrolls: false });
-  expect(fitHeight(400, 20, 20)).toEqual({ height: 140, scrolls: true });
-  expect(fitHeight(400, 24, 24, 4)).toEqual({ height: 120, scrolls: true });
+test("the text grows from one line to its max height, then scrolls", () => {
+  expect(fitHeight(0, 40, 160)).toEqual({ height: 40, scrolls: false });
+  expect(fitHeight(100, 40, 160)).toEqual({ height: 100, scrolls: false });
+  expect(fitHeight(160, 40, 160)).toEqual({ height: 160, scrolls: false });
+  expect(fitHeight(400, 40, 160)).toEqual({ height: 160, scrolls: true });
+});
+
+test("the text takes its own row by its words: a new line, or more than fits beside the buttons", () => {
+  expect(stacks("", 30)).toBe(false);
+  expect(stacks("What is the latest potassium?", 30)).toBe(false);
+  expect(stacks("Summarise the last 24 hours for bed 12", 30)).toBe(true);
+  expect(stacks("a\nb", 30)).toBe(true);
+  expect(stacks("Summarise the last 24 hours for bed 12", 80)).toBe(false); // the full-screen width
+});
+
+test("a scrolling text fades only at the ends with more beyond", () => {
+  expect(fades(0, 100, 100)).toEqual({ top: false, bottom: false });
+  expect(fades(0, 300, 160)).toEqual({ top: false, bottom: true });
+  expect(fades(60, 300, 160)).toEqual({ top: true, bottom: true });
+  expect(fades(140, 300, 160)).toEqual({ top: true, bottom: false });
 });
