@@ -4,7 +4,7 @@ import type { Claim, PatientPoint } from "@sona-ai/domain/evidence";
 import { DRAFT_MAX } from "@sona-ai/domain/messages";
 import { huddle } from "@sona-ai/domain/ward";
 
-import { LANGUAGE_NAME, chatModels, jsonIn } from "./chat-models";
+import { JSON_REPLY, LANGUAGE_NAME, chatModels, jsonIn } from "./chat-models";
 import { partialEvidence } from "./evidence-stream";
 import { changesOf, stubModels, type EvidenceAnswer, type EvidenceInput, type EvidencePart, type Models, type Origin } from "./models";
 import { deltas } from "./sse";
@@ -278,10 +278,14 @@ export function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) 
       throw error;
     }
   }
-  /** One OpenAI-style chat turn; `content` may carry an image. Returns the JSON in the reply. */
-  async function chat(box: "brain" | "xray", model: string, system: string | null, content: unknown, maxTokens = 400) {
+  /**
+   * One OpenAI-style chat turn; `content` may carry an image. Returns the reply's text. `json` has vLLM hold the reply
+   * to valid JSON while it writes: left free, Gemma left about one long reply in three unclosed (8 Oct), and the
+   * caller fell back to its stub.
+   */
+  async function chat(box: "brain" | "xray", model: string, system: string | null, content: unknown, maxTokens = 400, json = false) {
     const messages = [...system ? [{ role: "system", content: system }] : [], { role: "user", content }];
-    const out = await call(box, "/v1/chat/completions", JSON.stringify({ model, messages, temperature: 0.1, max_tokens: maxTokens }), "application/json");
+    const out = await call(box, "/v1/chat/completions", JSON.stringify({ model, messages, temperature: 0.1, max_tokens: maxTokens, ...json ? { response_format: JSON_REPLY } : {} }), "application/json");
     return out?.choices?.[0]?.message?.content as string | undefined;
   }
   return { call, chat, wake, send, up };
@@ -289,7 +293,7 @@ export function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) 
 
 export function basetenModels(options: Baseten, fallback: Models = stubModels): Models {
   const { call, chat, send } = boxes(options);
-  const brain = async (system: string, user: string, maxTokens?: number) => jsonIn(await chat("brain", BRAIN_MODEL, system, user, maxTokens));
+  const brain = async (system: string, user: string, maxTokens?: number) => jsonIn(await chat("brain", BRAIN_MODEL, system, user, maxTokens, true));
 
   const hosted: Partial<Models> = {
     ...chatModels(brain, BRAIN_MODEL, fallback),

@@ -17,6 +17,9 @@ export type Chat = (system: string, user: string) => Promise<Record<string, unkn
 
 export const LANGUAGE_NAME: Record<Language, string> = { en: "English", ms: "Malay", zh: "Chinese" };
 
+/** vLLM's structured output for a chat call: the reply is valid JSON by construction. */
+export const JSON_REPLY = { type: "json_object" } as const;
+
 /** The model's JSON, from a reply that may wrap it in prose or a code fence. */
 export function jsonIn(text: unknown): Record<string, unknown> | undefined {
   const s = typeof text === "string" ? text : typeof text === "object" && text ? JSON.stringify(text) : "";

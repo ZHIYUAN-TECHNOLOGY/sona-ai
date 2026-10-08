@@ -109,7 +109,7 @@ export async function freeAnswer(baseten: Baseten, input: { scope: string; quest
   const user = `Page: ${input.scope}\nQuestion: ${input.question}\n\nWhat the page says:\n${context.lines.join("\n") || "(nothing)"}\n\nThe page's rows:\n${context.rows.map(r => JSON.stringify(r)).join("\n") || "(none)"}`;
   try {
     // Through the adapter's box gate: a cold brain is woken and not waited for.
-    const read = jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 900));
+    const read = jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 900, true));
     const spec = groundedSpec(read, context, input.question);
     if (spec) return { source: "model" as const, model: BRAIN_MODEL, spec };
     const text = typeof read?.general === "string" ? read.general.trim().slice(0, 600) : "";

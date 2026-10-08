@@ -3,7 +3,7 @@ import { beforeEach, expect, test } from "bun:test";
 import { BOXES, BRAIN_MODEL, COLD_START_MIN, basetenModels, boxState } from "./baseten-models";
 import { MANGLISH_CONSULTATION } from "./fixtures/manglish-consultation";
 import { stubModels } from "./models";
-import { checkDraft, citedStatement, medicinesIn, numbersIn, ruleNote, sentencesOf } from "./scribe-model";
+import { checkDraft, citedStatement, medicinesIn, numbersIn, ruleNote, scribeModels, sentencesOf } from "./scribe-model";
 
 const lines = MANGLISH_CONSULTATION.map(text => ({ text }));
 const sentences = sentencesOf(lines);
@@ -204,4 +204,11 @@ test("the captured words with voices: a named role labels its line, an unnamed v
     turns: [{ text: "Any fever?", speaker: "clinician", voice: 1, sure: true }, { text: "No.", voice: 2, sure: false }, { text: "She had one last night.", speaker: "family", sure: true }, { text: "Okay.", sure: false }],
     dropped: 0,
   });
+});
+
+test("the note is asked for as JSON the box must keep valid, so an unclosed list cannot drop the draft to its stub", async () => {
+  let sent: Record<string, unknown> | undefined;
+  const call = async (_box: unknown, _route: string, body: BodyInit) => { sent = JSON.parse(body as string); throw new Error("captured"); };
+  await scribeModels(call as never, BRAIN_MODEL, stubModels).draftNote({ lines } as never);
+  expect(sent?.response_format).toEqual({ type: "json_object" });
 });

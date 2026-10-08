@@ -1,7 +1,7 @@
 import type { NoteSections } from "@sona-ai/domain/types";
 
 import type { Box } from "./baseten-models";
-import { jsonIn } from "./chat-models";
+import { JSON_REPLY, jsonIn } from "./chat-models";
 import type { Models } from "./models";
 
 /**
@@ -199,7 +199,7 @@ export function scribeModels(call: Call, model: string, fallback: Models): Pick<
         const mark = (s: typeof sentences[number]) => [s.voice ? `voice ${s.voice}` : "", s.speaker ?? ""].filter(Boolean).join(", ");
         const transcript = sentences.map((s, i) => `[${i + 1}] ${mark(s) ? `(${mark(s)}) ` : ""}${s.text}`).join("\n");
         const messages = [{ role: "system", content: scribe(sentences.some(s => s.voice)) }, { role: "user", content: `Transcript:\n${transcript}` }];
-        const out = await call("brain", "/v1/chat/completions", JSON.stringify({ model, messages, temperature: 0.1, max_tokens: 2400 }), "application/json", SCRIBE_MS);
+        const out = await call("brain", "/v1/chat/completions", JSON.stringify({ model, messages, temperature: 0.1, max_tokens: 2400, response_format: JSON_REPLY }), "application/json", SCRIBE_MS);
         const draft = checkDraft(jsonIn(out?.choices?.[0]?.message?.content), sentences);
         if (draft) return { ...draft, source: "model", model };
       } catch { /* the captured words below, labelled fixture */ }
