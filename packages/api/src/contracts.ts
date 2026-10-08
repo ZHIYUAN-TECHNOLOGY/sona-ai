@@ -59,6 +59,8 @@ export const dischargeRequestSchema = approvedCommandSchema.extend({ checkInDays
 /** The guarantee letter's inline fixes, each adding its sentence to the note. */
 export const claimUpdateSchema = z.object({
   encounterId: z.string().min(1), organismConfirmed: z.boolean().optional(), ivReasonAdded: z.boolean().optional(),
+  /** The doctor confirms the pneumonia the consultation suspected, on the visit's read X-ray (refused before it is read). */
+  diagnosisConfirmed: z.boolean().optional(),
   /** The doctor's own words for why oral was not used first: the IV fix saves them, so it cannot go without them. */
   ivReason: z.string().trim().min(1).max(500).optional(),
 }).refine(u => !u.ivReasonAdded || u.ivReason, { message: "Say why oral was not used first", path: ["ivReason"] });

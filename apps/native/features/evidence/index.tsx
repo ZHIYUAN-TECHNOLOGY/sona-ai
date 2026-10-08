@@ -46,7 +46,7 @@ const SNAP = { duration: 360, dampingRatio: 0.82 }, TAP = { duration: 380, dampi
 /** The rehearsed demo question, for an answer opened without its prompt. */
 const REHEARSED_QUESTION = "Steroids for this patient with community-acquired pneumonia?";
 const SOURCES_NOTE: Record<ServerEvidence["pubmed"], string> = { live: "PubMed · conclusions quoted from each abstract", cached: "PubMed, saved copy · offline now", unavailable: "PubMed unreachable · no studies" };
-const DESIGN_WORDS: Record<Reference["design"], string> = { Guideline: "guideline", Review: "systematic review", Trial: "randomised trial", "Narrative review": "narrative review", Study: "study", Library: "your library", Imaging: "the patient's X-ray" };
+const DESIGN_WORDS: Record<Reference["design"], string> = { Guideline: "guideline", Review: "systematic review", Trial: "randomised trial", "Narrative review": "narrative review", Study: "study", Library: "your library", Imaging: "the patient's X-ray", "Patient record": "the patient's record" };
 const NOT_ENOUGH = "Not enough evidence found to answer this.";
 
 type Shown = { bottomLine?: string; claims: Claim[]; enough: boolean; followUps: string[]; references: Reference[]; source?: string; note: string };

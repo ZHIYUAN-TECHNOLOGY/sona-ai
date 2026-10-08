@@ -1,8 +1,10 @@
-import { admissions, claims, encounters, guaranteeLetters, notes, patients } from "@sona-ai/db/schema/clinical";
-import { CODES, DENIAL_REASONS, claimChecks } from "@sona-ai/domain/claim";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { admissions, claims, encounters, guaranteeLetters, notes, observations, patients } from "@sona-ai/db/schema/clinical";
+import { CODES, DENIAL_REASONS, claimChecks, type Sentence } from "@sona-ai/domain/claim";
+import { curb65FromObservations, severityApplies, type ObservationRow } from "@sona-ai/domain/evidence";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 
 import type { Context } from "./context";
+import { visitFilm } from "./routers/xray";
 
 /**
  * The insurer's side of the final guarantee letter: a page reached by an unguessable link (emailed
@@ -36,17 +38,43 @@ async function claimByToken(db: Db, token: string) {
 }
 const expired = (sentAt: Date | null, now: Date) => !sentAt || now.getTime() > sentAt.getTime() + LINK_DAYS * 24 * 3600_000;
 
+/**
+ * What the letter rests on: the visit's saved note (no sentences with none) and, attached after it, what
+ * the visit recorded that the insurer's criteria ask for, each as a sentence under the criterion it answers: the chest
+ * X-ray as a model read it (xray.read; an unread film attaches nothing) and, where the note is about pneumonia, the
+ * CURB-65 the chart scores with all five factors recorded. The claim card, the send and the insurer's page all read this
+ * one list, so a letter is built from what the visit produced (the recorded consultation, the read film, the chart),
+ * never from words written for it. Only in `hospitalId`: another hospital's visit attaches nothing.
+ */
+export async function letterNote(db: Db, hospitalId: string, encounterId: string) {
+  const [saved] = await db.select({ sentences: notes.sentences }).from(notes).where(eq(notes.encounterId, encounterId)).orderBy(desc(notes.revision)).limit(1);
+  const note = saved?.sentences ?? [];
+  const [visit] = await db.select({ patientId: patients.id, age: patients.age }).from(encounters).innerJoin(patients, eq(patients.id, encounters.patientId))
+    .where(and(eq(encounters.id, encounterId), eq(encounters.hospitalId, hospitalId)));
+  if (!visit) return { note, sentences: note };
+  const pneumonia = severityApplies(note.map(s => s.text), []);
+  const [film, chart] = await Promise.all([
+    visitFilm(db, hospitalId, encounterId),
+    pneumonia ? db.select().from(observations).where(and(eq(observations.patientId, visit.patientId), eq(observations.source, "clinical"))).orderBy(asc(observations.observedAt)) : [],
+  ]);
+  const score = pneumonia ? curb65FromObservations(chart as ObservationRow[], visit.age) : undefined;
+  const attached: Sentence[] = [
+    ...film?.read ? [{ id: "imaging", text: film.line.replace(":", ", Sona Vision reading, not validated:") }] : [],
+    ...score?.risk ? [{ id: "severity", text: `CURB-65 ${score.score} from the chart: ${score.factors.map(f => `${f.label.toLowerCase()} ${f.value}`).join(", ")}.` }] : [],
+  ];
+  return { note, sentences: [...note, ...attached] };
+}
+
 export type ReviewPacket = NonNullable<Awaited<ReturnType<typeof reviewPacket>>>;
 
 /**
  * What the insurer reviews: the patient, each code with the note sentence behind it, and the criteria read against the
- * visit's saved note. `estimate` is absent unless an amount was recorded with the claim (nothing records one today).
+ * visit's saved note and what is attached to it (letterNote). `estimate` is absent unless an amount was recorded with the claim (nothing records one today).
  */
 export async function reviewPacket(db: Db, token: string, now: Date) {
   const row = await claimByToken(db, token);
   if (!row) return undefined;
-  const [saved] = await db.select({ sentences: notes.sentences }).from(notes).where(eq(notes.encounterId, row.claim.encounterId)).orderBy(desc(notes.revision)).limit(1);
-  const note = saved?.sentences ?? [];
+  const { note, sentences } = await letterNote(db, row.hospitalId, row.claim.encounterId);
   return {
     token, patient: row.patient, insurer: row.claim.insurer, estimate: row.claim.estimateCents ? ringgit(row.claim.estimateCents) : undefined, status: row.claim.status,
     sentAt: row.claim.sentAt, decidedAt: row.claim.decidedAt, query: row.claim.insurerNote, expired: expired(row.claim.sentAt, now),
@@ -54,7 +82,7 @@ export async function reviewPacket(db: Db, token: string, now: Date) {
     codes: row.claim.codes.map(({ code, label, kind, evidence, text }) => ({ code,
       label: label ?? CODES.find(k => k.code === code)?.label ?? code, kind: kind ?? CODES.find(k => k.code === code)?.kind ?? "Secondary",
       evidence: text ?? note.find(s => s.id === evidence)?.text ?? "" })),
-    criteria: claimChecks(note),
+    criteria: claimChecks(sentences),
     denial: row.claim.denialReason ? { reason: row.claim.denialReason, note: row.claim.insurerNote } : undefined,
     appeal: row.claim.appeal ?? undefined,
   };

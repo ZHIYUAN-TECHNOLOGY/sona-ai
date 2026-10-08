@@ -26,10 +26,12 @@ export type Quote = { n: number; text: string };
 export type Claim = { text: string; cites: number[]; topic?: Topic; quotes?: Quote[] };
 /**
  * One numbered source: PubMed studies first, then library passages. An "image" is a patient's X-ray found in the
- * library by its reading: `encounterId` names the visit whose film the app fetches (xray.image).
+ * library by its reading: `encounterId` names the visit whose film the app fetches (xray.image). A "record" is the
+ * visit's patient's own record (what the hospital recorded and the visit's saved note), so a question about them is
+ * answered, and cited, from it.
  */
 export type Reference = {
-  n: number; id: string; kind: "study" | "library" | "image"; design: StudyKind | "Library" | "Imaging"; title: string; year: number; from?: string; text: string;
+  n: number; id: string; kind: "study" | "library" | "image" | "record"; design: StudyKind | "Library" | "Imaging" | "Patient record"; title: string; year: number; from?: string; text: string;
   url?: string; pmid?: string; documentId?: string; section?: string; encounterId?: string;
 };
 

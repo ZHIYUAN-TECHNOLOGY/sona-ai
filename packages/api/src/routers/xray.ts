@@ -49,9 +49,12 @@ async function filmsOf(db: Db, hospitalId: string, where: SQL) {
     const marks = found.filter(f => f.finding.encounterId === v.id);
     const lines = marks.map(({ finding: f, action }) => `${f.label}${f.sizeMm ? ` ${f.sizeMm} mm` : ""}, ${f.location.zone} (${[f.status, f.dueAt && `${testOf(action)} due ${day(f.dueAt)}`, f.source === "fixture" && "demo reading"].filter(Boolean).join(", ")})`);
     const reading = read ? (read.output as { findings: string[] }).findings.join("; ") : "not yet read by a model";
-    return { ...v, film, at, kinds: [...new Set(marks.map(m => m.finding.kind))], line: `Chest X-ray (${day(at)}): ${reading}${lines.length ? `; findings: ${lines.join("; ")}` : ""}` };
+    return { ...v, film, at, read: Boolean(read), kinds: [...new Set(marks.map(m => m.finding.kind))], line: `Chest X-ray (${day(at)}): ${reading}${lines.length ? `; findings: ${lines.join("; ")}` : ""}` };
   });
 }
+
+/** A visit's latest film with its record line and whether a model has read it (`read`); undefined when it has none. */
+export const visitFilm = async (db: Db, hospitalId: string, encounterId: string) => (await filmsOf(db, hospitalId, eq(encounters.id, encounterId)))[0];
 
 /** The X-ray lines of a patient's record (recordFacts): one per filmed visit, newest first. */
 export const xrayFacts = async (db: Db, hospitalId: string, patientId: string) => (await filmsOf(db, hospitalId, eq(encounters.patientId, patientId))).map(f => f.line);
@@ -66,7 +69,7 @@ export async function indexXray(context: Context & { hospitalId: string }, encou
   const { hospitalId, library } = context;
   if (!library) return;
   try {
-    const [film] = await filmsOf(context.db, hospitalId, eq(encounters.id, encounterId));
+    const film = await visitFilm(context.db, hospitalId, encounterId);
     if (!film) return;
     const text = `# Reading\nPatient: ${film.name} (${film.patientId}). Chest X-ray taken ${day(film.at)}.\n${film.line}\n\n# Search terms\n${["chest X-ray / X-ray dada / 胸部X光", ...film.kinds.map(k => TERMS[k])].join("\n")}`;
     await library.ingest({ id: `xray:${encounterId}`, kind: "xray", hospitalId, title: `Chest X-ray: ${film.name}, ${day(film.at)}`, source: "Imaging", year: film.at.getFullYear(), ownerId: null, uploadedBy: null }, text);

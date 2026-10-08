@@ -6,8 +6,8 @@ import { Icon, type IconName } from "@/components/icon";
 import { plural, sourceKinds } from "./summary";
 import "@/styles/ai.css";
 
-const KIND_ICON: Record<Reference["kind"], IconName> = { study: "file", library: "book", image: "image" };
-const KIND_LABEL: Record<Reference["kind"], string> = { study: "Studies", library: "Library", image: "Images" };
+const KIND_ICON: Record<Reference["kind"], IconName> = { study: "file", library: "book", image: "image", record: "user" };
+const KIND_LABEL: Record<Reference["kind"], string> = { study: "Studies", library: "Library", image: "Images", record: "Patient record" };
 const meta = (r: Reference) => [r.from, r.year, r.design].filter(Boolean).join(" · ");
 const GAP = 8;
 

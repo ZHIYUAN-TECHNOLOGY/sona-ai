@@ -1,15 +1,15 @@
-import { documents, encounters, observations, patients, provenance, pubmedArticles, pubmedSearches } from "@sona-ai/db/schema/clinical";
+import { documents, encounters, notes, observations, patients, provenance, pubmedArticles, pubmedSearches } from "@sona-ai/db/schema/clinical";
 import { STUDIES, authoredAnswer, curb65FromObservations, isRehearsed, pubmedUrl, quotedClaims, recordedPoints, severityApplies, sourcedClaims, studyKind, type Claim, type ObservationRow, type PatientPoint, type Reference } from "@sona-ai/domain/evidence";
 import { deidentifyByRules } from "@sona-ai/domain/training";
 import { ORPCError } from "@orpc/server";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import type { Context } from "../context";
+import { clockOf, type Context } from "../context";
 import { stubModels, type Models } from "../models";
 import { protectedProcedure } from "../index";
 import { conclusionOf, fetchArticles, searchEvidence, searchTerms, type Article } from "../pubmed";
-import { recordFacts } from "./encounter";
+import { malaysiaDay, recordFacts } from "./encounter";
 
 /**
  * Flow 4, the evidence answer (docs/evidence-answer-spec.md): short claims each citing numbered
@@ -22,9 +22,11 @@ import { recordFacts } from "./encounter";
  * app captions "Rehearsed answer") and anything else from the stub's labelled sample. No source, no
  * claim: the route drops any claim citing nothing or a number not in the list. Fetched articles are
  * cached, so a question asked once still has its sources when PubMed is unreachable.
- * Asked in a visit, the model also reads that patient's record (recordFacts, with no name or record number) and adds,
- * after the claims, what in the evidence bears on this patient (`patientPoints`): each point cites a source and the
- * record fact it used, and a point whose fact is not in the record text is dropped. Asked anywhere else, there is none.
+ * Asked in a visit, that patient's own record is one of the numbered sources (`kind: "record"`, after her films): what
+ * the hospital recorded (recordFacts) and the visit's saved note, with no name or record number. So a question about
+ * her ("brief me on her", "which antibiotic for her?") is answered and cited from her record, beside the studies; the
+ * model also adds what in the evidence bears on her (`patientPoints`), each point citing a source and the record fact
+ * it used, and a point whose fact is not in the record text is dropped. Asked anywhere else, there is no record.
  */
 const REHEARSED = {
   matches: isRehearsed,
@@ -102,6 +104,19 @@ const referenceOf = ({ kind, ...p }: Passage, n: number): Reference =>
   kind === "xray" ? { n, kind: "image", design: "Imaging", encounterId: p.documentId.slice("xray:".length), ...p } : { n, kind: "library", design: "Library", ...p };
 
 const turn = z.object({ question: z.string().trim().min(1).max(500), answer: z.string().max(4000) });
+/**
+ * The visit's patient's record as one source's text: recordFacts, then the visit's latest saved note. A record that
+ * cannot be read gives none (the answer still comes, from the other sources); the note is the visit's own, never another's.
+ */
+async function recordText(db: Context["db"], hospitalId: string, patientId: string, encounterId: string) {
+  const [facts, [note]] = await Promise.all([
+    recordFacts(db, hospitalId, patientId).catch(() => [] as string[]),
+    db.select({ sentences: notes.sentences, at: notes.createdAt }).from(notes).where(eq(notes.encounterId, encounterId)).orderBy(desc(notes.revision)).limit(1).catch(() => []),
+  ]);
+  const noted = note?.sentences.map(s => s.text).join(" ").trim();
+  return [...facts, ...noted ? [`Doctor's note for this visit (saved ${malaysiaDay(note!.at)}): ${noted}`] : []].join("\n");
+}
+
 /** A visit's question (`encounterId`: its patient's CURB-65 and the patient kept out of the search), or one asked anywhere else (no patient). */
 const askInput = z.object({ encounterId: z.string().min(1).optional(), question: z.string().trim().min(1).max(500), thread: z.array(turn).max(4).default([]) });
 
@@ -128,14 +143,22 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   const authored = context.models ? undefined : authoredAnswer(input.question);
   // PubMed gets the question's key terms (a follow-up keeps the thread's topic), never the patient's name or record number.
   const terms = searchTerms(input.question, input.thread.map(t => t.question), visit ? [visit.name, visit.patientId] : []);
-  // PubMed and the library are searched at once.
-  const [{ articles, pubmed }, { passages, found }] = await Promise.all([articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored)), passagesFor(context, hospitalId, input.question)]);
+  // In a visit the model reads the patient's record by age, sex and facts, never by identity: the name (whole, and each
+  // of its words) and the record number are taken out of the record and of the doctor's own words before they reach it.
+  const unnamed = (text: string) => visit ? deidentifyByRules(text, { names: [visit.name, ...visit.name.split(/\s+/).filter(w => w.length > 2)], mrn: visit.patientId }).text : text;
+  // PubMed, the library and the patient's record are read at once.
+  const [{ articles, pubmed }, { passages, found }, facts] = await Promise.all([articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored)), passagesFor(context, hospitalId, input.question),
+    // Only a model reads and cites it: authored and sample answers (no model configured) never do, so they list no record.
+    visit && context.models ? recordText(db, hospitalId, visit.patientId, input.encounterId!).then(unnamed) : undefined]);
   // Authored answers show their reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.
   const summary = (pmid: string) => (authored ? STUDIES.find(s => s.pmid === pmid)?.finding : undefined);
   // The patient's own films lead: a question that found her X-ray is about her, and the studies are the background.
   const films = passages.filter(p => p.kind === "xray"), rest = passages.filter(p => p.kind !== "xray");
-  const studies: Reference[] = articles.map((a, i) => ({ n: films.length + i + 1, id: `pmid:${a.pmid}`, kind: "study", design: a.kind, title: a.title, year: a.year, from: a.journal, text: summary(a.pmid) ?? a.conclusion, url: pubmedUrl({ pmid: a.pmid, query: a.title }), pmid: a.pmid }));
-  const references: Reference[] = [...films.map((p, i) => referenceOf(p, i + 1)), ...studies, ...rest.map((p, i) => referenceOf(p, films.length + studies.length + i + 1))];
+  // Her record follows her films, so a question about her has her own words to cite first.
+  const own: Reference[] = facts ? [{ n: films.length + 1, id: `record:${input.encounterId}`, kind: "record", design: "Patient record", title: "Patient record", year: clockOf(context).getFullYear(), from: "This hospital", text: facts }] : [];
+  const lead = films.length + own.length;
+  const studies: Reference[] = articles.map((a, i) => ({ n: lead + i + 1, id: `pmid:${a.pmid}`, kind: "study", design: a.kind, title: a.title, year: a.year, from: a.journal, text: summary(a.pmid) ?? a.conclusion, url: pubmedUrl({ pmid: a.pmid, query: a.title }), pmid: a.pmid }));
+  const references: Reference[] = [...films.map((p, i) => referenceOf(p, i + 1)), ...own, ...studies, ...rest.map((p, i) => referenceOf(p, lead + studies.length + i + 1))];
   yield { type: "step", step: "read", studies: studies.length, passages: passages.length, references } as EvidenceStep;
   // A configured model reads each study's whole abstract (the card shows its conclusion), and a quote may come from any part of it.
   const abstract = new Map(articles.map(a => [a.pmid, a.abstract]));
@@ -145,17 +168,12 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   if (authored) {
     // Authored cites number the three rehearsed studies; renumber them to where each study landed, so a missing study drops its claims.
     const at = (n: number) => studies.find(s => s.pmid === STUDIES[n - 1]?.pmid)?.n ?? 0;
-    claims = sourcedClaims(authored.claims.map(c => ({ ...c, cites: c.cites.map(at) })), films.length + studies.length);
+    claims = sourcedClaims(authored.claims.map(c => ({ ...c, cites: c.cites.map(at) })), lead + studies.length);
     followUps = authored.followUps; source = "cached"; bottomLine = claims.length ? authored.bottomLine : undefined;
   } else {
     yield { type: "step", step: "write" } as EvidenceStep;
     const models = context.models ?? stubModels;
-    // In a visit the model reads the patient's record by age, sex and facts, never by identity: the name (whole, and each
-    // of its words) and the record number are taken out of the record and of the doctor's own words before they reach it.
-    const unnamed = (text: string) => visit ? deidentifyByRules(text, { names: [visit.name, ...visit.name.split(/\s+/).filter(w => w.length > 2)], mrn: visit.patientId }).text : text;
-    // A record that cannot be read costs the answer its patient section, never the answer.
-    const record = visit ? unnamed((await recordFacts(db, hospitalId, visit.patientId).catch(() => [] as string[])).join("\n")) : undefined;
-    const asked = { question: unnamed(input.question), thread: input.thread.map(t => ({ question: unnamed(t.question), answer: unnamed(t.answer) })), sources: read.map(r => ({ n: r.n, design: r.design, year: r.year, title: r.title, text: r.text, from: r.from, pmid: r.pmid })), ...record && { patient: record } };
+    const asked = { question: unnamed(input.question), thread: input.thread.map(t => ({ question: unnamed(t.question), answer: unnamed(t.answer) })), sources: read.map(r => ({ n: r.n, design: r.design, year: r.year, title: r.title, text: r.text, from: r.from, pmid: r.pmid })), ...facts && { patient: facts } };
     let written: Awaited<ReturnType<Models["synthesiseEvidence"]>>;
     if (models.streamEvidence) {
       // Each part goes to the app as soon as it is written, checked as the whole answer is: a claim must cite a source, and its quotes must be in it.
@@ -179,7 +197,7 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
     // The model stopped before finishing: the claims it finished stand, and the answer says more was cut off.
     cutShort = written.source === "model" && written.cutShort === true && claims.length > 0;
     // About this patient: only under claims that stood, and only points whose fact the record text holds.
-    if (record && claims.length) patientPoints = recordedPoints(written.patientPoints ?? [], references.length, record);
+    if (facts && claims.length) patientPoints = recordedPoints(written.patientPoints ?? [], references.length, facts);
   }
   // Each claim's proof: the sentence from each cited source that says it, checked word for word against that source.
   claims = quotedClaims(claims, read);

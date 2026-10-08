@@ -113,7 +113,7 @@ test("an amendment goes through the server: it needs an earlier receipt and a ne
 
 test("a note save appends the next revision; a save against an older revision is refused and the latest stays", async () => {
   const api = await signedIn();
-  // seedDemo alone gives Amelia no note (her seeded one is seedDemoNote's step), so here her visit starts at revision 0.
+  // The seed gives Amelia no note (hers is saved from her recorded consultation), so here her visit starts at revision 0.
   expect(await api.note.get({ encounterId: "visit-1042" })).toEqual({ encounterId: "visit-1042", revision: 0, sentences: [] });
   const seeded = await api.note.get({ encounterId: "visit-1086" });
   expect([seeded.revision, seeded.sentences.map(s => s.id)]).toEqual([1, ["s1", "s2"]]);

@@ -73,7 +73,7 @@ Rules:
 - topic: "dose" for doses and durations, "harms" for side effects and risks, otherwise "evidence".
 - quotes: for each source a claim cites, copy the one sentence from that source that supports it, word for word.
 - Say how strong each claim is in words from the source's design (a guideline recommends, a randomised trial found, a review concluded).
-- If the sources do not answer the question, return no claims and answer in "general" from general medical knowledge, in one to three short sentences. You have not seen this patient's record: never state a fact about them.
+- If the sources do not answer the question, return no claims and answer in "general" from general medical knowledge, in one to three short sentences. Never state a fact about a patient that no source holds.
 - Up to 3 short follow-up questions these sources could answer.`;
 
 const XRAY = `If this is not a chest radiograph, say so in one sentence. Otherwise list the findings a radiologist would report, most important first, in at most 4 short sentences.
@@ -552,17 +552,18 @@ const PROMPT_CHARS = (CONTEXT_TOKENS - EVIDENCE_MAX_TOKENS - 384) * CHARS_PER_TO
 /** 2,000 tokens can take longer to write than the 30 s other calls get. */
 const EVIDENCE_MS = 60_000;
 /**
- * Added to the evidence prompt when the question is asked in a visit: the patient's record follows the sources (no name
- * or record number in it), and the answer gains a separate part about this patient. The claims stay as grounded as
- * without it; a point's fact is checked against the record by the route (recordedPoints), and one not in it is dropped.
+ * Added to the evidence prompt when the question is asked in a visit: the patient's own record is one of the numbered
+ * sources (routers/evidence.ts, no name or record number in it), so a question about them is answered and cited from it,
+ * and the answer gains a separate part on what in the evidence bears on them. Every claim stays grounded the same way
+ * (a cited source, a quote from it); a point's fact is checked against the record by the route (recordedPoints).
  */
 const EVIDENCE_PATIENT = `
-This question was asked while seeing one patient. Their record follows the sources, under "Patient record", without their name.
+This question was asked while seeing one patient. Their own record is one of the numbered sources, the one marked "Patient record": what the hospital recorded about them and the doctor's note for this visit, without their name.
+- A question about the patient (brief me, their history, results, X-ray, allergies, medicines, what to give them) is answered from that source: each claim about them cites it and quotes its words. A question that also needs evidence (which drug, what dose) cites the studies or passages for the evidence and the patient record for their facts, such as an allergy that rules a drug out.
+- Never state a fact about the patient that the patient record does not hold, and never give them a diagnosis the record does not state.
 Add to the JSON, after "claims": "forPatient": [{"text": "<one sentence>", "cites": [<source numbers>], "fact": "<words copied from the patient record>"}]
-- forPatient: up to 3 short points on what in your claims bears on THIS patient: a drug in the evidence they are allergic to or already take, a dose caution for their kidney function, age or another recorded condition, a recorded result that changes which evidence applies.
-- Each point cites the numbered source it rests on, and copies in "fact", word for word, the one fact from the patient record it uses.
-- Use only facts written in the patient record: never guess one, never give a diagnosis, and return "forPatient": [] when nothing in the record bears on the evidence.
-- The claims, the bottom line and "general" stay about the evidence, exactly as above, and state no fact about the patient: the record's facts go only in "forPatient".`;
+- forPatient: up to 3 short points on what in the other sources bears on THIS patient: a drug in the evidence they are allergic to or already take, a dose caution for their kidney function, age or another recorded condition, a recorded result that changes which evidence applies.
+- Each point cites the numbered source it rests on, and copies in "fact", word for word, the one fact from the patient record it uses. Return "forPatient": [] when nothing in the record bears on the evidence.`;
 const evidenceChat = (content: string, patient?: string) => ({ model: BRAIN_MODEL, messages: [{ role: "system", content: patient ? EVIDENCE + EVIDENCE_PATIENT : EVIDENCE }, { role: "user", content }], temperature: 0.1, max_tokens: EVIDENCE_MAX_TOKENS });
 
 type EvidenceSource = EvidenceInput["sources"][number];
@@ -577,16 +578,15 @@ function wholeSentences(text: string, max: number) {
 
 /**
  * The question, the thread so far and the numbered sources, as the evidence prompt reads them, and the sources that are
- * in it. Sources come ranked (PubMed's best evidence first, then the library's passages), so each goes in whole while
- * there is room; the first that does not fit is cut at a sentence end and the ones after it are left out (`shown` has
- * neither, so a claim cannot cite what the model never read).
+ * in it. Sources come ranked (the patient's films and record first, then PubMed's best evidence, then the library's
+ * passages), so each goes in whole while there is room; the first that does not fit is cut at a sentence end and the
+ * ones after it are left out (`shown` has neither, so a claim cannot cite what the model never read).
  */
 function evidenceQuestion(input: EvidenceInput) {
   const thread = input.thread.map(t => `Earlier question: ${t.question}\nEarlier answer: ${t.answer}`).join("\n");
   const head = `${thread ? `${thread}\n\n` : ""}Question: ${input.question}\n\nSources:\n`;
-  // The visit's patient's record goes after the sources, and its room is taken first: it is short, and the sources are cut to fit.
-  const record = input.patient ? `\n\nPatient record:\n${input.patient}` : "";
-  let room = PROMPT_CHARS - EVIDENCE.length - head.length - (record ? EVIDENCE_PATIENT.length + record.length : 0);
+  // The visit's patient's record is a numbered source near the front (routers/evidence.ts), so it is never the one cut.
+  let room = PROMPT_CHARS - EVIDENCE.length - head.length - (input.patient ? EVIDENCE_PATIENT.length : 0);
   const shown: EvidenceSource[] = [], blocks: string[] = [];
   for (const s of input.sources as EvidenceSource[]) {
     const title = `[${s.n}] (${[s.design, s.year, s.from, s.pmid && `PMID ${s.pmid}`].filter(Boolean).join(", ")}) ${s.title}\n`;
@@ -594,7 +594,7 @@ function evidenceQuestion(input: EvidenceInput) {
     if (!text && s.text) break;
     blocks.push(title + text); shown.push(s); room -= title.length + text.length + 2;
   }
-  return { content: head + blocks.join("\n\n") + record, shown };
+  return { content: head + blocks.join("\n\n"), shown };
 }
 
 /**

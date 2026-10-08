@@ -132,13 +132,6 @@ const CHARTS: Record<string, Chart> = {
 };
 const OBS = [["temperature", "°C"], ["pulse", "bpm"], ["respiratory-rate", "/min"], ["oxygen-saturation", "%"], ["systolic", "mmHg"], ["diastolic", "mmHg"]] as const;
 const NOTE_SECTIONS = ["subjective", "objective", "assessment", "plan"] as const;
-// Amelia's (SYN-1042) saved note, a line per section, from her record: the intake, her ward record (DEMO_WARD) and her take-home list.
-const AMELIA_NOTE = [
-  "Five days of cough, with fever from the day before admission. Now eating and walking; the cough is easing.",
-  "Afebrile for 18 hours. SpO₂ 97% on room air. Chest film: right lower zone consolidation.",
-  "Community-acquired pneumonia, mild; CURB-65 0. Background asthma, on a salbutamol inhaler. Penicillin allergy reported.",
-  "IV azithromycin given, day 2; oral azithromycin 500 mg daily for 2 more days. Fit for discharge today; home when the final guarantee letter arrives.",
-];
 /** "5 Oct 2026, 07:00" on the ward's clock (Malaysia), whichever zone the seed runs in. */
 const wardTime = (at: Date) => at.toLocaleString("en-GB", { timeZone: "Asia/Kuala_Lumpur", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
@@ -261,7 +254,8 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
     ...WARD.flatMap(w => OBS.map(([kind, unit], i) => chartRow(w.id, kind, w.chart.obs[i]!, unit))),
   ]).onConflictDoUpdate({ target: observations.id, set: { value: sql`excluded.value`, unit: sql`excluded.unit`, observedAt: sql`excluded.observed_at` } });
   // Each ward patient's saved note, in the table and shape note.save writes (one sentence per section). A note saved during
-  // a run is a later revision, so it is never overwritten. Amelia's is seedDemoNote's, a step of its own (see there).
+  // a run is a later revision, so it is never overwritten. Amelia has none: her visit's note is the one saved from her recorded
+  // consultation, and her guarantee letter reads that note with what the visit recorded (the chart, her X-ray's reading).
   await db.insert(notes).values(WARD.map(w => ({ id: `note-visit-20${w.n}-1`, encounterId: `visit-20${w.n}`, revision: 1, sentences: NOTE_SECTIONS.map((id, i) => ({ id, text: w.chart.note[i]! })), createdAt: notedAt })))
     .onConflictDoNothing();
   // Daniel's potassium arrived two hours ago, like the app's pending result; reseeding keeps it two hours old.
@@ -272,6 +266,7 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
     { id: "severity", label: "Severity score documented", rule: { requires: "severity-score" } },
     { id: "imaging", label: "Imaging result attached", rule: { requires: "imaging-report" } },
     { id: "stay", label: "Stay within the approved plan", rule: { maxStayDays: 3 } },
+    { id: "diagnosis", code: "J18.9", label: "Diagnosis confirmed", rule: { requires: "confirmed-diagnosis" } },
     { id: "organism", code: "J18.9", label: "Organism documented", rule: { requires: "organism-statement" } },
     { id: "iv", label: "Reason for IV antibiotics", rule: { requires: "iv-reason" } },
   ].map(c => ({ ...c, id: `synthetic-${c.id}`, insurer: "Synthetic insurer" }))).onConflictDoNothing();
@@ -297,19 +292,6 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
     id: r.id!, kind: r.kind as "nodule", riskBand: r.risk_band as "low", minMm: num(r.min_mm), maxMm: num(r.max_mm),
     intervalDays: num(r.interval_days), action: r.action!, source: r.source!,
   }))).onConflictDoUpdate({ target: followUpRules.id, set: { intervalDays: sql`excluded.interval_days`, action: sql`excluded.action`, source: sql`excluded.source`, minMm: sql`excluded.min_mm`, maxMm: sql`excluded.max_mm` } });
-}
-
-/**
- * Amelia's saved note for her stay, in the table and shape note.save writes (revision 1, one sentence per section), so her
- * discharge and guarantee letter build on a real saved note. Like Nurul's it leaves the insurer's two open questions (the
- * organism, why IV came first) for the doctor: the seed answers nothing on the doctor's behalf. Safe to rerun; a note saved
- * during a run is a later revision and is never overwritten.
- * ponytail: its own step, run by the seed and the reset (seed-run.ts, reset.ts) and not inside seedDemo, because the API's
- * tests seed with seedDemo and many start from Amelia with no note; move it into seedDemo once those tests expect her note.
- */
-export async function seedDemoNote(db: AnyDb, now = new Date()) {
-  await db.insert(notes).values({ id: "note-visit-1042-1", encounterId: "visit-1042", revision: 1, sentences: NOTE_SECTIONS.map((id, i) => ({ id, text: AMELIA_NOTE[i]! })), createdAt: new Date(now.getTime() - 3 * HOUR) })
-    .onConflictDoNothing();
 }
 
 /**
