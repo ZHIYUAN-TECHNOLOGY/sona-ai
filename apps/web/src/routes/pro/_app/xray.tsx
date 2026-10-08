@@ -85,7 +85,8 @@ function Page() {
   const shown = !data ? undefined : sent?.key === data.key ? sent.url : stored.data && stored.data.key === data.key ? filmUrl(stored.data) : undefined;
   const all = findings.data ?? [];
   const onImage = readFrom(all, data?.key);
-  // The stage's halftone: the film on its way (being sent, or fetched back), then a scan over it while a model reads it.
+  // The stage's halftone while the film is on its way (being sent, or fetched back); Sona Vision's scan over the film
+  // while the model reads it (findings detected, or the first read of an image just sent).
   const filming = upload.isPending || (Boolean(encounterId) && !shown && (read.isFetching || (Boolean(data) && stored.isPending)));
   const reading = Boolean(shown) && (detect.isPending || (sent?.key === data?.key && read.isFetching));
 
@@ -232,7 +233,7 @@ function Page() {
           {patients.isError && <p className="xr-error" role="alert">{messageOf(patients.error)}</p>}
           <input ref={picker} className="xr-file" type="file" accept="image/*" aria-label="Choose an X-ray image" tabIndex={-1} disabled={upload.isPending}
             onChange={e => { take(e.target.files?.[0]); e.target.value = ""; }} />
-          <FilmStage src={stream ? undefined : shown} alt="Chest X-ray added for this visit" findings={onImage} zoom={zoom} setZoom={setZoom} data-over={over || undefined}
+          <FilmStage src={stream ? undefined : shown} alt="Chest X-ray added for this visit" findings={onImage} zoom={zoom} setZoom={setZoom} reading={reading} data-over={over || undefined}
             onDragOver={e => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
             onDrop={e => { e.preventDefault(); setOver(false); take(e.dataTransfer.files[0]); }}>
             {stream ? <video ref={video} className="xr-video" autoPlay playsInline muted />
@@ -247,7 +248,7 @@ function Page() {
                 </div>
               )}
             {encounterId && !stream && (
-              <ImageLoader fill state={filming ? "loading" : reading ? "reading" : "ready"}
+              <ImageLoader fill state={filming ? "loading" : "ready"}
                 messages={upload.isPending ? LOADER_COPY.upload : sent && !shown ? LOADER_COPY.read : undefined} />
             )}
           </FilmStage>

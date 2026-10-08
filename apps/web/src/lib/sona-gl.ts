@@ -7,6 +7,12 @@ float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75);
 float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
 float bayer8(vec2 a) { return bayer4(0.5 * a) * 0.25 + bayer2(a); }`;
 
+/** The same dither in WGSL, for the WebGPU twins of those shaders. */
+export const BAYER_WGSL = `
+fn bayer2(a: vec2f) -> f32 { let b = floor(a); return fract(b.x / 2.0 + b.y * b.y * 0.75); }
+fn bayer4(a: vec2f) -> f32 { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
+fn bayer8(a: vec2f) -> f32 { return bayer4(0.5 * a) * 0.25 + bayer2(a); }`;
+
 /** Lilac at the faint edge, the app's blue in the core: Sona Pro's blue, Sona Care's azure. */
 export const PALETTE = {
   pro: { deep: [0.141, 0.357, 0.8], mid: [0.42, 0.46, 0.92], hot: [0.62, 0.76, 0.95] },

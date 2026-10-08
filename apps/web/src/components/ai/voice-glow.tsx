@@ -1,6 +1,6 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
 
-import { BAYER, compile, PALETTE } from "@/lib/sona-gl";
+import { BAYER, BAYER_WGSL, compile, PALETTE } from "@/lib/sona-gl";
 import { follow, pickRenderer, type Renderer } from "@/lib/voice";
 
 type App = "pro" | "care";
@@ -46,9 +46,7 @@ struct U { res: vec2f, t: f32, level: f32, on: f32, pitch: f32, deep: vec4f, mid
   var p = array<vec2f, 3>(vec2f(-1.0, -1.0), vec2f(3.0, -1.0), vec2f(-1.0, 3.0));
   return vec4f(p[i], 0.0, 1.0);
 }
-fn bayer2(a: vec2f) -> f32 { let b = floor(a); return fract(b.x / 2.0 + b.y * b.y * 0.75); }
-fn bayer4(a: vec2f) -> f32 { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
-fn bayer8(a: vec2f) -> f32 { return bayer4(0.5 * a) * 0.25 + bayer2(a); }
+${BAYER_WGSL}
 fn lobes(x: f32) -> f32 {
   var h = 0.0;
   for (var i = 0; i < 4; i++) {

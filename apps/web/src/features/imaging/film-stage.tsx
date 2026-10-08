@@ -1,5 +1,6 @@
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 
+import { FilmScan } from "@/features/imaging/film-scan";
 import { FindingMarks, type Marked } from "@/features/imaging/marks";
 import { usePan, ZOOM } from "@/features/imaging/pan";
 import "@/styles/film.css";
@@ -13,10 +14,10 @@ export const ZoomSlider = ({ zoom, setZoom }: { zoom: number; setZoom: (zoom: nu
 
 /**
  * The dark stage a film sits on, as /pro/xray and the film panel both show it: drag to move, double-click or pinch to
- * zoom (pan.ts), the findings boxed on it. Without `src` it holds `children` instead (the drop box, the camera); any
- * other `children` (a progress note) sit over the film.
+ * zoom (pan.ts), the findings boxed on it, and Sona Vision's scan over it while `reading` (film-scan.tsx). Without `src`
+ * it holds `children` instead (the drop box, the camera); any other `children` (a progress note) sit over the film.
  */
-export function FilmStage({ src, alt, findings, zoom, setZoom, children, ...rest }: { src?: string; alt: string; findings: Marked[]; zoom: number; setZoom: (zoom: number) => void; children?: ReactNode } & HTMLAttributes<HTMLDivElement>) {
+export function FilmStage({ src, alt, findings, zoom, setZoom, reading = false, children, ...rest }: { src?: string; alt: string; findings: Marked[]; zoom: number; setZoom: (zoom: number) => void; reading?: boolean; children?: ReactNode } & HTMLAttributes<HTMLDivElement>) {
   const pan = usePan(zoom, setZoom);
   return (
     <div className="xr-stage" {...rest} {...src && { ...pan.stage, "data-pan": pan.dragging ? "dragging" : "", title: "Drag to move · double-click or pinch to zoom" }}>
@@ -25,6 +26,7 @@ export function FilmStage({ src, alt, findings, zoom, setZoom, children, ...rest
           <div className="xr-image" data-zoomed={zoom > 1 || undefined} style={{ "--xr-zoom": zoom } as CSSProperties}>
             <img src={src} alt={alt} draggable={false} />
             <FindingMarks findings={findings} />
+            <FilmScan key={src} reading={reading} />
           </div>
         </div>
       )}
