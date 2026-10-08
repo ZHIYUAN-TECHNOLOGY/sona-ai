@@ -29,6 +29,10 @@ const finding = (kind: "nodule" | "cardiomegaly" | "effusion", over: object = {}
   ...over,
 });
 
+const listed = ({ encounterId }: { encounterId?: string }) => encounterId !== "e-0" ? [] : [finding("nodule"), finding("cardiomegaly", { status: "tracked", taskId: "t-1", dueAt: new Date(Date.now() + 90 * 86_400_000) }), finding("effusion")];
+// CC BY, apps/native/features/imaging/assets/PROVENANCE.md (the dev gallery's film too).
+const FILM = new URL("../../../../native/features/imaging/assets/normal-pa-chest.jpg", import.meta.url).href;
+
 export default [
   fixture("xray.read", {
     // Only the first patient's visit has a film; any other answers NOT_FOUND as the router does.
@@ -40,11 +44,17 @@ export default [
     one: { key: KEY, findings: [READ[3]!], validated: false, source: "model", model: "medgemma-4b" },
   }),
   fixture("xray.upload", { worst: { key: KEY } }),
-  fixture("findings.list", {
-    worst: ({ encounterId }) => encounterId !== "e-0" ? [] : [finding("nodule"), finding("cardiomegaly", { status: "tracked", taskId: "t-1", dueAt: new Date(Date.now() + 90 * 86_400_000) }), finding("effusion")],
-    empty: [],
-    one: [finding("nodule")],
+  // The film itself: a real chest X-ray bundled with the phone app, so the stage and Sona Vision's scan have pixels to work on.
+  fixture("xray.image", {
+    worst: async ({ encounterId }) => {
+      if (encounterId !== "e-0") throw new ORPCError("NOT_FOUND", { message: `No X-ray uploaded for ${encounterId}` });
+      const bytes = new Uint8Array(await (await fetch(FILM)).arrayBuffer());
+      return { key: KEY, contentType: "image/jpeg", dataBase64: btoa(Array.from(bytes, b => String.fromCharCode(b)).join("")), uploadedAt: new Date(now).toISOString() };
+    },
   }),
+  fixture("findings.list", { worst: listed, empty: [], one: [finding("nodule")] }),
+  // As long as Sona Vision takes on staging (about 4 s), so the scan can be seen.
+  fixture("findings.detect", { worst: async input => { await new Promise(r => setTimeout(r, 4000)); return listed(input); } }),
   fixture("findings.status", {
     worst: ({ encounterId }) => encounterId !== "e-0" ? null : { source: "model", model: "google/medgemma-4b-it-cxr-finetune-2026-09-30", readAt: new Date(now), imageKey: KEY, found: 3 },
     empty: null,

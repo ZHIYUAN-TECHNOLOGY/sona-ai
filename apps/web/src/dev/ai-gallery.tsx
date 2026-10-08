@@ -6,6 +6,7 @@ import { Artifact, Conversation, Notice, type Phase, Response, RuleAnswer, type 
 import { ImageLoader } from "@/components/image-loader";
 import { Button, Card, Tabs } from "@/components/primitives";
 import { SonaOrb, SonaOrbMark } from "@/components/sona-orb";
+import { FilmStage } from "@/features/imaging/film-stage";
 import { LOADER_COPY, type LoaderState } from "@/lib/image-loader";
 import { BLOOM_MS, type OrbState } from "@/lib/sona-orb";
 import "@/styles/film.css";
@@ -34,6 +35,22 @@ function LoaderGallery() {
         </div>
         <div style={{ width: 200 }}><ImageLoader className="film-thumb" tone="paper" src={src && PAGE} state={state} alt="A scanned page" /></div>
       </div>
+    </Card>
+  );
+}
+
+const SCAN_STATES: { id: "reading" | "read"; label: string }[] = [{ id: "reading", label: "Reading" }, { id: "read", label: "Read (settle)" }];
+// A box as a model's finding carries one (0-1000, [y0, x0, y1, x1]); demo data, to see the settle bring it up.
+const SCAN_MARKS = [{ id: "demo-heart", status: "open", location: { box: [450, 330, 780, 760] } }];
+
+/** Sona Vision's scan on the real film, as /pro/xray and the film panel show it; Read plays the settle, Reading again restarts it. */
+function FilmScanGallery() {
+  const [pick, setPick] = useState<"reading" | "read">("reading");
+  const [zoom, setZoom] = useState(1);
+  return (
+    <Card title="Film scan">
+      <Tabs label="Read state" value={pick} onChange={setPick} tabs={SCAN_STATES} />
+      <div className="pro"><FilmStage src={XRAY} alt="Chest X-ray" findings={pick === "read" ? SCAN_MARKS : []} zoom={zoom} setZoom={setZoom} reading={pick === "reading"} /></div>
     </Card>
   );
 }
@@ -109,6 +126,7 @@ export function AiGallery({ worst }: { worst?: boolean }) {
     <>
     <OrbGallery />
     <LoaderGallery />
+    <FilmScanGallery />
     <Card title="Sona answer kit">
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
         <Tabs label="Look" value={look} onChange={setLook} tabs={[{ id: "pro", label: "Pro glass" }, { id: "care", label: "Light" }]} />

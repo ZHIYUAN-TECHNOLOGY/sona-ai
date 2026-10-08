@@ -75,9 +75,11 @@ function FilmBody({ encounterId }: { encounterId: string }) {
   const [zoom, setZoom] = useState(1);
   const marked = onImage(rows.data ?? [], film.data?.key);
   const sample = read.data && read.data.source !== "model";
+  // A film nobody has read yet is read on its first open (xray.read reads each image once): the scan runs until it lands.
+  const reading = Boolean(film.data) && read.isPending && read.isFetching;
   return (
     <div className="film-art">
-      <FilmStage src={film.data && filmUrl(film.data)} alt="Chest X-ray" findings={marked} zoom={zoom} setZoom={setZoom}>
+      <FilmStage src={film.data && filmUrl(film.data)} alt="Chest X-ray" findings={marked} zoom={zoom} setZoom={setZoom} reading={reading}>
         <ImageLoader fill state={film.isError ? "failed" : film.data ? "ready" : "loading"} />
       </FilmStage>
       {film.data && (

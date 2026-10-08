@@ -15,8 +15,8 @@ type Procedure = Procedures<AppRouterClient>;
 export type ProcedurePath = Procedure["path"];
 type Of<P extends ProcedurePath> = Extract<Procedure, { path: P }>;
 
-/** A value, or a function of the call's input, per mode. A missing mode falls back to `worst`. */
-export type Fixture<P extends ProcedurePath> = Partial<Record<Mode, Of<P>["output"] | ((input: Of<P>["input"]) => Of<P>["output"])>>;
+/** A value, or a function of the call's input (async to take as long as the model would), per mode. A missing mode falls back to `worst`. */
+export type Fixture<P extends ProcedurePath> = Partial<Record<Mode, Of<P>["output"] | ((input: Of<P>["input"]) => Of<P>["output"] | Promise<Of<P>["output"]>)>>;
 
 /** `fixture("care.me", { worst: {...} })`: checks the values against the procedure's output type. */
 export function fixture<P extends ProcedurePath>(path: P, modes: Fixture<P>) {
