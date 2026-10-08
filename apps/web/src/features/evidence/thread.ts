@@ -1,4 +1,5 @@
 import type { Claim, Reference } from "@sona-ai/domain/evidence";
+import { modelName } from "@sona-ai/domain/model-names";
 
 import type { client } from "@/lib/orpc";
 
@@ -36,13 +37,18 @@ export function apply(turn: Turn, event: StreamEvent): Turn {
   return event.step === "write" ? { ...turn, step: "Reading the sources and writing the answer" } : turn;
 }
 
-/** The number of the film that leads an answer, when its first source is a patient's X-ray: the page picks it before the clinician does. */
-export const leadFilm = (references: Reference[]) => (references[0]?.kind === "image" ? references[0].n : undefined);
+/**
+ * The number of the film that leads an answer: its first source, when that is a patient's X-ray the answer cites, so the
+ * page can open it before the clinician does. A film the answer does not cite stays one of the sources, opened on a tap.
+ */
+export const leadFilm = (references: Reference[], cited: Pick<Claim, "cites">[]) => {
+  const first = references[0];
+  return first?.kind === "image" && cited.some(c => c.cites.includes(first.n)) ? first.n : undefined;
+};
 
-/** The film an answer carries in place (a page's Sona thread): the leading source, when it is a visit's X-ray. */
-/** The film that leads an answer; on a patient's page (`encounterId`) only that visit's own film, never another patient's. */
-export const answerFilm = (references: Reference[], encounterId?: string) => {
-  const film = leadFilm(references) && references[0]?.encounterId ? references[0] : undefined;
+/** The film an answer carries in place (a page's Sona thread); on a patient's page (`encounterId`) only that visit's own film, never another patient's. */
+export const answerFilm = (references: Reference[], cited: Pick<Claim, "cites">[], encounterId?: string) => {
+  const film = leadFilm(references, cited) && references[0]?.encounterId ? references[0] : undefined;
   return film && (!encounterId || film.encounterId === encounterId) ? film : undefined;
 };
 
@@ -61,6 +67,9 @@ export function sampleLabel(answer: Pick<Answer, "source"> & { waking?: number }
   if (minutes <= 0) return "Sample answer";
   return `Sample for now · Sona's model is starting, ${minutes <= 1 ? "about a minute" : `about ${minutes} min`}. Ask again then.`;
 }
+
+/** Who wrote a finished answer, for the caption under Sona's mark: the sample label, or the model by Sona's name, never its id. */
+export const answerBy = (answer: Pick<Answer, "source"> & { waking?: number }) => sampleLabel(answer) ?? modelName(answer.source);
 
 /** Where a turn's answer is, for its steps line: done once answered, writing once the write step or a claim arrived, reading once sources came. */
 export function phaseOf(turn: Turn): "search" | "read" | "write" | "done" {

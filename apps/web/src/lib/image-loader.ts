@@ -29,7 +29,7 @@ export const firstPhase = (state: LoaderState, loaded: boolean) => nextPhase("vi
 export const LOADER_COPY = {
   film: ["Fetching the film", "Developing the image", "Almost there"],
   upload: ["Sending the film", "Storing it safely", "Getting it ready to read"],
-  read: ["MedGemma is reading the film", "Looking at the lungs", "Checking the heart size", "Marking findings"],
+  read: ["Sona Vision is reading the film", "Looking at the lungs", "Checking the heart size", "Marking findings"],
   scan: ["Reading the page", "Finding the words", "Checking unsure words"],
   films: ["Finding films to compare"],
 };

@@ -10,7 +10,7 @@ import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Chip } from "@/components/primitives";
 import { askVisit } from "@/features/evidence/ask";
 import { FilmCard } from "@/features/evidence/film-card";
-import { type Turn, apply, leadFilm, newTurn, phaseOf, sampleLabel, threadOf } from "@/features/evidence/thread";
+import { type Turn, answerBy, apply, leadFilm, newTurn, phaseOf, sampleLabel, threadOf } from "@/features/evidence/thread";
 import "@/styles/pages/evidence.css";
 
 export const Route = createFileRoute("/pro/_app/evidence")({ component: Page });
@@ -45,8 +45,8 @@ function Page() {
     try {
       await askVisit(undefined, question, event => {
         change(t => apply(t, event));
-        // A question about a patient's X-ray is answered by the film: on a wide screen it opens beside the answer before the clinician asks.
-        if (event.type === "step" && event.step === "read" && wide()) { const n = leadFilm(event.references); if (n) pick({ turn: id, n }); }
+        // An answer that rests on a patient's X-ray: on a wide screen the film opens beside it once written, before the clinician asks.
+        if (event.type === "answer" && wide()) { const n = leadFilm(event.answer.references, [...event.answer.claims, ...event.answer.patientPoints ?? []]); if (n) pick({ turn: id, n }); }
       }, thread);
       return true;
     } catch {
@@ -104,7 +104,7 @@ function TurnView({ turn, last, picked, onPick, onAsk }: { turn: Turn; last: boo
   const film = (r: Reference) => r.encounterId ? <FilmCard reference={r} encounterId={r.encounterId} picked={picked === r.n} onPick={() => onPick(r.n)} /> : null;
   const asked = answer?.claims.length ? answer.followUps : [];
   return (
-    <AnswerTurn question={turn.question} by={answer && !label ? answer.source : undefined}>
+    <AnswerTurn question={turn.question} by={answer && !label ? answerBy(answer) : undefined}>
       {turn.failed ? (
         <Notice kind="error" action={<Button size="sm" icon="refresh" onClick={() => onAsk(turn.question)}>Try again</Button>}>{turn.failed}</Notice>
       ) : (

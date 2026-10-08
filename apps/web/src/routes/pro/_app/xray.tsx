@@ -1,5 +1,6 @@
 import { ORPCError } from "@orpc/client";
 import { can } from "@sona-ai/api/roles";
+import { modelName } from "@sona-ai/domain/model-names";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -158,7 +159,7 @@ function Page() {
       {data && (
         <Card title="Your decision">
           <div className="xr-decide" ref={decision}>
-            {origin.data && <p className="xr-note">Read for findings by {"model" in origin.data ? origin.data.model : origin.data.source === "fixture" ? "the sample reader" : "an unrecorded reader"} · {when(origin.data.readAt)} · {origin.data.found} found</p>}
+            {origin.data && <p className="xr-note">Read for findings by {"model" in origin.data ? modelName(origin.data.model) : origin.data.source === "fixture" ? "the sample reader" : "an unrecorded reader"} · {when(origin.data.readAt)} · {origin.data.found} found</p>}
             {!onImage.length && <p className="xr-note">No findings to decide on yet. {mayDetect ? "Read the image for findings, then track or dismiss each one here." : "A doctor reads the image for findings."}</p>}
             {onImage.map((f, i) => (
               <div key={f.id} className="xr-finding">
