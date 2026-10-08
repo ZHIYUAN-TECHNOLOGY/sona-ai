@@ -29,11 +29,11 @@ test("an ask spec becomes a rule answer: lead, rows, only patient ops kept, who 
 });
 
 test("calm rows are counted, a review adds its items, the model is named, and an empty spec is no answer", () => {
-  const calm = rulesAnswer({ source: "model", model: "Gemma 3 27B", spec: spec(
+  const calm = rulesAnswer({ source: "model", model: "gemma-4-26b-a4b", spec: spec(
     { type: "AskLead", props: { text: "Two visits today." } },
     { type: "AskRows", props: { rows: [{ id: "a", title: "A", detail: "9:00", tone: "calm" }, { id: "b", title: "B", detail: "10:00", tone: "calm" }] } },
   ) });
-  expect(calm).toMatchObject({ by: "Gemma 3 27B", heading: "2 items" });
+  expect(calm).toMatchObject({ by: "Sona Med", heading: "2 items" });
   const review = rulesAnswer({ source: "fixture", spec: spec({ type: "AskReview", props: { title: "Discharge Amelia?", items: ["Oral switch done"] } }) });
   expect(review).toEqual({ kind: "rules", lead: "Discharge Amelia?", rows: [{ title: "Oral switch done", tone: "calm" }], heading: "1 item", by: undefined });
   expect(rulesAnswer({ source: "fixture" })).toBeUndefined();

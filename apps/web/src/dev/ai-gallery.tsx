@@ -120,7 +120,7 @@ export function AiGallery({ worst }: { worst?: boolean }) {
             <RuleAnswer lead="Two patients need you before the 11:00 round." rows={worst ? ROWS.map(r => ({ ...r, title: `${r.title} · Christopher Alexander Montgomery III bin Abdullah` })) : ROWS} noun={["patient", "patients"]} onOpen={() => undefined} />
             <Suggestions items={["Open Amelia Tan", "Acknowledge the potassium", "Call transport for Lim Wei Jie"]} onPick={() => undefined} />
           </Turn>
-          <Turn question={worst ? LONG_Q : "What's Amelia Tan's CURB-65, and does she need to stay in?"} by="Gemma 3 27B">
+          <Turn question={worst ? LONG_Q : "What's Amelia Tan's CURB-65, and does she need to stay in?"} by="Sona Med">
             <Steps phase="done" sources={REFS.length} seconds={4.2}>{searched}</Steps>
             <Response bottomLine={BOTTOM} claims={CLAIMS} references={REFS}>
               <Sources references={REFS} image={image} />
@@ -130,10 +130,10 @@ export function AiGallery({ worst }: { worst?: boolean }) {
           <Turn question="Is she safe for an oral switch?" by="rules">
             <Notice kind="error" action={<Button size="sm" icon="refresh">Try again</Button>}>Sona's model is starting. Ask again in about a minute.</Notice>
           </Turn>
-          <Turn question="Does vitamin C shorten pneumonia in older adults?" by="Gemma 3 27B">
+          <Turn question="Does vitamin C shorten pneumonia in older adults?" by="Sona Med">
             <Notice kind="empty" action={<Suggestions items={["What shortens recovery from pneumonia?", "Which supplements are safe with her antibiotics?"]} onPick={() => undefined} />} />
           </Turn>
-          <Turn question="Should she stay in, or go home on oral antibiotics?" by={phase === "done" ? "Gemma 3 27B" : undefined}>
+          <Turn question="Should she stay in, or go home on oral antibiotics?" by={phase === "done" ? "Sona Med" : undefined}>
             <Steps phase={phase} sources={phase === "search" ? undefined : REFS.length}>{phase === "search" ? null : searched}</Steps>
             {phase === "search" ? <Notice kind="thinking">Looking through PubMed and the hospital library</Notice> : null}
             {live.length || phase === "done" ? (

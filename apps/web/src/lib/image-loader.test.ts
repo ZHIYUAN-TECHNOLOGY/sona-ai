@@ -33,7 +33,7 @@ describe("messageAt", () => {
 
 describe("copyFor", () => {
   test("a film loading is fetched and developed", () => expect(copyFor("loading", "film")).toBe(LOADER_COPY.film));
-  test("a film being read names MedGemma first", () => expect(copyFor("reading", "film")[0]).toBe("MedGemma is reading the film"));
+  test("a film being read names Sona Vision first", () => expect(copyFor("reading", "film")[0]).toBe("Sona Vision is reading the film"));
   test("pages are read", () => expect(copyFor("reading", "paper")).toBe(LOADER_COPY.scan));
   test("failed says so plainly", () => expect(copyFor("failed", "film")).toEqual(["Film not available"]));
 });

@@ -1,3 +1,4 @@
+import { modelName } from "@sona-ai/domain/model-names";
 import type { ReactNode } from "react";
 
 import type { RuleRow } from "@/components/ai/rule-answer";
@@ -41,7 +42,7 @@ export function rulesAnswer(res: FreeAnswer): Extract<SonaAnswer, { kind: "rules
   if (!lead) [lead, heading] = [heading ?? "", undefined];
   // The kit's count line says "Nothing needs you" over calm rows, which would contradict a list of today's visits: count them instead.
   if (!heading && rows.length && !rows.some(r => r.tone === "urgent" || r.tone === "soon")) heading = plural(rows.length, "item");
-  return { kind: "rules", lead, rows, ...(heading ? { heading } : {}), by: res.source === "model" ? res.model : res.source === "rules" ? "rules" : undefined };
+  return { kind: "rules", lead, rows, ...(heading ? { heading } : {}), by: res.source === "model" ? modelName(res.model) : res.source === "rules" ? "rules" : undefined };
 }
 
 /** Where a streamed evidence turn is, for the Steps line: searching, reading the sources, writing, or done (answered or failed). */

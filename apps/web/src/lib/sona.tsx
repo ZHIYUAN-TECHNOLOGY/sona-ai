@@ -5,7 +5,7 @@ import { createContext, isValidElement, type ReactNode, type RefObject, use, use
 import { Conversation, Notice, Response, RuleAnswer, Sources, Steps, Suggestions, Turn as Asked } from "@/components/ai";
 import { Button } from "@/components/primitives";
 import { FilmCard } from "@/features/evidence/film-card";
-import { answerFilm, sampleLabel } from "@/features/evidence/thread";
+import { answerBy, answerFilm } from "@/features/evidence/thread";
 
 import { client } from "./orpc";
 import { type FreeAnswer, phaseOf, rowPatient, rulesAnswer, type SonaAnswer } from "./sona-answer";
@@ -133,7 +133,7 @@ const paragraphs = (text: string) => text.split(/\n{2,}/).map((line, i) => <p ke
 /** Who wrote an answer, for the caption under Sona's mark: "rules", the model, or what stood in for it. */
 function byOf(answer?: SonaAnswer) {
   if (answer?.kind === "rules") return answer.by;
-  if (answer?.kind === "evidence" && answer.turn.answer) return sampleLabel(answer.turn.answer) ?? answer.turn.answer.source;
+  if (answer?.kind === "evidence" && answer.turn.answer) return answerBy(answer.turn.answer);
   return undefined;
 }
 

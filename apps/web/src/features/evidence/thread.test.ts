@@ -1,7 +1,7 @@
 // @ts-expect-error apps/web has no bun types yet; add @types/bun and drop this line
 import { expect, test } from "bun:test";
 
-import { type Answer, answerFilm, apply, leadFilm, newTurn, sampleLabel, threadOf } from "./thread";
+import { type Answer, answerBy, answerFilm, apply, leadFilm, newTurn, sampleLabel, threadOf } from "./thread";
 
 const claim = { text: "Steroids are not routine.", cites: [1] };
 const answer = { bottomLine: "Not routinely.", claims: [claim], references: [], source: "gemma" } as unknown as Answer;
@@ -33,4 +33,9 @@ test("a sample says it is a sample, and when the model is starting", () => {
   expect(sampleLabel({ source: "gemma" })).toBeUndefined();
   expect(sampleLabel({ source: "fixture" })).toBe("Sample answer");
   expect(sampleLabel({ source: "fixture", waking: 2.2 })).toContain("about 3 min");
+});
+
+test("an answer's caption names the model by Sona's name, never its id", () => {
+  expect(answerBy({ source: "gemma-4-26b-a4b" })).toBe("Sona Med");
+  expect(answerBy({ source: "fixture" })).toBe("Sample answer");
 });

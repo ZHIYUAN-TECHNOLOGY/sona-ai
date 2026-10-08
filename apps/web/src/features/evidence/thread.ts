@@ -1,4 +1,5 @@
 import type { Claim, Reference } from "@sona-ai/domain/evidence";
+import { modelName } from "@sona-ai/domain/model-names";
 
 import type { client } from "@/lib/orpc";
 
@@ -61,6 +62,9 @@ export function sampleLabel(answer: Pick<Answer, "source"> & { waking?: number }
   if (minutes <= 0) return "Sample answer";
   return `Sample for now · Sona's model is starting, ${minutes <= 1 ? "about a minute" : `about ${minutes} min`}. Ask again then.`;
 }
+
+/** Who wrote a finished answer, for the caption under Sona's mark: the sample label, or the model by Sona's name, never its id. */
+export const answerBy = (answer: Pick<Answer, "source"> & { waking?: number }) => sampleLabel(answer) ?? modelName(answer.source);
 
 /** Where a turn's answer is, for its steps line: done once answered, writing once the write step or a claim arrived, reading once sources came. */
 export function phaseOf(turn: Turn): "search" | "read" | "write" | "done" {
