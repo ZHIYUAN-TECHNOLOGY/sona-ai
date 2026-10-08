@@ -56,3 +56,12 @@ test("a full mental test score is not a symptom to look at", () => {
   expect(marks("Observations: Confusion AMT 10/10, Urea 5.1 mmol/L.")).toEqual([]);
   expect(marks("Confusion AMT 6/10.")).toEqual([["Confusion", "symptom"]]);
 });
+
+test("a spoken consultation's signs, a bare saturation and the safety-net warning are marked", () => {
+  expect(marks("Temperature 38.1, pulse 96, saturation 91% on room air."))
+    .toEqual([["Temperature 38.1", "caution"], ["saturation 91%", "alert"]]);
+  expect(marks("Coughing, yellow phlegm and shivering; chest tightness on the stairs."))
+    .toEqual([["Coughing", "symptom"], ["phlegm", "symptom"], ["shivering", "symptom"], ["chest tightness", "symptom"]]);
+  expect(marks("If her lips turn bluish, go straight to emergency."))
+    .toEqual([["lips turn bluish", "alert"], ["straight to emergency", "alert"]]);
+});

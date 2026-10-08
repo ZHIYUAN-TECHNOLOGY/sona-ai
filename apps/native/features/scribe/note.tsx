@@ -4,6 +4,7 @@ import { Keyboard, Pressable, Switch, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { GlanceTile, IconRow, Section, Shelf } from "@/components/sona/sections";
+import { MarkedText } from "@/components/sona/marked-text";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Chip, Expand, glass, Icon, Insight, Notice, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
@@ -262,8 +263,12 @@ export function NoteScreen() {
         {sources[key] && <SourceLink label={key === "subjective" ? "Review consultation / history source" : "Review observation source"} onPress={() => router.push({ pathname: "/source", params: { id: sources[key]!, patientId: patient.id } })} />}
       </Expand>}
       <Surface style={{ paddingHorizontal: 16, paddingVertical: 14, borderRadius: radius.group, borderColor: focused === key ? FOCUS : glass.rim, transitionProperty: "borderColor", transitionDuration: 160 } as never}>
-        <TextInput accessibilityLabel={`Clinical note ${key}`} editable={canWrite} value={sections[key]} onChangeText={value => editSection(key, value)} onFocus={() => setFocused(key)} onBlur={() => setFocused(current => current === key ? undefined : current)} multiline placeholder={placeholders[key]} placeholderTextColor={palette.placeholder} textAlignVertical="top"
+        {/* Read with its key terms coloured (the app's one rule set); a tap opens the plain editor, and leaving it colours it again. */}
+        {focused === key || !sections[key] ? <TextInput accessibilityLabel={`Clinical note ${key}`} editable={canWrite} autoFocus={focused === key} value={sections[key]} onChangeText={value => editSection(key, value)} onFocus={() => setFocused(key)} onBlur={() => setFocused(current => current === key ? undefined : current)} multiline placeholder={placeholders[key]} placeholderTextColor={palette.placeholder} textAlignVertical="top"
           style={{ minHeight: key === "subjective" ? 150 : 96, padding: 0, fontSize: type.body.fontSize, lineHeight: 25, color: palette.ink }} />
+          : <Pressable accessibilityRole="button" accessibilityLabel={`Clinical note ${key}: ${sections[key]}`} accessibilityHint={canWrite ? "Edit this section" : undefined} disabled={!canWrite} onPress={() => setFocused(key)} style={{ minHeight: key === "subjective" ? 150 : 96 }}>
+            <MarkedText text={sections[key]} selectable={false} style={{ fontSize: type.body.fontSize, lineHeight: 25, color: palette.ink }} />
+          </Pressable>}
       </Surface>
     </Animated.View>)}
 

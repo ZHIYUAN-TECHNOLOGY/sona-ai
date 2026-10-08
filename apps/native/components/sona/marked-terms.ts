@@ -15,7 +15,7 @@ const words = (list: string[]) => new RegExp(`\\b(?:${list.join("|")})\\b`, "gi"
 const DICTIONARY: [RegExp, Mark][] = [
   [words([
     "(?:penicillin|drug|sulfa) allerg(?:y|ic)", "allerg(?:y|ic) to \\w+", "anaphylaxis", "septic shock", "sepsis",
-    "(?<!non-)severe(?: pneumonia)?", "critical", "intensive care", "hyperglycaemia", "high blood sugar", "hypokalaemia",
+    "(?<!non-)severe(?: pneumonia)?", "critical", "lips (?:turn(?:ing)? )?(?:bluish|blue)", "bluish lips", "straight to emergency", "intensive care", "hyperglycaemia", "high blood sugar", "hypokalaemia",
     // An abnormal result names its analyte, so "low risk" or "high certainty" never turns red.
     "(?:low|high) (?:potassium|sodium|haemoglobin|hb|glucose)", "(?:potassium|sodium|haemoglobin|hb|glucose) (?:is )?(?:low|high)",
   ]), "alert"],
@@ -27,11 +27,11 @@ const DICTIONARY: [RegExp, Mark][] = [
   [words([
     "community-acquired pneumonia", "pneumonia", "consolidation", "asthma", "copd", "pyelonephritis", "cellulitis", "appendicitis",
     "peritonitis", "heart failure", "chronic kidney disease", "kidney disease", "acute kidney injury", "ischaemic stroke", "stroke",
-    "infarct", "anaemia", "hyponatraemia", "type 2 diabetes", "diabetes", "hypertension", "atrial fibrillation", "curb-65 \\d",
+    "infarct", "reduced air entry", "anaemia", "hyponatraemia", "type 2 diabetes", "diabetes", "hypertension", "atrial fibrillation", "curb-65 \\d",
     "respiratory review", "\\d+(?:\\.\\d+)? mm nodule", "nodule", "borderline heart size", "heart size", "cardiomegaly", "pleural effusion", "effusion",
   ]), "finding"],
   [words([
-    "shortness of breath", "chest pain", "breathlessness", "cough", "fever", "wheeze", "wheezing", "rash", "vomiting", "confusion", "pain",
+    "shortness of breath", "chest pain", "chest tightness", "breathlessness", "breathless", "coughing", "cough", "fever", "phlegm", "sputum", "shivering", "wheeze", "wheezing", "rash", "vomiting", "confusion", "pain",
   ]), "symptom"],
   [words([
     "unconfirmed", "not confirmed", "needs confirmation", "not yet documented", "not documented", "not stated", "not described",
@@ -46,7 +46,7 @@ const DICTIONARY: [RegExp, Mark][] = [
  */
 const VITALS: [label: string, unit: string, low: number, high: number, criticalLow: number, criticalHigh: number][] = [
   ["temperature|temp", "\\s?°C", 36, 37.9, 35, 38.9],
-  ["oxygen saturation|spo2|sats", "\\s?%", 94, 100, 92, 100],
+  ["oxygen saturation|saturation|spo2|sats", "\\s?%", 94, 100, 92, 100],
   ["pulse|heart rate", "\\s?(?:bpm|/min)", 50, 100, 40, 119],
   ["respiratory rate", "\\s?/min", 12, 20, 9, 24],
   ["systolic", "\\s?mmHg", 100, 139, 90, 179],

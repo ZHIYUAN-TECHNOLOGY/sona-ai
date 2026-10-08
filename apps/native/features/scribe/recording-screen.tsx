@@ -1,11 +1,12 @@
 import { PressScale } from "@/components/sona/parts";
 import { router, Stack, useNavigation } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, Keyboard, KeyboardAvoidingView, Pressable, TextInput, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { Section } from "@/components/sona/sections";
+import { MarkedText, wordCount } from "@/components/sona/marked-text";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, BackButton, Chip, Expand, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
@@ -53,10 +54,28 @@ function InterimSegment({ speaker, text, tone, reduced }: { speaker: string; tex
 }
 
 /**
+ * A part's captions read in as speech lands: new turns' words appear in reading order, about 14 a second, while turns
+ * already there show whole. Counts nothing at rest, and every word shows at once under Reduce Motion.
+ */
+function useStreamedWords(lines: TranscriptLine[], from: number, still: boolean) {
+  // Counted once per transcript change, not on every tick of the reveal.
+  const counts = useMemo(() => lines.map(line => wordCount(line.original)), [lines]);
+  const total = counts.reduce((a, b) => a + b, 0);
+  const [shown, setShown] = useState(() => counts.slice(0, from).reduce((a, b) => a + b, 0));
+  useEffect(() => {
+    if (still || shown >= total) return;
+    const timer = setTimeout(() => setShown(n => Math.min(total, n + 1)), 70);
+    return () => clearTimeout(timer);
+  }, [shown, total, still]);
+  let at = 0;
+  return counts.map(count => { const words = still ? undefined : Math.max(0, Math.min(count, shown - at)); at += count; return words; });
+}
+
+/**
  * One turn of the transcript, tap to correct. `live`: what was heard is the only text (no separate English interpretation),
  * and a caption's label is its time, not a speaker, until the draft says who said what.
  */
-function TranscriptSegment({ line, interpretation, tone, last, fresh, live = false }: { line: TranscriptLine; interpretation: boolean; tone: string; last: boolean; fresh: boolean; live?: boolean }) {
+function TranscriptSegment({ line, interpretation, tone, last, fresh, live = false, reveal }: { line: TranscriptLine; interpretation: boolean; tone: string; last: boolean; fresh: boolean; live?: boolean; reveal?: number }) {
   const encounter = useEncounterSelect(s => s.encounter), updateEncounter = useEncounterSelect(s => s.updateEncounter);
   const draft = encounter?.transcriptDraft;
   const editing = draft?.lineId === line.id;
@@ -124,7 +143,7 @@ function TranscriptSegment({ line, interpretation, tone, last, fresh, live = fal
           <Text style={{ ...type.footnote, color: palette.blue }}>{interpretation ? "Review" : "Correct"}</Text>
         </View>}
       </View>
-      <Text style={{ ...type.body, color: palette.ink }}>{shown}</Text>
+      <MarkedText text={shown} shown={reveal} selectable={false} style={{ ...type.body, color: palette.ink }} />
       {line.corrected && !line.englishReviewed && <StateLine warning>Original corrected. The English interpretation shown is a previous draft and needs review.</StateLine>}
       {line.englishReviewed && !live && <StateLine icon="checkmark.circle">English interpretation · clinician confirmed</StateLine>}
       {line.corrected && captured && <View style={{ borderLeftWidth: 2, borderColor: RAIL, paddingLeft: 10, gap: 2 }}>
@@ -207,6 +226,7 @@ function LiveRecording() {
   const insightSaid = useRef(insight);
   useEffect(() => { if (insight && insightSaid.current !== insight) AccessibilityInfo.announceForAccessibility(insight); insightSaid.current = insight; }, [insight]);
   const [name, setName] = useState("");
+  const reveal = useStreamedWords(encounter?.transcript ?? [], initialLines, reducedMotion);
   if (!patient || !encounter) return <NoVisit view="recording" what="a consultation" />;
 
   const layout = reducedMotion ? undefined : LAYOUT;
@@ -308,7 +328,7 @@ function LiveRecording() {
         {/* A part keeps its key when its words arrive, so the caption settles where "Transcribing…" was. */}
         <View>{[
           ...lines.map((line, index) => <Animated.View key={line.id} layout={layout} entering={!reducedMotion && index >= initialLines ? riseIn({ distance: 10, duration: 320 }) : undefined}>
-            <TranscriptSegment line={line} interpretation={false} live tone={liveTone(line)} last={index === lines.length - 1 && !waiting.length} fresh={!reducedMotion && index >= initialLines} />
+            <TranscriptSegment line={line} interpretation={false} live tone={liveTone(line)} last={index === lines.length - 1 && !waiting.length} fresh={!reducedMotion && index >= initialLines} reveal={reveal[index]} />
           </Animated.View>),
           ...waiting.map((part, index) => <Animated.View key={`part-${part.n}`} layout={layout} entering={reducedMotion ? undefined : riseIn({ distance: 10, duration: 320 })} exiting={FadeOut.duration(140)}>
             <PartRow part={part} last={index === waiting.length - 1} reduced={reducedMotion} />
