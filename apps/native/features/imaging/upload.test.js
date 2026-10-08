@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
-import { contentTypeOf, readingOf, resetUploads, sendXray, uploadOf } from "./upload";
+import { contentTypeOf, readingOf, resetUploads, scanOf, sendXray, uploadOf } from "./upload";
 
 beforeEach(resetUploads);
 
@@ -68,4 +68,15 @@ test("a card shows only its own image's reading: it waits for the upload, says a
   const other = readingOf({ uri: "a", state: "uploaded", key: "key-0" }, mine);
   expect(other.data).toBeUndefined();
   expect(other.error).toBe("a newer image was added to this visit");
+});
+
+test("the film scans only while the image model reads it, and settles only on a model's reading", () => {
+  expect(scanOf(undefined)).toBe("off");
+  // Saving is not reading: the model has not been asked yet.
+  expect(scanOf({ live: true, loading: true, saving: true })).toBe("off");
+  expect(scanOf({ live: true, loading: true })).toBe("reading");
+  expect(scanOf({ live: true, loading: false, data: { source: "model" } })).toBe("read");
+  // A sample (the model starting or late) and a failure are not a reading.
+  expect(scanOf({ live: true, loading: false, data: { source: "fixture" } })).toBe("off");
+  expect(scanOf({ live: true, loading: false, error: "offline" })).toBe("off");
 });
