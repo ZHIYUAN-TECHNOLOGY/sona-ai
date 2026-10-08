@@ -4,6 +4,7 @@ import { createFileRoute, redirect, useLocation } from "@tanstack/react-router";
 
 import { Frame } from "@/components/frame";
 import { EmptyState, PageHeader } from "@/components/page";
+import { useLiveUpdates } from "@/lib/live";
 import { orpc } from "@/lib/orpc";
 import { homeFor, navFor, opens, PRO_NAV } from "@/nav";
 
@@ -23,6 +24,8 @@ function ProFrame() {
   const { me } = Route.useRouteContext();
   const pathname = useLocation({ select: location => location.pathname });
   const groups = navFor(me.role);
+  // What another person or the insurer changes (a letter approved, a message in) reaches the open page without a reload.
+  useLiveUpdates();
   // Sidebar badges: the same queries the pages run, so the cache is shared; a role only asks for what it may read.
   const inbox = useQuery(orpc.messages.inbox.queryOptions({ enabled: can(me.role, "messages.list") }));
   const summaries = useQuery(orpc.review.list.queryOptions({ enabled: can(me.role, "review.list") }));
