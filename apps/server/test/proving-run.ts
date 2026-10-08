@@ -30,7 +30,7 @@
  * discharge-draft, claim-codes, messages-draft and the X-ray checks can pass on an earlier answer: it says `storedAt`,
  * and the line's note gives its date), PubMed's results are
  * cached, and scan-read and care-medicine-photo each leave one image in storage that nothing points to.
- * Images are the apps' own bundled samples: apps/native/features/imaging/assets/normal-pa-chest.jpg (X-ray),
+ * Images are the apps' own bundled samples: apps/native/features/imaging/assets/lobar-pneumonia-pa.jpg (Amelia's X-ray),
  * apps/native/assets/scan/sample-ward-note.jpg (handwriting), apps/care/assets/scan/sample-medicine.jpg (medicine box).
  * Not part of the test run (bun test src).
  */
@@ -123,7 +123,7 @@ const visit = () => found ??= (async () => {
 
 /** A bundled sample image as the upload routes take it. */
 const jpeg = (path: string) => ({ contentType: "image/jpeg", dataBase64: readFileSync(fileURLToPath(new URL(`../../../${path}`, import.meta.url).href), "base64") });
-const XRAY = "apps/native/features/imaging/assets/normal-pa-chest.jpg", WARD_NOTE = "apps/native/assets/scan/sample-ward-note.jpg", MEDICINE_BOX = "apps/care/assets/scan/sample-medicine.jpg";
+const XRAY = "apps/native/features/imaging/assets/lobar-pneumonia-pa.jpg", WARD_NOTE = "apps/native/assets/scan/sample-ward-note.jpg", MEDICINE_BOX = "apps/care/assets/scan/sample-medicine.jpg";
 const wav = () => wavPath ? readFileSync(wavPath, "base64") : undefined;
 const NO_WAV = "no recording in the repo: pass --wav <16 kHz mono WAV>";
 // Plain questions: nothing here may read as feeling worse (readReply's keywords), or care.ask and the call would flag a task.
@@ -354,7 +354,7 @@ const CHECKS: Check[] = [
     const api = await doctor(), { encounterId } = await visit();
     await api.xray.upload({ encounterId, ...jpeg(XRAY) });
     const rows = await api.findings.detect({ encounterId });
-    // The bundled film is a normal chest: no rows is the right answer, so who read it comes from the reading's status.
+    // Amelia's film shows pneumonia, none of the incidental kinds: no rows is the right answer, so who read it comes from the reading's status.
     const read = await api.findings.status({ encounterId });
     if (!read) return { fail: "detect ran, but no reading of this film is on record" };
     return { ...origin(read), fail: read.found === rows.length ? undefined : `the reading found ${read.found}, detect returned ${rows.length}`, note: `${read.found} findings` };
