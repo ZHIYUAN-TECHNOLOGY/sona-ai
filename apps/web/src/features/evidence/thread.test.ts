@@ -17,16 +17,21 @@ test("claims arrive one by one and the finished answer replaces them", () => {
   expect(threadOf(Array.from({ length: 6 }, () => turn))).toHaveLength(4);
 });
 
-test("a film leads the answer only when it is the first source", () => {
+test("a film leads the answer only when it is the first source and the answer cites it", () => {
   const film = { n: 1, id: "enc-1", kind: "image", design: "Imaging", title: "Chest X-ray: Amelia Tan, 3 Oct 2026", year: 2026, text: "Clear lungs.", encounterId: "enc-1" } as const;
   const study = { n: 1, id: "blum", kind: "study", design: "Trial", title: "Prednisone in CAP", year: 2015, text: "" } as const;
-  expect(leadFilm([film, { ...study, n: 2 }])).toBe(1);
-  expect(leadFilm([study, { ...film, n: 2 }])).toBeUndefined();
-  expect(leadFilm([])).toBeUndefined();
+  const cites = (...n: number[]) => [{ cites: n }];
+  expect(leadFilm([film, { ...study, n: 2 }], cites(1, 2))).toBe(1);
+  expect(leadFilm([study, { ...film, n: 2 }], cites(1, 2))).toBeUndefined();
+  expect(leadFilm([], [])).toBeUndefined();
+  // Ranked first but not cited: the film stays a source, never opened for the clinician.
+  expect(leadFilm([film, { ...study, n: 2 }], cites(2))).toBeUndefined();
+  expect(leadFilm([film], [])).toBeUndefined();
   // In place, the film needs its visit: a leading image without one is text only.
-  expect(answerFilm([film, { ...study, n: 2 }])).toBe(film);
-  expect(answerFilm([study, { ...film, n: 2 }])).toBeUndefined();
-  expect(answerFilm([{ ...film, encounterId: undefined }])).toBeUndefined();
+  expect(answerFilm([film, { ...study, n: 2 }], cites(1))).toBe(film);
+  expect(answerFilm([film, { ...study, n: 2 }], cites(2))).toBeUndefined();
+  expect(answerFilm([study, { ...film, n: 2 }], cites(2))).toBeUndefined();
+  expect(answerFilm([{ ...film, encounterId: undefined }], cites(1))).toBeUndefined();
 });
 
 test("a sample says it is a sample, and when the model is starting", () => {

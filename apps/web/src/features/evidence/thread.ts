@@ -37,13 +37,18 @@ export function apply(turn: Turn, event: StreamEvent): Turn {
   return event.step === "write" ? { ...turn, step: "Reading the sources and writing the answer" } : turn;
 }
 
-/** The number of the film that leads an answer, when its first source is a patient's X-ray: the page picks it before the clinician does. */
-export const leadFilm = (references: Reference[]) => (references[0]?.kind === "image" ? references[0].n : undefined);
+/**
+ * The number of the film that leads an answer: its first source, when that is a patient's X-ray the answer cites, so the
+ * page can open it before the clinician does. A film the answer does not cite stays one of the sources, opened on a tap.
+ */
+export const leadFilm = (references: Reference[], cited: Pick<Claim, "cites">[]) => {
+  const first = references[0];
+  return first?.kind === "image" && cited.some(c => c.cites.includes(first.n)) ? first.n : undefined;
+};
 
-/** The film an answer carries in place (a page's Sona thread): the leading source, when it is a visit's X-ray. */
-/** The film that leads an answer; on a patient's page (`encounterId`) only that visit's own film, never another patient's. */
-export const answerFilm = (references: Reference[], encounterId?: string) => {
-  const film = leadFilm(references) && references[0]?.encounterId ? references[0] : undefined;
+/** The film an answer carries in place (a page's Sona thread); on a patient's page (`encounterId`) only that visit's own film, never another patient's. */
+export const answerFilm = (references: Reference[], cited: Pick<Claim, "cites">[], encounterId?: string) => {
+  const film = leadFilm(references, cited) && references[0]?.encounterId ? references[0] : undefined;
   return film && (!encounterId || film.encounterId === encounterId) ? film : undefined;
 };
 

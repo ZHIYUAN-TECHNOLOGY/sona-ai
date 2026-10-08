@@ -140,7 +140,7 @@ function byOf(answer?: SonaAnswer) {
 /** A visit's answer as it arrives: the steps, the film when it leads, the claims with citations, then sources and what to ask next. */
 function EvidenceAnswer({ answer: { turn, encounterId }, ask }: { answer: Extract<SonaAnswer, { kind: "evidence" }>; ask: (q: string) => void }) {
   const done = turn.answer;
-  const film = answerFilm(turn.references, encounterId);
+  const film = answerFilm(turn.references, turn.claims, encounterId);
   // On a patient's page, only that visit's films.
   const filmOf = (r: Reference) => (r.encounterId && (!encounterId || r.encounterId === encounterId) ? <FilmCard reference={r} encounterId={r.encounterId} /> : null);
   const next = <Suggestions items={done?.followUps ?? []} onPick={ask} />;

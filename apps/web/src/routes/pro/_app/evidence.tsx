@@ -45,8 +45,8 @@ function Page() {
     try {
       await askVisit(undefined, question, event => {
         change(t => apply(t, event));
-        // A question about a patient's X-ray is answered by the film: on a wide screen it opens beside the answer before the clinician asks.
-        if (event.type === "step" && event.step === "read" && wide()) { const n = leadFilm(event.references); if (n) pick({ turn: id, n }); }
+        // An answer that rests on a patient's X-ray: on a wide screen the film opens beside it once written, before the clinician asks.
+        if (event.type === "answer" && wide()) { const n = leadFilm(event.answer.references, [...event.answer.claims, ...event.answer.patientPoints ?? []]); if (n) pick({ turn: id, n }); }
       }, thread);
       return true;
     } catch {
