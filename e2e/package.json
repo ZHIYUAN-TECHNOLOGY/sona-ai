@@ -1,0 +1,26 @@
+{
+  "name": "@sona-ai/e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "server": "cd ../packages/infra && SONA_DEV_PORT=3002 bun x alchemy dev",
+    "reset": "bun reset.ts",
+    "build:web": "bun run --cwd ../apps/web build",
+    "test:web": "bun run reset && bun run build:web && e2e run",
+    "test:pro": "bun run reset && e2e run --config pro.config.ts",
+    "test:care": "bun run reset && e2e run --config care.config.ts",
+    "test:e2e": "bun run test:web && bun run test:pro && bun run test:care && bun run test:journey",
+    "test:journey": "bun run reset && e2e run --config journey.config.ts",
+    "check-types": "tsc"
+  },
+  "devDependencies": {
+    "e2e": "^0.18.0",
+    "@e2e-dev/web": "^0.13.0",
+    "@e2e-dev/mobile": "^0.10.0",
+    "@ai-sdk/anthropic": "^4.0.76",
+    "ai": "^7.0.0",
+    "zod": "catalog:",
+    "@sona-ai/config": "workspace:*",
+    "typescript": "^6.0.3"
+  }
+}

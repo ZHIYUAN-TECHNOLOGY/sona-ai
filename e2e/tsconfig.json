@@ -1,0 +1,5 @@
+{
+  "extends": "@sona-ai/config/tsconfig.base.json",
+  "compilerOptions": { "noEmit": true, "allowImportingTsExtensions": true, "lib": ["ESNext", "DOM"], "types": ["node"] },
+  "include": ["*.ts", "tests/**/*.ts"]
+}

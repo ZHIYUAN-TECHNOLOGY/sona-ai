@@ -78,7 +78,8 @@ export const server = Cloudflare.Worker("server", {
   // Nightly coding audit (flow 5), 02:00 Malaysia time; after-discharge check-ins (flow 7) go out hourly.
   crons: ["0 18 * * *", "0 * * * *"],
   dev: {
-    port: 3000,
+    // SONA_DEV_PORT moves a second local server (a worktree, the e2e suite) off the main checkout's 3000.
+    port: Number(process.env.SONA_DEV_PORT) || 3000,
   },
 });
 
