@@ -233,6 +233,17 @@ test("a question asked again within the week skips PubMed's search (its articles
   expect(searches()).toBeGreaterThan(searched);
 });
 
+test("a search saved before PubMed's query changed is never reused: the question is searched again the new way", async () => {
+  // Staging, 8 Oct: after title-and-abstract search shipped, the IDs saved that afternoon for the same key terms (a
+  // rhinosinusitis guideline, an Acinetobacter trial) kept answering "pneumonia with a penicillin allergy" for a week.
+  const { state, fetcher } = pubmed(["25608756"]);
+  const { api, db } = await signedIn(fetcher);
+  await db.insert(pubmedSearches).values({ terms: "pneumonia AND penicillin allergy", pmids: ["14726904", "37182534"] });
+  const r = await api.evidence.ask({ question: "What does the evidence say for pneumonia with a penicillin allergy?" });
+  expect(decodeURIComponent(state.calls.find(u => u.includes("esearch")) ?? "")).toContain("(pneumonia[tiab]) AND (penicillin[tiab] AND allergy[tiab])");
+  expect(r.references.map(x => x.pmid)).toEqual(["25608756"]);
+});
+
 test("the library is searched while PubMed is, not after it", async () => {
   let libraryAsked!: () => void;
   const asked = new Promise<void>(resolve => { libraryAsked = resolve; });

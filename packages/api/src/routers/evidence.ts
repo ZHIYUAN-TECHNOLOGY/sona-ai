@@ -8,7 +8,7 @@ import { z } from "zod";
 import { clockOf, type Context } from "../context";
 import { stubModels, type Models } from "../models";
 import { protectedProcedure } from "../index";
-import { conclusionOf, fetchArticles, searchEvidence, searchTerms, type Article } from "../pubmed";
+import { conclusionOf, fetchArticles, pubmedQuery, searchEvidence, searchTerms, type Article } from "../pubmed";
 import { malaysiaDay, recordFacts } from "./encounter";
 
 /**
@@ -49,7 +49,8 @@ const STUDIES_MAX = 5;
  * reuse that search's IDs, so only the articles are fetched; any question searched once has its sources offline too.
  */
 async function articlesFor(db: Context["db"], fetcher: typeof fetch, terms: string[], rehearsed: boolean) {
-  const key = terms.join(" AND ");
+  // Keyed by the query PubMed is sent, not the terms: IDs found by an older query (before [tiab], staging 8 Oct) are never reused.
+  const key = pubmedQuery(terms);
   const [saved] = rehearsed ? [] : await db.select().from(pubmedSearches).where(eq(pubmedSearches.terms, key));
   // A search that found nothing is not reused: it may only have been PubMed's second search timing out, and would leave the question without studies for a week.
   const recent = saved?.pmids.length && Date.now() - saved.searchedAt.getTime() < SEARCH_DAYS * 86400_000;

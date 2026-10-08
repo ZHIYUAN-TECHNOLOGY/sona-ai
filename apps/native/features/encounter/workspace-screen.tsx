@@ -384,6 +384,9 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
   const visitLive: LiveAdapter | undefined = patient && props && {
     scope: patient.name.split(" ")[0] ?? patient.name,
     ask: async question => {
+      // A spoken question clears the last notice, as a typed one does (`submit`): a Live chunk that could not be read
+      // earlier ("The speech model is starting…") must not stay over the answer once the later words were heard and sent.
+      setNotice(undefined);
       // Attachments from the dock's + menu go with the question, as `submit` sends them: an image to the imaging review;
       // files and documents are kept for reference, which the page says.
       const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
@@ -407,7 +410,7 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
   // The dock's height (bar, chip, notices, Live's draft), measured: the page's end clears it. 130 until it has laid out.
   const [dockH, setDockH] = useState(130);
   // On Today, a spoken question joins Today's thread as a typed one does: the page is the shell, and Live its voice.
-  const todayAdapter: LiveAdapter = { scope: "Today", onOpenChange: (open, end) => setCloseLive(open ? () => end : undefined), ask: async question => { await (pending.length ? askForPatient(question) : today.ask(question)); return { shown: true }; } };
+  const todayAdapter: LiveAdapter = { scope: "Today", onOpenChange: (open, end) => setCloseLive(open ? () => end : undefined), ask: async question => { setNotice(undefined); await (pending.length ? askForPatient(question) : today.ask(question)); return { shown: true }; } };
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
   // Live mode records the room (scribe/live-recorder); the demo plays its sample consultation.

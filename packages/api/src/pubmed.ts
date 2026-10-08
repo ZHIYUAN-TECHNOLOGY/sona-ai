@@ -99,6 +99,8 @@ const CITABLE = "hasabstract AND english[la]";
  * ponytail: no synonyms or stemming ("allergic" is not "allergy"); a Gemma rewrite into MeSH terms widens it if questions miss.
  */
 const phrase = (term: string) => `(${term.split(" ").flatMap(w => (SPELLED[w] ?? w).split(" ")).map(w => `${w}[tiab]`).join(" AND ")})`;
+/** The terms as PubMed is asked for them: every term must match. A saved search is keyed by it, so a change here is never answered from IDs found the old way. */
+export const pubmedQuery = (terms: string[]) => terms.map(phrase).join(" AND ");
 
 /**
  * PubMed IDs for a clinical question's terms, best evidence first: all of them in a guideline, review or
@@ -110,7 +112,7 @@ const phrase = (term: string) => `(${term.split(" ").flatMap(w => (SPELLED[w] ??
  */
 export async function searchEvidence(terms: string[], fetcher: typeof fetch = fetch, max = 3): Promise<string[]> {
   if (!terms.length) return [];
-  const all = terms.map(phrase).join(" AND ");
+  const all = pubmedQuery(terms);
   const found = await searchPubmed(`${all} AND ${STUDY_TYPES} AND ${CITABLE}`, fetcher, max);
   if (found.length < max) {
     for (const id of await searchPubmed(`${all} AND ${CITABLE}`, fetcher, max).catch(() => [])) if (!found.includes(id)) found.push(id);
