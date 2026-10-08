@@ -20,15 +20,15 @@ function cutsOf(seconds, pauses) {
 }
 
 describe("cutting the recording into parts", () => {
-  test("a part ends at the first pause after 25 s, never mid-word, and a pause before 25 s is kept inside it", () => {
-    expect(cutsOf(90, [[12, 12.6], [27, 27.5], [40, 41], [58, 58.4]])).toEqual([27.3, 58.3]);
+  test("a part ends at the first pause after 12 s, never mid-word, and a pause before 12 s is kept inside it", () => {
+    expect(cutsOf(60, [[5, 5.6], [14, 14.5], [30, 31], [44, 44.4]])).toEqual([14.3, 30.3, 44.3]);
   });
-  test("with no pause at all, a part still ends by 36 s, inside voice.transcribe's 40 s", () => {
-    expect(cutsOf(80, [])).toEqual([36, 72]);
+  test("with no pause at all, a part still ends by 20 s, inside voice.transcribe's 40 s", () => {
+    expect(cutsOf(50, [])).toEqual([20, 40]);
     expect(HARD_MS).toBeLessThan(40_000);
   });
   test("a breath shorter than 0.3 s is not a pause", () => {
-    expect(cutsOf(40, [[26, 26.2], [30, 30.25]])).toEqual([36]);
+    expect(cutsOf(25, [[13, 13.2], [16, 16.25]])).toEqual([20]);
   });
   test("quiet is relative to the room: soft speech in a quiet room is not a pause, a noisy clinic still has them", () => {
     expect(isQuiet(-50, -58)).toBe(true);

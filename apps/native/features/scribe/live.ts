@@ -12,10 +12,12 @@ export type LiveDraft = Awaited<ReturnType<AppRouterClient["note"]["draft"]>>;
 type Turn = LiveDraft["turns"][number];
 
 /*
- * About 30 s a part, cut at the first pause after 25 s so no word is split, and by 36 s whatever is being said:
+ * About 15 s a part, cut at the first pause after 12 s so no word is split, and by 20 s whatever is being said, so
+ * captions land every few sentences. On the 20 synthetic consultations (tools/diar-eval, 8 Oct) 12 s parts gave 97.1% of
+ * turns to the right person and 15 of 20 head counts right, against 96.7% and 15 at 25 s and 96.3% and 13 at 8 s.
  * voice.transcribe takes about 40 s of 16 kHz audio (MAX_AUDIO_BASE64). A pause is 0.3 s of quiet.
  */
-export const SOFT_MS = 25_000, HARD_MS = 36_000, PAUSE_MS = 300;
+export const SOFT_MS = 12_000, HARD_MS = 20_000, PAUSE_MS = 300;
 export const cutNow = ({ elapsed, quietFor }: { elapsed: number; quietFor: number }) => elapsed >= HARD_MS || (elapsed >= SOFT_MS && quietFor >= PAUSE_MS);
 /**
  * Quiet: under the dock's speech level, or within 10 dB of the quietest the room has been, whichever is lower, so a

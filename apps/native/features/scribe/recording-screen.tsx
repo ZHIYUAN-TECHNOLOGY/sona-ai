@@ -252,7 +252,7 @@ function LiveRecording() {
   const guess = asking && roleOf(asking.label) ? asking.label : undefined;
   const known = people.filter(p => p.named);
   const settle = (next: (transcript: TranscriptLine[]) => TranscriptLine[]) => { haptic("done"); setName(""); updateEncounter(current => ({ ...current, transcript: next(current.transcript), noteReviewed: false })); };
-  const subtitle = !lines.length && !waiting.length ? (stopped ? "No speech captured, so there is nothing to draft from." : "Captions appear here about every 30 seconds while you record.")
+  const subtitle = !lines.length && !waiting.length ? (stopped ? "No speech captured, so there is nothing to draft from." : "Captions appear here every few sentences while you record.")
     : people.length && !encounter.note ? "Each voice is numbered as Sona hears it. Name them after you stop, or Sona reads who is who when it drafts the note."
     : lines.some(line => !isCaption(line)) ? "Who said what, as Sona read it; unsure speakers are amber. Tap a turn to correct it."
     : "Captions as heard, part by part. Tap one to correct a word; Sona marks who said what when it drafts the note.";

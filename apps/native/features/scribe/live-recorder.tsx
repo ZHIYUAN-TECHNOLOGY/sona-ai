@@ -88,7 +88,7 @@ const DENIED = "Sona can't hear the consultation: allow the microphone for Sona 
 /**
  * The consultation recorder in live mode, mounted with the encounter shell (ScribePlayback) so it keeps recording while
  * the recorder screen is minimized. It follows the visit's `recording`: recording records, paused or stopped ends the
- * stretch. Underneath, the audio is cut into parts of about 30 s at a pause (./live `listen`), each sent to
+ * stretch. Underneath, the audio is cut into parts of about 15 s at a pause (./live `listen`), each sent to
  * voice.transcribe as soon as it ends; to the clinician it is one recording. A part's words join the transcript as a
  * caption, and its audio is deleted once heard.
  * ponytail: the recorder is stopped and restarted at each cut, losing about 0.2 s, which the pause absorbs; expo-audio's
