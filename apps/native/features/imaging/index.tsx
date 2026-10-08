@@ -27,6 +27,8 @@ import { useRole } from "@/features/live/roles";
 import { api } from "@/features/live";
 import { filmDate, groupFilms, type SimilarFilm } from "./compare";
 import { useXrayAttach, useXrayReading, useXrayUploadOf } from "./use-upload";
+import { FilmScan } from "./scan";
+import { scanOf, type ScanState } from "./upload";
 import { takeXray } from "@/features/library/scan-state";
 import { teachingImage, type TeachingImage } from "./fixture";
 import { ImageEdge, OriginalImageViewer, VIEWING } from "./viewer";
@@ -65,7 +67,7 @@ export function XrayCard({ patient, onOpen, onRequest, result }: FeatureProps) {
   const openOriginal = () => { if (result && (attachment || referenceImage)) router.push({ pathname: "/xray", params: { recordCardId: result.id, patientId: result.patientId } }); else onOpen("xray"); };
   return <View style={{ gap: 18 }}>
     {shown ? <ComparedFilm film={shown} onBack={() => { haptic(); setShown(undefined); }} /> : <View style={{ gap: 8 }}>
-      <Preview source={imageSource} label={attachment ? "Selected local teaching image" : referenceImage ? "Reference radiograph, unrelated to this patient" : "Add a teaching image"} onPress={openOriginal} />
+      <Preview source={imageSource} scan={scanOf(reading)} label={attachment ? "Selected local teaching image" : referenceImage ? "Reference radiograph, unrelated to this patient" : "Add a teaching image"} onPress={openOriginal} />
       {attachment && <Caption icon={null}>{attachment.name} · {reading?.saving ? "saving to your hospital’s storage" : reading && !reading.failed ? "in your hospital’s storage" : "local, not uploaded or analysed"}</Caption>}
       {!attachment && referenceImage && <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <Caption icon={null}>Reference example, not this patient · {referenceImage.attribution} · {referenceImage.license}</Caption>
@@ -87,14 +89,15 @@ export function XrayCard({ patient, onOpen, onRequest, result }: FeatureProps) {
   </View>;
 }
 
-/** The image as hero: a dark viewing tile that settles in (Arc's source-to-summary, calmed) and opens the original. */
-function Preview({ source, label, onPress }: { source?: ImageSource | number; label: string; onPress: () => void }) {
+/** The image as hero: a dark viewing tile that settles in (Arc's source-to-summary, calmed) and opens the original; scanned while the image model reads it. */
+export function Preview({ source, label, onPress, scan = "off" }: { source?: ImageSource | number; label: string; onPress: () => void; scan?: ScanState }) {
   const { reducedMotion } = useAccessibleEffects();
   return <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 8, scale: 0.97 })}>
     <Pressable accessibilityRole={source ? "imagebutton" : "button"} accessibilityLabel={label} accessibilityHint={source ? "Opens the original image" : undefined} onPress={onPress}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98} style={{ ...VIEWING, aspectRatio: 1.25 }}>
       {source
         ? <Image source={source} contentFit="contain" style={{ flex: 1 }} transition={reducedMotion ? 0 : 200} />
         : <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10 }}><Icon name="photo" size={32} color={palette.line} /><Text style={{ ...type.callout, color: palette.line }}>Add a teaching image</Text></View>}
+      {source && <FilmScan source={source} state={scan} />}
       {source && <View pointerEvents="none" style={{ position: "absolute", right: 12, bottom: 12, width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }}>
         <Icon name="arrow.up.left.and.arrow.down.right" size={14} color={palette.white} />
       </View>}
@@ -402,7 +405,7 @@ export function XrayScreen() {
   if (historical) return <ViewerPage scrollEnabled={!zoomed}>
     <Heading identity={`${patient.name} · saved revision ${savedCard?.revision} · ${attachment ? (upload?.state === "uploaded" ? "image in your hospital’s storage" : "local image, no model inference") : "reference example, not this patient"}`} result={resultLine(analysed, analysis)} open={open} />
     {/* The visit's findings travel with its film, so a saved answer shows the same marks as the live view. */}
-    {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} /> : <Notice>No image was attached when this response was created.</Notice>}
+    {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} scan={scanOf(analysis)} /> : <Notice>No image was attached when this response was created.</Notice>}
     {image && <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} read={found.readOf(patient.encounterId)} onRead={role.can("findings.detect") ? () => found.detect(patient.encounterId) : undefined} />}
     <AnalysisDetails snapshot={analysed} reading={analysis} />
   </ViewerPage>;
@@ -440,7 +443,7 @@ export function XrayScreen() {
     ]} />}
     <Heading identity={attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"} result={analysing ? "Analysing…" : resultLine(analysed, analysis)} open={open} />
     {pickerError && <Notice warning>{pickerError}</Notice>}
-    <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} />
+    <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} scan={scanOf(analysis)} />
     <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} read={found.readOf(patient.encounterId)} onRead={role.can("findings.detect") ? () => found.detect(patient.encounterId) : undefined} />
     {/* The latest analysis sits right under the image: one page, no separate details screen. */}
     <AnalysisDetails snapshot={analysed} reading={analysis} />

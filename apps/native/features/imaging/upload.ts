@@ -70,3 +70,8 @@ export function readingOf<T extends { key: string }>(upload: XrayUpload | undefi
   if (reading.data && reading.data.key !== upload.key) return { live: true, loading: false, error: "a newer image was added to this visit" };
   return reading;
 }
+
+/** What a film shows of its reading: a scan while the image model reads it, a settle once a model's reading lands, else nothing (saving, a failure, a sample). */
+export type ScanState = "reading" | "read" | "off";
+export const scanOf = (reading?: { loading: boolean; saving?: boolean; data?: { source?: string } }): ScanState =>
+  reading?.loading && !reading.saving ? "reading" : reading?.data?.source === "model" ? "read" : "off";

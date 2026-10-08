@@ -11,6 +11,8 @@ import { EASE_IN_OUT, EASE_OUT, LAYOUT_SPRING } from "@/components/sona/motion";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Chip, Icon, pillStyle, SourceLink, useAccessibleEffects } from "@/components/sona/ui";
 import type { TeachingImage } from "./fixture";
+import { FilmScan } from "./scan";
+import type { ScanState } from "./upload";
 import { clamp, DOUBLE_TAP_ZOOM, fitted, limit, markerAt, markerUnder, MAX_ZOOM, rubberBand, ZOOM_STEP, zoomAround } from "./zoom";
 
 /** A finger let go: settle toward the limit carrying its velocity (a little give, no bounce past it). */
@@ -29,9 +31,10 @@ export function ImageEdge() {
  * carrying the gesture's velocity, and a flicked pan glides out with decay. Everything runs on
  * the UI thread; only zoom thresholds cross to React. Transforms move pixels, never alter them:
  * no filter, tint, blur or shader touches the image. The finding torch is a separate layer above
- * it, only while a finding is in focus, and tapping anywhere else takes it away.
+ * it, only while a finding is in focus, and tapping anywhere else takes it away; so is the
+ * reading scan (`FilmScan`), only while the image model reads the film.
  */
-export function OriginalImageViewer({ asset, onZoomChange, markers = [], focus, onFocus }: { asset: TeachingImage; onZoomChange?: (zoomed: boolean) => void; markers?: ImageMarker[]; focus?: string; onFocus?: (id: string | undefined) => void }) {
+export function OriginalImageViewer({ asset, onZoomChange, markers = [], focus, onFocus, scan = "off" }: { asset: TeachingImage; onZoomChange?: (zoomed: boolean) => void; markers?: ImageMarker[]; focus?: string; onFocus?: (id: string | undefined) => void; scan?: ScanState }) {
   const { height, width } = useWindowDimensions();
   const viewportHeight = Math.max(260, Math.min(560, height * 0.52, width * 1.3));
   const { reducedMotion } = useAccessibleEffects();
@@ -149,6 +152,8 @@ export function OriginalImageViewer({ asset, onZoomChange, markers = [], focus, 
           </Animated.View>
         </View>
       </GestureDetector>
+      {/* While the image model reads this film: the scan rides its pan and zoom; the frame and status line stay put. */}
+      {ready && <FilmScan source={asset.source} state={scan} filmStyle={transform} />}
       {status !== "ready" && <Animated.View exiting={FadeOut.duration(160)} style={{ position: "absolute", inset: 0, backgroundColor: palette.ink, justifyContent: "center", alignItems: "center", padding: 24, gap: 16 }}>
         {status === "loading"
           ? <><ActivityIndicator color={palette.line} /><Text style={{ color: palette.line, ...type.subhead }}>Loading original image…</Text></>
