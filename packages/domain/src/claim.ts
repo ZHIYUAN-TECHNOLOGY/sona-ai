@@ -77,9 +77,9 @@ type Criterion = { id: string; label: string; applies?: RegExp; met: RegExp; mis
 const CRITERIA: Criterion[] = [
   { id: "severity", label: "Severity score documented", met: /CURB-65|CRB-65|qSOFA|NEWS2?\b|severity score/i, missing: "No severity score in the note" },
   // A result, not an order: "Chest X-ray today to check for pneumonia" is a plan, so it attaches nothing.
-  { id: "imaging", label: "Imaging result attached", met: /^(?!.*\b(today|to check|to look|request(ed)?|order(ed)?|arrange[ds]?|book(ed)?|will|plan(ned)?|pending)\b).*(chest film|x-?ray|radiograph|ultrasound|\bCT\b|\bMRI\b|echocardiogra)/i, missing: "No imaging result in the note" },
+  { id: "imaging", label: "Imaging result attached", met: /^(?!.*\b(today|to check|to look|request(ed)?|order(ed)?|arrange[ds]?|book(ed)?|will|plan(ned)?|pending|follow(?:[- ]?up)?|repeat|again|next)\b).*(chest film|x-?ray|radiograph|ultrasound|\bCT\b|\bMRI\b|echocardiogra)/i, missing: "No imaging result in the note" },
   // A consultation suspects pneumonia ("X-ray to check for pneumonia"); the letter codes J18.9 only once a sentence states it.
-  { id: "diagnosis", label: "Diagnosis confirmed", applies: /pneumonia/i, met: /^(?!.*(\b(possible|possibly|suspected?|query|likely|probable|probably|consider|if|whether|rule out|exclude|to check|no|not|without)\b|\?)).*pneumonia/i, missing: "The note names pneumonia only as possible: confirm it from the X-ray" },
+  { id: "diagnosis", label: "Diagnosis confirmed", applies: /pneumonia/i, met: /^(?!.*(\b(possible|possibly|suspected?|query|likely|probable|probably|consider|if|whether|ruled? out|to be|exclude|to check|no|not|without|could|may|might|suggest\w*)\b|\?)).*pneumonia/i, missing: "The note names pneumonia only as possible: confirm it from the X-ray" },
   { id: "organism", label: "Organism documented", applies: /pneumonia/i, met: /organism|culture/i, missing: "J18.9 needs the note to say the organism is unknown" },
   // IV and its reason in one sentence: "IV azithromycin given" alone says what was given, not why oral was not.
   { id: "iv", label: "Reason for IV antibiotics", applies: /\bIV\b|intravenous/i, met: /^(?=.*(\bIV\b|intravenous))(?=.*(IV first:|because|unable|vomit|could not|not tolerat|nil by mouth))/i, missing: "The insurer asks why oral was not used first" },

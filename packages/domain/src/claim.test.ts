@@ -64,3 +64,10 @@ test("each denial gets a calm appeal whose every point cites a real sentence of 
   const bare = appealByRules({ denialCode: "DOC", denialReason: "x", sentences: noteFor(EMPTY_CLAIM), patient: { name: "Amelia Tan" } });
   expect(bare.points.map(p => p.evidenceSentenceId)).toEqual(["diagnosis", "xray"]);
 });
+
+test("a plan or a hedge is not a result: a follow-up X-ray and a pneumonia to be ruled out stay open", () => {
+  const said = [{ id: "a", text: "Pneumonia to be ruled out." }, { id: "b", text: "Follow up in two days with X-ray." }, { id: "c", text: "Chest X-ray: opacity in the right lower lung field, which could represent pneumonia." }];
+  const checks = claimChecks(said);
+  expect(checks.find(c => c.id === "diagnosis")?.status).toBe("blocked");
+  expect(checks.find(c => c.id === "imaging")).toMatchObject({ status: "passed", detail: "“Chest X-ray: opacity in the right lower lung field, which could represent pneumonia.”" });
+});
