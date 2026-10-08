@@ -8,7 +8,7 @@ import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useShared
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { spoken, type Asked, type Reply } from "@/features/assistant/answers";
-import { pickVoices, preview, standInFor, voiceFor, type SonaVoice } from "@/features/assistant/voices";
+import { languageOf, pickVoices, preview, standInFor, voiceFor, type SonaVoice } from "@/features/assistant/voices";
 import { FIRST_MS, sayInSonaVoice } from "./sona-voice";
 import { useLiveVoice } from "./live";
 import { useListen } from "@/lib/listen";
@@ -144,7 +144,8 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
     if (said) read(said, v);
     else { const hi = t("voice.ready"); speak(hi, voiceFor(hi, v, voices ?? [])); }
   };
-  const ask = async (q: string) => read(spoken(await answer(q), lang));
+  // With no answer from the plan, Sona replies in the language the question was asked in, not the app's.
+  const ask = async (q: string) => { const r = await answer(q); read(spoken(r, r.kind === "none" ? languageOf(q) : lang)); };
   const replay = () => { if (speaking) stop(); else if (said) read(said); };
   /** The mic: start a conversation (live, where there is one), send the turn now, or (while Sona talks, or in a live call) stop and end it. */
   const main = () => {

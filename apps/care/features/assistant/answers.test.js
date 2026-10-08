@@ -154,7 +154,8 @@ test("doctor questions search the directory: by the question's words, else the p
 
 test("urgent words win: the 999 line, even when asking for a doctor or when the server is out of reach", async () => {
   expect(await answer("I have chest pain, find me a doctor", [], api(failing, failing), "chest infection")).toEqual({ kind: "none", urgent: true });
-  expect(spoken({ kind: "none", urgent: true })).toBe(`If this is happening now, call 999. ${NO_ANSWER}`);
+  expect(spoken({ kind: "none", urgent: true })).toBe("If this is happening now, call 999. This needs your care team. Shall I send it to them now?");
+  expect(spoken({ kind: "none", urgent: true }, "ms")).toMatch(/^.+ Ini perlu dimaklumkan kepada pasukan penjagaan anda\./);
 });
 
 // care.ask's `careTeam`: the flagged task and Sona's line, there once the server has told the care team.

@@ -183,7 +183,8 @@ export function shown(r: Reply, lang: Lang = "en") {
   if (r.kind === "doctors") return r.text;
   const told = r.careTeam?.line;
   if (r.kind === "plan") return told ? `${r.asked.answer}${sp(lang)}${told}` : r.asked.answer;
-  return told ?? noAnswer(lang);
+  // A warning sign is not a question Sona failed: it belongs with the care team, so say that and offer to send it.
+  return told ?? (r.kind === "none" && r.urgent ? tFor(lang)("ask.urgentTeam") : noAnswer(lang));
 }
 
 /** The words to read aloud for a reply: what the chat shows, the doctors by name, and the 999 line first (the chat has its card for that). */
