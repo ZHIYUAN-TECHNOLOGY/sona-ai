@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { sql } from "drizzle-orm";
-import { admissions, appointments, auditItems, careCodes, careLinks, careMessages, patients, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, hospitals, notes, observations, visitSummaries, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples } from "./schema";
+import { eq, sql } from "drizzle-orm";
+import { admissions, appointments, chunks, documents, imageVectors, auditItems, careCodes, careLinks, careMessages, patients, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, hospitals, notes, observations, visitSummaries, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples } from "./schema";
 import { resetDemo } from "./reset";
 import { DEMO_HOSPITAL, seedDemo, seedTestPatient, TEST_PATIENT } from "./seed";
 import { createTestDb } from "./testing";
@@ -60,8 +60,10 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
   // Results that arrived during the run are gone, not merely unacknowledged; records return to the seed.
   expect((await db.select().from(labResults)).map(r => r.id).sort()).toEqual(["lab-1086-potassium", "lab-2002-b2-result", "lab-2009-b9-renal", "lab-2017-b17-hb", "lab-hb-1086"]);
   expect((await db.select().from(patients)).map(p => p.allergies).filter(Boolean).sort()).toEqual(["Aspirin — wheeze", "Co-trimoxazole — rash", "Codeine — nausea and vomiting", "Penicillin — rash as a child", "Penicillin — reported rash; details need confirmation", "Perindopril — dry cough"]);
-  // The run's second revision is gone; Daniel, Amelia and each ward patient are back to their one seeded note.
-  expect((await db.select().from(notes)).map(n => n.revision)).toEqual(Array(17).fill(1));
+  // The run's second revision is gone; Daniel and each ward patient are back to their one seeded note, and Amelia has none
+  // (hers comes from her recorded consultation).
+  expect((await db.select().from(notes)).map(n => n.revision)).toEqual(Array(16).fill(1));
+  expect(await db.select().from(notes).where(eq(notes.encounterId, "visit-1042"))).toEqual([]);
   expect((await db.select().from(appointments)).map(a => a.id).sort()).toEqual(["appt-SYN-1042", "appt-SYN-1086"]);
 });
 
@@ -71,4 +73,31 @@ test("a demo reset keeps the demo patient's Sona Care account linked to Amelia",
   const id = await seedTestPatient(db);
   await resetDemo(db);
   expect(await db.select({ userId: careLinks.userId, patientId: careLinks.patientId }).from(careLinks)).toEqual([{ userId: id, patientId: TEST_PATIENT.patientId }]);
+});
+
+test("a demo reset clears a visit's film and its search entries together, and keeps the library and other hospitals' films", async () => {
+  const db = await createTestDb();
+  await seedDemo(db);
+  // A film uploaded and read during the run, the way xray.upload and indexXray write it.
+  await db.update(encounters).set({ state: { xray: { key: "demo/xray/visit-1042/a", contentType: "image/png", uploadedAt: "2026-10-09T01:00:00Z" } } }).where(eq(encounters.id, "visit-1042"));
+  const vector = Array(512).fill(0.01);
+  await db.insert(imageVectors).values([
+    { key: "demo/xray/visit-1042/a", hospitalId: DEMO_HOSPITAL, encounterId: "visit-1042", patientId: "SYN-1042", embedding: vector },
+    { key: "other/xray/v9/b", hospitalId: "other", encounterId: "v9", patientId: "P9", embedding: vector },
+  ]);
+  await db.insert(documents).values([
+    { id: "xray:visit-1042", hospitalId: DEMO_HOSPITAL, title: "Chest X-ray: Amelia Tan", source: "Imaging", year: 2026, kind: "xray" },
+    { id: "lib-1", hospitalId: DEMO_HOSPITAL, title: "Ward pneumonia pathway", source: "Ward 4B", year: 2025, kind: "text" },
+  ]);
+  await db.insert(chunks).values([
+    { id: "c-x", documentId: "xray:visit-1042", hospitalId: DEMO_HOSPITAL, sourceId: "xray:visit-1042#1", section: "Reading", text: "Right lower zone consolidation." },
+    { id: "c-l", documentId: "lib-1", hospitalId: DEMO_HOSPITAL, sourceId: "lib-1#1", section: "Severity", text: "Score CURB-65." },
+  ]);
+
+  await resetDemo(db);
+
+  expect((await db.select().from(encounters).where(eq(encounters.id, "visit-1042")))[0]!.state).toEqual({});
+  expect((await db.select().from(imageVectors)).map(v => v.key)).toEqual(["other/xray/v9/b"]);
+  expect((await db.select().from(documents)).map(d => d.id)).toEqual(["lib-1"]);
+  expect((await db.select().from(chunks)).map(c => c.id)).toEqual(["c-l"]);
 });

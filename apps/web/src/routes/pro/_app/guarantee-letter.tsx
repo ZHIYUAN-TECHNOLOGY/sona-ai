@@ -1,5 +1,5 @@
 import { can } from "@sona-ai/api/roles";
-import { DENIAL_REASONS } from "@sona-ai/domain/claim";
+import { DENIAL_REASONS, PNEUMONIA_CONFIRMED } from "@sona-ai/domain/claim";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -198,6 +198,12 @@ function Letter({ encounterId }: { encounterId: string }) {
                   <div className="gl-check-body">
                     <span className="gl-step-label">{c.label}</span>
                     <span className="gl-muted">{c.detail}</span>
+                    {c.status === "blocked" && mayChange && c.id === "diagnosis" ? (
+                      // Confirmed on the film: offered once the X-ray's reading is attached (the server refuses it before).
+                      s.checks?.some(x => x.id === "imaging" && x.status === "passed")
+                        ? <div className="gl-row"><Button size="sm" variant="secondary" pending={fix.isPending} onClick={() => fix.mutate({ encounterId, diagnosisConfirmed: true })}>Add “{PNEUMONIA_CONFIRMED.text}”</Button></div>
+                        : <p className="gl-muted">Read the visit's chest X-ray first.</p>
+                    ) : null}
                     {c.status === "blocked" && mayChange && c.id === "organism" ? (
                       <div className="gl-row"><Button size="sm" variant="secondary" pending={fix.isPending} onClick={() => fix.mutate({ encounterId, organismConfirmed: true })}>Add “Organism not identified.”</Button></div>
                     ) : null}

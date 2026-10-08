@@ -7,7 +7,7 @@ import type { Patient } from "@sona-ai/domain/types";
 import { account, admissions, appointments, careLinks, casemixWeights, encounters, followUpRules, guaranteeLetters, hospitalMembers, insurerCriteria, labResults, notes, observations, patients, user } from "./schema";
 import { DEMO_CLINICIANS } from "./demo";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
-import { DEMO_HOSPITAL, LEGACY_EMAILS, seedDemo, seedDemoNote, seedTestPatient, seedTestStaff, TEST_BED_MANAGER, TEST_DOCTOR, TEST_DOCTOR_2, TEST_MANAGER, TEST_NURSE, TEST_NURSE_2, TEST_PATIENT, WARD_EXTRA } from "./seed";
+import { DEMO_HOSPITAL, LEGACY_EMAILS, seedDemo, seedTestPatient, seedTestStaff, TEST_BED_MANAGER, TEST_DOCTOR, TEST_DOCTOR_2, TEST_MANAGER, TEST_NURSE, TEST_NURSE_2, TEST_PATIENT, WARD_EXTRA } from "./seed";
 import { createTestDb } from "./testing";
 
 test("the Sona Care test patient is seeded signed up and linked to Amelia, rerun-safe, and takes the demo phone back from a stray account", async () => {
@@ -183,15 +183,10 @@ test("a take-home list is charted only for a bed that is fit to go, and the plan
   const vitals = (await db.select().from(observations).where(eq(observations.patientId, "SYN-1042"))).map(o => ({ kind: o.kind, value: o.value, unit: o.unit, at: o.observedAt.toISOString() }));
   expect(dischargeChecks({ glReceived: false, medsConfirmed: false, language: "ms" }, planFor({ ...people.find(p => p.id === "SYN-1042")!.record as Record, visit: { vitals } })).find(c => c.id === "observations")?.status).toBe("passed");
   // The two stays waiting on a guarantee letter. Nurul's note meets the insurer's criteria but one: it says IV, not why.
-  // Amelia's visit has no note in seedDemo alone. seedDemoNote adds her one saved note, however often it runs: it says her
-  // score and her film; the organism and why IV came first are left for the doctor, never answered by the seed.
+  // Amelia's visit has no note: the seed writes none for her, so her note is the one saved from her recorded consultation.
   expect(await db.select().from(notes).where(eq(notes.encounterId, "visit-1042"))).toEqual([]);
-  await seedDemoNote(db);
-  await seedDemoNote(db);
   const note = async (visit: string) => (await db.select().from(notes).where(eq(notes.encounterId, visit)))[0]?.sentences ?? [];
   expect(claimChecks(await note("visit-2002")).map(c => [c.id, c.status])).toEqual([["severity", "passed"], ["imaging", "passed"], ["iv", "blocked"]]);
-  expect((await db.select().from(notes).where(eq(notes.encounterId, "visit-1042"))).map(n => [n.id, n.revision, n.sentences.map(s => s.id)])).toEqual([["note-visit-1042-1", 1, ["subjective", "objective", "assessment", "plan"]]]);
-  expect(claimChecks(await note("visit-1042")).map(c => [c.id, c.status])).toEqual([["severity", "passed"], ["imaging", "passed"], ["organism", "blocked"], ["iv", "blocked"]]);
   // Her cetirizine is recorded with its form, so the medicine resolves without a guess.
   expect(defaultMedications({ medicines: (people.find(p => p.id === "SYN-1042")!.record as Pick<Patient, "medicines">).medicines } as Patient).map(m => [m.ingredient, m.formulation])).toEqual([["salbutamol", "inhaler"], ["cetirizine", "tablet"]]);
 });
@@ -202,9 +197,10 @@ test("the demo insurer's criteria for Amelia's claim are rows, the organism rule
   await seedDemo(db);
   const rows = await db.select().from(insurerCriteria).where(eq(insurerCriteria.insurer, "Synthetic insurer"));
   expect(rows.map(r => r.label).sort()).toEqual([
-    "Imaging result attached", "Organism documented", "Reason for IV antibiotics", "Severity score documented", "Stay within the approved plan",
+    "Diagnosis confirmed", "Imaging result attached", "Organism documented", "Reason for IV antibiotics", "Severity score documented", "Stay within the approved plan",
   ]);
   expect(rows.find(r => r.label === "Organism documented")?.code).toBe("J18.9");
+  expect(rows.find(r => r.label === "Diagnosis confirmed")?.code).toBe("J18.9");
 });
 
 test("every coding-audit code has a casemix weight, and each audit's specific code weighs more than the vague one", async () => {

@@ -48,7 +48,7 @@ test("sending a claim creates a review link; the page shows the packet: patient,
   // Each criterion quotes the sentence of her note that meets it.
   expect(packet.criteria.map(c => [c.id, c.status, c.detail])).toEqual([
     ["severity", "passed", "“Community-acquired pneumonia, CURB-65 0.”"], ["imaging", "passed", "“Chest film: right lower zone consolidation.”"],
-    ["organism", "passed", "“Organism not identified.”"], ["iv", "passed", "“IV first: vomiting on arrival, unable to keep oral tablets down.”"],
+    ["diagnosis", "passed", "“Community-acquired pneumonia, CURB-65 0.”"], ["organism", "passed", "“Organism not identified.”"], ["iv", "passed", "“IV first: vomiting on arrival, unable to keep oral tablets down.”"],
   ]);
   expect(await reviewPacket(db, "not-a-token", clock.now)).toBeUndefined();
 });

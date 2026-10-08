@@ -1,23 +1,24 @@
 import { ORPCError } from "@orpc/server";
 import { searchIcd } from "@sona-ai/db/lookups";
 import { claims, encounters, icd10Codes, patients, provenance, receipts } from "@sona-ai/db/schema/clinical";
-import { INSURER, ORGANISM_UNKNOWN, claimChecks, decideClaimSend, ivReason, withFix, type Code, type DenialCode, type Sentence } from "@sona-ai/domain/claim";
+import { INSURER, ORGANISM_UNKNOWN, PNEUMONIA_CONFIRMED, claimChecks, decideClaimSend, ivReason, withFix, type Code, type DenialCode, type Sentence } from "@sona-ai/domain/claim";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { answerOnce, originOf } from "../answers";
 import { appealSchema, claimUpdateSchema, approvedCommandSchema } from "../contracts";
-import { newReviewToken, reviewUrl } from "../insurer";
+import { letterNote, newReviewToken, reviewUrl } from "../insurer";
 import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
 import { assertApprover } from "./hospital";
 import { loadEncounter, logAnswer } from "./encounter";
 import { latestNote, saveNote } from "./note";
+import { visitFilm } from "./xray";
 
 /**
- * Final guarantee letter, built on the visit's saved note: refused while the note leaves an insurer criterion
- * open or nobody approved it, sent once per requestId with a review link the insurer approves or queries on
+ * Final guarantee letter, built on the visit's saved note and what the visit recorded (../insurer letterNote: the read
+ * X-ray, the chart's CURB-65): refused while they leave an insurer criterion open or nobody approved it, sent once per requestId with a review link the insurer approves or queries on
  * (see ../insurer). Approval marks the guarantee letter received, which is what the discharge checks.
  */
 // No amount goes with the letter: nothing records what the stay was billed. The column cannot be empty, so it holds 0,
@@ -81,7 +82,10 @@ export const claimRouter = {
     // Each fix saves its sentence to the visit's saved note as its next revision (with no note saved there is nothing to
     // add to), and only a sentence the note does not already say, so a repeated fix adds nothing.
     const note = await latestNote(db, hospitalId, encounterId);
-    const fixes = [...patch.organismConfirmed ? [ORGANISM_UNKNOWN] : [], ...patch.ivReasonAdded && why ? [ivReason(why)] : []]
+    // Pneumonia is confirmed on the film: only once the visit's X-ray has been read.
+    if (patch.diagnosisConfirmed && !(await visitFilm(db, hospitalId, encounterId))?.read)
+      throw new ORPCError("PRECONDITION_FAILED", { message: "Read the visit's chest X-ray before confirming pneumonia on it" });
+    const fixes = [...patch.diagnosisConfirmed ? [PNEUMONIA_CONFIRMED] : [], ...patch.organismConfirmed ? [ORGANISM_UNKNOWN] : [], ...patch.ivReasonAdded && why ? [ivReason(why)] : []]
       .filter(f => !note.sentences.some(s => s.id === f.id && s.text === f.text));
     if (note.revision && fixes.length) await saveNote(context, hospitalId, { encounterId, expectedRevision: note.revision, sentences: fixes.reduce(withFix, note.sentences) });
     await db.update(encounters)
@@ -104,8 +108,8 @@ export const claimRouter = {
     if (current?.status === "approved" && sentBefore) return sentBefore;
 
     const at = clockOf(context);
-    // The criteria are read against the note as it is saved now, whatever the app last showed.
-    const decision = decideClaimSend((await latestNote(db, hospitalId, input.encounterId)).sentences, input, at);
+    // The criteria are read against the note as it is saved now and what is attached to it, whatever the app last showed.
+    const decision = decideClaimSend((await letterNote(db, hospitalId, input.encounterId)).sentences, input, at);
     if (decision.status === "refused") throw new ORPCError("PRECONDITION_FAILED", { message: "The claim is not ready to send", data: { reason: decision.reason, open: decision.open } });
 
     // The codes the doctor reviewed for this patient, each with the note sentence behind it and who suggested it, frozen into the letter.
@@ -148,9 +152,10 @@ export const claimRouter = {
   status: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;
     // Read together (every visit open asks); a visit outside the hospital still refuses before anything is returned.
-    const [note, [claim]] = await Promise.all([latestNote(db, hospitalId, input.encounterId), db.select().from(claims).where(eq(claims.id, claimId(input.encounterId)))]);
-    // The insurer's criteria read against the saved note now, so the doctor sees what is open before sending.
-    const checks = claimChecks(note.sentences);
+    await loadEncounter(db, hospitalId, input.encounterId);
+    const [letter, [claim]] = await Promise.all([letterNote(db, hospitalId, input.encounterId), db.select().from(claims).where(eq(claims.id, claimId(input.encounterId)))]);
+    // The insurer's criteria read against the saved note and what is attached to it now, so the doctor sees what is open before sending.
+    const checks = claimChecks(letter.sentences);
     if (!claim) return { status: "draft" as const, checks };
     const withInsurer = claim.status === "sent" || claim.status === "appealed";
     const link = claim.reviewToken && context.publicUrl && withInsurer ? reviewUrl(context.publicUrl, claim.reviewToken) : undefined;

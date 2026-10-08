@@ -34,8 +34,8 @@ export type Code = { code: string; label: string; kind: "Principal" | "Secondary
 export const EMPTY_CLAIM: ClaimState = { organismConfirmed: false, ivReasonAdded: false, status: "draft" };
 export const INSURER = "Synthetic insurer";
 
-// Sample mode's note for the demo patient. Connected, the letter reads her visit's saved note instead: the seed saves
-// one for her stay (packages/db seedDemoNote), and a note saved from her consultation is its next revision.
+// Sample mode's note for the demo patient. Connected, the letter reads her visit's saved note instead (the one saved from
+// her recorded consultation; the seed writes none) with what the visit recorded (packages/api insurer.ts letterNote).
 const NOTE: Sentence[] = [
   { id: "presenting", text: "Five days of cough, fever since yesterday." },
   { id: "xray", text: "Chest film: right lower zone consolidation." },
@@ -62,6 +62,8 @@ export function noteFor(state: ClaimState): Sentence[] {
  * words after "IV first:", so it still reads as the reason once the note is edited as a whole.
  */
 export const ORGANISM_UNKNOWN: Sentence = { id: "organism", text: "Organism not identified." };
+/** The doctor confirming, once the visit's X-ray is read, the pneumonia the consultation could only suspect (the server checks there is a read film). */
+export const PNEUMONIA_CONFIRMED: Sentence = { id: "diagnosis", text: "Community-acquired pneumonia, confirmed on the chest X-ray." };
 export const ivReason = (why: string): Sentence => ({ id: "iv", text: `IV first: ${why.trim()}` });
 /** The note with a fix's sentence saved to it: at the end, replacing an earlier answer to the same criterion. */
 export const withFix = (note: Sentence[], fix: Sentence): Sentence[] => [...note.filter(s => s.id !== fix.id), fix];
@@ -74,7 +76,10 @@ type Criterion = { id: string; label: string; applies?: RegExp; met: RegExp; mis
  */
 const CRITERIA: Criterion[] = [
   { id: "severity", label: "Severity score documented", met: /CURB-65|CRB-65|qSOFA|NEWS2?\b|severity score/i, missing: "No severity score in the note" },
-  { id: "imaging", label: "Imaging result attached", met: /chest film|x-?ray|radiograph|ultrasound|\bCT\b|\bMRI\b|echocardiogra/i, missing: "No imaging result in the note" },
+  // A result, not an order: "Chest X-ray today to check for pneumonia" is a plan, so it attaches nothing.
+  { id: "imaging", label: "Imaging result attached", met: /^(?!.*\b(today|to check|to look|request(ed)?|order(ed)?|arrange[ds]?|book(ed)?|will|plan(ned)?|pending)\b).*(chest film|x-?ray|radiograph|ultrasound|\bCT\b|\bMRI\b|echocardiogra)/i, missing: "No imaging result in the note" },
+  // A consultation suspects pneumonia ("X-ray to check for pneumonia"); the letter codes J18.9 only once a sentence states it.
+  { id: "diagnosis", label: "Diagnosis confirmed", applies: /pneumonia/i, met: /^(?!.*(\b(possible|possibly|suspected?|query|likely|probable|probably|consider|if|whether|rule out|exclude|to check|no|not|without)\b|\?)).*pneumonia/i, missing: "The note names pneumonia only as possible: confirm it from the X-ray" },
   { id: "organism", label: "Organism documented", applies: /pneumonia/i, met: /organism|culture/i, missing: "J18.9 needs the note to say the organism is unknown" },
   // IV and its reason in one sentence: "IV azithromycin given" alone says what was given, not why oral was not.
   { id: "iv", label: "Reason for IV antibiotics", applies: /\bIV\b|intravenous/i, met: /^(?=.*(\bIV\b|intravenous))(?=.*(IV first:|because|unable|vomit|could not|not tolerat|nil by mouth))/i, missing: "The insurer asks why oral was not used first" },

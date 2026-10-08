@@ -1,11 +1,11 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { encounters, guaranteeLetters, hospitalMembers, hospitals, labResults } from "@sona-ai/db/schema/clinical";
+import { encounters, guaranteeLetters, hospitalMembers, hospitals, labResults, provenance } from "@sona-ai/db/schema/clinical";
 import { runNightlyAudit } from "../audit-job";
-import { decideReview, reviewTokenOf } from "../insurer";
+import { decideReview, reviewPacket, reviewTokenOf } from "../insurer";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
-import { EMPTY_CLAIM, ORGANISM_UNKNOWN, ivReason, noteFor } from "@sona-ai/domain/claim";
+import { EMPTY_CLAIM, ORGANISM_UNKNOWN, PNEUMONIA_CONFIRMED, ivReason, noteFor } from "@sona-ai/domain/claim";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
@@ -184,7 +184,39 @@ test("a claim is refused while the visit's saved note leaves a criterion open, a
   expect(await refused()).toEqual({ reason: "blocked", open: ["Organism documented", "Reason for IV antibiotics"] });
   // The IV fix carries the doctor's own reason; without it nothing is written for them.
   expect(await api.claim.update({ encounterId: "visit-1042", ivReasonAdded: true }).then(() => null, (e: { code?: string }) => e.code)).toBe("BAD_REQUEST");
-  expect((await api.claim.status({ encounterId: "visit-1042" })).checks?.map(c => c.status)).toEqual(["passed", "passed", "blocked", "blocked"]);
+  expect((await api.claim.status({ encounterId: "visit-1042" })).checks?.map(c => c.status)).toEqual(["passed", "passed", "passed", "blocked", "blocked"]);
+});
+
+test("the demo's letter rests on what the visit produced: the recorded consultation's note, the chart's CURB-65 and the read X-ray, with the doctor confirming pneumonia on the film", async () => {
+  const { api, db, clock } = await signedIn();
+  const checks = async () => Object.fromEntries((await api.claim.status({ encounterId: "visit-1042" })).checks!.map(c => [c.id, [c.status, c.detail]]));
+  // The note as the scribe drafts it from her consultation: pneumonia suspected, an X-ray ordered, no score, no film read.
+  await api.note.save({ encounterId: "visit-1042", expectedRevision: 0, sentences: [
+    { id: "subjective", text: "Five days of cough with yellow sputum, fever since yesterday, rigors overnight. Asthma, reliever three to four times a day. Penicillin allergy (rash)." },
+    { id: "objective", text: "Temperature 38.1, pulse 96, SpO2 97% on room air. Bilateral wheeze, reduced air entry at the right base." },
+    { id: "assessment", text: "Possible community-acquired pneumonia." },
+    { id: "plan", text: "Chest X-ray today to check for pneumonia. Paracetamol 1 g every 6 hours as needed. If pneumonia, azithromycin, not a penicillin." },
+  ] });
+  // Severity comes from her chart (all five CURB-65 factors recorded); nothing else is assumed.
+  expect(await checks()).toEqual({
+    severity: ["passed", "“CURB-65 0 from the chart: confusion AMT 10/10, urea 5.1 mmol/L, respiratory rate 18 /min, blood pressure 124/78 mmHg, age 42.”"],
+    imaging: ["blocked", "No imaging result in the note"],
+    diagnosis: ["blocked", "The note names pneumonia only as possible: confirm it from the X-ray"],
+    organism: ["blocked", "J18.9 needs the note to say the organism is unknown"],
+  });
+  // Pneumonia cannot be confirmed on a film nobody has read.
+  expect(await api.claim.update({ encounterId: "visit-1042", diagnosisConfirmed: true }).then(() => null, (e: { code?: string }) => e.code)).toBe("PRECONDITION_FAILED");
+  // Her film uploaded and read by a model, as xray.upload and xray.read store them.
+  await db.update(encounters).set({ state: { xray: { key: "demo/xray/visit-1042/f", contentType: "image/png", uploadedAt: "2026-09-26T01:30:00.000Z" } } }).where(eq(encounters.id, "visit-1042"));
+  await db.insert(provenance).values({ id: "read-1", encounterId: "visit-1042", kind: "xray-read", output: { findings: ["Right lower zone consolidation."] }, sourceIds: [], model: "medgemma-1.5-4b" });
+  expect((await checks()).imaging).toEqual(["passed", expect.stringMatching(/^“Chest X-ray \(26 Sept? 2026\), Sona Vision reading, not validated: Right lower zone consolidation.”$/)]);
+  await api.claim.update({ encounterId: "visit-1042", diagnosisConfirmed: true, organismConfirmed: true });
+  expect((await api.note.get({ encounterId: "visit-1042" })).sentences.slice(-2)).toEqual([PNEUMONIA_CONFIRMED, ORGANISM_UNKNOWN]);
+  expect(Object.values(await checks()).every(([status]) => status === "passed")).toBe(true);
+  await api.claim.send({ encounterId: "visit-1042", requestId: "c-real", approvedBy: "dr-aisyah" });
+  // The insurer reads the same: the note's confirmation and what the visit attached.
+  const packet = (await reviewPacket(db, await reviewTokenOf(db, "visit-1042"), clock.now))!;
+  expect(packet.criteria.map(c => [c.id, c.status])).toEqual([["severity", "passed"], ["imaging", "passed"], ["diagnosis", "passed"], ["organism", "passed"]]);
 });
 
 test("the claim's fixes save their sentences to the note as a new revision, once each, and then the claim sends", async () => {

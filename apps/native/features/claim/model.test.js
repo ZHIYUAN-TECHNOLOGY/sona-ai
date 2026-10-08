@@ -11,7 +11,7 @@ test("two insurer gaps block until fixed, and each fix adds its sentence to the 
 
 test("connected, a fix is a sentence saved to the visit's note: the criteria read the note, and a second answer replaces the first", () => {
   const saved = [{ id: "assessment", text: "Community-acquired pneumonia, CURB-65 1. Chest X-ray: left lower zone consolidation." }, { id: "plan", text: "IV ceftriaxone." }];
-  expect(claimChecks(saved).map(c => [c.id, c.status])).toEqual([["severity", "passed"], ["imaging", "passed"], ["organism", "blocked"], ["iv", "blocked"]]);
+  expect(claimChecks(saved).map(c => [c.id, c.status])).toEqual([["severity", "passed"], ["imaging", "passed"], ["diagnosis", "passed"], ["organism", "blocked"], ["iv", "blocked"]]);
   const fixed = withFix(withFix(withFix(saved, ORGANISM_UNKNOWN), ivReason("first try")), ivReason("she could not keep tablets down"));
   expect(fixed.map(s => s.id)).toEqual(["assessment", "plan", "organism", "iv"]);
   expect(claimChecks(fixed).find(c => c.id === "iv")).toMatchObject({ status: "passed", detail: "“IV first: she could not keep tablets down”" });
