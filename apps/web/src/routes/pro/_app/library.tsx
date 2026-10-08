@@ -1,10 +1,11 @@
 import { can } from "@sona-ai/api/roles";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { type Column, DataTable, TableToolbar } from "@/components/data-table";
 import { Icon } from "@/components/icon";
+import { ImageLoader } from "@/components/image-loader";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, Field, SearchField, Select, Signal, StatCard, StatRow, Tabs } from "@/components/primitives";
 import { RightRail, WithRail } from "@/components/rail";
@@ -185,6 +186,15 @@ function AddSource({ onAdded, onReview, notice }: { onAdded: () => unknown; onRe
   // Photos are always read page by page by MedGemma, which takes a while.
   const readerOff = (add.error as { data?: { reason?: string } } | null)?.data?.reason === "reader-off";
   const reading = scanning || add.isPending && mode === "pdf" && (add.variables?.getAll("file") as File[] | undefined)?.some(f => f.type.startsWith("image/"));
+  // The first photo, under a scanning light while MedGemma reads the pages; a scanned PDF's pages are drawn on the server, so it waits as dots.
+  const [page, setPage] = useState<string>();
+  useEffect(() => {
+    const photo = reading ? (add.variables?.getAll("file") as File[] | undefined)?.find(f => f.type.startsWith("image/")) : undefined;
+    if (!photo) return;
+    const url = URL.createObjectURL(photo);
+    setPage(url);
+    return () => { URL.revokeObjectURL(url); setPage(undefined); };
+  }, [reading, add.variables]);
 
   return (
     <form className="lib-form lib-add" key={requestId + mode} onSubmit={e => { e.preventDefault(); setDone(undefined); add.mutate(new FormData(e.currentTarget)); }}>
@@ -213,6 +223,7 @@ function AddSource({ onAdded, onReview, notice }: { onAdded: () => unknown; onRe
         <Button type="submit" variant="primary" pending={add.isPending}>{reading ? "Reading pages…" : mode !== "article" ? "Add to library" : preview ? "Confirm and add" : "Preview article"}</Button>
         {preview && <Button onClick={() => setPreview(undefined)}>Choose another</Button>}
       </div>
+      {reading && <ImageLoader className="lib-scan" tone="paper" src={page} state={page ? "reading" : "loading"} alt="The first page, being read" />}
       {add.isError && <p className="lib-error" role="alert">{messageOf(add.error)}{readerOff && <> <Button size="sm" onClick={() => add.mutate(add.variables!)} aria-label="Try reading the pages again">Try again</Button></>}</p>}
       {done ? <p role="status"><Signal tone="done">{done}</Signal> Sona answers from it now.</p> : null}
     </form>

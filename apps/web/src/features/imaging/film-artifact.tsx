@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Artifact, Notice, Shimmer } from "@/components/ai";
+import { ImageLoader } from "@/components/image-loader";
 import { Button, Chip, Signal } from "@/components/primitives";
 import { Compare } from "@/features/imaging/compare";
 import { FilmStage, ZoomSlider } from "@/features/imaging/film-stage";
@@ -77,7 +78,7 @@ function FilmBody({ encounterId }: { encounterId: string }) {
   return (
     <div className="film-art">
       <FilmStage src={film.data && filmUrl(film.data)} alt="Chest X-ray" findings={marked} zoom={zoom} setZoom={setZoom}>
-        {film.data ? null : film.isError ? <p className="xr-note">Film not available</p> : <Shimmer>Loading the film</Shimmer>}
+        <ImageLoader fill state={film.isError ? "failed" : film.data ? "ready" : "loading"} />
       </FilmStage>
       {film.data && (
         <div className="film-art-tools">
