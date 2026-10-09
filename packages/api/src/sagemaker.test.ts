@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { BOXES } from "./baseten-models";
-import { endpointsOf, hedged, hosted, payloads, sagemakerEmbedder, sagemakerFetcher, sagemakerImageEmbedder, sagemakerLive, signed } from "./sagemaker";
+import { endpointsOf, hedged, hosted, stalls, whole, payloads, sagemakerEmbedder, sagemakerFetcher, sagemakerImageEmbedder, sagemakerLive, signed } from "./sagemaker";
 
 const creds = { region: "us-east-1", accessKeyId: "AKIDEXAMPLE", secretAccessKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY" };
 
@@ -174,4 +174,25 @@ test("a call that hangs is sent once more after HEDGE_MS, and the first answer w
   let m = 0;
   await hedged(async () => { m++; return new Response("x"); }, undefined);
   expect(m).toBe(1);
+});
+
+test("box 2's answer must arrive whole within the deadline: a try that stalls mid-body is cancelled and sent fresh", async () => {
+  let n = 0;
+  const stallsOnce = async (signal: AbortSignal) => {
+    n++;
+    if (n === 1) return new Response(new ReadableStream({ start(c) { c.enqueue(new Uint8Array([1])); signal.addEventListener("abort", () => c.error(signal.reason)); } }));
+    return new Response("audio");
+  };
+  expect(await (await whole(stallsOnce, 3, 30)).text()).toBe("audio");
+  expect(n).toBe(2);
+  let m = 0;
+  await expect(whole(async signal => { m++; return new Promise<Response>((_, no) => signal.addEventListener("abort", () => no(signal.reason))); }, 2, 10)).rejects.toThrow("stalled");
+  expect(m).toBe(2);
+});
+
+test("a streamed answer that goes quiet ends with an error instead of hanging", async () => {
+  const quiet = new ReadableStream<Uint8Array>({ start(c) { c.enqueue(new Uint8Array([1])); } }).pipeThrough(stalls(20));
+  const reader = quiet.getReader();
+  expect((await reader.read()).value).toEqual(new Uint8Array([1]));
+  await expect(reader.read()).rejects.toThrow("stalled");
 });

@@ -112,9 +112,12 @@ export function sagemakerFetcher(sm: SageMaker, fetcher: typeof fetch = fetch, n
     const url = `https://runtime.sagemaker.${sm.region}.amazonaws.com/endpoints/${encodeURIComponent(endpoint)}/${streamed ? "invocations-response-stream" : "invocations"}`;
     // The box is named too: one endpoint may hold two boxes (packages/infra/aws/live: box ② beside box ④), and tells by this.
     const headers = { ...await signed(sm, "sagemaker", url, body, contentType, now()), "x-amzn-sagemaker-custom-attributes": box! };
-    const res = await hedged(signal => fetcher(url, { method: "POST", body, headers, signal }), box === "voice" || streamed ? HEDGE_MS : undefined, init?.signal);
+    const send = (signal: AbortSignal) => fetcher(url, { method: "POST", body, headers, signal });
+    // Box ② (hearing and speaking): the whole answer within a deadline, or a fresh request (stalls, see `whole`).
+    if (box === "voice" && !streamed) return whole(send, VOICE_TRIES, VOICE_DEADLINE_MS, init?.signal);
+    const res = await hedged(send, box === "voice" || streamed ? HEDGE_MS : undefined, init?.signal);
     if (!streamed || !res.ok || !res.body) return res;
-    return new Response(res.body.pipeThrough(payloads()), { status: res.status, headers: { "content-type": "text/event-stream" } });
+    return new Response(res.body.pipeThrough(stalls(STALL_MS)).pipeThrough(payloads()), { status: res.status, headers: { "content-type": "text/event-stream" } });
   }) as typeof fetch;
 }
 
@@ -126,6 +129,37 @@ export function sagemakerFetcher(sm: SageMaker, fetcher: typeof fetch = fetch, n
  * Chats that are not streamed take longer than this to answer at all, so they are never sent twice.
  */
 export const HEDGE_MS = 4000;
+/**
+ * A stall can come after the answer has started (headers in, audio still to come), where the hedge above does not
+ * look. Box ②'s answers are small (a spoken sentence, a transcript) and arrive whole in about 2 s, so each try gets
+ * VOICE_DEADLINE_MS for the whole answer, then is cancelled and sent fresh: VOICE_TRIES at most, about 15 s in the
+ * worst case instead of the caller's 30 s timeout. A streamed answer that goes quiet for STALL_MS ends with an error,
+ * so its caller falls back (the phone's voice) now rather than at 30 s.
+ */
+export const VOICE_TRIES = 3, VOICE_DEADLINE_MS = 5000, STALL_MS = 8000;
+export async function whole(send: (signal: AbortSignal) => Promise<Response>, tries: number, deadline: number, caller?: AbortSignal | null): Promise<Response> {
+  for (let i = 1; ; i++) {
+    const own = new AbortController(), timer = setTimeout(() => own.abort(new Error("stalled")), deadline);
+    try {
+      const res = await send(caller ? AbortSignal.any([own.signal, caller]) : own.signal);
+      const bytes = await res.arrayBuffer();
+      return new Response(bytes, { status: res.status, headers: res.headers });
+    } catch (error) {
+      if (caller?.aborted || !own.signal.aborted || i >= tries) throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+}
+/** Passes a stream through, ending it with an error once no bytes have come for `ms`. */
+export function stalls(ms: number) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return new TransformStream<Uint8Array, Uint8Array>({
+    start(c) { timer = setTimeout(() => c.error(new Error("stalled")), ms); },
+    transform(chunk, c) { clearTimeout(timer); timer = setTimeout(() => c.error(new Error("stalled")), ms); c.enqueue(chunk); },
+    flush() { clearTimeout(timer); },
+  });
+}
 export async function hedged(send: (signal: AbortSignal) => Promise<Response>, after: number | undefined, caller?: AbortSignal | null): Promise<Response> {
   if (after === undefined) return send(caller ?? new AbortController().signal);
   const tries = [new AbortController(), new AbortController()];
