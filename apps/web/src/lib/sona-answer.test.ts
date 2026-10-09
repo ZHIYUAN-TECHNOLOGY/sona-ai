@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 
 import { type Answer, apply, newTurn } from "@/features/evidence/thread";
 
-import { phaseOf, rowPatient, rulesAnswer } from "./sona-answer";
+import { historyOf, phaseOf, rowPatient, rulesAnswer } from "./sona-answer";
 
 const spec = (...parts: { type: string; props: Record<string, unknown> }[]) => ({
   root: "r",
@@ -51,4 +51,23 @@ test("stream events move an evidence turn through search, read, write and done",
   turn = apply(turn, { type: "answer", answer: { bottomLine: "Not routinely.", claims: [], references: [], source: "gemma" } as unknown as Answer });
   expect(phaseOf(turn)).toBe("done");
   expect(phaseOf({ ...newTurn("b", "?"), failed: "no" })).toBe("done");
+});
+
+test("a follow-up goes with the thread so far: the last 6 answered turns, oldest first, in the words shown; a new thread has none", () => {
+  const said = (question: string, text: string) => ({ question, state: "done", answer: { kind: "text" as const, text } });
+  expect(historyOf([])).toEqual([]);
+  // Still thinking, failed, or a page's answer with no words: not history.
+  expect(historyOf([
+    said("What is panadol?", "Panadol is paracetamol.\n\nI've let your care team know."),
+    { question: "Why?", state: "error" },
+    { question: "Shown", state: "done", answer: { kind: "node" as const, node: null } },
+    { question: "Asked", state: "done", answer: { kind: "node" as const, node: null, text: "Its words." } },
+    { question: "How does it help?", state: "pending" },
+  ])).toEqual([
+    { question: "What is panadol?", answer: "Panadol is paracetamol.\n\nI've let your care team know." },
+    { question: "Asked", answer: "Its words." },
+  ]);
+  expect(historyOf(Array.from({ length: 8 }, (_, i) => said(`Q${i}`, `A${i}`))).map(h => h.question)).toEqual(["Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]);
+  const long = historyOf([said("q".repeat(2500), "a".repeat(5000))])[0]!;
+  expect([long.question.length, long.answer.length]).toEqual([2000, 4000]);
 });

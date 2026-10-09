@@ -8,7 +8,7 @@ import { FilmCard } from "@/features/evidence/film-card";
 import { answerBy, answerFilm } from "@/features/evidence/thread";
 
 import { client } from "./orpc";
-import { type FreeAnswer, phaseOf, rowPatient, rulesAnswer, type SonaAnswer } from "./sona-answer";
+import { type FreeAnswer, historyOf, phaseOf, rowPatient, rulesAnswer, type Said, type SonaAnswer } from "./sona-answer";
 import { PANEL_KEY, type PanelState, parsePanel } from "./sona-panel";
 
 export type { SonaAnswer } from "./sona-answer";
@@ -17,8 +17,9 @@ type App = "pro" | "care";
 /**
  * A page's own answer to a question from the Sona panel: a typed answer (`SonaAnswer`), plain text, or the page's own JSX.
  * `update` shows the answer so far while it is still coming (a streamed answer's steps). Throw to show an error.
+ * `history`: this page's thread so far (`historyOf`), for care.ask to read a follow-up with.
  */
-export type SonaHandler = (question: string, update: (answer: SonaAnswer) => void) => Promise<SonaAnswer | ReactNode>;
+export type SonaHandler = (question: string, update: (answer: SonaAnswer) => void, history: Said[]) => Promise<SonaAnswer | ReactNode>;
 type Turn = { id: number; question: string; state: "pending" | "done" | "error"; answer?: SonaAnswer; error?: string };
 
 type Ask = { ask: (question: string) => void; handler: RefObject<SonaHandler | null>; setPanel: (panel: PanelState) => void; setContext: (label?: string) => void };
@@ -41,8 +42,8 @@ export function plain(e: unknown): string {
 const isAnswer = (value: unknown): value is SonaAnswer => typeof value === "object" && value !== null && !isValidElement(value) && "kind" in value;
 const asAnswer = (value: SonaAnswer | ReactNode): SonaAnswer => (isAnswer(value) ? value : typeof value === "string" ? { kind: "text", text: value } : { kind: "node", node: value });
 
-async function askCare(question: string): Promise<SonaAnswer> {
-  const res = (await client.care.ask({ question })) as { answer?: string; careTeam?: { line?: string }; sources?: { title: string }[] };
+async function askCare(question: string, _update: unknown, history: Said[]): Promise<SonaAnswer> {
+  const res = (await client.care.ask({ question, history })) as { answer?: string; careTeam?: { line?: string }; sources?: { title: string }[] };
   if (!res.answer) throw new Error("Sona can't answer right now. Please try again in a minute.");
   const text = [res.answer, res.careTeam?.line].filter(Boolean).join("\n\n");
   return { kind: "text", text, ...(res.sources?.length ? { note: `From: ${res.sources.map(source => source.title).join(", ")}` } : {}) };
@@ -66,6 +67,9 @@ export function SonaProvider({ app, children }: { app: App; children: ReactNode 
   const handler = useRef<SonaHandler | null>(null);
   const page = useRef(0);
   const asked = useRef(0);
+  // The thread as it stands, for the next question's `history` (`ask` is stable, so it reads this, not `turns`).
+  const latest = useRef(turns);
+  useEffect(() => { latest.current = turns; }, [turns]);
 
   // An answer belongs to the page it was asked on: a new page starts with an empty thread.
   const path = useRouterState({ select: state => state.location.pathname });
@@ -87,7 +91,7 @@ export function SonaProvider({ app, children }: { app: App; children: ReactNode 
     const end = (turn: Partial<Turn>) => { settle(turn); if (from === page.current && closed.current) setUnseen(true); };
     // Asking again replaces a question that failed.
     setTurns(all => [...all.filter(t => t.state !== "error"), { id, question, state: "pending" }]);
-    (handler.current ?? (app === "care" ? askCare : askPro))(question, answer => settle({ answer })).then(
+    (handler.current ?? (app === "care" ? askCare : askPro))(question, answer => settle({ answer }), historyOf(latest.current)).then(
       answer => end({ state: "done", answer: asAnswer(answer) }),
       e => end({ state: "error", error: plain(e) }),
     );

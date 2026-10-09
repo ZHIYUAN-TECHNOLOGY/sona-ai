@@ -5,7 +5,7 @@ import { AccessibilityInfo, ActivityIndicator, Alert, Keyboard, Pressable, Scrol
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { answer, conditionOf, doctorQuestion, leadOf, shown, spoken, startingLine, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
+import { answer, conditionOf, doctorQuestion, historyOf, leadOf, shown, spoken, startingLine, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import { Composer } from "@/features/assistant/composer";
 import { Icon, type IconName } from "@/lib/icons";
@@ -37,8 +37,9 @@ import { client, orpc, queryClient } from "@/utils/orpc";
  * sits by a small live orb for as long as the call runs. Any question is answered (care.ask): their own care
  * from their plan, anything else from general knowledge, marked as such; doctor questions search the hospital's
  * directory (care.doctors.list), and warning words put the 999 line first. A problem they report reaches their care
- * team (care.ask makes the task), and Sona's line saying so closes the answer. + starts a new chat (there is no
- * stored history, so no history button).
+ * team (care.ask makes the task), and Sona's line saying so closes the answer. Each question goes with the chat's last
+ * 6 turns (historyOf), typed or spoken, so a follow-up ("How does it help?") is read with them. + starts a new chat,
+ * empty (nothing is stored, so no history button).
  */
 type Turn = { question: string; reply: Reply; requestId: string; ready: boolean; saved?: boolean; sent?: boolean; rated?: "up" | "down" };
 const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -83,8 +84,12 @@ export default function Assistant() {
   const working = last !== undefined && !last.ready;
   const rest = rows.filter(s => !turns.some(t => t.question === s.question));
 
-  // Real calls: the question to the model grounded in the plan (care.ask), a doctor question to the directory.
-  const answerOf = (question: string) => answer(question, asks, { ask: q => client.care.ask({ question: q }), doctors: search => client.care.doctors.list(search ? { search } : undefined) }, condition, lang);
+  // Real calls: the question to the model grounded in the plan (care.ask), with this chat so far so a follow-up is
+  // read with it (the new question's own turn is not in `turns` yet); a doctor question to the directory.
+  const answerOf = (question: string) => {
+    const history = historyOf(turns, lang);
+    return answer(question, asks, { ask: q => client.care.ask({ question: q, history }), doctors: search => client.care.doctors.list(search ? { search } : undefined) }, condition, lang);
+  };
   const ask = (question: string) => {
     // Asked (typed, or a suggestion tapped while typing): the keyboard goes down, or it covers the answer and leaves only its chips in view.
     Keyboard.dismiss();

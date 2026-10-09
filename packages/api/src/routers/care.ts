@@ -144,7 +144,7 @@ export const careRouter = {
    * once a task is made. General advice rests on the hospital's own patient leaflets when one fits (../leaflets): `sources`
    * names the leaflets the answer used, by title; empty when it used none, or none could be found in time.
    */
-  ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(500) })).handler(async ({ context, input }) => {
+  ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(2000), history: z.array(z.object({ question: z.string().trim().min(1).max(2000), answer: z.string().trim().max(4000) })).max(6).optional() })).handler(async ({ context, input }) => {
     // The hospital's leaflets for the question are searched while her record is read. The search never fails the answer
     // and is given PASSAGES_MS from here, so the gates below run when they did before, whatever it does.
     const found = leafletHits(context.library, context.hospitalId, input.question);

@@ -12,6 +12,7 @@ import { Listen } from "@/features/care-ask/listen";
 import { authClient } from "@/lib/auth-client";
 import { client, orpc } from "@/lib/orpc";
 import { useSonaAsk } from "@/lib/sona";
+import type { Said, SonaAnswer } from "@/lib/sona-answer";
 import "@/styles/pages/care-ask.css";
 
 export const Route = createFileRoute("/care/_app/ask")({ component: Page });
@@ -52,24 +53,31 @@ function Next({ question, spoken }: { question: string; spoken: string }) {
   );
 }
 
-/** This page's answer to the Sona bar and the chips: `care.ask`. A failure is a plain line with "Try again". */
-async function answer(question: string): Promise<ReactNode> {
+/**
+ * This page's answer to the Sona bar and the chips: `care.ask`, with the thread so far (`history`) so a follow-up is
+ * read with it. The answer carries its words (`text`) for the next question's history. A failure is a plain line with "Try again".
+ */
+async function answer(question: string, _update: unknown, history: Said[]): Promise<SonaAnswer | ReactNode> {
   let res: Answer;
-  try { res = (await client.care.ask({ question })) as Answer; }
+  try { res = (await client.care.ask({ question, history })) as Answer; }
   catch { return <Failed question={question} line="Sona can't answer right now. Try again." />; }
   if (!res.answer) return <Failed question={question} line={res.waking ? `Sona is starting (about ${res.waking} min). Try again then.` : "Sona can't answer right now. Try again."} />;
   const spoken = res.careTeam?.line ? `${res.answer} ${res.careTeam.line}` : res.answer;
-  return (
-    <>
-      {res.source === "fixture" ? <Chip tone="neutral">Sample answer</Chip> : null}
-      {/* Keeps the answer's own line breaks: a numbered list stays a list. */}
-      <p className="ask-answer">{res.answer}</p>
-      {res.careTeam?.line ? <p>{res.careTeam.line}</p> : null}
-      {res.grounded ? <p className="sona-turn-note">From your record.</p> : null}
-      {res.sources?.length ? <p className="sona-turn-note">From: {res.sources.map(s => s.title).join(", ")}</p> : null}
-      <Next question={question} spoken={spoken} />
-    </>
-  );
+  return {
+    kind: "node",
+    text: spoken,
+    node: (
+      <>
+        {res.source === "fixture" ? <Chip tone="neutral">Sample answer</Chip> : null}
+        {/* Keeps the answer's own line breaks: a numbered list stays a list. */}
+        <p className="ask-answer">{res.answer}</p>
+        {res.careTeam?.line ? <p>{res.careTeam.line}</p> : null}
+        {res.grounded ? <p className="sona-turn-note">From your record.</p> : null}
+        {res.sources?.length ? <p className="sona-turn-note">From: {res.sources.map(s => s.title).join(", ")}</p> : null}
+        <Next question={question} spoken={spoken} />
+      </>
+    ),
+  };
 }
 
 function Body({ call }: { call?: Parameters<Parameters<typeof Call>[0]["children"]>[0] }) {
