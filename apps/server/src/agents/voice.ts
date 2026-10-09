@@ -91,8 +91,24 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
     });
   }
 
+  /** When the current call began: its turns are the conversation Gemma reads (getConversationHistory). */
+  #callStart = 0;
+
+  /**
+   * A call is its own conversation, as a new chat is in the app: earlier calls' turns stay stored but are not read, so
+   * one call's language and worries never carry into the next (9 Oct: after Malay day-2 calls, an English allergy
+   * question was answered in Malay, and a calm one with the 999 line).
+   */
+  getConversationHistory(limit = 20) {
+    super.getConversationHistory(0); // creates the table on a first call
+    return this.sql<{ role: "user" | "assistant"; text: string }>`
+      SELECT role, text FROM cf_voice_messages WHERE timestamp >= ${this.#callStart} ORDER BY id DESC LIMIT ${limit}
+    `.reverse().map(row => ({ role: row.role, content: row.text }));
+  }
+
   /** On picking up, the call's boxes are woken, and the patient is told plainly if hearing or answers are still starting. */
   async onCallStart(connection: Connection) {
+    this.#callStart = Date.now();
     const { hospitalId, patientId } = patientOf(this.name);
     this.#records.set(connection, this.#read());
     try {
