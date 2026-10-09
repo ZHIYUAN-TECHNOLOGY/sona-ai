@@ -50,9 +50,7 @@ nav a:hover { color: var(--text); }
 
 /* hero */
 .hero { padding: 96px 0 0; }
-.orb { width: 84px; height: 84px; border-radius: 50%; margin-bottom: 28px;
-  background: radial-gradient(circle at 35% 30%, #fff 0, #b9c6ff 14%, var(--blue) 42%, var(--violet) 70%, #2a1d5c 100%);
-  box-shadow: 0 0 60px rgba(91,124,255,.55), 0 0 140px rgba(167,123,255,.35); }
+.orb { width: 96px; height: 96px; margin: 0 0 24px -6px; background: url(media/orb.png) center / contain no-repeat; } /* Sona Care's resting pearl, as the app draws it */
 .hero .lead { margin-top: 20px; }
 .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
 .tag { font: 600 12px/1 var(--mono); letter-spacing: .1em; padding: 9px 12px; border-radius: 999px; border: var(--stroke); color: var(--text); background: rgba(255,255,255,.04); }
@@ -246,7 +244,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
 
   <div class="featured">
     <div class="player"><video controls preload="none" playsinline poster="media/film.jpg" src="media/film.mp4"></video><span class="sound">SOUND ON</span></div>
-    <p class="caption">The whole story in one take, 4:35. Web, Sona Pro and Sona Care recorded at the same time on 8 Oct 2026: the consultation, the X-ray, the insurer's letter, discharge, a Malay call from home on day 2, and the care team's task.</p>
+    <p class="caption">The whole story in one take, 4:51. Web, Sona Pro and Sona Care recorded at the same time on 8 Oct 2026: the consultation, the X-ray, the insurer's letter, discharge, a Malay call from home on day 2, and the care team's task. The day-2 call was recorded again on 9 Oct with the new Sona Care orb; you hear her and Sona.</p>
   </div>
 
   <div id="groups"></div>
@@ -328,7 +326,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
       <li>Both iPhone apps and both web portals</li>
       <li>The server, the database and the live updates between apps</li>
       <li>Every AI answer, from our models running in Malaysia</li>
-      <li>The voice calls: recorded on a real iPhone</li>
+      <li>The voice calls: our models hear her and answer out loud (her voice is synthetic)</li>
       <li>Every step on screen: only waiting is cut, nothing is sped up</li>
     </ul></div>
     <div class="list glass"><h3>Synthetic</h3><ul>
@@ -375,9 +373,9 @@ const GROUPS = [
     proof: ["97.1% of turns to the right person", "10.0% words wrong on medical Manglish", "Full note in about 10 s"],
     clips: [["scribe", "The consultation to the saved note", 1], ["scribe-record", "Recording, live voice count", 1], ["scribe-who", "Who said what, one tap each", 1], ["scribe-note", "Note drafted and saved", 1]] },
   { title: "Patients call Sona. It talks back, in their language.", tag: "Voice, speech to speech",
-    what: "Four real calls on an iPhone, in English, Malay and Chinese. Sona answers anything the patient asks, from her own record when it matters, out loud with a Malaysian voice we trained.",
+    what: "Four calls in English, Malay and Chinese: you hear her question, then Sona's answer. Sona answers anything the patient asks, from her own record when it matters, out loud with a Malaysian voice we trained. The orb turns to light while she talks.",
     proof: ["Reply starts in 1.5 to 2.25 s", "Malay, English, Chinese"],
-    clips: [["voice", "Four real calls", 1], ["voice-allergy", "\"Am I allergic to any medicine?\"", 1], ["voice-malay", "In Malay: which medicine do I take?", 1], ["voice-chinese", "In Chinese: what to watch for", 1], ["voice-general", "A general question", 1]] },
+    clips: [["voice", "Four calls, sound on", 1], ["voice-allergy", "\"Am I allergic to any medicine?\"", 1], ["voice-malay", "In Malay: which medicine do I take?", 1], ["voice-chinese", "In Chinese: what to watch for", 1], ["voice-general", "A general question", 1]] },
   { title: "Sona follows her home and brings problems back to the team.", tag: "Sona Care and Sona Pro together",
     what: "Discharge reaches her phone within a second. On day 2 she speaks Malay; Sona answers aloud, hears a red flag, tells her to call 999 and gives the care team a task. Day 2 is the demo clock moved forward, and the clip says so.",
     proof: ["Two apps, one record", "Red flags always reach staff"],
@@ -405,7 +403,7 @@ const GROUPS = [
   { title: "Her own app, in Malay, English or Chinese.", tag: "Sona Care for patients",
     what: "Her plan, medicines and warning signs in plain words. She asks anything, checks a medicine box by photo, marks doses, reads the leaflet in her language and books a follow-up. On iPhone and on the web.",
     proof: ["Three languages", "Answers say where they came from"],
-    clips: [["care-web-day", "Her day and medicines, on the web"], ["care-web-ask", "Ask Sona, then in Malay"], ["care-web-plan", "Plan, warning signs and PDF"], ["care-plan", "Her plan after discharge"], ["care-record", "Answers from her own record"], ["care-worry", "When to worry"], ["care-dose", "Dose taken"], ["care-photo", "Is this my medicine?"], ["care-leaflet", "Her leaflet, in her language"], ["care-malay", "In Malay"], ["care-chinese", "In Chinese"], ["care-doctor", "Which doctor should I see?"], ["care-book", "Book a follow-up"]] },
+    clips: [["care-web-day", "Her day and medicines, on the web"], ["care-orb", "The orb turns to light as she talks", 1], ["care-web-ask", "Ask Sona, then in Malay"], ["care-web-plan", "Plan, warning signs and PDF"], ["care-plan", "Her plan after discharge"], ["care-record", "Answers from her own record"], ["care-worry", "When to worry"], ["care-dose", "Dose taken"], ["care-photo", "Is this my medicine?"], ["care-leaflet", "Her leaflet, in her language"], ["care-malay", "In Malay"], ["care-chinese", "In Chinese"], ["care-doctor", "Which doctor should I see?"], ["care-book", "Book a follow-up"]] },
 ];
 
 const el = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); n.append(...kids); return n; };

@@ -8,6 +8,7 @@ K=~/Documents/sona-ai/pitch/semifinal-kit/04-media/videos
 A=~/Documents/sona-ai/pitch/semifinal-kit/04-media/architecture
 O="$(dirname "$0")/public/media"; mkdir -p "$O"
 cp "$A"/0{1,2,3}-*.dark.svg "$O/"
+[[ -f "$O/orb.png" ]] || sips -Z 336 ~/Documents/sona-ai/pitch/semifinal-kit/04-media/brand/orb.png --out "$O/orb.png" >/dev/null   # hero logo: Sona Care resting pearl
 for m in jay-ng wilfred-foo; do [[ -f "$O/$m.jpg" ]] || sips -s format jpeg -Z 480 ~/Documents/sona-ai/pitch/semifinal-kit/05-team/$m.png --out "$O/$m.jpg" >/dev/null; done
 
 # id | source | start s | end s (empty = to the end) | poster s (empty = 45% in)
@@ -18,7 +19,7 @@ while IFS='|' read -r id src start end pt; do
   src="${src/#B/$B}"; src="${src/#K/$K}"
   [[ -f "$src" ]] || { echo "missing $src (skipped $id)"; continue; }
   to=(); [[ -n "$end" ]] && to=(-to "$end")
-  ffmpeg -nostdin -loglevel error -y -ss "$start" ${to[@]+"${to[@]}"} -i "$src" -c:v libx264 -preset slow -crf 26 -vf "scale=1600:-2,format=yuv420p" \
+  ffmpeg -nostdin -loglevel error -y -ss "$start" ${to[@]+"${to[@]}"} -i "$src" -c:v libx264 -preset slow -crf 26 -vf "scale='min(1600,iw)':-2,format=yuv420p" \
     -c:a aac -b:a 96k -movflags +faststart "$O/$id.mp4"
   d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$O/$id.mp4")
   ffmpeg -nostdin -loglevel error -y -ss "${pt:-$(echo "$d * 0.45" | bc)}" -i "$O/$id.mp4" -frames:v 1 -vf scale=960:-2 -q:v 4 "$O/$id.jpg"
@@ -34,6 +35,7 @@ voice-allergy|B/6-voice-speech-to-speech/01-allergy-from-her-record.mp4|4.5|
 voice-malay|B/6-voice-speech-to-speech/02-malay-her-medicines.mp4|4.5|
 voice-chinese|B/6-voice-speech-to-speech/03-chinese-recovery-advice.mp4|4.5|
 voice-general|B/6-voice-speech-to-speech/04-a-general-question.mp4|4.5|
+care-orb|B/13-orb-trial/pearl-to-folding-light-16x9.mp4|0||9
 day2|K/demo-day2.mp4|0|
 home-discharge|B/10-wow-flow-v3/05-discharge.mp4|4.5|
 home-call|B/10-wow-flow-v3/06-day2-call.mp4|4.5|
