@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Evidence answers with citations",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      660
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Sona Pro"
+        },
+        "backend": {
+          "label": "Sona server"
+        },
+        "database": {
+          "label": "Postgres (Neon)"
+        },
+        "cloud": {
+          "label": "Model in Malaysia"
+        },
+        "external": {
+          "label": "Public source"
+        },
+        "security": {
+          "label": "Citation checks"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "question",
+      "type": "frontend",
+      "label": "Question",
+      "sublabel": "typed or spoken",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "evidence.stream",
+      "sublabel": "steps stream back",
+      "pos": [
+        270,
+        330
+      ],
+      "size": [
+        170,
+        72
+      ]
+    },
+    {
+      "id": "pubmed",
+      "type": "external",
+      "label": "PubMed",
+      "sublabel": "esearch + efetch, cached 7 d",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        210,
+        72
+      ]
+    },
+    {
+      "id": "record",
+      "type": "database",
+      "label": "Patient record",
+      "sublabel": "in a visit; name, MRN out",
+      "pos": [
+        560,
+        190
+      ],
+      "size": [
+        210,
+        72
+      ]
+    },
+    {
+      "id": "search",
+      "type": "backend",
+      "label": "Hybrid search",
+      "sublabel": "RRF k=60, top 3",
+      "pos": [
+        560,
+        330
+      ],
+      "size": [
+        210,
+        72
+      ]
+    },
+    {
+      "id": "embed",
+      "type": "cloud",
+      "label": "sona-embed",
+      "sublabel": "EmbeddingGemma 768-d",
+      "pos": [
+        330,
+        520
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "chunks",
+      "type": "database",
+      "label": "chunks",
+      "sublabel": "tsvector + HNSW",
+      "pos": [
+        565,
+        520
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "rerank",
+      "type": "cloud",
+      "label": "sona-voice rerank",
+      "sublabel": "bge-reranker, top 20",
+      "pos": [
+        800,
+        520
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "med",
+      "type": "cloud",
+      "label": "Sona Med",
+      "sublabel": "claims cite [n]",
+      "pos": [
+        840,
+        190
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "checks",
+      "type": "security",
+      "label": "Citation checks",
+      "sublabel": "in range, quotes verbatim",
+      "pos": [
+        1070,
+        190
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "answer",
+      "type": "frontend",
+      "label": "Answer + sources",
+      "sublabel": "films shown inline",
+      "pos": [
+        1070,
+        360
+      ],
+      "size": [
+        180,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "question-route",
+      "from": "question",
+      "to": "route",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route-pubmed",
+      "from": "route",
+      "to": "pubmed",
+      "label": "terms",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelSegment": 2
+    },
+    {
+      "id": "route-record",
+      "from": "route",
+      "to": "record",
+      "label": "visit",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelSegment": 2
+    },
+    {
+      "id": "route-search",
+      "from": "route",
+      "to": "search",
+      "variant": "emphasis"
+    },
+    {
+      "id": "search-embed",
+      "from": "search",
+      "to": "embed",
+      "label": "query",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "search-chunks",
+      "from": "search",
+      "to": "chunks",
+      "label": "SQL",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 104
+    },
+    {
+      "id": "search-rerank",
+      "from": "search",
+      "to": "rerank",
+      "label": "top 20",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "pubmed-med",
+      "from": "pubmed",
+      "to": "med",
+      "label": "5 studies",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "record-med",
+      "from": "record",
+      "to": "med",
+      "label": "record"
+    },
+    {
+      "id": "search-med",
+      "from": "search",
+      "to": "med",
+      "label": "passages",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "med-checks",
+      "from": "med",
+      "to": "checks",
+      "variant": "emphasis"
+    },
+    {
+      "id": "checks-answer",
+      "from": "checks",
+      "to": "answer",
+      "label": "kept claims",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 62
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Order of sources",
+      "items": [
+        "X-ray films first, then the patient record, then PubMed, then library passages",
+        "A claim that cites nothing it read is dropped"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "X-ray similarity (same embed box)",
+      "items": [
+        "BiomedCLIP 512-d vectors in image_vectors",
+        "xray.similar finds films like this one, or from text"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,224 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Ambient scribe: consultation to coded note",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Sona Pro iPhone"
+        },
+        "backend": {
+          "label": "Sona server"
+        },
+        "cloud": {
+          "label": "Model in Malaysia"
+        },
+        "security": {
+          "label": "Doctor decides"
+        }
+      }
+    },
+    "viewBox": [
+      1200,
+      652
+    ]
+  },
+  "lanes": [
+    {
+      "id": "phone",
+      "label": "Sona Pro \u00b7 doctor"
+    },
+    {
+      "id": "server",
+      "label": "Sona server"
+    },
+    {
+      "id": "speech",
+      "label": "Sona Speech \u00b7 sona-voice"
+    },
+    {
+      "id": "med",
+      "label": "Sona Med \u00b7 sona-brain"
+    }
+  ],
+  "mainPath": [
+    "record",
+    "parts",
+    "transcribe",
+    "diarize",
+    "name",
+    "draft",
+    "check",
+    "review",
+    "codes",
+    "table"
+  ],
+  "nodes": [
+    {
+      "id": "record",
+      "lane": "phone",
+      "col": 0,
+      "type": "frontend",
+      "label": "Record visit",
+      "sublabel": "16 kHz mono WAV",
+      "width": 140
+    },
+    {
+      "id": "parts",
+      "lane": "phone",
+      "col": 1,
+      "type": "frontend",
+      "label": "12 s parts",
+      "sublabel": "cut at a pause, by 20 s",
+      "width": 150
+    },
+    {
+      "id": "transcribe",
+      "lane": "server",
+      "col": 2,
+      "type": "backend",
+      "label": "voice.transcribe",
+      "sublabel": "audio read, not stored",
+      "width": 150
+    },
+    {
+      "id": "diarize",
+      "lane": "speech",
+      "col": 2,
+      "type": "cloud",
+      "label": "Diarize, then ASR",
+      "sublabel": "each turn, up to 8 voices",
+      "width": 150
+    },
+    {
+      "id": "name",
+      "lane": "phone",
+      "col": 3,
+      "type": "security",
+      "label": "Name the voices",
+      "sublabel": "\"Who is Voice 3?\"",
+      "width": 150
+    },
+    {
+      "id": "draft",
+      "lane": "med",
+      "col": 3,
+      "type": "cloud",
+      "label": "Draft note",
+      "sublabel": "JSON mode, cites sentences",
+      "width": 160
+    },
+    {
+      "id": "check",
+      "lane": "server",
+      "col": 4,
+      "type": "backend",
+      "label": "Grounding check",
+      "sublabel": "numbers, drugs, speaker",
+      "width": 150
+    },
+    {
+      "id": "review",
+      "lane": "phone",
+      "col": 4,
+      "type": "security",
+      "label": "Review + save",
+      "sublabel": "new note revision",
+      "width": 150
+    },
+    {
+      "id": "codes",
+      "lane": "med",
+      "col": 5,
+      "type": "cloud",
+      "label": "ICD-10 codes",
+      "sublabel": "each cites a sentence",
+      "width": 150
+    },
+    {
+      "id": "table",
+      "lane": "server",
+      "col": 5,
+      "type": "backend",
+      "label": "Code check",
+      "sublabel": "WHO table + sentence id",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "record-parts",
+      "from": "record",
+      "to": "parts",
+      "role": "main"
+    },
+    {
+      "id": "parts-transcribe",
+      "from": "parts",
+      "to": "transcribe",
+      "label": "WAV + memory",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "transcribe-diarize",
+      "from": "transcribe",
+      "to": "diarize",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "diarize-name",
+      "from": "diarize",
+      "to": "name",
+      "label": "turns + new memory",
+      "role": "main"
+    },
+    {
+      "id": "name-draft",
+      "from": "name",
+      "to": "draft",
+      "label": "note.draft",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "draft-check",
+      "from": "draft",
+      "to": "check",
+      "role": "main"
+    },
+    {
+      "id": "check-review",
+      "from": "check",
+      "to": "review",
+      "label": "kept + dropped",
+      "role": "main"
+    },
+    {
+      "id": "review-codes",
+      "from": "review",
+      "to": "codes",
+      "label": "saved sentences",
+      "role": "main"
+    },
+    {
+      "id": "codes-table",
+      "from": "codes",
+      "to": "table",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Limits",
+      "items": [
+        "Measured on 20 synthetic consultations; real rooms not yet scored",
+        "Web has no recorder; it drafts from a pasted transcript"
+      ]
+    }
+  ]
+}

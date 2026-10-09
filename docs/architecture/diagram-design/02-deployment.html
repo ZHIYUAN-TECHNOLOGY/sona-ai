@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sona deployment on staging</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f6f8;
+      --color-paper-2: #e8eaee;
+      --color-ink:     #1d1f23;
+      --color-muted:   #59616b;
+      --color-soft:    #8a929e;
+      --color-rule:    rgba(29,31,35,0.12);
+      --color-accent:  #245bcc;
+      --color-link:    #0f6e66;
+      --font-sans:     'Inter', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1200px; width: 100%; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .eyebrow .hash { text-transform: none; }
+
+    .subtitle {
+      font-size: 0.875rem;
+      line-height: 1.55;
+      color: var(--color-muted);
+      max-width: 72ch;
+      margin-bottom: 1.5rem;
+    }
+
+    .diagram { overflow-x: auto; }
+    svg { width: 100%; min-width: 900px; display: block; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+    .card {
+      background: #ffffff;
+      border-radius: 6px;
+      border: 1px solid var(--color-rule);
+      padding: 1.25rem;
+    }
+    .card-header {
+      display: flex; align-items: center; gap: 0.6rem;
+      margin-bottom: 0.875rem; padding-bottom: 0.875rem;
+      border-bottom: 1px solid rgba(29,31,35,0.08);
+    }
+    .card-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .card-dot.ink    { background: var(--color-ink); }
+    .card-dot.muted  { background: var(--color-muted); }
+    .card-dot.accent { background: var(--color-accent); }
+    .card-dot.link   { background: var(--color-link); }
+    .card-dot.soft   { background: var(--color-soft); }
+    .card h3 { font-size: 0.875rem; font-weight: 600; color: var(--color-ink); letter-spacing: -0.005em; }
+    .card ul { list-style: none; color: var(--color-muted); font-size: 0.8125rem; line-height: 1.55; }
+    .card li { margin-bottom: 0.3rem; padding-left: 0.875rem; position: relative; }
+    .card li::before { content: '\2014'; position: absolute; left: 0; color: rgba(29,31,35,0.25); font-size: 0.75rem; }
+    code { font-family: var(--font-mono); font-size: 0.75rem; }
+
+    .footer {
+      margin-top: 2rem; padding-top: 1.25rem;
+      border-top: 1px solid var(--color-rule);
+      font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em;
+      color: var(--color-soft);
+      display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Sona · Staging · Checked 8 Oct 2026 @ <span class="hash">cd76571b</span></p>
+    <h1>Sona deployment on staging</h1>
+    <p class="subtitle">What runs where, and what is in Malaysia today. Stack <code>sona-ai</code>, stage <code>staging</code> only, with synthetic patients.</p>
+
+    <div class="diagram">
+    <svg viewBox="0 0 1168 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="deployment-title deployment-desc">
+      <title id="deployment-title">Sona deployment on staging</title>
+      <desc id="deployment-desc">Deployment diagram placing the Sona Worker, its Durable Objects and the R2 bucket on Cloudflare with no region pin, Neon Postgres in Singapore, and all six model hosts, five SageMaker endpoints and one Lambda, in AWS Malaysia.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#59616b"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#245bcc"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f6e66"/></marker>
+        <marker id="arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1d1f23"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#f5f6f8"/>
+<!-- background: lanes, lifelines, frames -->
+<rect x="288" y="48" width="392" height="312" rx="8" fill="rgba(29,31,35,0.02)" stroke="rgba(29,31,35,0.2)" stroke-width="0.8" stroke-dasharray="4,4"/>
+<rect x="304" y="52" width="148" height="12" rx="2" fill="#f5f6f8"/>
+<text x="378" y="61" fill="rgba(29,31,35,0.5)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">CLOUDFLARE · NO REGION PIN</text>
+<rect x="40" y="240" width="192" height="144" rx="8" fill="rgba(29,31,35,0.02)" stroke="rgba(29,31,35,0.2)" stroke-width="0.8" stroke-dasharray="4,4"/>
+<rect x="56" y="244" width="96" height="12" rx="2" fill="#f5f6f8"/>
+<text x="104" y="253" fill="rgba(29,31,35,0.5)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">NEON · SINGAPORE</text>
+<rect x="728" y="48" width="400" height="424" rx="8" fill="rgba(36,91,204,0.03)" stroke="rgba(36,91,204,0.55)" stroke-width="0.8" stroke-dasharray="4,4"/>
+<rect x="744" y="52" width="164" height="12" rx="2" fill="#f5f6f8"/>
+<text x="826" y="61" fill="#245bcc" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">AWS AP-SOUTHEAST-5 · MALAYSIA</text>
+<!-- connectors (drawn before boxes) -->
+<path d="M 232 120 L 312 120" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 312 184 L 192 184 A 8 8 0 0 0 184 192 L 184 272" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 484 224 L 484 264" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 656 120 L 752 120" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 656 184 L 696 184 A 8 8 0 0 1 704 192 L 704 384 A 8 8 0 0 0 712 392 L 752 392" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<!-- connector labels -->
+<rect x="240" y="100" width="64" height="12" rx="2" fill="#f5f6f8"/>
+<text x="272" y="109" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HTTPS, WSS</text>
+<rect x="192" y="208" width="72" height="12" rx="2" fill="#f5f6f8"/>
+<text x="228" y="217" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SQL / HTTPS</text>
+<rect x="492" y="240" width="48" height="12" rx="2" fill="#f5f6f8"/>
+<text x="516" y="249" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">BINDING</text>
+<rect x="664" y="100" width="76" height="12" rx="2" fill="#f5f6f8"/>
+<text x="702" y="109" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SIGV4 INVOKE</text>
+<rect x="616" y="376" width="80" height="12" rx="2" fill="#f5f6f8"/>
+<text x="656" y="385" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">LAMBDA INVOKE</text>
+<!-- nodes -->
+<rect x="40" y="80" width="192" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="40" y="80" width="192" height="80" rx="6" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<rect x="48" y="88" width="44" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="70" y="97" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CLIENTS</text>
+<text x="136" y="116" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Clients</text>
+<text x="136" y="132" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Sona Pro + Sona Care</text>
+<text x="136" y="144" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">2 iPhone apps, 2 web portals</text>
+<rect x="312" y="80" width="344" height="144" rx="6" fill="#f5f6f8"/>
+<rect x="312" y="80" width="344" height="144" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<rect x="320" y="88" width="40" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="340" y="97" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">WORKER</text>
+<text x="484" y="116" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Worker &quot;server&quot;</text>
+<text x="484" y="132" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Hono · oRPC · Better Auth · web portal assets</text>
+<text x="484" y="144" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">crons 0 * * * * (check-ins) · 0 18 * * * (audit)</text>
+<rect x="320" y="160" width="328" height="24" rx="4" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="0.8"/>
+<text x="328" y="176" fill="#1d1f23" font-size="12" font-family="'Inter', system-ui, sans-serif">HospitalChannel, EncounterState</text>
+<text x="640" y="175" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">Durable Objects ×2</text>
+<rect x="320" y="192" width="328" height="24" rx="4" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="0.8"/>
+<text x="328" y="208" fill="#1d1f23" font-size="12" font-family="'Inter', system-ui, sans-serif">CheckIn, Watch, SonaVoice, SonaLive</text>
+<text x="640" y="207" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">Agents SDK ×4</text>
+<rect x="312" y="264" width="344" height="72" rx="6" fill="#f5f6f8"/>
+<rect x="312" y="264" width="344" height="72" rx="6" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="1"/>
+<rect x="320" y="272" width="20" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="330" y="281" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">R2</text>
+<text x="484" y="300" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">R2 bucket &quot;uploads&quot;</text>
+<text x="484" y="316" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">X-rays · handwritten scans · medicine photos</text>
+<text x="484" y="328" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">training JSONL exports</text>
+<rect x="56" y="272" width="160" height="88" rx="6" fill="#f5f6f8"/>
+<rect x="56" y="272" width="160" height="88" rx="6" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="1"/>
+<rect x="64" y="280" width="44" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="86" y="289" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">MANAGED</text>
+<text x="136" y="308" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Neon Postgres</text>
+<text x="136" y="324" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">sona-ai-staging · db sona</text>
+<text x="136" y="336" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">aws-ap-southeast-1</text>
+<text x="136" y="348" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">pgvector 768-d + 512-d</text>
+<rect x="752" y="80" width="352" height="224" rx="6" fill="#f5f6f8"/>
+<rect x="752" y="80" width="352" height="224" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<rect x="760" y="88" width="56" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="788" y="97" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SAGEMAKER</text>
+<text x="928" y="116" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">SageMaker endpoints</text>
+<text x="928" y="132" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">GPU boxes deleted between sessions; sona-embed stays up</text>
+<rect x="760" y="144" width="336" height="24" rx="4" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="0.8"/>
+<text x="768" y="160" fill="#1d1f23" font-size="12" font-family="'Inter', system-ui, sans-serif">sona-brain</text>
+<text x="852" y="159" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">Gemma 4 26B A4B INT4</text>
+<text x="1088" y="159" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">ml.g6.2xlarge</text>
+<rect x="760" y="176" width="336" height="24" rx="4" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="0.8"/>
+<text x="768" y="192" fill="#1d1f23" font-size="12" font-family="'Inter', system-ui, sans-serif">sona-voice</text>
+<text x="852" y="191" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">ASR, diarizer, TTS, rerank</text>
+<text x="1088" y="191" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">ml.g6.2xlarge</text>
+<rect x="760" y="208" width="336" height="24" rx="4" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="0.8"/>
+<text x="768" y="224" fill="#1d1f23" font-size="12" font-family="'Inter', system-ui, sans-serif">sona-xray</text>
+<text x="852" y="223" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">MedGemma 1.5 4B FP8</text>
+<text x="1088" y="223" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">ml.g6.xlarge</text>
+<rect x="760" y="240" width="336" height="24" rx="4" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="0.8"/>
+<text x="768" y="256" fill="#1d1f23" font-size="12" font-family="'Inter', system-ui, sans-serif">sona-laya</text>
+<text x="852" y="255" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">Laya router</text>
+<text x="1088" y="255" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">ml.c6i.large</text>
+<rect x="760" y="272" width="336" height="24" rx="4" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="0.8"/>
+<text x="768" y="288" fill="#1d1f23" font-size="12" font-family="'Inter', system-ui, sans-serif">sona-embed</text>
+<text x="852" y="287" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">EmbeddingGemma + BiomedCLIP</text>
+<text x="1088" y="287" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">ml.c6i.xlarge</text>
+<rect x="752" y="344" width="352" height="96" rx="6" fill="#f5f6f8"/>
+<rect x="752" y="344" width="352" height="96" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<rect x="760" y="352" width="40" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="780" y="361" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">LAMBDA</text>
+<text x="928" y="380" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Lambda</text>
+<text x="928" y="396" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">called with Invoke (no function URLs in this region)</text>
+<rect x="760" y="408" width="336" height="24" rx="4" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="0.8"/>
+<text x="768" y="424" fill="#1d1f23" font-size="12" font-family="'Inter', system-ui, sans-serif">sona-pii</text>
+<text x="852" y="423" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">OpenMed PII mClinicalE5-Large-560M</text>
+<text x="1088" y="423" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">6144 MB</text>
+<!-- legend -->
+<line x1="40" y1="504" x2="1128" y2="504" stroke="rgba(29,31,35,0.12)" stroke-width="0.8"/>
+<text x="40" y="524" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="535" width="16" height="12" rx="2" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="64" y="544" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Client</text>
+<rect x="116" y="535" width="16" height="12" rx="2" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="140" y="544" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Host or runtime</text>
+<rect x="240" y="535" width="16" height="12" rx="2" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="1"/>
+<text x="264" y="544" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Storage</text>
+<rect x="320" y="535" width="20" height="12" rx="3" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="0.8"/>
+<text x="348" y="544" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Deployed artifact</text>
+<rect x="456" y="534" width="24" height="14" rx="3" fill="rgba(29,31,35,0.02)" stroke="rgba(29,31,35,0.2)" stroke-width="0.8" stroke-dasharray="4,4"/>
+<text x="488" y="544" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Provider region</text>
+<rect x="584" y="534" width="24" height="14" rx="3" fill="rgba(36,91,204,0.03)" stroke="rgba(36,91,204,0.55)" stroke-width="0.8" stroke-dasharray="4,4"/>
+<text x="616" y="544" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">In Malaysia</text>
+<line x1="692" y1="541" x2="720" y2="541" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<text x="732" y="544" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Cross-zone call</text>
+<line x1="832" y1="541" x2="860" y2="541" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="872" y="544" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">In-zone binding</text>
+<text x="1128" y="544" fill="#8a929e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.12em">STAGING · SYNTHETIC PATIENTS</text>
+    </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header"><span class="card-dot accent"></span><h3>In Malaysia today</h3></div>
+        <ul>
+          <li>Every model host: five SageMaker endpoints and the <code>sona-pii</code> Lambda in <code>ap-southeast-5</code></li>
+          <li>GPU endpoints are deleted between sessions (configs kept); with none up, model routes answer as labelled fixtures</li>
+          <li><code>sona-embed</code> is always on; <code>sona-live</code> (MiniCPM-o) exists as code only, not deployed</li>
+          <li>Baseten configs remain the fallback host for any box not named in <code>SAGEMAKER_ENDPOINTS</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-dot muted"></span><h3>Not in Malaysia yet</h3></div>
+        <ul>
+          <li>Database: Neon in Singapore (region from the handoff, not in code)</li>
+          <li>Worker, Durable Objects and R2: Cloudflare, no jurisdiction or region pin in <code>alchemy.run.ts</code></li>
+          <li>Pilot plan (pitch, not built): move the database and object storage into Malaysia</li>
+          <li>Also bound, not drawn: Workers AI (embedder fallback) and Email. No KV, Queues or Hyperdrive</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer"><span>Source: docs/architecture/02-deployment.md</span><span>diagram-design · deployment</span></div>
+  </div>
+</body>
+</html>

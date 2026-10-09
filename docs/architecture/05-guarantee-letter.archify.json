@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Guarantee letter to discharge",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      520
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Doctor acts"
+        },
+        "backend": {
+          "label": "claims.status value"
+        },
+        "external": {
+          "label": "Insurer review page"
+        },
+        "frontend": {
+          "label": "Discharge"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "draft",
+      "type": "security",
+      "label": "Draft",
+      "sublabel": "checklist + approver",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "sent",
+      "type": "backend",
+      "label": "sent",
+      "sublabel": "7-day review link",
+      "pos": [
+        290,
+        110
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "decide",
+      "type": "external",
+      "label": "Insurer page",
+      "sublabel": "one decision per link",
+      "pos": [
+        540,
+        110
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "approved",
+      "type": "backend",
+      "label": "approved",
+      "sublabel": "GL marked received",
+      "pos": [
+        790,
+        110
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "discharged",
+      "type": "frontend",
+      "label": "Discharged",
+      "sublabel": "check-ins scheduled",
+      "pos": [
+        1040,
+        110
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "queried",
+      "type": "backend",
+      "label": "queried",
+      "sublabel": "insurer's question",
+      "pos": [
+        290,
+        330
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "denied",
+      "type": "backend",
+      "label": "denied",
+      "sublabel": "PEC, MED, DOC or COV",
+      "pos": [
+        540,
+        330
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "appealed",
+      "type": "security",
+      "label": "appealed",
+      "sublabel": "each point cites the note",
+      "pos": [
+        790,
+        330
+      ],
+      "size": [
+        200,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "draft-sent",
+      "from": "draft",
+      "to": "sent",
+      "label": "send",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sent-decide",
+      "from": "sent",
+      "to": "decide",
+      "label": "opens"
+    },
+    {
+      "id": "decide-approved",
+      "from": "decide",
+      "to": "approved",
+      "label": "approve",
+      "variant": "emphasis"
+    },
+    {
+      "id": "approved-discharged",
+      "from": "approved",
+      "to": "discharged",
+      "label": "checks",
+      "variant": "emphasis"
+    },
+    {
+      "id": "decide-queried",
+      "from": "decide",
+      "to": "queried",
+      "label": "query",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "queried-sent",
+      "from": "queried",
+      "to": "sent",
+      "label": "resend",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "decide-denied",
+      "from": "decide",
+      "to": "denied",
+      "label": "deny",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 110
+    },
+    {
+      "id": "denied-appealed",
+      "from": "denied",
+      "to": "appealed",
+      "label": "appeal",
+      "variant": "security"
+    },
+    {
+      "id": "appealed-decide",
+      "from": "appealed",
+      "to": "decide",
+      "label": "new link",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Send is refused until",
+      "items": [
+        "Severity, imaging result, confirmed diagnosis, organism and IV reason are stated",
+        "A doctor approves; each code cites a note sentence",
+        "The X-ray read and the chart's CURB-65 attach to the letter"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Discharge is refused until",
+      "items": [
+        "Vitals in range, GL received, medicines confirmed, follow-up chosen",
+        "No open finding, pending lab or transport wait"
+      ]
+    }
+  ]
+}
