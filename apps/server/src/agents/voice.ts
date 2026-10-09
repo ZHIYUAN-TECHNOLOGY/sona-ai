@@ -4,7 +4,6 @@ import type { Context as ApiContext } from "@sona-ai/api/context";
 import { leafletHits, passagesIn } from "@sona-ai/api/leaflets";
 import { stubModels } from "@sona-ai/api/models";
 import { lastDischarge, recordText } from "@sona-ai/api/routers/care-plan";
-import { careLinkOf } from "@sona-ai/api/routers/hospital";
 import { LINES, answerTurn, basetenChat, type TurnSummary } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber } from "@sona-ai/api/voice-agent/listen";
@@ -15,7 +14,8 @@ import { withVoice, type VoiceTurnContext } from "agents/voice";
 import type { Context as HonoContext } from "hono";
 
 import { announcer, followUpAgents, libraryOf } from "../context";
-import { createAuth, getDb } from "../services";
+import { getDb } from "../services";
+import { nameOf, patientLink, patientOf } from "./patient";
 
 type Language = keyof typeof LINES;
 
@@ -173,27 +173,14 @@ function send(connection: Connection, message: Record<string, unknown>) {
   try { connection.send(JSON.stringify(message)); } catch { /* the phone hung up */ }
 }
 
-// The agent's name is its patient, set only by voiceRoute from the session.
-const nameOf = (link: { hospitalId: string; patientId: string }) => `${encodeURIComponent(link.hospitalId)}/${encodeURIComponent(link.patientId)}`;
-export function patientOf(name: string) {
-  const [hospitalId = "", patientId = ""] = name.split("/").map(decodeURIComponent);
-  return { hospitalId, patientId };
-}
-
 /**
  * GET /agents/sona-voice-agent/:id (WebSocket), the SDK's own route shape, where `:id` is the signed-in account's user
- * id: it reaches that account's patient's agent and no other. The agent is named here from the account's care link, never
- * from the path, and a path naming another account is refused. It signs in as /live and the RPC client do: the session
- * cookie on the upgrade.
+ * id: it reaches that account's patient's agent and no other (patientLink).
  */
 export async function voiceRoute(c: HonoContext) {
   if (c.req.header("upgrade")?.toLowerCase() !== "websocket") return c.text("Expected a WebSocket", 426);
-  const db = getDb();
-  const session = await (await createAuth(db)).api.getSession({ headers: c.req.raw.headers });
-  if (!session?.user) return c.text("Sign in first", 401);
-  if (c.req.param("id") !== session.user.id) return c.text("This is another account's conversation", 403);
-  const link = await careLinkOf(db, session.user.id);
-  if (!link) return c.text("Join with the code on your discharge paper first", 403);
+  const link = await patientLink(c);
+  if (link instanceof Response) return link;
   // The call on MiniCPM-o (agents/live.ts) once its box is set; the app's route stays the same either way.
   const env = c.env as Env;
   const agent = env.SONA_LIVE_URL ? await getAgentByName(env.LIVE, nameOf(link)) : await getAgentByName(env.VOICE, nameOf(link));

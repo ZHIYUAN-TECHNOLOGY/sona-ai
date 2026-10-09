@@ -17,6 +17,7 @@ import { wakeFollowUps } from "@sona-ai/api/routers/check-ins";
 import { labFeed } from "@sona-ai/api/routers/day";
 import { hospitals } from "@sona-ai/db/schema/clinical";
 import { careLinkOf, hospitalOf } from "@sona-ai/api/routers/hospital";
+import { chatRoute } from "./agents/chat";
 import { voiceRoute } from "./agents/voice";
 
 const app = new Hono();
@@ -118,6 +119,9 @@ app.get("/live", async (c) => {
 
 // Sona Care's live voice: a WebSocket to the signed-in patient's own voice agent (see agents/voice.ts).
 app.get("/agents/sona-voice-agent/:id", voiceRoute);
+// Ask Sona Care with conversation memory: the signed-in patient's own chat agent (see agents/chat.ts), and its stored conversation.
+app.get("/agents/sona-chat-agent/:id", chatRoute);
+app.get("/agents/sona-chat-agent/:id/get-messages", chatRoute);
 
 app.get("/", (c) => {
   return c.text("OK");
@@ -128,6 +132,7 @@ export { HospitalChannel } from "./hospital-channel";
 export { CheckInAgent } from "./agents/check-in";
 export { SonaVoiceAgent } from "./agents/voice";
 export { SonaLiveAgent } from "./agents/live";
+export { SonaChatAgent } from "./agents/chat";
 export { WatchAgent } from "./agents/watch";
 
 /** Matches the hourly cron in packages/infra/alchemy.run.ts. */
