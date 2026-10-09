@@ -212,3 +212,69 @@ test("the note is asked for as JSON the box must keep valid, so an unclosed list
   await scribeModels(call as never, BRAIN_MODEL, stubModels).draftNote({ lines } as never);
   expect(sent?.response_format).toEqual({ type: "json_object" });
 });
+
+// 9 Oct: on staging Gemma answered about half the time with a section as one paragraph citing as it goes, and the next
+// section's name as a string inside the history list. Every paragraph failed the number check on its own citations
+// ([6], [9, 10]), so the doctor got the captured words labelled "Sample draft", or a note of one line.
+const SAID = sentencesOf([
+  { text: "I've been coughing for five days, doctor.", speaker: "patient" },
+  { text: "The fever started yesterday.", speaker: "patient" },
+  { text: "Just cetirizine, ten milligrams.", speaker: "patient" },
+  { text: "Some wheeze on both sides.", speaker: "clinician" },
+]);
+
+test("a paragraph citing as it goes is split into its statements, so a citation's numbers are never read as numbers said", () => {
+  const draft = checkDraft({ history: ["Coughing for five days [1], fever started yesterday [2], takes cetirizine 10mg [3]."], examination: ["Wheeze on both sides [4]."], assessment: [], plan: [], medicines: ["cetirizine"] }, SAID);
+  expect(draft?.sections.subjective.split("\n")).toEqual(["Coughing for five days.", "Fever started yesterday.", "Takes cetirizine 10mg."]);
+  expect(draft?.dropped).toBe(0);
+});
+
+test('a section named inside another\'s list starts that section there, and a list after "medicines:" is the medicines', () => {
+  // The shape Gemma answered with on 9 Oct, trimmed: one history list holding every section.
+  const draft = checkDraft({ speakers: "", history: ["Coughing for five days [1], fever started yesterday [2].", "examination:", "Wheeze on both sides [4].", "assessment:", "Chest infection [4].", "plan:", "Cetirizine 10mg at night [3, 4].", "medicines:", ["cetirizine"]] }, SAID);
+  expect(draft?.sections).toEqual({ subjective: "Coughing for five days.\nFever started yesterday.", objective: "Wheeze on both sides.", assessment: "Chest infection.", plan: "Cetirizine 10mg at night." });
+  expect(draft?.dropped).toBe(0);
+  // Another 9 Oct shape: names with no colon or with a suffix, each followed by its list.
+  const suffixed = checkDraft({ history: ["Coughing for five days [1].", "examination", "assessment", "plan", "medicines", ["cetirizine"], "examination_findings_list", ["Wheeze on both sides [4]"], "assessment_list", ["Chest infection [4]"], "plan_list", ["Cetirizine 10mg at night [3, 4]"]] }, SAID);
+  expect(suffixed?.sections).toEqual({ subjective: "Coughing for five days.", objective: "Wheeze on both sides.", assessment: "Chest infection.", plan: "Cetirizine 10mg at night." });
+});
+
+test("a decimal said in words matches its digits, so the nurse's vitals are not dropped from the examination", () => {
+  expect([...numbersIn("Temperature thirty-eight point one, saturation ninety-seven percent")]).toEqual(["38.1", "97"]);
+  expect([...numbersIn("Suhu tiga puluh lapan perpuluhan lima, point two five")]).toEqual(["38.5", "0.25"]);
+  const vitals = sentencesOf([{ text: "Temperature thirty-eight point one, pulse ninety-six.", speaker: "nurse" }]);
+  expect(checkDraft({ history: [], examination: ["Temp 38.1, pulse 96. [1]"], assessment: [], plan: [] }, vitals)?.sections.objective).toBe("Temp 38.1, pulse 96.");
+});
+
+test("an unusable reply is asked for once more before the captured words; a failed call is not, so a timeout never doubles", async () => {
+  // 9 Oct on staging, 2 drafts in 12: Gemma looped ("examination_notes_list_2", "_3", ...) until max_tokens, cut off mid-JSON.
+  const looped = { choices: [{ message: { content: '{"history": ["Cough [1].", "examination_notes_list_2", "examination_notes_list_3", "exam' } }] };
+  const good = { choices: [{ message: { content: JSON.stringify({ history: ["Coughing for five days [1]."], examination: [], assessment: [], plan: [] }) } }] };
+  const replies = [looped, good];
+  let calls = 0;
+  const draft = await scribeModels((async () => replies[calls++]) as never, BRAIN_MODEL, stubModels).draftNote({ lines: [{ text: "I've been coughing for five days, doctor." }] } as never);
+  expect(calls).toBe(2);
+  expect(draft.source).toBe("model");
+  expect(draft.sections.subjective).toBe("Coughing for five days.");
+  calls = 0;
+  const failed = await scribeModels((async () => { calls++; throw new Error("timeout"); }) as never, BRAIN_MODEL, stubModels).draftNote({ lines } as never);
+  expect(calls).toBe(1);
+  expect(failed.source).toBe("fixture");
+});
+
+test("the reply's length is capped by the consultation's, so a looping reply ends well inside SageMaker's 60 s and can be asked again", async () => {
+  const sent: number[] = [];
+  const capture = async (_b: unknown, _r: string, body: BodyInit) => { sent.push(JSON.parse(body as string).max_tokens); throw new Error("captured"); };
+  const say = (n: number) => Array.from({ length: n }, (_, i) => ({ text: `Line ${i + 1}.` }));
+  for (const n of [4, 64, 600]) await scribeModels(capture as never, BRAIN_MODEL, stubModels).draftNote({ lines: say(n) } as never);
+  // A good note used at most ~10 tokens a sentence on 9 Oct (623 for 64); a loop runs on to the cap.
+  expect(sent).toEqual([460, 1360, 2400]);
+});
+
+test("the scribe is told each statement is its own string in its own list: 0 of 12 replies came back malformed with it, 3 of 8 without", async () => {
+  const prompts: string[] = [];
+  const capture = async (_b: unknown, _r: string, body: BodyInit) => { prompts.push(JSON.parse(body as string).messages[0].content); throw new Error("captured"); };
+  await scribeModels(capture as never, BRAIN_MODEL, stubModels).draftNote({ lines } as never);
+  await scribeModels(capture as never, BRAIN_MODEL, stubModels).draftNote({ lines: [{ text: "Cough.", voice: 1 }] } as never);
+  for (const p of prompts) expect(p).toContain("never a paragraph of several statements, never a section's name inside a list");
+});

@@ -75,14 +75,17 @@ function zhValue(run: string) {
   }
   return fraction ? `${total + digit}.${[...fraction].map(c => ZH[c] ?? "").join("")}` : `${total + digit}`;
 }
+// A decimal in words: "thirty-eight point one", "tiga puluh lapan perpuluhan lima", "point two five" (digits after the point said one by one).
+const DECIMAL = new RegExp(`(?:\\b(${WORD}(?:[\\s-]+(?:and[\\s-]+)?${WORD})*)\\s+)?\\b(?:point|perpuluhan)((?:\\s+${WORD})+)\\b`, "g");
 /**
  * The numbers a text states, in digits or in English, Malay or Chinese words. A digit run glued to a word is part of a
- * name (SpO2, B12), not a number said. ponytail: no "point" in words ("thirty eight point five"); speech-to-text writes 38.5.
+ * name (SpO2, B12), not a number said.
  */
 export function numbersIn(text: string) {
   const plain = text.toLowerCase()
     .replace(/[零〇一二两三四五六七八九十百千点]+/g, run => ` ${zhValue(run)} `)
     .replace(/\bse(ratus|ribu)\b/g, "satu $1")
+    .replace(DECIMAL, (_, whole: string | undefined, digits: string) => ` ${whole ? wordsValue(whole) : 0}.${digits.trim().split(/\s+/).map(w => UNITS[w] ?? "").join("")} `)
     .replace(WORDS, run => ` ${wordsValue(run)} `);
   return new Set((plain.match(/(?<![\p{L}\d])\d+(?:\.\d+)?/gu) ?? []).map(n => String(Number(n))));
 }
@@ -127,10 +130,29 @@ ${voiced
 - examination: only findings and measurements said aloud in the consultation; [] if none.
 - assessment and plan: only the clinician's own impression, tests, treatment, advice and follow-up, as they said them; [] if they said none. Never add a diagnosis, test or treatment of your own.
 - Use only what the transcript says. Keep every number, dose, frequency and medicine name as said (a brand stays a brand); never add, convert or correct one.
-- medicines: every medicine your statements name, as written in them.`;
+- medicines: every medicine your statements name, as written in them.
+- Each statement is its own string in its section's list, with its own brackets: never a paragraph of several statements, never a section's name inside a list.`;
 
 /** Where each of the model's sections lands in the app's note. */
 const SECTIONS = { history: "subjective", examination: "objective", assessment: "assessment", plan: "plan" } as const;
+const LISTS = ["history", "examination", "assessment", "plan", "medicines"] as const;
+const LIST_NAME = /^\s*(history|examination|assessment|plan|medicines)(?:[\s_-]*(?:findings|list))*\s*:?\s*$/i;
+/**
+ * The model's lists by name. A list's name given as an entry of another list ("examination:", "plan_list") starts that list there,
+ * and a list inside one is its entries: on 9 Oct Gemma answered about half the time with every section in history.
+ */
+function listsIn(read: Record<string, unknown>) {
+  const lists = Object.fromEntries(LISTS.map(k => [k, [] as unknown[]])) as Record<typeof LISTS[number], unknown[]>;
+  for (const key of LISTS) {
+    let into: typeof LISTS[number] = key;
+    for (const item of Array.isArray(read[key]) ? read[key] as unknown[] : []) {
+      const named = typeof item === "string" ? LIST_NAME.exec(item) : null;
+      if (named) into = named[1]!.toLowerCase() as typeof into;
+      else lists[into].push(...Array.isArray(item) ? item : [item]);
+    }
+  }
+  return lists;
+}
 
 /** A statement and the sentence numbers it cites: "Fever since yesterday. [3, 5]" (or `{ text, cites }`, should the model answer that way). */
 export function citedStatement(value: unknown) {
@@ -139,6 +161,18 @@ export function citedStatement(value: unknown) {
   const tail = text.match(/(?:\s*\[[\d,\s]+\])+\s*[.;]?\s*$/);
   const numbers = Array.isArray(cites) ? cites : tail?.[0].match(/\d+/g)?.map(Number) ?? [];
   return { text: (tail ? text.slice(0, tail.index) : text).trim().slice(0, 400), cites: numbers.filter((n): n is number => Number.isInteger(n) && n > 0) };
+}
+
+/**
+ * A section's entry as its statements. A paragraph that cites as it goes ("Cough for five days [6], fever since
+ * yesterday [7].") is one statement per citation, so a citation's numbers are never read as numbers said; words after
+ * the last citation stand alone, uncited.
+ */
+function statementsIn(value: unknown) {
+  const parts = typeof value === "string" ? value.match(/[^[\]]*?(?:\s*\[[\d,\s]+\])+/g) ?? [] : [];
+  if (parts.length < 2) return [citedStatement(value)];
+  const rest = (value as string).slice(parts.join("").length);
+  return [...parts, ...(/\p{L}/u.test(rest) ? [rest] : [])].map(p => citedStatement(p.replace(/^[\s,;.]+/, "").replace(/^\p{Ll}/u, c => c.toUpperCase())));
 }
 
 /** The model's reply checked against the transcript; undefined when no statement survives. */
@@ -157,12 +191,12 @@ export function checkDraft(read: Record<string, unknown> | undefined, sentences:
     who[i] = LETTERS[letter!.toUpperCase()];
     sure[i] = !unsure;
   }
-  const listed = Array.isArray(read.medicines) ? read.medicines.filter((m): m is string => typeof m === "string") : [];
+  const lists = listsIn(read);
+  const listed = lists.medicines.filter((m): m is string => typeof m === "string");
   const sections: NoteSections = { subjective: "", objective: "", assessment: "", plan: "" };
   let dropped = 0, kept = 0;
   for (const [key, section] of Object.entries(SECTIONS) as [keyof typeof SECTIONS, keyof NoteSections][]) {
-    const statements = (Array.isArray(read[key]) ? read[key] as unknown[] : []).flatMap(s => {
-      const { text: said, cites } = citedStatement(s);
+    const statements = lists[key].flatMap(statementsIn).flatMap(({ text: said, cites }) => {
       const rests = cites.filter(n => n <= sentences.length);
       // An assessment or plan is the clinician's own: one resting only on what the patient or their family said is not.
       const clinicians = key !== "assessment" && key !== "plan" || rests.some(n => who[n - 1] !== "patient" && who[n - 1] !== "family");
@@ -199,10 +233,19 @@ export function scribeModels(call: Call, model: string, fallback: Models): Pick<
         const mark = (s: typeof sentences[number]) => [s.voice ? `voice ${s.voice}` : "", s.speaker ?? ""].filter(Boolean).join(", ");
         const transcript = sentences.map((s, i) => `[${i + 1}] ${mark(s) ? `(${mark(s)}) ` : ""}${s.text}`).join("\n");
         const messages = [{ role: "system", content: scribe(sentences.some(s => s.voice)) }, { role: "user", content: `Transcript:\n${transcript}` }];
-        const out = await call("brain", "/v1/chat/completions", JSON.stringify({ model, messages, temperature: 0.1, max_tokens: 2400, response_format: JSON_REPLY }), "application/json", SCRIBE_MS);
-        const draft = checkDraft(jsonIn(out?.choices?.[0]?.message?.content), sentences);
-        if (draft) return { ...draft, source: "model", model };
-      } catch { /* the captured words below, labelled fixture */ }
+        // A good note takes at most ~10 tokens a sentence heard (623 for 64 on 9 Oct); the cap leaves room and ends a loop early.
+        const max_tokens = Math.min(2400, 400 + 15 * sentences.length);
+        // A reply that came back unusable is asked for once more: Gemma sometimes loops until max_tokens, and the next
+        // answer is usually fine. A failed call (cold box, timeout) is not retried, so the wait never doubles.
+        for (const attempt of [1, 2]) {
+          const out = await call("brain", "/v1/chat/completions", JSON.stringify({ model, messages, temperature: 0.1, max_tokens, response_format: JSON_REPLY }), "application/json", SCRIBE_MS);
+          const content = out?.choices?.[0]?.message?.content;
+          const draft = checkDraft(jsonIn(content), sentences);
+          if (draft) return { ...draft, source: "model", model };
+          console.error(`scribe draft (try ${attempt}): nothing in the reply passed the checks`, String(content).slice(0, 2000));
+        }
+      } catch (error) { console.error("scribe draft failed", error); }
+      // The captured words, labelled fixture.
       return fallback.draftNote(input);
     },
   };
