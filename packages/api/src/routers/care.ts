@@ -1,7 +1,6 @@
 import { ORPCError } from "@orpc/server";
 import { DEMO_PATIENT_PHONE, DEMO_SIGN_IN_CODE } from "@sona-ai/db/demo";
 import { careCodes, careLinks, encounters, hospitalMembers, hospitals, patients } from "@sona-ai/db/schema/clinical";
-import { grounded, groundsOf } from "@sona-ai/domain/grounding";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -21,7 +20,6 @@ import { registerPushToken, unregisterPushToken } from "../push";
 import { setTrainingConsent, trainingConsentOf } from "./training";
 import { LINES, callNow } from "../voice-agent/answer";
 import { tellCareTeam } from "../voice-agent/care-team";
-import { mayReport } from "../voice-agent/live";
 
 /**
  * Errors a patient can see carry a stable `data.code` (CODE_UNKNOWN, SPEECH_OFF, …) so Sona Care can
@@ -57,6 +55,7 @@ async function codeRow(db: Context["db"], code: string) {
 export const MAX_AUDIO_BASE64 = 1_800_000;
 // A sentence or two of an answer: Sona's voice takes longer to make than to hear, so the app sends one part at a time.
 export const MAX_SPOKEN = 300;
+const TOLD = Object.values(LINES).map(l => l.told);
 
 export const careRouter = {
   /** Clinician: the visit's code and link for the QR, issued once per visit (reissued only once it has expired). */
@@ -135,39 +134,38 @@ export const careRouter = {
   }),
 
   /**
-   * Patient: any question, answered. Their own care comes from their record (recordText: the discharge plan once they are
-   * home, their visits, and what the hospital recorded about them: history, allergy, medicines, observations, results,
-   * the latest note, their check-in replies and doses), anything else from general knowledge: `grounded` says which. The stub
-   * answers nothing (source "fixture") and the app keeps its authored plan answers. A question that reports feeling
-   * worse or names an emergency sign also reaches their care team, as it does in the live call: `careTeam` is the
-   * flagged task (the call's `sona_care_team`) with Sona's line saying so (`line`, in the plan's language), there only
-   * once a task is made. General advice rests on the hospital's own patient leaflets when one fits (../leaflets): `sources`
-   * names the leaflets the answer used, by title; empty when it used none, or none could be found in time.
+   * Patient: any question, answered fully (founder, 9 Oct: no limit on what Sona says, no "ask your care team" default).
+   * Their own care comes from their record (recordText: the discharge plan once they are home, their visits, and what the
+   * hospital recorded about them: history, allergy, medicines, observations, results, the latest note, their check-in
+   * replies and doses), anything else from general knowledge: `grounded` is the model's own word for which. `history` is
+   * the chat's earlier turns, oldest first, so a follow-up ("How does it help?") is answered in their light. The stub
+   * answers nothing (source "fixture") and the app keeps its authored plan answers. A question naming an emergency sign
+   * (callNow), or one the model flags urgent, also reaches their care team: `careTeam` is the flagged task (the call's
+   * `sona_care_team`) with Sona's line saying so (`line`, in the question's language), there only once a task is made.
+   * General advice rests on the hospital's own patient leaflets when one fits (../leaflets): `sources` names the leaflets
+   * the answer used, by title; empty when it used none, or none could be found in time. `withheld` is always 0 (the
+   * answer is no longer filtered), kept so clients that read it still do.
    */
-  ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(500) })).handler(async ({ context, input }) => {
+  ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(2000), history: z.array(z.object({ question: z.string().trim().min(1).max(2000), answer: z.string().trim().max(4000) })).max(6).optional() })).handler(async ({ context, input }) => {
     // The hospital's leaflets for the question are searched while her record is read. The search never fails the answer
     // and is given PASSAGES_MS from here, so the gates below run when they did before, whatever it does.
     const found = leafletHits(context.library, context.hospitalId, input.question);
     // Her visits and her record are real whether or not she has gone home; only the take-home plan waits for discharge.
     // A part that cannot be read never fails the answer (recordText): the gates below must still run.
     const { text: record } = await recordText(context);
-    // The live call's gates: the keyword floors, or the model's own urgent flag; the care team's reader then decides. Never fails the answer.
+    // A real emergency only: the 999 keyword floor, or the model's own urgent flag; the care team's reader then decides. Never fails the answer.
     const tell = () => tellCareTeam(context, context.hospitalId, context.patientId, input.question).catch(error => { console.error("care team not told", error); return undefined; });
-    const floor = callNow(input.question) || mayReport(input.question) ? tell() : undefined;
+    const floor = callNow(input.question) ? tell() : undefined;
     // The question's own language (an English question gets English, even when her papers are in Malay).
     const language = languageOf(input.question);
     const passages = passagesIn(await found, language);
-    const { cites, ...answer } = await (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: record, language, passages });
+    // Sona's told line is Sona's, said once a task exists: kept out of what the model reads back, so it never echoes it.
+    const history = input.history?.map(t => ({ ...t, answer: TOLD.reduce((a, line) => a.split(line).join(""), t.answer).trim() }));
+    const { cites, ...answer } = await (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: record, language, passages, history });
     const told = await (floor ?? (answer.urgent ? tell() : undefined));
     // Only a leaflet that was offered can be a source: a number Gemma made up names nothing.
     const sources = citedSources(cites, passages);
-    // Cannot invent (domain/grounding): a sentence stating a fact about her that her record does not hold is withheld
-    // before she sees it, and the answer says so once. Her discharge leaflet is in the record (planText), so it vouches
-    // too. What was withheld is logged here, never shown; `withheld` only counts it. An answer whose record-based
-    // sentences all went is not "From your record".
-    const checked = grounded(answer.answer, groundsOf(record, passages.map(p => p.text)), language);
-    if (checked.changed) console.warn("care.ask withheld", JSON.stringify(checked.removed));
-    return { ...answer, answer: checked.text, grounded: answer.grounded && Boolean(checked.kept), withheld: checked.removed.length, sources, ...told && { careTeam: { ...told, line: LINES[language].told } } };
+    return { ...answer, withheld: 0, sources, ...told && { careTeam: { ...told, line: LINES[language].told } } };
   }),
 
   /**

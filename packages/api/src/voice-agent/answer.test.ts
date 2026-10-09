@@ -1,4 +1,3 @@
-import { NOT_FOUND } from "@sona-ai/domain/grounding";
 import { beforeEach, expect, test } from "bun:test";
 
 import { boxState } from "../baseten-models";
@@ -204,18 +203,32 @@ test("the chat alternates turns, as chat templates require; flags may be fenced 
   expect(sentencesOf("**请多休息** 多喝水", true)).toEqual([["请多休息 多喝水。"], ""]);
 });
 
-test("a sentence stating a fact her record does not hold is not spoken; the not-found line is said once, last; an urgent sentence is never withheld; general advice passes", async () => {
-  const { chat } = gemma(['{"triage":"fine","inPlan":true}\nYour azithromycin is 1 tablet once a day. Your potassium was 3.1 mmol/L. Your sodium was 120 mmol/L. Rest and drink plenty of water.']);
+test("every sentence is spoken whole (founder, 9 Oct): a fact her record does not hold is not withheld, and no not-found line is added", async () => {
+  const { chat, log } = gemma(['{"triage":"fine","inPlan":true}\nYour azithromycin is 1 tablet once a day. Your potassium was 3.1 mmol/L. Rest and drink plenty of water.']);
   const { turn, summaries } = turnOf({ question: "What are my results?", chat });
-  expect(await spoken(turn)).toEqual(["Your azithromycin is 1 tablet once a day.", "Rest and drink plenty of water.", NOT_FOUND.en]);
-  expect(summaries[0]).toMatchObject({ grounded: true, withheld: 2 });
-  const urgent = turnOf({ question: "What was my sodium?", chat: gemma(['{"triage":"fine","inPlan":true}\nYour sodium was 120 mmol/L, so see a doctor immediately.']).chat });
-  expect(await spoken(urgent.turn)).toEqual(["Your sodium was 120 mmol/L, so see a doctor immediately."]);
-  expect(urgent.summaries[0]!.withheld).toBe(0);
-  // Today's real answer, with no fact about her in it.
-  const general = turnOf({ question: "肺炎康复期间我应该注意什么？", language: "zh", chat: gemma(['{"triage":"fine","inPlan":false}\n请多喝水并休息。保持环境空气清新对康复有帮助。如有呼吸困难请立即就医。']).chat });
-  expect((await spoken(general.turn)).join("")).toBe("请多喝水并休息。保持环境空气清新对康复有帮助。如有呼吸困难请立即就医。");
-  expect(general.summaries[0]!.withheld).toBe(0);
+  expect(await spoken(turn)).toEqual(["Your azithromycin is 1 tablet once a day.", "Your potassium was 3.1 mmol/L.", "Rest and drink plenty of water."]);
+  expect(summaries[0]).toMatchObject({ grounded: true, withheld: 0 });
+  // No "ask your care team" default: Gemma is told to answer from general knowledge when her record lacks it.
+  expect(log.messages[0]!.content).toContain('never answer or end with "ask your doctor or care team" instead of the answer itself');
+});
+
+test("the demo's day-2 scene stands: Amelia breathless in Malay hears the 999 line in Malay before Gemma is read, Gemma answers in Malay, and her care team gets a task", async () => {
+  const question = "Hello, Sona. Saya masih demam sikit, dan malam tadi saya rasa sesak nafas, inhaler pun tak berapa tolong.";
+  for (const triage of ["urgent", "worse"] as const) {
+    const { chat, log } = gemma([`${triage}\nSila hubungi 999 sekarang. `, "Sesak nafas yang tidak lega dengan inhaler perlu dirawat segera.", '\n{"inPlan": false, "cites": []}']);
+    const { turn, escalated, summaries } = turnOf({ question, language: "ms", chat, escalate: async label => { escalated.push(label); return true; } });
+    const parts = answerTurn(turn);
+    // The keyword floor (sesak nafas): the 999 line waits for no model.
+    expect((await parts.next()).value).toEqual({ type: "text-delta", text: LINES.ms.call999 });
+    expect(log.pulled).toBe(0);
+    const rest: string[] = [];
+    for await (const p of parts) if (p.type === "text-delta") rest.push(p.text);
+    // Gemma's own 999 line is not repeated; the care team's task is said once it exists.
+    expect(rest).toEqual(["Sesak nafas yang tidak lega dengan inhaler perlu dirawat segera.", LINES.ms.told]);
+    expect([escalated, summaries[0]!.urgent]).toEqual([[triage], true]);
+    // Gemma is still asked for the triage word that reaches the care team.
+    expect(log.messages[0]!.content).toContain('"urgent" when they say they have an emergency sign now (chest pain, severe breathlessness');
+  }
 });
 
 test("the triage word heads the reply and the rest of the flags close it: the words start at once, and the closing JSON is never spoken", async () => {

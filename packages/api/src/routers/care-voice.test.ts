@@ -141,16 +141,18 @@ test("a call reads the same record as a typed question: recordText is what care.
   expect(messagesFor({ question: "Bila temu janji saya?", history: [], plan: spoken.text, language: "ms" })[0]!.content).toEndWith(`Patient's record:\n${read[0]}\n\nHospital's general leaflets (advice for any patient, not facts about this patient):\nNone found for this question.`);
 });
 
-test("a question that reports feeling worse or names an emergency sign reaches her care team as a flagged task, and uses up no check-in", async () => {
+test("only an emergency sign reaches her care team from a typed question (founder, 9 Oct): a fever back is answered and tells no one; no check-in is used up", async () => {
   // The stub answers nothing, yet its keyword reader still flags the doctor.
   const { doctor, amelia } = await world();
-  const worse = await amelia.care.ask({ question: "Demam saya datang balik malam tadi, boleh makan ubat lagi?" });
-  expect(worse).toMatchObject({ answer: "", source: "fixture", careTeam: { title: "Amelia: fever returned after discharge", line: "Saya sudah maklumkan pasukan penjagaan anda." } });
+  expect(await amelia.care.ask({ question: "Demam saya datang balik malam tadi, boleh makan ubat lagi?" })).not.toHaveProperty("careTeam");
   const urgent = await amelia.care.ask({ question: "I have chest pain since this morning" });
-  expect(urgent.careTeam?.title).toBe("Amelia: chest pain after discharge");
+  expect(urgent.careTeam).toMatchObject({ title: "Amelia: chest pain after discharge", line: "I've let your care team know." });
+  // The demo's day-2 words, typed: breathless (sesak nafas) is an emergency sign, so her care team hears of it in Malay.
+  const breathless = await amelia.care.ask({ question: "Hello, Sona. Saya masih demam sikit, dan malam tadi saya rasa sesak nafas, inhaler pun tak berapa tolong." });
+  expect(breathless.careTeam?.line).toBe("Saya sudah maklumkan pasukan penjagaan anda.");
   expect((await doctor.tasks.list()).filter(t => t.kind === "check-in").map(t => [t.id, t.title, t.owner, t.encounterId, t.completed])).toEqual([
-    [worse.careTeam!.taskId, "Amelia: fever returned after discharge", "Attending doctor", "visit-1042", false],
     [urgent.careTeam!.taskId, "Amelia: chest pain after discharge", "Attending doctor", "visit-1042", false],
+    [breathless.careTeam!.taskId, breathless.careTeam!.title, "Attending doctor", "visit-1042", false],
   ]);
   expect((await amelia.care.checkIns.list()).map(c => [c.day, c.sentAt, c.replies.length])).toEqual([[2, null, 0], [7, null, 0]]);
   // A plain question tells no one.
