@@ -1,6 +1,5 @@
 import { readReply } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
-import { NOT_FOUND, groundsOf, unsupported, type Grounds } from "@sona-ai/domain/grounding";
 
 import { BRAIN_MODEL, EMERGENCY, answered, boxes, wakingOf, type Baseten } from "../baseten-models";
 import { deltas } from "../sse";
@@ -30,7 +29,7 @@ export type TurnSummary = {
   grounded: boolean; urgent: boolean; source: "model" | "fixture"; model?: string; waking?: number; ear?: Heard;
   /** The hospital's leaflets the answer used, by title (care.ask's `sources`); empty when it used none, or none were found in time. */
   sources: Source[];
-  /** Sentences not spoken because they stated a fact about her that her record does not hold (domain/grounding), as care.ask counts them. */
+  /** Always 0: every sentence Gemma writes is spoken (founder, 9 Oct), as care.ask's answer is shown whole. Kept so readers still work. */
   withheld: number;
 };
 /** Who turned the patient's speech into `question`: the ASR model, or a fixture when none did. */
@@ -115,12 +114,12 @@ Begin every reply with one word on a line of its own: fine, worse or urgent. The
 - inPlan is true when your answer uses their record, false when it comes only from a general leaflet or general knowledge.
 - cites is the numbers of the hospital's general leaflets your answer used, [] when it used none. The numbers belong in this line only: never say one.
 The words to say:
-- Plain and kind, at a reading age of about 12, at most 3 short sentences. The first has at most 10 words: it is spoken while you write the rest. No lists, symbols or markdown: they are read aloud.
+- Plain and kind, as a knowledgeable nurse would say them, at a reading age of about 12, at most 3 short sentences. The first has at most 10 words and answers them directly: it is spoken while you write the rest. No lists, symbols or markdown: they are read aloud.
 - In the language the patient spoke (Malay, English or Chinese).
 - If urgent, tell them to call 999 now.
-- Facts about them (a result, a number, a date, a medicine, a diagnosis) come only from their record: never invent one, and never give a new diagnosis or say what a result means for them beyond the record's own words. If they ask for such a fact and their record lacks it, say it is not in their record and suggest asking their care team.
-- General health advice is always yours to give, also about their own condition: how to recover, what to eat, what to watch for. When one of the hospital's general leaflets below fits the question, give the advice from it and say it is from the hospital's leaflet. When none fits, give it from general knowledge and say it is general advice. Never answer such a question with only "ask your care team".
-- A general leaflet is advice for any patient: never take a fact about this patient (their medicine, dose, date or diagnosis) from a leaflet.`;
+- When their record does not hold the answer (what a medicine is, how it works, the usual adult dose, what a condition or a result usually means, how to recover), answer from general medical knowledge and say it is general information. Never refuse, and never answer or end with "ask your doctor or care team" instead of the answer itself.
+- Never say something is in their record when it is not, and never invent a fact about them (a result, a date, a dose they were given).
+- When one of the hospital's general leaflets below fits, use it and say it is from the hospital's leaflet. A leaflet is general advice for any patient: never take a fact about this patient (their medicine, dose, date or diagnosis) from a leaflet.`;
 
 /**
  * Sona's "told your care team" line, in every language: only a made task says it (the end of answerTurn), never Gemma.
@@ -219,7 +218,7 @@ function within(promise: Promise<boolean>, ms: number) {
 
 export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
   const lines = LINES[turn.language], summary: TurnSummary = { grounded: false, urgent: false, source: "fixture", sources: [], withheld: 0, ...turn.heard && { ear: turn.heard } };
-  let told: Promise<boolean> | undefined, said = false, passages: Passage[] = [], grounds: Grounds | undefined;
+  let told: Promise<boolean> | undefined, said = false, passages: Passage[] = [];
   const began = Date.now(), timing: TurnTiming = {}, mark = (step: keyof TurnTiming) => { timing[step] ??= Date.now() - began; };
   const escalate = (label: "worse" | "urgent") => { told ??= turn.escalate(label).catch(() => false); };
   function* say(text: string): Generator<Part> {
@@ -236,10 +235,6 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
   function* sayModel(sentence: string): Generator<Part> {
     // The 999 line already led; Gemma's own call to 999 would only repeat it. The told line is Sona's, said once a task exists.
     if ((summary.urgent && EMERGENCY.test(sentence)) || TOLD.includes(sentence)) return;
-    // Cannot invent (domain/grounding): a sentence stating a fact about her that her record does not hold is not spoken.
-    // Judged here, sentence by sentence, so the first is spoken while Gemma still writes; the not-found line comes once, last.
-    const why = grounds && unsupported(sentence, grounds);
-    if (why) { summary.withheld++; console.warn("voice turn withheld", JSON.stringify({ sentence, ...why })); return; }
     yield* say(sentence);
   }
 
@@ -256,8 +251,6 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
   if (got && "text" in got) {
     summary.source = "model";
     summary.model = got.model;
-    // Her record and the leaflets Gemma was given, read once for the turn (her discharge leaflet is in the record, planText).
-    grounds = groundsOf(turn.plan ?? "", passages.map(p => p.text));
     // `closing`: the line of JSON after the words, once it has started; nothing from there on is spoken.
     let text = "", flags: Flags | null | undefined, closing: string | undefined;
     try {
@@ -293,7 +286,6 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
       if (turn.signal.aborted) return;
       if (!said) summary.source = "fixture";
     }
-    if (summary.withheld) yield* say(NOT_FOUND[turn.language]);
   } else summary.waking = got?.waking;
 
   if (!said) yield* say(summary.waking ? lines.starting(summary.waking) : lines.unavailable);

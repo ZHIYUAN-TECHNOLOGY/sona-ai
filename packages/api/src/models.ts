@@ -113,11 +113,12 @@ export type Models = {
    * The stub answers nothing, so the app's authored plan answers stay in charge.
    * `passages`: the hospital's patient leaflets found for the question (./leaflets), which general advice rests on when
    * one fits; `cites` the numbers of those the answer used, as the model wrote them (care.ask keeps only numbers offered).
+   * `history`: the chat's earlier turns, oldest first, so a follow-up ("How does it help?") is read in their light.
    */
-  answerFromPlan(input: { question: string; plan: string; language: Language; passages?: Passage[] }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string; cites?: number[] }>;
+  answerFromPlan(input: { question: string; plan: string; language: Language; passages?: Passage[]; history?: { question: string; answer: string }[] }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string; cites?: number[] }>;
   /**
    * Sona Care: what one of the patient's own lab results means, in plain words in their language. Only asked for a
-   * result a doctor has acknowledged (care.results.explain). No diagnosis and no advice beyond "ask your care team".
+   * result a doctor has acknowledged (care.results.explain). What such a value commonly means, in general terms, is fine.
    * The stub says only what was measured and to ask the care team.
    */
   explainResult(input: { test: string; value: string; unit?: string; flag?: string; language: Language }): Answer<{ text: string }>;

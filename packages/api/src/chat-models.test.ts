@@ -17,3 +17,16 @@ test("the safety floor says so: the rule's urgent words decide over a model's mi
   const down = chatModels(async () => { throw new Error("down"); }, "chat-test", stubModels);
   expect(await down.classifyReply({ text: "chest pain since this morning", language: "en" })).toEqual({ label: "urgent", source: "fixture" });
 });
+
+test("an answer in the wrong language is asked for once more, with the same conversation before the question", async () => {
+  const said: string[] = [];
+  const models = chatModels(async (_, user) => {
+    said.push(user);
+    return { answer: said.length === 1 ? "Panadol ialah parasetamol, ubat biasa untuk sakit dan demam." : "It eases pain and brings a fever down.", grounded: false, urgent: false };
+  }, "chat-test", stubModels);
+  const answer = await models.answerFromPlan({ question: "How does it help?", plan: "", language: "en", history: [{ question: "What is panadol", answer: "Panadol is paracetamol." }] });
+  expect(answer).toMatchObject({ answer: "It eases pain and brings a fever down.", source: "model" });
+  expect(said).toHaveLength(2);
+  for (const s of said) expect(s).toStartWith("Conversation so far:\nPatient: What is panadol\nSona Care: Panadol is paracetamol.\n\nPatient's question, written in English.");
+  expect(said[1]).toContain("Your last answer was not in English");
+});

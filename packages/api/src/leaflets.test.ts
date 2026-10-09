@@ -53,9 +53,9 @@ test("a typed question: the leaflets found reach Gemma under their own heading, 
   expect(prompt).toContain("\n\nHospital's general leaflets (advice for any patient, not facts about this patient):\n[1] Chest infection: Finish your antibiotic course as prescribed.");
   expect(prompt).toContain("\n[2] Going home from hospital: Take your medicines as listed on your take-home sheet.");
   expect(prompt!.indexOf("Patient's record:")).toBeLessThan(prompt!.indexOf("Hospital's general leaflets"));
-  // The safety wording stands, and general advice is never only "ask your care team".
-  expect(prompt).toContain("never invent one, and never give a new diagnosis or say what a result means for them beyond the record's own words");
-  expect(prompt).toContain('Never answer such a question with only "ask your care team"');
+  // Honest about her record, and never only "ask your care team" (founder, 9 Oct).
+  expect(prompt).toContain("Never say something is in their record when it is not, and never invent a fact about them");
+  expect(prompt).toContain('never answer or end with "ask your doctor or care team" instead of the answer itself');
   // 7 was never offered and "2" is not a number: neither names a source. The number is not shown in the answer.
   expect(answer).toEqual({ answer: "The hospital's leaflet says to finish your antibiotics.", grounded: false, urgent: false, sources: [{ title: "Chest infection", kind: "leaflet" }], withheld: 0, source: "model", model: "gemma-test" });
 });
@@ -117,8 +117,8 @@ test("a spoken question: the 999 line is said before the leaflets are in, Gemma 
   const system = log.messages[0]!.content;
   expect(system).toEndWith("Patient's record:\nMedicines: none\n\nHospital's general leaflets (advice for any patient, not facts about this patient):\n[1] Chest infection: Finish your antibiotic course as prescribed. Come back straight away if breathing gets harder.\n[2] Going home from hospital: Take your medicines as listed on your take-home sheet.");
   expect(system).toContain('"cites": [<leaflet numbers>]');
-  expect(system).toContain("never invent one, and never give a new diagnosis or say what a result means for them beyond the record's own words");
-  expect(system).toContain('Never answer such a question with only "ask your care team"');
+  expect(system).toContain("Never say something is in their record when it is not, and never invent a fact about them");
+  expect(system).toContain('never answer or end with "ask your doctor or care team" instead of the answer itself');
   // 4 was never offered.
   expect(summaries).toEqual([{ grounded: false, urgent: true, sources: [{ title: "Chest infection", kind: "leaflet" }], withheld: 0, source: "model", model: "gemma-test" }]);
 });
