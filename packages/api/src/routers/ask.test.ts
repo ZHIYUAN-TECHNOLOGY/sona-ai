@@ -130,16 +130,43 @@ test("a question the page doesn't answer gets a general answer from Gemma, marke
   const client = await nurse(boxes(() => gemma({ general: "Paracetamol's usual adult maximum is 4 g a day." })).baseten);
   const r = await client.ask.free({ ...free, question: "What is the maximum daily dose of paracetamol?" });
   expect(r).toMatchObject({ source: "model", general: true, spec: { root: "f", elements: { "f-0": { type: "AskLead", props: { text: "Paracetamol's usual adult maximum is 4 g a day." } } } } });
+  // A paragraph is kept whole up to 1,500 characters (9 Oct; before, over 280 failed the lead's schema), and cut there.
+  const long = "Hypokalaemia is common on the ward. ".repeat(30).trim();
+  const lead = async (general: string) => leadOf(await (await nurse(boxes(() => gemma({ general })).baseten)).ask.free(free));
+  expect(await lead(long)).toBe(long);
+  expect(await lead(long.repeat(2))).toHaveLength(1500);
+});
+
+test("general clinical knowledge alongside a page answer comes after its lead, labelled as not from the records", async () => {
+  const answer = { ...spec("Daniel Rahman needs you first: his history is still to complete."), general: "Low potassium is often from diuretics or vomiting; replace it and recheck in 4 to 6 hours." };
+  const r = await (await nurse(boxes(() => gemma(answer)).baseten)).ask.free(free);
+  expect(r).toMatchObject({ source: "model", model: "gemma-4-26b-a4b" });
+  expect(r).not.toHaveProperty("general"); // the rows are the records'; only the added part is general, and it says so
+  expect(leadOf(r as Res)).toBe("Daniel Rahman needs you first: his history is still to complete.\n\nGeneral knowledge, not from this hospital's records: Low potassium is often from diuretics or vomiting; replace it and recheck in 4 to 6 hours.");
+  expect(rowsOf(r as Res)).toEqual([context.rows[0]!]);
 });
 
 test("grounding: counts up to the page's rows, names from the data and a row without its op pass; the answer is still the app's schema", () => {
   expect(groundedSpec(spec("Two patients need you: Daniel Rahman first, then Amelia Tan."), context)).not.toBeNull();
   expect(groundedSpec(spec("Amelia's result to review.", [{ ...context.rows[1], op: undefined }]), context)).not.toBeNull();
   expect(groundedSpec(spec("12 patients need you."), context)).toBeNull();
-  // An invented finding fails whatever its case: every word long enough to carry a claim must come from the page or the question.
-  expect(groundedSpec(spec("Daniel needs you: possible sepsis."), context)).toBeNull();
-  expect(groundedSpec(spec("Daniel needs you: possible Sepsis."), context)).toBeNull();
   expect(groundedSpec(spec(""), context)).toBeNull(); // AskLead needs text
+});
+
+test("grounding (9 Oct): the lead's own clinical phrasing passes; an invented patient, bed or number still fails", () => {
+  // Normal phrasing, as Gemma writes it on Today (in e2e, 4 of 5 such answers had fallen back to the rules).
+  for (const lead of [
+    "Daniel Rahman should be seen first: his potassium result is still waiting for review, and the repeat test is overdue.",
+    "Daniel needs you: possible sepsis, worth an early review.",
+    "Start with Daniel; check his ECG on the ICU monitor before Amelia's review.",
+  ]) expect(groundedSpec(spec(lead), context)).not.toBeNull();
+  for (const lead of [
+    "Review Siti Aminah first.", // a patient the page doesn't have
+    "Siti Aminah needs you first.", // a full name opening the sentence fails on its surname
+    "Bed 14 is blocked.", // a bed the page doesn't have
+    "Daniel's potassium is 2.1.", // a number the page doesn't have
+    "Daniel and 5 others need you.", // a count the page doesn't have
+  ]) expect(groundedSpec(spec(lead), context)).toBeNull();
 });
 
 // Sona Pro web sends no page data (scope "web"): the server reads the hospital's Today, Ward and Tasks and always answers.
@@ -190,6 +217,15 @@ test("web: another hospital's tasks never appear, in any answer or in the page d
   const sent = String(up.calls.find(c => c.url.endsWith("completions"))?.init.body);
   expect(sent).toContain("Repeat potassium");
   expect(sent).not.toContain("Another hospital");
+});
+
+test("web: with the model up, it answers the bar's three questions too; a general answer to one of them, or a box that is down, gives the rule's", async () => {
+  const rule = await (await webDoctor()).ask.free(web("What needs me first?"));
+  // Gemma copies the page's own first row (the seed is the same each time), in its own words.
+  const answered = spec("Daniel Rahman needs you first: his potassium result is waiting for review.", [rowsOf(rule)[0]]);
+  expect(await (await webDoctor(boxes(() => gemma(answered)).baseten)).ask.free(web("What needs me first?"))).toEqual({ source: "model", model: "gemma-4-26b-a4b", spec: answered });
+  expect(await (await webDoctor(boxes(() => gemma({ general: "See the sickest patient first." })).baseten)).ask.free(web("What needs me first?"))).toEqual(rule);
+  expect(await (await webDoctor(boxes(() => "starting", 503).baseten)).ask.free(web("Which beds are blocked?"))).toMatchObject({ source: "rules" });
 });
 
 test("web: with no model, another question answers from what the pages show that matches it, else one plain line that the model is off", async () => {
