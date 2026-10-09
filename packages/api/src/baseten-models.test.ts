@@ -309,7 +309,7 @@ test("the visit summary is the model's words with the rules' changes; a number t
   expect((await gemma(JSON.stringify({ summary: "Take amoxicillin 250 mg." })).draftVisitSummary(visit)).source).toBe("fixture");
 });
 
-test("reasoning keeps only possibilities citing a record source it was given, one per line, unranked", async () => {
+test("reasoning keeps only possibilities citing a record source it was given, one per line, in the model's order", async () => {
   const read = await gemma(JSON.stringify({ possibilities: [
     { title: "Pneumonia", why: "Five days of cough with a temperature of 38.1 °C.", sources: ["history", "vitals"] },
     { title: "Asthma: flare", why: "Childhood asthma is recorded.", sources: ["history", "xray"] },
@@ -320,14 +320,24 @@ test("reasoning keeps only possibilities citing a record source it was given, on
   // The model answered, and the checks kept none of it: the sample answers, marked `withheld`, so the card can say that
   // and not that the model was silent.
   expect(await gemma("Probably pneumonia.").reasoning({ patient: amelia, question: "Why?" })).toEqual({ ...stub, withheld: true });
-  // A verdict, and a number the record lacks: nothing left.
+  // A number the record lacks, or no record source: nothing left.
   expect(await gemma(JSON.stringify({ possibilities: [
-    { title: "Pneumonia", why: "Most likely pneumonia given the cough.", sources: ["history"] },
     { title: "Sepsis", why: "A lactate of 4.2 points to it.", sources: ["vitals"] },
+    { title: "Pneumonia", why: "Most likely, given the cough.", sources: ["xray"] },
   ] })).reasoning({ patient: amelia, question: "Why?" })).toEqual({ ...stub, withheld: true });
   // A model that never answered is not `withheld`.
   const silent = basetenModels({ apiKey: "k", fetcher: fake({ [box("brain")]: () => new Response("down", { status: 500 }) }).fetcher });
   expect(await silent.reasoning({ patient: amelia, question: "Why?" })).not.toHaveProperty("withheld");
+});
+
+test("reasoning (9 Oct) ranks by likelihood with brief reasons: 'most likely' and 'less likely' are kept as written", async () => {
+  const read = await gemma(JSON.stringify({ possibilities: [
+    { title: "Community-acquired pneumonia", why: "Most likely: five days of cough with a temperature of 38.1 °C.", sources: ["history", "vitals"] },
+    { title: "Asthma flare", why: "Less likely, though childhood asthma is recorded.", sources: ["history"] },
+  ] })).reasoning({ patient: amelia, question: "What is the most likely cause?" });
+  expect(read).toEqual({ answer: "Community-acquired pneumonia: Most likely: five days of cough with a temperature of 38.1 °C.\nAsthma flare: Less likely, though childhood asthma is recorded.", sourceIds: ["history", "vitals"], ...fromModel });
+  // Ranked or not, a number the record lacks still drops it.
+  expect(await gemma(JSON.stringify({ possibilities: [{ title: "Pneumonia", why: "Most likely, with a CRP of 180.", sources: ["history"] }] })).reasoning({ patient: amelia, question: "Why?" })).toMatchObject({ source: "fixture", withheld: true });
 });
 
 test("reasoning on a sparse record reasons from what is recorded and ends with what the record lacks, under the same checks", async () => {
@@ -341,7 +351,7 @@ test("reasoning on a sparse record reasons from what is recorded and ends with w
   expect(read.answer.split("\n")).toEqual([
     "Heart failure: Breathlessness on exertion at 57 is recorded, with nothing yet to weigh against it.",
     "COPD: Breathlessness on exertion; the smoking history is not documented.",
-    "Not in the record: Onset and duration; Observations",
+    "Not in the record: Onset and duration; Observations; The most likely cause",
   ]);
   // A whole record's answer is its possibilities only: the app lists each line as one.
   expect((await gemma(reply.replace(/57/g, "42")).reasoning({ patient: amelia, question: "Why?" })).answer).not.toContain("Not in the record");
@@ -366,7 +376,13 @@ test("a drafted reply may answer anything (the nurse checks it), but never promi
     "Hi Amelia, your plan says: Take 500 mg once a day for 2 more days. A nurse can talk it through with you.",
     "Hi Amelia, it sounds like a chest infection is settling. Finish the course unless your doctor says otherwise.",
   ]) expect(await gemma(JSON.stringify({ text })).draftReply(ask)).toEqual({ text, ...fromModel });
+  // Up to 600 characters (9 Oct; 280 before), never over.
+  const long = `Hi Amelia, ${"finish the azithromycin course as your plan says and keep drinking fluids. ".repeat(7)}`.trim();
+  expect(long.length).toBeGreaterThan(500);
+  expect(long.length).toBeLessThanOrEqual(600);
+  expect(await gemma(JSON.stringify({ text: long })).draftReply(ask)).toEqual({ text: long, ...fromModel });
   const broken: [string, typeof ask][] = [
+    [`${long} ${long}`, ask],
     ["Hi Amelia, a nurse will call you within the hour.", ask],
     ["Hi Amelia, rest and drink water.", { ...ask, label: "urgent" }],
     ["Hi Amelia, a nurse can talk it through with you.", { ...ask, language: "zh" }],

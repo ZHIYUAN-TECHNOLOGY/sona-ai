@@ -1,7 +1,6 @@
 import type { AppealLetter, Code } from "@sona-ai/domain/claim";
 import { planFor, type Language, type PlanRecord } from "@sona-ai/domain/discharge";
 import type { Claim, PatientPoint } from "@sona-ai/domain/evidence";
-import { DRAFT_MAX } from "@sona-ai/domain/messages";
 import { huddle } from "@sona-ai/domain/ward";
 
 import { JSON_REPLY, LANGUAGE_NAME, chatModels, jsonIn } from "./chat-models";
@@ -85,13 +84,14 @@ Answer with JSON only: {"findings": ["<sentence>", ...]}`;
  * numbers come from the facts, medicines match the take-home list...). Anything that fails is replaced by
  * the stub's own rule or authored answer, labelled fixture, never shown unchecked.
  */
-const REASONING = `You help a hospital doctor think before examining a patient. Use ONLY the record and sources below.
-List 2 to 4 possibilities worth considering for the doctor's question: unranked, never stated as a diagnosis, never a treatment.
-For each, one sentence on what in the record points to it, citing the id of every source it rests on.
+// 9 Oct (founder): ranked by likelihood with brief reasons, as a colleague would; the doctor decides.
+const REASONING = `You help a hospital doctor think before examining a patient, from the record and sources below and your clinical knowledge; the doctor decides.
+List 2 to 4 possibilities worth considering for the doctor's question, most likely first. Never order a treatment.
+For each, one or two sentences: how likely it is ("most likely", "possible", "less likely", "worth excluding") and what in the record points to it, citing the id of every source it rests on.
 A thin record still gets an answer: reason from what IS recorded (the complaint, the age and sex), cite the source that records it, and never read something missing as a negative finding.
 In "missing", name up to 4 things the record lacks that would tell the possibilities apart; an empty list when it lacks nothing.
 Never state a finding, test result or number the record does not contain.
-Answer with JSON only: {"possibilities": [{"title": "<2-5 words>", "why": "<one sentence>", "sources": ["<source id>"]}], "missing": ["<2-6 words>"]}`;
+Answer with JSON only: {"possibilities": [{"title": "<2-5 words>", "why": "<one or two sentences>", "sources": ["<source id>"]}], "missing": ["<2-6 words>"]}`;
 
 const HUDDLE = `You write the three-line brief a charge nurse reads aloud at the ward huddle. FACTS are the ward's own count and are exact.
 Write exactly 3 short spoken lines: where the ward stands, which bed to start with and what holds it, and who owns the blockers (or how many have no owner).
@@ -100,7 +100,7 @@ Answer with JSON only: {"lines": ["<line>", "<line>", "<line>"]}`;
 
 const REPLY = `You draft a short reply from a hospital care team to their patient's message, for a nurse to check before sending.
 Rules:
-- Write only in LANGUAGE: plain, kind, at most 3 short sentences and under 280 characters. Greet the patient by first name.
+- Write only in LANGUAGE: plain, kind, at most 5 short sentences and under 600 characters. Greet the patient by first name.
 - Answer what they asked. For their own medicines and next visit, use their plan below and quote a medicine line exactly as written; anything else from general knowledge.
 - Never promise a time or say when someone will call or reply: the care team decides that.
 - If the label is urgent, tell them to call 999 or go to the nearest emergency department now.
@@ -130,7 +130,7 @@ Answer with JSON only: {"diagnosis": "<one line>", "course": "<one or two lines>
 
 const strings = (value: unknown, max: number) =>
   Array.isArray(value) ? value.filter((s): s is string => typeof s === "string" && s.trim() !== "").map(s => s.trim().slice(0, 300)).slice(0, max) : [];
-const text = (value: unknown, max = 600) => typeof value === "string" && value.trim() ? value.trim().slice(0, max) : undefined;
+const text = (value: unknown, max = 1500) => typeof value === "string" && value.trim() ? value.trim().slice(0, max) : undefined;
 
 const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
 /** The numbers a text states, English number words included ("five" is 5). ponytail: Malay and Chinese number words are not read, digits are. */
@@ -145,19 +145,17 @@ function onlyNumbersFrom(facts: string, ...texts: string[]) {
 const inLanguage = (s: string, language: Language) => /[㐀-鿿]/.test(s) === (language === "zh");
 const unique = <T>(values: T[]) => [...new Set(values)];
 
-// A possibility worded as a ranking or a verdict is dropped: the card says "unranked, not a diagnosis".
-const VERDICT = /\b(most likely|likeliest|leading|probable|definite(ly)?|confirms|confirmed|diagnosed|the diagnosis|certainly)\b/i;
-
 // ponytail: a word list, not a reader: it misses a paraphrase, so the nurse's check before sending stays.
 const PROMISED_TIME = /\b(today|tonight|tomorrow|this (morning|afternoon|evening)|within|in (an?|\d+) (minutes?|hours?)|by \d|\d+ ?[ap]\.?m\b)|hari ini|malam ini|esok|dalam masa|sejam|今天|今晚|明天|小时内|分钟内/i;
 export const EMERGENCY = /999|emergency|kecemasan|急诊/i;
 
+const REPLY_MAX = 600; // 9 Oct: 280 raised for Sona Pro's drafts; the rules' own template stays at DRAFT_MAX
 /**
- * A draft a nurse checks before sending: in the patient's language, short, urgent ones sent to 999, and no promise of
- * when the team will act. What it may talk about is not limited (the user lifted every content limit on 1 Oct).
+ * A draft a nurse checks before sending: in the patient's language, under REPLY_MAX, urgent ones sent to 999, and no
+ * promise of when the team will act. What it may talk about is not limited (the user lifted every content limit on 1 Oct).
  */
 function safeReply(reply: string, input: Parameters<Models["draftReply"]>[0]) {
-  return reply.length <= DRAFT_MAX && inLanguage(reply, input.language) && (input.label !== "urgent" || EMERGENCY.test(reply)) && !PROMISED_TIME.test(reply);
+  return reply.length <= REPLY_MAX && inLanguage(reply, input.language) && (input.label !== "urgent" || EMERGENCY.test(reply)) && !PROMISED_TIME.test(reply);
 }
 
 /**
@@ -283,7 +281,7 @@ export function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) 
    * to valid JSON while it writes: left free, Gemma left about one long reply in three unclosed (8 Oct), and the
    * caller fell back to its stub.
    */
-  async function chat(box: "brain" | "xray", model: string, system: string | null, content: unknown, maxTokens = 400, json = false) {
+  async function chat(box: "brain" | "xray", model: string, system: string | null, content: unknown, maxTokens = 1000, json = false) {
     const messages = [...system ? [{ role: "system", content: system }] : [], { role: "user", content }];
     const out = await call(box, "/v1/chat/completions", JSON.stringify({ model, messages, temperature: 0.1, max_tokens: maxTokens, ...json ? { response_format: JSON_REPLY } : {} }), "application/json");
     return out?.choices?.[0]?.message?.content as string | undefined;
@@ -359,7 +357,7 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
       return fallback.synthesiseEvidence(input);
     },
 
-    // Each possibility must cite a record source it was given; an uncited or verdict-worded one is dropped.
+    // Each possibility must cite a record source it was given and state no number the record lacks; ranked wording is kept.
     // A reply the checks emptied is `withheld`, so the card never says of a model that answered that it did not.
     async reasoning(input) {
       let withheld = false;
@@ -367,18 +365,18 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
         const { age, sex, complaint, history, allergies, medicines, vitals } = input.patient;
         const sources = (input.patient.sources ?? []).filter(s => s.kind === "record" || s.kind === "transcript");
         const facts = `Record: ${JSON.stringify({ age, sex, complaint, history, allergies, medicines, vitals })}\n\nSources:\n${sources.map(s => `[${s.id}] ${s.title}: ${s.excerpt}`).join("\n")}\n\nQuestion: ${input.question}`;
-        const read = await brain(REASONING, facts, 600);
+        const read = await brain(REASONING, facts, 1000);
         withheld = true;
         const ids = new Set(sources.map(s => s.id));
         const kept = (Array.isArray(read?.possibilities) ? read.possibilities : []).flatMap(p => {
-          const title = text(p?.title, 60)?.replace(/:/g, ""), why = text(p?.why, 300);
+          const title = text(p?.title, 60)?.replace(/:/g, ""), why = text(p?.why, 400);
           const cites: string[] = Array.isArray(p?.sources) ? unique(p.sources.filter((id: unknown): id is string => typeof id === "string" && ids.has(id))) : [];
-          return title && why && cites.length && !VERDICT.test(`${title} ${why}`) && onlyNumbersFrom(facts, title, why) ? [{ title, why, cites }] : [];
+          return title && why && cites.length && onlyNumbersFrom(facts, title, why) ? [{ title, why, cites }] : [];
         }).slice(0, 4);
         // One possibility per line, "Title: why" (the app lists them); the cited sources once each.
         // What an incomplete record lacks is its last line, under the same checks. Only there: the app shows that answer
         // as written, and lists a whole record's lines as possibilities, where this line would read as one more.
-        const missing = input.patient.incomplete ? strings(read?.missing, 4).filter(m => !VERDICT.test(m) && onlyNumbersFrom(facts, m)) : [];
+        const missing = input.patient.incomplete ? strings(read?.missing, 4).filter(m => onlyNumbersFrom(facts, m)) : [];
         if (kept.length) return { answer: [...kept.map(p => `${p.title}: ${p.why}`), ...missing.length ? [`Not in the record: ${missing.join("; ")}`] : []].join("\n"), sourceIds: unique(kept.flatMap(p => p.cites)), source: "model", model: BRAIN_MODEL };
       } catch { /* falls back below */ }
       return { ...await fallback.reasoning(input), ...withheld && { withheld } };
@@ -494,7 +492,7 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
         ]);
         // MedGemma sometimes answers in plain sentences; keep them rather than lose the read.
         const findings = strings(jsonIn(reply)?.findings, 4);
-        const read = findings.length ? findings : reply?.trim() ? [reply.trim().slice(0, 600)] : [];
+        const read = findings.length ? findings : reply?.trim() ? [reply.trim().slice(0, 1500)] : [];
         if (read.length) return { findings: read, validated: false, source: "model", model: XRAY_MODEL };
       } catch { /* falls back below */ }
       return fallback.xrayRead(input);

@@ -11,10 +11,10 @@ import { liveBeds, ownersOf } from "./routers/ward";
 
 /**
  * Sona Pro web's bar asks from any page, and the page sends nothing (ask.free, scope "web"): the server reads what the
- * Today, Ward and Tasks pages show for the clinician's hospital and role, answers the bar's three questions from it by
- * the iPhone's rules (apps/native/features/ask/answers.ts: needsYou, soonest's blocked beds, overdue), no model, and
- * hands the same data to the model for any other question. With the model off it says what the pages show that
- * matches the question's words, or plainly that the model is off; never an empty answer.
+ * Today, Ward and Tasks pages show for the clinician's hospital and role and hands it to the model for any question. The
+ * bar's three questions also have the iPhone's rule answers (apps/native/features/ask/answers.ts: needsYou, soonest's
+ * blocked beds, overdue), given when the model is off or fails. With the model off, any other question gets what the
+ * pages show that matches the question's words, or plainly that the model is off; never an empty answer.
  */
 type Row = AskContext["rows"][number];
 type Asker = Pick<Context, "db" | "now"> & { hospitalId: string; role: Role };
@@ -116,13 +116,17 @@ export function ruleFor(question: string): "needs" | "blocked" | "due" | undefin
 
 const OFF = "Sona's assistant model is off right now; ask again when it is on, or open Today, Ward or Tasks.";
 
-/** ask.free for the web: the bar's questions by rule; anything else by the model with the page data, else what the pages say, else the off line. */
+/**
+ * ask.free for the web: every question by the model with the page data when it answers (9 Oct: the bar's three too, for
+ * the judges); the bar's three otherwise by rule, which also stands in for a general answer to one of them (it is about
+ * this hospital's page); anything else then what the pages say, else the off line.
+ */
 export async function webAnswer(asker: Asker & { baseten?: Baseten }, question: string) {
   const page = await webPage(asker);
   const rule = ruleFor(question);
-  if (rule) return { source: "rules" as const, spec: page.specs[rule] };
   const asked = asker.baseten ? await freeAnswer(asker.baseten, { scope: "web", question, context: page.context }) : undefined;
-  if (asked?.spec && asked.source === "model") return asked;
+  if (asked?.source === "model" && asked.spec && !(rule && "general" in asked)) return asked;
+  if (rule) return { source: "rules" as const, spec: page.specs[rule] };
   const said = pageLines(page.context, question);
   if (said) return { source: "rules" as const, spec: said };
   const waking = asked && "waking" in asked ? asked.waking : undefined;

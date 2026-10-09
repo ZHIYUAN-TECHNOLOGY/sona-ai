@@ -9,9 +9,11 @@ import { z } from "zod";
 export const askTone = z.enum(["urgent", "soon", "good", "calm"]);
 export const askOp = z.string().regex(/^(open|go|tab|task-done):[\w\-/:.]+$/);
 export const askRow = z.object({ id: z.string().max(64), title: z.string().max(120), detail: z.string().max(160), tone: askTone, op: askOp.optional() }).strict();
+/** A lead's longest: a general answer to a clinician runs to a short paragraph (9 Oct: 600 raised to 1,500 for Sona Pro). */
+export const LEAD_MAX = 1500;
 export const ASK_PROPS = {
   AskColumn: z.object({}).strict(),
-  AskLead: z.object({ text: z.string().min(1).max(280) }).strict(),
+  AskLead: z.object({ text: z.string().min(1).max(LEAD_MAX) }).strict(),
   AskRows: z.object({ rows: z.array(askRow).max(12) }).strict(),
   AskReview: z.object({ title: z.string().max(160), items: z.array(z.string().max(160)).max(6), what: z.string().max(200), confirm: z.string().max(40), done: z.string().max(160), op: askOp }).strict(),
   AskActions: z.object({ items: z.array(z.object({ label: z.string().max(40), op: askOp, primary: z.boolean().optional() }).strict()).max(3) }).strict(),
