@@ -238,3 +238,9 @@ test("web: with no model, another question answers from what the pages show that
   expect(leadOf(off)).toBe("Sona's assistant model is off right now; ask again when it is on, or open Today, Ward or Tasks.");
   expect(rowsOf(off)).toEqual([]);
 });
+
+test("a clinical question that says first-line is not the bar's \"who needs me first\" question", async () => {
+  const { ruleFor } = await import("../ask-context");
+  expect(ruleFor("What is the first-line antibiotic for pneumonia?")).toBeUndefined();
+  expect(ruleFor("Who needs me first?")).toBe("needs");
+});

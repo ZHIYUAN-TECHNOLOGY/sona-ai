@@ -107,7 +107,7 @@ export async function webPage(asker: Asker) {
  */
 export function ruleFor(question: string): "needs" | "blocked" | "due" | undefined {
   const q = question.toLowerCase();
-  if (/\b(first|urgent|dulu|segera)\b/.test(q)) return "needs";
+  if (/\b(first(?![-\s]line)|urgent|dulu|segera)\b/.test(q)) return "needs"; // "first-line antibiotic" is not "who needs me first"
   if (/block|tersekat|stuck|\bkatil\b|\bbeds?\b/.test(q)) return "blocked";
   if (/\bdue\b|today|overdue|hari ini|\btasks?\b|tugas/.test(q)) return "due";
   if (/\bneeds?\b|perlu/.test(q)) return "needs";
@@ -125,7 +125,8 @@ export async function webAnswer(asker: Asker & { baseten?: Baseten }, question: 
   const page = await webPage(asker);
   const rule = ruleFor(question);
   const asked = asker.baseten ? await freeAnswer(asker.baseten, { scope: "web", question, context: page.context }) : undefined;
-  if (asked?.source === "model" && asked.spec && !(rule && "general" in asked)) return asked;
+  // A general answer loses to the page's own rule answer, unless Gemma read a clinical question the literature answers.
+  if (asked?.source === "model" && asked.spec && !(rule && "general" in asked && !("evidence" in asked))) return asked;
   if (rule) return { source: "rules" as const, spec: page.specs[rule] };
   const said = pageLines(page.context, question);
   if (said) return { source: "rules" as const, spec: said };
