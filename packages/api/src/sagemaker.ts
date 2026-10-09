@@ -112,10 +112,36 @@ export function sagemakerFetcher(sm: SageMaker, fetcher: typeof fetch = fetch, n
     const url = `https://runtime.sagemaker.${sm.region}.amazonaws.com/endpoints/${encodeURIComponent(endpoint)}/${streamed ? "invocations-response-stream" : "invocations"}`;
     // The box is named too: one endpoint may hold two boxes (packages/infra/aws/live: box ② beside box ④), and tells by this.
     const headers = { ...await signed(sm, "sagemaker", url, body, contentType, now()), "x-amzn-sagemaker-custom-attributes": box! };
-    const res = await fetcher(url, { method: "POST", body, headers, signal: init?.signal });
+    const res = await hedged(signal => fetcher(url, { method: "POST", body, headers, signal }), box === "voice" || streamed ? HEDGE_MS : undefined, init?.signal);
     if (!streamed || !res.ok || !res.body) return res;
     return new Response(res.body.pipeThrough(payloads()), { status: res.status, headers: { "content-type": "text/event-stream" } });
   }) as typeof fetch;
+}
+
+/**
+ * A request to Malaysia from the Worker now and then hangs (9 Oct, staging: Sona's voice took 47 to 59 s where the same
+ * call from a Mac took 1.6 s, and the endpoint itself answered in under 1 s). Where the answer starts within seconds
+ * (box ② hears and speaks in about 2 s; a streamed chat sends its headers at once), a call with no answer after
+ * HEDGE_MS is sent once more, and whichever answers first is used; the other is cancelled. The model may run twice.
+ * Chats that are not streamed take longer than this to answer at all, so they are never sent twice.
+ */
+export const HEDGE_MS = 4000;
+export async function hedged(send: (signal: AbortSignal) => Promise<Response>, after: number | undefined, caller?: AbortSignal | null): Promise<Response> {
+  if (after === undefined) return send(caller ?? new AbortController().signal);
+  const tries = [new AbortController(), new AbortController()];
+  const signals = tries.map(t => caller ? AbortSignal.any([t.signal, caller]) : t.signal);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const first = send(signals[0]!).then(res => ({ res, i: 0 }));
+  const second = new Promise<void>(resolve => { timer = setTimeout(resolve, after); }).then(() => send(signals[1]!)).then(res => ({ res, i: 1 }));
+  try {
+    const { res, i } = await Promise.any([first, second]);
+    tries[1 - i]!.abort();
+    return res;
+  } catch (error) {
+    throw error instanceof AggregateError ? error.errors[0] : error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { BOXES } from "./baseten-models";
-import { endpointsOf, hosted, payloads, sagemakerEmbedder, sagemakerFetcher, sagemakerImageEmbedder, sagemakerLive, signed } from "./sagemaker";
+import { endpointsOf, hedged, hosted, payloads, sagemakerEmbedder, sagemakerFetcher, sagemakerImageEmbedder, sagemakerLive, signed } from "./sagemaker";
 
 const creds = { region: "us-east-1", accessKeyId: "AKIDEXAMPLE", secretAccessKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY" };
 
@@ -159,4 +159,19 @@ test("a live call on SageMaker: the start, then audio a second a request, in ord
   await over;
   expect(sent).toEqual(['invocations {"type":"start","system":"s"}', 'invocations-response-stream {"type":"listen"}', "invocations 32000 bytes", "invocations 32000 bytes"]);
   expect(got.map(g => typeof g === "string" ? g : [...new Uint8Array(g)])).toEqual(['{"type":"ready"}', '{"type":"unit","i":1}', [1, 2, 3, 4]]);
+});
+
+test("a call that hangs is sent once more after HEDGE_MS, and the first answer wins; a quick answer is never sent twice", async () => {
+  const tries: AbortSignal[] = [];
+  const hangsOnce = (signal: AbortSignal) => { tries.push(signal); return tries.length === 1 ? new Promise<Response>(() => {}) : Promise.resolve(new Response("second")); };
+  expect(await (await hedged(hangsOnce, 20)).text()).toBe("second");
+  expect(tries.map(s => s.aborted)).toEqual([true, false]);
+  let n = 0;
+  expect(await (await hedged(async () => { n++; return new Response("first"); }, 20)).text()).toBe("first");
+  await new Promise(r => setTimeout(r, 40));
+  expect(n).toBe(1);
+  // Not hedged (a chat that is not streamed): one try only.
+  let m = 0;
+  await hedged(async () => { m++; return new Response("x"); }, undefined);
+  expect(m).toBe(1);
 });
