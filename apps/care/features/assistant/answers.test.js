@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { DOCTORS, matchDoctors } from "../doctors/data";
-import { answer, conditionOf, doctorQuestion, leadOf, NO_ANSWER, shown, spoken, startingLine, suggestions, urgent, wantsDoctor } from "./answers";
+import { answer, conditionOf, doctorQuestion, historyOf, leadOf, NO_ANSWER, shown, spoken, startingLine, suggestions, urgent, wantsDoctor } from "./answers";
 
 const medicines = {
   new: [{ name: "Paracetamol", line: "For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day" }],
@@ -95,6 +95,34 @@ test("any question goes to the model first; a plan question's authored answer on
   expect(await answer("Can I drink coffee?", asks, api(modelSays({ answer: "Call 999 now.", grounded: false, urgent: true })))).toEqual({ kind: "none", urgent: true });
 });
 
+test("the missed-dose question is the model's to answer; its authored words only when no model is on or the call fails", async () => {
+  const asks = suggestions(plan, visit, "Cetirizine");
+  const asked = [];
+  const model = modelSays({ answer: "Take it when you remember, unless it is nearly time for the next one.", grounded: false, urgent: false });
+  const reply = await answer("What if I miss a dose of Cetirizine?", asks, api(async q => { asked.push(q); return model(); }));
+  expect(asked).toEqual(["What if I miss a dose of Cetirizine?"]);
+  expect(reply.asked.answer).toBe("Take it when you remember, unless it is nearly time for the next one.");
+  expect(await answer("What if I miss a dose of Cetirizine?", asks, api(fixture))).toEqual({ kind: "plan", asked: asks[0] });
+  expect(await answer("What if I miss a dose of Cetirizine?", asks, api(failing))).toEqual({ kind: "plan", asked: asks[0] });
+});
+
+test("the chat so far goes with a follow-up: the last 6 answered turns, oldest first, in the words the patient got; a new chat has none", () => {
+  const said = (question, answer) => ({ question, reply: { kind: "plan", asked: { question: "", answer, source: "General answer · not from your records", kind: "medicine" } }, ready: true });
+  expect(historyOf([])).toEqual([]);
+  const chat = [said("What is panadol?", "Panadol is paracetamol, for pain and fever.")];
+  // The question still waiting for its answer is not history yet.
+  expect(historyOf([...chat, { question: "How does it help?", reply: { kind: "none", urgent: false }, ready: false }])).toEqual([
+    { question: "What is panadol?", answer: "Panadol is paracetamol, for pain and fever." },
+  ]);
+  const eight = Array.from({ length: 8 }, (_, i) => said(`Q${i}`, `A${i}`));
+  expect(historyOf(eight).map(h => h.question)).toEqual(["Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]);
+  // Each answer as the patient got it: the care team's line, the 999 line, the doctors by name; cut to care.ask's limits.
+  const careTeam = { taskId: "t", title: "x", line: "I've let your care team know." };
+  expect(historyOf([{ question: "I have chest pain", reply: { kind: "none", urgent: true, careTeam }, ready: true }])[0].answer).toBe("If this is happening now, call 999. I've let your care team know.");
+  const long = historyOf([said("q".repeat(2500), "a".repeat(5000))])[0];
+  expect([long.question.length, long.answer.length]).toEqual([2000, 4000]);
+});
+
 test("an answer that used one of the hospital's leaflets names it; from her record too, both captions show; general is only what is from neither", async () => {
   const captions = async (lang, reply) => { const { asked } = await answer("Bila?", [], api(modelSays({ answer: "Esok.", urgent: false, ...reply })), undefined, lang); return [asked.source, asked.leaflet]; };
   const chest = { title: "Chest infection", kind: "leaflet" }, home = { title: "Going home from hospital", kind: "leaflet" };
@@ -137,13 +165,13 @@ test("doctor questions search the directory: by the question's words, else the p
   const forPlan = await answer(doctorQuestion("chest infection"), [], tracked, "chest infection");
   expect(forPlan.kind).toBe("doctors");
   expect(forPlan.doctors.map(d => d.id)).toEqual(["lim", "aisyah"]);
-  expect(forPlan.text).toBe("Here are doctors who may help with your chest infection. Ask your care team before you book.");
-  expect(spoken(forPlan)).toBe("Here are doctors who may help with your chest infection. Ask your care team before you book. Dr. Lim Wei Jie (Respiratory) and Dr. Aisyah Rahman (Cardiology).");
+  expect(forPlan.text).toBe("Here are doctors who may help with your chest infection.");
+  expect(spoken(forPlan)).toBe("Here are doctors who may help with your chest infection. Dr. Lim Wei Jie (Respiratory) and Dr. Aisyah Rahman (Cardiology).");
   expect(searched).toEqual(["Find a doctor for my chest infection", "chest infection"]); // the model is never asked
 
   const heart = await answer("Who is the best heart specialist?", [], tracked, "chest infection");
   expect(heart.doctors.map(d => d.id)).toEqual(["aisyah"]);
-  expect(heart.text).toBe("Here is a doctor who may help. Ask your care team before you book.");
+  expect(heart.text).toBe("Here is a doctor who may help.");
 
   expect((await answer("Can you find me a doctor?", [], tracked, "chest infection")).doctors.map(d => d.id)).toEqual(["lim", "aisyah"]);
   expect((await answer("Can you find me a doctor?", [], tracked)).doctors.every(d => d.careTeam)).toBe(true);

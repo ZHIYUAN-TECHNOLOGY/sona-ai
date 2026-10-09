@@ -192,3 +192,13 @@ export function spoken(r: Reply, lang: Lang = "en") {
   if (r.kind === "doctors") return `${r.text}${sp(lang)}${end(listOf(r.doctors.map(d => `${d.name} (${d.specialty})`), lang), lang)}`;
   return r.kind === "none" && r.urgent ? `${tFor(lang)("ask.call999First")}${sp(lang)}${shown(r, lang)}` : shown(r, lang);
 }
+
+/** A turn of this chat as care.ask's `history` takes it: the question and the words the patient got back. */
+export type Said = { question: string; answer: string };
+/**
+ * This chat so far, for a follow-up ("How does it help?") to be read with it: the last 6 answered turns, oldest first,
+ * each answer in the words of its reply (`spoken`: the doctors by name, the 999 line), cut to care.ask's limits.
+ * A new chat has no turns, so no history.
+ */
+export const historyOf = (turns: { question: string; reply: Reply; ready: boolean }[], lang: Lang = "en"): Said[] =>
+  turns.filter(t => t.ready).slice(-6).map(t => ({ question: t.question.slice(0, 2000), answer: spoken(t.reply, lang).slice(0, 4000) }));

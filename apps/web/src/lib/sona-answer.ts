@@ -13,7 +13,21 @@ export type SonaAnswer =
   | { kind: "rules"; lead: string; rows: RuleRow[]; heading?: string; by?: string }
   | { kind: "evidence"; turn: EvidenceTurn; encounterId?: string }
   | { kind: "text"; text: string; note?: string }
-  | { kind: "node"; node: ReactNode };
+  /** `text`: the answer's words, when the page has them, so a follow-up can be read with it (`historyOf`). */
+  | { kind: "node"; node: ReactNode; text?: string };
+
+/** A turn of the thread as care.ask's `history` takes it: the question and the words the patient got back. */
+export type Said = { question: string; answer: string };
+/**
+ * The thread so far, for a follow-up ("How does it help?") to be read with it: the last 6 answered turns, oldest first,
+ * cut to care.ask's limits. A turn with no words (still thinking, failed, a page's answer without `text`) is left out.
+ */
+export function historyOf(turns: { question: string; state: string; answer?: SonaAnswer }[]): Said[] {
+  return turns.flatMap(t => {
+    const words = t.state === "done" && (t.answer?.kind === "text" || t.answer?.kind === "node") ? t.answer.text : undefined;
+    return words ? [{ question: t.question.slice(0, 2000), answer: words.slice(0, 4000) }] : [];
+  }).slice(-6);
+}
 
 type Element = { type: string; props: Record<string, unknown>; children?: string[] };
 /** What `ask.free` returns: an ask-catalogue spec, who wrote it, and how long the model needs when it is starting. */
