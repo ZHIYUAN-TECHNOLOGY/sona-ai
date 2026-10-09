@@ -21,6 +21,7 @@ import { useFollowUps } from "@/features/follow-ups/row";
 import { useMe } from "@/features/me";
 import { saveQuestion } from "@/features/questions";
 import { orbPad, SonaOrb } from "@/lib/orb";
+import { VoiceOrb } from "@/lib/voice-orb";
 import { AnimatedText, Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
 import { AccentText, Call999, CircleButton, LoadError, pillStyle, surfaceStyle, inkPill } from "@/lib/ui";
@@ -126,6 +127,9 @@ export default function Assistant() {
   // the pill as they speak; on stop the last of them sit in the field, dimmed, until the whole recording is read.
   const join = (d: string, q: string) => d.trim() ? `${d.trim()} ${q}` : q;
   const listen = useListen({ language: lang, untilStop: true, onHeard: q => setDraft(d => join(d, q)) });
+  // The mic's -60 dB (quiet) to -10 dB (loud), for the orb while the patient talks (as voice mode reads it).
+  const hearing = listen.state === "listening", heard = useSharedValue(0);
+  useEffect(() => { heard.set(withTiming(hearing ? Math.max(0, Math.min(1, (listen.level + 60) / 50)) : 0, { duration: 120 })); }, [hearing, listen.level]);
   const finishing = listen.state === "reading" && !!listen.partial;
   const askTyped = () => {
     const question = draft.trim();
@@ -167,7 +171,7 @@ export default function Assistant() {
     <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={() => { if (turns.length) scroll.current?.scrollToEnd({ animated: !still }); }}
       contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 12, gap: 20 }}>
       {!turns.length ? <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 8 }}>
-        <Animated.View entering={enter(0)} style={{ margin: -orbPad(120) + 6 }}><SonaOrb size={120} flood={flood} /></Animated.View>
+        <Animated.View entering={enter(0)} style={{ margin: -orbPad(120) + 6 }}><VoiceOrb size={120} flood={flood} hearing={hearing} level={heard} /></Animated.View>
         <Animated.View entering={enter(1)} accessible accessibilityRole="header" accessibilityLabel={t("ask.titleA11y")} style={{ alignItems: "center", gap: 4, marginTop: 8 }}>
           <AccentText style={{ ...type.display, color: palette.ink, textAlign: "center" }}>{t("ask.title")}</AccentText>
           <Text style={{ ...type.body, color: palette.faint, textAlign: "center" }}>{t("ask.subtitle")}</Text>
