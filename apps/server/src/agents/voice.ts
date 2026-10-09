@@ -5,7 +5,7 @@ import { leafletHits, passagesIn } from "@sona-ai/api/leaflets";
 import { stubModels } from "@sona-ai/api/models";
 import { lastDischarge, recordText } from "@sona-ai/api/routers/care-plan";
 import { careLinkOf } from "@sona-ai/api/routers/hospital";
-import { LINES, answerTurn, basetenChat, type TurnSummary } from "@sona-ai/api/voice-agent/answer";
+import { LINES, answerTurn, basetenChat, languageOf, type TurnSummary } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber } from "@sona-ai/api/voice-agent/listen";
 import { SonaVoice, VOICE_RATE, basetenSpeak, basetenSpeakStream, startingBoxes, warmBoxes, type PhoneVoice } from "@sona-ai/api/voice-agent/voice";
@@ -124,7 +124,9 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
     // A record that could not be read is read again next turn; this turn is still answered, so its 999 and care-team checks run.
     if (!record) this.#records.delete(connection);
     if (record?.plan.status === "discharged") this.#discharged = record.plan.language;
-    const language = this.#language(connection);
+    // The answer is in the language she spoke, as typed Ask does (care.ask): left to Gemma, an English question was
+    // answered in Malay because her record was written in Malay (9 Oct). The app's language is only for Sona's notices.
+    const language = languageOf(transcript);
     return answerTurn({
       question: transcript, heard, history: messages, signal, chat: this.#chat,
       plan: record?.text,

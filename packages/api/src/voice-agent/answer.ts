@@ -5,6 +5,8 @@ import { BRAIN_MODEL, EMERGENCY, answered, boxes, wakingOf, type Baseten } from 
 import { deltas } from "../sse";
 import { LANGUAGE_NAME, jsonIn } from "../chat-models";
 import { citedSources, leafletsText, unnumbered, type Passage, type Source } from "../leaflets";
+/** The question's own language, for the server's voice agent (which has no @sona-ai/domain dependency). */
+export { languageOf } from "@sona-ai/domain/language";
 
 /**
  * One answer turn of Sona Care's live voice (withVoice's onTurn). The patient's own record (recordText), the conversation
