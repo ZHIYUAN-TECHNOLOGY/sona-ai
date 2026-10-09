@@ -100,13 +100,14 @@ function tide(t: number) {
  * size, flags and shared values, so a parent re-rendering (Ask on every keystroke, voice mode on every word read aloud,
  * the dock on every navigation) no longer re-renders its Skia tree each time.
  */
-export const SonaOrb = memo(function SonaOrb({ size = 148, flood, tx, ty, lift = true, awake = false }: { size?: number; flood?: SharedValue<number>; tx?: SharedValue<number>; ty?: SharedValue<number>; lift?: boolean; awake?: boolean }) {
+export const SonaOrb = memo(function SonaOrb({ size = 148, flood, tx, ty, lift = true, awake = false, covered = false }: { size?: number; flood?: SharedValue<number>; tx?: SharedValue<number>; ty?: SharedValue<number>; lift?: boolean; awake?: boolean; covered?: boolean }) {
   const still = useReducedMotion();
   // Under Reduce Motion the orb holds still, so its clock stops too (useClock kept ticking for nothing). On a screen left
   // alone (./idle) it holds its frame, unless `awake`: a voice call, Sona working, the opening, where nobody touches it.
-  // Awake or not, it holds while a screen slides (unseen in a 350 ms slide).
+  // Awake or not, it holds while a screen slides (unseen in a 350 ms slide), and while `covered` (fully hidden under the
+  // voice orb's folding light, ./voice-orb), so two renderers never draw the same orb at once.
   const idle = useIdle(), sliding = useSliding();
-  const clock = useCalmClock(!still && !sliding && (awake || !idle));
+  const clock = useCalmClock(!still && !sliding && !covered && (awake || !idle));
   const zero = useSharedValue(0);
   const fl = flood ?? zero, x = tx ?? zero, y = ty ?? zero;
   const s = size, k = s / 148, pad = orbPad(s), W = s + pad * 2, center = vec(s / 2, s / 2);
