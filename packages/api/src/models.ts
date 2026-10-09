@@ -60,7 +60,7 @@ export type Models = {
   /** Brain (Gemma): what to know before seeing the patient. */
   /** `visitPrep` is what the patient shared from Sona Care before the visit (visitPrepBlock), when they shared anything. */
   briefing(input: { patient: Patient; visitPrep?: string }): Answer<{ lines: string[] }>;
-  /** `withheld` (on a fixture): the model did answer, and nothing in its reply passed the checks (cited, unranked, no number the record lacks). */
+  /** `withheld` (on a fixture): the model did answer, and nothing in its reply passed the checks (cited, no number the record lacks). */
   reasoning(input: { patient: Patient; question: string }): Answer<{ answer: string; sourceIds: string[]; withheld?: boolean }>;
   /** X-ray box: never a validated read in this demo. */
   xrayRead(input: { image: Uint8Array; contentType: string }): Answer<{ findings: string[]; validated: false }>;

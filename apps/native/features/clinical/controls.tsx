@@ -16,7 +16,7 @@ export function ClinicalChoice<T extends string>({ label, value, options, onChan
 
 export function EvidenceCard({ title, summary, rows, children }: { title: string; summary: string; rows: { label: string; text: string }[]; children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  return <Card label="Illustrative possibilities · unranked" title={title}>
+  return <Card label="Illustrative possibilities · most likely first" title={title}>
     <Host matchContents colorScheme="light"><Column spacing={12}><NativeText textStyle={{ color: palette.ink, ...type.body }}>{summary}</NativeText><Collapsible label="Evidence & information gaps" isOpen={open} onOpenChange={setOpen} labelStyle={{ color: palette.blue, ...type.body }}><Column spacing={14}>{rows.map(row => <Column key={row.label} spacing={4}><NativeText textStyle={{ color: palette.muted, ...type.footnote, fontWeight: "600" }}>{row.label}</NativeText><NativeText textStyle={{ color: palette.ink, ...type.body }}>{row.text}</NativeText></Column>)}</Column></Collapsible></Column></Host>
     {open && children}
   </Card>;

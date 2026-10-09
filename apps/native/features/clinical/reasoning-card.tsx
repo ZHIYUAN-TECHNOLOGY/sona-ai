@@ -86,10 +86,10 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
   // One quiet provenance line replaces the section subtitle, the complaint quote and the sources caption.
   const provenance = patient.incomplete
     ? "Missing findings don’t rule anything in or out."
-    : "Unranked. Sources give background, not confirmation.";
+    : "Most likely first. Sources give background, not confirmation.";
   const takeaways: Takeaway[] = patient.incomplete
     ? [{ tone: "caution", text: "Not enough history yet to weigh possibilities" }, { tone: "info", text: "Collect onset, observations and background first" }, { tone: "caution", text: "Allergy and medicines are unknown" }]
-    : [{ tone: "info", text: "Two unranked possibilities: pneumonia and an asthma contribution" }, { tone: "caution", text: "Chest examination and imaging are still needed" }, { tone: "good", text: "Long history of asthma; current control needs review" }];
+    : [{ tone: "info", text: "Two possibilities, most likely first: pneumonia and an asthma contribution" }, { tone: "caution", text: "Chest examination and imaging are still needed" }, { tone: "good", text: "Long history of asthma; current control needs review" }];
   // Live mode: the server answers the question asked, above the authored possibilities it does not replace.
   const question = encounter?.requests.find(r => r.id === result?.requestId)?.prompt || "What could explain these symptoms?";
   const server = useLiveReasoning(patient.encounterId, result?.requestId, question);
@@ -110,7 +110,7 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
         <Arrive index={1}><SampleLabel answer={server} what="reasoning" /></Arrive>
       </> : <Text style={{ ...type.footnote, color: palette.red }}>{server.error}</Text>}
     </Surface>}
-    {(!JUDGE || modelled) && <Takeaways items={modelled ? [{ tone: "info", text: `${modelled.length} unranked ${modelled.length === 1 ? "possibility" : "possibilities"}, each citing the record` }, ...(JUDGE ? [] : takeaways.slice(1))] : takeaways} />}
+    {(!JUDGE || modelled) && <Takeaways items={modelled ? [{ tone: "info", text: `${modelled.length} ${modelled.length === 1 ? "possibility" : "possibilities"}, most likely first, each citing the record` }, ...(JUDGE ? [] : takeaways.slice(1))] : takeaways} />}
     {(!JUDGE || modelled) && <Anchor id="possibilities" title={patient.incomplete ? "Gaps" : "Possibilities"}>
     <Section icon={patient.incomplete ? "checklist" : "lightbulb"} tone={patient.incomplete ? "amber" : "violet"} title={patient.incomplete ? "What to collect first" : "Possibilities to explore"}>
       {modelled && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
