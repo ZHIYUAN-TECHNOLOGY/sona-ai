@@ -1,0 +1,8 @@
+// Judges' overview page: static files, plus worker.js to answer video Range requests.
+// Build media with `bash media.sh` (gitignored), then deploy with `bunx wrangler deploy`.
+{
+  "name": "sona-overview",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/media/*.mp4"] }
+}
