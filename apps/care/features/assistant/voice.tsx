@@ -14,7 +14,8 @@ import { useLiveVoice } from "./live";
 import { useListen } from "@/lib/listen";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import "./strings";
-import { orbPad, SonaOrb } from "@/lib/orb";
+import { orbPad } from "@/lib/orb";
+import { VoiceOrb } from "@/lib/voice-orb";
 import { VoiceGlow } from "@/lib/voice-glow";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
@@ -196,7 +197,7 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
       {/* In a live call the orb only shows the state (talking over Sona is how to stop her); the status line says it. */}
       <Pressable accessible={!inCall} accessibilityRole="button" accessibilityLabel={speaking ? t("voice.stopReading") : said ? t("voice.hear") : t("voice.nothing")} accessibilityState={{ disabled: !said }} disabled={inCall || !said} onPress={replay}
         style={({ pressed }) => ({ margin: -orbPad(150) + 8, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
-        <SonaOrb size={150} flood={talk} awake />
+        <VoiceOrb size={150} flood={talk} hearing={glowing && !thinking} level={level} awake />
       </Pressable>
       <Text accessibilityLiveRegion="polite" style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: warn ? palette.amber : palette.ink, textAlign: "center" }}>{status}</Text>
       {standInLine && voice.hosted && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{standInLine}</Text>}
