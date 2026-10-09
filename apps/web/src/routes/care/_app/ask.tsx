@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { lazy, Suspense, useCallback, useMemo, useState, type ReactNode } from "react";
 
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow } from "@/components/primitives";
@@ -23,6 +23,11 @@ const planLang = langOf(typeof navigator === "undefined" ? undefined : navigator
 const SUGGESTED = ["When is my next visit?", "What medicines do I take today?", "What should I eat this week?", "Is it normal to feel tired?"];
 
 type Answer = { answer?: string; source?: string; waking?: number; grounded?: boolean; careTeam?: { line?: string }; sources?: { title: string }[] };
+
+// Behind VITE_CARE_CHAT_AGENT=1 only: her chat agent, which remembers the conversation (features/care-ask/chat-agent).
+// Off, the build leaves it out entirely and the page asks care.ask as before.
+const ChatAgentLink = import.meta.env.VITE_CARE_CHAT_AGENT === "1" ? lazy(() => import("@/features/care-ask/chat-agent")) : null;
+type AgentAsk = (question: string) => Promise<Answer>;
 
 /** Brings a settled answer above the floating Sona bar (the row has a scroll margin for the bar). */
 const reveal = (el: HTMLElement | null) => { el?.scrollIntoView({ block: "nearest", behavior: "smooth" }); };
@@ -52,10 +57,10 @@ function Next({ question, spoken }: { question: string; spoken: string }) {
   );
 }
 
-/** This page's answer to the Sona bar and the chips: `care.ask`. A failure is a plain line with "Try again". */
-async function answer(question: string): Promise<ReactNode> {
+/** This page's answer to the Sona bar and the chips: `care.ask`, or her chat agent behind its flag. A failure is a plain line with "Try again". */
+const answerWith = (get: AgentAsk) => async (question: string): Promise<ReactNode> => {
   let res: Answer;
-  try { res = (await client.care.ask({ question })) as Answer; }
+  try { res = await get(question); }
   catch { return <Failed question={question} line="Sona can't answer right now. Try again." />; }
   if (!res.answer) return <Failed question={question} line={res.waking ? `Sona is starting (about ${res.waking} min). Try again then.` : "Sona can't answer right now. Try again."} />;
   const spoken = res.careTeam?.line ? `${res.answer} ${res.careTeam.line}` : res.answer;
@@ -70,10 +75,16 @@ async function answer(question: string): Promise<ReactNode> {
       <Next question={question} spoken={spoken} />
     </>
   );
-}
+};
+const answer = answerWith(question => client.care.ask({ question }) as Promise<Answer>);
+// The agent's own line (no model, or it is starting) reads as care.ask's fixture: "Try again".
+const fromAgent = (ask: AgentAsk) => answerWith(question => ask(question).then(a => a.source === "model" ? a : { ...a, answer: "" }));
 
 function Body({ call }: { call?: Parameters<Parameters<typeof Call>[0]["children"]>[0] }) {
-  const ask = useSonaAsk(answer);
+  const user = authClient.useSession().data?.user.id;
+  const [agentAsk, setAgentAsk] = useState<AgentAsk>();
+  const onAsk = useCallback((a?: AgentAsk) => setAgentAsk(() => a), []);
+  const ask = useSonaAsk(useMemo(() => agentAsk ? fromAgent(agentAsk) : answer, [agentAsk]));
   // Two independent reads, started together; the suggestions become personal only when they have real data.
   const visits = useQuery(orpc.care.followUps.queryOptions({ input: { lang: visitLang } }));
   const plan = useQuery(orpc.care.discharge.queryOptions({ input: { lang: planLang } }));
@@ -86,6 +97,7 @@ function Body({ call }: { call?: Parameters<Parameters<typeof Call>[0]["children
   ].slice(0, 6);
   return (
     <div className="ask-page" data-call={call?.open ? "on" : "off"}>
+      {ChatAgentLink && user ? <Suspense fallback={null}><ChatAgentLink user={user} onAsk={onAsk} /></Suspense> : null}
       <PageHeader title="Ask Sona" lead="Ask anything. Type below, or talk to Sona." actions={call?.open ? undefined : call?.button} />
       {call?.open ? call.stage : null}
       <Card className="ask-welcome">

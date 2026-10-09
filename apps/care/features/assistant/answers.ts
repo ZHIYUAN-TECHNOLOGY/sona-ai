@@ -156,7 +156,7 @@ function partOf(from: string, lang: Lang) {
   return said === key ? from : said;
 }
 
-function fromModel(a: PlanAnswer, lang: Lang): Exclude<Reply, { kind: "doctors" }> {
+export function fromModel(a: PlanAnswer, lang: Lang): Exclude<Reply, { kind: "doctors" }> {
   if (!a.answer) return NONE;
   if (a.urgent) return CALL_999;
   const t = tFor(lang);
