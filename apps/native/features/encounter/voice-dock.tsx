@@ -200,8 +200,10 @@ export function VoiceDock(props: Props) {
   // Keyboard-synced morph progress: follows the on-screen keyboard frame by frame when there is one.
   const composing = useSharedValue(0);
   const kbHeight = useSharedValue(0), kbProgress = useSharedValue(0), soft = useSharedValue(0), fallback = useSharedValue(0);
+  // Only a keyboard opened for the composer drives the morph: one raised for a field on the page (a prescribing form,
+  // a search box) leaves the bar where it is, so the card never covers the field being typed in.
   useKeyboardHandler({
-    onStart: e => { "worklet"; if (e.height > 0) soft.set(1); },
+    onStart: e => { "worklet"; if (e.height > 0 && composing.value) soft.set(1); },
     onMove: e => { "worklet"; kbHeight.set(e.height); kbProgress.set(e.progress); },
     onInteractive: e => { "worklet"; kbHeight.set(e.height); kbProgress.set(e.progress); },
     onEnd: e => { "worklet"; kbHeight.set(e.height); kbProgress.set(e.progress); if (e.height === 0) soft.set(0); },

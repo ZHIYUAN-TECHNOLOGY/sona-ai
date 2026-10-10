@@ -21,6 +21,11 @@ test("an entered regimen, confirmed medicines, eligibility and a review at the c
   expect(blocked({ proposedMedicine: regimen, medicationEntries: confirmed, prescriptionInputs: eligible, medicationCheckedRevision: 1 })).toEqual([]);
 });
 
+test("by mouth and PO read as oral, so the web form's own hint passes the dose rule", () => {
+  for (const route of ["by mouth", "PO", " oral "]) expect(blocked({ proposedMedicine: regimenLine({ ...entered, route }), medicationEntries: confirmed, prescriptionInputs: eligible, medicationCheckedRevision: 1 })).toEqual([]);
+  expect(blocked({ proposedMedicine: regimenLine({ ...entered, route: "IV" }), medicationEntries: confirmed, prescriptionInputs: eligible, medicationCheckedRevision: 1 })).toEqual(["Bounded regimen"]);
+});
+
 test("a review taken at an older revision blocks, and so does a weight under 50 kg or a positive risk", () => {
   expect(blocked({ revision: 2, proposedMedicine: regimen, medicationEntries: confirmed, prescriptionInputs: { ...eligible, weightKg: "48", liverDisease: "yes" }, medicationCheckedRevision: 1 }))
     .toEqual(["Current medication review", "Adult age & weight", "Liver history"]);

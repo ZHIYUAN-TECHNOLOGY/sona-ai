@@ -28,7 +28,7 @@ export function regimenOf(encounter: Pick<Encounter, "proposedMedicine">, patien
 function doseVerdict(r: EnteredRegimen | undefined): [boolean, string] {
   if (!r) return [false, "No regimen entered. Enter the medicine, strength, dose, route, frequency and duration."];
   if (!isParacetamol(r.medication)) return [false, `The dose rules cover paracetamol only; ${r.medication} cannot be checked, so it is not prescribed here.`];
-  if (!/^500\s*mg\b.*tablet/i.test(r.formulation) || !/^oral$/i.test(r.route) || r.unit !== "mg") return [false, "The dose rules cover 500 mg tablets taken by mouth (oral), with the dose in mg."];
+  if (!/^500\s*mg\b.*tablet/i.test(r.formulation) || !/^(oral|by mouth|po)$/i.test(r.route.trim()) || r.unit !== "mg") return [false, "The dose rules cover 500 mg tablets taken by mouth (oral), with the dose in mg."];
   const dose = Number(r.dose), hours = Number(r.frequency.match(/^every (\d+) hours?$/i)?.[1]), days = Number(r.duration.match(/^(\d+) days?$/i)?.[1]);
   if (dose !== 500 && dose !== 1000) return [false, "A dose is one or two 500 mg tablets: 500 mg or 1000 mg."];
   // A frequency or duration the rule cannot read is NaN, which fails every comparison below, so it blocks.
