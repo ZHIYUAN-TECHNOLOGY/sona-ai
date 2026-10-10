@@ -149,8 +149,11 @@ export class SonaTranscriber {
     const read = async (pcm: Int16Array, early?: Promise<Heard | undefined>) => {
       const heard = await (early ?? hear(pcm));
       if (closed) return;
-      // A model that heard no words (a sigh, the TV) is no turn; no model at all is said out loud.
-      if (heard?.source === "model") { if (heard.text.trim()) hooks.onUtterance?.(heard.text.trim()); }
+      // A model that heard no words (a sigh, the TV) is no turn; no model at all is said out loud. Only words cut Sona
+      // off (the SDK's barge-in, onSpeechStart): on 10 Oct a burst of the simulator mic's noise right after a question
+      // started a "turn" and cancelled her answer after its first sentence, every call. While she is audible the phone
+      // stops her itself (its echo gate's `interrupt`).
+      if (heard?.source === "model") { if (heard.text.trim()) { hooks.onSpeechStart?.(); hooks.onUtterance?.(heard.text.trim()); } }
       else this.unheard(heard?.waking);
     };
     return {
@@ -163,8 +166,9 @@ export class SonaTranscriber {
         for (let i = 0; i < samples.length; i++) samples[i] = view.getInt16(i * 2, true);
         odd = even < bytes.length ? bytes.slice(even) : undefined;
         for (const event of turns.push(samples)) {
-          if (event.type === "start") hooks.onSpeechStart?.();
-          else if (event.type === "early") ahead = { samples: event.pcm.length, heard: hear(event.pcm) };
+          // A turn's start alone stops nothing (see `read`).
+          if (event.type === "start") continue;
+          if (event.type === "early") ahead = { samples: event.pcm.length, heard: hear(event.pcm) };
           else {
             const early = ahead?.samples === event.pcm.length ? ahead.heard : undefined;
             ahead = undefined;

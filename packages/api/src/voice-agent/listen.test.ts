@@ -132,3 +132,17 @@ test("a turn is read from its first 0.2 s of quiet: said through, it is read onc
   expect(sent[2]).toBeGreaterThan(sent[1]!);
   expect(said[1]).toBe(`turn of ${sent[2]} bytes`);
 });
+
+test("noise that reads as no words never cuts Sona off; words do, just before they are answered", async () => {
+  const events: string[] = [];
+  let words = "";
+  const ears = new SonaTranscriber(async () => ({ text: words, source: "model", model: "sona-asr" }));
+  const session = ears.createSession({ onSpeechStart: () => events.push("cut"), onUtterance: text => events.push(text) });
+  session.feed(bytes(pcm(quiet(900), tone(600), quiet(900))).buffer);
+  await Bun.sleep(0);
+  expect(events).toEqual([]);
+  words = "Saya sesak nafas";
+  session.feed(bytes(pcm(tone(600), quiet(900))).buffer);
+  await Bun.sleep(0);
+  expect(events).toEqual(["cut", "Saya sesak nafas"]);
+});
