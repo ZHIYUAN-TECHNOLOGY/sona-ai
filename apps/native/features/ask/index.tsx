@@ -104,9 +104,10 @@ export function answerNow(question: string, answers: Answer[], live: boolean): R
   return rule ? { answer: rule } : live ? undefined : { notice: only(answers) };
 }
 /** Live mode: the model's answer to any question (ask.free: from the page's own data, else general knowledge, marked; a clinical one from the evidence), or why not: it is starting or out of reach (ask again). */
-export async function answerFree(scope: Scope, question: string, answers: Answer[]): Promise<Reply> {
+export async function answerFree(scope: Scope, question: string, answers: Answer[], encounterId?: string): Promise<Reply> {
   try {
-    const r = await api.ask.free({ scope, question, context: askContext(answers) });
+    // A visit's question sends the visit too: the server adds its patient's record, so "her last potassium" is answered from it.
+    const r = await api.ask.free({ scope, question, context: askContext(answers), encounterId });
     // A clinical question the literature answers (the model's own reading of it, not a word list) goes to the evidence, cited.
     if (r.source === "model") return "evidence" in r && r.evidence ? EVIDENCE : { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model, general: "general" in r };
     // The model's words did not keep to the page, so the server sent the page's own lines: shown as the rules' answer.

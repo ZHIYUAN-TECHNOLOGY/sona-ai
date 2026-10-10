@@ -111,7 +111,7 @@ const turn = z.object({ question: z.string().trim().min(1).max(500), answer: z.s
  * The visit's patient's record as one source's text: recordFacts, then the visit's latest saved note. A record that
  * cannot be read gives none (the answer still comes, from the other sources); the note is the visit's own, never another's.
  */
-async function recordText(db: Context["db"], hospitalId: string, patientId: string, encounterId: string) {
+export async function recordText(db: Context["db"], hospitalId: string, patientId: string, encounterId: string) {
   const [facts, [note]] = await Promise.all([
     recordFacts(db, hospitalId, patientId).catch(() => [] as string[]),
     db.select({ sentences: notes.sentences, at: notes.createdAt }).from(notes).where(eq(notes.encounterId, encounterId)).orderBy(desc(notes.revision)).limit(1).catch(() => []),

@@ -274,7 +274,7 @@ function Workspace({ mode, sessionId, todayAnswers }: { mode: "home" | "session"
     const pid = patient.id, id = entryId ?? asideId.current++;
     setAsides(a => ({ ...a, [pid]: entryId === undefined ? [...(a[pid] ?? []), { id, question }] : (a[pid] ?? []).map(e => (e.id === id ? { id, question } : e)) }));
     setTimeout(() => scroll.current?.scrollToEnd({ animated: !reducedMotion }), 60);
-    const reply = await answerFree("visit", question, []);
+    const reply = await answerFree("visit", question, [], patient.encounterId);
     // A clinical question for the literature is the visit's evidence card (this patient's, cited), not an aside; asked only if this visit is still the open one.
     if ("evidence" in reply) { setAsides(a => ({ ...a, [pid]: (a[pid] ?? []).filter(e => e.id !== id) })); if (openId.current === pid) run("evidence", question); return reply; }
     setAsides(a => ({ ...a, [pid]: (a[pid] ?? []).map(e => (e.id === id ? { id, question, reply } : e)) }));

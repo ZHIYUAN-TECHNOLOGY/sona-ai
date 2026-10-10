@@ -244,3 +244,19 @@ test("a clinical question that says first-line is not the bar's \"who needs me f
   expect(ruleFor("What is the first-line antibiotic for pneumonia?")).toBeUndefined();
   expect(ruleFor("Who needs me first?")).toBe("needs");
 });
+
+test("a visit's free question reads that visit's patient record on the server, so her last potassium is answered from it; another hospital's visit adds nothing", async () => {
+  const lead = "Her last potassium was 3.1 mmol/L, low.";
+  const up = boxes(() => gemma({ root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "AskLead", props: { text: lead }, children: [] } } }));
+  const client = await nurse(up.baseten);
+  const asked = { scope: "visit", question: "What were her last potassium levels?", context: { lines: [], rows: [] } };
+  const answer = await client.ask.free({ ...asked, encounterId: "visit-1086" });
+  expect(answer).toMatchObject({ source: "model", spec: { elements: { "f-0": { props: { text: lead } } } } });
+  const chats = () => up.calls.filter(c => c.url.includes("chat/completions")).map(c => String(c.init.body));
+  const sent = chats()[0]!;
+  expect(sent).toContain("This visit's patient record:");
+  expect(sent).toContain("Potassium 3.1 mmol/L, low");
+  // A visit the clinician's hospital does not hold reads nothing: the model sees only the page.
+  await client.ask.free({ ...asked, encounterId: "visit-elsewhere" });
+  expect(chats()[1]).not.toContain("patient record");
+});
