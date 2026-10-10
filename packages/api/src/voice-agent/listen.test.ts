@@ -35,14 +35,30 @@ test("a short pause does not end the turn; a cough or a click never starts one",
 });
 
 test("a monologue is cut at 30 s and still sent, and what follows is the next turn; the knobs move the thresholds", () => {
-  const events = run(new TurnDetector(), tone(31_000));
+  // The call's first 0.8 s teach it the room (a turn waits for that), as in every test that starts with quiet.
+  const events = run(new TurnDetector(), pcm(quiet(800), tone(31_000)));
   expect(events.map(e => e.type)).toEqual(["start", "end", "start"]);
   expect(ms((events[1] as Extract<TurnEvent, { type: "end" }>).pcm)).toBe(30_000);
   // A quieter room's threshold hears a softer voice; a longer quiet lets a slow speaker pause.
-  const soft = pcm(tone(1000).map(s => s / 100), quiet(1000));
+  const soft = pcm(quiet(800), tone(1000).map(s => s / 100), quiet(1000));
   expect(run(new TurnDetector(), soft)).toEqual([]);
   expect(run(new TurnDetector({ speechDb: -55 }), soft).map(e => e.type)).toEqual(["start", "end"]);
-  expect(run(new TurnDetector({ quietMs: 1200 }), pcm(tone(800), quiet(1000))).map(e => e.type)).toEqual(["start"]);
+  expect(run(new TurnDetector({ quietMs: 1200 }), pcm(quiet(800), tone(800), quiet(1000))).map(e => e.type)).toEqual(["start"]);
+});
+
+/** A room's hum, as a real phone hears it: noise at about -38 dBFS, a few dB louder or softer each 100 ms. */
+const hum = (ms: number) => Int16Array.from({ length: (RATE * ms) / 1000 }, (_, i) => Math.round([0.7, 1, 1.4, 1, 0.8, 1.2][Math.floor(i / 1600) % 6]! * 715 * (((i * 7919) % 1000) / 500 - 1)));
+const over = (a: Int16Array, b: Int16Array) => a.map((s, i) => s + (b[i] ?? 0));
+
+test("a room that hums louder than -40 dBFS: its hum never starts a turn, and a turn still ends 0.5 s after the patient stops", () => {
+  expect(run(new TurnDetector(), hum(5000))).toEqual([]);
+  const events = run(new TurnDetector(), pcm(hum(1500), over(tone(1200), hum(1200)), hum(700)));
+  expect(events.map(e => e.type)).toEqual(["start", "end"]);
+  // While Sona talks the phone sends zeros: the room learnt before her still holds for the next question.
+  const detector = new TurnDetector();
+  run(detector, pcm(hum(1500), over(tone(1200), hum(1200)), hum(700)));
+  expect(run(detector, pcm(new Int16Array(RATE * 3), hum(1500)))).toEqual([]);
+  expect(run(detector, pcm(over(tone(1200), hum(1200)), hum(700))).map(e => e.type)).toEqual(["start", "end"]);
 });
 
 test("WAV: a 44-byte RIFF header for 16 kHz mono 16-bit, then the samples little-endian", () => {

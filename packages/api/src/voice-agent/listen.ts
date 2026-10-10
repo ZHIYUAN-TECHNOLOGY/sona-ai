@@ -13,6 +13,18 @@ const FRAME = 320; // 20 ms
 const FRAME_MS = 20;
 /** The half second a turn's start is judged over, the frames kept before it (so the first syllable is not clipped), and the quiet kept after it. */
 const WINDOW = 25, PRE_ROLL = 15, TAIL = 10;
+/**
+ * The room's own level is the quietest fifth of the frames between turns (the window and its pre-roll, 0.8 s), and only
+ * a frame ABOVE_ROOM_DB over it is speech. Below speechDb it changes nothing; a room louder than that (a real phone's
+ * mic, 10 Oct: the turn ended up to 5 s after the patient stopped, since its hum kept breaking the half second of quiet)
+ * raises the bar over the hum. Learnt only between turns, so the patient's own words never raise it; no turn starts
+ * before the call's first 0.8 s has taught it (they are the new turn's pre-roll, so no words are lost).
+ */
+// The phone sends exact zeros while Sona talks (apps/care/lib/live-voice/gate.ts): they hide the room, so a window
+// with any frame under SILENT_DB keeps the room learnt before her.
+// ponytail: zeros are the room when they come first (a call that opens with a "still starting" notice, or the
+// simulator's BlackHole mic), which is the -40 dBFS bar as before; relearn on the first all-mic window if that bites.
+const ABOVE_ROOM_DB = 10, ROOM_SHARE = 0.2, SILENT_DB = -90;
 
 /** The calibration knobs: a real phone in a real room is never the ideal on paper. */
 export type TurnOptions = {
@@ -54,7 +66,10 @@ export class TurnDetector {
   readonly #o: Required<TurnOptions>;
   #pending = new Int16Array(0);
   /** Between turns: the latest frames, the window plus its pre-roll. */
-  #recent: { frame: Int16Array; loud: boolean }[] = [];
+  #recent: { frame: Int16Array; db: number }[] = [];
+  #room = -Infinity;
+  /** The room's level (dBFS) as learnt so far: -Infinity before the call's first 0.8 s. */
+  get room() { return this.#room; }
   /** In a turn: its frames so far, and the quiet at its end. */
   #turn: Int16Array[] | undefined;
   #quietMs = 0;
@@ -72,11 +87,12 @@ export class TurnDetector {
   }
 
   #frame(frame: Int16Array, events: TurnEvent[]) {
-    const loud = dbfs(frame) > this.#o.speechDb;
+    const db = dbfs(frame), bar = () => Math.max(this.#o.speechDb, this.#room + ABOVE_ROOM_DB);
     if (!this.#turn) {
-      this.#recent.push({ frame, loud });
+      this.#recent.push({ frame, db });
       if (this.#recent.length > WINDOW + PRE_ROLL) this.#recent.shift();
-      if (this.#recent.slice(-WINDOW).filter(f => f.loud).length * FRAME_MS < this.#o.minSpeechMs) return;
+      if (this.#recent.length === WINDOW + PRE_ROLL && (this.#room === -Infinity || this.#recent.every(f => f.db > SILENT_DB))) this.#room = this.#recent.map(f => f.db).sort((a, b) => a - b)[Math.floor(ROOM_SHARE * (WINDOW + PRE_ROLL))]!;
+      if (this.#room === -Infinity || this.#recent.slice(-WINDOW).filter(f => f.db > bar()).length * FRAME_MS < this.#o.minSpeechMs) return;
       this.#turn = this.#recent.map(f => f.frame);
       this.#recent = [];
       this.#quietMs = 0;
@@ -84,7 +100,7 @@ export class TurnDetector {
       return;
     }
     this.#turn.push(frame);
-    this.#quietMs = loud ? 0 : this.#quietMs + FRAME_MS;
+    this.#quietMs = db > bar() ? 0 : this.#quietMs + FRAME_MS;
     // A little of the quiet stays: the ASR reads a last word better with its tail than with a hard cut.
     const drop = Math.max(0, this.#quietMs / FRAME_MS - TAIL), sofar = () => joined(this.#turn!.slice(0, this.#turn!.length - drop));
     if (this.#quietMs < this.#o.quietMs && this.#turn.length * FRAME_MS < this.#o.maxMs) {
@@ -152,6 +168,7 @@ export class SonaTranscriber {
           else {
             const early = ahead?.samples === event.pcm.length ? ahead.heard : undefined;
             ahead = undefined;
+            console.log(JSON.stringify({ voice: "turn", ms: Math.round(event.pcm.length / (RATE / 1000)), roomDb: Math.round(turns.room) }));
             // One at a time, so turns reach the agent in the order they were said.
             reading = reading.then(() => read(event.pcm, early));
           }
