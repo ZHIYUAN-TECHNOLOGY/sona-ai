@@ -5,6 +5,8 @@ import { lazy, Suspense, useCallback, useMemo, useState, type ReactNode } from "
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, Chip, ListCard, ListRow } from "@/components/primitives";
 import { RightRail } from "@/components/rail";
+import { CareMarked } from "@/components/marked";
+import type { Chosen } from "../../../../../care/features/assistant/terms";
 import { Call } from "@/features/care-ask/call";
 import { browserLang } from "@/features/care-follow-ups/dates";
 import { langOf } from "@/features/care-medicines/model";
@@ -23,7 +25,7 @@ const planLang = langOf(typeof navigator === "undefined" ? undefined : navigator
 
 const SUGGESTED = ["When is my next visit?", "What medicines do I take today?", "What should I eat this week?", "Is it normal to feel tired?"];
 
-type Answer = { answer?: string; source?: string; waking?: number; grounded?: boolean; careTeam?: { line?: string }; sources?: { title: string }[] };
+type Answer = { answer?: string; marks?: Chosen[]; source?: string; waking?: number; grounded?: boolean; careTeam?: { line?: string }; sources?: { title: string }[] };
 
 // Behind VITE_CARE_CHAT_AGENT=1 only: her chat agent, which remembers the conversation (features/care-ask/chat-agent).
 // Off, the build leaves it out entirely and the page asks care.ask as before.
@@ -76,8 +78,8 @@ const answerWith = (get: (question: string, history: Said[]) => Promise<Answer>)
       <>
         {res.source === "fixture" ? <Chip tone="neutral">Sample answer</Chip> : null}
         {/* Keeps the answer's own line breaks: a numbered list stays a list. */}
-        <p className="ask-answer">{res.answer}</p>
-        {res.careTeam?.line ? <p>{res.careTeam.line}</p> : null}
+        <p className="ask-answer"><CareMarked text={res.answer} chosen={res.marks} /></p>
+        {res.careTeam?.line ? <p><CareMarked text={res.careTeam.line} /></p> : null}
         {res.grounded ? <p className="sona-turn-note">From your record.</p> : null}
         {res.sources?.length ? <p className="sona-turn-note">From: {res.sources.map(s => s.title).join(", ")}</p> : null}
         <Next question={question} spoken={spoken} />
