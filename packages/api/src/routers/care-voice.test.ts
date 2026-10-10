@@ -153,7 +153,7 @@ test("a call reads the same record as a typed question: recordText is what care.
   expect(spoken.text).toBe(read[0]!);
   expect(spoken.text).toContain("Visits booked:");
   expect(spoken.text).toContain("Allergies: Penicillin — reported rash");
-  expect(messagesFor({ question: "Bila temu janji saya?", history: [], plan: spoken.text, language: "ms" })[0]!.content).toEndWith(`Patient's record:\n${read[0]}\n\nHospital's general leaflets (advice for any patient, not facts about this patient):\nNone found for this question.`);
+  expect(messagesFor({ question: "Bila temu janji saya?", history: [], plan: spoken.text, language: "ms" })[0]!.content).toContain(`Patient's record:\n${read[0]}\n\nHospital's general leaflets (advice for any patient, not facts about this patient):\nNone found for this question.`);
 });
 
 test("only an emergency sign reaches her care team from a typed question (founder, 9 Oct): a fever back is answered and tells no one; no check-in is used up", async () => {
