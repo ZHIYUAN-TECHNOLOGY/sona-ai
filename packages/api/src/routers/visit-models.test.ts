@@ -54,6 +54,9 @@ test("the briefing reads the record as it is now: the chart's latest readings, n
   await api.encounter.briefing({ encounterId: "visit-1042" });
   expect(seen!.record?.find(l => l.startsWith("Observations (latest of each)"))).toContain("Temperature 36.9 °C");
   expect(seen!.record?.join("\n")).not.toContain("38.1");
+  // The doctor's card gives a result's value before anyone has acknowledged it (Sona Care's record waits for that).
+  await api.encounter.briefing({ encounterId: "visit-1086" });
+  expect(seen!.record?.join("\n")).toContain("Potassium 3.1 mmol/L, low");
 });
 
 test("the discharge draft is the patient's own plan in the chosen language, built from each one's record: Amelia's like Nurul's", async () => {

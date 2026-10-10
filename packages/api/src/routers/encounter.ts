@@ -220,11 +220,11 @@ export const encounterRouter = {
   }),
   /**
    * What to know before seeing the patient, read from their own record as it is now (recordFacts: the chart's latest
-   * readings, results a doctor acknowledged), a labelled fixture until Gemma is on.
+   * readings, the latest results with their values, as the doctor reads them), a labelled fixture until Gemma is on.
    */
   briefing: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { patient } = await visitOf(context.db, context.hospitalId, input.encounterId);
-    const [visitPrep, record] = await Promise.all([visitPrepBlock(context.db, context.hospitalId, patient.id, clockOf(context)), recordFacts(context.db, context.hospitalId, patient.id, { forPatient: true })]);
+    const [visitPrep, record] = await Promise.all([visitPrepBlock(context.db, context.hospitalId, patient.id, clockOf(context)), recordFacts(context.db, context.hospitalId, patient.id)]);
     const answer = await (context.models ?? stubModels).briefing({ patient, visitPrep, record });
     return logAnswer(context.db, input.encounterId, "briefing", answer, recordSources(patient));
   }),
