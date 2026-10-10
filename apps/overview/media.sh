@@ -67,6 +67,7 @@ cl-ask|B/3-sona-pro-clinician/01-ask-sona-brief-me.mp4|4.5|26
 cl-reason|B/3-sona-pro-clinician/03-clinical-reasoning.mp4|4.5|50
 cl-hand|B/3-sona-pro-clinician/07-scan-handwritten-note.mp4|4.5||38
 cl-rx|B/3-sona-pro-clinician/08-safe-prescription.mp4|4.5|
+cl-dose|B/14-problem-proofs/wrong-dose-stopped.mp4|4.5|
 cl-discharge|B/8-web-sona-pro/06-discharge-plan-and-readiness.mp4|4.5|
 care-web-day|B/9-web-sona-care/01-sign-in-her-day-and-medicines.mp4|4.5|
 care-web-ask|B/9-web-sona-care/02-ask-sona-from-her-record-and-in-malay.mp4|4.5|
@@ -81,5 +82,6 @@ care-malay|R/5-sona-care-patient/08-in-malay.mp4|4.5|
 care-chinese|R/5-sona-care-patient/09-in-chinese.mp4|4.5|
 care-doctor|R/5-sona-care-patient/10-which-doctor.mp4|4.5|
 care-book|B/5-sona-care-patient/11-book-a-follow-up.mp4|4.5|
+care-summary|B/14-problem-proofs/health-summary-to-another-hospital.mp4|4.5|
 privacy|B/12-web-ops-and-privacy/02-privacy-de-identified.mp4|4.5|
 LIST
