@@ -1,4 +1,4 @@
-import { accessLogs, appointments, bookingRequests, checkIns, doctors, doseLogs, encounters, findings, followUpRules, hospitalMembers, notes, patients } from "@sona-ai/db/schema/clinical";
+import { accessLogs, appointments, bookingRequests, checkIns, doctors, doseLogs, encounters, findings, followUpRules, hospitalMembers, notes, patients, receipts } from "@sona-ai/db/schema/clinical";
 import { appointmentWords, followUpTiming, malaysianDay, patientMeds, reviewWords, warningSigns } from "@sona-ai/domain/care";
 import { checkInDaysLine, checkInSchedule } from "@sona-ai/domain/check-ins";
 import { FOLLOW_UPS, LANGUAGES, planFor, type DischargeState, type Language } from "@sona-ai/domain/discharge";
@@ -180,10 +180,23 @@ const NOTE_CHARS = 1200, REPLIES_MAX = 5, REPLY_CHARS = 200, MISSED_MAX = 5;
  * Only the plan must be read (as before); a part that cannot be read is left out, never failing the answer, so the urgent
  * gates after it still run.
  */
+/**
+ * The prescriptions her doctor approved on her visits (Sona Pro's prescribing), the newest of each medicine, as lines
+ * with their dose, route, how often and for how long: what the ward gives her, which no other part of the record holds.
+ */
+async function prescribed(db: PatientContext["db"], hospitalId: string, patientId: string) {
+  const rows = await db.select({ payload: receipts.payload, at: receipts.createdAt }).from(receipts).innerJoin(encounters, eq(encounters.id, receipts.encounterId))
+    .where(and(eq(receipts.kind, "prescription"), eq(encounters.patientId, patientId), eq(encounters.hospitalId, hospitalId))).orderBy(desc(receipts.createdAt));
+  type Ordered = { medication?: string; formulation?: string; dose?: string; unit?: string; route?: string; frequency?: string; duration?: string };
+  const newest = new Map<string, { r: Ordered; at: Date }>();
+  for (const { payload, at } of rows) { const r = payload as Ordered; if (r.medication && !newest.has(r.medication.toLowerCase())) newest.set(r.medication.toLowerCase(), { r, at }); }
+  return [...newest.values()].map(({ r, at }) => `- ${[r.medication, r.formulation, r.dose && `${r.dose} ${r.unit ?? ""}`.trim(), r.route, r.frequency, r.duration && `for ${r.duration}`].filter(Boolean).join(", ")} (approved ${malaysiaDay(at)})`);
+}
+
 export async function recordText(context: PatientContext) {
   const { db, hospitalId, patientId } = context, now = clockOf(context);
   const unread = <T>(what: string, none: T) => (error: unknown) => { console.error(`${what} not read`, error); return none; };
-  const [plan, visits, facts, [note], asked, taken] = await Promise.all([
+  const [plan, visits, facts, [note], asked, taken, ordered] = await Promise.all([
     patientPlan(context),
     visitsText(context).catch(unread("visits", "")),
     recordFacts(db, hospitalId, patientId).catch(unread("record", [] as string[])),
@@ -192,6 +205,7 @@ export async function recordText(context: PatientContext) {
       .catch(unread("note", [] as { sentences: { id: string; text: string }[]; at: Date }[])),
     listCheckIns(db, hospitalId, { patientId }).catch(unread("check-ins", [] as Awaited<ReturnType<typeof listCheckIns>>)),
     takenKeys(db, hospitalId, patientId).catch(unread("doses", [] as string[])),
+    prescribed(db, hospitalId, patientId).catch(unread("prescriptions", [] as string[])),
   ]);
   const replies = asked.flatMap(c => c.replies.map(r => `- Day ${c.day} check-in, ${malaysiaDay(r.receivedAt)}: "${r.text.slice(0, REPLY_CHARS)}" (read as ${r.label})`)).slice(-REPLIES_MAX);
   // The note's sentences in order, whole, while they fit.
@@ -203,6 +217,7 @@ export async function recordText(context: PatientContext) {
     plan.status === "discharged" ? planText(plan) : "Still in hospital: no take-home medicines or leaflet yet.",
     visits,
     ...(facts.length ? ["Recorded by the hospital:", ...facts] : []),
+    ...(ordered.length ? ["Prescribed by her doctor in hospital:", ...ordered] : []),
     ...(noted ? [`Doctor's note (saved ${malaysiaDay(note!.at)}):`, noted] : []),
     ...(replies.length ? ["Check-in replies:", ...replies] : []),
     ...(doses?.due ? [`Doses since going home: ${doses.taken} of ${doses.due} due marked taken${doses.missed.length ? `; not marked taken: ${doses.missed.slice(-MISSED_MAX).map(m => `${m.name} ${malaysiaTime(m.dueAt)}`).join(", ")}` : ""}`] : []),

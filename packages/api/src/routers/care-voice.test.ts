@@ -1,7 +1,7 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
-import { encounters, guaranteeLetters, labResults } from "@sona-ai/db/schema/clinical";
+import { encounters, guaranteeLetters, labResults, receipts } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
@@ -97,6 +97,10 @@ test("her question is answered from her own record as recorded (history, allergy
   await db.insert(labResults).values({ id: "lab-1042-crp", patientId: "SYN-1042", test: "CRP", value: "48", unit: "mg/L", flag: "high", sourceId: "lab-1042-crp", receivedAt: new Date("2026-09-26T09:00:00+08:00") });
   await doctor.note.save({ encounterId: "visit-1042", expectedRevision: 0, sentences: [{ id: "assessment", text: "Community-acquired pneumonia, mild; CURB-65 0." }, { id: "plan", text: "Oral azithromycin for 2 more days." }] });
   await amelia.care.checkIns.reply({ checkInId: "check-in:visit-1042:2", text: "Demam balik, batuk makin teruk" });
+  // What her doctor prescribed in hospital, with how often: an amendment's newer receipt wins over the first.
+  const rx = (id: string, frequency: string, at: string) => ({ id, kind: "prescription" as const, encounterId: "visit-1042", requestId: id, revision: 0, approvedBy: "dr-aisyah", createdAt: new Date(at),
+    payload: { medication: "Paracetamol", formulation: "500 mg tablet", dose: "1000", unit: "mg", route: "Oral", frequency, duration: "3 days" } });
+  await db.insert(receipts).values([rx("rx-1", "Every 4 hours", "2026-09-26T09:00:00+08:00"), rx("rx-2", "Every 6 hours", "2026-09-27T09:00:00+08:00")]);
   await amelia.care.ask({ question: "Am I allergic to anything?" });
   const hers = read[0]!;
   for (const recorded of [
@@ -104,12 +108,13 @@ test("her question is answered from her own record as recorded (history, allergy
     "Recorded by the hospital:\nAge 42, female. Came in with: Cough for five days, with fever since yesterday.",
     "History: Asthma since childhood", "Family history: Mother has asthma", "Allergies: Penicillin — reported rash", "Medicines before admission: Salbutamol inhaler, as needed",
     "Urea 5.1 mmol/L", "Results:\n- CRP 48 mg/L, high (Sat, 26 Sep 2026)",
+    "Prescribed by her doctor in hospital:\n- Paracetamol, 500 mg tablet, 1000 mg, Oral, Every 6 hours, for 3 days (approved Sun, 27 Sep 2026)",
     "Doctor's note (saved ", "Community-acquired pneumonia, mild; CURB-65 0. Oral azithromycin for 2 more days.",
     'Check-in replies:\n- Day 2 check-in, Mon, 28 Sep 2026: "Demam balik, batuk makin teruk" (read as worse)',
   ]) expect(hers).toContain(recorded);
   expect(hers.length).toBeLessThanOrEqual(RECORD_CHARS);
   // The text says who she is by her record, not by name or number, and holds none of the other patient's rows (his potassium, his history).
-  expect(hers).not.toMatch(/SYN-1042|SYN-1086|Potassium|Hb 9\.8/);
+  expect(hers).not.toMatch(/SYN-1042|SYN-1086|Potassium|Hb 9\.8|Every 4 hours/);
 
   // Two days on, her doses count from her plan's schedule: the one she marked taken, and the ones she did not.
   const plan = await amelia.care.discharge(), later = new Date("2026-09-30T10:05:00+08:00");
