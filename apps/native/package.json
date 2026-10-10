@@ -10,7 +10,7 @@
     "prebuild": "expo prebuild",
     "web": "expo start --web",
     "check-types": "tsc -b ../../packages/api && tsc --noEmit",
-    "update": "EXPO_PUBLIC_SERVER_URL=https://sona-ai-server-staging-uxfqzyce5rxhzsju.zhiyuantech.workers.dev eas update --channel production --environment production",
+    "update": "EXPO_PUBLIC_JUDGE_BUILD=true EXPO_PUBLIC_SERVER_URL=https://sona-ai-server-staging-uxfqzyce5rxhzsju.zhiyuantech.workers.dev eas update --channel production --environment production",
     "env:generate": "varlock codegen",
     "test": "bun test features components"
   },
