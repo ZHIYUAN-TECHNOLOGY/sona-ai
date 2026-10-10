@@ -267,7 +267,8 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
           if (!head) continue;
           [flags, text] = head;
           mark("flags");
-          summary.grounded = flags?.inPlan !== false;
+          // Grounded only when Gemma says so: a reply that leaves inPlan out is not taken to be from her record.
+          summary.grounded = flags?.inPlan === true;
           // Only a leaflet that was offered can be a source: a number Gemma made up names nothing.
           summary.sources = citedSources(flags?.cites, passages);
           if (flags?.triage === "urgent") yield* urgentFirst();
@@ -282,7 +283,7 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
       if (flags === undefined) text = flagsOf(text, true)![1];
       for (const s of sentencesOf(text, true)[0]) yield* sayModel(s);
       const closed = closing === undefined ? undefined : jsonIn(closing) as Flags | undefined;
-      if (closed?.inPlan === false) summary.grounded = false;
+      if (closed?.inPlan !== undefined) summary.grounded = closed.inPlan === true;
       if (closed?.cites !== undefined) summary.sources = citedSources(closed.cites, passages);
     } catch {
       // A reply cut off mid-way keeps what was already said; one cut off before any of it counts as no answer.

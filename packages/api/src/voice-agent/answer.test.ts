@@ -58,7 +58,7 @@ test("each sentence is handed on as soon as Gemma finishes it, after the flags l
   // A spoken question names its ear beside Gemma; a typed one (above) names none.
   const heard = turnOf({ question: "After breakfast or dinner?", chat: gemma(["Hello there, Amelia."]).chat, heard: { source: "model", model: "asr-test" } });
   await spoken(heard.turn);
-  expect(heard.summaries).toEqual([{ grounded: true, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test", ear: { source: "model", model: "asr-test" } }]);
+  expect(heard.summaries).toEqual([{ grounded: false, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test", ear: { source: "model", model: "asr-test" } }]);
   expect(log.messages.map(m => m.role)).toEqual(["system", "user", "assistant", "user"]);
   expect(log.messages[0]!.content).toContain("Azithromycin (changed): Now a tablet once a day");
   expect(log.messages.at(-1)!.content).toBe("After breakfast or dinner?");
@@ -115,7 +115,7 @@ test("'I've let your care team know' is said once, by Sona when a task exists: G
   }
 });
 
-test("honest when there is no answer: Gemma starting (with its minutes), a reply with no words; a patient still in hospital is answered too; a reply without flags still counts", async () => {
+test("honest when there is no answer: Gemma starting (with its minutes), a reply with no words; a patient still in hospital is answered too; a reply without flags is still said, but not taken to be from her record", async () => {
   const starting = turnOf({ question: "Bila saya makan ubat?", language: "ms", chat: async () => ({ waking: 12 }) });
   expect(await spoken(starting.turn)).toEqual([LINES.ms.starting(12)]);
   expect(starting.summaries).toEqual([{ grounded: false, urgent: false, sources: [], withheld: 0, source: "fixture", waking: 12 }]);
@@ -127,7 +127,11 @@ test("honest when there is no answer: Gemma starting (with its minutes), a reply
   expect(asked).toBe(true);
   const bare = turnOf({ question: "Can I rest?", chat: gemma(["Your plan says rest ", "at home."]).chat });
   expect(await spoken(bare.turn)).toEqual(["Your plan says rest at home."]);
-  expect(bare.summaries[0]!.grounded).toBe(true);
+  expect(bare.summaries[0]!.grounded).toBe(false);
+  // The flags only after the words (the triage word first) still say where the answer came from.
+  const late = turnOf({ question: "Can I rest?", chat: gemma(["fine\nYour plan says rest at home.", '\n{"inPlan": true, "cites": []}']).chat });
+  await spoken(late.turn);
+  expect(late.summaries[0]!.grounded).toBe(true);
   const broken = turnOf({ question: "Can I rest?", chat: async () => ({ model: "gemma-test", text: (async function* () { throw new Error("connection reset"); })() }) });
   expect(await spoken(broken.turn)).toEqual([LINES.en.unavailable]);
 });
@@ -249,7 +253,11 @@ test("the triage word heads the reply and the rest of the flags close it: the wo
   expect(general.summaries[0]!.grounded).toBe(false);
   const bare = turnOf({ question: "When is my review?", chat: gemma(["fine\nYour review is on 12 October."]).chat });
   expect(await spoken(bare.turn)).toEqual(["Your review is on 12 October."]);
-  expect(bare.summaries[0]!.grounded).toBe(true);
+  expect(bare.summaries[0]!.grounded).toBe(false);
+  // The flags only after the words (the triage word first) still say where the answer came from.
+  const late = turnOf({ question: "Can I rest?", chat: gemma(["fine\nYour plan says rest at home.", '\n{"inPlan": true, "cites": []}']).chat });
+  await spoken(late.turn);
+  expect(late.summaries[0]!.grounded).toBe(true);
 
   // "urgent" still puts the 999 line before Gemma's words, and "worse" still reaches the care team.
   const urgent = turnOf({ question: "I feel confused and dizzy", chat: gemma(['urgent\nYour plan says to come back if you feel faint.\n{"inPlan": true, "cites": []}']).chat });
