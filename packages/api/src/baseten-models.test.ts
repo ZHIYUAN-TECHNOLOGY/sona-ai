@@ -244,6 +244,14 @@ test("a brief always names a recorded allergy, even when Gemma leaves it out", a
   expect(brief).toEqual({ lines: ["Three days of cough and fever.", "Allergy recorded: Penicillin."], source: "model", model: BRAIN_MODEL });
 });
 
+test("given the record as it is now, the brief reads its lines instead of the intake fields, so a fever long gone is not told", async () => {
+  const { fetcher, calls } = fake({ [box("brain")]: chatReply('{"lines":["Cough and fever, now afebrile."]}') });
+  await basetenModels({ apiKey: "k", fetcher }).briefing({ patient: { ...patient, vitals: [{ label: "Temp", value: "38.1 °C" }] }, record: ["Observations (latest of each): Temperature 36.9 °C (Tue, 13 Oct 2026)"] });
+  const sent = JSON.parse(String(calls.find(c => c.url.endsWith("completions"))!.init.body)).messages[1].content;
+  expect(sent).toContain("Temperature 36.9 °C");
+  expect(sent).not.toContain("38.1");
+});
+
 test("check-in replies go to Gemma through the shared readers, with the rule's urgent words as a floor", async () => {
   const { fetcher } = fake({ [box("brain")]: chatReply('{"label":"worse","symptom":"chest discomfort"}') });
   const models = basetenModels({ apiKey: "k", fetcher });

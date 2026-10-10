@@ -59,8 +59,12 @@ export const changesOf = ({ prescriptions, followUps }: VisitSummaryInput) => [
 
 export type Models = {
   /** Brain (Gemma): what to know before seeing the patient. */
-  /** `visitPrep` is what the patient shared from Sona Care before the visit (visitPrepBlock), when they shared anything. */
-  briefing(input: { patient: Patient; visitPrep?: string }): Answer<{ lines: string[] }>;
+  /**
+   * `visitPrep` is what the patient shared from Sona Care before the visit (visitPrepBlock), when they shared anything.
+   * `record` is the record's lines as of now (recordFacts: the latest dated reading of each observation, results a doctor
+   * acknowledged); without it the brief reads the patient's intake fields, vitals as written at intake.
+   */
+  briefing(input: { patient: Patient; visitPrep?: string; record?: string[] }): Answer<{ lines: string[] }>;
   /** `withheld` (on a fixture): the model did answer, and nothing in its reply passed the checks (cited, no number the record lacks). */
   reasoning(input: { patient: Patient; question: string }): Answer<{ answer: string; sourceIds: string[]; withheld?: boolean }>;
   /** X-ray box: never a validated read in this demo. */

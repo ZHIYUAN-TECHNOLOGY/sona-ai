@@ -48,6 +48,14 @@ test("briefing and reasoning read the patient's own record, are labelled fixture
   expect(logs[0]!.output).toEqual({ lines: brief.lines });
 });
 
+test("the briefing reads the record as it is now: the chart's latest readings, not the vitals written at intake (10 Oct, gate: 38.1 °C told on a 36.9 °C chart)", async () => {
+  let seen: Parameters<Models["briefing"]>[0] | undefined;
+  const { api } = await world({ ...stubModels, briefing: input => { seen = input; return stubModels.briefing(input); } });
+  await api.encounter.briefing({ encounterId: "visit-1042" });
+  expect(seen!.record?.find(l => l.startsWith("Observations (latest of each)"))).toContain("Temperature 36.9 °C");
+  expect(seen!.record?.join("\n")).not.toContain("38.1");
+});
+
 test("the discharge draft is the patient's own plan in the chosen language, built from each one's record: Amelia's like Nurul's", async () => {
   const { db, api } = await world();
   const amelia = await api.discharge.draft({ encounterId: "visit-1042", language: "zh" });

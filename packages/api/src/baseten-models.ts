@@ -347,7 +347,9 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
     async briefing(input) {
       try {
         const { age, sex, complaint, history, family, social, allergies, medicines, vitals, incomplete } = input.patient;
-        const read = await brain(BRIEFING, JSON.stringify({ age, sex, complaint, history, family, social, allergies, medicines, vitals, recordIncomplete: incomplete, sharedByPatientBeforeVisit: input.visitPrep }));
+        // The record as of now when the route read it: the intake vitals told the doctor of a fever long gone (10 Oct, gate: 38.1 °C on a 36.9 °C chart).
+        const facts = input.record ? { record: input.record } : { age, sex, complaint, history, family, social, allergies, medicines, vitals };
+        const read = await brain(BRIEFING, JSON.stringify({ ...facts, recordIncomplete: incomplete, sharedByPatientBeforeVisit: input.visitPrep }));
         const lines = strings(read?.lines, 4);
         if (lines.length) {
           // Safety floor: a recorded allergy is always in the brief, whatever the model left out.

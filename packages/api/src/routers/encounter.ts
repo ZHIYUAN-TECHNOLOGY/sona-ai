@@ -218,10 +218,14 @@ export const encounterRouter = {
     const current = await loadEncounter(context.db, hospitalId, input.encounterId);
     return saveEncounter(context.db, hospitalId, current.revision, applyReview(current, review));
   }),
-  /** What to know before seeing the patient, read from their own record (a labelled fixture until Gemma is on). */
+  /**
+   * What to know before seeing the patient, read from their own record as it is now (recordFacts: the chart's latest
+   * readings, results a doctor acknowledged), a labelled fixture until Gemma is on.
+   */
   briefing: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { patient } = await visitOf(context.db, context.hospitalId, input.encounterId);
-    const answer = await (context.models ?? stubModels).briefing({ patient, visitPrep: await visitPrepBlock(context.db, context.hospitalId, patient.id, clockOf(context)) });
+    const [visitPrep, record] = await Promise.all([visitPrepBlock(context.db, context.hospitalId, patient.id, clockOf(context)), recordFacts(context.db, context.hospitalId, patient.id, { forPatient: true })]);
+    const answer = await (context.models ?? stubModels).briefing({ patient, visitPrep, record });
     return logAnswer(context.db, input.encounterId, "briefing", answer, recordSources(patient));
   }),
   /** The briefing's timeline: the dated events the record holds for this visit's patient (timelineOf). */
