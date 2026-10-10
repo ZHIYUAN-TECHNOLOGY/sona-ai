@@ -22,7 +22,7 @@ async function world() {
   await seedDemo(db, clock.now);
   await addClinician(db, "dr-aisyah");
   const heard: [string, Change][] = [];
-  const as = (session: Session | null) => createRouterClient(appRouter, { context: { db, session, now: () => clock.now, announce: async (h: string, c: Change) => { heard.push([h, c]); } } });
+  const as = (session: Session | null) => createRouterClient(appRouter, { context: { db, session, now: () => clock.now, publicUrl: "https://sona.test/", announce: async (h: string, c: Change) => { heard.push([h, c]); } } });
   return { db, clock, heard, doctor: as(user("dr-aisyah")), amelia: as(user("amelia-account", "Amelia Tan")), anyone: as(null), as };
 }
 
@@ -31,7 +31,7 @@ test("the doctor issues Amelia's code once per visit; anyone can preview it, and
   const issued = await doctor.care.code({ encounterId: "visit-1042" });
   expect(issued.code).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/);
   expect(await doctor.care.code({ encounterId: "visit-1042" })).toEqual(issued);
-  expect(issued.link).toBe(`sona-care://join?code=${issued.code}`);
+  expect(issued.link).toBe(`https://sona.test/care/join?code=${issued.code}`);
   expect(await anyone.care.preview({ code: issued.code.toLowerCase().replace("-", "") })).toEqual({ firstName: "Amelia", hospital: "Demo General Hospital (synthetic)" });
   expect((await anyone.care.preview({ code: "ZZZZ-ZZZZ" }).catch(e => e)).code).toBe("NOT_FOUND");
 });

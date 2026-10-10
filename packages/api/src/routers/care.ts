@@ -41,7 +41,8 @@ function newCode() {
 /** Accepts the code however it was typed: lower case, with or without the dash or spaces. */
 const normalise = (code: string) => { const c = code.toUpperCase().replace(/[^A-Z0-9]/g, ""); return `${c.slice(0, 4)}-${c.slice(4, 8)}`; };
 const codeInput = z.object({ code: z.string().trim().min(8).max(20) });
-export const joinLink = (code: string) => `sona-care://join?code=${code}`;
+/** The QR's link: Sona Care web on the Worker's own address, so any phone camera opens it; the app's scanner reads `code=` from it too. */
+export const joinLink = (code: string, publicUrl?: string) => publicUrl ? `${publicUrl.replace(/\/$/, "")}/care/join?code=${code}` : `sona-care://join?code=${code}`;
 
 async function codeRow(db: Context["db"], code: string) {
   const [row] = await db.select({ code: careCodes, patient: patients.name, hospital: hospitals.name }).from(careCodes)
@@ -64,11 +65,11 @@ export const careRouter = {
     await loadEncounter(db, hospitalId, input.encounterId);
     const now = clockOf(context);
     const [existing] = await db.select().from(careCodes).where(eq(careCodes.encounterId, input.encounterId));
-    if (existing && (existing.redeemedBy || existing.expiresAt > now)) return { code: existing.code, link: joinLink(existing.code), expiresAt: existing.expiresAt, joined: Boolean(existing.redeemedBy) };
+    if (existing && (existing.redeemedBy || existing.expiresAt > now)) return { code: existing.code, link: joinLink(existing.code, context.publicUrl), expiresAt: existing.expiresAt, joined: Boolean(existing.redeemedBy) };
     const [visit] = await db.select({ patientId: encounters.patientId }).from(encounters).where(eq(encounters.id, input.encounterId));
     const row = { code: newCode(), hospitalId, patientId: visit!.patientId, encounterId: input.encounterId, expiresAt: new Date(now.getTime() + CODE_DAYS * 24 * 3600_000) };
     await db.insert(careCodes).values(row).onConflictDoUpdate({ target: careCodes.encounterId, set: { code: row.code, expiresAt: row.expiresAt, redeemedBy: null, redeemedAt: null } });
-    return { code: row.code, link: joinLink(row.code), expiresAt: row.expiresAt, joined: false };
+    return { code: row.code, link: joinLink(row.code, context.publicUrl), expiresAt: row.expiresAt, joined: false };
   }),
 
   /** Anyone: who a code is for, first name only, so the patient can confirm before signing up. */

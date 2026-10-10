@@ -65,5 +65,5 @@ export default [
     one: { due: 1, taken: 0, missed: [], late: doses(1), line: "" },
     huge: { due: 1284, taken: 284, missed: doses(1000), late: [], line: "Missed 1,000 doses." },
   }),
-  fixture("care.code", { worst: { code: "K7QM-4ZXP", link: "sona-care://join?code=K7QM-4ZXP", expiresAt: new Date(NOW + 7 * 86_400_000), joined: false } }),
+  fixture("care.code", { worst: { code: "K7QM-4ZXP", link: "https://sona.example/care/join?code=K7QM-4ZXP", expiresAt: new Date(NOW + 7 * 86_400_000), joined: false } }),
 ];

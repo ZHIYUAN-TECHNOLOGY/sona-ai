@@ -21,7 +21,8 @@ import { client, queryClient } from "@/utils/orpc";
  * Joining from the discharge paper (the kit's "Please scan / your code", then its "Hello! I'm …"
  * card): scan the QR (or type its code), confirm it is for you, create an account (or use the one you
  * are signed in with), and the code links it to your record.
- * The QR holds sona-care://join?code=…, so the phone's camera can also open this screen directly.
+ * The QR holds Sona Care web's https://…/care/join?code=… (any phone camera opens it); the scanner
+ * reads `code=` from it, and a sona-care://join?code=… link still opens this screen directly.
  * A page pushed from home (steps, a camera and typing, so not a modal): back, or the swipe, leaves it.
  */
 const codeFrom = (text: string) => text.match(/code=([A-Za-z0-9-]+)/)?.[1] ?? text;
