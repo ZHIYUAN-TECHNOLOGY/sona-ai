@@ -70,6 +70,8 @@ button.ai-steps-head { cursor: pointer; transition: background-color 150ms ease,
 /* Response */
 .ai-response { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
 .ai-bottom-line { margin: 0; font-size: calc(var(--text-body) + 1px); line-height: 1.45; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); text-wrap: pretty; overflow-wrap: anywhere; }
+/* What general knowledge adds after the page's answer (ask.free "general"): its own paragraph, body weight. */
+.ai-general { margin: var(--space-2, 8px) 0 0; font-size: var(--text-body); line-height: 1.5; color: var(--ink); text-wrap: pretty; overflow-wrap: anywhere; }
 .ai-claims { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .ai-claims > li { position: relative; padding-left: 16px; color: var(--ink); text-wrap: pretty; overflow-wrap: anywhere; }
 .ai-claims > li::before { content: ""; position: absolute; left: 3px; top: calc(var(--line-body) / 2 - 2.5px); width: 5px; height: 5px; border-radius: 50%; background: var(--placeholder); }

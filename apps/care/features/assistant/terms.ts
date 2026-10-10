@@ -65,43 +65,53 @@ export function medicinesOf(plan?: { medicines?: Partial<Record<string, { name: 
 }
 
 /** A word to colour as the model chose it (care.ask's `marks`): its exact words in the answer, and its kind. */
-export type Chosen = { text: string; kind: Mark };
+export type Chosen<K extends string = Mark> = { text: string; kind: K };
 
 /**
- * The text cut into pieces, each marked or not. The model's own marks when it gave any (`chosen`, even none: then
- * nothing is coloured): each is found in turn after the one before, so a dose said twice is marked twice. Without them
- * (no model, or an older server) the word lists stand in: a warning wins over a medicine, a medicine over a dose.
+ * Where each of the model's chosen words is in `text`: each found in turn after the one before, so a dose said twice
+ * is marked twice; one not in the text is skipped. Sona Pro's web answers use it too, with their own kinds.
  */
-export function marked(text: string, medicines: string[] = [], chosen?: Chosen[]): Piece[] {
-  const found: { from: number; to: number; mark: Mark }[] = [];
+export function chosenIn<K extends string>(text: string, chosen: Chosen<K>[]) {
+  const found: { from: number; to: number; mark: K }[] = [];
   const free = (from: number, to: number) => !found.some(f => from < f.to && to > f.from);
-  if (chosen) {
-    let cursor = 0;
-    for (const c of chosen) {
-      let from = text.indexOf(c.text, cursor);
-      while (from >= 0 && !free(from, from + c.text.length)) from = text.indexOf(c.text, from + 1);
-      if (from < 0) from = text.indexOf(c.text);
-      while (from >= 0 && !free(from, from + c.text.length)) from = text.indexOf(c.text, from + 1);
-      if (from < 0 || !c.text) continue;
-      found.push({ from, to: from + c.text.length, mark: c.kind });
-      cursor = from + c.text.length;
-    }
-  } else {
-    const rules: [Mark, RegExp][] = [["warning", WARNING], ["medicine", DRUG], ["dose", DOSE]];
-    if (medicines.length) rules.splice(1, 0, ["medicine", words([...medicines].sort((a, b) => b.length - a.length).map(escape).join("|"))]);
-    for (const [mark, rule] of rules) for (const m of text.matchAll(rule)) {
-      const from = m.index, to = from + m[0].length;
-      if (free(from, to)) found.push({ from, to, mark });
-    }
+  const next = (words: string, at: number) => { let from = text.indexOf(words, at); while (from >= 0 && !free(from, from + words.length)) from = text.indexOf(words, from + 1); return from; };
+  let cursor = 0;
+  for (const c of chosen) {
+    if (!c.text) continue;
+    const from = next(c.text, cursor) >= 0 ? next(c.text, cursor) : next(c.text, 0);
+    if (from < 0) continue;
+    found.push({ from, to: from + c.text.length, mark: c.kind });
+    cursor = from + c.text.length;
   }
-  found.sort((a, b) => a.from - b.from);
-  const pieces: Piece[] = [];
+  return found;
+}
+
+/** The text cut into pieces at the found words, each marked or not. */
+export function piecesOf<K extends string>(text: string, found: { from: number; to: number; mark: K }[]): { text: string; mark?: K }[] {
+  const pieces: { text: string; mark?: K }[] = [];
   let at = 0;
-  for (const f of found) {
+  for (const f of [...found].sort((a, b) => a.from - b.from)) {
     if (f.from > at) pieces.push({ text: text.slice(at, f.from) });
     pieces.push({ text: text.slice(f.from, f.to), mark: f.mark });
     at = f.to;
   }
   if (at < text.length) pieces.push({ text: text.slice(at) });
   return pieces;
+}
+
+/**
+ * The text cut into pieces, each marked or not. The model's own marks when it gave any (`chosen`, even none: then
+ * nothing is coloured). Without them (no model, or an older server) the word lists stand in: a warning wins over a
+ * medicine, a medicine over a dose.
+ */
+export function marked(text: string, medicines: string[] = [], chosen?: Chosen[]): Piece[] {
+  if (chosen) return piecesOf(text, chosenIn(text, chosen));
+  const found: { from: number; to: number; mark: Mark }[] = [];
+  const rules: [Mark, RegExp][] = [["warning", WARNING], ["medicine", DRUG], ["dose", DOSE]];
+  if (medicines.length) rules.splice(1, 0, ["medicine", words([...medicines].sort((a, b) => b.length - a.length).map(escape).join("|"))]);
+  for (const [mark, rule] of rules) for (const m of text.matchAll(rule)) {
+    const from = m.index, to = from + m[0].length;
+    if (!found.some(f => from < f.to && to > f.from)) found.push({ from, to, mark });
+  }
+  return piecesOf(text, found);
 }

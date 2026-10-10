@@ -1,5 +1,5 @@
 import { Icon } from "@/components/icon";
-import { Marked } from "@/components/marked";
+import { Marked, type ProChosen } from "@/components/marked";
 
 import { type RuleTone, ruleHeading } from "./summary";
 import "@/styles/ai.css";
@@ -13,10 +13,10 @@ const TONE_WORD: Record<RuleTone, string> = { urgent: "Urgent", soon: "Soon", go
  * ("2 patients need you", or `heading`), then one row per item with its tone dot, title and detail. A row with an `op`
  * opens with `onOpen(row)` and shows a chevron.
  */
-export function RuleAnswer({ lead, rows, noun, heading, onOpen }: { lead: string; rows: RuleRow[]; noun?: [string, string]; heading?: string; onOpen?: (row: RuleRow) => void }) {
+export function RuleAnswer({ lead, rows, noun, heading, onOpen, chosen }: { lead: string; rows: RuleRow[]; noun?: [string, string]; heading?: string; onOpen?: (row: RuleRow) => void; /** The words the model chose to colour in the lead. */ chosen?: ProChosen[] }) {
   return (
     <div className="ai-rule">
-      <p className="ai-bottom-line"><Marked text={lead} /></p>
+      {lead.split(/\n{2,}/).map((part, i) => <p key={i} className={i ? "ai-general" : "ai-bottom-line"}><Marked text={part} chosen={chosen} /></p>)}
       {rows.length ? (
         <div className="ai-rule-group">
           <p className="ai-rule-heading">{heading ?? ruleHeading(rows, noun)}</p>

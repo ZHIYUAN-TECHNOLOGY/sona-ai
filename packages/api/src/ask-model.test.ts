@@ -8,3 +8,8 @@ test("Gemma's misplaced general and children are put back, so its answer is used
   const fine = { root: "f", elements: { f: { type: "AskColumn", props: {}, children: [] } }, general: "x" };
   expect(lifted(fine).elements).toEqual(fine.elements);
 });
+
+test("kind tags Gemma writes into its words are taken out; the colours come from its marks", () => {
+  const lead = (text: string) => (lifted({ root: "f", elements: { "f-0": { type: "AskLead", props: { text }, children: [] } } }) as any).elements["f-0"].props.text;
+  expect(lead('Treat <finding>pyelonephritis</finding> with <mark kind="medicine">ceftriaxone</mark>.')).toBe("Treat pyelonephritis with ceftriaxone.");
+});

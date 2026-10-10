@@ -39,7 +39,10 @@ Rules:
 - <rows>: up to 8 of the page's rows that answer the question, most important first, each copied exactly as given (id, title, detail, tone, op). If no row answers it, leave out "f-1" and its child id.
 - The lead, under 280 characters, in your own words: every patient, bed, name and number in it must be one the page's data or the question states (a count of the rows is fine). Never invent a patient, bed, task, result or count.
 - "general": what general clinical knowledge adds for this clinician (likely causes, what to check, usual management or doses), in up to 5 short sentences; leave it out when it adds nothing. It is shown labelled as general knowledge.
-When the page's data does not answer it, answer from general medical, hospital and everyday knowledge instead, in up to 5 short sentences, as {"general": "<text>", "evidence": <true or false>}. "evidence" is true only for a clinical question that published studies or guidelines answer (whether a treatment or test helps, a dose, a risk, a prognosis). You have not seen this hospital's other records: never state a fact about a specific patient, bed, task or number there.`;
+When the page's data does not answer it, answer from general medical, hospital and everyday knowledge instead, in up to 5 short sentences, as {"general": "<text>", "evidence": <true or false>}. "evidence" is true only for a clinical question that published studies or guidelines answer (whether a treatment or test helps, a dose, a risk, a prognosis). You have not seen this hospital's other records: never state a fact about a specific patient, bed, task or number there.
+In either shape, add "marks": every clinical term in your lead and in "general" a clinician's eye should land on, so it is coloured, each copied exactly as you wrote it, as [{"text": "<words>", "kind": "<kind>"}]. Kinds: "alert" for what must not be missed (an allergy, a critical or abnormal result with its value, an emergency sign); "medicine" for each medicine, drug class or treatment; "finding" for each diagnosis or condition; "symptom" for each symptom or sign; "caution" for what is unconfirmed, pending or missing. Never mark a person's name, a bed, a task or a count. The shortest phrase that carries each, at most 12; [] when none fits.
+Write the lead and "general" as plain sentences: no tags or markup in them; the colouring comes only from "marks".
+Example: lead "Daniel Rahman has a low potassium of 3.1 mmol/L." and general "Hypokalaemia can cause arrhythmias and muscle weakness; check an ECG and give oral or IV potassium." give "marks": [{"text": "low potassium of 3.1 mmol/L", "kind": "alert"}, {"text": "Hypokalaemia", "kind": "finding"}, {"text": "arrhythmias", "kind": "alert"}, {"text": "muscle weakness", "kind": "symptom"}, {"text": "ECG", "kind": "caution"}, {"text": "oral or IV potassium", "kind": "medicine"}].`;
 
 const TOKEN = /[\p{L}\p{N}][\p{L}\p{N}+'’-]*(?:\.\d+)*/gu;
 const bare = (word: string) => word.toLowerCase().replace(/['’]s$/, ""); // "Amelia's" is Amelia
@@ -127,13 +130,25 @@ function withGeneral(spec: AskSpec, general: string): AskSpec {
 export function lifted<T>(reply: T): T {
   const read = reply as any, inner = read?.elements;
   if (!inner || typeof inner !== "object") return reply;
-  const { general, evidence, ...rest } = inner;
+  const { general, evidence, marks, ...rest } = inner;
   const elements = Object.fromEntries(Object.entries(rest).map(([id, el]: [string, any]) => {
+    if (el?.type === "AskLead" && typeof el.props?.text === "string") el = { ...el, props: { ...el.props, text: untagged(el.props.text) } };
     if (!el || typeof el !== "object" || Array.isArray(el.children) || !Array.isArray(el.props?.children)) return [id, el];
     const { children, ...props } = el.props;
     return [id, { ...el, props, children }];
   }));
-  return { ...read, elements, general: read.general ?? general, evidence: read.evidence ?? evidence };
+  return { ...read, elements, general: read.general ?? general, evidence: read.evidence ?? evidence, marks: read.marks ?? marks };
+}
+
+/** Words without the kind tags Gemma sometimes writes into them ("<finding>pyelonephritis</finding>", "<mark kind=\"finding\">", 10 Oct) instead of only in "marks". */
+const untagged = (text: string) => text.replace(/<\/?(?:alert|medicine|finding|symptom|caution|mark)\b[^>]*>/gi, "");
+const MARK_KINDS = new Set(["alert", "medicine", "finding", "symptom", "caution"]);
+type ProMark = { text: string; kind: "alert" | "medicine" | "finding" | "symptom" | "caution" };
+/** The model's marks that name words really in the answer's lead (with its general part), as `{ marks }`; none when it gave none. */
+function marksOf(marks: unknown, spec: AskSpec): { marks?: ProMark[] } {
+  if (!Array.isArray(marks)) return {};
+  const said = Object.values(spec.elements).flatMap(e => (e.type === "AskLead" ? [String(e.props.text)] : [])).join("\n");
+  return { marks: marks.flatMap(m => (MARK_KINDS.has(m?.kind) && typeof m?.text === "string" && m.text.trim() && said.includes(m.text.trim()) ? [{ text: m.text.trim().slice(0, 80), kind: m.kind }] : [])).slice(0, 20) };
 }
 
 export async function freeAnswer(baseten: Baseten, input: { scope: string; question: string; context: AskContext }) {
@@ -143,12 +158,15 @@ export async function freeAnswer(baseten: Baseten, input: { scope: string; quest
     // Through the adapter's box gate: a cold brain is woken and not waited for.
     const read = lifted(jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 1500, true)));
     const spec = groundedSpec(read, context, input.question);
-    const text = typeof read?.general === "string" ? read.general.trim().slice(0, LEAD_MAX) : "";
-    if (spec) return { source: "model" as const, model: BRAIN_MODEL, spec: text ? withGeneral(spec, text) : spec };
+    const text = typeof read?.general === "string" ? untagged(read.general).trim().slice(0, LEAD_MAX) : "";
+    if (spec) {
+      const answer = text ? withGeneral(spec, text) : spec;
+      return { source: "model" as const, model: BRAIN_MODEL, spec: answer, ...marksOf(read?.marks, answer) };
+    }
     const general = text && checkAskSpec({ root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "AskLead", props: { text }, children: [] } } });
     // `evidence`: Gemma read it as a clinical question the literature answers, so the app answers it from PubMed and the
     // library with citations (the Evidence feature) and this uncited general answer is not what the clinician is shown.
-    if (general) return { source: "model" as const, model: BRAIN_MODEL, spec: general, general: true as const, ...read?.evidence === true && { evidence: true as const } };
+    if (general) return { source: "model" as const, model: BRAIN_MODEL, spec: general, general: true as const, ...read?.evidence === true && { evidence: true as const }, ...marksOf(read?.marks, general) };
     // Gemma answered from the page and its words did not keep to it (the check above). The page's own lines are still
     // true, so they answer, as the rules' (no model's name on them), rather than "Sona couldn't answer that".
     const said = read?.elements ? pageLines(context) : undefined;

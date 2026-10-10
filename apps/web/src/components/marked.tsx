@@ -3,13 +3,16 @@ import { Fragment } from "react";
 // The phone apps' rules, read as they are: one dictionary decides which clinical words get a colour everywhere.
 import { type Mark, segments } from "../../../native/components/sona/marked-terms";
 // Sona Care's rules (the patient app's): her medicines, how much and when, and when to worry.
-import { type Chosen, marked } from "../../../care/features/assistant/terms";
+import { type Chosen, chosenIn, marked, piecesOf } from "../../../care/features/assistant/terms";
 
-/** Clinical text with its terms coloured by kind, so the eye lands on what matters first. */
-export function Marked({ text }: { text: string }) {
+/** A word to colour in a Sona Pro answer, as the model chose it (ask.free `marks`). */
+export type ProChosen = Chosen<Mark>;
+
+/** Clinical text with its terms coloured by kind, so the eye lands on what matters first: the model's choice (`chosen`) when it gave one, else the word lists. */
+export function Marked({ text, chosen }: { text: string; chosen?: ProChosen[] }) {
   return (
     <>
-      {segments(text).map((seg, i) => seg.mark ? <span key={i} className="mark" data-mark={seg.mark}>{seg.text}</span> : <Fragment key={i}>{seg.text}</Fragment>)}
+      {(chosen ? piecesOf(text, chosenIn(text, chosen)) : segments(text)).map((seg, i) => seg.mark ? <span key={i} className="mark" data-mark={seg.mark}>{seg.text}</span> : <Fragment key={i}>{seg.text}</Fragment>)}
     </>
   );
 }

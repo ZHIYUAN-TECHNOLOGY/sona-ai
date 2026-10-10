@@ -180,7 +180,7 @@ function Answer({ turn, ask }: { turn: Turn; ask: (q: string) => void }) {
     const patientId = rowPatient(row);
     if (patientId) void navigate({ to: "/pro/patients/$patientId", params: { patientId } });
   };
-  return <RuleAnswer lead={answer.lead} rows={answer.rows} heading={answer.heading} onOpen={open} />;
+  return <RuleAnswer lead={answer.lead} rows={answer.rows} heading={answer.heading} onOpen={open} chosen={answer.marks} />;
 }
 
 /** The page's turns as a thread that follows the newest: the Sona panel's body. Nothing until the first question. */

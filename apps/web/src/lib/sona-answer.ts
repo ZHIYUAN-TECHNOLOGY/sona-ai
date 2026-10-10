@@ -1,5 +1,6 @@
 import { modelName } from "@sona-ai/domain/model-names";
 import type { Chosen } from "../../../care/features/assistant/terms";
+import type { ProChosen } from "@/components/marked";
 import type { ReactNode } from "react";
 
 import type { RuleRow } from "@/components/ai/rule-answer";
@@ -11,7 +12,7 @@ import type { Turn as EvidenceTurn } from "@/features/evidence/thread";
  * except `node`, a page's own answer (Sona Care's Ask page) shown as it is.
  */
 export type SonaAnswer =
-  | { kind: "rules"; lead: string; rows: RuleRow[]; heading?: string; by?: string }
+  | { kind: "rules"; lead: string; rows: RuleRow[]; heading?: string; by?: string; marks?: ProChosen[] }
   | { kind: "evidence"; turn: EvidenceTurn; encounterId?: string }
   | { kind: "text"; text: string; note?: string; /** Sona Care: the words the model chose to colour (care.ask `marks`). */ marks?: Chosen[] }
   /** `text`: the answer's words, when the page has them, so a follow-up can be read with it (`historyOf`). */
@@ -32,7 +33,7 @@ export function historyOf(turns: { question: string; state: string; answer?: Son
 
 type Element = { type: string; props: Record<string, unknown>; children?: string[] };
 /** What `ask.free` returns: an ask-catalogue spec, who wrote it, and how long the model needs when it is starting. */
-export type FreeAnswer = { source?: string; model?: string; waking?: number; spec?: { root: string; elements: Record<string, Element> } };
+export type FreeAnswer = { source?: string; model?: string; waking?: number; spec?: { root: string; elements: Record<string, Element> }; /** The words the model chose to colour in its lead (ask.free `marks`). */ marks?: ProChosen[] };
 
 /**
  * The ask spec as a rule answer: AskLead is the lead, AskRows the rows, AskReview's items more rows under its title.
@@ -57,7 +58,7 @@ export function rulesAnswer(res: FreeAnswer): Extract<SonaAnswer, { kind: "rules
   if (!lead) [lead, heading] = [heading ?? "", undefined];
   // The kit's count line says "Nothing needs you" over calm rows, which would contradict a list of today's visits: count them instead.
   if (!heading && rows.length && !rows.some(r => r.tone === "urgent" || r.tone === "soon")) heading = plural(rows.length, "item");
-  return { kind: "rules", lead, rows, ...(heading ? { heading } : {}), by: res.source === "model" ? modelName(res.model) : res.source === "rules" ? "rules" : undefined };
+  return { kind: "rules", lead, rows, ...(heading ? { heading } : {}), ...res.marks && { marks: res.marks }, by: res.source === "model" ? modelName(res.model) : res.source === "rules" ? "rules" : undefined };
 }
 
 /** Where a streamed evidence turn is, for the Steps line: searching, reading the sources, writing, or done (answered or failed). */
