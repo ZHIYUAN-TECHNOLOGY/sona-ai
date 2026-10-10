@@ -34,7 +34,7 @@ function Page() {
         <Button variant="primary" icon="download" pending={pdf.isPending} onClick={() => pdf.mutate({})}>{pdf.isPending ? "Making the PDF…" : "Download PDF"}</Button>
       } />
       {pdf.isError ? <p className="hs-text" role="alert">We could not make the PDF. {pdf.error.message}</p> : null}
-      <HealthSummaryView s={s} />
+      <HealthSummaryView s={s} marks />
     </>
   );
 }

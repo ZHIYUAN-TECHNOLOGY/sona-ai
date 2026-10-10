@@ -13,10 +13,10 @@ import { Button, Card, LoadError, Section, surfaceStyle, Title, useBelowStatusBa
 import { client, orpc } from "@/utils/orpc";
 import "./strings";
 
-/** One line of a card: the label above in grey, the words in ink (or their meaning colour). */
-function Fact({ label, children, color = palette.ink, first }: { label: string; children: ReactNode; color?: string; first?: boolean }) {
+/** One line of a card: the label above in grey (or its meaning colour, semibold), the words in ink (or their meaning colour). */
+function Fact({ label, children, color = palette.ink, labelColor, first }: { label: string; children: ReactNode; color?: string; labelColor?: string; first?: boolean }) {
   return <View style={{ gap: 2, paddingVertical: 10, borderTopWidth: first ? 0 : 1, borderColor: palette.line }}>
-    <Text style={{ ...type.footnote, color: palette.faint }}>{label}</Text>
+    <Text style={{ ...type.footnote, color: labelColor ?? palette.faint, fontWeight: labelColor ? "600" : undefined }}>{label}</Text>
     <Text selectable style={{ ...type.body, color }}>{children}</Text>
   </View>;
 }
@@ -25,7 +25,8 @@ function Fact({ label, children, color = palette.ink, first }: { label: string; 
  * My health summary (a dock tab, beside Home; Home's tile and Settings open it too): her record as the hospital's PDF holds it (care.healthSummaryData, the
  * object the PDF renders), read before she shares it. Insight first: the key problems, her allergy in red, her medicines
  * and her next visit in one feature card, with Share right under it; then the record, a section with nothing in it left
- * out. Clinical words stay as the care team wrote them; Sona Care's own words follow her language. Sections rise 40 ms
+ * out. Colours come from each field's type, as in her answers (assistant/marked.tsx): a medicine's name blue, its dose and
+ * times violet, warning signs and flagged results red; a stopped medicine stays grey. Clinical words stay as the care team wrote them; Sona Care's own words follow her language. Sections rise 40 ms
  * apart; still under Reduce Motion.
  */
 export function HealthSummaryScreen() {
@@ -77,7 +78,8 @@ export function HealthSummaryScreen() {
         {s.social ? <Fact label={t("hs.social")}>{s.social}</Fact> : null}
       </Card>)}
       {s.medicines.length > 0 && section(t("hs.medsLight"), t("hs.medsBold"), <View style={[surfaceStyle, { paddingHorizontal: 18, paddingVertical: 4 }]}>
-        {s.medicines.map((m, n) => <Fact key={`${n}${m.name}`} first={n === 0} label={m.change === "unchanged" ? m.name : `${m.name} · ${m.change}`} color={m.change === "stopped" ? palette.muted : palette.ink}>{m.detail || "—"}</Fact>)}
+        {s.medicines.map((m, n) => <Fact key={`${n}${m.name}`} first={n === 0} label={m.change === "unchanged" ? m.name : `${m.name} · ${m.change}`}
+          labelColor={m.change === "stopped" ? undefined : palette.blue} color={m.change === "stopped" ? palette.muted : palette.violet}>{m.detail || "—"}</Fact>)}
       </View>)}
       {s.results.length > 0 && section(t("hs.resultsLight"), t("hs.resultsBold"), <View style={[surfaceStyle, { paddingHorizontal: 18, paddingVertical: 4 }]}>
         {s.results.map((r, n) => <Fact key={`${n}${r.test}`} first={n === 0} label={`${r.test} · ${day(r.at)}`} color={r.flag && r.flag !== "normal" ? palette.red : palette.ink}>
@@ -95,7 +97,7 @@ export function HealthSummaryScreen() {
         {s.followUps.map((f, n) => <Text key={`v${n}`} style={{ ...type.body, color: palette.blue }}>{f.title} · {day(f.date)}</Text>)}
         {s.discharge?.warningSigns.length ? <>
           <Text accessibilityRole="header" style={{ ...type.headline, color: palette.red }}>{t("hs.comeBack")}</Text>
-          {s.discharge.warningSigns.map(w => <Text key={w} style={{ ...type.body, color: palette.ink }}>•  {w}</Text>)}
+          {s.discharge.warningSigns.map(w => <Text key={w} style={{ ...type.body, color: palette.red }}>•  {w}</Text>)}
         </> : null}
       </Card>)}
       {s.visits.length > 0 && section(t("hs.recordLight"), t("hs.recordBold"), <View style={[surfaceStyle, { paddingHorizontal: 18, paddingVertical: 4 }]}>

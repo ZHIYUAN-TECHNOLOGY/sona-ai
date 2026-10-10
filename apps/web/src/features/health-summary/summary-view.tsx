@@ -10,13 +10,16 @@ export type HealthSummary = Awaited<ReturnType<typeof orpc.patients.summaryData.
 /** "10 Oct 2026": the day in Malaysia, as the PDF writes it. */
 const day = (at: Date | string) => new Date(at).toLocaleDateString("en-MY", { timeZone: "Asia/Kuala_Lumpur", day: "numeric", month: "short", year: "numeric" });
 const flagged = (flag: string | null) => Boolean(flag && flag !== "normal");
+/** A word in Sona Care's answer colours (components/marked.tsx), picked by the field it sits in, not by the words. */
+const ink = (on: boolean | undefined, mark: "medicine" | "dose" | "warning", text: string) => on ? <span className="care-mark" data-mark={mark}>{text}</span> : text;
 
 /**
  * A health summary on screen, in the PDF's order. Insight first: the key problems with the allergy (red), the medicines
  * and the next visit (blue) as one card; then the record as cards and lists. A section with nothing in it is left out.
- * The page's own header carries the download, so the card suggests no second action.
+ * The page's own header carries the download, so the card suggests no second action. With `marks` (Sona Care) each
+ * field takes its colour from its type: a medicine's name blue, its dose and times violet, warning signs red.
  */
-export function HealthSummaryView({ s }: { s: HealthSummary }) {
+export function HealthSummaryView({ s, marks }: { s: HealthSummary; marks?: boolean }) {
   const current = s.medicines.filter(m => m.change !== "stopped"), stopped = s.medicines.length - current.length, next = s.followUps[0];
   return (
     <div className="hs">
@@ -38,7 +41,8 @@ export function HealthSummaryView({ s }: { s: HealthSummary }) {
       <div className="hs-pair">
         {s.medicines.length ? (
           <ListCard title="Medicines">
-            {s.medicines.map((m, i) => <ListRow key={`${i}${m.name}`} wrap icon="pill" title={m.name} caption={m.detail || undefined}
+            {s.medicines.map((m, i) => <ListRow key={`${i}${m.name}`} wrap icon="pill" title={ink(marks && m.change !== "stopped", "medicine", m.name)}
+              caption={m.detail ? ink(marks && m.change !== "stopped", "dose", m.detail) : undefined}
               trailing={m.change === "unchanged" ? undefined : <Chip tone={m.change === "stopped" ? "soon" : "info"}>{m.change}</Chip>} />)}
           </ListCard>
         ) : null}
@@ -56,7 +60,7 @@ export function HealthSummaryView({ s }: { s: HealthSummary }) {
         {s.discharge || s.followUps.length ? (
           <ListCard title={s.discharge ? "Discharge and follow-up" : "Follow-up"}>
             {s.followUps.map((f, i) => <ListRow key={`v${i}`} wrap icon="calendar" title={f.title} caption={day(f.date)} />)}
-            {s.discharge?.warningSigns.map((w, i) => <ListRow key={`w${i}`} wrap icon="alert" title={w} caption={i ? undefined : "Come back straight away if"} />)}
+            {s.discharge?.warningSigns.map((w, i) => <ListRow key={`w${i}`} wrap icon="alert" title={ink(marks, "warning", w)} caption={i ? undefined : "Come back straight away if"} />)}
           </ListCard>
         ) : null}
       </div>
