@@ -83,15 +83,19 @@ export async function patientPlan(context: PatientContext, lang: Language = "en"
 export function planText(plan: Extract<Awaited<ReturnType<typeof patientPlan>>, { status: "discharged" }>) {
   const meds = Object.entries(plan.medicines).flatMap(([group, list]) => list.map(m =>
     `- ${m.name} (${group}): ${[m.line, !m.finished && m.take, m.endsAt && `last dose ${malaysiaDay(m.endsAt)}`].filter(Boolean).join("; ")}`));
-  const leaflet = plan.leaflets.find(l => l.language === plan.language) ?? plan.leaflets[0];
   return [
     `Discharged: ${plan.dischargedAt}`,
     "Medicines:", ...meds,
     "Come back or call if:", ...plan.warningSigns.map(w => `- ${w}`),
     plan.followUp ? `Follow-up: ${plan.followUp.title} on ${new Date(plan.followUp.date).toDateString()}` : "Follow-up: none booked",
     `Check-ins: ${checkInDaysLine(plan.checkIns.map(c => c.day))} after discharge`,
-    `Leaflet (${leaflet?.label ?? ""}):`, leaflet?.text ?? "",
   ].join("\n");
+}
+
+/** Her discharge leaflet: general advice, the longest part of her record, so recordText puts it last. */
+export function leafletText(plan: Extract<Awaited<ReturnType<typeof patientPlan>>, { status: "discharged" }>) {
+  const leaflet = plan.leaflets.find(l => l.language === plan.language) ?? plan.leaflets[0];
+  return leaflet ? `Leaflet (${leaflet.label}):\n${leaflet.text}` : "";
 }
 
 /**
@@ -199,7 +203,7 @@ export async function recordText(context: PatientContext) {
   const [plan, visits, facts, [note], asked, taken, ordered] = await Promise.all([
     patientPlan(context),
     visitsText(context).catch(unread("visits", "")),
-    recordFacts(db, hospitalId, patientId).catch(unread("record", [] as string[])),
+    recordFacts(db, hospitalId, patientId, { forPatient: true }).catch(unread("record", [] as string[])),
     db.select({ sentences: notes.sentences, at: notes.createdAt }).from(notes).innerJoin(encounters, eq(encounters.id, notes.encounterId))
       .where(and(eq(encounters.patientId, patientId), eq(encounters.hospitalId, hospitalId))).orderBy(desc(notes.createdAt), desc(notes.revision)).limit(1)
       .catch(unread("note", [] as { sentences: { id: string; text: string }[]; at: Date }[])),
@@ -212,15 +216,17 @@ export async function recordText(context: PatientContext) {
   const noted = (note?.sentences ?? []).map(s => s.text).filter((_, i, all) => all.slice(0, i + 1).join(" ").length <= NOTE_CHARS).join(" ");
   // Doses count from the plan's own schedule, as the care team's adherence line does (doses.ts).
   const doses = plan.status === "discharged" ? adherence([...plan.medicines.new, ...plan.medicines.changed, ...plan.medicines.continue], plan.dischargedAt, taken, now) : undefined;
-  // ponytail: her rows are read whole and the text cut at RECORD_CHARS from its end; a long record would need selection by the question (retrieval).
+  // Her medicines, doses and check-ins first and the general leaflet last, so a record past RECORD_CHARS loses the leaflet,
+  // then the note, first. ponytail: her rows are read whole and cut from the end; a long record would need retrieval by the question.
   const text = [
     plan.status === "discharged" ? planText(plan) : "Still in hospital: no take-home medicines or leaflet yet.",
+    ...(ordered.length ? ["Prescribed by her doctor in hospital:", ...ordered] : []),
+    ...(doses?.due ? [`Doses since going home: ${doses.taken} of ${doses.due} due marked taken${doses.missed.length ? `; not marked taken: ${doses.missed.slice(-MISSED_MAX).map(m => `${m.name} ${malaysiaTime(m.dueAt)}`).join(", ")}` : ""}`] : []),
+    ...(replies.length ? ["Check-in replies:", ...replies] : []),
     visits,
     ...(facts.length ? ["Recorded by the hospital:", ...facts] : []),
-    ...(ordered.length ? ["Prescribed by her doctor in hospital:", ...ordered] : []),
     ...(noted ? [`Doctor's note (saved ${malaysiaDay(note!.at)}):`, noted] : []),
-    ...(replies.length ? ["Check-in replies:", ...replies] : []),
-    ...(doses?.due ? [`Doses since going home: ${doses.taken} of ${doses.due} due marked taken${doses.missed.length ? `; not marked taken: ${doses.missed.slice(-MISSED_MAX).map(m => `${m.name} ${malaysiaTime(m.dueAt)}`).join(", ")}` : ""}`] : []),
+    plan.status === "discharged" ? leafletText(plan) : "",
   ].filter(Boolean).join("\n");
   return { plan, text: text.length > RECORD_CHARS ? text.slice(0, text.lastIndexOf("\n", RECORD_CHARS)) : text };
 }

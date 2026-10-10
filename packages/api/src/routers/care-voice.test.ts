@@ -1,7 +1,7 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
-import { encounters, guaranteeLetters, labResults, receipts } from "@sona-ai/db/schema/clinical";
+import { encounters, guaranteeLetters, labResults, observations, receipts } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
@@ -107,7 +107,7 @@ test("her question is answered from her own record as recorded (history, allergy
     "Medicines:", "Now: Mon, 28 Sep 2026 10:05 (Malaysia time)",
     "Recorded by the hospital:\nAge 42, female. Came in with: Cough for five days, with fever since yesterday.",
     "History: Asthma since childhood", "Family history: Mother has asthma", "Allergies: Penicillin — reported rash", "Medicines before admission: Salbutamol inhaler, as needed",
-    "Urea 5.1 mmol/L", "Results:\n- CRP 48 mg/L, high (Sat, 26 Sep 2026)",
+    "Urea 5.1 mmol/L", "Results:\n- CRP: back from the lab, waiting for the doctor to review it (Sat, 26 Sep 2026)",
     "Prescribed by her doctor in hospital:\n- Paracetamol, 500 mg tablet, 1000 mg, Oral, Every 6 hours, for 3 days (approved Sun, 27 Sep 2026)",
     "Doctor's note (saved ", "Community-acquired pneumonia, mild; CURB-65 0. Oral azithromycin for 2 more days.",
     'Check-in replies:\n- Day 2 check-in, Mon, 28 Sep 2026: "Demam balik, batuk makin teruk" (read as worse)',
@@ -115,6 +115,16 @@ test("her question is answered from her own record as recorded (history, allergy
   expect(hers.length).toBeLessThanOrEqual(RECORD_CHARS);
   // The text says who she is by her record, not by name or number, and holds none of the other patient's rows (his potassium, his history).
   expect(hers).not.toMatch(/SYN-1042|SYN-1086|Potassium|Hb 9\.8|Every 4 hours/);
+  // A result reaches her only once her doctor has acknowledged it, as on her Results screen; a home reading is named as hers.
+  expect(hers).not.toContain("CRP 48");
+  await db.update(labResults).set({ acknowledgedBy: "dr-aisyah", acknowledgedAt: new Date("2026-09-27T09:00:00+08:00") }).where(eq(labResults.id, "lab-1042-crp"));
+  await db.insert(observations).values({ id: "obs-home-bp", patientId: "SYN-1042", kind: "systolic", value: 141, unit: "mmHg", sourceId: "care", source: "patient", observedAt: new Date("2026-09-28T08:00:00+08:00") });
+  const reviewed = (await recordText({ db, session: null, now: () => new Date("2026-09-28T10:05:00+08:00"), hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042" })).text;
+  expect(reviewed).toContain("- CRP 48 mg/L, high (Sat, 26 Sep 2026)");
+  expect(reviewed).toMatch(/\nHome readings the patient entered \(latest of each\): .*141 mmHg/);
+  expect(reviewed).toMatch(/Observations \(latest of each\): .*Systolic 124 mmHg/);
+  // Her medicines and check-in replies come before the general leaflet, so a long record loses the leaflet first.
+  expect(reviewed.indexOf("Check-in replies:")).toBeLessThan(reviewed.indexOf("Leaflet ("));
 
   // Two days on, her doses count from her plan's schedule: the one she marked taken, and the ones she did not.
   const plan = await amelia.care.discharge(), later = new Date("2026-09-30T10:05:00+08:00");
@@ -128,8 +138,8 @@ test("her question is answered from her own record as recorded (history, allergy
   await other.care.join({ code: (await doctor.care.code({ encounterId: "visit-1086" })).code });
   await other.care.ask({ question: "What were my blood results?" });
   const his = read[1]!;
-  expect(his).toContain("- Potassium 3.1 mmol/L, low");
-  expect(his).toContain("- Hb 9.8 g/dL, low");
+  expect(his).toContain("- Potassium: back from the lab, waiting for the doctor to review it");
+  expect(his).toContain("- Hb: back from the lab, waiting for the doctor to review it");
   expect(his).not.toMatch(/Penicillin — reported rash|Asthma since childhood|CRP 48|Demam balik|Community-acquired pneumonia, mild/);
 });
 

@@ -70,9 +70,10 @@ const RESULTS_MAX = 12;
  * results): age and sex (never the name or the record number), why they came, history, allergy, medicines, the latest
  * reading of each observation, the latest results and the X-rays with their readings (routers/xray.ts xrayFacts), each with its day. Nothing is told that no row holds. Only in the
  * caller's hospital: a patient of another hospital has no lines. Sona Care's answers (care-plan's recordText) and the
- * evidence answer's patient section (evidence.ts) read the same lines.
+ * evidence answer's patient section (evidence.ts) read the same lines. `forPatient` (Sona Care) gives a result's value only
+ * once a doctor has acknowledged it, as her Results screen does (care-results).
  */
-export async function recordFacts(db: Db, hospitalId: string, patientId: string): Promise<string[]> {
+export async function recordFacts(db: Db, hospitalId: string, patientId: string, { forPatient = false } = {}): Promise<string[]> {
   const [row] = await db.select().from(patients).where(and(eq(patients.id, patientId), eq(patients.hospitalId, hospitalId)));
   if (!row) return [];
   const [chart, labs, films] = await Promise.all([
@@ -82,7 +83,9 @@ export async function recordFacts(db: Db, hospitalId: string, patientId: string)
   ]);
   const p = recordOf(row);
   // The last reading of each kind (rows come oldest first); a record with no chart rows keeps the vitals written at intake.
-  const latest = [...new Map(chart.map(o => [o.kind, o])).values()];
+  // Ward readings and the patient's own home readings (Sona Care) are kept apart, so neither is taken for the other.
+  const latestOf = (source: string) => [...new Map(chart.filter(o => o.source === source).map(o => [o.kind, o])).values()];
+  const latest = latestOf("clinical"), home = latestOf("patient");
   return [
     `Age ${p.age}, ${p.sex.toLowerCase()}. Came in with: ${p.complaint}`,
     p.history.length ? `History: ${p.history.join("; ")}` : "",
@@ -92,7 +95,9 @@ export async function recordFacts(db: Db, hospitalId: string, patientId: string)
     `Medicines before admission: ${p.medicines.join("; ") || "none recorded"}`,
     latest.length ? `Observations (latest of each): ${latest.map(o => `${reading(o)} (${malaysiaDay(o.observedAt)})`).join(" · ")}`
       : p.vitals?.length ? `Observations at intake: ${p.vitals.map(v => `${v.label} ${v.value}`).join(" · ")}` : "",
+    home.length ? `Home readings the patient entered (latest of each): ${home.map(o => `${reading(o)} (${malaysiaDay(o.observedAt)})`).join(" · ")}` : "",
     ...(labs.length ? ["Results:", ...labs.map(l => l.flag === "pending" ? `- ${l.test}: sent to the lab, result pending (${malaysiaDay(l.receivedAt)})`
+      : forPatient && !l.acknowledgedAt ? `- ${l.test}: back from the lab, waiting for the doctor to review it (${malaysiaDay(l.receivedAt)})`
       : `- ${[l.test, l.value, l.unit].filter(Boolean).join(" ")}${l.flag ? `, ${l.flag}` : ""} (${malaysiaDay(l.receivedAt)})`)] : []),
     ...films,
     p.incomplete ? "The record is marked incomplete." : "",
