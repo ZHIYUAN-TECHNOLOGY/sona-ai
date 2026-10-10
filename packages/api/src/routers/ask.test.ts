@@ -169,10 +169,10 @@ test("grounding (9 Oct): the lead's own clinical phrasing passes; an invented pa
   ]) expect(groundedSpec(spec(lead), context)).toBeNull();
 });
 
-test("grounding (10 Oct): a joined word claims what its parts do, and a day or a month is no name; an invented number in either still fails", () => {
+test("grounding (10 Oct): a joined word claims what its parts do, and a day or a month is the record's in its long form; an invented number or day still fails", () => {
   const record: AskContext = { lines: ["Age 42, female.", "Potassium 3.1 mmol/L, low (Tue, 13 Oct 2026)"], rows: [] };
   for (const lead of ["A 42-year-old woman.", "Her potassium was 3.1 mmol/L on Tuesday, 13 October 2026."]) expect(groundedSpec(spec(lead, []), record)).not.toBeNull();
-  for (const lead of ["A 43-year-old woman.", "Her potassium was 3.1 mmol/L on Tuesday, 14 October 2026."]) expect(groundedSpec(spec(lead, []), record)).toBeNull();
+  for (const lead of ["A 43-year-old woman.", "Her potassium was 3.1 mmol/L on Tuesday, 14 October 2026.", "Her potassium was taken on Monday."]) expect(groundedSpec(spec(lead, []), record)).toBeNull();
   // A number the question states is the page's, joined or not: "CURB-65" asked makes "under 65" known.
   expect(groundedSpec(spec("Her CURB-65 is 0: she is under 65.", []), record, "what's her CURB-65")).not.toBeNull();
 });

@@ -19,6 +19,9 @@ test("any markup Gemma writes into its words goes and the words stay (10 Oct, ga
   expect(untagged('<mark text="ECG" kind="caution">ECG</mark> and <mark text="hypokalaemia" kind="finding"</mark>, <allergy>penicillin</allergy> allergy')).toBe("ECG and hypokalaemia, penicillin allergy");
   expect(untagged("<br>Reconcile <medications> on admission; <symptom>cough<symptom> and <salbutamol</medicine> is a <drug allergy>")).toBe("Reconcile medications on admission; cough and salbutamol is a drug allergy");
   expect(untagged("Replace if K <3.5 or K < 3.0 mmol/L.")).toBe("Replace if K <3.5 or K < 3.0 mmol/L."); // a "<" before a number is not a tag
+  // An apostrophe in the marked words, and an "=" after an unclosed fragment, keep every word (10 Oct, review).
+  expect(untagged('Her <mark text="Crohn\'s disease" kind="finding"/> is quiet; <mark text="the patient\'s potassium of 3.1" kind="alert"/> is low.')).toBe("Her Crohn's disease is quiet; the patient's potassium of 3.1 is low.");
+  expect(untagged("There are no <allergy recorded; CURB-65 = 0.")).toBe("There are no allergy recorded; CURB-65 = 0.");
 });
 
 test("a column that is not one of leaves is put back as one: rows listed under the lead, an id under itself, a child never written", () => {

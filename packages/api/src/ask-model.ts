@@ -49,7 +49,7 @@ const TOKEN = /[\p{L}\p{N}][\p{L}\p{N}+'’-]*(?:\.\d+)*/gu;
 const bare = (word: string) => word.toLowerCase().replace(/['’]s$/, ""); // "Amelia's" is Amelia
 // A joined word is also its parts, so "CURB-65" asked makes 65 known.
 const words = (text: string) => new Set(Array.from(text.matchAll(TOKEN), m => bare(m[0])).flatMap(w => [w, ...w.split("-")]));
-// Days and months are not names: the record writes "Tue, 13 Oct 2026" and Gemma "Tuesday, 13 October" (a wrong date still fails on its number).
+// A day or month passes when the data holds its short form: the record writes "Tue, 13 Oct 2026" and Gemma "Tuesday, 13 October"; "Monday" against it fails.
 const CALENDAR = new Set("monday tuesday wednesday thursday friday saturday sunday january february march april may june july august september october november december".split(" "));
 // Joining words that say nothing about what a question asks: pageLines matches a question by its other words.
 const GLUE = new Set("that this these those with from have has need needs your their there they them then than which when what where while today first next last only most more less none nobody each both also still been being were will would should could about after before into over under within without soon later now here right just same other others another some any all every none none's needs".split(" "));
@@ -63,7 +63,7 @@ const GLUE = new Set("that this these those with from have has need needs your t
 function unknownClaims(text: string, known: Set<string>) {
   return Array.from(text.matchAll(TOKEN)).filter(m => {
     const word = bare(m[0]);
-    if (known.has(word) || CALENDAR.has(word)) return false;
+    if (known.has(word) || (CALENDAR.has(word) && known.has(word.slice(0, 3)))) return false;
     const opens = /(^|[.!?]\s+)$/.test(text.slice(0, m.index));
     return word.split("-").some((part, i) => !known.has(part) && (/\d/.test(part) || (i === 0 && !opens && /^\p{Lu}\p{Ll}/u.test(m[0]))));
   }).map(m => bare(m[0]));
@@ -160,13 +160,17 @@ export function lifted<T>(reply: T, rows = true): T {
  * attribute gives that word once (`<mark text="potassium" kind="alert"/>`); words it put in angle brackets as if to
  * highlight them stay ("reconcile <medications> on admission", "<salbutamol is a"); a line break is a space. Before, only
  * the kind tags were taken out, with whatever they held, so "a low <mark text="potassium" .../> of" read "a low  of".
- * A "<" before a number or a space ("K <3.5") is not a tag and stays.
+ * A "<" before a number or a space ("K <3.5") is not a tag and stays. Only a name then an attribute (`kind="`) is a tag
+ * to drop whole: an "=" later in an unclosed fragment ("no <allergy recorded; CURB-65 = 0") is the model's own words.
+ * ponytail: a "<" meaning "less than" before a word ("(<normal range)") is taken for one of Gemma's fragments and lost,
+ * its words kept; none in the gate's answers.
  */
 export const untagged = (text: string) => text.replace(/<(\/?)([A-Za-z][^<>]*)(>|(?=<)|$)/g, (tag, close: string, inner: string, _end: string, at: number) => {
   if (close) return "";
-  const word = /\btext=["“']([^"”']*)["”']/.exec(inner)?.[1];
+  // Quoted in its own quotes, so "Crohn's disease" is whole.
+  const said = /\btext=(?:["“]([^"”]*)["”]|'([^']*)')/.exec(inner), word = said ? said[1] ?? said[2] : undefined;
   if (word !== undefined) return text.startsWith(word, at + tag.length) ? "" : word;
-  if (inner.includes("=")) return "";
+  if (/^[\w-]+\s+[\w-]+\s*=\s*["“'\w]/.test(inner)) return "";
   if (/^(br|hr)\b/i.test(inner)) return " ";
   // A bare name touching a word ("<finding>cough", "cough<finding>") wraps it; anything else is the model's own words.
   const name = /^[\w-]+\/?$/.test(inner.trim()), next = text[at + tag.length] ?? "", prev = text[at - 1] ?? "";
