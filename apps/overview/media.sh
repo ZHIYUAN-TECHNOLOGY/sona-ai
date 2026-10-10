@@ -36,7 +36,7 @@ while IFS='|' read -r id src start end pt; do
   ffmpeg -nostdin -loglevel error -y -ss "${pt:-$(echo "$d * 0.45" | bc)}" -i "$O/$id.mp4" -frames:v 1 -vf scale=960:-2 -q:v 4 "$O/$id.jpg"
   printf '%-16s %5.1fs\n' "$id" "$d"
 done <<'LIST'
-film|B/10-wow-flow-v3/00-wow-flow-v3-full.mp4|0||200
+film|R/journey/film.mp4|0||420
 scribe|R/7-consultation-scribe/four-voices-one-take.mp4|0|
 scribe-record|B/7-consultation-scribe/01-record-the-consultation.mp4|4.5|
 scribe-who|B/7-consultation-scribe/02-who-said-what.mp4|4.5|
