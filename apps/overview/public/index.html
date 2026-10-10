@@ -171,11 +171,89 @@ table.grid tr.us td:first-child { color: var(--pos); }
 .contact a { color: var(--text); text-decoration: none; }
 .contact a:hover { color: var(--blue); }
 
+/* try it, screens, print */
+.cta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 28px; }
+.btn { font: 600 15px/1 var(--body); color: var(--text); text-decoration: none; padding: 13px 18px; border-radius: 999px; border: var(--stroke); background: rgba(255,255,255,.05); }
+.btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn:hover { border-color: rgba(255,255,255,.4); }
+.btn:focus-visible, .thumb:focus-visible, .url:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.logins { display: grid; grid-template-columns: 1fr 1fr 0.8fr; gap: 12px; margin-top: 32px; }
+.login { padding: 24px; display: grid; gap: 12px; align-content: start; }
+.who { font: 600 12px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.who.pro { color: #9fb2ff; } .who.care { color: var(--yellow); }
+.url { font: 600 16px/1.3 var(--body); color: var(--text); word-break: break-all; }
+.login dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; align-items: baseline; }
+.login dt { color: var(--muted); font-size: 14px; }
+.login dd { margin: 0; }
+code { white-space: nowrap; font: 600 15px var(--mono); background: rgba(255,255,255,.08); padding: 2px 7px; border-radius: 6px; color: var(--text); }
+.login ol { margin: 0; padding-left: 20px; color: var(--muted); display: grid; gap: 6px; font-size: 15px; }
+.note { margin-top: 16px; max-width: 900px; }
+.sub-h { margin-top: 56px; font-size: 22px; }
+.matrix { min-width: 560px; }
+.matrix td.yes { color: var(--pos); font-size: 18px; } .matrix td.no { color: var(--line); }
+.matrix td a { color: var(--text); text-decoration: none; }
+.feature .on { margin: 16px 0 0; display: grid; gap: 4px; }
+.feature .on dt { font: 600 11px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: #9fb2ff; margin-top: 8px; }
+.feature .on dd { margin: 0; color: var(--text); font-size: 15px; }
+.thumb em, .now b { font-style: normal; font-weight: 600; color: #9fb2ff; }
+.thumb em { display: block; font-size: 11px; letter-spacing: .04em; }
+.print-only { display: none; }
+.qr svg { width: 84px; height: 84px; display: block; }
+.qr span { display: block; font: 10px var(--mono); margin-top: 4px; word-break: break-all; max-width: 180px; }
+
+@media print {
+  :root { --text: #111; --muted: #444; --line: #ccc; --pos: #0a7d5b; --yellow: #8a5a00; --blue: #2a4bd7; }
+  @page { size: A4; margin: 14mm; }
+  body { background: #fff; color: var(--text); font-size: 11pt; }
+  body::before, nav, .tabs, .sound, .btn, video, .thumbs img, .orb { display: none !important; }
+  .print-only { display: block; }
+  .glass { background: #fff; border: 1px solid #ccc; }
+  section { padding-top: 28px; } .hero { padding-top: 0; }
+  h1 { font-size: 30pt; } h2 { font-size: 18pt; } .lead { font-size: 12pt; }
+  .feature, .login, .point, .model, .week, .person, .price, .list, .fact, table, figure { break-inside: avoid; }
+  .feature { grid-template-columns: 1fr 1.2fr; margin-top: 28px; }
+  .feature .side { order: 0 !important; }
+  .player { aspect-ratio: auto; background: none; border: 0; }
+  .player::before { content: ""; }
+  .feature .player { display: none; }
+  .feature .print-poster { display: block; width: 100%; border-radius: 10px; border: 1px solid #ccc; }
+  .thumbs { display: block; columns: 2; margin-top: 8px; }
+  .thumb { display: block; break-inside: avoid; margin-bottom: 4px; }
+  .thumb span { color: var(--text); font-size: 9pt; }
+  .thumb em, .now b, .feature .on dt, .who.pro, .who.care { color: var(--blue); }
+  .featured .player { display: none; }
+  .diagram { background: #0b0d18; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .diagram figcaption { color: #ddd; }
+  .feature .proof span { background: #eef1ff; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  code { background: #eee; color: #111; }
+  .scroll { overflow: visible; } table.grid { min-width: 0; font-size: 9.5pt; }
+  table.grid tr.us td { background: #e9f7f1; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  a { color: var(--text); }
+  .cta .qr, .login .qr { margin-top: 6px; }
+  .facts, .measured, .weeks { grid-template-columns: repeat(4, 1fr) !important; }
+  .models { grid-template-columns: repeat(4, 1fr) !important; }
+  .points, .logins { grid-template-columns: repeat(3, 1fr) !important; }
+  .two, .team, .change { grid-template-columns: 1fr 1fr !important; }
+  .feature { grid-template-columns: 0.9fr 1.3fr !important; gap: 16px !important; margin-top: 18px !important; padding-top: 14px; border-top: 1px solid #ddd; }
+  .feature .print-poster { max-height: 62mm; object-fit: contain; object-position: left top; }
+  .feature h3 { font-size: 14pt; } .feature .what, .feature .on dd { font-size: 9.5pt; }
+  .thumbs { columns: 2; column-gap: 12px; } .thumb span { font-size: 8.5pt; } .feature .now { display: none; }
+  .model, .point, .fact, .week, .price, .login, .list, .person { padding: 12px !important; }
+  .model p, .point p, .week p, .person p, .list ul, .login ol { font-size: 9pt !important; }
+  .fact b { font-size: 16pt; } .big { font-size: 22pt; }
+  .feature .proof { margin-top: 8px; } .feature .on { margin-top: 8px; }
+  .qr svg { width: 64px; height: 64px; }
+  .dropped, .still, .goal, .contact { padding: 12px !important; }
+  #try, #features { break-before: page; }
+  footer { margin-top: 30px; }
+}
+
 footer { margin-top: 110px; padding: 40px 0 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
 footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--text); margin-bottom: 18px; }
 
 @media (max-width: 900px) {
   .facts, .measured, .models, .weeks { grid-template-columns: 1fr 1fr; }
+  .logins { grid-template-columns: 1fr; }
   .change, .feature, .two, .team, .points { grid-template-columns: 1fr; }
   .feature .side, .feature:nth-of-type(even) .side { order: -1; }
   section { padding-top: 64px; }
@@ -195,6 +273,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
 
 <nav aria-label="Sections"><div class="wrap">
   <b>Sona</b>
+  <a href="#try">Try it</a>
   <a href="#problem">Problem</a>
   <a href="#changed">What changed</a>
   <a href="#features">Features</a>
@@ -218,6 +297,11 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <span class="tag">AMBIENT SCRIBES</span><span class="tag">WORKFLOW AUTOMATION</span><span class="tag">LOCAL LLMS</span><span class="tag">HOSPITAL OPS</span>
     <span class="tag real">REAL SYSTEM · SYNTHETIC PATIENTS</span>
   </div>
+  <div class="cta">
+    <a class="btn primary" href="#try">Try Sona yourself</a>
+    <a class="btn" href="#features">Watch it work</a>
+    <div class="qr print-only" data-qr="#try"></div>
+  </div>
   <div class="facts">
     <div class="fact glass"><b>4 surfaces</b><span>Sona Pro on iPhone and web for staff. Sona Care on iPhone and web for patients.</span></div>
     <div class="fact glass"><b>10 models</b><span>All trained by us. All run in AWS Malaysia.</span></div>
@@ -225,6 +309,45 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <div class="fact glass"><b>1,219 commits</b><span>Since the first one on 22 Sep 2026. Two founders, both write code.</span></div>
   </div>
 </div></header>
+
+<section id="try"><div class="wrap">
+  <span class="eyebrow">Try it yourself · staging, synthetic patients</span>
+  <h2>Sign in as the doctor or as Amelia.</h2>
+  <p class="lead">This is the real system on our staging server: the apps, the database and our models in Malaysia. Every patient is synthetic, so click anything.</p>
+  <div class="logins">
+    <article class="login glass">
+      <span class="who pro">Sona Pro · web · for staff</span>
+      <a class="url" href="/pro">sona-overview.zhiyuantech.workers.dev/pro</a>
+      <dl><dt>Username</dt><dd><code>doctor</code></dd><dt>Password</dt><dd><code>123</code></dd></dl>
+      <p class="small muted">Other roles, same password: <code>nurse</code>, <code>beds</code> (bed manager), <code>manager</code>.</p>
+      <ol>
+        <li>On Today, ask <q>What needs me first?</q></li>
+        <li>Open Amelia Tan's visit and ask Sona to brief you.</li>
+        <li>Open Ward to see what holds each bed.</li>
+      </ol>
+      <div class="qr print-only" data-qr="pro"></div>
+    </article>
+    <article class="login glass">
+      <span class="who care">Sona Care · web · for patients</span>
+      <a class="url" href="/care">sona-overview.zhiyuantech.workers.dev/care</a>
+      <dl><dt>Mobile</dt><dd><code>011-0000 0000</code></dd><dt>Code</dt><dd><code>123456</code></dd></dl>
+      <p class="small muted">You are Amelia Tan after discharge. The sign-in page fills the demo number for you.</p>
+      <ol>
+        <li>Ask Sona <q>Am I allergic to any medicine?</q>, then ask in Malay.</li>
+        <li>Open Health summary and download the PDF.</li>
+        <li>Open her plan and warning signs.</li>
+      </ol>
+      <div class="qr print-only" data-qr="care"></div>
+    </article>
+    <article class="login glass">
+      <span class="who">Sona Pro and Sona Care · iPhone</span>
+      <p>Both apps are on TestFlight. Email us for an invite.</p>
+      <p class="small muted">On the iPhone, Sona Care also signs in with username <code>patient</code>, password <code>123</code>.</p>
+      <a class="url" href="mailto:ngchwanlii@zhiyuantech.ai?subject=Sona%20TestFlight%20invite">ngchwanlii@zhiyuantech.ai</a>
+    </article>
+  </div>
+  <p class="note small muted">Everyone shares one demo hospital, so what you change others will see; we reset it before judging. If Sona Care shows no hospital yet, sign in to Sona Pro as <code>doctor</code>, open Amelia Tan and press the join code; then enter that code in Sona Care.</p>
+</div></section>
 
 <section id="problem"><div class="wrap">
   <span class="eyebrow">The problem · one patient, one week</span>
@@ -272,7 +395,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
 <section id="intro"><div class="wrap">
   <span class="eyebrow">Intro</span>
   <h2>Sona in two minutes.</h2>
-  <div class="player featured"><video controls preload="metadata" playsinline poster="media/intro.jpg" src="media/intro.mp4"></video></div>
+  <div class="player featured"><video controls preload="metadata" playsinline poster="media/intro.jpg" src="media/intro.mp4?v=2"></video></div>
 </div></section>
 -->
 
@@ -282,8 +405,16 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
   <p class="lead">Every clip is a screen recording of the real system: the apps, the server, the database and our models in Malaysia. The patient, her records and the insurer are synthetic. Only waiting is cut. Nothing is sped up.</p>
 
   <div class="featured">
-    <div class="player"><video controls preload="none" playsinline poster="media/film.jpg" src="media/film.mp4"></video><span class="sound">SOUND ON</span></div>
+    <div class="player"><video controls preload="none" playsinline poster="media/film.jpg" src="media/film.mp4?v=2"></video><span class="sound">SOUND ON</span></div>
     <p class="caption">The whole story in one take, 4:51. Web, Sona Pro and Sona Care recorded at the same time on 8 Oct 2026: the consultation, the X-ray, the insurer's letter, discharge, a Malay call from home on day 2, and the care team's task. The day-2 call was recorded again on 9 Oct with the new Sona Care orb; you hear her and Sona.</p>
+  </div>
+
+  <h3 class="sub-h">Every feature, on every screen</h3>
+  <div class="scroll glass">
+    <table class="grid matrix">
+      <thead><tr><th>Feature</th><th>Sona Pro<br>iPhone</th><th>Sona Pro<br>web</th><th>Sona Care<br>iPhone</th><th>Sona Care<br>web</th></tr></thead>
+      <tbody id="matrix"></tbody>
+    </table>
   </div>
 
   <div id="groups"></div>
@@ -349,7 +480,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <div class="point glass"><h3>Safety without AI</h3><p>If a model is down, safety still runs on rules: red-flag words always get the 999 line and a care-team task.</p></div>
   </div>
   <div class="feature" style="margin-top:40px">
-    <div><div class="player"><video controls preload="none" playsinline poster="media/privacy.jpg" src="media/privacy.mp4"></video></div><p class="caption">Sona Privacy at work: the patient chose to share. Her doctor's note becomes a training sample with her name replaced by [NAME] before anything is kept, and a search for her name finds nothing.</p></div>
+    <div><div class="player"><video controls preload="none" playsinline poster="media/privacy.jpg" src="media/privacy.mp4?v=2"></video></div><p class="caption">Sona Privacy at work: the patient chose to share. Her doctor's note becomes a training sample with her name replaced by [NAME] before anything is kept, and a search for her name finds nothing.</p></div>
     <figure class="diagram glass" style="margin:0"><img src="media/03-data-privacy.dark.svg" alt="Data and privacy diagram: audio goes to Sona Speech in memory only; evidence, training and scans pass through Sona Privacy, which strips identifiers, before storage or outside search." loading="lazy"><figcaption>Red paths pass through Sona Privacy. Audio reaches Sona Speech in memory only.</figcaption></figure>
   </div>
   <p class="promise">Every AI model runs in Malaysia. <span>Real patient data will only ever be stored in Malaysia.</span></p>
@@ -466,72 +597,104 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
   <p style="margin-top:6px">Chest X-ray: Mikael Häggström, M.D. · Wikimedia Commons · CC0 1.0</p>
 </div></footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
-// Feature groups, ranked by wow. Each group: one main clip, more clips below it.
+// Feature groups, ranked by wow. Each group says what it does on each screen, then shows its clips.
+// Screens: pi = Sona Pro iPhone, pw = Sona Pro web, ci = Sona Care iPhone, cw = Sona Care web, both = Sona Pro and Sona Care at once.
+const SCREENS = { pi: "Sona Pro · iPhone", pw: "Sona Pro · web", ci: "Sona Care · iPhone", cw: "Sona Care · web", both: "Pro + Care" };
 const GROUPS = [
-  { title: "Four voices, three languages, one note.", tag: "Ambient scribe",
+  { id: "scribe", title: "Four voices, three languages, one note.", tag: "Ambient scribe",
     what: "Sona listens to a real consultation, tells the doctor, nurse, patient and partner apart, keeps the Malay and Chinese as spoken, and Sona Med drafts the colour-coded note. The doctor names each voice with one tap and saves.",
     proof: ["97.1% of turns to the right person", "10.0% words wrong on medical Manglish", "Full note in about 10 s"],
-    clips: [["scribe", "The consultation to the saved note", 1], ["scribe-record", "Recording, live voice count", 1], ["scribe-who", "Who said what, one tap each", 1], ["scribe-note", "Note drafted and saved", 1]] },
-  { title: "Patients call Sona. It talks back, in their language.", tag: "Voice, speech to speech",
+    on: { pi: "Records the room, counts the voices live, names each with one tap, drafts the note.", pw: "Drafts the note from a pasted transcript on the visit page; the note opens there too." },
+    clips: [["scribe", "The consultation to the saved note", 1, "pi"], ["scribe-record", "Recording, live voice count", 1, "pi"], ["scribe-who", "Who said what, one tap each", 1, "pi"], ["scribe-note", "Note drafted and saved", 1, "pi"]] },
+  { id: "voice", title: "Patients call Sona. It talks back, in their language.", tag: "Voice, speech to speech",
     what: "Four calls in English, Malay and Chinese: you hear her question, then Sona's answer. Sona answers anything the patient asks, from her own record when it matters, out loud with a Malaysian voice we trained. The orb turns to light while she talks.",
     proof: ["Reply starts in 1.5 to 2.25 s", "Malay, English, Chinese"],
-    clips: [["voice", "Four calls, sound on", 1], ["voice-allergy", "\"Am I allergic to any medicine?\"", 1], ["voice-malay", "In Malay: which medicine do I take?", 1], ["voice-chinese", "In Chinese: what to watch for", 1], ["voice-general", "A general question", 1]] },
-  { title: "Sona follows her home and brings problems back to the team.", tag: "Sona Care and Sona Pro together",
+    on: { ci: "Talk to Sona: she speaks, Sona answers aloud in her language.", cw: "Ask Sona by typing; answers come from her record, in her language.", pi: "Staff ask by voice anywhere in the app; the answer lands in the page." },
+    clips: [["voice", "Four calls, sound on", 1, "ci"], ["voice-allergy", "\"Am I allergic to any medicine?\"", 1, "ci"], ["voice-malay", "In Malay: which medicine do I take?", 1, "ci"], ["voice-chinese", "In Chinese: what to watch for", 1, "ci"], ["voice-general", "A general question", 1, "ci"], ["care-web-ask", "Ask Sona on the web, then in Malay", 0, "cw"]] },
+  { id: "home", title: "Sona follows her home and brings problems back to the team.", tag: "Sona Care and Sona Pro together",
     what: "Discharge reaches her phone within a second. On day 2 she speaks Malay; Sona answers aloud, hears a red flag, tells her to call 999 and gives the care team a task. Day 2 is the demo clock moved forward, and the clip says so.",
     proof: ["Two apps, one record", "Red flags always reach staff"],
-    clips: [["day2", "Day 2 at home, in Malay", 1], ["home-discharge", "Discharge lands on her phone"], ["home-staff", "The care team gets a task"], ["home-phone", "Her plan and Malay leaflet arrive"], ["home-checkin", "Day-2 check-in flagged to the doctor"], ["home-urgent", "Chest pain: 999 first, staff told"], ["home-booked", "Booked in from the flag"]] },
-  { title: "The insurer says no. Sona appeals. Approved.", tag: "Guarantee letter",
+    on: { ci: "Plan and leaflet arrive at discharge; day-2 check-in; a red flag gets the 999 line.", pw: "The care team gets the task and books her in from the flag.", pi: "Urgent messages come first on Today, with a reply Sona drafts for the doctor to edit." },
+    clips: [["day2", "Day 2 at home, in Malay", 1, "ci"], ["home-discharge", "Discharge lands on her phone", 0, "both"], ["home-staff", "The care team gets a task", 0, "pw"], ["home-phone", "Her plan and Malay leaflet arrive", 0, "both"], ["home-checkin", "Day-2 check-in flagged to the doctor", 0, "both"], ["home-urgent", "Chest pain: 999 first, staff told", 0, "both"], ["home-booked", "Booked in from the flag", 0, "both"]] },
+  { id: "letter", title: "The insurer says no. Sona appeals. Approved.", tag: "Guarantee letter",
     what: "Sona drafts the insurer's guarantee letter from the note, ties every code to a sentence, and checks the insurer's criteria before it is sent. When the insurer denies it, Sona writes the appeal from the same note. Staff approve each step.",
     proof: ["Codes tied to note sentences", "Criteria checked before sending"],
-    clips: [["gl", "Denied, appealed, approved"], ["gl-web", "End to end on the web portal"]] },
-  { title: "An X-ray read in seconds, right in the answer.", tag: "Chest X-ray",
+    on: { pw: "Letter, codes and criteria from the note; denial, appeal and approval in one sitting." },
+    clips: [["gl", "Denied, appealed, approved", 0, "pw"], ["gl-web", "End to end on the web portal", 0, "pw"]] },
+  { id: "xray", title: "An X-ray read in seconds, right in the answer.", tag: "Chest X-ray",
     what: "Sona Vision reads the film and points out an opacity in the right lower lung. Ask about it and the film opens beside the answer, with similar films from the hospital. A draft for the doctor, not a radiologist's report.",
     proof: ["Read in about 4 s", "Similar films found"],
-    clips: [["xray", "Film added, scanned and read"], ["xray-web", "The film in the answer, on the web"]] },
-  { title: "Ask a question out loud. Get an answer with its sources.", tag: "Evidence",
+    on: { pw: "Add the film, Sona Vision drafts the read; ask and the film opens beside the answer." },
+    clips: [["xray", "Film added, scanned and read", 0, "pw"], ["xray-web", "The film in the answer", 0, "pw"]] },
+  { id: "evidence", title: "Ask a question out loud. Get an answer with its sources.", tag: "Evidence",
     what: "Sona searches PubMed and the hospital's own library, answers only with claims it can cite, and opens the guideline it used. Asked inside a visit, it applies the evidence to that patient.",
     proof: ["Numbered citations", "Patient name never sent to PubMed"],
-    clips: [["evidence", "Asked by voice, cited answer"], ["ev-pubmed", "Evidence in seconds"], ["ev-patient", "Applied to this patient"], ["ev-web", "Cited answer and guideline, on the web"]] },
-  { title: "Who needs me first? Which bed frees next?", tag: "Hospital operations",
-    what: "Today ranks patients by need from the hospital's data. The ward board shows what holds each bed, gives every blocker an owner and writes the huddle brief. Ask once in plain words and Sona keeps watch: every morning at 7 it shows who has low potassium. A watch only reads. Handover, critical lab results and the manager's and nurse's views run on the same record.",
+    on: { pi: "Ask by voice; numbered citations; applied to the patient in a visit.", pw: "The same cited answer, with the guideline opened beside it." },
+    clips: [["evidence", "Asked by voice, cited answer", 0, "pi"], ["ev-pubmed", "Evidence in seconds", 0, "pi"], ["ev-patient", "Applied to this patient", 0, "pi"], ["ev-web", "Cited answer and guideline", 0, "pw"]] },
+  { id: "ops", title: "Who needs me first? Which bed frees next?", tag: "Hospital operations",
+    what: "Today ranks patients by need from the hospital's data. The ward board shows what holds each bed, gives every blocker an owner and writes the huddle brief. Ask once in plain words and Sona keeps watch: every morning at 7 it shows who has low potassium. A watch only reads.",
     proof: ["Every blocker has an owner", "Sona keeps watch every morning", "Critical results raised at once"],
-    clips: [["ops-today", "What needs me first?"], ["ops-web", "Ward, tasks and handover on the web"], ["ops-myday", "My day, ranked by need"], ["ops-ward", "The ward and huddle brief"], ["ops-bed", "Bed freed, hours earlier"], ["ops-handover", "Shift handover"], ["ops-lab", "A critical result arrives"], ["ops-manager", "The manager's view"], ["ops-nurse", "The nurse's view"]] },
-  { title: "Everything about the patient, one question away.", tag: "For clinicians",
-    what: "The visit page knows the patient. Ask for a brief, the possibilities to consider, a handwritten note scanned into the record, or a prescription checked against her allergy, and Sona does it in place.",
-    proof: ["11 safety checks per prescription", "Sona never records a diagnosis on its own"],
-    clips: [["cl-visit", "The visit page knows her"], ["cl-ask", "Ask Sona for a brief"], ["cl-reason", "What else could this be?"], ["cl-hand", "A handwritten note into the record"], ["cl-rx", "A safe prescription"], ["cl-dose", "A wrong dose stopped"], ["cl-discharge", "Discharge plan and readiness"]] },
-  { title: "Her own app, in Malay, English or Chinese.", tag: "Sona Care for patients",
-    what: "Her plan, medicines and warning signs in plain words. She asks anything, checks a medicine box by photo, marks doses, reads the leaflet in her language and books a follow-up. On iPhone and on the web.",
+    on: { pw: "Today, the ward board, tasks and handover; the huddle brief.", pi: "My day by need, critical results the moment they land, handover, manager's and nurse's views." },
+    clips: [["ops-today", "What needs me first?", 0, "pw"], ["ops-web", "Ward, tasks and handover", 0, "pw"], ["ops-lab", "A critical result arrives", 0, "pi"], ["ops-myday", "My day, ranked by need", 0, "pi"], ["ops-ward", "The ward and huddle brief", 0, "pi"], ["ops-bed", "Bed freed, hours earlier", 0, "pi"], ["ops-handover", "Shift handover", 0, "pi"], ["ops-manager", "The manager's view", 0, "pi"], ["ops-nurse", "The nurse's view", 0, "pi"]] },
+  { id: "clinicians", title: "Everything about the patient, one question away.", tag: "For clinicians",
+    what: "The visit page knows the patient. Ask for a brief, the possibilities to consider, a handwritten note scanned into the record, or a prescription checked before it is placed, and Sona does it in place.",
+    proof: ["A wrong dose is stopped before the order", "Sona never records a diagnosis on its own"],
+    on: { pw: "The visit page and Sona's brief; prescriptions checked (dose rules cover paracetamol today); discharge plan and readiness.", pi: "Brief me, what else could this be, scan a handwritten note." },
+    clips: [["cl-visit", "The visit page knows her", 0, "pw"], ["cl-dose", "A wrong dose stopped", 0, "pw"], ["cl-ask", "Ask Sona for a brief", 0, "pi"], ["cl-reason", "What else could this be?", 0, "pi"], ["cl-hand", "A handwritten note into the record", 0, "pi"], ["cl-rx", "Allergy checked, order recorded", 0, "pi"], ["cl-discharge", "Discharge plan and readiness", 0, "pw"]] },
+  { id: "care", title: "Her own app, in Malay, English or Chinese.", tag: "Sona Care for patients",
+    what: "Her plan, medicines and warning signs in plain words. She asks anything, checks a medicine box by photo, marks doses, reads the leaflet in her language, books a follow-up and carries her health summary to another hospital.",
     proof: ["Three languages", "Answers say where they came from"],
-    clips: [["care-web-day", "Her day and medicines, on the web"], ["care-orb", "The orb turns to light as she talks", 1], ["care-web-ask", "Ask Sona, then in Malay"], ["care-web-plan", "Plan, warning signs and PDF"], ["care-plan", "Her plan after discharge"], ["care-record", "Answers from her own record"], ["care-worry", "When to worry"], ["care-dose", "Dose taken"], ["care-photo", "Is this my medicine?"], ["care-leaflet", "Her leaflet, in her language"], ["care-malay", "In Malay"], ["care-chinese", "In Chinese"], ["care-doctor", "Which doctor should I see?"], ["care-book", "Book a follow-up"], ["care-summary", "Her health summary for another hospital"]] },
+    on: { ci: "Her day, doses, photo check of a medicine box, leaflet, booking, Malay and Chinese.", cw: "Her day, Ask Sona, plan and warning signs as a PDF, health summary for another hospital." },
+    clips: [["care-orb", "The orb turns to light as she talks", 1, "ci"], ["care-web-day", "Her day and medicines", 0, "cw"], ["care-summary", "Health summary for another hospital", 0, "cw"], ["care-web-plan", "Plan, warning signs and PDF", 0, "cw"], ["care-plan", "Her plan after discharge", 0, "ci"], ["care-record", "Answers from her own record", 0, "ci"], ["care-worry", "When to worry", 0, "ci"], ["care-dose", "Dose taken", 0, "ci"], ["care-photo", "Is this my medicine?", 0, "ci"], ["care-leaflet", "Her leaflet, in her language", 0, "ci"], ["care-malay", "In Malay", 0, "ci"], ["care-chinese", "In Chinese", 0, "ci"], ["care-doctor", "Which doctor should I see?", 0, "ci"], ["care-book", "Book a follow-up", 0, "ci"]] },
 ];
 
 const el = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); n.append(...kids); return n; };
 const groups = document.getElementById("groups");
 GROUPS.forEach((g, i) => {
   const [first] = g.clips;
-  const video = el("video", { controls: "", preload: "none", playsinline: "", poster: `media/${first[0]}.jpg`, src: `media/${first[0]}.mp4` });
+  const video = el("video", { controls: "", preload: "none", playsinline: "", poster: `media/${first[0]}.jpg`, src: `media/${first[0]}.mp4?v=2` });
   const sound = el("span", { class: "sound" }, "SOUND ON"); sound.hidden = !first[2];
-  const now = el("p", { class: "now" }, first[1]);
+  const now = el("p", { class: "now" }, el("b", {}, SCREENS[first[3]]), ` · ${first[1]}`);
   const thumbs = el("div", { class: "thumbs" });
-  g.clips.forEach(([id, label, hasSound], j) => {
-    const b = el("button", { class: "thumb", type: "button", "aria-current": j ? "false" : "true" }, el("img", { src: `media/${id}.jpg`, alt: "", loading: "lazy" }), el("span", {}, label));
+  g.clips.forEach(([id, label, hasSound, screen], j) => {
+    const b = el("button", { class: "thumb", type: "button", "aria-current": j ? "false" : "true" },
+      el("img", { src: `media/${id}.jpg`, alt: "", loading: "lazy" }), el("span", {}, el("em", {}, SCREENS[screen]), label));
     b.querySelector("img").onerror = () => b.remove(); // clip not built yet
     b.onclick = () => {
       thumbs.querySelectorAll(".thumb").forEach(t => t.setAttribute("aria-current", t === b ? "true" : "false"));
-      video.poster = `media/${id}.jpg`; video.src = `media/${id}.mp4`; video.play().catch(() => {});
-      sound.hidden = !hasSound; now.textContent = label;
+      video.poster = `media/${id}.jpg`; video.src = `media/${id}.mp4?v=2`; video.play().catch(() => {});
+      sound.hidden = !hasSound; now.replaceChildren(el("b", {}, SCREENS[screen]), ` · ${label}`);
     };
     thumbs.append(b);
   });
+  const on = el("dl", { class: "on" }, ...Object.entries(g.on).flatMap(([s, t]) => [el("dt", {}, SCREENS[s]), el("dd", {}, t)]));
   const side = el("div", { class: "side" },
     el("span", { class: "rank" }, `${String(i + 1).padStart(2, "0")} · ${g.tag.toUpperCase()}`),
-    el("h3", {}, g.title), el("p", { class: "what" }, g.what),
-    el("div", { class: "proof" }, ...g.proof.map(p => el("span", {}, p))));
-  const main = el("div", {}, el("div", { class: "player" }, video, sound), now, g.clips.length > 1 ? thumbs : "");
-  groups.append(el("article", { class: "feature" }, main, side));
+    el("h3", {}, g.title), el("p", { class: "what" }, g.what), on,
+    el("div", { class: "proof" }, ...g.proof.map(p => el("span", {}, p))),
+    el("div", { class: "qr print-only", "data-qr": `#${g.id}` }));
+  const poster = el("img", { class: "print-only print-poster", src: `media/${first[0]}.jpg`, alt: "" });
+  const main = el("div", {}, el("div", { class: "player" }, video, sound), poster, now, g.clips.length > 1 ? thumbs : "");
+  groups.append(el("article", { class: "feature", id: g.id }, main, side));
 });
+
+// Screens by feature: one table a judge can scan, or tick off on paper.
+const matrix = document.getElementById("matrix");
+matrix.append(...GROUPS.map(g => el("tr", {}, el("td", {}, el("a", { href: `#${g.id}` }, g.tag)),
+  ...["pi", "pw", "ci", "cw"].map(s => el("td", { class: g.on[s] ? "yes" : "no" }, g.on[s] ? "●" : "–")))));
+
+// Print: a QR code beside each link a judge will want to open from paper.
+const BASE = "https://sona-overview.zhiyuantech.workers.dev/";
+const drawQr = () => document.querySelectorAll("[data-qr]").forEach(n => {
+  if (n.firstChild || typeof qrcode === "undefined") return;
+  const t = n.dataset.qr, url = t.startsWith("http") ? t : BASE + t;
+  const q = qrcode(0, "M"); q.addData(url); q.make();
+  n.innerHTML = q.createSvgTag({ cellSize: 3, margin: 0, scalable: true });
+  n.setAttribute("aria-label", url); n.append(el("span", {}, url.replace("https://", "")));
+});
+drawQr(); addEventListener("load", drawQr); addEventListener("beforeprint", drawQr);
 
 // Architecture tabs.
 const DIAGRAMS = [

@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
-# Builds public/media from the pitch showcase videos: trims each clip's 4.5 s title card (the page titles it),
+# Builds ./media from the pitch showcase videos: trims each clip's 4.5 s title card (the page titles it),
 # cuts frames that show base model names, re-encodes for the web and writes a poster frame.
-# Usage: bash media.sh [id ...]   (no ids = all; existing outputs are skipped)
+# The Worker serves ./media from the R2 bucket sona-overview-media, so upload what you build.
+# Usage: bash media.sh [id ...]            build (no ids = all; existing outputs are skipped)
+#        bash media.sh --upload [file ...]  upload to R2 (no files = everything in ./media)
 set -euo pipefail
+O="$(dirname "$0")/media"; mkdir -p "$O"
+if [[ "${1:-}" == "--upload" ]]; then
+  shift; cd "$O"; [[ $# -gt 0 ]] || set -- *
+  for f in "$@"; do
+    case $f in *.mp4) t=video/mp4;; *.jpg) t=image/jpeg;; *.svg) t=image/svg+xml;; *.png) t=image/png;; *) continue;; esac
+    for try in 1 2 3; do bunx wrangler r2 object put "sona-overview-media/media/$f" --file "$f" --content-type "$t" \
+      --cache-control "public, max-age=86400" --remote >/dev/null 2>&1 && break; [[ $try == 3 ]] && echo "failed $f"; sleep 2; done
+  done; exit
+fi
 B=~/Documents/sona-ai/pitch/showcase-videos
 K=~/Documents/sona-ai/pitch/semifinal-kit/04-media/videos
 A=~/Documents/sona-ai/pitch/semifinal-kit/04-media/architecture
 R=~/Documents/sona-ai/pitch/rerecord-2026-10-10   # 10 Oct re-recordings with the new Sona Care orb
-O="$(dirname "$0")/public/media"; mkdir -p "$O"
 cp "$A"/0{1,2,3}-*.dark.svg "$O/"
 [[ -f "$O/orb.png" ]] || sips -Z 336 ~/Documents/sona-ai/pitch/semifinal-kit/04-media/brand/orb.png --out "$O/orb.png" >/dev/null   # hero logo: Sona Care resting pearl
 for m in jay-ng wilfred-foo; do [[ -f "$O/$m.jpg" ]] || sips -s format jpeg -Z 480 ~/Documents/sona-ai/pitch/semifinal-kit/05-team/$m.png --out "$O/$m.jpg" >/dev/null; done
