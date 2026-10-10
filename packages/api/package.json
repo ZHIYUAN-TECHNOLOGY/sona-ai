@@ -18,7 +18,9 @@
     "@sona-ai/auth": "workspace:*",
     "@sona-ai/db": "workspace:*",
     "@sona-ai/domain": "workspace:*",
+    "@takumi-rs/helpers": "^2.14.0",
     "drizzle-orm": "catalog:",
+    "takumi-pdf": "^0.15.0",
     "unpdf": "^1.8.1",
     "zod": "catalog:"
   },
