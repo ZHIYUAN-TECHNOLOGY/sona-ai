@@ -104,9 +104,6 @@ nav a:hover { color: var(--text); }
 .diagram { margin-top: 28px; padding: 16px; }
 .diagram img { width: 100%; display: block; border-radius: 12px; }
 .diagram figcaption { margin: 14px 6px 4px; color: var(--muted); font-size: 15px; }
-.tabs { display: flex; gap: 8px; margin-top: 28px; flex-wrap: wrap; }
-.tabs button { font: 500 14px var(--body); color: var(--muted); background: rgba(255,255,255,.04); border: var(--stroke); border-radius: 999px; padding: 9px 16px; cursor: pointer; }
-.tabs button[aria-selected="true"] { color: var(--text); background: rgba(91,124,255,.2); border-color: rgba(91,124,255,.6); }
 
 /* models */
 .models { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 32px; }
@@ -200,6 +197,11 @@ code { white-space: nowrap; font: 600 15px var(--mono); background: rgba(255,255
 .print-only { display: none; }
 .qr svg { width: 84px; height: 84px; display: block; }
 .qr span { display: block; font: 10px var(--mono); margin-top: 4px; word-break: break-all; max-width: 180px; }
+
+.diagrams { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 28px; }
+.diagrams .diagram { margin: 0; }
+.diagram figcaption b { color: var(--text); }
+@media (max-width: 900px) { .diagrams { grid-template-columns: 1fr; } }
 
 /* video controls and full-size diagrams */
 .vctl { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
@@ -297,7 +299,6 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
   <a href="#models">Our AI</a>
   <a href="#privacy">Privacy</a>
   <a href="#progress">Progress</a>
-  <a href="#real">What's real</a>
   <a href="#business">Business</a>
   <a href="#pilot">Pilot</a>
   <a href="#team">Team</a>
@@ -437,17 +438,19 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
 </div></section>
 
 <section id="architecture"><div class="wrap">
-  <span class="eyebrow">Architecture</span>
+  <span class="eyebrow">Architecture · every diagram</span>
   <h2>One system. Four screens. One server. Our models.</h2>
-  <p class="lead">Two iPhone apps and two web portals talk to one Sona server. Every AI model sits on its own server in Malaysia.</p>
-  <div class="tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-d="0">Who uses what</button>
-    <button role="tab" aria-selected="false" data-d="1">Where it runs</button>
+  <p class="lead">Two iPhone apps and two web portals talk to one Sona server. Every AI model sits on its own server in Malaysia. Tap any diagram to see it full size.</p>
+  <div class="diagrams">
+    <figure class="diagram glass"><img src="media/01-system-context.dark.svg" alt="System context diagram" loading="lazy"><figcaption><b>System context.</b> Who uses Sona, through which app, and which outside systems it talks to. The insurer gets one link by email; the lab system posts results straight in.</figcaption></figure>
+    <figure class="diagram glass"><img src="media/02-deployment.dark.svg" alt="Where it runs diagram" loading="lazy"><figcaption><b>Where it runs.</b> Every Sona model on its own server in AWS Malaysia: three on GPUs, three on CPUs, called with signed requests. Sona Privacy sits beside them.</figcaption></figure>
+    <figure class="diagram glass"><img src="media/03-data-privacy.dark.svg" alt="Where patient data goes diagram" loading="lazy"><figcaption><b>Where patient data goes.</b> What each model sees, what is stored and what is deleted. Red paths pass through Sona Privacy; audio reaches Sona Speech in memory only.</figcaption></figure>
+    <figure class="diagram glass"><img src="media/04-ambient-scribe.dark.svg" alt="Ambient scribe diagram" loading="lazy"><figcaption><b>Ambient scribe.</b> How a consultation becomes a reviewed, coded note: voices told apart, each statement grounded in the transcript, codes checked against the WHO table.</figcaption></figure>
+    <figure class="diagram glass"><img src="media/05-guarantee-letter.dark.svg" alt="Guarantee letter to discharge diagram" loading="lazy"><figcaption><b>Guarantee letter to discharge.</b> The letter's states, who moves each one, and what blocks sending and discharge. The insurer decides on a one-time review page.</figcaption></figure>
+    <figure class="diagram glass"><img src="media/06-care-voice-call.dark.svg" alt="Sona Care voice call diagram" loading="lazy"><figcaption><b>Sona Care voice call.</b> How a patient talks to Sona turn by turn, and how a warning sign gets the 999 line first and a care-team task.</figcaption></figure>
+    <figure class="diagram glass"><img src="media/07-care-check-ins.dark.svg" alt="Check-ins after discharge diagram" loading="lazy"><figcaption><b>Check-ins after discharge.</b> Scheduled check-ins, how her reply is read, and how worse or urgent becomes a task the care team owns.</figcaption></figure>
+    <figure class="diagram glass"><img src="media/09-retrieval-evidence.dark.svg" alt="Evidence with citations diagram" loading="lazy"><figcaption><b>Evidence with citations.</b> Hybrid search over the hospital library, PubMed and her record, then a citation check before any claim is shown.</figcaption></figure>
   </div>
-  <figure class="diagram glass" style="margin:16px 0 0">
-    <img id="diagram" src="media/01-system-context.dark.svg" alt="System diagram: hospital staff use Sona Pro, patients use Sona Care, both talk to the Sona server, which calls Sona models in Malaysia, the Sona database, PubMed, push notifications and the lab system; insurers get a one-time link by email." loading="lazy">
-    <figcaption id="diagram-cap">Staff use Sona Pro. Patients use Sona Care. The insurer gets one link by email and needs no login. The lab system posts results straight in.</figcaption>
-  </figure>
 </div></section>
 
 <section id="models"><div class="wrap">
@@ -515,27 +518,6 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <div><b>4 TO 7 OCT</b><span>Every model moved to servers in Malaysia. Streaming voice call chosen after a day of live tests.</span></div>
     <div><b>8 OCT</b><span>The whole patient journey recorded in one take across web and both apps.</span></div>
     <div><b>9 OCT</b><span>1,219 commits. End-to-end test suite across Sona Pro and Sona Care, web and iOS.</span></div>
-  </div>
-</div></section>
-
-<section id="real"><div class="wrap">
-  <span class="eyebrow">What's real</span>
-  <h2>Real system. Synthetic patients.</h2>
-  <div class="two">
-    <div class="list glass"><h3>Real</h3><ul>
-      <li>Both iPhone apps and both web portals</li>
-      <li>The server, the database and the live updates between apps</li>
-      <li>Every AI answer, from our endpoints in AWS Malaysia</li>
-      <li>The voice calls: our models hear her and answer out loud (her voice is synthetic)</li>
-      <li>Every step on screen: only waiting is cut, nothing is sped up</li>
-    </ul></div>
-    <div class="list glass"><h3>Synthetic</h3><ul>
-      <li>Amelia Tan, her records and the other patients</li>
-      <li>The insurer and its decisions</li>
-      <li>The consultation voices: AI voices played into the microphone</li>
-      <li>"Day 2": the demo hospital's clock moved forward, and said so on screen</li>
-      <li>No real patient data exists anywhere in Sona yet</li>
-    </ul></div>
   </div>
 </div></section>
 
@@ -740,16 +722,6 @@ document.querySelectorAll(".diagram img").forEach(img => {
 });
 lb.addEventListener("click", () => lb.close());
 
-// Architecture tabs.
-const DIAGRAMS = [
-  ["media/01-system-context.dark.svg", "Staff use Sona Pro. Patients use Sona Care. The insurer gets one link by email and needs no login. The lab system posts results straight in."],
-  ["media/02-deployment.dark.svg", "Every Sona model runs on its own server in Malaysia: three on GPUs, three on CPUs. The server calls them with signed requests. Sona Privacy sits beside them."],
-];
-document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
-  document.querySelectorAll(".tabs button").forEach(t => t.setAttribute("aria-selected", t === b));
-  const [src, cap] = DIAGRAMS[b.dataset.d];
-  document.getElementById("diagram").src = src; document.getElementById("diagram-cap").textContent = cap;
-});
 </script>
 </body>
 </html>
