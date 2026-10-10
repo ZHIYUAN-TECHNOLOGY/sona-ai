@@ -152,6 +152,25 @@ nav a:hover { color: var(--text); }
 .person h3 { font-size: 20px; }
 .person p { color: var(--muted); font-size: 15px; margin-top: 4px; }
 
+/* problem, benchmarks, business, contact */
+.big { display: block; font: 600 40px/1.05 var(--title); color: var(--yellow); margin: 10px 0 6px; }
+.src { display: block; margin-top: 10px; color: var(--muted); font-size: 12.5px; }
+section > .wrap > .eyebrow.sub { margin-top: 48px; }
+.scroll { overflow-x: auto; margin-top: 16px; }
+table.grid { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 15px; }
+table.grid th, table.grid td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.grid th { font: 600 12px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+table.grid td { color: var(--muted); }
+table.grid tr.us td { color: var(--text); font-weight: 600; background: rgba(47,211,166,.07); }
+table.grid tr.us td:first-child { color: var(--pos); }
+.price { padding: 22px; }
+.price b { display: block; font: 600 26px/1.15 var(--title); margin-top: 8px; }
+.price p { margin-top: 6px; color: var(--muted); font-size: 15px; }
+.goal { margin-top: 20px; padding: 16px 20px; border-radius: 16px; border: 1px solid rgba(255,200,61,.4); background: rgba(255,200,61,.07); }
+.contact { padding: 24px; display: grid; gap: 10px; margin-top: 32px; font-size: 18px; }
+.contact a { color: var(--text); text-decoration: none; }
+.contact a:hover { color: var(--blue); }
+
 footer { margin-top: 110px; padding: 40px 0 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
 footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--text); margin-bottom: 18px; }
 
@@ -176,6 +195,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
 
 <nav aria-label="Sections"><div class="wrap">
   <b>Sona</b>
+  <a href="#problem">Problem</a>
   <a href="#changed">What changed</a>
   <a href="#features">Features</a>
   <a href="#architecture">Architecture</a>
@@ -183,8 +203,10 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
   <a href="#privacy">Privacy</a>
   <a href="#progress">Progress</a>
   <a href="#real">What's real</a>
+  <a href="#business">Business</a>
   <a href="#pilot">Pilot</a>
   <a href="#team">Team</a>
+  <a href="#contact">Contact</a>
 </div></nav>
 
 <header class="hero"><div class="wrap">
@@ -203,6 +225,23 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <div class="fact glass"><b>1,219 commits</b><span>Since the first one on 22 Sep 2026. Two founders, both write code.</span></div>
   </div>
 </div></header>
+
+<section id="problem"><div class="wrap">
+  <span class="eyebrow">The problem · one patient, one week</span>
+  <h2>Amelia's week breaks in three places.</h2>
+  <p class="lead">Amelia is our synthetic demo patient. Every clip on this page is her week.</p>
+  <div class="points">
+    <div class="point glass"><span class="eyebrow">1 · Clinic</span><span class="big">2 h</span><h3>at the desk for every hour with patients</h3><p>Her doctor writes notes instead of looking at her.</p><span class="src">Sinsky et al., Ann Intern Med 2016 · US doctors</span></div>
+    <div class="point glass"><span class="eyebrow">2 · Admission</span><span class="big">67%</span><h3>of private specialists have seen guarantee letters revoked or denied</h3><p>Her guarantee letter is denied after admission.</p><span class="src">CodeBlue poll of 849 specialists, Oct 2025</span></div>
+    <div class="point glass"><span class="eyebrow">3 · Home</span><span class="big">1 in 5</span><h3>patients are harmed in the weeks after discharge</h3><p>Day 2 at home, she gets worse and nobody knows.</p><span class="src">Forster et al., Ann Intern Med 2003</span></div>
+  </div>
+  <span class="eyebrow sub">Why now</span>
+  <div class="points" style="margin-top:14px">
+    <div class="point glass"><h3>MediAsas goes nationwide, Jan 2027</h3><p>A fixed price per diagnosis. Every extra bed-day and every wrong code becomes the hospital's loss.</p><span class="src">Bank Negara Malaysia, base health plan</span></div>
+    <div class="point glass"><h3>Claims up 73%, premiums up 21%</h3><p>Insurers are tightening.</p><span class="src">BNM, 2021 to 2023</span></div>
+    <div class="point glass"><h3>RM1 bn for electronic records</h3><p>Across 150 hospitals. Hospitals are going digital now.</p><span class="src">Bernama, Aug 2026</span></div>
+  </div>
+</div></section>
 
 <section id="changed"><div class="wrap">
   <span class="eyebrow">Since the preliminary round</span>
@@ -282,6 +321,19 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <span class="eyebrow">We keep only what measures better</span>
     <p style="margin-top:10px">We also trained models we did not ship, because they lost on our tests: a one-model voice call (worse medical answers), an end-of-turn detector, and two search fine-tunes (both less accurate). Every model on this page beat its alternatives on our own benchmarks in English, Malay and Chinese.</p>
   </div>
+  <span class="eyebrow sub">Measured against others · Sona Speech on clinic speech · 9 Oct 2026</span>
+  <div class="scroll glass">
+    <table class="grid">
+      <thead><tr><th>Model</th><th>444 clinic clips<br>words wrong</th><th>Drug names</th><th>15 real phone recordings<br>words wrong</th><th>Drug names</th></tr></thead>
+      <tbody>
+        <tr class="us"><td>Sona Speech</td><td>4.1%</td><td>30/31</td><td>10.0%</td><td>10/10</td></tr>
+        <tr><td>Open base model (before our training)</td><td>14.4%</td><td>20/31</td><td>21.3%</td><td>8/10</td></tr>
+        <tr><td>Whisper large-v3 (OpenAI)</td><td>15.4%</td><td>22/31</td><td>54.0%</td><td>5/10</td></tr>
+        <tr><td>ILMU ASR v4.2 (YTL, Malaysia)</td><td>16.5%</td><td>20/31</td><td>24.6%</td><td>6/10</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">Same scoring for every model; lower words-wrong is better. The 444 clips are our own synthetic consultations in mixed Malay, English and Mandarin, voiced with voices never used in training. The 15 phone recordings are real, from one speaker.</p>
 </div></section>
 
 <section id="privacy"><div class="wrap">
@@ -339,9 +391,49 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
   </div>
 </div></section>
 
+<section id="business"><div class="wrap">
+  <span class="eyebrow">Where Sona sits</span>
+  <h2>Scribes write the note. Sona runs the work after it.</h2>
+  <div class="scroll glass">
+    <table class="grid">
+      <thead><tr><th>Product</th><th>Writes the note</th><th>Runs the work after<br>letter, ward, follow-up</th><th>Where models run</th></tr></thead>
+      <tbody>
+        <tr class="us"><td>Sona</td><td>Yes</td><td>Yes</td><td>Malaysia</td></tr>
+        <tr><td>Qmed Scribe</td><td>Yes, rojak-friendly</td><td>Not seen on its public pages</td><td>On-premise option</td></tr>
+        <tr><td>Heidi</td><td>Yes: notes, letters, summaries</td><td>Not seen on its public pages</td><td>Abroad or not shown</td></tr>
+        <tr><td>Global scribes</td><td>Yes</td><td>Not seen on their public pages</td><td>US and EU products</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">Placed from each company's public pages, 8 Oct 2026.</p>
+
+  <span class="eyebrow sub">Business model · scenario numbers, the pilot measures them</span>
+  <h2>Doctors get the scribe free. The hospital pays for what saves it money.</h2>
+  <div class="points">
+    <div class="price glass"><span class="eyebrow">Platform</span><b>≈ RM1,800</b><p>per bed a year</p></div>
+    <div class="price glass"><span class="eyebrow">Usage</span><b>RM20 · RM30</b><p>per guarantee letter · per patient followed home</p></div>
+    <div class="price glass"><span class="eyebrow">Optional</span><b>10%</b><p>of recovered claims</p></div>
+  </div>
+  <p class="caption">Prices are a proposal.</p>
+  <div class="two">
+    <div class="list glass"><h3>One 300-bed hospital: about 5.9× return, from freed beds alone</h3><ul>
+      <li>2,000 clinician-hours back a month</li>
+      <li>RM620k of bed capacity a month (RM3,550 per bed-day, IHH 2024, if 2 h are saved per discharge)</li>
+      <li>Sona costs about RM105k a month; models are RM14k of it, so about 87% margin on model cost</li>
+    </ul></div>
+    <div class="list glass"><h3>Room to grow: about RM80M a year in Malaysia's private hospitals</h3><ul>
+      <li>About 290 hospitals and 19,000 beds at about RM4,200 per bed a year (Frost &amp; Sullivan via CodeBlue, Jul 2026)</li>
+      <li>Department, then hospital, then group: IHH alone runs 18 hospitals in Malaysia. Then public hospitals and ASEAN.</li>
+      <li>Plan: 3 hospitals and RM2.5M a year in year 1, 12 and RM10M in year 2, 30 and RM25M in year 3, including a second country</li>
+    </ul></div>
+  </div>
+  <p class="caption">The category pays: Heidi went from US$1M to US$50M a year in 24 months (HLTH, Sep 2026).</p>
+</div></section>
+
 <section id="pilot"><div class="wrap">
   <span class="eyebrow">Next</span>
   <h2>One department. Eight weeks.</h2>
+  <p class="goal">Our goal by the November final: one department in shadow mode. If you know that hospital, talk to us.</p>
   <div class="weeks">
     <div class="week glass"><b>WEEK 0</b><p>Database and storage move into Malaysia. PDPA review with the hospital's data protection officer.</p></div>
     <div class="week glass"><b>WEEKS 1 TO 2</b><p>Shadow mode: staff approve every output.</p></div>
@@ -356,6 +448,15 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
   <div class="team">
     <div class="person glass"><img src="media/jay-ng.jpg" alt="Jay Ng" loading="lazy"><div><h3>Jay Ng</h3><p>Founder &amp; CEO. Builds Sona's apps, servers and models. Before: software engineer, TreeRing (2019 to 2022).</p></div></div>
     <div class="person glass"><img src="media/wilfred-foo.jpg" alt="Wilfred Foo Thien Hau" loading="lazy"><div><h3>Wilfred Foo Thien Hau</h3><p>Co-founder. Software engineer, co-builds Sona and takes it to hospitals. Before: founder of IT &amp; Marketing 2U (2023) and GoPrint2U (2019).</p></div></div>
+  </div>
+</div></section>
+
+<section id="contact"><div class="wrap">
+  <span class="eyebrow">Contact</span>
+  <h2>Talk to us.</h2>
+  <div class="contact glass">
+    <a href="mailto:ngchwanlii@zhiyuantech.ai">ngchwanlii@zhiyuantech.ai</a>
+    <a href="tel:+601139984911">+6011-3998-4911</a>
   </div>
 </div></section>
 
