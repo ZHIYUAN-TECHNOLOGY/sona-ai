@@ -262,9 +262,9 @@ test("a visit's free question reads that visit's patient record on the server, s
   expect(answer).toMatchObject({ source: "model", spec: { elements: { "f-0": { props: { text: lead } } } } });
   const chats = () => up.calls.filter(c => c.url.includes("chat/completions")).map(c => String(c.init.body));
   const sent = chats()[0]!;
-  expect(sent).toContain("This visit's patient record:");
+  expect(sent).toContain("This visit's patient record (Daniel Rahman):"); // named, so a question about another bed is not answered from it
   expect(sent).toContain("Potassium 3.1 mmol/L, low");
   // A visit the clinician's hospital does not hold reads nothing: the model sees only the page.
   await client.ask.free({ ...asked, encounterId: "visit-elsewhere" });
-  expect(chats()[1]).not.toContain("This visit's patient record:"); // the record's own header (the prompt speaks of a visit's patient record)
+  expect(chats()[1]).not.toContain("This visit's patient record ("); // the record's own header (the prompt speaks of a visit's patient record)
 });

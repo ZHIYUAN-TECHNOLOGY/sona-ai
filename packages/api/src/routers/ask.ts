@@ -1,4 +1,4 @@
-import { encounters } from "@sona-ai/db/schema/clinical";
+import { encounters, patients } from "@sona-ai/db/schema/clinical";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -35,15 +35,18 @@ export const askRouter = {
 /**
  * The visit's patient's record (evidence's recordText: what the hospital recorded, her stay, then the visit's note) as
  * page lines, only for a visit of the clinician's own hospital; none when it cannot be read, so the question is still
- * answered. At most RECORD_CHARS, whole lines from the top, so a long record leaves Gemma room to answer.
+ * answered. At most RECORD_CHARS, whole lines from the top, so a long record leaves Gemma room to answer. Its header
+ * names the patient (recordText leaves the name out for evidence's search): unnamed, a question about another bed was
+ * answered with this patient's results as that bed's (10 Oct, review: "Ravi bed 9 K and creatinine how?", 10 of 10).
  */
 async function visitRecord(context: Context, hospitalId: string, encounterId: string): Promise<AskContext["lines"]> {
-  const [visit] = await context.db.select({ patientId: encounters.patientId }).from(encounters)
+  const [visit] = await context.db.select({ patientId: encounters.patientId, name: patients.name }).from(encounters)
+    .innerJoin(patients, eq(patients.id, encounters.patientId))
     .where(and(eq(encounters.id, encounterId), eq(encounters.hospitalId, hospitalId))).catch(() => []);
   if (!visit) return [];
   const text = await recordText(context.db, hospitalId, visit.patientId, encounterId).catch(() => "");
   const kept = text.length > RECORD_CHARS ? text.slice(0, text.lastIndexOf("\n", RECORD_CHARS)) : text;
-  return kept ? ["This visit's patient record:", ...kept.split("\n")] : [];
+  return kept ? [`This visit's patient record (${visit.name}):`, ...kept.split("\n")] : [];
 }
 /**
  * About 1,300 of Gemma's 16,384 tokens (3 characters a token), beside the prompt and the page's own lines and rows.
