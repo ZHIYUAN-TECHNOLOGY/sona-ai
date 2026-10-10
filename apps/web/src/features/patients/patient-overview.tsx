@@ -1,5 +1,5 @@
 import { can } from "@sona-ai/api/roles";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { Fragment, type ReactNode, useState } from "react";
@@ -15,6 +15,7 @@ import { when } from "@/features/results/result-rail";
 import { isFlagged } from "@/features/results/triage";
 import { countOf, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
+import { downloadServerPdf } from "@/lib/pdf/render";
 import "@/styles/pages/patient-overview.css";
 
 import { JoinCode } from "./join-code";
@@ -63,6 +64,7 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
   const timeline = useQuery({ ...orpc.encounter.timeline.queryOptions({ input: { encounterId } }), enabled: hasVisit });
   const doses = useQuery({ ...orpc.adherence.get.queryOptions({ input: { patientId: patient.id } }), enabled: canRead });
   const trends = useTrends(patient.id, canRead);
+  const summary = useMutation(orpc.patients.summary.mutationOptions({ onSuccess: downloadServerPdf }));
 
   const events = timeline.data ? [...timeline.data].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()) : [];
   const latest = events[0];
@@ -99,12 +101,17 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
             <>
               {/* With doses behind, the summary's suggested step is the Message button. */}
               {behind ? null : <Button to="/pro/messages" search={{ patient: patient.id }} icon="message" variant="secondary">Message</Button>}
+              {/* The server's PDF of the record, to send to another hospital on transfer. */}
+              <Button icon="download" variant="secondary" pending={summary.isPending} onClick={() => summary.mutate({ patientId: patient.id })}>
+                {summary.isPending ? "Making the PDF…" : "Download health summary"}
+              </Button>
               {/* The visit page reads encounterId from the URL itself. */}
               {visit ? <Button {...visit} variant="primary" icon="arrow-right">Open the visit</Button> : null}
             </>
           ) : undefined
         }
       />
+      {summary.isError ? <p className="pt-muted" role="alert">The health summary could not be made: {summary.error.message}</p> : null}
       <PatientStrip
         name={patient.name}
         meta={patientMeta(patient)}
