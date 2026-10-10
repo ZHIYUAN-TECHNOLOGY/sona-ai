@@ -21,3 +21,11 @@ test("her own medicines from the plan, even names no list knows; nothing in a pl
   expect(marked(text).map(p => p.text).join("")).toBe(text);
   expect(medicinesOf(undefined)).toEqual([]);
 });
+
+test("the next visit and its date, as \"when\": Sona Care's own answer of 10 Oct, Malay and Chinese", () => {
+  expect(marks("Your next visit is a clinic review scheduled for Saturday, October 24, 2026. You also have check-ins scheduled for day 2 and day 7 after your discharge."))
+    .toEqual(["dose:clinic review", "dose:Saturday, October 24, 2026", "dose:check-ins", "dose:day 2 and day 7"]);
+  expect(marks("Take paracetamol every 4 to 6 hours.")).toEqual(["medicine:paracetamol", "dose:every 4 to 6 hours"]);
+  expect(marks("Temujanji klinik anda pada Sabtu, 24 Oktober 2026.")).toEqual(["dose:Temujanji klinik", "dose:Sabtu, 24 Oktober 2026"]);
+  expect(marks("您的复诊在10月24日星期六。")).toEqual(["dose:复诊", "dose:10月24日", "dose:星期六"]);
+});

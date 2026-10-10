@@ -1,6 +1,6 @@
 /**
  * The words in Sona's answers a patient looks for, in colour (the UX rule "meaningful highlights"): a medicine in the
- * blue the plan tags new medicines with, how much and when in violet, and a warning sign or an allergy in red, the
+ * blue the plan tags new medicines with, how much and when (a dose, its timing, and a visit or check-in and its date) in violet, and a warning sign or an allergy in red, the
  * colour kept for "call the hospital". English, Malay and Chinese; her own medicines come from her plan, so a name the
  * lists below don't know is still found. Pure, so bun can test it.
  */
@@ -32,13 +32,20 @@ const DRUG = new RegExp([
   "扑热息痛|对乙酰氨基酚|布洛芬|阿司匹林|胰岛素|抗生素|阿莫西林|阿奇霉素|二甲双胍|华法林",
 ].join("|"), "giu");
 
+const MONTH = "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|januari|februari|mac|mei|julai|ogos|oktober|disember";
+const WEEKDAY = "(?:mon|tues|wednes|thurs|fri|satur|sun)day|isnin|selasa|rabu|khamis|jumaat|sabtu|ahad";
 const NUM = "\\d+(?:[.,]\\d+)?|one|two|three|four|five|six|half|a|satu|dua|tiga|empat|lima|enam|setengah|separuh|sebiji";
 const ZH_NUM = "[\\d一二两三四五六七八九十半]+";
 const DOSE = new RegExp([
   words([
     `(?:${NUM})\\s?(?:mg|mcg|µg|g|grams?|grammes?|milligrams?|ml|millilitres?|units?|tablets?|tabs?|capsules?|puffs?|drops?|sachets?|biji|kapsul|titis|sudu(?: teh| besar)?)`,
     "(?:once|twice|three times|four times)(?: (?:a|per|every) (?:day|week)| daily)?",
-    "every (?:\\d+|two|three|four|six|eight|twelve) hours?", "every (?:morning|night|evening|day|other day)",
+    "every (?:\\d+|two|three|four|six|eight|twelve)(?: to (?:\\d+|four|six|eight))? hours?",
+    // When to come back: the visit and its date ("Saturday, October 24, 2026", "24 Oct", "day 2 and day 7"). A month
+    // alone ("in April") is not a date.
+    `(?:(?:${WEEKDAY}),? )?(?:(?:${MONTH}) \\d{1,2}(?:st|nd|rd|th)?(?:,? \\d{4})?|\\d{1,2} (?:${MONTH})(?: \\d{4})?)`, WEEKDAY,
+    "day \\d+(?: and (?:day )?\\d+)?", "hari (?:ke-?)?\\d+(?: dan (?:hari (?:ke-?)?)?\\d+)?",
+    "clinic (?:review|visit|appointment)", "follow-up(?: visit| appointment| review)?", "check-ins?", "temujanji(?: klinik)?", "lawatan susulan", "every (?:morning|night|evening|day|other day)",
     "(?:before|after|with) (?:meals?|food|breakfast|lunch|dinner|eating)", "at (?:night|bedtime)", "before bed(?:time)?", "in the (?:morning|evening)",
     "for (?:\\d+|one|two|three|four|five|six|seven|ten|fourteen) (?:more )?(?:days?|weeks?|months?)", "\\d{1,2}(?::\\d{2})?\\s?(?:am|pm)",
     "(?:sekali|dua kali|tiga kali|empat kali)(?: (?:sehari|seminggu))?", "setiap (?:\\d+|dua|tiga|empat|enam|lapan|dua belas) jam",
@@ -46,7 +53,7 @@ const DOSE = new RegExp([
     "selama (?:\\d+|satu|dua|tiga|empat|lima|enam|tujuh) (?:hari|minggu|bulan)(?: lagi)?",
   ].join("|")).source,
   `${ZH_NUM}\\s?(?:毫克|克|毫升|片|粒|颗|包|滴|单位|mg|g|ml)`, `(?:每[天日]|一[天日])${ZH_NUM}次`, `每${ZH_NUM}个?小时`, "每[天晚早]",
-  "饭前|饭后|餐前|餐后|睡前|空腹", `${ZH_NUM}(?:天|周|个?星期|个月)`,
+  "饭前|饭后|餐前|餐后|睡前|空腹", "\\d{1,2}月\\d{1,2}[日号]", "星期[一二三四五六日天]|周[一二三四五六日]", `第${ZH_NUM}天`, "复诊|回诊|门诊", `${ZH_NUM}(?:天|周|个?星期|个月)`,
 ].join("|"), "giu");
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
