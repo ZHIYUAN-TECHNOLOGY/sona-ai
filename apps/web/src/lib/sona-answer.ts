@@ -1,4 +1,5 @@
 import { modelName } from "@sona-ai/domain/model-names";
+import type { Chosen } from "../../../care/features/assistant/terms";
 import type { ReactNode } from "react";
 
 import type { RuleRow } from "@/components/ai/rule-answer";
@@ -12,7 +13,7 @@ import type { Turn as EvidenceTurn } from "@/features/evidence/thread";
 export type SonaAnswer =
   | { kind: "rules"; lead: string; rows: RuleRow[]; heading?: string; by?: string }
   | { kind: "evidence"; turn: EvidenceTurn; encounterId?: string }
-  | { kind: "text"; text: string; note?: string }
+  | { kind: "text"; text: string; note?: string; /** Sona Care: the words the model chose to colour (care.ask `marks`). */ marks?: Chosen[] }
   /** `text`: the answer's words, when the page has them, so a follow-up can be read with it (`historyOf`). */
   | { kind: "node"; node: ReactNode; text?: string };
 

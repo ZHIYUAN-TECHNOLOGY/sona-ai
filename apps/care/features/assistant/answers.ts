@@ -1,4 +1,5 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
+import type { Chosen } from "./terms";
 import { formatDate, tFor, type Lang } from "@/lib/i18n";
 import { listOf, type Discharged } from "../discharge/lines";
 import type { Doctor } from "../doctors/data";
@@ -17,7 +18,7 @@ export type Visit = { title: string; date: Date | string; why?: string; inDays?:
  * `kind` picks the suggestion row's icon: a missed dose, a medicine, a visit. `leaflet`: a second caption, on an answer
  * that is from their record and also from one of the hospital's leaflets ("From the hospital's leaflet · Chest infection").
  */
-export type Asked = { question: string; answer: string; source: string; leaflet?: string; kind: "dose" | "medicine" | "visit" };
+export type Asked = { question: string; answer: string; source: string; leaflet?: string; kind: "dose" | "medicine" | "visit"; /** The words the model chose to colour (terms.ts Chosen); none on an authored answer. */ marks?: Chosen[] };
 
 const MYT = 8 * 3600_000;
 /** "8:00 AM" ("8:00 PG", "上午8:00") from the plan's "HH:MM" (already Malaysia time). */
@@ -165,7 +166,9 @@ function fromModel(a: PlanAnswer, lang: Lang): Exclude<Reply, { kind: "doctors" 
   const titles = ((a as { sources?: { title: string }[] }).sources ?? []).map(s => s.title);
   const leaflet = titles.length ? t("ask.leaflet", { title: listOf(titles, lang) }) : undefined;
   // One caption says where the answer is from; an answer from their record and a leaflet says both. "General" is only what is from neither.
-  return { kind: "plan", asked: { question: "", answer: a.answer, source: record ?? leaflet ?? t("ask.general"), ...record && leaflet && { leaflet }, kind: "medicine" } };
+  // The words the model chose to colour (read loosely: older servers never send them; the word lists then colour).
+  const marks = (a as { marks?: Chosen[] }).marks;
+  return { kind: "plan", asked: { question: "", answer: a.answer, source: record ?? leaflet ?? t("ask.general"), ...record && leaflet && { leaflet }, kind: "medicine", ...marks && { marks } } };
 }
 
 /** An answer split into its lead sentence (shown bold) and the rest; "Dr." never ends a sentence. */

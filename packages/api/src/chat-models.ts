@@ -36,6 +36,27 @@ Answer with JSON only: {"label": "fine" | "worse" | "urgent", "symptom": "<2-5 E
 - fine: better, or the same with no new concern.
 If unsure between two labels, choose the more serious one.`;
 
+/**
+ * What Sona Care colours in an answer, chosen by the model (the app's word lists only stand in when it chose nothing):
+ * the words a patient scans for. Shared with the call's closing line (voice-agent/answer.ts).
+ */
+export const MARKS_RULE = `Set "marks" to the words in your answer a patient scans for, so they can be coloured, each copied exactly as written in the answer (same language and spelling):
+  - "medicine": every medicine's name (paracetamol, azithromycin, ubat batuk), never its dose.
+  - "when": every dose and amount (500 mg, 1 g, satu tablet), how often or when to take it (every 6 hours, sekali sehari, 饭后), for how long (for 2 more days), and every visit, check-in or date (clinic review, day 2 and day 7, Saturday, 24 October 2026).
+  - "warning": every warning sign to act on (chest pain, lips turn blue), an allergy and what it is to (allergy to penicillin), and calling 999.
+  Mark the shortest phrase that carries each, every time it appears; [] when the answer has none.
+  Example: answer "Take paracetamol 1 g every 6 hours, at most 4 g a day. Call 999 if you have chest pain." gives marks [{"text": "paracetamol", "kind": "medicine"}, {"text": "1 g", "kind": "when"}, {"text": "every 6 hours", "kind": "when"}, {"text": "4 g a day", "kind": "when"}, {"text": "Call 999", "kind": "warning"}, {"text": "chest pain", "kind": "warning"}].`;
+const MARK_KINDS = { medicine: "medicine", when: "dose", dose: "dose", warning: "warning" } as const;
+export type ModelMark = { text: string; kind: "medicine" | "dose" | "warning" };
+/** The model's marks that name words really in `text`, as the apps' Mark kinds; undefined when it gave none (the apps' word lists then mark). */
+export function marksIn(marks: unknown, text: string): ModelMark[] | undefined {
+  if (!Array.isArray(marks)) return undefined;
+  return marks.flatMap(m => {
+    const kind = MARK_KINDS[m?.kind as keyof typeof MARK_KINDS], words = typeof m?.text === "string" ? m.text.trim() : "";
+    return kind && words && text.includes(words) ? [{ text: words.slice(0, 80), kind }] : [];
+  }).slice(0, 20);
+}
+
 // Kept in step with the call's prompt (VOICE in voice-agent/answer.ts): the same rules, there as spoken words.
 // No limit on what Sona answers, and no "ask your care team" default (founder, 9 Oct): only the 999 rule stays.
 const ANSWER = `You are Sona Care, a hospital's assistant for its patients, answering one patient as a knowledgeable, kind nurse would. Answer whatever they ask, fully and helpfully: their own care, any other health or medicine question, or anything else. For anything about them (their medicines, doses, visits, conditions, allergies, results, what their doctor noted, what they told us), use their record below when it is relevant: it is what the hospital has recorded about them. When the conversation so far is given, read their question in its light: "it" or "that" means what you were talking about.
@@ -48,10 +69,11 @@ Rules:
 - Set "grounded" to true when your answer uses their record, false when it comes only from a general leaflet or general knowledge.
 - Set "cites" to the numbers of the general leaflets your answer used, [] when it used none. Never write a leaflet's number in the answer itself.
 - If they say they HAVE an emergency sign now (chest pain, severe breathlessness, confusion, fainting, coughing blood), set "urgent" to true and tell them to call 999 now. A question about which signs to watch for is not urgent: answer it.
-Answer with JSON only: {"answer": "<text>", "grounded": true|false, "urgent": true|false, "from": "<which part of the record: medicines, leaflet, warning signs, follow-up, visits, history, allergies, results, note, check-ins or doses; empty if not from the record>", "cites": [<leaflet numbers>]}.`;
+${MARKS_RULE}
+Answer with JSON only: {"answer": "<text>", "grounded": true|false, "urgent": true|false, "from": "<which part of the record: medicines, leaflet, warning signs, follow-up, visits, history, allergies, results, note, check-ins or doses; empty if not from the record>", "cites": [<leaflet numbers>], "marks": [{"text": "<words copied from the answer>", "kind": "medicine" | "when" | "warning"}]}.`;
 
-/** Up to about 6 sentences, or a short list, in JSON: room for it in any of the three languages. */
-const ANSWER_TOKENS = 800;
+/** Up to about 6 sentences, or a short list, and its marks, in JSON: room for it in any of the three languages. */
+const ANSWER_TOKENS = 1000;
 /** The conversation so far, as the model reads it: its latest part when a long chat would crowd out her record. */
 const HISTORY_CHARS = 4000;
 
@@ -115,8 +137,9 @@ export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Mo
         // copied from her Malay leaflet): asked once more, insisting, when the answer is not in the question's language.
         if (typeof read?.answer === "string" && languageOf(read.answer) !== input.language) read = await ask(`. Your last answer was not in ${name}: write every word in ${name}, translating anything you take from her record`) ?? read;
         if (read && typeof read.answer === "string" && unnumbered(read.answer).trim()) {
+          const answer = unnumbered(read.answer).trim().slice(0, 2000), marks = marksIn(read.marks, answer);
           return {
-            answer: unnumbered(read.answer).trim().slice(0, 2000), grounded: read.grounded === true, urgent: read.urgent === true,
+            answer, grounded: read.grounded === true, urgent: read.urgent === true, ...marks && { marks },
             ...typeof read.from === "string" && read.from.trim() ? { from: read.from.trim().slice(0, 40) } : {},
             ...Array.isArray(read.cites) && { cites: read.cites.filter((n): n is number => typeof n === "number") },
             source: "model", model,

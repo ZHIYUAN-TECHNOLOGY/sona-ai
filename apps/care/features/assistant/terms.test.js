@@ -29,3 +29,11 @@ test("the next visit and its date, as \"when\": Sona Care's own answer of 10 Oct
   expect(marks("Temujanji klinik anda pada Sabtu, 24 Oktober 2026.")).toEqual(["dose:Temujanji klinik", "dose:Sabtu, 24 Oktober 2026"]);
   expect(marks("您的复诊在10月24日星期六。")).toEqual(["dose:复诊", "dose:10月24日", "dose:星期六"]);
 });
+
+test("the model's own marks win, found in turn so a dose said twice is marked twice; none chosen colours nothing", () => {
+  const text = "Take 1 g every 6 hours. Your record says 1 g if you need it, and call 999 if you faint.";
+  const chosen = [{ text: "1 g", kind: "dose" }, { text: "every 6 hours", kind: "dose" }, { text: "1 g", kind: "dose" }, { text: "call 999", kind: "warning" }, { text: "not in it", kind: "medicine" }];
+  expect(marked(text, [], chosen).filter(p => p.mark).map(p => `${p.mark}:${p.text}`)).toEqual(["dose:1 g", "dose:every 6 hours", "dose:1 g", "warning:call 999"]);
+  expect(marked(text, [], []).filter(p => p.mark)).toEqual([]);
+  expect(marked(text, [], chosen).map(p => p.text).join("")).toBe(text);
+});

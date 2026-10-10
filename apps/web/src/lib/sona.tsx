@@ -4,6 +4,7 @@ import { createContext, isValidElement, type ReactNode, type RefObject, use, use
 
 import { Conversation, Notice, Response, RuleAnswer, Sources, Steps, Suggestions, Turn as Asked } from "@/components/ai";
 import { MarkedFor } from "@/components/marked";
+import type { Chosen } from "../../../care/features/assistant/terms";
 import { Button } from "@/components/primitives";
 import { FilmCard } from "@/features/evidence/film-card";
 import { answerBy, answerFilm } from "@/features/evidence/thread";
@@ -44,10 +45,10 @@ const isAnswer = (value: unknown): value is SonaAnswer => typeof value === "obje
 const asAnswer = (value: SonaAnswer | ReactNode): SonaAnswer => (isAnswer(value) ? value : typeof value === "string" ? { kind: "text", text: value } : { kind: "node", node: value });
 
 async function askCare(question: string, _update: unknown, history: Said[]): Promise<SonaAnswer> {
-  const res = (await client.care.ask({ question, history })) as { answer?: string; careTeam?: { line?: string }; sources?: { title: string }[] };
+  const res = (await client.care.ask({ question, history })) as { answer?: string; careTeam?: { line?: string }; sources?: { title: string }[]; marks?: Chosen[] };
   if (!res.answer) throw new Error("Sona can't answer right now. Please try again in a minute.");
   const text = [res.answer, res.careTeam?.line].filter(Boolean).join("\n\n");
-  return { kind: "text", text, ...(res.sources?.length ? { note: `From: ${res.sources.map(source => source.title).join(", ")}` } : {}) };
+  return { kind: "text", text, ...res.marks && { marks: res.marks }, ...(res.sources?.length ? { note: `From: ${res.sources.map(source => source.title).join(", ")}` } : {}) };
 }
 
 /** The Sona panel's default in Sona Pro: the server reads the hospital's Today, Ward and Tasks itself (scope "web") and answers, by rule when the model is off. */
@@ -134,7 +135,7 @@ export function useSonaContext(label: string | undefined) {
 }
 
 /** An answer's paragraphs, its words coloured as the app colours them (Sona Care: medicine, dose, warning; Sona Pro: its five). */
-const paragraphs = (text: string, app: App) => text.split(/\n{2,}/).map((line, i) => <p key={i}><MarkedFor app={app} text={line} /></p>);
+const paragraphs = (text: string, app: App, chosen?: Chosen[]) => text.split(/\n{2,}/).map((line, i) => <p key={i}><MarkedFor app={app} text={line} chosen={chosen} /></p>);
 
 /** Who wrote an answer, for the caption under Sona's mark: "rules", the model, or what stood in for it. */
 function byOf(answer?: SonaAnswer) {
@@ -174,7 +175,7 @@ function Answer({ turn, ask }: { turn: Turn; ask: (q: string) => void }) {
   if (!answer) return <Notice kind="thinking" />;
   if (answer.kind === "evidence") return <EvidenceAnswer answer={answer} ask={ask} />;
   if (answer.kind === "node") return answer.node;
-  if (answer.kind === "text") return <div className="sona-text">{paragraphs(answer.text, app)}{answer.note ? <p className="sona-note">{answer.note}</p> : null}</div>;
+  if (answer.kind === "text") return <div className="sona-text">{paragraphs(answer.text, app, answer.marks)}{answer.note ? <p className="sona-note">{answer.note}</p> : null}</div>;
   const open = (row: { op?: string }) => {
     const patientId = rowPatient(row);
     if (patientId) void navigate({ to: "/pro/patients/$patientId", params: { patientId } });
@@ -218,7 +219,7 @@ export function SonaThread() {
               {turn.state === "error" ? <p>{turn.error}</p>
                 : turn.state === "pending" || !answer ? <p className="sona-turn-note">Sona is thinking…</p>
                 : answer.kind === "node" ? answer.node
-                : answer.kind === "text" ? <>{paragraphs(answer.text, app)}{answer.note ? <p className="sona-turn-note">{answer.note}</p> : null}</>
+                : answer.kind === "text" ? <>{paragraphs(answer.text, app, answer.marks)}{answer.note ? <p className="sona-turn-note">{answer.note}</p> : null}</>
                 : <p><MarkedFor app={app} text={(answer.kind === "rules" ? answer.lead : answer.turn.bottomLine) ?? ""} /></p>}
             </div>
           </article>

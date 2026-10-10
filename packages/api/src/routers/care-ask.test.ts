@@ -52,7 +52,7 @@ test("a follow-up is read in the light of the chat so far (staging, 9 Oct: \"How
   expect(answer).toMatchObject({ answer: long, grounded: false, withheld: 0 });
   expect(long.length).toBeGreaterThan(800);
   expect(asked).toHaveLength(1);
-  expect(asked[0]!.maxTokens).toBe(800);
+  expect(asked[0]!.maxTokens).toBe(1000);
   expect(asked[0]!.said).toStartWith("Conversation so far:\nPatient: What is panadol\nSona Care: Panadol is paracetamol, a common medicine for pain and fever.\n\nPatient: Is it safe?\nSona Care: Yes, at the usual dose.\n\nPatient's question, written in English.");
   expect(asked[0]!.said).toEndWith(": How does it help?");
   // A first question has no conversation before it; a chat sent with more than six earlier turns is refused.

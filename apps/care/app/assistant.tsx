@@ -223,6 +223,8 @@ function TurnView({ t, medicines, lead, flood, enter, visitDay, busy, error, onS
   const lang = useLang(), tr = tFor(lang);
   const r = t.reply;
   const [bold, more] = leadOf(shown(r, lang));
+  // The words the model chose to colour, when it answered; the word lists colour an authored answer.
+  const chosen = r.kind === "plan" ? r.asked.marks : undefined;
   return <View style={{ gap: 12 }}>
     <Animated.View entering={enter(0)} style={{ alignSelf: "flex-end", maxWidth: "86%", backgroundColor: palette.white, borderRadius: 22, borderCurve: "continuous", borderWidth: 1, borderColor: palette.line, paddingHorizontal: 16, paddingVertical: 11 }}>
       <Text selectable style={{ ...type.body, color: palette.ink }}>{t.question}</Text>
@@ -232,7 +234,7 @@ function TurnView({ t, medicines, lead, flood, enter, visitDay, busy, error, onS
       : <Animated.View entering={enter(1)} style={{ gap: 12 }}>
         <Text selectable style={{ fontSize: 17, lineHeight: 26, letterSpacing: -0.3, color: palette.ink }}>
           {/* Her medicines, how much and when, and warning signs in colour, so the answer can be scanned (terms.ts). */}
-          <Marked text={bold} medicines={medicines} weight="700" />{more ? <>{lang === "zh" ? "" : " "}<Marked text={more} medicines={medicines} /></> : null}
+          <Marked text={bold} medicines={medicines} chosen={chosen} weight="700" />{more ? <>{lang === "zh" ? "" : " "}<Marked text={more} medicines={medicines} chosen={chosen} /></> : null}
         </Text>
         {r.kind === "plan" && <Caption text={r.asked.source} />}
         {/* From their record and one of the hospital's leaflets: the leaflet is named too. */}

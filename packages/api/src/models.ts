@@ -115,7 +115,7 @@ export type Models = {
    * one fits; `cites` the numbers of those the answer used, as the model wrote them (care.ask keeps only numbers offered).
    * `history`: the chat's earlier turns, oldest first, so a follow-up ("How does it help?") is read in their light.
    */
-  answerFromPlan(input: { question: string; plan: string; language: Language; passages?: Passage[]; history?: { question: string; answer: string }[] }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string; cites?: number[] }>;
+  answerFromPlan(input: { question: string; plan: string; language: Language; passages?: Passage[]; history?: { question: string; answer: string }[] }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string; cites?: number[]; /** The words to colour, the model's choice (chat-models MARKS_RULE). */ marks?: { text: string; kind: "medicine" | "dose" | "warning" }[] }>;
   /**
    * Sona Care: what one of the patient's own lab results means, in plain words in their language. Only asked for a
    * result a doctor has acknowledged (care.results.explain). What such a value commonly means, in general terms, is fine.
