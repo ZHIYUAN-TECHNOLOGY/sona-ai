@@ -1,6 +1,8 @@
-import { documents, encounters, notes, observations, patients, provenance, pubmedArticles, pubmedSearches } from "@sona-ai/db/schema/clinical";
+import { admissions, documents, encounters, notes, observations, patients, provenance, pubmedArticles, pubmedSearches } from "@sona-ai/db/schema/clinical";
+import type { MedChange } from "@sona-ai/domain/discharge";
 import { STUDIES, authoredAnswer, curb65FromObservations, isRehearsed, pubmedUrl, quotedClaims, recordedPoints, severityApplies, sourcedClaims, studyKind, type Claim, type ObservationRow, type PatientPoint, type Reference } from "@sona-ai/domain/evidence";
 import { deidentifyByRules } from "@sona-ai/domain/training";
+import type { WardRecord } from "@sona-ai/domain/ward";
 import { ORPCError } from "@orpc/server";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -9,6 +11,7 @@ import { clockOf, type Context } from "../context";
 import { stubModels, type Models } from "../models";
 import { protectedProcedure } from "../index";
 import { conclusionOf, fetchArticles, pubmedQuery, searchEvidence, searchTerms, type Article } from "../pubmed";
+import { malaysiaTime, prescribed } from "./care-plan";
 import { malaysiaDay, recordFacts } from "./encounter";
 
 /**
@@ -108,16 +111,43 @@ const referenceOf = ({ kind, ...p }: Passage, n: number): Reference =>
 
 const turn = z.object({ question: z.string().trim().min(1).max(500), answer: z.string().max(4000) });
 /**
- * The visit's patient's record as one source's text: recordFacts, then the visit's latest saved note. A record that
- * cannot be read gives none (the answer still comes, from the other sources); the note is the visit's own, never another's.
+ * The visit's patient's record as one source's text: recordFacts, her stay (stayLines), then the visit's latest saved
+ * note. A record that cannot be read gives none (the answer still comes, from the other sources); the note is the visit's
+ * own, never another's. Sona Pro's visit questions (ask.free) read the same text.
  */
 export async function recordText(db: Context["db"], hospitalId: string, patientId: string, encounterId: string) {
-  const [facts, [note]] = await Promise.all([
+  const [facts, stay, [note]] = await Promise.all([
     recordFacts(db, hospitalId, patientId).catch(() => [] as string[]),
+    stayLines(db, hospitalId, patientId, encounterId).catch(() => [] as string[]),
     db.select({ sentences: notes.sentences, at: notes.createdAt }).from(notes).where(eq(notes.encounterId, encounterId)).orderBy(desc(notes.revision)).limit(1).catch(() => []),
   ]);
   const noted = note?.sentences.map(s => s.text).join(" ").trim();
-  return [...facts, ...noted ? [`Doctor's note for this visit (saved ${malaysiaDay(note!.at)}): ${noted}`] : []].join("\n");
+  return [...facts, ...stay, ...noted ? [`Doctor's note for this visit (saved ${malaysiaDay(note!.at)}): ${noted}`] : []].join("\n");
+}
+
+/**
+ * Her stay as the ward and the discharge card hold it, which recordFacts (her history and chart) does not: the bed and
+ * where the stay stands (on the ward, fit to go since, or discharged when), the ward's handover (SBAR), the take-home
+ * medicines and whether the doctor confirmed them, and the prescriptions approved on her visits. None for a patient never
+ * admitted. 10 Oct, gate: without them "what abx is she on now?" was answered "not on any antibiotics" for a patient
+ * going home on azithromycin, and "brief me" left out the discharge.
+ */
+async function stayLines(db: Context["db"], hospitalId: string, patientId: string, encounterId: string) {
+  const [[row], [stay], [visit], ordered] = await Promise.all([
+    db.select({ record: patients.record }).from(patients).where(and(eq(patients.id, patientId), eq(patients.hospitalId, hospitalId))),
+    db.select().from(admissions).where(and(eq(admissions.patientId, patientId), eq(admissions.hospitalId, hospitalId))).orderBy(desc(admissions.id)).limit(1),
+    db.select({ state: encounters.state }).from(encounters).where(and(eq(encounters.id, encounterId), eq(encounters.hospitalId, hospitalId))),
+    prescribed(db, hospitalId, patientId),
+  ]);
+  const { ward, takeHome } = (row?.record ?? {}) as { ward?: WardRecord; takeHome?: MedChange[] };
+  const confirmed = (visit?.state as { discharge?: { medsConfirmed?: boolean } } | undefined)?.discharge?.medsConfirmed;
+  const sbar = ward?.sbar && [["Situation", ward.sbar.s], ["Background", ward.sbar.b], ["Assessment", ward.sbar.a], ["Recommendation", ward.sbar.r]].filter(([, said]) => said).map(([part, said]) => `${part}: ${said}`).join(" ");
+  return [
+    stay ? `Stay: ${stay.bed}, ${stay.dischargedAt ? `discharged ${malaysiaTime(stay.dischargedAt)}` : ward?.status === "fit" ? `on the ward, fit for discharge${stay.fitAt ? ` since ${malaysiaTime(stay.fitAt)}` : ""}` : `on the ward${ward?.status ? ` (${ward.status})` : ""}`}` : "",
+    sbar ? `Ward handover (SBAR): ${sbar}` : "",
+    ...takeHome?.length ? [`Take-home medicines (${confirmed ? "confirmed by the doctor" : "charted, not yet confirmed"}):`, ...takeHome.map(m => `- ${m.name} (${m.change}): ${m.detail}`)] : [],
+    ...ordered.length ? ["Prescriptions approved on her visits:", ...ordered] : [],
+  ].filter(Boolean);
 }
 
 /** A visit's question (`encounterId`: its patient's CURB-65 and the patient kept out of the search), or one asked anywhere else (no patient). */

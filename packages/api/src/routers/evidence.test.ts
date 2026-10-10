@@ -402,3 +402,18 @@ test("in a visit her own record is a numbered source: a question about her is an
   // Asked off a visit there is no record to cite.
   expect((await api.evidence.ask({ question: "Brief me on Amelia" })).references).toEqual([]);
 });
+
+test("in a visit her record also says her stay, as the ward and the discharge card hold it: the bed, fit to go since when, the ward's handover and the take-home medicines (10 Oct, gate: \"not on any antibiotics\" for a patient going home on azithromycin)", async () => {
+  let seen: Parameters<Models["synthesiseEvidence"]>[0] | undefined;
+  const models: Models = { ...stubModels, synthesiseEvidence: async input => { seen = input; return stubModels.synthesiseEvidence(input); } };
+  const { api } = await signedIn(pubmed([]).fetcher, true, models);
+  await api.evidence.ask({ encounterId: "visit-1042", question: "What antibiotic is she on?" });
+  for (const line of ["Stay: Bed 6, on the ward, fit for discharge since Sat, 26 Sep 2026 08:00", "Ward handover (SBAR): Situation: Community-acquired pneumonia, mild, day 2.", "Recommendation: Discharge today on oral azithromycin.",
+    "Take-home medicines (charted, not yet confirmed):", "- Azithromycin (changed): IV 500 mg to oral 500 mg daily, 2 more days"]) expect(seen!.patient).toContain(line);
+  await api.discharge.update({ encounterId: "visit-1042", medsConfirmed: true });
+  await api.evidence.ask({ encounterId: "visit-1042", question: "What antibiotic is she on?" });
+  expect(seen!.patient).toContain("Take-home medicines (confirmed by the doctor):");
+  // Daniel was never admitted: no stay.
+  await api.evidence.ask({ encounterId: "visit-1086", question: "What is he on?" });
+  expect(seen!.patient).not.toContain("Stay:");
+});

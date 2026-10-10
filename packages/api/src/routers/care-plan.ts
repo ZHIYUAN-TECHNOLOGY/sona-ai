@@ -142,7 +142,7 @@ export async function followUpsOf(context: PatientContext, lang?: Language) {
 }
 
 /** "Thu, 01 Oct 2026 10:30": the time in Malaysia. */
-const malaysiaTime = (at: Date) => new Date(at.getTime() + 8 * 3600_000).toUTCString().slice(0, 22);
+export const malaysiaTime = (at: Date) => new Date(at.getTime() + 8 * 3600_000).toUTCString().slice(0, 22);
 
 /**
  * Her visits as plain text for the model, in hospital or home: the ones her Home and Schedule show (followUpsOf) and
@@ -188,7 +188,7 @@ const NOTE_CHARS = 1200, REPLIES_MAX = 5, REPLY_CHARS = 200, MISSED_MAX = 5;
  * The prescriptions her doctor approved on her visits (Sona Pro's prescribing), the newest of each medicine, as lines
  * with their dose, route, how often and for how long: what the ward gives her, which no other part of the record holds.
  */
-async function prescribed(db: PatientContext["db"], hospitalId: string, patientId: string) {
+export async function prescribed(db: PatientContext["db"], hospitalId: string, patientId: string) {
   const rows = await db.select({ payload: receipts.payload, at: receipts.createdAt }).from(receipts).innerJoin(encounters, eq(encounters.id, receipts.encounterId))
     .where(and(eq(receipts.kind, "prescription"), eq(encounters.patientId, patientId), eq(encounters.hospitalId, hospitalId))).orderBy(desc(receipts.createdAt));
   type Ordered = { medication?: string; formulation?: string; dose?: string; unit?: string; route?: string; frequency?: string; duration?: string };

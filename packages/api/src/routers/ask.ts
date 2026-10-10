@@ -33,13 +33,22 @@ export const askRouter = {
 };
 
 /**
- * The visit's patient's record (evidence's recordText: what the hospital recorded, then the visit's note) as page lines,
- * only for a visit of the clinician's own hospital; none when it cannot be read, so the question is still answered.
+ * The visit's patient's record (evidence's recordText: what the hospital recorded, her stay, then the visit's note) as
+ * page lines, only for a visit of the clinician's own hospital; none when it cannot be read, so the question is still
+ * answered. At most RECORD_CHARS, whole lines from the top, so a long record leaves Gemma room to answer.
  */
 async function visitRecord(context: Context, hospitalId: string, encounterId: string): Promise<AskContext["lines"]> {
   const [visit] = await context.db.select({ patientId: encounters.patientId }).from(encounters)
     .where(and(eq(encounters.id, encounterId), eq(encounters.hospitalId, hospitalId))).catch(() => []);
   if (!visit) return [];
   const text = await recordText(context.db, hospitalId, visit.patientId, encounterId).catch(() => "");
-  return text ? ["This visit's patient record:", ...text.split("\n")] : [];
+  const kept = text.length > RECORD_CHARS ? text.slice(0, text.lastIndexOf("\n", RECORD_CHARS)) : text;
+  return kept ? ["This visit's patient record:", ...kept.split("\n")] : [];
 }
+/**
+ * About 1,300 of Gemma's 16,384 tokens (3 characters a token), beside the prompt and the page's own lines and rows.
+ * Amelia's record with her stay is about 1,900 characters. Lines are kept whole: cutting the latest observations line at
+ * 300 characters (a page line's limit) lost her temperature.
+ * ponytail: a record past it loses its note and stay lines first; retrieval by the question if records grow.
+ */
+const RECORD_CHARS = 4000;
