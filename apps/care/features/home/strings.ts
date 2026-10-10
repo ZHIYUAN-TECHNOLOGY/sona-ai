@@ -26,7 +26,7 @@ addStrings({
     "home.latest": "Latest update", "home.latestA11y": "Latest update. {line}",
     "home.nextVisit": "Next visit", "home.noVisit": "No visit booked", "home.visitsHere": "Your visits show here", "home.bookVisit": "Book a visit", "home.book": "Book", "home.timeTbc": "Time to be confirmed",
     "home.visitA11y": "Next visit. {title}, {time}, {when}.{hospital} Open my visits",
-    "home.summary": "My health summary", "home.summaryHint": "Your record, to check and share with another hospital",
+    "home.summary": "My health summary", "home.summaryLine": "Your record, ready to share with another hospital", "home.summaryHint": "Your record, to check and share with another hospital",
   },
   ms: {
     "home.needs1": "1 perkara perlukan anda · kira-kira {m} min", "home.needsN": "{n} perkara perlukan anda · kira-kira {m} min", "home.allDone": "Semua selesai hari ini",
@@ -51,7 +51,7 @@ addStrings({
     "home.latest": "Berita terkini", "home.latestA11y": "Berita terkini. {line}",
     "home.nextVisit": "Lawatan seterusnya", "home.noVisit": "Tiada temu janji", "home.visitsHere": "Lawatan anda akan ditunjukkan di sini", "home.bookVisit": "Tempah lawatan", "home.book": "Tempah", "home.timeTbc": "Masa akan disahkan",
     "home.visitA11y": "Lawatan seterusnya. {title}, {time}, {when}.{hospital} Buka lawatan saya",
-    "home.summary": "Ringkasan kesihatan saya", "home.summaryHint": "Rekod anda, untuk disemak dan dikongsi dengan hospital lain",
+    "home.summary": "Ringkasan kesihatan saya", "home.summaryLine": "Rekod anda, sedia dikongsi dengan hospital lain", "home.summaryHint": "Rekod anda, untuk disemak dan dikongsi dengan hospital lain",
   },
   zh: {
     "home.needs1": "有1件事要处理 · 约{m}分钟", "home.needsN": "有{n}件事要处理 · 约{m}分钟", "home.allDone": "今天都完成了",
@@ -76,6 +76,6 @@ addStrings({
     "home.latest": "最新动态", "home.latestA11y": "最新动态。{line}",
     "home.nextVisit": "下次复诊", "home.noVisit": "还没有预约", "home.visitsHere": "您的复诊会显示在这里", "home.bookVisit": "预约复诊", "home.book": "预约", "home.timeTbc": "时间待确认",
     "home.visitA11y": "下次复诊。{title}，{time}，{when}。{hospital}打开我的复诊",
-    "home.summary": "我的健康摘要", "home.summaryHint": "您的病历，核对后可分享给其他医院",
+    "home.summary": "我的健康摘要", "home.summaryLine": "您的病历，可随时分享给其他医院", "home.summaryHint": "您的病历，核对后可分享给其他医院",
   },
 });

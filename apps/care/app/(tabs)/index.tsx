@@ -15,7 +15,7 @@ import { daysHome, headerDate, needsLine, type Need } from "@/features/home";
 import { LanguageRow } from "@/features/language/picker";
 import { SignOutRow } from "@/features/home/sign-out";
 import { tFor, useLang } from "@/lib/i18n";
-import { ConsistencyTile, LatestTile, MedicinesTile, VisitTile } from "@/features/home/bento";
+import { ConsistencyTile, LatestTile, MedicinesTile, SummaryTile, VisitTile } from "@/features/home/bento";
 import { useMe } from "@/features/me";
 import { useMessageNeeds, useThread } from "@/features/messages/row";
 import { useDischarge } from "@/features/discharge/row";
@@ -164,7 +164,8 @@ function Home() {
           <VisitTile index={3} still={calm} hospital={me?.hospital} />
         </View>
       </View>
-      <Animated.View entering={rise(calm, 4)} onLayout={spot("today")} style={{ gap: 12 }}>
+      <SummaryTile index={4} still={calm} />
+      <Animated.View entering={rise(calm, 5)} onLayout={spot("today")} style={{ gap: 12 }}>
         <Section light={t("home.checkInLight")} bold={t("home.checkInBold")} />
         <TodayCard />
       </Animated.View>

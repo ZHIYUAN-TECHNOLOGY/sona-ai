@@ -24,8 +24,9 @@ export function List({ children }: { children: ReactNode }) {
  * pass `divider` for every row but the first; in a virtualised list, pass `edges` so the row draws
  * its own part of the group.
  */
-export function ListRow({ title, detail, tone = "calm", initials, trailing, badge, onPress, accessibilityLabel, accessibilityHint, divider = false, edges }: {
-  title: string; detail?: string; tone?: RowTone; initials?: string; trailing?: string; badge?: ReactNode; onPress?: () => void;
+export function ListRow({ title, detail, detailLines = 2, tone = "calm", initials, trailing, badge, onPress, accessibilityLabel, accessibilityHint, divider = false, edges }: {
+  /** `detailLines`: how many lines the reason may take before it is cut (0 shows it whole). */
+  title: string; detail?: string; detailLines?: number; tone?: RowTone; initials?: string; trailing?: string; badge?: ReactNode; onPress?: () => void;
   accessibilityLabel?: string; accessibilityHint?: string; divider?: boolean; edges?: { first: boolean; last: boolean };
 }) {
   const ink = INK[tone];
@@ -39,7 +40,7 @@ export function ListRow({ title, detail, tone = "calm", initials, trailing, badg
       <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{title}{badge}</Text>
       {detail ? <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         {initials && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: ink }} />}
-        <Text numberOfLines={2} style={{ ...type.caption, flex: 1, fontWeight: "500", color: ink }}>{detail}</Text>
+        <Text numberOfLines={detailLines || undefined} style={{ ...type.caption, flex: 1, fontWeight: "500", color: ink }}>{detail}</Text>
       </View> : null}
     </View>
     {trailing ? <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink, fontVariant: ["tabular-nums"] }}>{trailing}</Text> : null}

@@ -154,6 +154,25 @@ export function LatestTile({ index, still, onCheckIn }: { index: number; still: 
 }
 
 /**
+ * My health summary (full width, under the four): her record as the hospital's PDF holds it, a tap away from Home so
+ * she can find it when she moves hospital; opens the summary screen, where Share is. A quiet row in the bento's glass,
+ * with pixels in the one corner no tile uses, so it never competes with the cards above.
+ */
+export function SummaryTile({ index, still }: { index: number; still: boolean }) {
+  const lang = useLang(), t = tFor(lang);
+  return <Tile index={index} still={still} dither={{ pattern: "pixels", corner: "bottom-right" }} label={`${t("home.summary")}. ${t("home.summaryLine")}`} onPress={() => router.push("/health-summary")}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+      <View style={[pillStyle, { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" }]}><Icon name="doc" size={24} /></View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ fontSize: 17, lineHeight: 23, fontWeight: "600", letterSpacing: -0.4, color: palette.ink }}>{t("home.summary")}</Text>
+        <Text style={{ fontSize: 14, lineHeight: 19, color: palette.faint }}>{t("home.summaryLine")}</Text>
+      </View>
+      <Icon name="next" size={18} color={palette.pale} />
+    </View>
+  </Tile>;
+}
+
+/**
  * Next visit (tall): its time (or day) in a white capsule, what it is big, the hospital, then the day
  * and how far off (amber once due soon or overdue), or "Time to be confirmed" when it has no time yet. Tap opens My visits. None
  * booked: says so, with Book to find a doctor. The data has no doctor or room yet, so neither is shown.

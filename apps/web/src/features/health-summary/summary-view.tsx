@@ -21,7 +21,7 @@ export function HealthSummaryView({ s }: { s: HealthSummary }) {
   return (
     <div className="hs">
       <InsightCard band label="Health summary" meta={`Generated ${day(s.generatedAt)}`} title={s.problems}
-        lead={s.discharge ? `Went home on ${day(s.discharge.at)}.` : "Not discharged yet."}
+        lead={s.discharge ? `Went home on ${day(s.discharge.at)}.` : "In hospital now."}
         evidence={[
           { icon: "alert", text: s.allergies ? <Signal tone="urgent">Allergy: {s.allergies}</Signal> : "No allergy recorded" },
           { icon: "pill", text: current.length ? `${countOf(current.length, "current medicine")}${stopped ? `, ${stopped} stopped` : ""}` : "No medicines recorded" },

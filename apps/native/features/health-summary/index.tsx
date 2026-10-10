@@ -76,7 +76,7 @@ export function HealthSummaryScreen() {
         </View>)}
     </Card>
     {s.medicines.length > 0 && <Group title="Medicines">
-      {s.medicines.map((m, i) => <ListRow key={`${i}${m.name}`} divider={i > 0} title={m.name} detail={m.detail || undefined}
+      {s.medicines.map((m, i) => <ListRow key={`${i}${m.name}`} divider={i > 0} title={m.name} detail={m.detail || undefined} detailLines={0}
         trailing={m.change === "unchanged" ? undefined : m.change} tone={m.change === "stopped" ? "soon" : m.change === "unchanged" ? "calm" : "next"} />)}
     </Group>}
     {s.results.length > 0 && <Group title="Recent results">
@@ -95,7 +95,7 @@ export function HealthSummaryScreen() {
       {s.discharge?.warningSigns.map((w, i) => <ListRow key={`w${i}`} divider={i > 0 || s.followUps.length > 0} title={w} detail={i ? undefined : "Come back straight away if"} tone="urgent" />)}
     </Group>}
     {s.visits.length > 0 && <Group title="Recent record">
-      {s.visits.map((v, i) => <ListRow key={i} divider={i > 0} title={v.title} detail={v.detail} trailing={day(v.at)} />)}
+      {s.visits.map((v, i) => <ListRow key={i} divider={i > 0} title={v.title} detail={v.detail} detailLines={0} trailing={day(v.at)} />)}
     </Group>}
     {s.careTeam.length > 0 && <Group title="Care team">
       {s.careTeam.map((d, i) => <ListRow key={d.name} divider={i > 0} title={d.name} detail={`${d.specialty} · ${d.room}`} />)}

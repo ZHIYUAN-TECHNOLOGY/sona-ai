@@ -66,7 +66,10 @@ function PatientCard({ patient, onGo }: { patient: Patient; onGo: (go: Go) => vo
   const [history, setHistory] = useState(false);
   const flags = patientFlags(patient, unconfirmedOf(patient, encounter), result, encounter);
   // Doctors also get "Scan note" (full width under the grid); it opens the visit with the scan on top.
-  const visit = visitActions(patient, encounter, result, kind => go(kind === "recording" || kind === "scan" ? { view: kind } : { next: kind }), useRole().can("scan.read"));
+  const role = useRole();
+  const visit = visitActions(patient, encounter, result, kind => go(kind === "recording" || kind === "scan" ? { view: kind } : { next: kind }), role.can("scan.read"));
+  // The patient's Health summary (app/health-summary), read there before it is shared on transfer: live mode, roles that read the record.
+  const shareable = useLive().on && role.can("patients.summaryData");
   // What Today and Patients flag is said once, on the key that fixes it (no chips repeating the
   // keys): the result's value on Brief me, the allergy (or that it is unknown) on Medicines until a clinician records it.
   const resultLine = result?.patientId === patient.id ? `${result.flag} ${testInSentence(result.test)} ${result.value}` : undefined;
@@ -110,10 +113,11 @@ function PatientCard({ patient, onGo }: { patient: Patient; onGo: (go: Go) => vo
     {/* Who, the main action, then the keys (each with what needs attention there); everything below is context. */}
     <Animated.View entering={rise(1)}><Action label={started ? "Continue visit" : "Open visit"} icon="arrow.right" accessibilityLabel={`${started ? "Continue" : "Open"} visit with ${patient.name}`} onPress={() => go({})} /></Animated.View>
     <Animated.View entering={rise(1)}><PinControl patient={patient} /></Animated.View>
-    <SummaryLink patient={patient} />
     <Animated.View entering={rise(2)}>
+      {/* Health summary sits before Scan note: six keys for a doctor, and for the other roles the summary is the odd key that spans the row. */}
       <QuickActions animate={false} actions={[...keys,
         { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) },
+        ...shareable ? [{ key: "summary", label: "Health summary", icon: "doc.text", status: "Ready to share", onPress: () => router.push({ pathname: "/health-summary", params: { patientId: patient.id } }) }] : [],
         ...visit.filter(a => a.key === "scan")]} />
     </Animated.View>
 
@@ -168,20 +172,5 @@ function PinControl({ patient }: { patient: Patient }) {
     style={{ minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
     <Icon name={pinned ? "pin.slash" : "pin"} size={14} color={palette.blue} />
     <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>{pinned ? "Pinned to Continue · Unpin" : "Pin to Continue"}</Text>
-  </Press>;
-}
-
-/**
- * Live mode, for the roles that read the record: opens the patient's Health summary (app/health-summary), read there
- * before it is shared with another hospital on transfer.
- */
-function SummaryLink({ patient }: { patient: Patient }) {
-  const { on } = useLive();
-  const { can } = useRole();
-  if (!on || !can("patients.summaryData")) return null;
-  return <Press accessibilityLabel={`${patient.name}'s health summary`} onPress={() => router.push({ pathname: "/health-summary", params: { patientId: patient.id } })}
-    style={{ minHeight: 44, marginTop: -12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
-    <Icon name="doc.text" size={14} color={palette.blue} />
-    <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>Health summary</Text>
   </Press>;
 }
