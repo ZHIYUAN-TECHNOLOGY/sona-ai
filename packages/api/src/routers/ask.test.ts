@@ -169,6 +169,14 @@ test("grounding (9 Oct): the lead's own clinical phrasing passes; an invented pa
   ]) expect(groundedSpec(spec(lead), context)).toBeNull();
 });
 
+test("grounding (10 Oct): a joined word claims what its parts do, and a day or a month is no name; an invented number in either still fails", () => {
+  const record: AskContext = { lines: ["Age 42, female.", "Potassium 3.1 mmol/L, low (Tue, 13 Oct 2026)"], rows: [] };
+  for (const lead of ["A 42-year-old woman.", "Her potassium was 3.1 mmol/L on Tuesday, 13 October 2026."]) expect(groundedSpec(spec(lead, []), record)).not.toBeNull();
+  for (const lead of ["A 43-year-old woman.", "Her potassium was 3.1 mmol/L on Tuesday, 14 October 2026."]) expect(groundedSpec(spec(lead, []), record)).toBeNull();
+  // A number the question states is the page's, joined or not: "CURB-65" asked makes "under 65" known.
+  expect(groundedSpec(spec("Her CURB-65 is 0: she is under 65.", []), record, "what's her CURB-65")).not.toBeNull();
+});
+
 // Sona Pro web sends no page data (scope "web"): the server reads the hospital's Today, Ward and Tasks and always answers.
 async function webDoctor(baseten?: Baseten) {
   const db = await createTestDb();
@@ -258,5 +266,5 @@ test("a visit's free question reads that visit's patient record on the server, s
   expect(sent).toContain("Potassium 3.1 mmol/L, low");
   // A visit the clinician's hospital does not hold reads nothing: the model sees only the page.
   await client.ask.free({ ...asked, encounterId: "visit-elsewhere" });
-  expect(chats()[1]).not.toContain("patient record");
+  expect(chats()[1]).not.toContain("This visit's patient record:"); // the record's own header (the prompt speaks of a visit's patient record)
 });

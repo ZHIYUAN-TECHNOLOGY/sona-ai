@@ -39,6 +39,7 @@ Rules:
 - <rows>: up to 8 of the page's rows that answer the question, most important first, each copied exactly as given (id, title, detail, tone, op). If no row answers it, leave out "f-1" and its child id.
 - The lead, under 280 characters, in your own words: every patient, bed, name and number in it must be one the page's data or the question states (a count of the rows is fine). Never invent a patient, bed, task, result or count.
 - "general": what general clinical knowledge adds for this clinician (likely causes, what to check, usual management or doses), in up to 5 short sentences; leave it out when it adds nothing. It is shown labelled as general knowledge.
+- A visit's patient record, when the page has one, is the page's data: any question about this patient (their readings, results, medicines, allergies, history, stay or plan) takes this shape, even when most of the answer is general knowledge; the lead says what the record holds, or that it does not record what was asked, and "general" adds the rest.
 When the page's data does not answer it, answer from general medical, hospital and everyday knowledge instead, in up to 5 short sentences, as {"general": "<text>", "evidence": <true or false>}. "evidence" is true only for a clinical question that published studies or guidelines answer (whether a treatment or test helps, a dose, a risk, a prognosis). You have not seen this hospital's other records: never state a fact about a specific patient, bed, task or number there.
 In either shape, add "marks": every clinical term in your lead and in "general" a clinician's eye should land on, so it is coloured, each copied exactly as you wrote it, as [{"text": "<words>", "kind": "<kind>"}]. Kinds: "alert" for what must not be missed (an allergy, a critical or abnormal result with its value, an emergency sign); "medicine" for each medicine, drug class or treatment; "finding" for each diagnosis or condition; "symptom" for each symptom or sign; "caution" for what is unconfirmed, pending or missing. Never mark a person's name, a bed, a task or a count. The shortest phrase that carries each, at most 12; [] when none fits.
 Write the lead and "general" as plain sentences: no tags or markup in them; the colouring comes only from "marks".
@@ -46,21 +47,25 @@ Example: lead "Daniel Rahman has a low potassium of 3.1 mmol/L." and general "Hy
 
 const TOKEN = /[\p{L}\p{N}][\p{L}\p{N}+'’-]*(?:\.\d+)*/gu;
 const bare = (word: string) => word.toLowerCase().replace(/['’]s$/, ""); // "Amelia's" is Amelia
-const words = (text: string) => new Set(Array.from(text.matchAll(TOKEN), m => bare(m[0])));
+// A joined word is also its parts, so "CURB-65" asked makes 65 known.
+const words = (text: string) => new Set(Array.from(text.matchAll(TOKEN), m => bare(m[0])).flatMap(w => [w, ...w.split("-")]));
+// Days and months are not names: the record writes "Tue, 13 Oct 2026" and Gemma "Tuesday, 13 October" (a wrong date still fails on its number).
+const CALENDAR = new Set("monday tuesday wednesday thursday friday saturday sunday january february march april may june july august september october november december".split(" "));
 // Joining words that say nothing about what a question asks: pageLines matches a question by its other words.
 const GLUE = new Set("that this these those with from have has need needs your their there they them then than which when what where while today first next last only most more less none nobody each both also still been being were will would should could about after before into over under within without soon later now here right just same other others another some any all every none none's needs".split(" "));
 /**
  * What a lead claims about the hospital that the data must hold: every number, and every capitalised word (a name, a
  * bed) not opening a sentence. Clinical words are free (9 Oct: checking every word of four letters or more rejected
- * normal phrasing, 4 of 5 Today answers in e2e). Acronyms (ECG, ICU) are not names.
+ * normal phrasing, 4 of 5 Today answers in e2e). Acronyms (ECG, ICU) are not names. A joined word claims what its parts
+ * do ("42-year-old" is the record's age 42; 10 Oct, gate: it failed a record answer whole).
  * ponytail: a made-up first name alone at the start of a sentence passes; a full name fails on its surname.
  */
 function unknownClaims(text: string, known: Set<string>) {
   return Array.from(text.matchAll(TOKEN)).filter(m => {
     const word = bare(m[0]);
-    if (known.has(word)) return false;
+    if (known.has(word) || CALENDAR.has(word)) return false;
     const opens = /(^|[.!?]\s+)$/.test(text.slice(0, m.index));
-    return /\d/.test(word) || (!opens && /^\p{Lu}\p{Ll}/u.test(m[0]));
+    return word.split("-").some((part, i) => !known.has(part) && (/\d/.test(part) || (i === 0 && !opens && /^\p{Lu}\p{Ll}/u.test(m[0]))));
   }).map(m => bare(m[0]));
 }
 
