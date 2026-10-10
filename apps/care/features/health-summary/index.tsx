@@ -8,7 +8,8 @@ import { errorText } from "@/features/errors";
 import { formatDate, tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { BackButton, Button, Card, LoadError, Section, surfaceStyle, Title, useBelowStatusBar } from "@/lib/ui";
+import { DOCK_SPACE } from "@/lib/dock";
+import { Button, Card, LoadError, Section, surfaceStyle, Title, useBelowStatusBar } from "@/lib/ui";
 import { client, orpc } from "@/utils/orpc";
 import "./strings";
 
@@ -21,7 +22,7 @@ function Fact({ label, children, color = palette.ink, first }: { label: string; 
 }
 
 /**
- * My health summary (pushed from Settings): her record as the hospital's PDF holds it (care.healthSummaryData, the
+ * My health summary (a dock tab, beside Home; Home's tile and Settings open it too): her record as the hospital's PDF holds it (care.healthSummaryData, the
  * object the PDF renders), read before she shares it. Insight first: the key problems, her allergy in red, her medicines
  * and her next visit in one feature card, with Share right under it; then the record, a section with nothing in it left
  * out. Clinical words stay as the care team wrote them; Sona Care's own words follow her language. Sections rise 40 ms
@@ -50,9 +51,8 @@ export function HealthSummaryScreen() {
   let i = 1;
   const section = (light: string, bold: string, body: ReactNode) => <Animated.View entering={rise(reduced, ++i)} style={{ gap: 12 }}><Section light={light} bold={bold} />{body}</Animated.View>;
 
-  return <ScrollView style={below} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: 48, gap: 16 }}>
+  return <ScrollView style={below} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: DOCK_SPACE, gap: 16 }}>
     <Animated.View entering={rise(reduced, 0)} style={{ gap: 16 }}>
-      <BackButton />
       <Title greeting={t("hs.titleLight")} accent={t("hs.titleBold")} line={s ? `${s.patient.name} · ${s.hospital}` : undefined} />
     </Animated.View>
     {query.isLoading && <ActivityIndicator color={palette.muted} />}

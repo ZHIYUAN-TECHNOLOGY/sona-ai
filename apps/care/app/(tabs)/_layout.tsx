@@ -2,7 +2,7 @@ import { Tabs } from "expo-router";
 import { useEffect } from "react";
 
 /**
- * The dock's four places are real tabs, not stack pages: a tap swaps the page at once (no transition), and a page
+ * The dock's five places are real tabs, not stack pages: a tap swaps the page at once (no transition), and a page
  * already visited stays mounted, so switching back is instant and keeps its scroll. They were stack screens before,
  * so every dock tap pushed or popped a page through a 250 ms crossfade and rebuilt it. The tab bar is the app's own
  * floating dock (lib/dock.tsx), so the navigator's bar is hidden; pages are clear over the stack's one canvas.
@@ -18,6 +18,7 @@ export default function TabsLayout() {
   }, []);
   return <Tabs tabBar={() => null} screenOptions={{ headerShown: false, animation: "none", freezeOnBlur: true, sceneStyle: { backgroundColor: "transparent" } }}>
     <Tabs.Screen name="index" />
+    <Tabs.Screen name="health-summary" />
     <Tabs.Screen name="follow-ups" />
     <Tabs.Screen name="dose" />
     <Tabs.Screen name="doctors" />

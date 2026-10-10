@@ -160,7 +160,7 @@ export function LatestTile({ index, still, onCheckIn }: { index: number; still: 
  */
 export function SummaryTile({ index, still }: { index: number; still: boolean }) {
   const lang = useLang(), t = tFor(lang);
-  return <Tile index={index} still={still} dither={{ pattern: "pixels", corner: "bottom-right" }} label={`${t("home.summary")}. ${t("home.summaryLine")}`} onPress={() => router.push("/health-summary")}>
+  return <Tile index={index} still={still} dither={{ pattern: "pixels", corner: "bottom-right" }} label={`${t("home.summary")}. ${t("home.summaryLine")}`} onPress={() => router.navigate("/health-summary")}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
       <View style={[pillStyle, { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" }]}><Icon name="doc" size={24} /></View>
       <View style={{ flex: 1, gap: 2 }}>

@@ -1,7 +1,7 @@
 import { BlurView } from "expo-blur";
 import { router, usePathname } from "expo-router";
 import { useEffect } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, useWindowDimensions, View } from "react-native";
 import Animated, { Easing, FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { useRevealed } from "@/features/opening";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,13 +23,23 @@ import { palette } from "./theme";
 export const DOCK_SPACE = 120;
 const TABS = [
   { path: "/", label: "dock.home", icon: "home" },
+  { path: "/health-summary", label: "dock.summary", icon: "doc" },
   { path: "/follow-ups", label: "dock.schedule", icon: "calendar" },
   { path: "/dose", label: "dock.medicine", icon: "pill" },
   { path: "/doctors", label: "dock.doctors", icon: "doctor" },
 ] as const;
 // Messages sits last in the pill but opens the thread over the dock (its composer needs the bottom edge), so it is never the current tab.
-// Five 50 pt keys + pad (260) and the 66 pt orb fit 335 pt, the narrowest phone less its 20 pt gutters; every key stays over 44 pt.
-const TAB = 50, PAD = 4, ORB = 56;
+const KEYS = TABS.length + 1, GAP = 8;
+/**
+ * Six keys and the orb across the phone less its 20 pt gutters. A 402 pt phone keeps 46 pt keys and the 66 pt orb ring;
+ * the narrowest (375 pt, 335 pt of room) tightens the pill's padding and the orb ring first, so its keys stay 44 pt, never under.
+ */
+function dockSize(width: number) {
+  const room = width - 40;
+  const wide = room >= KEYS * 46 + 8 + GAP + 66;
+  const pad = wide ? 4 : 3, orb = wide ? 56 : 50;
+  return { pad, orb, tab: Math.max(44, Math.min(50, Math.floor((room - (orb + 10) - GAP - 2 * pad) / KEYS))) };
+}
 
 let arrived = false;
 
@@ -40,6 +50,7 @@ export function Dock() {
   const { state } = useMe();
   const revealed = useRevealed();
   const tr = useT();
+  const { tab: TAB, pad: PAD, orb: ORB } = dockSize(useWindowDimensions().width);
   const unread = useMessageNeeds() > 0;
   const at = TABS.findIndex(t => t.path === path);
   const x = useSharedValue(Math.max(0, at) * TAB);
@@ -49,7 +60,7 @@ export function Dock() {
     if (still) { x.set(at * TAB); return; }
     x.set(withSpring(at * TAB, { duration: 420, dampingRatio: 0.82 }));
     stretch.set(withSequence(withTiming(1.3, { duration: 130 }), withSpring(1, { duration: 380, dampingRatio: 0.7 })));
-  }, [at, still, x, stretch]);
+  }, [at, still, x, stretch, TAB]);
   const indicator = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scaleX: stretch.value }] }));
   // It arrives with the opening's reveal, never over Sona while the app is still opening.
   const shown = state === "joined" && at >= 0 && revealed;
