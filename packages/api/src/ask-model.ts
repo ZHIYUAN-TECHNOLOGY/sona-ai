@@ -125,23 +125,48 @@ function withGeneral(spec: AskSpec, general: string): AskSpec {
 /**
  * Gemma's reply put back in the shape it was asked for. It sometimes writes "general" (and "evidence") inside "elements"
  * as if one more element, or an element's "children" inside its "props" (10 Oct, staging: "Who needs me first?"); either
- * failed the spec's check, so a good answer was thrown away and the clinician was told the model was off.
+ * failed the spec's check, so a good answer was thrown away and the clinician was told the model was off. The same for a
+ * column that is not one of leaves: the rows listed under the lead, an id listed twice or under itself, or a child it
+ * never wrote (10 Oct, gate: "his Hb how much ah?"); each id it did write is kept once, under the root. `rows: false` (a
+ * page with no rows to copy, as a visit's record is lines only) leaves out any rows it wrote from the lines.
  */
-export function lifted<T>(reply: T): T {
+export function lifted<T>(reply: T, rows = true): T {
   const read = reply as any, inner = read?.elements;
   if (!inner || typeof inner !== "object") return reply;
   const { general, evidence, marks, ...rest } = inner;
-  const elements = Object.fromEntries(Object.entries(rest).map(([id, el]: [string, any]) => {
+  const elements: Record<string, any> = Object.fromEntries(Object.entries(rest).filter(([, el]: [string, any]) => rows || el?.type !== "AskRows").map(([id, el]: [string, any]) => {
     if (el?.type === "AskLead" && typeof el.props?.text === "string") el = { ...el, props: { ...el.props, text: untagged(el.props.text) } };
     if (!el || typeof el !== "object" || Array.isArray(el.children) || !Array.isArray(el.props?.children)) return [id, el];
     const { children, ...props } = el.props;
     return [id, { ...el, props, children }];
   }));
+  const root = elements[read.root];
+  if (root && typeof root === "object") {
+    const ids = [root.children, ...Object.entries(elements).map(([id, el]) => id !== read.root && el?.children)].flatMap(c => (Array.isArray(c) ? c : []));
+    for (const [id, el] of Object.entries(elements)) if (id !== read.root && Array.isArray(el?.children)) elements[id] = { ...el, children: [] };
+    elements[read.root] = { ...root, children: [...new Set(ids)].filter(id => id !== read.root && elements[id]) };
+  }
   return { ...read, elements, general: read.general ?? general, evidence: read.evidence ?? evidence, marks: read.marks ?? marks };
 }
 
-/** Words without the kind tags Gemma sometimes writes into them ("<finding>pyelonephritis</finding>", "<mark kind=\"finding\">", 10 Oct) instead of only in "marks". */
-const untagged = (text: string) => text.replace(/<\/?(?:alert|medicine|finding|symptom|caution|mark)\b[^>]*>/gi, "");
+/**
+ * Gemma's words without the markup it sometimes writes into them instead of only in "marks" (10 Oct): a tag around a word
+ * goes and the word stays ("<finding>pyelonephritis</finding>", "<symptom>cough<symptom>"); a tag holding its word in an
+ * attribute gives that word once (`<mark text="potassium" kind="alert"/>`); words it put in angle brackets as if to
+ * highlight them stay ("reconcile <medications> on admission", "<salbutamol is a"); a line break is a space. Before, only
+ * the kind tags were taken out, with whatever they held, so "a low <mark text="potassium" .../> of" read "a low  of".
+ * A "<" before a number or a space ("K <3.5") is not a tag and stays.
+ */
+export const untagged = (text: string) => text.replace(/<(\/?)([A-Za-z][^<>]*)(>|(?=<)|$)/g, (tag, close: string, inner: string, _end: string, at: number) => {
+  if (close) return "";
+  const word = /\btext=["“']([^"”']*)["”']/.exec(inner)?.[1];
+  if (word !== undefined) return text.startsWith(word, at + tag.length) ? "" : word;
+  if (inner.includes("=")) return "";
+  if (/^(br|hr)\b/i.test(inner)) return " ";
+  // A bare name touching a word ("<finding>cough", "cough<finding>") wraps it; anything else is the model's own words.
+  const name = /^[\w-]+\/?$/.test(inner.trim()), next = text[at + tag.length] ?? "", prev = text[at - 1] ?? "";
+  return name && (/\w/.test(next) || /\w/.test(prev)) ? "" : inner.replace(/\/$/, "");
+}).replace(/ {2,}/g, " ").trim();
 const MARK_KINDS = new Set(["alert", "medicine", "finding", "symptom", "caution"]);
 type ProMark = { text: string; kind: "alert" | "medicine" | "finding" | "symptom" | "caution" };
 /** The model's marks that name words really in the answer's lead (with its general part), as `{ marks }`; none when it gave none. */
@@ -156,7 +181,7 @@ export async function freeAnswer(baseten: Baseten, input: { scope: string; quest
   const user = `Page: ${input.scope}\nQuestion: ${input.question}\n\nWhat the page says:\n${context.lines.join("\n") || "(nothing)"}\n\nThe page's rows:\n${context.rows.map(r => JSON.stringify(r)).join("\n") || "(none)"}`;
   try {
     // Through the adapter's box gate: a cold brain is woken and not waited for.
-    const read = lifted(jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 1500, true)));
+    const read = lifted(jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 1500, true)), context.rows.length > 0);
     const spec = groundedSpec(read, context, input.question);
     const text = typeof read?.general === "string" ? untagged(read.general).trim().slice(0, LEAD_MAX) : "";
     if (spec) {
