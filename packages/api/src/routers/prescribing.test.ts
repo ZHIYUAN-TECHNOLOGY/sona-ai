@@ -4,6 +4,7 @@ import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 
+import { stubModels, type Models } from "../models";
 import { appRouter } from "./index";
 
 const session = {
@@ -11,11 +12,11 @@ const session = {
   session: { id: "s1", userId: "dr-aisyah", token: "t", expiresAt: new Date(Date.now() + 3600_000), createdAt: new Date(), updatedAt: new Date() },
 } as unknown as Session;
 
-async function signedIn(signed = true) {
+async function signedIn(signed = true, models?: Models) {
   const db = await createTestDb();
   await seedDemo(db);
   await addClinician(db, "dr-aisyah");
-  return createRouterClient(appRouter, { context: { db, session: signed ? session : null, now: () => new Date("2026-09-26T10:00:00+08:00") } });
+  return createRouterClient(appRouter, { context: { db, session: signed ? session : null, models, now: () => new Date("2026-09-26T10:00:00+08:00") } });
 }
 const code = (p: Promise<unknown>) => p.then(() => null, (e: { code?: string }) => e.code);
 
@@ -65,14 +66,34 @@ test("with every check passed the prescription is receipted once per revision, w
   expect((await api.prescribing.simulate({ ...simulate, requestId: "rx-2" })).payload).toMatchObject({ dose: "500", frequency: "Every 8 hours", duration: "2 days" });
 });
 
-test("no regimen, a bare medicine name, a dose over the limit or another medicine is refused: nothing is filled in for the doctor", async () => {
+test("no regimen, a bare medicine name or a dose over the limit is refused: nothing is filled in for the doctor", async () => {
   const api = await signedIn();
   let revision = 1;
-  for (const proposedMedicine of [undefined, "Paracetamol", "Paracetamol 500 mg tablet · 1000 mg · Oral · Every 4 hours · 3 days", "Ibuprofen 400 mg tablet · 400 mg · Oral · Every 8 hours · 3 days"]) {
+  for (const proposedMedicine of [undefined, "Paracetamol", "Paracetamol 500 mg tablet · 1000 mg · Oral · Every 4 hours · 3 days"]) {
     ({ revision } = await api.encounter.edit({ encounterId: "visit-1042", expectedRevision: revision, prescriptionInputs: eligible, medicationEntries: confirmed, proposedMedicine }));
     await api.prescribing.review({ encounterId: "visit-1042", expectedRevision: revision });
     expect(await refusal(api.prescribing.simulate(simulate))).toEqual(["PRECONDITION_FAILED", ["Bounded regimen"]]);
   }
+});
+
+test("another medicine is Sona's to check at the review: its block refuses the order, and with no model the doctor may place it over a warning", async () => {
+  const ibuprofen = "Ibuprofen 400 mg tablet · 400 mg · Oral · Every 8 hours · 3 days";
+  const asked: unknown[] = [];
+  const models = { ...stubModels, checkOrder: async (input: Parameters<typeof stubModels.checkOrder>[0]) => {
+    asked.push(input);
+    return { items: [{ id: "interactions", label: "interactions", status: "blocked" as const, detail: "Asthma on salbutamol: ibuprofen can trigger bronchospasm." }], source: "model" as const, model: "gemma-test" };
+  } };
+  const judged = await signedIn(true, models);
+  const { revision } = await judged.encounter.edit({ encounterId: "visit-1042", expectedRevision: 1, medicationEntries: confirmed, proposedMedicine: ibuprofen });
+  const reviewed = await judged.prescribing.review({ encounterId: "visit-1042", expectedRevision: revision });
+  expect(reviewed.state.sonaCheck).toMatchObject({ for: ibuprofen, model: "gemma-test" });
+  expect(asked).toMatchObject([{ regimen: { medication: "Ibuprofen", dose: "400" }, patient: { id: "SYN-1042" } }]);
+  expect(await refusal(judged.prescribing.simulate(simulate))).toEqual(["PRECONDITION_FAILED", ["Interactions with medicines & conditions"]]);
+
+  const unjudged = await signedIn();
+  const edited = await unjudged.encounter.edit({ encounterId: "visit-1042", expectedRevision: 1, medicationEntries: confirmed, proposedMedicine: ibuprofen });
+  await unjudged.prescribing.review({ encounterId: "visit-1042", expectedRevision: edited.revision });
+  expect((await unjudged.prescribing.simulate(simulate)).payload).toMatchObject({ medication: "Ibuprofen", sourceId: "sona-order-check", warnings: ["Sona's check"], checkedBy: "none: Sona could not check it" });
 });
 
 test("the checks run on the server's record of the visit: its medicines, and an allergy the doctor recorded there", async () => {

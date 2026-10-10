@@ -17,7 +17,13 @@ export type HistoryFact = { id: string; category: "medical" | "family" | "social
 export type MedicationEntry = { id: string; name: string; ingredient: string; formulation: string; confirmed: boolean; change?: "new" | "changed" | "stopped"; from?: string };
 export type PrescriptionInputs = { weightKg: string; liverDisease: "unknown" | "no" | "yes"; kidneyDisease: "unknown" | "no" | "yes"; alcoholRisk: "unknown" | "no" | "yes"; paracetamolAllergy: "unknown" | "no" | "yes" };
 /** `recorded`: the patient's record itself blocks this check (a listed allergy), so no answer on the card can resolve it. */
-export type PrescriptionCheck = { id: string; label: string; status: "passed" | "blocked"; detail: string; recorded?: true };
+/** `warning`: shown, never blocking; the doctor may place the order over it. `by: "sona"`: a model's judgement on the order, not a rule's. */
+export type PrescriptionCheck = { id: string; label: string; status: "passed" | "warning" | "blocked"; detail: string; recorded?: true; by?: "sona" };
+/**
+ * Sona's check of an order no dose rule covers (any medicine but paracetamol), made when the order is reviewed: `for` is the
+ * regimen line it read, `items` its verdicts (none when the model could not answer), `model` the model that wrote them.
+ */
+export type SonaOrderCheck = { for: string; items: { id: string; label: string; status: PrescriptionCheck["status"]; detail: string }[]; model?: string };
 export type Regimen = { medication: string; formulation: string; dose: string; unit: string; route: string; frequency: string; duration: string; indication: string; sourceId: string; sourceVersion: string };
 export type NoteSections = { subjective: string; objective: string; assessment: string; plan: string };
 export type Task = { id: string; title: string; owner: string; due: string; completed: boolean; sourceSnapshot?: Source; sourceId?: string; sourceRevision?: number; provenance?: "fixture" | "clinician" };
@@ -28,6 +34,8 @@ export type Encounter = {
   revision: number; historyFacts?: HistoryFact[]; historyDraft?: Omit<HistoryFact, "id" | "revision">;
   medicationEntries?: MedicationEntry[]; medicationDraft?: MedicationEntry; proposedMedicine?: string; proposedMedicineDraft?: string;
   prescriptionInputs?: PrescriptionInputs; prescriptionInputsOpen?: number;
+  /** Sona's check of this visit's order, written by the last review (SonaOrderCheck). */
+  sonaCheck?: SonaOrderCheck;
   /** A review or simulation running in place inside the prescribe card (no new answer). */
   working?: "medication" | "prescription";
   /** A review existed but a later edit invalidated it (so the card can say "rerun", not "run"). */

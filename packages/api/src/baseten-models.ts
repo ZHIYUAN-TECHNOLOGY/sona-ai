@@ -128,6 +128,19 @@ Use ONLY the record below. Never add a diagnosis, result, dose, duration or numb
 The take-home medicines are fixed: list exactly their names in "medicines", and name no other medicine in "plan" or "leaflet".
 Answer with JSON only: {"diagnosis": "<one line>", "course": "<one or two lines>", "plan": "<one line>", "full": "<a short paragraph for the notes>", "leaflet": "<3 short sentences for the patient in LANGUAGE at a reading age of about 12: what they had, how to take their medicines, when to come back straight away>", "medicines": ["<take-home medicine name>"]}`;
 
+const ORDER_CHECK = `You check a doctor's medicine order against the patient's record before it is placed, as a careful clinical pharmacist would. Judge from the record and your clinical knowledge; the doctor decides.
+Reply with JSON only: {"items":[{"id":"dose","status":"passed","detail":"..."}]}.
+Give exactly one item for each id: "dose" (the dose, frequency, route and duration for this patient), "allergy" (the recorded allergies, including cross-reactions), "interactions" (with each current medicine, and with each condition in the history it can worsen), "kidney", "liver". Add an item only for another real concern (pregnancy, age, the indication, a current medicine with the same ingredient), with its own short id naming that concern and a "label": {"id":"<concern>","label":"<Short title>","status":"warning","detail":"..."}.
+status: "blocked" when placing it as written could seriously harm this patient (a recorded allergy to it or its class, a contraindication, a dose above the maximum); "warning" when the doctor should look first (a moderate interaction, a dose to adjust, a fact this medicine needs that the record lacks); "passed" when nothing in the record is against it.
+detail: one or two plain sentences giving the reason and naming the record's fact or medicine it rests on. Write every number exactly as the order or record writes it.`;
+const ORDER_STATUS = new Set(["passed", "warning", "blocked"]);
+/** The area an item's id names, read loosely ("interaction", "renal", "hepatic"); any other concern keeps its own id. */
+const areaOf = (id?: string) => {
+  const key = id?.toLowerCase().replace(/[^a-z]+/g, "-");
+  return !key ? undefined : /^dos|frequen/.test(key) ? "dose" : /^allerg/.test(key) ? "allergy" : /^interact/.test(key) ? "interactions"
+    : /^(kidney|renal)/.test(key) ? "kidney" : /^(liver|hepat)/.test(key) ? "liver" : key;
+};
+
 const strings = (value: unknown, max: number) =>
   Array.isArray(value) ? value.filter((s): s is string => typeof s === "string" && s.trim() !== "").map(s => s.trim().slice(0, 300)).slice(0, max) : [];
 const text = (value: unknown, max = 1500) => typeof value === "string" && value.trim() ? value.trim().slice(0, max) : undefined;
@@ -380,6 +393,21 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
         if (kept.length) return { answer: [...kept.map(p => `${p.title}: ${p.why}`), ...missing.length ? [`Not in the record: ${missing.join("; ")}`] : []].join("\n"), sourceIds: unique(kept.flatMap(p => p.cites)), source: "model", model: BRAIN_MODEL };
       } catch { /* falls back below */ }
       return { ...await fallback.reasoning(input), ...withheld && { withheld } };
+    },
+
+    // Gemma judges an order no dose rule covers; a verdict without a reason is dropped. Its numbers may be its own (a maximum dose).
+    async checkOrder(input) {
+      try {
+        const { age, sex, complaint, history, allergies, vitals } = input.patient;
+        const facts = `Order: ${JSON.stringify(input.regimen)}\n\nRecord: ${JSON.stringify({ age, sex, weightKg: input.weightKg || "not recorded", complaint, history, allergies: allergies ?? "none recorded", currentMedicines: input.medicines, vitals })}`;
+        const read = await brain(ORDER_CHECK, facts, 900);
+        const items = (Array.isArray(read?.items) ? read.items : []).flatMap((i: any) => {
+          const id = areaOf(text(i?.id, 24)), detail = text(i?.detail, 400), label = text(i?.label, 60);
+          return id && detail && ORDER_STATUS.has(i?.status) ? [{ id, label: label ?? id.charAt(0).toUpperCase() + id.slice(1).replace(/-/g, " "), status: i.status, detail }] : [];
+        }).slice(0, 8);
+        if (items.length) return { items, source: "model", model: BRAIN_MODEL };
+      } catch { /* no verdicts below */ }
+      return fallback.checkOrder(input);
     },
 
     // Gemma words the brief; every number in it must be one the rule counted.

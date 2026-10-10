@@ -128,7 +128,7 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
     </Surface>
     <Animated.View layout={layout} style={{ gap: 6 }}>
       {edit.error && <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{edit.error}</Text>}
-      <Footnote>A correction invalidates earlier checks. The dose rules cover adult paracetamol tablets only; any other regimen is blocked, never guessed. Thumbnails show the dosage form, not a specific brand.</Footnote>
+      <Footnote>A correction invalidates earlier checks. The dose rules cover adult paracetamol tablets; Sona checks any other medicine against the record, and you decide. Thumbnails show the dosage form, not a specific brand.</Footnote>
     </Animated.View>
   </Section>;
 }

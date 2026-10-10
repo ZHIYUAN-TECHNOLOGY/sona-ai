@@ -52,7 +52,7 @@ test("the regimen is the one entered: its line reads back whole, and the visit's
 test("the dose rule works out the entered regimen's 24-hour total and blocks what is outside the NHS adult limits", () => {
   expect(verdict({})).toMatchObject({ status: "passed", detail: expect.stringContaining("1000 mg every 6 hours for 3 days: at most 4000 mg in 24 hours") });
   expect(verdict({ dose: "500", frequency: "Every 8 hours", duration: "1 day" })).toMatchObject({ status: "passed", detail: expect.stringContaining("at most 1500 mg in 24 hours") });
-  for (const outside of [{ dose: "1500" }, { frequency: "Every 4 hours" }, { frequency: "Every 2 hours" }, { frequency: "When needed" }, { duration: "5 days" }, { route: "Intravenous" }, { formulation: "1000 mg tablet" }, { unit: "g" }, { medication: "Ibuprofen", formulation: "400 mg tablet", dose: "400" }])
+  for (const outside of [{ dose: "1500" }, { frequency: "Every 4 hours" }, { frequency: "Every 2 hours" }, { frequency: "When needed" }, { duration: "5 days" }, { route: "Intravenous" }, { formulation: "1000 mg tablet" }, { unit: "g" }])
     expect(verdict(outside).status).toBe("blocked");
 });
 
@@ -70,4 +70,25 @@ test("an allergy the record lists blocks whatever the card answered, and is mark
   const check = (patient: Patient) => getPrescriptionChecks({ revision: 1, prescriptionInputs: eligible } as Encounter, patient).find(c => c.id === "paracetamolAllergy")!;
   expect(check(allergic)).toMatchObject({ status: "blocked", recorded: true, detail: "The record lists this allergy: Paracetamol — rash. Paracetamol is not prescribed." });
   expect(check(amelia)).toEqual({ id: "paracetamolAllergy", label: "Paracetamol allergy", status: "passed", detail: "Recorded as no by the clinician." });
+});
+
+test("any other medicine is Sona's to check at the review: its verdicts are the checks, and a warning never blocks", () => {
+  const ibuprofen = regimenLine({ ...entered, medication: "Ibuprofen", formulation: "400 mg tablet", dose: "400", frequency: "Every 8 hours" });
+  const checks = (encounter: Partial<Encounter>) => getPrescriptionChecks({ revision: 1, ...ready, prescriptionInputs: undefined, proposedMedicine: ibuprofen, ...encounter } as Encounter, amelia);
+  // Not reviewed yet: Sona has not looked, so the order waits; the paracetamol rules (weight, the four history questions) do not apply.
+  expect(checks({ medicationCheckedRevision: undefined }).filter(c => c.status === "blocked").map(c => c.label)).toEqual(["Current medication review", "Sona's check"]);
+  // Reviewed, but the model could not answer: one warning to check it by hand, and nothing blocks.
+  expect(checks({ sonaCheck: { for: ibuprofen, items: [] } }).map(c => [c.id, c.status])).toEqual([["identity", "passed"], ["review", "passed"], ["sona", "warning"], ["prerequisite", "passed"]]);
+  // Its verdicts, each marked as Sona's; an area it skipped is a warning, a block blocks, and a check of another order counts for nothing.
+  const sonaCheck = { for: ibuprofen, model: "gemma", items: [
+    { id: "dose", label: "dose", status: "passed" as const, detail: "400 mg every 8 hours is within the adult range." },
+    { id: "allergy", label: "allergy", status: "passed" as const, detail: "Penicillin allergy does not cross-react with ibuprofen." },
+    { id: "interactions", label: "interactions", status: "blocked" as const, detail: "Asthma: NSAIDs can trigger bronchospasm." },
+    { id: "pregnancy", label: "Pregnancy", status: "warning" as const, detail: "Pregnancy status is not recorded." },
+  ] };
+  expect(checks({ sonaCheck }).filter(c => c.by === "sona").map(c => [c.label, c.status])).toEqual([
+    ["Dose & frequency", "passed"], ["Allergies", "passed"], ["Interactions with medicines & conditions", "blocked"], ["Kidney function", "warning"], ["Liver function", "warning"], ["Pregnancy", "warning"],
+  ]);
+  expect(checks({ sonaCheck: { ...sonaCheck, for: regimen } }).find(c => c.id === "sona")?.status).toBe("blocked");
+  expect(regimenOf({ proposedMedicine: ibuprofen }, amelia)?.sourceId).toBe("sona-order-check");
 });

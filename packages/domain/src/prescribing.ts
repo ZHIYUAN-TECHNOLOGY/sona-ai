@@ -1,4 +1,4 @@
-import type { Encounter, Patient, PrescriptionCheck, Regimen } from "./types";
+import type { Encounter, Patient, PrescriptionCheck, Regimen, SonaOrderCheck } from "./types";
 
 /** What the clinician enters for a regimen; the indication and the cited dose source come from the record and the rules (regimenOf). */
 export type EnteredRegimen = Pick<Regimen, "medication" | "formulation" | "dose" | "unit" | "route" | "frequency" | "duration">;
@@ -18,16 +18,19 @@ export function parseRegimen(line?: string): EnteredRegimen | undefined {
 }
 /** Adult paracetamol tablets as the NHS page states them (the record's `paracetamol-reference` source): the only regimen these rules can check. */
 const NHS = { sourceId: "paracetamol-reference", sourceVersion: "NHS · Paracetamol for adults · reviewed 24 Mar 2026" };
+/** Any other medicine is checked by Sona's model against the record when the order is reviewed (sonaChecks). */
+const SONA = { sourceId: "sona-order-check", sourceVersion: "Checked by Sona against the record (a model's judgement)" };
 const isParacetamol = (medication: string) => /^paracetamol$/i.test(medication.trim());
+/** The order Sona checks: a whole regimen for a medicine the dose rules do not cover. */
+export const sonaChecksOrder = (proposedMedicine?: string) => { const r = parseRegimen(proposedMedicine); return !!r && !isParacetamol(r.medication); };
 /** This visit's regimen as the clinician entered it, with the complaint it answers and the source its dose is checked against. */
 export function regimenOf(encounter: Pick<Encounter, "proposedMedicine">, patient: Pick<Patient, "complaint">): Regimen | undefined {
   const entered = parseRegimen(encounter.proposedMedicine);
-  return entered && { ...entered, indication: `Recorded complaint: ${patient.complaint}`, ...(isParacetamol(entered.medication) ? NHS : { sourceId: "", sourceVersion: "No dose rule covers this medicine" }) };
+  return entered && { ...entered, indication: `Recorded complaint: ${patient.complaint}`, ...(isParacetamol(entered.medication) ? NHS : SONA) };
 }
 /** The dose rule: whether the entered regimen is inside the NHS adult limits, with the sum that shows it (or what puts it outside). */
 function doseVerdict(r: EnteredRegimen | undefined): [boolean, string] {
   if (!r) return [false, "No regimen entered. Enter the medicine, strength, dose, route, frequency and duration."];
-  if (!isParacetamol(r.medication)) return [false, `The dose rules cover paracetamol only; ${r.medication} cannot be checked, so it is not prescribed here.`];
   if (!/^500\s*mg\b.*tablet/i.test(r.formulation) || !/^(oral|by mouth|po)$/i.test(r.route.trim()) || r.unit !== "mg") return [false, "The dose rules cover 500 mg tablets taken by mouth (oral), with the dose in mg."];
   const dose = Number(r.dose), hours = Number(r.frequency.match(/^every (\d+) hours?$/i)?.[1]), days = Number(r.duration.match(/^(\d+) days?$/i)?.[1]);
   if (dose !== 500 && dose !== 1000) return [false, "A dose is one or two 500 mg tablets: 500 mg or 1000 mg."];
@@ -64,6 +67,29 @@ export function defaultMedications(patient: Patient) {
     formulation: name.match(/\b(inhaler|tablet|caplet|capsule|syrup|solution|suspension)\b/i)?.[1]?.toLowerCase() ?? "", confirmed: false,
   }));
 }
+/** What Sona checks an order against, in the order the card lists them; the ids are the ones its answer uses. */
+export const SONA_AREAS = [
+  ["dose", "Dose & frequency"], ["allergy", "Allergies"], ["interactions", "Interactions with medicines & conditions"], ["kidney", "Kidney function"], ["liver", "Liver function"],
+] as const;
+/**
+ * Sona's verdicts on the order, as checks. They count only for the regimen they read (`for`), at a review of this revision;
+ * before that the order is not checked yet. When the model could not answer (no items), or skipped an area, the doctor is
+ * warned to check it themselves, and may still place the order: Sona's silence is never a block, and never a pass.
+ */
+function sonaChecks(encounter: Encounter): PrescriptionCheck[] {
+  const sona: SonaOrderCheck | undefined = encounter.sonaCheck?.for === encounter.proposedMedicine ? encounter.sonaCheck : undefined;
+  const one = (status: PrescriptionCheck["status"], detail: string): PrescriptionCheck[] => [{ id: "sona", label: "Sona's check", status, detail, by: "sona" }];
+  if (encounter.medicationCheckedRevision !== encounter.revision || !sona) return one("blocked", "When you review the order, Sona checks the dose, allergies, interactions, kidney and liver function against the record.");
+  if (!sona.items.length) return one("warning", "Sona could not check this order just now. Check the dose, allergies, interactions, kidney and liver function yourself before you place it.");
+  const extra = sona.items.filter(i => !SONA_AREAS.some(([id]) => id === i.id)).slice(0, 3);
+  return [
+    ...SONA_AREAS.map(([id, label]): PrescriptionCheck => {
+      const item = sona.items.find(i => i.id === id);
+      return { id: `sona-${id}`, label, status: item?.status ?? "warning", detail: item?.detail ?? "Sona gave no verdict on this; check it yourself.", by: "sona" };
+    }),
+    ...extra.map((i): PrescriptionCheck => ({ ...i, id: `sona-${i.id}`, by: "sona" })),
+  ];
+}
 export function getPrescriptionChecks(encounter: Encounter, patient: Patient): PrescriptionCheck[] {
   const inputs = encounter.prescriptionInputs;
   const medicines = encounter.medicationEntries ?? defaultMedications(patient);
@@ -71,17 +97,22 @@ export function getPrescriptionChecks(encounter: Encounter, patient: Patient): P
   const check = (id: string, label: string, passed: boolean, yes: string, no: string): PrescriptionCheck => ({ id, label, status: passed ? "passed" : "blocked", detail: passed ? yes : no });
   const [dosed, doseDetail] = doseVerdict(parseRegimen(encounter.proposedMedicine));
   const recordedAllergy = /paracetamol|acetaminophen/i.test(patient.allergies ?? "");
+  const identity = check("identity", "Medication identity", medicines.length > 0 && medicines.every(m => m.confirmed && !!m.ingredient.trim() && !!m.formulation.trim()), "The clinician confirmed every listed ingredient and formulation.", "Confirm each medication ingredient and formulation; unknown tablets cannot be checked.");
+  const review = check("review", "Current medication review", encounter.medicationCheckedRevision === encounter.revision, `Review recorded at encounter revision ${encounter.revision}.`, "Rerun medication review after the latest context or regimen edit.");
+  const prerequisite = check("prerequisite", "Prerequisite service", encounter.prescriptionScenario !== "failed-prerequisite", "The checks run inside Sona; no outside service is called.", "Demo scenario: the prerequisite service failed. Restore the standard scenario and retry.");
+  // Paracetamol keeps its exact rules below; any other medicine is Sona's to check, beside the checks that hold for every order.
+  if (sonaChecksOrder(encounter.proposedMedicine)) return [identity, review, ...sonaChecks(encounter), prerequisite];
   return [
     check("indication", "Indication & patient context", !patient.incomplete && /fever/i.test(patient.complaint), "Fever is documented in the recorded complaint; this is symptom relief, not treatment of a confirmed respiratory diagnosis.", "The rules need a documented fever and a complete intake before paracetamol can be prescribed."),
     check("regimen", "Bounded regimen", dosed && encounter.prescriptionScenario !== "unsupported", doseDetail, dosed ? "Demo scenario: this regimen is marked unsupported." : doseDetail),
-    check("identity", "Medication identity", medicines.length > 0 && medicines.every(m => m.confirmed && !!m.ingredient.trim() && !!m.formulation.trim()), "The clinician confirmed every listed ingredient and formulation.", "Confirm each medication ingredient and formulation; unknown tablets cannot be checked."),
+    identity,
     check("coverage", "Interaction coverage", encounter.prescriptionScenario !== "unknown-coverage" && medicines.every(m => COVERED.includes(m.ingredient.trim().toLowerCase())), "Every medicine on this visit is one the interaction rules cover (salbutamol, cetirizine). This is rule coverage, not a clinical interaction clearance.", "One or more of this visit's medicines are outside what the interaction rules cover. No blanket safe result is available."),
-    check("review", "Current medication review", encounter.medicationCheckedRevision === encounter.revision, `Review recorded at encounter revision ${encounter.revision}.`, "Rerun medication review after the latest context or regimen edit."),
+    review,
     check("age-weight", "Adult age & weight", patient.age >= 18 && Number.isFinite(weight) && weight >= 50, `Adult, ${inputs?.weightKg} kg recorded.`, "Record a weight of at least 50 kg; the dose rules cover adults of 50 kg or more, and lower or unknown weights need a different regimen."),
     ...([ ["paracetamolAllergy", "Paracetamol allergy"], ["liverDisease", "Liver history"], ["kidneyDisease", "Kidney history"], ["alcoholRisk", "Alcohol risk"] ] as const).map(([key,label]) => key === "paracetamolAllergy" && recordedAllergy
       // The record outranks the answer on the card: a listed allergy blocks even when "No" was tapped.
       ? { ...check(key, label, false, "", `The record lists this allergy: ${patient.allergies}. Paracetamol is not prescribed.`), recorded: true as const }
       : check(key, label, inputs?.[key] === "no", "Recorded as no by the clinician.", inputs?.[key] === "yes" ? "Positive risk recorded: this case is outside what the dose rules cover." : "History not recorded. Unknown is not a negative finding.")),
-    check("prerequisite", "Prerequisite service", encounter.prescriptionScenario !== "failed-prerequisite", "The rules run inside Sona; no outside service is called.", "Demo scenario: the prerequisite service failed. Restore the standard scenario and retry."),
+    prerequisite,
   ];
 }

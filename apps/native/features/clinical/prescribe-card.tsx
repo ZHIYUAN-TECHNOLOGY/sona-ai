@@ -152,6 +152,9 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
   const last = (c: PrescriptionCheck) => (c.id === "review" ? 1 : 0);
   const rows = checks.filter(c => c.status === "blocked" || resolving.has(c.id)).sort((a, b) => last(a) - last(b));
   const passed = checks.filter(c => c.status === "passed" && !resolving.has(c.id));
+  // Sona's warnings never block: the doctor reads them here and may prescribe over them.
+  const warned = checks.filter(c => c.status === "warning");
+  const bySona = checks.some(c => c.by === "sona");
   const prescription = encounter.prescription;
   const created = prescription?.status === "created" && prescription.revision === encounter.revision;
   // The receipt's regimen once there is one; before that, what is entered on this visit, which may be nothing yet.
@@ -178,12 +181,13 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
     if (check.id === "identity") return <View style={{ alignSelf: "flex-start" }}><Action secondary label="Confirm next medicine" onPress={() => { const entry = (encounter.medicationEntries ?? defaultMedications(patient)).find(m => !m.confirmed); if (entry) updateEncounter(value => ({ ...value, medicationDraft: { ...entry } })); }} /></View>;
     return undefined;
   };
-  const label = (check: PrescriptionCheck) => check.id === "review" && reviewStale ? { ...check, detail: "Needs rerun · eligibility or medicines changed since the last review." } : check;
+  const label = (check: PrescriptionCheck) => check.id === "review" && reviewStale ? { ...check, detail: "Needs rerun · eligibility or medicines changed since the last review." }
+    : check.by === "sona" && check.id !== "sona" ? { ...check, detail: `Sona: ${check.detail}` } : check;
   // A recorded risk isn't something to resolve: the case is outside what the dose rules cover.
   // So is an allergy the record lists: nothing on the card resolves it, and the button says that instead of "Resolve 1".
   const recordedAllergy = blocked.some(c => c.recorded);
   const outside = outsideCase(encounter) || recordedAllergy;
-  const primary = working === "prescription" ? `Checking all ${checks.length}…` : recordedAllergy ? "Recorded allergy · not prescribing" : outside ? "Outside the supported case · not prescribing" : blocked.length ? `Resolve ${blocked.length} to prescribe` : regimen ? `Prescribe ${regimen.medication.toLowerCase()}` : "Prescribe";
+  const primary = working === "prescription" ? `Checking all ${checks.length}…` : recordedAllergy ? "Recorded allergy · not prescribing" : outside ? "Outside the supported case · not prescribing" : blocked.length ? `Resolve ${blocked.length} to prescribe` : regimen ? `Prescribe ${regimen.medication.toLowerCase()}${warned.length ? " anyway" : ""}` : "Prescribe";
 
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 12 }}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
@@ -199,6 +203,18 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
       {rows.map((check, i) => <BlockerRow key={check.id} check={label(check)} n={i + 1} resolved={resolving.has(check.id)}>{fix(check)}</BlockerRow>)}
     </Animated.View>}
 
+    {!created && warned.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 10, padding: 12, borderRadius: radius.group, backgroundColor: "rgba(196,120,20,0.08)" }}>
+      {warned.map(c => <View key={c.id} accessible accessibilityLabel={`Warning. ${c.label}. ${c.detail}`} style={{ flexDirection: "row", gap: 10 }}>
+        <Icon name="exclamationmark.triangle.fill" size={13} color={palette.amber} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{c.label}</Text>
+          <Text style={{ ...type.caption, color: palette.muted }}>{c.detail}</Text>
+        </View>
+      </View>)}
+    </Animated.View>}
+
+    {!created && bySona && <Text style={{ ...type.caption, color: palette.muted }}>No dose rule covers {regimen?.medication.toLowerCase() ?? "this medicine"}, so Sona checks it against the record at the review. A model's judgement: you decide.</Text>}
+
     {!created && passed.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 6 }}>
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: showPassed }} onPress={() => setShowPassed(v => !v)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 32 }}>
         <Icon name="checkmark.circle.fill" size={13} color={palette.green} />
@@ -213,7 +229,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
       <Seal stampDelay={reducedMotion ? undefined : 120} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{words.title}</Text>
-        <Text style={{ ...type.caption, color: palette.muted }}>All {checks.length} checks passed · {new Date(prescription.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · {words.where}</Text>
+        <Text style={{ ...type.caption, color: palette.muted }}>{warned.length ? `Prescribed over ${warned.length === 1 ? "a warning" : `${warned.length} warnings`}` : `All ${checks.length} checks passed`} · {new Date(prescription.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · {words.where}</Text>
       </View>
     </Animated.View>
       : !canPrescribe ? <LockedAction label="Needs a doctor to prescribe" path="prescribing.simulate" />

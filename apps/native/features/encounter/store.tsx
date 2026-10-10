@@ -9,9 +9,9 @@ import { useServerPatients } from "@/features/live/patients-sync";
 import { serverRoster } from "@/features/patients/record";
 import { amendOnServer, pushAndReview, simulateOnServer } from "@/features/live/prescribing-sync";
 import { patients, refreshDemoTimes } from "./fixtures";
-import { effectivePatient } from "./clinical-state";
+import { effectivePatient, sonaChecksOrder } from "./clinical-state";
 import { acceptCard, beginRequest, createCard, finishRequest, initialEncounters, isRepeat, issueSimulation, reviseEncounter, revealSections, queueAmendment, reconcileAmendment, withRoster, type ServerReceipt } from "./state";
-import type { Capability, Encounter, Patient, RequestState } from "./types";
+import type { Capability, Encounter, Patient, RequestState, SonaOrderCheck } from "./types";
 
 type Store = {
   patient: Patient | undefined; patients: Patient[]; encounters: Record<string, Encounter>; encounter: Encounter | undefined;
@@ -153,11 +153,13 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     if (!id || !patient || stateRef.current[id]!.working) return; // one run at a time, whichever button started it
     const encounter = stateRef.current[id]!, revision = encounter.revision;
     const settle = (update: (current: Encounter) => Encounter) => setEncounters(prev => ({ ...prev, [id]: update({ ...prev[id]!, working: undefined }) }));
-    const reviewed = (current: Encounter): Encounter => current.revision === revision ? { ...current, medicationCheckedRevision: revision, reviewInvalidated: false } : current;
+    // Live: the server's review carries Sona's check of an order no dose rule covers; on this phone there is no model, so it warns.
+    const reviewed = (current: Encounter, sonaCheck?: SonaOrderCheck): Encounter => current.revision !== revision ? current : { ...current, medicationCheckedRevision: revision, reviewInvalidated: false,
+      sonaCheck: sonaCheck ?? (sonaChecksOrder(current.proposedMedicine) ? { for: current.proposedMedicine!, items: [] } : undefined) };
     setRunErrors(errors => ({ ...errors, [id]: undefined }));
     setEncounters(prev => ({ ...prev, [id]: { ...prev[id]!, working: kind } }));
     if (live && user) {
-      const call = kind === "medication" ? pushAndReview(patient.encounterId, encounter).then(() => settle(reviewed))
+      const call = kind === "medication" ? pushAndReview(patient.encounterId, encounter).then(snapshot => settle(current => reviewed(current, snapshot.state.sonaCheck)))
         : simulateOnServer(patient.encounterId, user.id).then(receipt => settle(current => issueSimulation(current, patient, receipt.requestId, receipt)));
       call.catch(e => { setRunErrors(errors => ({ ...errors, [id]: errorText(e) })); settle(current => current); });
       return;

@@ -532,3 +532,18 @@ test("a diarized answer with no usable segment or memory is the words alone", as
   const { fetcher } = fake({ [box("voice")]: { text: "Batuk.", memory: 7, segments: [{ voice: "1", from: 0, to: 1, text: "Batuk." }] } });
   expect(await basetenModels({ apiKey: "k", fetcher }).transcribe({ audio: new Uint8Array(4), voices: {} })).toEqual({ text: "Batuk.", source: "model", model: ASR_MODEL });
 });
+
+test("Gemma checks an order no dose rule covers: its areas read loosely, a verdict without a reason or status is dropped, none at all is no verdict", async () => {
+  const order = { regimen: { medication: "Ibuprofen", formulation: "400 mg tablet", dose: "400", unit: "mg", route: "Oral", frequency: "Every 8 hours", duration: "3 days" }, patient: DEMO_PATIENTS[0]!, medicines: ["Salbutamol inhaler"], weightKg: "62" };
+  const items = [
+    { id: "Interaction", status: "blocked", detail: "Asthma: ibuprofen can trigger bronchospasm; the maximum is 1200 mg a day over the counter." },
+    { id: "renal", status: "warning", detail: "No kidney function is recorded." },
+    { id: "dose", status: "fine", detail: "Within range." },
+    { id: "liver", status: "passed" },
+  ];
+  expect(await gemma(JSON.stringify({ items })).checkOrder(order)).toEqual({ items: [
+    { id: "interactions", label: "Interactions", status: "blocked", detail: items[0]!.detail },
+    { id: "kidney", label: "Kidney", status: "warning", detail: "No kidney function is recorded." },
+  ], ...fromModel });
+  expect(await gemma("{not json").checkOrder(order)).toEqual({ items: [], source: "fixture" });
+});

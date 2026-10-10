@@ -29,7 +29,7 @@ export function prescribingState(encounter: Encounter, patient: Patient): "creat
   const rx = encounter.prescription?.revision === encounter.revision ? encounter.prescription : undefined;
   if (rx?.status === "created" || rx?.status === "failed") return rx.status;
   if (outsideCase(encounter)) return "outside";
-  return getPrescriptionChecks(encounter, patient).every(check => check.status === "passed") ? "ready" : undefined;
+  return getPrescriptionChecks(encounter, patient).every(check => check.status !== "blocked") ? "ready" : undefined;
 }
 
 export function nextSteps(kind: Capability, encounter: Encounter | undefined, patient: Patient, canPrescribe = true): Step[] | undefined {
@@ -47,7 +47,7 @@ export function nextSteps(kind: Capability, encounter: Encounter | undefined, pa
   return [
     ...getPrescriptionChecks(encounter, patient).sort((a, b) => order(a) - order(b)).map(check => ({
       id: check.id, label: risk(check, encounter) ? `${check.label} · risk recorded` : check.label, detail: check.detail,
-      done: check.status === "passed", action: action(check), ...(risk(check, encounter) && { stop: true }),
+      done: check.status !== "blocked", action: action(check), ...(risk(check, encounter) && { stop: true }),
     })),
     { id: "simulate", label: created ? "Prescription recorded" : medicine ? `Prescribe ${medicine}` : "Prescribe", detail: CONSEQUENCE, done: created,
       action: created ? { label: "View", type: "receipt" } : { label: "Prescribe", type: "run", kind: "prescription" }, ...(!created && !canPrescribe && { locked: true }) },

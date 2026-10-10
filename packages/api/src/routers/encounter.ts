@@ -1,12 +1,14 @@
 import { ORPCError } from "@orpc/server";
 import { admissions, appointments, checkInReplies, checkIns, encounters, findings, guaranteeLetters, labResults, notes, observations, patients, provenance, receipts } from "@sona-ai/db/schema/clinical";
 import type { MedChange } from "@sona-ai/domain/discharge";
-import type { Encounter, Patient } from "@sona-ai/domain/types";
+import { effectivePatient, parseRegimen, sonaChecksOrder } from "@sona-ai/domain/prescribing";
+import type { Encounter, Patient, SonaOrderCheck } from "@sona-ai/domain/types";
 import type { WardRecord } from "@sona-ai/domain/ward";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { encounterEditSchema, recordReviewSchema, type EncounterEdit, type RecordReview } from "../contracts";
+import { answerOnce } from "../answers";
 import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
 import { stubModels, type Origin } from "../models";
@@ -165,7 +167,23 @@ export function applyEdit(current: EncounterSnapshot, edit: EncounterEdit): Enco
 /** Marks the medication review current at this revision; a review of an older revision is refused. */
 export function applyReview(current: EncounterSnapshot, review: RecordReview): EncounterSnapshot {
   if (review.expectedRevision !== current.revision) throw stale(current.encounterId);
-  return { ...current, state: { ...current.state, medicationCheckedRevision: current.revision, reviewInvalidated: false } };
+  const { sonaCheck: _, ...state } = current.state;
+  return { ...current, state: { ...state, medicationCheckedRevision: current.revision, reviewInvalidated: false, ...review.sonaCheck && { sonaCheck: review.sonaCheck } } };
+}
+
+/**
+ * Sona's check of the visit's order when no dose rule covers its medicine (any but paracetamol): the model reads the
+ * regimen against the record, with the visit's corrections laid over it, and its answer is kept (answerOnce), so the
+ * same order on the same record is judged once. A model that is off or starting gives no verdicts: the card then warns.
+ */
+async function orderCheckFor(context: Pick<Context, "db" | "models"> & { hospitalId: string }, encounterId: string, revision: number): Promise<SonaOrderCheck | undefined> {
+  const { patient: record, state } = await visitOf(context.db, context.hospitalId, encounterId);
+  const regimen = parseRegimen(state.proposedMedicine);
+  if (!regimen || !sonaChecksOrder(state.proposedMedicine)) return undefined; // paracetamol keeps its rules
+  const patient = effectivePatient({ ...record, sources: record.sources ?? [] }, { ...state, revision } as Encounter);
+  const input = { regimen, patient, medicines: patient.medicines, weightKg: state.prescriptionInputs?.weightKg };
+  const answer = await answerOnce(context.db, encounterId, "order-check", input, () => (context.models ?? stubModels).checkOrder(input), () => recordSources(record));
+  return { for: state.proposedMedicine!, items: answer.items, ...answer.source === "model" && { model: answer.model } };
 }
 
 /** Writes the snapshot only if Postgres is still at `fromRevision`; otherwise someone else wrote first. */
@@ -190,9 +208,10 @@ export const encounterRouter = {
   edit: protectedProcedure.input(encounterEditSchema).handler(({ context, input }) => editEncounter(context, context.hospitalId, input)),
   recordReview: protectedProcedure.input(recordReviewSchema).handler(async ({ context, input }) => {
     const { hospitalId } = context;
-    if (context.encounters) return context.encounters.recordReview(hospitalId, input);
+    const review = { ...input, sonaCheck: await orderCheckFor(context, input.encounterId, input.expectedRevision) };
+    if (context.encounters) return context.encounters.recordReview(hospitalId, review);
     const current = await loadEncounter(context.db, hospitalId, input.encounterId);
-    return saveEncounter(context.db, hospitalId, current.revision, applyReview(current, input));
+    return saveEncounter(context.db, hospitalId, current.revision, applyReview(current, review));
   }),
   /** What to know before seeing the patient, read from their own record (a labelled fixture until Gemma is on). */
   briefing: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {

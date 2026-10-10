@@ -6,7 +6,8 @@ import type { Claim, PatientPoint } from "@sona-ai/domain/evidence";
 import type { DetectedFinding } from "@sona-ai/domain/findings";
 import { deidentifyByRules, type KnownIdentity, type Replacement } from "@sona-ai/domain/training";
 import { SAMPLE_NOTE, type HandwrittenNote } from "@sona-ai/domain/scan";
-import type { Patient } from "@sona-ai/domain/types";
+import type { EnteredRegimen } from "@sona-ai/domain/prescribing";
+import type { Patient, SonaOrderCheck } from "@sona-ai/domain/types";
 import { huddle, type Bed, type Owner } from "@sona-ai/domain/ward";
 
 import type { Passage } from "./leaflets";
@@ -154,6 +155,11 @@ export type Models = {
    * who said what (unsure speakers marked). Every number, dose and medicine in the note is one the transcript has (./scribe-model).
    */
   draftNote(input: { lines: ConsultationLine[] }): Answer<ScribeDraft>;
+  /**
+   * Checks an order no dose rule covers against the patient's record (dose and frequency, allergies, interactions with
+   * `medicines`, kidney and liver function): a verdict per area with its reason. No items when it could not judge.
+   */
+  checkOrder(input: { regimen: EnteredRegimen; patient: Patient; medicines: string[]; weightKg?: string }): Answer<{ items: SonaOrderCheck["items"] }>;
 };
 
 const RESULT_LINE: Record<Language, (result: string) => string> = {
@@ -232,4 +238,6 @@ export const stubModels: Models = {
   readMedicinePhoto: () => fixture({ name: "Cetirizine", dose: "10 mg", frequency: "once at night" }),
   // ponytail: no reader, so the captured words stand as the history and the rest stays the clinician's; Gemma drafts through the Baseten adapter.
   draftNote: ({ lines }) => fixture(ruleNote(lines)),
+  // No model to judge the order: no verdicts, so the card warns the doctor to check it themselves.
+  checkOrder: () => fixture({ items: [] }),
 };

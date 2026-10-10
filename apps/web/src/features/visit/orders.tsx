@@ -9,7 +9,7 @@ import { orpc } from "@/lib/orpc";
 import { Medicines, type MedicineState } from "./medicines";
 import { orderChecks, refusal, type VisitPatient } from "./visit";
 
-type Payload = Partial<Regimen> & { checks?: string[]; transmitted?: boolean; amendment?: { reason?: string; supersedes?: string } };
+type Payload = Partial<Regimen> & { checks?: string[]; warnings?: string[]; checkedBy?: string; transmitted?: boolean; amendment?: { reason?: string; supersedes?: string } };
 
 /** The medicine order beside the note: the check first, then the order, then the server's receipt. */
 export function Orders({ encounterId, patient, userId, canPrescribe }: { encounterId: string; patient?: VisitPatient; userId: string; canPrescribe: boolean }) {
@@ -37,7 +37,7 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
   const state = encounter.data.state as MedicineState;
   const proposed = state.proposedMedicine;
   const checks = orderChecks(encounter.data, patient);
-  const blocked = checks.filter(c => c.status === "blocked");
+  const blocked = checks.filter(c => c.status === "blocked"), warnings = checks.filter(c => c.status === "warning");
   const reviewed = shown === revision;
   // One request per revision, so a second tap or a reload returns the same receipt.
   const command = { encounterId, approvedBy: userId, requestId: `web-rx-${encounterId}-r${revision}` };
@@ -54,6 +54,7 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
           <ul className="list"><ListRow icon="pill" title={proposed}
             caption={reviewed ? `Reviewed at revision ${revision}` : "Not reviewed yet"}
             trailing={blocked.length ? <Chip tone="amber" icon="alert">{blocked.length} of {checks.length} blocked</Chip>
+              : warnings.length ? <Chip tone="amber">{warnings.length} to weigh</Chip>
               : <span className="visit-muted">{checks.length} checks pass</span>} /></ul>
         ) : <p className="visit-muted">No medicine is proposed for this visit yet.{canPrescribe ? " Propose one above, then review it." : ""}</p>}
         {canPrescribe ? (
@@ -64,7 +65,7 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
             </Button>
             {reviewed ? (
               <Button size="sm" variant="primary" icon="check" disabled={blocked.length > 0} pending={place.isPending} onClick={() => { amend.reset(); place.mutate(command); }}>
-                Place the order
+                {warnings.length && !blocked.length ? "Place the order anyway" : "Place the order"}
               </Button>
             ) : null}
           </div>
@@ -74,8 +75,8 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
           <ul className="visit-checks">
             {checks.map(c => (
               <li key={c.id}>
-                {c.status === "blocked" ? <Chip tone="amber">Blocked</Chip> : <span className="visit-muted">Passed</span>}
-                <span><strong>{c.label}</strong><br />{c.detail}</span>
+                {c.status === "blocked" ? <Chip tone="red">Blocked</Chip> : c.status === "warning" ? <Chip tone="amber">Warning</Chip> : <span className="visit-muted">Passed</span>}
+                <span><strong>{c.label}</strong>{c.by === "sona" ? <span className="visit-muted"> · checked by Sona</span> : null}<br />{c.detail}</span>
               </li>
             ))}
           </ul>
@@ -94,6 +95,8 @@ export function Orders({ encounterId, patient, userId, canPrescribe }: { encount
           <p className="visit-muted">
             {receipt.indication}{receipt.sourceVersion ? ` · ${receipt.sourceVersion}` : ""}<br />
             Approved by {last.approvedByName ?? "the approver"} at revision {last.revision} · {receipt.checks?.length ?? 0} checks passed<br />
+            {receipt.warnings?.length ? <>Placed over {receipt.warnings.length === 1 ? "a warning" : `${receipt.warnings.length} warnings`}: {receipt.warnings.join(", ")}<br /></> : null}
+            {receipt.checkedBy ? <>Checked by Sona ({receipt.checkedBy})<br /></> : null}
             {receipt.amendment ? `Amends ${receipt.amendment.supersedes}: ${receipt.amendment.reason}. ` : ""}
             A record only: not sent to a pharmacy, not dispensed.<br />
             Request {last.requestId}

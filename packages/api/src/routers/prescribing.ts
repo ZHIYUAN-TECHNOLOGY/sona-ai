@@ -14,9 +14,9 @@ import { assertApprover } from "./hospital";
 
 /**
  * The prescribe card's server steps. The review is recorded at the revision it ran against
- * (encounter.recordReview's rule). Prescribing runs the same eleven domain checks on the server's
- * encounter state and patient record, whatever the app shows, and is refused while any of them is
- * blocked. The receipt holds the regimen the clinician entered for this visit; it is a record here,
+ * (encounter.recordReview's rule, which also has Sona check an order no dose rule covers). Prescribing runs
+ * the same domain checks on the server's encounter state and patient record, whatever the app shows, and is
+ * refused while any of them is blocked; a warning is the doctor's to weigh. The receipt holds the regimen the clinician entered for this visit; it is a record here,
  * sent to no pharmacy system. (`simulate` is the route's first name, kept so callers need not change.)
  */
 export const prescribingRouter = {
@@ -69,7 +69,9 @@ async function write({ db, hospitalId, session }: Pick<Context, "db"> & { hospit
   await db.insert(receipts).values({
     id: crypto.randomUUID(), kind: "prescription", encounterId: input.encounterId, requestId: input.requestId, revision: encounter.revision, approvedBy: input.approvedBy,
     // The regimen check passed, so the visit holds a whole regimen: the one entered for this patient, never a stock one.
-    payload: { ...regimenOf(visit, patient)!, checks: checks.map(c => c.label), transmitted: false, dispensed: false, ...latest ? { amendment: { reason, supersedes: latest.requestId } } : {} },
+    // Warnings were the doctor's to weigh, and placing the order over them is recorded beside it, with the model that raised them.
+    payload: { ...regimenOf(visit, patient)!, checks: checks.filter(c => c.status === "passed").map(c => c.label), warnings: checks.filter(c => c.status === "warning").map(c => c.label),
+      ...checks.some(c => c.by === "sona") && { checkedBy: visit.sonaCheck?.model ?? "none: Sona could not check it" }, transmitted: false, dispensed: false, ...latest ? { amendment: { reason, supersedes: latest.requestId } } : {} },
   }).onConflictDoNothing();
   const [receipt] = await db.select().from(receipts).where(eq(receipts.requestId, input.requestId));
   return receipt!;
