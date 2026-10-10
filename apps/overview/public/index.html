@@ -201,6 +201,22 @@ code { white-space: nowrap; font: 600 15px var(--mono); background: rgba(255,255
 .qr svg { width: 84px; height: 84px; display: block; }
 .qr span { display: block; font: 10px var(--mono); margin-top: 4px; word-break: break-all; max-width: 180px; }
 
+/* video controls and full-size diagrams */
+.vctl { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
+.vctl button, .vctl select { font: 600 13px/1 var(--body); color: var(--text); background: rgba(255,255,255,.06); border: var(--stroke); border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+.vctl select { appearance: none; padding-right: 12px; }
+.vctl button:hover, .vctl select:hover { border-color: rgba(255,255,255,.4); }
+.vctl button:focus-visible, .vctl select:focus-visible, .zoom:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.vctl .hint { color: var(--muted); font-size: 12px; margin-left: 4px; }
+.zoom { all: unset; display: block; cursor: zoom-in; border-radius: 12px; position: relative; }
+.zoom::after { content: "Tap to enlarge"; position: absolute; right: 10px; bottom: 10px; font: 600 11px/1 var(--mono); letter-spacing: .06em; padding: 7px 9px; border-radius: 999px; background: rgba(5,6,12,.8); color: var(--text); }
+dialog.lightbox { padding: 0; border: 0; background: #05060c; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; }
+dialog.lightbox::backdrop { background: rgba(0,0,0,.85); }
+dialog.lightbox .lb-body { width: 100%; height: 100%; overflow: auto; display: grid; place-items: center; cursor: zoom-out; }
+dialog.lightbox img { width: min(2400px, max(96vw, 1200px)); max-width: none; display: block; }
+dialog.lightbox .lb-close { position: fixed; top: 14px; right: 14px; font: 600 14px var(--body); color: var(--text); background: rgba(255,255,255,.12); border: var(--stroke); border-radius: 999px; padding: 10px 16px; cursor: pointer; }
+@media print { .vctl, .zoom::after, dialog { display: none !important; } }
+
 @media print {
   :root { --text: #111; --muted: #444; --line: #ccc; --pos: #0a7d5b; --yellow: #8a5a00; --blue: #2a4bd7; }
   @page { size: A4; margin: 14mm; }
@@ -488,8 +504,9 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
 
 <section id="progress"><div class="wrap">
   <span class="eyebrow">Progress</span>
-  <h2>From research to a working system in three weeks.</h2>
+  <h2>From first research in June to a working system today.</h2>
   <div class="timeline">
+    <div class="was"><b>11 JUN</b><span>We start Sona: research into AI for Malaysian hospitals.</span></div>
     <div class="was"><b>17 SEP</b><span>Research and plan: AI on the phone.</span></div>
     <div><b>22 SEP</b><span>First commit.</span></div>
     <div><b>26 SEP</b><span>Server, database and staff routes live on staging.</span></div>
@@ -597,6 +614,8 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
   <p style="margin-top:6px">Chest X-ray: Mikael Häggström, M.D. · Wikimedia Commons · CC0 1.0</p>
 </div></footer>
 
+<dialog class="lightbox" id="lightbox" aria-label="Diagram, full size"><div class="lb-body"><img alt=""></div><button class="lb-close" type="button">Close</button></dialog>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 // Feature groups, ranked by wow. Each group says what it does on each screen, then shows its clips.
@@ -619,8 +638,8 @@ const GROUPS = [
     on: { ci: "Plan and leaflet arrive at discharge; day-2 check-in; a red flag gets the 999 line.", pw: "The care team gets the task and books her in from the flag.", pi: "Urgent messages come first on Today, with a reply Sona drafts for the doctor to edit." },
     clips: [["day2", "Day 2 at home, in Malay", 1, "ci"], ["home-discharge", "Discharge lands on her phone", 0, "both"], ["home-staff", "The care team gets a task", 0, "pw"], ["home-phone", "Her plan and Malay leaflet arrive", 0, "both"], ["home-checkin", "Day-2 check-in flagged to the doctor", 0, "both"], ["home-urgent", "Chest pain: 999 first, staff told", 0, "both"], ["home-booked", "Booked in from the flag", 0, "both"]] },
   { id: "letter", title: "The insurer says no. Sona appeals. Approved.", tag: "Guarantee letter",
-    what: "Sona drafts the insurer's guarantee letter from the note, ties every code to a sentence, and checks the insurer's criteria before it is sent. When the insurer denies it, Sona writes the appeal from the same note. Staff approve each step.",
-    proof: ["Codes tied to note sentences", "Criteria checked before sending"],
+    what: "Sona drafts the insurer's guarantee letter from the note, ties every code to a line of the note, and holds the letter until the insurer's criteria are met. When the insurer denies it, Sona drafts the appeal from the same note; the doctor edits and sends it.",
+    proof: ["Every code cites a line of the note", "Not sent until criteria are met"],
     on: { pw: "Letter, codes and criteria from the note; denial, appeal and approval in one sitting." },
     clips: [["gl", "Denied, appealed, approved", 0, "pw"], ["gl-web", "End to end on the web portal", 0, "pw"]] },
   { id: "xray", title: "An X-ray read in seconds, right in the answer.", tag: "Chest X-ray",
@@ -695,6 +714,31 @@ const drawQr = () => document.querySelectorAll("[data-qr]").forEach(n => {
   n.setAttribute("aria-label", url); n.append(el("span", {}, url.replace("https://", "")));
 });
 drawQr(); addEventListener("load", drawQr); addEventListener("beforeprint", drawQr);
+
+
+// Video controls: 10 s back and forward and playback speed, under every player (Safari has no speed menu).
+const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
+document.querySelectorAll(".player").forEach(player => {
+  const v = () => player.querySelector("video");
+  if (!v()) return;
+  const skip = d => () => { const x = v(); x.currentTime = Math.max(0, Math.min((x.duration || 0) || Infinity, x.currentTime + d)); };
+  const back = el("button", { type: "button", "aria-label": "Back 10 seconds" }, "‹ 10 s"); back.onclick = skip(-10);
+  const fwd = el("button", { type: "button", "aria-label": "Forward 10 seconds" }, "10 s ›"); fwd.onclick = skip(10);
+  const speed = el("select", { "aria-label": "Playback speed" }, ...SPEEDS.map(r => { const o = el("option", { value: r }, `${r}×`); if (r === 1) o.selected = true; return o; }));
+  speed.onchange = () => { v().playbackRate = +speed.value; };
+  player.querySelector("video").addEventListener("loadedmetadata", e => { e.target.playbackRate = +speed.value; });
+  new MutationObserver(() => { v().playbackRate = +speed.value; }).observe(player.querySelector("video"), { attributes: true, attributeFilter: ["src"] });
+  player.after(el("div", { class: "vctl" }, back, fwd, speed));
+});
+
+// Diagrams: tap to open full size; tap, Esc or Close to go back.
+const lb = document.getElementById("lightbox"), lbImg = lb.querySelector("img");
+document.querySelectorAll(".diagram img").forEach(img => {
+  const btn = el("button", { class: "zoom", type: "button", "aria-label": "Enlarge diagram" });
+  img.replaceWith(btn); btn.append(img);
+  btn.onclick = () => { lbImg.src = img.src; lbImg.alt = img.alt; lb.showModal(); };
+});
+lb.addEventListener("click", () => lb.close());
 
 // Architecture tabs.
 const DIAGRAMS = [
