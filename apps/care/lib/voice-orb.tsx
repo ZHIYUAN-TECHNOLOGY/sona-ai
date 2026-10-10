@@ -60,8 +60,12 @@ export const VoiceOrb = memo(function VoiceOrb({ size, flood, hearing, level, aw
   // While the light covers it, the pearl stops: its clock, and its dots (which follow the voice), so it never redraws unseen.
   useAnimatedReaction(() => morph.get() === 1, (over, was) => { if (over && was === false) scheduleOnRN(setCovered, true); });
 
+  // While parked (`morph` 0, off screen) the light follows nothing: each voice step re-rendered it and each lift frame
+  // committed its style for a view nobody sees (a live call's thinking phase, where the mic still ticks: 36 % app CPU in
+  // the simulator, 10 Oct). It picks the voice up again the moment it starts to unfold (at opacity 0).
+  const parked = () => { "worklet"; return morph.get() === 0; };
   // The light's pulse takes a JS number and eases it natively, so it gets the voice in 10 % steps.
-  useAnimatedReaction(() => Math.round(level.get() * 10) / 10, (v, was) => { if (v !== was) scheduleOnRN(setVoice, v); });
+  useAnimatedReaction(() => parked() ? -1 : Math.round(level.get() * 10) / 10, (v, was) => { if (v >= 0 && v !== was) scheduleOnRN(setVoice, v); });
   // Its look, with hysteresis.
   const talking = useSharedValue(0), quietSince = useSharedValue(0);
   useAnimatedReaction(() => level.get(), v => {
@@ -75,7 +79,7 @@ export const VoiceOrb = memo(function VoiceOrb({ size, flood, hearing, level, aw
   });
 
   const lift = useSharedValue(0);
-  useAnimatedReaction(() => level.get(), v => { lift.set(withSpring(v, FOLLOW)); });
+  useAnimatedReaction(() => parked() ? -1 : level.get(), (v, was) => { if (v >= 0) lift.set(was === null || was < 0 ? v : withSpring(v, FOLLOW)); });
 
   const zero = useSharedValue(0);
   // The pearl's own sunbeam dots flood it over the first half of the morph: it dissolves into dots, then fades.
