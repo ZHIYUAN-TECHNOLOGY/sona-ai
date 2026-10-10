@@ -6,6 +6,7 @@ set -euo pipefail
 B=~/Documents/sona-ai/pitch/showcase-videos
 K=~/Documents/sona-ai/pitch/semifinal-kit/04-media/videos
 A=~/Documents/sona-ai/pitch/semifinal-kit/04-media/architecture
+R=~/Documents/sona-ai/pitch/rerecord-2026-10-10   # 10 Oct re-recordings with the new Sona Care orb
 O="$(dirname "$0")/public/media"; mkdir -p "$O"
 cp "$A"/0{1,2,3}-*.dark.svg "$O/"
 [[ -f "$O/orb.png" ]] || sips -Z 336 ~/Documents/sona-ai/pitch/semifinal-kit/04-media/brand/orb.png --out "$O/orb.png" >/dev/null   # hero logo: Sona Care resting pearl
@@ -16,7 +17,7 @@ while IFS='|' read -r id src start end pt; do
   [[ -z "$id" || "$id" == \#* ]] && continue
   [[ $# -gt 0 && ! " $* " =~ " $id " ]] && continue
   [[ -f "$O/$id.mp4" ]] && continue
-  src="${src/#B/$B}"; src="${src/#K/$K}"
+  src="${src/#B/$B}"; src="${src/#K/$K}"; src="${src/#R/$R}"
   [[ -f "$src" ]] || { echo "missing $src (skipped $id)"; continue; }
   to=(); [[ -n "$end" ]] && to=(-to "$end")
   ffmpeg -nostdin -loglevel error -y -ss "$start" ${to[@]+"${to[@]}"} -i "$src" -c:v libx264 -preset slow -crf 26 -vf "scale='min(1600,iw)':-2,format=yuv420p" \
@@ -30,19 +31,19 @@ scribe|K/demo-scribe.mp4|0|
 scribe-record|B/7-consultation-scribe/01-record-the-consultation.mp4|4.5|
 scribe-who|B/7-consultation-scribe/02-who-said-what.mp4|4.5|
 scribe-note|B/7-consultation-scribe/03-note-from-the-consultation.mp4|4.5|
-voice|K/backup-voice-calls.mp4|0|
-voice-allergy|B/6-voice-speech-to-speech/01-allergy-from-her-record.mp4|4.5|
-voice-malay|B/6-voice-speech-to-speech/02-malay-her-medicines.mp4|4.5|
-voice-chinese|B/6-voice-speech-to-speech/03-chinese-recovery-advice.mp4|4.5|
-voice-general|B/6-voice-speech-to-speech/04-a-general-question.mp4|4.5|
+voice|R/6-voice-speech-to-speech/00-four-calls-in-one.mp4|0|
+voice-allergy|R/6-voice-speech-to-speech/01-allergy-from-her-record.mp4|4.5|
+voice-malay|R/6-voice-speech-to-speech/02-malay-her-medicines.mp4|4.5|
+voice-chinese|R/6-voice-speech-to-speech/03-chinese-recovery-advice.mp4|4.5|
+voice-general|R/6-voice-speech-to-speech/04-a-general-question.mp4|4.5|
 care-orb|B/13-orb-trial/pearl-to-folding-light-16x9.mp4|0||9
-day2|K/demo-day2.mp4|0|
+day2|R/deck/day2-call.mp4|0|
 home-discharge|B/10-wow-flow-v3/05-discharge.mp4|4.5|
-home-call|B/10-wow-flow-v3/06-day2-call.mp4|4.5|
+home-call|R/deck/day2-call.mp4|4.5|
 home-staff|B/10-wow-flow-v3/07-staff-see-it.mp4|4.5|
 home-phone|B/2-cross-app-sona-care-and-sona-pro/01-discharge.mp4|4.5|
-home-checkin|B/2-cross-app-sona-care-and-sona-pro/02-day2-checkin.mp4|4.5|
-home-urgent|B/2-cross-app-sona-care-and-sona-pro/03-urgent-message.mp4|4.5|40
+home-checkin|R/2-cross-app-sona-care-and-sona-pro/02-day2-checkin.mp4|4.5|
+home-urgent|R/2-cross-app-sona-care-and-sona-pro/03-urgent-message.mp4|4.5||57
 home-booked|B/2-cross-app-sona-care-and-sona-pro/04-book-in.mp4|4.5|
 gl|B/10-wow-flow-v3/04-guarantee-letter.mp4|4.5|
 gl-web|B/8-web-sona-pro/05-guarantee-letter-end-to-end.mp4|4.5|
@@ -69,14 +70,14 @@ care-web-day|B/9-web-sona-care/01-sign-in-her-day-and-medicines.mp4|4.5|
 care-web-ask|B/9-web-sona-care/02-ask-sona-from-her-record-and-in-malay.mp4|4.5|
 care-web-plan|B/9-web-sona-care/03-discharge-plan-warning-signs-and-pdf.mp4|4.5|
 care-plan|B/5-sona-care-patient/01-her-plan-and-medicines.mp4|4.5|
-care-record|B/5-sona-care-patient/02-answer-from-her-record.mp4|4.5|
-care-worry|B/5-sona-care-patient/03-when-to-worry.mp4|4.5|
+care-record|R/5-sona-care-patient/02-answer-from-her-record.mp4|4.5|
+care-worry|R/5-sona-care-patient/03-when-to-worry.mp4|4.5|
 care-dose|B/5-sona-care-patient/04-dose-taken.mp4|4.5|
 care-photo|B/5-sona-care-patient/05-is-this-my-medicine.mp4|4.5|
 care-leaflet|B/5-sona-care-patient/06-leaflet-in-her-language.mp4|4.5|
-care-malay|B/5-sona-care-patient/08-in-malay.mp4|4.5|
-care-chinese|B/5-sona-care-patient/09-in-chinese.mp4|4.5|
-care-doctor|B/5-sona-care-patient/10-which-doctor.mp4|4.5|
+care-malay|R/5-sona-care-patient/08-in-malay.mp4|4.5|
+care-chinese|R/5-sona-care-patient/09-in-chinese.mp4|4.5|
+care-doctor|R/5-sona-care-patient/10-which-doctor.mp4|4.5|
 care-book|B/5-sona-care-patient/11-book-a-follow-up.mp4|4.5|
 privacy|B/12-web-ops-and-privacy/02-privacy-de-identified.mp4|4.5|
 LIST
