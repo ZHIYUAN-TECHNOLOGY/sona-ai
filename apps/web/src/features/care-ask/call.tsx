@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { CareMarked } from "@/components/marked";
 import { Button, Card } from "@/components/primitives";
 import { resample } from "@/lib/wav";
 
@@ -138,7 +139,7 @@ export function Call({ instance, children }: { instance: string; children: (part
         <p className="ask-stage-status" role={live ? "status" : "alert"}><span className="ask-stage-dot" aria-hidden="true" />{status}</p>
         <div className="ask-orb" aria-hidden="true"><span>S</span></div>
         <p className="ask-stage-hint">{live ? (phase === "on" ? HINT[talk.status] : "Your microphone is on only during the call.") : "Nothing is being recorded."}</p>
-        <p className="ask-caption" aria-live="polite">{caption || (live ? "What you and Sona say will show here." : "The call is not connected.")}</p>
+        <p className="ask-caption" aria-live="polite">{(talk.said ? <CareMarked text={talk.said} /> : caption) || (live ? "What you and Sona say will show here." : "The call is not connected.")}</p>
         <div className="ask-dock">
           {live ? <Button className="ask-pill ask-end" icon="phone" onClick={() => end.current?.()}>End call</Button> : (
             <>
@@ -154,7 +155,7 @@ export function Call({ instance, children }: { instance: string; children: (part
         {talk.heard || talk.said ? (
           <div className="ask-lines">
             {talk.heard ? <p className="ask-line"><span>You</span>{talk.heard}</p> : null}
-            {talk.said ? <p className="ask-line"><span>Sona</span>{talk.said}</p> : null}
+            {talk.said ? <p className="ask-line"><span>Sona</span><CareMarked text={talk.said} /></p> : null}
           </div>
         ) : <p className="ask-quiet">What Sona hears and says will show here.</p>}
       </Card>

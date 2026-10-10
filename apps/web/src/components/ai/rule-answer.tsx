@@ -1,4 +1,5 @@
 import { Icon } from "@/components/icon";
+import { Marked } from "@/components/marked";
 
 import { type RuleTone, ruleHeading } from "./summary";
 import "@/styles/ai.css";
@@ -15,7 +16,7 @@ const TONE_WORD: Record<RuleTone, string> = { urgent: "Urgent", soon: "Soon", go
 export function RuleAnswer({ lead, rows, noun, heading, onOpen }: { lead: string; rows: RuleRow[]; noun?: [string, string]; heading?: string; onOpen?: (row: RuleRow) => void }) {
   return (
     <div className="ai-rule">
-      <p className="ai-bottom-line">{lead}</p>
+      <p className="ai-bottom-line"><Marked text={lead} /></p>
       {rows.length ? (
         <div className="ai-rule-group">
           <p className="ai-rule-heading">{heading ?? ruleHeading(rows, noun)}</p>

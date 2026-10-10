@@ -113,4 +113,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .mark[data-mark="finding"] { color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); }
 .mark[data-mark="symptom"] { color: #1E4FB8; background: rgb(36 91 204 / 0.1); }
 .mark[data-mark="caution"] { color: var(--amber); background: color-mix(in srgb, var(--amber) 14%, transparent); }
+/* Sona Care's answers: as the patient app colours them (apps/care/features/assistant/marked.tsx), semibold, no wash. */
+.care-mark { font-weight: 600; }
+.care-mark[data-mark="medicine"] { color: var(--blue); }
+.care-mark[data-mark="dose"] { color: #9333EA; }
+.care-mark[data-mark="warning"] { color: var(--red); }
 .mark-key { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--text-small); }

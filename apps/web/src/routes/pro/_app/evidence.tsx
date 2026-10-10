@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Artifact, Composer, Conversation, InlineCitation, Notice, Response, SonaMark, Sources, Steps, Suggestions, Turn as AnswerTurn } from "@/components/ai";
 import { plural } from "@/components/ai/summary";
 import { Icon } from "@/components/icon";
+import { Marked } from "@/components/marked";
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Chip } from "@/components/primitives";
 import { askVisit } from "@/features/evidence/ask";
@@ -118,7 +119,7 @@ function TurnView({ turn, last, picked, onPick, onAsk }: { turn: Turn; last: boo
                   <h4>For this patient</h4>
                   <ul>
                     {points.map((p, i) => (
-                      <li key={i}>{p.text}<span className="ai-cites">{p.cites.map(n => <InlineCitation key={n} n={n} reference={byN.get(n)} onSelect={onPick} />)}</span>
+                      <li key={i}><Marked text={p.text} /><span className="ai-cites">{p.cites.map(n => <InlineCitation key={n} n={n} reference={byN.get(n)} onSelect={onPick} />)}</span>
                         <span className="ev-fact">From the record: “{p.fact}”</span>
                       </li>
                     ))}
@@ -127,7 +128,7 @@ function TurnView({ turn, last, picked, onPick, onAsk }: { turn: Turn; last: boo
               )}
               {answer && answer.claims.length === 0 && (
                 <Notice kind="empty" action={last ? <Suggestions items={answer.followUps.length ? answer.followUps : EXAMPLES} onPick={onAsk} /> : undefined}>
-                  {answer.general ? `The sources did not answer this. General knowledge, not from the sources: ${answer.general}` : "The sources did not answer this question."}
+                  {answer.general ? <>The sources did not answer this. General knowledge, not from the sources: <Marked text={answer.general} /></> : "The sources did not answer this question."}
                 </Notice>
               )}
               {answer && "cutShort" in answer && answer.cutShort && <p className="ev-note">The answer was cut short. Ask again for the rest.</p>}

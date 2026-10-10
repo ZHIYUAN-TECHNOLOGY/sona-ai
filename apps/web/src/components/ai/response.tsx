@@ -2,6 +2,7 @@ import type { Claim, Reference } from "@sona-ai/domain/evidence";
 import { type PointerEvent, type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 import { Icon, type IconName } from "@/components/icon";
+import { Marked } from "@/components/marked";
 
 import { plural, sourceKinds } from "./summary";
 import "@/styles/ai.css";
@@ -92,11 +93,11 @@ export function Response({ bottomLine, claims, references = [], onCite, children
   const byN = new Map(references.map(r => [r.n, r]));
   return (
     <div className="ai-response">
-      {bottomLine ? <p className="ai-bottom-line">{bottomLine}</p> : null}
+      {bottomLine ? <p className="ai-bottom-line"><Marked text={bottomLine} /></p> : null}
       {claims.length ? (
         <ul className="ai-claims">
           {claims.map((c, i) => (
-            <li key={i}>{c.text}<span className="ai-cites">{c.cites.map(n => <InlineCitation key={n} n={n} reference={byN.get(n)} onSelect={onCite} />)}</span></li>
+            <li key={i}><Marked text={c.text} /><span className="ai-cites">{c.cites.map(n => <InlineCitation key={n} n={n} reference={byN.get(n)} onSelect={onCite} />)}</span></li>
           ))}
         </ul>
       ) : null}

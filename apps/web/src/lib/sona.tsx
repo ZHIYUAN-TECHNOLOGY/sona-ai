@@ -3,6 +3,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { createContext, isValidElement, type ReactNode, type RefObject, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Conversation, Notice, Response, RuleAnswer, Sources, Steps, Suggestions, Turn as Asked } from "@/components/ai";
+import { MarkedFor } from "@/components/marked";
 import { Button } from "@/components/primitives";
 import { FilmCard } from "@/features/evidence/film-card";
 import { answerBy, answerFilm } from "@/features/evidence/thread";
@@ -23,9 +24,9 @@ export type SonaHandler = (question: string, update: (answer: SonaAnswer) => voi
 type Turn = { id: number; question: string; state: "pending" | "done" | "error"; answer?: SonaAnswer; error?: string };
 
 type Ask = { ask: (question: string) => void; handler: RefObject<SonaHandler | null>; setPanel: (panel: PanelState) => void; setContext: (label?: string) => void };
-type Thread = { turns: Turn[]; panel: PanelState; /** An answer arrived while the panel was closed. */ unseen: boolean; /** What the page said it is about (`useSonaContext`). */ context?: string };
+type Thread = { app: App; turns: Turn[]; panel: PanelState; /** An answer arrived while the panel was closed. */ unseen: boolean; /** What the page said it is about (`useSonaContext`). */ context?: string };
 const AskContext = createContext<Ask | null>(null);
-const ThreadContext = createContext<Thread>({ turns: [], panel: "open", unseen: false });
+const ThreadContext = createContext<Thread>({ app: "pro", turns: [], panel: "open", unseen: false });
 
 const storedPanel = (): PanelState => { try { return parsePanel(localStorage.getItem(PANEL_KEY)); } catch { return "open"; } };
 
@@ -98,7 +99,7 @@ export function SonaProvider({ app, children }: { app: App; children: ReactNode 
   }, [app]);
 
   const value = useMemo(() => ({ ask, handler, setPanel, setContext }), [ask, setPanel]);
-  const thread = useMemo(() => ({ turns, panel, unseen, context }), [turns, panel, unseen, context]);
+  const thread = useMemo(() => ({ app, turns, panel, unseen, context }), [app, turns, panel, unseen, context]);
   return <AskContext value={value}><ThreadContext value={thread}>{children}</ThreadContext></AskContext>;
 }
 
@@ -132,7 +133,8 @@ export function useSonaContext(label: string | undefined) {
   }, [label, setContext]);
 }
 
-const paragraphs = (text: string) => text.split(/\n{2,}/).map((line, i) => <p key={i}>{line}</p>);
+/** An answer's paragraphs, its words coloured as the app colours them (Sona Care: medicine, dose, warning; Sona Pro: its five). */
+const paragraphs = (text: string, app: App) => text.split(/\n{2,}/).map((line, i) => <p key={i}><MarkedFor app={app} text={line} /></p>);
 
 /** Who wrote an answer, for the caption under Sona's mark: "rules", the model, or what stood in for it. */
 function byOf(answer?: SonaAnswer) {
@@ -158,7 +160,7 @@ function EvidenceAnswer({ answer: { turn, encounterId }, ask }: { answer: Extrac
           {done ? <><Sources references={turn.references} image={filmOf} />{next}</> : null}
         </Response>
       ) : done?.general ? (
-        <div className="sona-general"><p className="sona-note">General knowledge, not from the sources</p>{paragraphs(done.general)}{next}</div>
+        <div className="sona-general"><p className="sona-note">General knowledge, not from the sources</p>{paragraphs(done.general, "pro")}{next}</div>
       ) : done ? <Notice kind="empty" action={next} /> : null}
     </>
   );
@@ -166,12 +168,13 @@ function EvidenceAnswer({ answer: { turn, encounterId }, ask }: { answer: Extrac
 
 function Answer({ turn, ask }: { turn: Turn; ask: (q: string) => void }) {
   const navigate = useNavigate();
+  const { app } = use(ThreadContext);
   const answer = turn.answer;
   if (turn.state === "error") return <Notice kind="error" action={<Button size="sm" icon="refresh" onClick={() => ask(turn.question)}>Try again</Button>}>{turn.error}</Notice>;
   if (!answer) return <Notice kind="thinking" />;
   if (answer.kind === "evidence") return <EvidenceAnswer answer={answer} ask={ask} />;
   if (answer.kind === "node") return answer.node;
-  if (answer.kind === "text") return <div className="sona-text">{paragraphs(answer.text)}{answer.note ? <p className="sona-note">{answer.note}</p> : null}</div>;
+  if (answer.kind === "text") return <div className="sona-text">{paragraphs(answer.text, app)}{answer.note ? <p className="sona-note">{answer.note}</p> : null}</div>;
   const open = (row: { op?: string }) => {
     const patientId = rowPatient(row);
     if (patientId) void navigate({ to: "/pro/patients/$patientId", params: { patientId } });
@@ -200,7 +203,7 @@ export function SonaTurns({ className }: { className?: string }) {
  * The Ask page lays itself out around it (styles/pages/care-ask.css). The newest turn is brought into view.
  */
 export function SonaThread() {
-  const { turns } = use(ThreadContext);
+  const { app, turns } = use(ThreadContext);
   const newest = useRef<HTMLElement>(null);
   const last = turns.at(-1);
   useEffect(() => { newest.current?.scrollIntoView({ block: "nearest" }); }, [last?.id, last?.state]);
@@ -215,8 +218,8 @@ export function SonaThread() {
               {turn.state === "error" ? <p>{turn.error}</p>
                 : turn.state === "pending" || !answer ? <p className="sona-turn-note">Sona is thinking…</p>
                 : answer.kind === "node" ? answer.node
-                : answer.kind === "text" ? <>{paragraphs(answer.text)}{answer.note ? <p className="sona-turn-note">{answer.note}</p> : null}</>
-                : <p>{answer.kind === "rules" ? answer.lead : answer.turn.bottomLine}</p>}
+                : answer.kind === "text" ? <>{paragraphs(answer.text, app)}{answer.note ? <p className="sona-turn-note">{answer.note}</p> : null}</>
+                : <p><MarkedFor app={app} text={(answer.kind === "rules" ? answer.lead : answer.turn.bottomLine) ?? ""} /></p>}
             </div>
           </article>
         );
