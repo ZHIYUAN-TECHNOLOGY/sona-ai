@@ -10,8 +10,8 @@ const blockListPatterns = Array.isArray(blockList) ? blockList : [blockList];
 config.resolver.blockList = [
   ...blockListPatterns,
   /[/\\]packages[/\\]infra[/\\]\.alchemy(?:[/\\]|$)/,
-  // Agent worktrees carry their own node_modules; resolving from them breaks native module lookup.
-  /[/\\]\.claude[/\\]worktrees[/\\]/,
+  // Agent worktrees carry their own node_modules; resolving from them breaks native module lookup. Not when Metro runs in one.
+  ...(/[/\\]\.claude[/\\]worktrees[/\\]/.test(__dirname) ? [] : [/[/\\]\.claude[/\\]worktrees[/\\]/]),
 ];
 
 module.exports = withVarlockMetroConfig(config);
