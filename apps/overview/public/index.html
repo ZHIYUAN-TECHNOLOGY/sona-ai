@@ -415,7 +415,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
 <section id="intro"><div class="wrap">
   <span class="eyebrow">Intro</span>
   <h2>Sona in two minutes.</h2>
-  <div class="player featured"><video controls preload="metadata" playsinline poster="media/intro.jpg" src="media/intro.mp4?v=2"></video></div>
+  <div class="player featured"><video controls preload="metadata" playsinline poster="media/intro.jpg" src="media/intro.mp4?v=4"></video></div>
 </div></section>
 -->
 
@@ -502,7 +502,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <div class="point glass"><h3>Safety without AI</h3><p>If a model is down, safety still runs on rules: red-flag words always get the 999 line and a care-team task.</p></div>
   </div>
   <div class="feature" style="margin-top:40px">
-    <div><div class="player"><video controls preload="none" playsinline poster="media/privacy.jpg" src="media/privacy.mp4?v=2"></video></div><p class="caption">Sona Privacy at work: the patient chose to share. Her doctor's note becomes a training sample with her name replaced by [NAME] before anything is kept, and a search for her name finds nothing.</p></div>
+    <div><div class="player"><video controls preload="none" playsinline poster="media/privacy.jpg" src="media/privacy.mp4?v=4"></video></div><p class="caption">Sona Privacy at work: the patient chose to share. Her doctor's note becomes a training sample with her name replaced by [NAME] before anything is kept, and a search for her name finds nothing.</p></div>
     <figure class="diagram glass" style="margin:0"><img src="media/03-data-privacy.dark.svg" alt="Data and privacy diagram: audio goes to Sona Speech in memory only; evidence, training and scans pass through Sona Privacy, which strips identifiers, before storage or outside search." loading="lazy"><figcaption>Red paths pass through Sona Privacy. Audio reaches Sona Speech in memory only.</figcaption></figure>
   </div>
   <p class="promise">Every AI model runs in Malaysia. <span>Real patient data will only ever be stored in Malaysia.</span></p>
@@ -662,17 +662,17 @@ const el = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag)
 const groups = document.getElementById("groups");
 GROUPS.forEach((g, i) => {
   const [first] = g.clips;
-  const video = el("video", { controls: "", preload: "none", playsinline: "", poster: `media/${first[0]}.jpg`, src: `media/${first[0]}.mp4?v=2` });
+  const video = el("video", { controls: "", preload: "none", playsinline: "", poster: `media/${first[0]}.jpg?v=4`, src: `media/${first[0]}.mp4?v=4` });
   const sound = el("span", { class: "sound" }, "SOUND ON"); sound.hidden = !first[2];
   const now = el("p", { class: "now" }, el("b", {}, SCREENS[first[3]]), ` · ${first[1]}`);
   const thumbs = el("div", { class: "thumbs" });
   g.clips.forEach(([id, label, hasSound, screen], j) => {
     const b = el("button", { class: "thumb", type: "button", "aria-current": j ? "false" : "true" },
-      el("img", { src: `media/${id}.jpg`, alt: "", loading: "lazy" }), el("span", {}, el("em", {}, SCREENS[screen]), label));
+      el("img", { src: `media/${id}.jpg?v=4`, alt: "", loading: "lazy" }), el("span", {}, el("em", {}, SCREENS[screen]), label));
     b.querySelector("img").onerror = () => b.remove(); // clip not built yet
     b.onclick = () => {
       thumbs.querySelectorAll(".thumb").forEach(t => t.setAttribute("aria-current", t === b ? "true" : "false"));
-      video.poster = `media/${id}.jpg`; video.src = `media/${id}.mp4?v=2`; video.play().catch(() => {});
+      video.poster = `media/${id}.jpg?v=4`; video.src = `media/${id}.mp4?v=4`; video.play().catch(() => {});
       sound.hidden = !hasSound; now.replaceChildren(el("b", {}, SCREENS[screen]), ` · ${label}`);
     };
     thumbs.append(b);
@@ -683,7 +683,7 @@ GROUPS.forEach((g, i) => {
     el("h3", {}, g.title), el("p", { class: "what" }, g.what), on,
     el("div", { class: "proof" }, ...g.proof.map(p => el("span", {}, p))),
     el("div", { class: "qr print-only", "data-qr": `#${g.id}` }));
-  const poster = el("img", { class: "print-only print-poster", src: `media/${first[0]}.jpg`, alt: "" });
+  const poster = el("img", { class: "print-only print-poster", src: `media/${first[0]}.jpg?v=4`, alt: "" });
   const main = el("div", {}, el("div", { class: "player" }, video, sound), poster, now, g.clips.length > 1 ? thumbs : "");
   groups.append(el("article", { class: "feature", id: g.id }, main, side));
 });
