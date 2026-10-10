@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { errorText } from "@/features/errors";
 import { client } from "@/utils/orpc";
 import { currentLang, translate } from "./i18n";
+import { speechBar } from "./room";
 import "./strings";
 
 /**
@@ -26,9 +27,9 @@ const OPTIONS: RecordingOptions = {
   bitRate: 256_000,
   ios: { ...RecordingPresets.HIGH_QUALITY.ios, extension: ".wav", outputFormat: IOSOutputFormat.LINEARPCM, sampleRate: 16_000, linearPCMBitDepth: 16, linearPCMIsBigEndian: false, linearPCMIsFloat: false },
 };
-// Metering is dBFS: above SPEECH counts as talking; SILENCE_MS of quiet after talking ends the turn (0.8 s, as voice
-// assistants do: a longer wait reads as Sona being slow to answer).
-const SPEECH_DB = -38, SILENCE_MS = 800, MAX_MS = 30_000, NOTHING_MS = 7_000;
+// Metering is dBFS: over the room's bar (./room) counts as talking; SILENCE_MS of quiet after talking ends the turn (0.8 s,
+// as voice assistants do: a longer wait reads as Sona being slow to answer).
+const SILENCE_MS = 800, MAX_MS = 30_000, NOTHING_MS = 7_000;
 
 export type Listening = "idle" | "listening" | "reading" | "error";
 
@@ -45,7 +46,7 @@ export function useListen({ language, onHeard, untilStop }: { language?: "en" | 
   const [partial, setPartial] = useState("");
   // turn: which recording a partial belongs to, so a late answer from the last one never shows over this one.
   const turn = useRef(0), partialBusy = useRef(false), partialSent = useRef(0), latest = useRef("");
-  const spoke = useRef(false), quietSince = useRef<number>(undefined), startedAt = useRef(0), ending = useRef(false);
+  const spoke = useRef(false), quietest = useRef(Infinity), quietSince = useRef<number>(undefined), startedAt = useRef(0), ending = useRef(false);
   const heard = useRef(onHeard);
   useEffect(() => { heard.current = onHeard; });
 
@@ -85,7 +86,7 @@ export function useListen({ language, onHeard, untilStop }: { language?: "en" | 
     await recorder().prepareToRecordAsync();
     recorder().record();
     setStatus({ durationMillis: 0 });
-    spoke.current = false; quietSince.current = undefined; startedAt.current = Date.now(); ending.current = false;
+    spoke.current = false; quietest.current = Infinity; quietSince.current = undefined; startedAt.current = Date.now(); ending.current = false;
     turn.current++; partialSent.current = 0; latest.current = ""; setPartial("");
     setState("listening");
   };
@@ -102,7 +103,9 @@ export function useListen({ language, onHeard, untilStop }: { language?: "en" | 
   useEffect(() => {
     if (state !== "listening") return;
     const now = Date.now();
-    if (level > SPEECH_DB) { spoke.current = true; quietSince.current = undefined; }
+    // The recorder reads -160 (no sound at all) before its first buffer: that is no room.
+    if (level > -120) quietest.current = Math.min(quietest.current, level);
+    if (level > speechBar(quietest.current)) { spoke.current = true; quietSince.current = undefined; }
     else if (spoke.current) quietSince.current ??= now;
     if (!untilStop && spoke.current && quietSince.current && now - quietSince.current > SILENCE_MS) void finish(true);
     else if (!spoke.current && now - startedAt.current > NOTHING_MS) void finish(false);
