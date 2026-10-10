@@ -1,6 +1,8 @@
 import { ScrollView, View } from "react-native";
 import { RemindersRow } from "@/features/doses/remind";
+import { HealthSummaryRow } from "@/features/home/health-summary";
 import { SignOutRow } from "@/features/home/sign-out";
+import { useMe } from "@/features/me";
 import "@/features/home/strings";
 import { LanguageChoices } from "@/features/language/picker";
 import { TrainingRow } from "@/features/training/consent";
@@ -17,7 +19,9 @@ import { BackButton, Section, surfaceStyle, Title, useBelowStatusBar } from "@/l
 export default function Settings() {
   const lang = useLang(), t = tFor(lang);
   const below = useBelowStatusBar();
-  const rows = [<RemindersRow key="remind" />, <TrainingRow key="train" />, <SignOutRow key="out" />];
+  // Her health summary only once a record is linked: there is nothing to summarise before.
+  const joined = useMe().state === "joined";
+  const rows = [<RemindersRow key="remind" />, ...joined ? [<HealthSummaryRow key="summary" />] : [], <TrainingRow key="train" />, <SignOutRow key="out" />];
   return <ScrollView style={below} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: 48, gap: 16 }}>
     <BackButton />
     <Title greeting={t("home.settingsLight")} accent={t("home.settingsBold")} />

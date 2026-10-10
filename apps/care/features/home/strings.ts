@@ -26,6 +26,8 @@ addStrings({
     "home.latest": "Latest update", "home.latestA11y": "Latest update. {line}",
     "home.nextVisit": "Next visit", "home.noVisit": "No visit booked", "home.visitsHere": "Your visits show here", "home.bookVisit": "Book a visit", "home.book": "Book", "home.timeTbc": "Time to be confirmed",
     "home.visitA11y": "Next visit. {title}, {time}, {when}.{hospital} Open my visits",
+    "home.summary": "Share my health summary", "home.summaryMaking": "Making your health summary…", "home.summaryHint": "A PDF of your record to send to another hospital",
+    "home.summaryFailed": "We could not make your health summary. {why}",
   },
   ms: {
     "home.needs1": "1 perkara perlukan anda · kira-kira {m} min", "home.needsN": "{n} perkara perlukan anda · kira-kira {m} min", "home.allDone": "Semua selesai hari ini",
@@ -50,6 +52,8 @@ addStrings({
     "home.latest": "Berita terkini", "home.latestA11y": "Berita terkini. {line}",
     "home.nextVisit": "Lawatan seterusnya", "home.noVisit": "Tiada temu janji", "home.visitsHere": "Lawatan anda akan ditunjukkan di sini", "home.bookVisit": "Tempah lawatan", "home.book": "Tempah", "home.timeTbc": "Masa akan disahkan",
     "home.visitA11y": "Lawatan seterusnya. {title}, {time}, {when}.{hospital} Buka lawatan saya",
+    "home.summary": "Kongsi ringkasan kesihatan saya", "home.summaryMaking": "Menyediakan ringkasan kesihatan anda…", "home.summaryHint": "PDF rekod anda untuk dihantar ke hospital lain",
+    "home.summaryFailed": "Kami tidak dapat menyediakan ringkasan kesihatan anda. {why}",
   },
   zh: {
     "home.needs1": "有1件事要处理 · 约{m}分钟", "home.needsN": "有{n}件事要处理 · 约{m}分钟", "home.allDone": "今天都完成了",
@@ -74,5 +78,7 @@ addStrings({
     "home.latest": "最新动态", "home.latestA11y": "最新动态。{line}",
     "home.nextVisit": "下次复诊", "home.noVisit": "还没有预约", "home.visitsHere": "您的复诊会显示在这里", "home.bookVisit": "预约复诊", "home.book": "预约", "home.timeTbc": "时间待确认",
     "home.visitA11y": "下次复诊。{title}，{time}，{when}。{hospital}打开我的复诊",
+    "home.summary": "分享我的健康摘要", "home.summaryMaking": "正在生成您的健康摘要…", "home.summaryHint": "您的病历 PDF，可发送给其他医院",
+    "home.summaryFailed": "无法生成您的健康摘要。{why}",
   },
 });
