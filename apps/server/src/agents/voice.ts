@@ -80,6 +80,7 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
     return new SonaTranscriber(async audio => {
       const began = Date.now(), heard = await this.#models.transcribe({ audio });
       this.#earMs.set(connection, Date.now() - began);
+      console.log(JSON.stringify({ voice: "ear", ms: Date.now() - began, source: heard.source, words: heard.text.length }));
       if (heard.source === "model") this.#heard.set(connection, { text: heard.text.trim(), by: { source: "model", model: heard.model } });
       return heard;
     }, waking => {
@@ -154,7 +155,10 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
         return Boolean(told);
       },
       done: summary => send(connection, { type: "sona_turn", ...summary }),
-      timed: timing => send(connection, { type: "sona_timing", ...timing, ear: this.#earMs.get(connection) }),
+      timed: timing => {
+        console.log(JSON.stringify({ voice: "timing", ...timing, ear: this.#earMs.get(connection) }));
+        send(connection, { type: "sona_timing", ...timing, ear: this.#earMs.get(connection) });
+      },
     });
   }
 
