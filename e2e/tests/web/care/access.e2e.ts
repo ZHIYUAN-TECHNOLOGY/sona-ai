@@ -99,7 +99,7 @@ describe('Sona Care sign-in', { tags: ['care'] }, () => {
     await expect(screen.getByLabel(/email/i)).toHaveCount(0);
   });
 
-  for (const page of ['/care/home', '/care/messages', '/care/medicines', '/care/join']) {
+  for (const page of ['/care/home', '/care/messages', '/care/medicines']) {
     test(`a signed-out visit to ${page} lands on sign-in`, { tags: ['smoke'] }, async ({ app, screen, browser }) => {
       await app.open(page);
       await expect(browser).toHaveURL('/care/sign-in', { timeout: 15_000 });
@@ -109,6 +109,13 @@ describe('Sona Care sign-in', { tags: ['care'] }, () => {
 });
 
 describe('Sona Care join', { tags: ['care'] }, () => {
+  test('a signed-out visit from the QR link checks its code at once, without sending the patient to sign-in first', async ({ app, screen, browser }) => {
+    await app.open('/care/join?code=ZZZZ-9999');
+    await expect(screen.getByLabel('Your code')).toHaveValue('ZZZZ-9999', { timeout: 15_000 });
+    await expect(screen.getByRole('alert')).toHaveText('That code was not recognised. Check it against your discharge paper.', { timeout: 15_000 });
+    await expect(browser).toHaveURL('/care/join?code=ZZZZ-9999');
+  });
+
   test('a code that is not on any discharge paper is refused in plain words, and nothing is joined', { session: 'patient' }, async ({ app, screen, browser }) => {
     await app.open('/care/join');
     await expect(screen.getByRole('heading', 'Join your care plan')).toBeVisible({ timeout: 15_000 });
@@ -127,8 +134,8 @@ describe('Sona Care join', { tags: ['care'] }, () => {
   test('a code too short to be one is refused in plain words', {
     session: 'patient',
     // join.tsx:19 shows any Error's message; care.preview's input schema (packages/api/src/routers/care.ts:45, min 8) refuses
-    // "AB12" with oRPC's "Input validation failed", so the patient reads that instead of the page's plain fallback (join.tsx:39).
-    skip: 'BUG: a short join code shows "Input validation failed" (apps/web/src/routes/care/join.tsx:19, 39)',
+    // "AB12" with oRPC's "Input validation failed", so the patient reads that instead of the page's plain fallback (join.tsx:33).
+    skip: 'BUG: a short join code shows "Input validation failed" (apps/web/src/routes/care/join.tsx:19, 33)',
   }, async ({ app, screen }) => {
     await app.open('/care/join');
     await screen.getByLabel('Your code').fill('AB12');

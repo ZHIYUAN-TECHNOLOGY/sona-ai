@@ -3,11 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
+import { oneParam } from "@/features/discharge/shared";
 import { authClient } from "@/lib/auth-client";
 import { orpc, queryClient } from "@/lib/orpc";
 import "@/styles/sign-in.css";
 
-export const Route = createFileRoute("/care/sign-in")({ component: SignIn });
+// `?code=`: a discharge-paper code the patient already confirmed on /care/join, carried back there once signed in.
+export const Route = createFileRoute("/care/sign-in")({ validateSearch: oneParam("code"), component: SignIn });
 
 /** A Malaysian mobile as typed (012-345 6789, 60123456789, +60 12…) to +60123456789; undefined until it is whole. */
 function toE164(typed: string) {
@@ -23,6 +25,7 @@ function toNational(e164: string) {
 
 function SignIn() {
   const navigate = useNavigate();
+  const { code: joining } = Route.useSearch();
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [sentTo, setSentTo] = useState<string>();
@@ -47,7 +50,7 @@ function SignIn() {
     if (error) { setBusy(false); setCode(""); setError(error.message ?? "That code did not work. Check it, or send a new one."); return; }
     queryClient.clear();
     // The guard on /care/home sends a patient who has not joined a record yet on to /care/join.
-    await navigate({ to: "/care/home" });
+    await (joining ? navigate({ to: "/care/join", search: { code: joining } }) : navigate({ to: "/care/home" }));
   };
   const alert = error ? <p role="alert" className="sign-in-error">{error}</p> : null;
 
