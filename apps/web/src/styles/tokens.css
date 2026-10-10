@@ -107,7 +107,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 /* Sona Care keeps patient sizes after the shared pass above: overlines and chips at 15px, card titles at 19px (rem, so 200% text scales). */
 .care { --text-overline: 0.9375rem; --text-title: 1.1875rem; }
 /* Clinical terms: one colour per kind, the same five the phone apps use (rules in apps/native/components/sona/marked-terms.ts). */
-.mark { padding: 0 0.28em; border-radius: 0.4em; font-weight: 500; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.mark { padding: 0 0.28em; border-radius: 0.4em; font-weight: 600; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .mark[data-mark="alert"] { color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }
 .mark[data-mark="medicine"] { color: #5A3DB8; background: rgb(110 80 210 / 0.11); }
 .mark[data-mark="finding"] { color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); }

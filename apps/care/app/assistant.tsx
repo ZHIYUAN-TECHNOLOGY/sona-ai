@@ -35,7 +35,7 @@ import { client, orpc, queryClient } from "@/utils/orpc";
  * Empty: the orb, "Ask Sona Care" in the headline gradient, one faint line, then up to three questions
  * from the plan plus "Find a doctor for my …" as plain rows with a small icon, and the composer card
  * (voice mode until there is text, then send). Asked: the question in a white capsule on the right, and
- * Sona's answer as plain text on the canvas, lead sentence bold, with where it came from, copy / helpful
+ * Sona's answer as plain text on the canvas, in body weight with only its marked words bold, with where it came from, copy / helpful
  * / not helpful, and the next steps (Save for my visit, Ask my care team). While it works, a status line
  * sits by a small live orb for as long as the call runs. Any question is answered (care.ask): their own care
  * from their plan, anything else from general knowledge, marked as such; doctor questions search the hospital's
@@ -234,7 +234,7 @@ function TurnView({ t, medicines, lead, flood, enter, visitDay, busy, error, onS
       : <Animated.View entering={enter(1)} style={{ gap: 12 }}>
         <Text selectable style={{ fontSize: 17, lineHeight: 26, letterSpacing: -0.3, color: palette.ink }}>
           {/* Her medicines, how much and when, and warning signs in colour, so the answer can be scanned (terms.ts). */}
-          <Marked text={bold} medicines={medicines} chosen={chosen} weight="700" />{more ? <>{lang === "zh" ? "" : " "}<Marked text={more} medicines={medicines} chosen={chosen} /></> : null}
+          <Marked text={bold} medicines={medicines} chosen={chosen} />{more ? <>{lang === "zh" ? "" : " "}<Marked text={more} medicines={medicines} chosen={chosen} /></> : null}
         </Text>
         {r.kind === "plan" && <Caption text={r.asked.source} />}
         {/* From their record and one of the hospital's leaflets: the leaflet is named too. */}
