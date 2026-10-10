@@ -1,8 +1,7 @@
-import { File, Paths } from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Keyboard, Pressable, Share, View } from "react-native";
+import { Alert, Keyboard, Pressable, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,7 +15,7 @@ import { CheckInThread } from "@/features/check-ins/thread";
 import { confirmedAllergy, patientFlags, unconfirmedOf, type Go } from "@/features/day/counts";
 import { testInSentence } from "@/features/day/model";
 import { useDayPatients, usePendingResult } from "@/features/day/use-counts";
-import { api, errorText, JUDGE, useLive } from "@/features/live";
+import { JUDGE, useLive } from "@/features/live";
 import { AccessTrail, useRole } from "@/features/live/roles";
 import { useServerEncounter } from "@/features/live/sync";
 import { QuickActions } from "@/components/sona/quick-actions";
@@ -111,7 +110,7 @@ function PatientCard({ patient, onGo }: { patient: Patient; onGo: (go: Go) => vo
     {/* Who, the main action, then the keys (each with what needs attention there); everything below is context. */}
     <Animated.View entering={rise(1)}><Action label={started ? "Continue visit" : "Open visit"} icon="arrow.right" accessibilityLabel={`${started ? "Continue" : "Open"} visit with ${patient.name}`} onPress={() => go({})} /></Animated.View>
     <Animated.View entering={rise(1)}><PinControl patient={patient} /></Animated.View>
-    <ShareSummary patient={patient} />
+    <SummaryLink patient={patient} />
     <Animated.View entering={rise(2)}>
       <QuickActions animate={false} actions={[...keys,
         { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) },
@@ -173,34 +172,16 @@ function PinControl({ patient }: { patient: Patient }) {
 }
 
 /**
- * Live mode, for the roles that read the record: the server's health summary PDF, written to the cache and opened in the
- * share sheet, so it goes to another hospital on transfer (mail, AirDrop, WhatsApp). Says while it is being made, and
- * why it failed, in place.
+ * Live mode, for the roles that read the record: opens the patient's Health summary (app/health-summary), read there
+ * before it is shared with another hospital on transfer.
  */
-function ShareSummary({ patient }: { patient: Patient }) {
+function SummaryLink({ patient }: { patient: Patient }) {
   const { on } = useLive();
   const { can } = useRole();
-  const [state, setState] = useState<"idle" | "busy" | { error: string }>("idle");
-  if (!on || !can("patients.summary")) return null;
-  const share = async () => {
-    setState("busy");
-    try {
-      const { filename, pdf } = await api.patients.summary({ patientId: patient.id });
-      const file = new File(Paths.cache, filename);
-      file.write(pdf, { encoding: "base64" });
-      await Share.share({ url: file.uri, title: filename });
-      setState("idle");
-    } catch (e) {
-      setState({ error: errorText(e) });
-    }
-  };
-  const busy = state === "busy";
-  return <View style={{ gap: 4, marginTop: -12 }}>
-    <Press accessibilityLabel={`Share ${patient.name}'s health summary`} disabled={busy} onPress={() => { void share(); }}
-      style={{ minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
-      <Icon name="square.and.arrow.up" size={14} color={busy ? palette.muted : palette.blue} />
-      <Text style={{ ...type.subhead, fontWeight: "600", color: busy ? palette.muted : palette.blue }}>{busy ? "Preparing the health summary…" : "Share health summary"}</Text>
-    </Press>
-    {typeof state === "object" && <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber, textAlign: "center" }}>The summary could not be made. {state.error}</Text>}
-  </View>;
+  if (!on || !can("patients.summaryData")) return null;
+  return <Press accessibilityLabel={`${patient.name}'s health summary`} onPress={() => router.push({ pathname: "/health-summary", params: { patientId: patient.id } })}
+    style={{ minHeight: 44, marginTop: -12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
+    <Icon name="doc.text" size={14} color={palette.blue} />
+    <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>Health summary</Text>
+  </Press>;
 }

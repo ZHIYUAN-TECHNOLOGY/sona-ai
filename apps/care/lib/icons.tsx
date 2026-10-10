@@ -14,6 +14,7 @@ import { CaretRightIcon } from "phosphor-react-native/src/icons/CaretRight";
 import { ChatCircleIcon } from "phosphor-react-native/src/icons/ChatCircle";
 import { CheckIcon } from "phosphor-react-native/src/icons/Check";
 import { CopyIcon } from "phosphor-react-native/src/icons/Copy";
+import { ExportIcon } from "phosphor-react-native/src/icons/Export";
 import { EyeIcon } from "phosphor-react-native/src/icons/Eye";
 import { EyeSlashIcon } from "phosphor-react-native/src/icons/EyeSlash";
 import { FileTextIcon } from "phosphor-react-native/src/icons/FileText";
@@ -49,7 +50,7 @@ const PHOSPHOR = {
   check: CheckIcon, close: XIcon, copy: CopyIcon, doctor: StethoscopeIcon, doc: FileTextIcon, eye: EyeIcon, eyeOff: EyeSlashIcon,
   home: HouseIcon, info: InfoIcon, keyboard: KeyboardIcon, medal: MedalIcon, mic: MicrophoneIcon, next: CaretRightIcon,
   pencil: PencilSimpleIcon, person: UserIcon, phone: PhoneIcon, pill: PillIcon, pin: MapPinIcon, plus: PlusIcon,
-  save: BookmarkSimpleIcon, search: MagnifyingGlassIcon, sparkle: SparkleIcon, star: StarIcon, thumbsDown: ThumbsDownIcon,
+  save: BookmarkSimpleIcon, search: MagnifyingGlassIcon, share: ExportIcon, sparkle: SparkleIcon, star: StarIcon, thumbsDown: ThumbsDownIcon,
   thumbsUp: ThumbsUpIcon, voice: WaveformIcon,
 } satisfies Record<string, Phosphor>;
 export type IconName = keyof typeof PHOSPHOR;
