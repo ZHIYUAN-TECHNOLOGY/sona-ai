@@ -119,12 +119,29 @@ function withGeneral(spec: AskSpec, general: string): AskSpec {
  * knowledge it adds labelled after the lead; when the page doesn't answer it, the same call answers from general
  * knowledge as one lead, marked `general` so the app shows it is not from the records.
  */
+/**
+ * Gemma's reply put back in the shape it was asked for. It sometimes writes "general" (and "evidence") inside "elements"
+ * as if one more element, or an element's "children" inside its "props" (10 Oct, staging: "Who needs me first?"); either
+ * failed the spec's check, so a good answer was thrown away and the clinician was told the model was off.
+ */
+export function lifted<T>(reply: T): T {
+  const read = reply as any, inner = read?.elements;
+  if (!inner || typeof inner !== "object") return reply;
+  const { general, evidence, ...rest } = inner;
+  const elements = Object.fromEntries(Object.entries(rest).map(([id, el]: [string, any]) => {
+    if (!el || typeof el !== "object" || Array.isArray(el.children) || !Array.isArray(el.props?.children)) return [id, el];
+    const { children, ...props } = el.props;
+    return [id, { ...el, props, children }];
+  }));
+  return { ...read, elements, general: read.general ?? general, evidence: read.evidence ?? evidence };
+}
+
 export async function freeAnswer(baseten: Baseten, input: { scope: string; question: string; context: AskContext }) {
   const { context } = input;
   const user = `Page: ${input.scope}\nQuestion: ${input.question}\n\nWhat the page says:\n${context.lines.join("\n") || "(nothing)"}\n\nThe page's rows:\n${context.rows.map(r => JSON.stringify(r)).join("\n") || "(none)"}`;
   try {
     // Through the adapter's box gate: a cold brain is woken and not waited for.
-    const read = jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 1500, true));
+    const read = lifted(jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 1500, true)));
     const spec = groundedSpec(read, context, input.question);
     const text = typeof read?.general === "string" ? read.general.trim().slice(0, LEAD_MAX) : "";
     if (spec) return { source: "model" as const, model: BRAIN_MODEL, spec: text ? withGeneral(spec, text) : spec };

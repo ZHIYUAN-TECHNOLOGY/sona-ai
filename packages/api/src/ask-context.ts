@@ -115,6 +115,7 @@ export function ruleFor(question: string): "needs" | "blocked" | "due" | undefin
 }
 
 const OFF = "Sona's assistant model is off right now; ask again when it is on, or open Today, Ward or Tasks.";
+const UNANSWERED = "Sona couldn't answer that from this page. Try asking it another way, or open Today, Ward or Tasks.";
 
 /**
  * ask.free for the web: every question by the model with the page data when it answers (9 Oct: the bar's three too, for
@@ -130,6 +131,8 @@ export async function webAnswer(asker: Asker & { baseten?: Baseten }, question: 
   if (rule) return { source: "rules" as const, spec: page.specs[rule] };
   const said = pageLines(page.context, question);
   if (said) return { source: "rules" as const, spec: said };
+  // The model answered, but not in a form that keeps to the page: it is on, so it is not called off.
+  if (asked && "unanswered" in asked) return { source: "fixture" as const, spec: column(UNANSWERED, []), unanswered: true as const };
   const waking = asked && "waking" in asked ? asked.waking : undefined;
   return { source: "fixture" as const, spec: column(waking ? `Sona's assistant model is starting (about ${waking} min); ask again then, or open Today, Ward or Tasks.` : OFF, []), ...waking && { waking } };
 }
