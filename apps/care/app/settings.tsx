@@ -1,4 +1,5 @@
-import { ScrollView, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, ScrollView, View } from "react-native";
 import { RemindersRow } from "@/features/doses/remind";
 import { HealthSummaryRow } from "@/features/home/health-summary";
 import { SignOutRow } from "@/features/home/sign-out";
@@ -21,7 +22,12 @@ export default function Settings() {
   const below = useBelowStatusBar();
   // Her health summary only once a record is linked: there is nothing to summarise before.
   const joined = useMe().state === "joined";
-  const rows = [<RemindersRow key="remind" />, ...joined ? [<HealthSummaryRow key="summary" />] : [], <TrainingRow key="train" />, <SignOutRow key="out" />];
+  // A new discharge paper (a later admission) has a new code; once linked, Home no longer offers the scanner, so it lives here.
+  const linkAgain = <Pressable key="link" accessibilityRole="button" accessibilityHint={t("home.linkAgainHint")} onPress={() => router.push("/join")}
+    style={({ pressed }) => ({ minHeight: 48, justifyContent: "center", opacity: pressed ? 0.6 : 1 })}>
+    <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{t("home.linkAgain")}</Text>
+  </Pressable>;
+  const rows = [<RemindersRow key="remind" />, ...joined ? [<HealthSummaryRow key="summary" />, linkAgain] : [], <TrainingRow key="train" />, <SignOutRow key="out" />];
   return <ScrollView style={below} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: 48, gap: 16 }}>
     <BackButton />
     <Title greeting={t("home.settingsLight")} accent={t("home.settingsBold")} />

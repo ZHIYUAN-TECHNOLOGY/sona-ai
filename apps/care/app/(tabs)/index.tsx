@@ -151,7 +151,7 @@ function Home() {
     {state === "not-joined" && <Card feature>
       <Text style={{ ...type.headline, color: palette.ink }}>{t("home.linkTitle")}</Text>
       <Text style={{ ...type.body, color: palette.muted }}>{t("home.linkLine")}</Text>
-      <Button label={t("home.linkButton")} onPress={() => router.push("/join")} />
+      <Button icon="camera" label={t("home.linkButton")} onPress={() => router.push("/join")} />
     </Card>}
     {state === "joined" && <>
       <View onLayout={spot("cards")} style={{ flexDirection: stack ? "column" : "row", gap: 8 }}>

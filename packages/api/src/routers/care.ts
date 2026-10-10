@@ -93,6 +93,9 @@ export const careRouter = {
     if (row.code.redeemedBy === userId) return { firstName: firstName(row.patient) };
     if (row.code.redeemedBy) throw new ORPCError("CONFLICT", { message: "This code has already been used. Ask the ward for a new one.", data: { code: "CODE_USED" } });
     if (row.code.expiresAt < clockOf(context)) throw new ORPCError("PRECONDITION_FAILED", { message: "This code has expired. Ask the ward for a new one.", data: { code: "CODE_EXPIRED" } });
+    // One record per account: a new visit's code for the same patient redeems; another patient's would be a silent no-op.
+    const [linked] = await db.select().from(careLinks).where(eq(careLinks.userId, userId));
+    if (linked && linked.patientId !== row.code.patientId) throw new ORPCError("CONFLICT", { message: "This account is linked to another record. Use a separate account for this code.", data: { code: "OTHER_RECORD" } });
     await db.insert(careLinks).values({ userId, hospitalId: row.code.hospitalId, patientId: row.code.patientId }).onConflictDoNothing();
     await db.update(careCodes).set({ redeemedBy: userId, redeemedAt: clockOf(context) }).where(eq(careCodes.code, row.code.code));
     return { firstName: firstName(row.patient) };

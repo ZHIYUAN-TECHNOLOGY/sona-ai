@@ -47,7 +47,7 @@ export function Card({ children, feature = false, style }: { children: ReactNode
 }
 
 /** Primary: the kit's near-black capsule (only the action that matters). `quiet`: a white capsule on a hairline. */
-export function Button({ label, onPress, busy, disabled, quiet }: { label: string; onPress: () => void; busy?: boolean; disabled?: boolean; quiet?: boolean }) {
+export function Button({ label, onPress, busy, disabled, quiet, icon }: { label: string; onPress: () => void; busy?: boolean; disabled?: boolean; quiet?: boolean; icon?: IconName }) {
   const off = disabled || busy;
   // Coming on as the form fills fades in (after Family's Continue), rather than snapping.
   const on = useSharedValue(disabled ? 0.45 : 1);
@@ -57,7 +57,10 @@ export function Button({ label, onPress, busy, disabled, quiet }: { label: strin
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: off, busy }} disabled={off} onPress={onPress}
       style={({ pressed }) => ({ minHeight: 52, borderRadius: 26, paddingHorizontal: 20, overflow: "hidden", alignItems: "center", justifyContent: "center", borderWidth: 1,
         borderColor: quiet ? "#EDEDED" : palette.dark, backgroundColor: quiet ? palette.white : palette.dark, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-      {busy ? <ActivityIndicator color={quiet ? palette.ink : palette.white} /> : <Text style={{ fontSize: 16, fontWeight: "600", color: quiet ? palette.ink : palette.white }}>{label}</Text>}
+      {busy ? <ActivityIndicator color={quiet ? palette.ink : palette.white} /> : <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        {icon && <Icon name={icon} size={20} color={quiet ? palette.ink : palette.white} />}
+        <Text style={{ fontSize: 16, fontWeight: "600", color: quiet ? palette.ink : palette.white }}>{label}</Text>
+      </View>}
     </Pressable>
   </Animated.View>;
 }

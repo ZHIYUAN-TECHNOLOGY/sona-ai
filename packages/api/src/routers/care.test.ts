@@ -56,7 +56,7 @@ test("redeeming links the account to Amelia only: it reads her own record, and n
   expect((await db.select().from(careLinks))[0]).toMatchObject({ userId: "amelia-account", patientId: "SYN-1042" });
 });
 
-test("a code redeems once; an expired code, a clinician account and a signed-out caller cannot join", async () => {
+test("a code redeems once; an expired code, a clinician account, another record's account and a signed-out caller cannot join", async () => {
   const { doctor, amelia, clock, as } = await world();
   const { code } = await doctor.care.code({ encounterId: "visit-1042" });
   await amelia.care.join({ code });
@@ -64,6 +64,8 @@ test("a code redeems once; an expired code, a clinician account and a signed-out
   expect((await as(user("someone-else")).care.join({ code }).catch(e => e)).data).toEqual({ code: "CODE_USED" });
   expect((await doctor.care.join({ code }).catch(e => e)).data).toEqual({ code: "CLINICIAN_ACCOUNT" });
   const other = await doctor.care.code({ encounterId: "visit-1086" });
+  // One record per account: another patient's code is refused, not silently ignored.
+  expect((await amelia.care.join({ code: other.code }).catch(e => e)).data).toEqual({ code: "OTHER_RECORD" });
   clock.now = new Date(clock.now.getTime() + 15 * 24 * 3600_000);
   expect((await as(user("late")).care.join({ code: other.code }).catch(e => e)).data).toEqual({ code: "CODE_EXPIRED" });
   expect((await as(null).care.join({ code: other.code }).catch(e => e)).code).toBe("UNAUTHORIZED");
