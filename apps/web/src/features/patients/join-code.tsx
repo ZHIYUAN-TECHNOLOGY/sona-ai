@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import qrcode from "qrcode-generator";
 
 import { Button, Card, Chip } from "@/components/primitives";
 import { orpc } from "@/lib/orpc";
@@ -6,7 +7,7 @@ import "@/styles/pages/patients.css";
 
 const until = (at: Date | string) => new Date(at).toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
-/** The code a patient types into Sona Care's "Join by code". Issued only on a press, never on load. */
+/** The code a patient scans (its QR opens Sona Care web's join page) or types into Sona Care. Issued only on a press, never on load. */
 export function JoinCode({ encounterId, patientName }: { encounterId?: string; patientName: string }) {
   const issue = useMutation(orpc.care.code.mutationOptions());
   const first = patientName.split(" ")[0];
@@ -27,12 +28,29 @@ export function JoinCode({ encounterId, patientName }: { encounterId?: string; p
       ) : (
         <div className="join-code-print">
           <p className="join-code-for">Sona Care join code for {patientName}</p>
-          <output className="join-code" aria-label={`Join code ${data.code.split("").join(" ")}`}>{data.code}</output>
-          <p>Open Sona Care, sign in, then enter this code.</p>
+          <div className="join-code-row">
+            <Qr text={data.link} />
+            <output className="join-code" aria-label={`Join code ${data.code.split("").join(" ")}`}>{data.code}</output>
+          </div>
+          <p>Scan with the phone camera, or open Sona Care and enter this code.</p>
           <p className="pt-muted">Valid until {until(data.expiresAt)}. It works once.</p>
           <Button className="join-code-action" onClick={() => window.print()}>Print this code</Button>
         </div>
       )}
     </Card>
   );
+}
+
+/** The join link as a QR, one SVG path (medium error correction, so a crease on the printed paper still scans); as apps/native's care invite. */
+function Qr({ text }: { text: string }) {
+  const qr = qrcode(0, "M");
+  qr.addData(text);
+  qr.make();
+  const n = qr.getModuleCount(), quiet = 2, total = n + quiet * 2;
+  let d = "";
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) d += `M${c + quiet} ${r + quiet}h1v1h-1z`;
+  return <svg className="join-code-qr" viewBox={`0 0 ${total} ${total}`} role="img" aria-label="QR code to join Sona Care" shapeRendering="crispEdges">
+    <path d={`M0 0h${total}v${total}H0z`} fill="#fff" />
+    <path d={d} fill="#000" />
+  </svg>;
 }

@@ -22,8 +22,11 @@
 .pt-labs h3 { margin: 0 0 var(--space-1); font-size: 1rem; overflow-wrap: anywhere; }
 .pt-labs p { margin: 0; }
 
-/* Sona Care join code on the patient overview */
+/* Sona Care join code on the patient overview and the discharge page */
 .join-code-for { font-weight: 600; margin: 0; }
+.join-code-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin: var(--space-2) 0; }
+.join-code-row .join-code { margin: 0; }
+.join-code-qr { width: 128px; height: 128px; flex: none; }
 .join-code { display: block; font-size: 2.75rem; font-weight: 700; letter-spacing: 0.18em; font-variant-numeric: tabular-nums; line-height: 1.2; margin: var(--space-2) 0; overflow-wrap: anywhere; }
 @media print {
   /* Print only the code card: everything else stays in the layout but is not drawn. */
@@ -31,4 +34,5 @@
   .join-code-print, .join-code-print * { visibility: visible; }
   .join-code-print { position: fixed; top: 0; left: 0; padding: 20mm; color: #000; }
   .join-code-print .join-code-action { display: none; }
+  .join-code-qr { width: 45mm; height: 45mm; }
 }

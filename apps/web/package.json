@@ -19,6 +19,7 @@
     "@tanstack/react-router": "^1.170.41",
     "better-auth": "catalog:",
     "gsap": "^3.15.0",
+    "qrcode-generator": "^2.0.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "takumi-pdf": "^0.15.0"

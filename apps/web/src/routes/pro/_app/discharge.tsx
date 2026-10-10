@@ -10,6 +10,7 @@ import { Button, Card, Chip, ListCard, ListRow, Select, Signal, StatCard, StatRo
 import { RightRail, WithRail } from "@/components/rail";
 import { countOf, dischargeRank, standings } from "@/features/discharge/rank";
 import { blockersOf, Loaded, type Mark, oneParam, Origin, PatientPicker, say, usePatient } from "@/features/discharge/shared";
+import { JoinCode } from "@/features/patients/join-code";
 import { countOf as count, formatNumber } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
 import "@/styles/pages/discharge-plan.css";
@@ -126,6 +127,8 @@ function Visit({ encounterId }: { encounterId: string }) {
             }>
               <div className="dp-stack">
                 {approve.error ? <Card title="Not approved"><Refused error={approve.error} /></Card> : null}
+                {/* Suggested next step once discharged: the Sona Care code and QR, to print on the discharge paper. */}
+                {done && patient && can(me.role, "care.code") ? <JoinCode encounterId={encounterId} patientName={patient.name} /> : null}
                 <ListCard title={`Readiness: ${count(blocked.length, "blocker")} · ${count(p.meds.length, "take-home medicine")}`}>
                   {checks.map(c => c.status === "blocked"
                     ? <ListRow key={c.id} icon="clock" title={c.label} caption={c.detail} trailing={<Chip tone="soon">Blocking</Chip>} />
