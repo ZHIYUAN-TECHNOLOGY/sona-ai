@@ -135,12 +135,12 @@ test("azithromycin reads as current until its last dose has gone by on the demo 
   clock.now = new Date("2026-09-28T13:59:00+08:00"); // Monday's dose can still be logged
   const during = await read();
   expect(during.medicines.changed[0]).toMatchObject({ line: "Now a tablet once a day, for 2 more days", endsAt: new Date("2026-09-28T08:00:00+08:00") });
-  expect(planText(during, clock.now)).toContain("- Azithromycin (changed): Now a tablet once a day, for 2 more days; 1 tablet, with or without food; last dose Mon, 28 Sep 2026\n");
+  expect(planText(during, clock.now)).toContain("- Azithromycin (changed): Now a tablet once a day, for 2 more days; 1 tablet, with or without food; at 08:00; last dose Mon, 28 Sep 2026\n");
   clock.now = new Date("2026-09-28T14:00:00+08:00");
   const after = await read();
   expect(after.medicines.changed[0]).toMatchObject({ finished: true, line: "Course finished, nothing left to take" });
   expect(planText(after, clock.now)).toContain("- Azithromycin (changed): Course finished, nothing left to take; last dose Mon, 28 Sep 2026\n");
-  expect(planText(after, clock.now)).toContain("- Cetirizine (continue): Keep taking it as before; 1 tablet at night\n");
+  expect(planText(after, clock.now)).toContain("- Cetirizine (continue): Keep taking it as before; 1 tablet at night; at 21:00\n");
   expect((await read("ms")).medicines.changed[0]!.line).toBe("Kursus sudah tamat, tiada lagi untuk diambil");
 });
 
@@ -166,7 +166,7 @@ test("the plan's check-ins are the visit's own, including one the check-in agent
   if (plan.status !== "discharged") throw new Error("expected a discharged plan");
   expect(plan.checkIns.map(c => c.day)).toEqual([2, 4, 7, 14]);
   expect(plan.checkIns[1]!.date).toEqual(new Date("2026-09-30T10:00:00+08:00"));
-  expect(planText(plan, clock.now)).toContain("Check-ins: day 2, day 4, day 7 and day 14 after discharge");
+  expect(planText(plan, clock.now)).toContain("Check-ins: day 2, day 4, day 7 and day 14 after discharge (Mon, 28 Sep 2026; Wed, 30 Sep 2026; Sat, 03 Oct 2026; Sat, 10 Oct 2026)");
 });
 
 test("the plan and follow-ups come in the language Sona Care asks for, English per string where a word is missing", async () => {

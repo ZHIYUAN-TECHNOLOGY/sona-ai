@@ -80,20 +80,22 @@ export async function patientPlan(context: PatientContext, lang: Language = "en"
 }
 
 /**
- * The plan as plain text for the model: only what the patient's own app already shows them. A course gives its last dose.
+ * The plan as plain text for the model: only what the patient's own app already shows them. A course gives its last dose,
+ * and a timed medicine its daily times (Malaysia), so "when is my next dose" is counted from Now, not made up.
  * It opens with how long she has been home (Malaysian calendar days on the demo clock): an ISO "Discharged:" time left Gemma
  * answering as if she were still on the ward (10 Oct gate: 141 of 178 answers said the ward nurse brings each dose).
  */
 export function planText(plan: Extract<Awaited<ReturnType<typeof patientPlan>>, { status: "discharged" }>, now: Date) {
   const out = new Date(plan.dischargedAt), days = malaysianDay(now) - malaysianDay(out);
   const meds = Object.entries(plan.medicines).flatMap(([group, list]) => list.map(m =>
-    `- ${m.name} (${group}): ${[m.line, !m.finished && m.take, m.endsAt && `last dose ${malaysiaDay(m.endsAt)}`].filter(Boolean).join("; ")}`));
+    `- ${m.name} (${group}): ${[m.line, !m.finished && m.take, !m.finished && m.at?.length && `at ${m.at.join(" and ")}`, m.endsAt && `last dose ${malaysiaDay(m.endsAt)}`].filter(Boolean).join("; ")}`));
   return [
     `At home since ${malaysiaTime(out)} (${days > 0 ? `${days} day${days > 1 ? "s" : ""}` : "today"})`,
     "Medicines:", ...meds,
     "Come back or call if:", ...plan.warningSigns.map(w => `- ${w}`),
     plan.followUp ? `Follow-up: ${plan.followUp.title} on ${new Date(plan.followUp.date).toDateString()}` : "Follow-up: none booked",
-    `Check-ins: ${checkInDaysLine(plan.checkIns.map(c => c.day))} after discharge`,
+    // With their dates: from "day 2" alone Gemma counted the discharge day as day 1 (10 Oct gate: day 2 said as Wed, not Thu).
+    `Check-ins: ${checkInDaysLine(plan.checkIns.map(c => c.day))} after discharge (${plan.checkIns.map(c => malaysiaDay(new Date(c.date))).join("; ")})`,
   ].join("\n");
 }
 
