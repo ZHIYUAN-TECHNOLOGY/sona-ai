@@ -11,6 +11,8 @@ import { Composer } from "@/features/assistant/composer";
 import { Icon, type IconName } from "@/lib/icons";
 import { Dictation, MicButton } from "@/features/assistant/mic";
 import { SUGGEST_ICON, SuggestionRow, VoiceMode, type Suggestion } from "@/features/assistant/voice";
+import { Marked } from "@/features/assistant/marked";
+import { medicinesOf } from "@/features/assistant/terms";
 import { useListen } from "@/lib/listen";
 import { DoctorAvatar } from "@/features/doctors/avatar";
 import type { Doctor } from "@/features/doctors/data";
@@ -65,6 +67,7 @@ export default function Assistant() {
   const discharged = plan?.status === "discharged" ? plan : undefined;
   const asks = suggestions(discharged, visit, dose?.name, lang);
   const condition = conditionOf(discharged);
+  const medicines = medicinesOf(discharged);
   const rows: Suggestion[] = [...asks.map(a => ({ question: a.question, icon: SUGGEST_ICON[a.kind] })), ...(condition ? [{ question: doctorQuestion(condition, lang), icon: SUGGEST_ICON.doctor }] : [])];
   const flood = useSharedValue(0);
   const scroll = useRef<ScrollView>(null);
@@ -157,7 +160,7 @@ export default function Assistant() {
   const lastAnswer = [...turns].reverse().find(t => t.ready);
 
   if (voice) return <Animated.View entering={still ? undefined : FadeIn.duration(240)} style={{ flex: 1 }}>
-    <VoiceMode questions={rows} answer={askAloud} language={lang} first={lastAnswer && spoken(lastAnswer.reply, lang)} onChat={() => setVoice(false)} onType={() => { setTypeNext(true); setVoice(false); }} />
+    <VoiceMode questions={rows} answer={askAloud} language={lang} medicines={medicines} first={lastAnswer && spoken(lastAnswer.reply, lang)} onChat={() => setVoice(false)} onType={() => { setTypeNext(true); setVoice(false); }} />
   </Animated.View>;
 
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
@@ -177,7 +180,7 @@ export default function Assistant() {
           <Text style={{ ...type.body, color: palette.faint, textAlign: "center" }}>{t("ask.subtitle")}</Text>
         </Animated.View>
       </View>
-        : turns.map((turn, i) => <TurnView key={turn.requestId} t={turn} lead={i === turns.length - 1} flood={flood} enter={enter} visitDay={visitDay}
+        : turns.map((turn, i) => <TurnView key={turn.requestId} t={turn} medicines={medicines} lead={i === turns.length - 1} flood={flood} enter={enter} visitDay={visitDay}
           busy={send.isPending && send.variables?.requestId === turn.requestId} error={send.variables?.requestId === turn.requestId ? send.error : null}
           onSave={() => save(turn)} onSend={() => send.mutate(turn)} onRate={r => rate(turn, r)} />)}
 
@@ -213,8 +216,8 @@ export default function Assistant() {
  * One question and its answer: the question in a white capsule on the right, the answer as plain text
  * on the canvas. Only the latest turn draws the live orb, and only while it works.
  */
-function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend, onRate }: {
-  t: Turn; lead: boolean; flood: SharedValue<number>; enter: (i: number) => FadeInDown | undefined; visitDay: string;
+function TurnView({ t, medicines, lead, flood, enter, visitDay, busy, error, onSave, onSend, onRate }: {
+  t: Turn; medicines: string[]; lead: boolean; flood: SharedValue<number>; enter: (i: number) => FadeInDown | undefined; visitDay: string;
   busy: boolean; error: Error | null; onSave: () => void; onSend: () => void; onRate: (r: "up" | "down") => void;
 }) {
   const lang = useLang(), tr = tFor(lang);
@@ -228,7 +231,8 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
     {!t.ready ? (lead && <Working doctors={wantsDoctor(t.question)} flood={flood} />)
       : <Animated.View entering={enter(1)} style={{ gap: 12 }}>
         <Text selectable style={{ fontSize: 17, lineHeight: 26, letterSpacing: -0.3, color: palette.ink }}>
-          <Text style={{ fontWeight: "700" }}>{bold}</Text>{more ? `${lang === "zh" ? "" : " "}${more}` : ""}
+          {/* Her medicines, how much and when, and warning signs in colour, so the answer can be scanned (terms.ts). */}
+          <Marked text={bold} medicines={medicines} weight="700" />{more ? <>{lang === "zh" ? "" : " "}<Marked text={more} medicines={medicines} /></> : null}
         </Text>
         {r.kind === "plan" && <Caption text={r.asked.source} />}
         {/* From their record and one of the hospital's leaflets: the leaflet is named too. */}

@@ -21,6 +21,7 @@ import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
 import { Icon, type IconName } from "@/lib/icons";
 import { Button, CircleButton } from "@/lib/ui";
+import { Marked } from "./marked";
 
 /**
  * Voice mode, after the AI Health Companion kit's voice screens: "Sona Care" centred at the top with
@@ -51,7 +52,7 @@ const EASE_IN_OUT = Easing.bezier(0.77, 0, 0.175, 1);
 export type Suggestion = { question: string; icon: IconName };
 export const SUGGEST_ICON: Record<Asked["kind"] | "doctor", IconName> = { dose: "alarm", medicine: "pill", visit: "calendar", doctor: "doctor" };
 
-export function VoiceMode({ questions, answer, first, language, onChat, onType }: { questions: Suggestion[]; answer: (question: string) => Reply | Promise<Reply>; first?: string; language?: "en" | "ms" | "zh"; onChat: () => void; onType: () => void }) {
+export function VoiceMode({ questions, answer, first, language, medicines, onChat, onType }: { questions: Suggestion[]; medicines?: string[]; answer: (question: string) => Reply | Promise<Reply>; first?: string; language?: "en" | "ms" | "zh"; onChat: () => void; onType: () => void }) {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
   const lang = useLang(), t = tFor(lang);
@@ -203,7 +204,7 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
       {standInLine && voice.hosted && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{standInLine}</Text>}
       {words && <Text selectable accessibilityLabel={t("voice.youSaid", { q: words })} style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>“{words}”</Text>}
       {shown && <Text accessibilityLiveRegion="polite" selectable style={{ fontSize: 24, lineHeight: 32, fontWeight: "600", letterSpacing: -0.6, color: palette.ink, textAlign: "center", marginTop: 4 }}>
-        {shown.slice(0, lit)}<Text style={{ fontWeight: "600", color: palette.faint }}>{shown.slice(lit)}</Text>
+        <Marked text={shown} medicines={medicines} weight="600" lit={lit} />
       </Text>}
       <View style={{ alignSelf: "stretch", marginTop: 8 }}>
         {questions.map(s => <SuggestionRow key={s.question} s={s} aloud onPress={() => { if (inCall) live.say(s.question); else void ask(s.question); }} />)}
