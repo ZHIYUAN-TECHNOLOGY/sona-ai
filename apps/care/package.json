@@ -75,5 +75,10 @@
     "@types/react": "~19.2.18",
     "babel-preset-expo": "~57.0.10",
     "typescript": "~6.0.3"
+  },
+  "reanimated": {
+    "staticFeatureFlags": {
+      "IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS": true
+    }
   }
 }
