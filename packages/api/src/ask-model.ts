@@ -168,7 +168,7 @@ export function lifted<T>(reply: T, rows = true): T {
 export const untagged = (text: string) => text.replace(/<(\/?)([A-Za-z][^<>]*)(>|(?=<)|$)/g, (tag, close: string, inner: string, _end: string, at: number) => {
   if (close) return "";
   // Quoted in its own quotes, so "Crohn's disease" is whole.
-  const said = /\btext=(?:["“]([^"”]*)["”]|'([^']*)')/.exec(inner), word = said ? said[1] ?? said[2] : undefined;
+  const said = /\btext=(?:["“]([^"”]*)["”]|'([^']*)')/.exec(inner), word = said?.[1] ?? said?.[2];
   if (word !== undefined) return text.startsWith(word, at + tag.length) ? "" : word;
   if (/^[\w-]+\s+[\w-]+\s*=\s*["“'\w]/.test(inner)) return "";
   if (/^(br|hr)\b/i.test(inner)) return " ";

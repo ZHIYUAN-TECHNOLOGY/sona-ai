@@ -128,7 +128,7 @@ export async function recordText(db: Context["db"], hospitalId: string, patientI
 /**
  * Her stay as the ward and the discharge card hold it, which recordFacts (her history and chart) does not: the bed and
  * where the stay stands (on the ward, fit to go since, or discharged when), the ward's handover (SBAR), the take-home
- * medicines and whether the doctor confirmed them, and the prescriptions approved on the patient's visits. None for a patient never
+ * medicines and whether the doctor confirmed them, and the prescriptions approved on her visits. None for a patient never
  * admitted. 10 Oct, gate: without them "what abx is she on now?" was answered "not on any antibiotics" for a patient
  * going home on azithromycin, and "brief me" left out the discharge.
  */
