@@ -295,6 +295,28 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
   if (!turn.signal.aborted) { turn.done?.(summary); turn.timed?.(timing); }
 }
 
+/**
+ * An answer's parts, passed through, with what was said of it kept when the patient cuts in. withVoice saves an answer
+ * only once it finishes, so a cut-off one left the patient's question with no reply in the conversation; their next line
+ * then joined it (messagesFor), the old question first, and Gemma answered the old question again on every later turn
+ * (10 Oct: "hot soup?" then "my throat hurts" got the soup answer again). `save` runs as the cut lands, before the next
+ * turn reads the conversation. A cut before any sentence still leaves the two patient lines to join, as a patient
+ * cut off mid-pause should.
+ */
+export async function* keepingSaid(parts: AsyncIterable<Part>, signal: AbortSignal, save: (said: string) => void): AsyncGenerator<Part> {
+  const said: string[] = [];
+  const cut = () => { if (said.length) save(said.join(" ")); };
+  signal.addEventListener("abort", cut, { once: true });
+  try {
+    for await (const part of parts) {
+      if (part.type === "text-delta") said.push(part.text);
+      yield part;
+    }
+  } finally {
+    signal.removeEventListener("abort", cut);
+  }
+}
+
 /** Gemma in box ① as a `ChatStream`: a cold box is woken and not waited for, so Sona says when it should be ready. */
 export function basetenChat(options: Baseten): ChatStream {
   const { send } = boxes(options);

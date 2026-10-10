@@ -2,7 +2,7 @@ import { beforeEach, expect, test } from "bun:test";
 
 import { boxState } from "../baseten-models";
 import { deltas } from "../sse";
-import { LINES, answerTurn, basetenChat, closingAt, flagsOf, messagesFor, sentencesOf, type AnswerTurn, type ChatStream, type Part, type TurnSummary } from "./answer";
+import { LINES, answerTurn, basetenChat, closingAt, flagsOf, keepingSaid, messagesFor, sentencesOf, type AnswerTurn, type ChatStream, type Part, type TurnSummary } from "./answer";
 
 /** Amelia's plan as Gemma reads it (planText, discharged in Malay). */
 const PLAN = `Discharged: 2026-09-28T02:05:00.000Z
@@ -275,4 +275,37 @@ test("the triage word heads the reply and the rest of the flags close it: the wo
   expect(messagesFor({ question: "And my next visit?", plan: PLAN, language: "en", history: [{ role: "user", content: "Am I allergic?" }, { role: "assistant", content: "fine You are allergic to penicillin." }] })[2]!.content).toBe("You are allergic to penicillin.");
   expect(closingAt('Rest well.\n{"inPlan"')).toBe(10);
   expect(closingAt("Rest well. Drink water.")).toBe(-1);
+});
+
+test("a cut-off answer is kept as far as it was said, so the next question is answered and not the one before it", async () => {
+  // As withVoice keeps the conversation: an answer is saved only once it finishes, a patient line when it is heard.
+  const stored: { role: "user" | "assistant"; content: string }[] = [];
+  const ask = async (question: string, chunks: string[], cutAfter?: number) => {
+    const history = [...stored], abort = new AbortController(), { chat, log } = gemma(chunks);
+    stored.push({ role: "user", content: question });
+    const { turn } = turnOf({ question, history, chat, signal: abort.signal });
+    let said = 0, whole = "";
+    for await (const part of keepingSaid(answerTurn(turn), abort.signal, text => stored.push({ role: "assistant", content: text }))) {
+      if (part.type !== "text-delta") continue;
+      whole += part.text;
+      if (++said === cutAfter) { abort.abort(); break; }
+    }
+    if (!abort.signal.aborted) stored.push({ role: "assistant", content: whole });
+    return log.messages;
+  };
+  await ask("Can I drink hot soup?", ["fine\n", "Yes, warm soup is fine to drink. ", "Let it cool a little first. ", "Clear soups are best.\n{\"inPlan\": false, \"cites\": []}"], 1);
+  const asked = await ask("My throat is painful, any advice?", ["fine\n", "Warm salt water gargles help. ", "Paracetamol eases the pain.\n{\"inPlan\": false, \"cites\": []}"]);
+  // Before the fix Gemma read one patient line, "Can I drink hot soup?\nMy throat is painful...", and answered the soup again.
+  expect(asked.slice(1)).toEqual([
+    { role: "user", content: "Can I drink hot soup?" },
+    { role: "assistant", content: "Yes, warm soup is fine to drink." },
+    { role: "user", content: "My throat is painful, any advice?" },
+  ]);
+});
+
+test("a cut before any sentence keeps nothing, so a patient cut off mid-pause still reaches Gemma as one line", async () => {
+  const abort = new AbortController(), saved: string[] = [];
+  const parts = (async function* (): AsyncGenerator<Part> { abort.abort(); yield { type: "text-delta", text: "Too late." }; })();
+  for await (const _ of keepingSaid(parts, abort.signal, text => saved.push(text))) break;
+  expect(saved).toEqual([]);
 });
