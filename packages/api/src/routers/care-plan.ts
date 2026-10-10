@@ -79,12 +79,17 @@ export async function patientPlan(context: PatientContext, lang: Language = "en"
     };
 }
 
-/** The plan as plain text for the model: only what the patient's own app already shows them. A course gives its last dose. */
-export function planText(plan: Extract<Awaited<ReturnType<typeof patientPlan>>, { status: "discharged" }>) {
+/**
+ * The plan as plain text for the model: only what the patient's own app already shows them. A course gives its last dose.
+ * It opens with how long she has been home (Malaysian calendar days on the demo clock): an ISO "Discharged:" time left Gemma
+ * answering as if she were still on the ward (10 Oct gate: 141 of 178 answers said the ward nurse brings each dose).
+ */
+export function planText(plan: Extract<Awaited<ReturnType<typeof patientPlan>>, { status: "discharged" }>, now: Date) {
+  const out = new Date(plan.dischargedAt), days = malaysianDay(now) - malaysianDay(out);
   const meds = Object.entries(plan.medicines).flatMap(([group, list]) => list.map(m =>
     `- ${m.name} (${group}): ${[m.line, !m.finished && m.take, m.endsAt && `last dose ${malaysiaDay(m.endsAt)}`].filter(Boolean).join("; ")}`));
   return [
-    `Discharged: ${plan.dischargedAt}`,
+    `At home since ${malaysiaTime(out)} (${days > 0 ? `${days} day${days > 1 ? "s" : ""}` : "today"})`,
     "Medicines:", ...meds,
     "Come back or call if:", ...plan.warningSigns.map(w => `- ${w}`),
     plan.followUp ? `Follow-up: ${plan.followUp.title} on ${new Date(plan.followUp.date).toDateString()}` : "Follow-up: none booked",
@@ -219,7 +224,7 @@ export async function recordText(context: PatientContext) {
   // Her medicines, doses and check-ins first and the general leaflet last, so a record past RECORD_CHARS loses the leaflet,
   // then the note, first. ponytail: her rows are read whole and cut from the end; a long record would need retrieval by the question.
   const text = [
-    plan.status === "discharged" ? planText(plan) : "Still in hospital: no take-home medicines or leaflet yet.",
+    plan.status === "discharged" ? planText(plan, now) : "Still in hospital: the ward nurse brings each dose; no take-home medicines or leaflet yet.",
     ...(ordered.length ? ["Prescribed by her doctor in hospital:", ...ordered] : []),
     ...(doses?.due ? [`Doses since going home: ${doses.taken} of ${doses.due} due marked taken${doses.missed.length ? `; not marked taken: ${doses.missed.slice(-MISSED_MAX).map(m => `${m.name} ${malaysiaTime(m.dueAt)}`).join(", ")}` : ""}`] : []),
     ...(replies.length ? ["Check-in replies:", ...replies] : []),
