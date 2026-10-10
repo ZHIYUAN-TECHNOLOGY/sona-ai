@@ -57,7 +57,7 @@ export async function logAnswer<T extends Origin>(db: Db, encounterId: string | 
 /** One dated thing the record holds about the visit's patient. */
 export type TimelineEvent = { id: string; at: Date; title: string; detail?: string };
 const sentenceCase = (text: string) => text.charAt(0).toUpperCase() + text.slice(1).replace(/-/g, " ");
-const reading = (o: { kind: string; value: number; unit: string }) => o.unit === "AMT" ? `AMT ${o.value}/10` : `${sentenceCase(o.kind)} ${o.value} ${o.unit}`;
+export const reading = (o: { kind: string; value: number; unit: string }) => o.unit === "AMT" ? `AMT ${o.value}/10` : `${sentenceCase(o.kind)} ${o.value} ${o.unit}`;
 /** "Thu, 01 Oct 2026": the day in Malaysia, the same on any server. */
 export const malaysiaDay = (at: Date) => new Date(at.getTime() + 8 * 3600_000).toUTCString().slice(0, 16);
 /** Results a model reads about one patient: the latest dozen. */

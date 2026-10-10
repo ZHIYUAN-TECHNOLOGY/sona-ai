@@ -57,3 +57,7 @@ export function downloadPdf(name: string, blob: Blob) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** Saves a PDF the server made (base64, as the health summary routes return it) under its own file name. */
+export const downloadServerPdf = ({ filename, pdf }: { filename: string; pdf: string }) =>
+  downloadPdf(filename, new Blob([Uint8Array.from(atob(pdf), c => c.charCodeAt(0))], { type: "application/pdf" }));
