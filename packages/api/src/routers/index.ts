@@ -25,7 +25,7 @@ import { messagesRouter } from "./messages";
 import { careVisitSummariesRouter, reviewRouter } from "./review";
 import { encounterRouter } from "./encounter";
 import { evidenceRouter } from "./evidence";
-import { careHealthSummary, proHealthSummary } from "./health-summary";
+import { careHealthSummary, careHealthSummaryData, proHealthSummary, proHealthSummaryData } from "./health-summary";
 import { wardRouter } from "./ward";
 // lane P
 import { noteRouter } from "./note";
@@ -65,7 +65,7 @@ export const appRouter = {
   // Management: this week's numbers from the loops' own rows (the ops counter on the ward view).
   ops: opsRouter,
   // Sona Care, the patient app; `messages` is the care team's side of its thread (announced as "messages")
-  care: { ...careRouter, ...carePlanRouter, ...careReadingsRouter, doctors: careDoctorsRouter, bookings: careBookingsRouter, results: careResultsRouter, visitSummaries: careVisitSummariesRouter, healthSummary: careHealthSummary },
+  care: { ...careRouter, ...carePlanRouter, ...careReadingsRouter, doctors: careDoctorsRouter, bookings: careBookingsRouter, results: careResultsRouter, visitSummaries: careVisitSummariesRouter, healthSummary: careHealthSummary, healthSummaryData: careHealthSummaryData },
   review: reviewRouter,
   // Booking requests from Sona Care (confirm or decline on My Day) and free slots for Book in.
   bookings: bookingsRouter,
@@ -78,7 +78,7 @@ export const appRouter = {
   results: resultsRouter,
   day: dayRouter,
   // summary: the health summary PDF a hospital sends to another on transfer (Sona Care has its own, care.healthSummary).
-  patients: { ...patientsRouter, summary: proHealthSummary },
+  patients: { ...patientsRouter, summary: proHealthSummary, summaryData: proHealthSummaryData },
   // lane P
   prescribing: prescribingRouter,
   note: noteRouter,

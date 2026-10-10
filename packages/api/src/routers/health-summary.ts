@@ -68,6 +68,14 @@ async function exported(context: PatientContext) {
 }
 
 /**
+ * The summary itself, for the Health summary pages: the same object the PDF renders, so the page and the file cannot
+ * differ. A clinician's view is in the access trail like every other read of the record ("viewed the health summary");
+ * the patient reading her own is not, as no Sona Care read is.
+ */
+export const proHealthSummaryData = protectedProcedure.input(z.object({ patientId: z.string().min(1) })).handler(({ context, input }) => healthSummaryOf({ ...context, patientId: input.patientId }));
+export const careHealthSummaryData = patientProcedure.handler(({ context }) => healthSummaryOf(context));
+
+/**
  * Clinician (Sona Pro): a patient's summary to send to another hospital on transfer. The access trail logs it as any
  * call naming a patient is (patients.summary, "exported a health summary").
  */

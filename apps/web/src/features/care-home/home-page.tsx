@@ -6,7 +6,6 @@ import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Chip, ListCard, ListRow, StatCard, StatRow } from "@/components/primitives";
 import { countOf } from "@/lib/format";
 import { orpc } from "@/lib/orpc";
-import { downloadServerPdf } from "@/lib/pdf/render";
 
 import { dayLead, dosesToday, inDaysWords, langOf, nextStep, partOfDay } from "./model";
 
@@ -17,22 +16,15 @@ const timeOf = (d: Date) => d.toLocaleTimeString(lang, { hour: "numeric", minute
 const dayOf = (d: Date) => d.toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long", timeZone: MALAYSIA });
 
 const shortDay = (d: Date) => d.toLocaleDateString(lang, { day: "numeric", month: "short", timeZone: MALAYSIA });
-/**
- * Rail: the places a patient goes from here, and her health summary (the server's PDF of her record) to take to another
- * hospital; its row says while it is being made and when it failed, in place.
- */
-function More() {
-  const summary = useMutation(orpc.care.healthSummary.mutationOptions({ onSuccess: downloadServerPdf }));
-  return (
-    <ListCard title="More for you">
-      <ListRow wrap to="/care/ask" icon="sparkle" title="Ask Sona" caption="Ask in your own words" />
-      <ListRow wrap to="/care/discharge-plan" icon="clipboard" title="Your discharge plan" caption="Your steps at home" />
-      <ListRow wrap to="/care/medicines" icon="pill" title="All medicines" caption="What to take and why" />
-      <ListRow wrap icon="download" title="Download my health summary" disabled={summary.isPending} onClick={() => summary.mutate({})}
-        caption={summary.isPending ? "Making your PDF…" : summary.isError ? `We could not make it. ${summary.error.message}` : "A PDF of your record for another hospital"} />
-    </ListCard>
-  );
-}
+/** Rail: the places a patient goes from here, her health summary among them (read it there, then download it); static, so built once. */
+const MORE = (
+  <ListCard title="More for you">
+    <ListRow wrap to="/care/ask" icon="sparkle" title="Ask Sona" caption="Ask in your own words" />
+    <ListRow wrap to="/care/discharge-plan" icon="clipboard" title="Your discharge plan" caption="Your steps at home" />
+    <ListRow wrap to="/care/medicines" icon="pill" title="All medicines" caption="What to take and why" />
+    <ListRow wrap to="/care/health-summary" icon="user" title="My health summary" caption="Your record, to send to another hospital" />
+  </ListCard>
+);
 
 export function CareHome({ firstName }: { firstName: string }) {
   const queryClient = useQueryClient();
@@ -180,7 +172,7 @@ export function CareHome({ firstName }: { firstName: string }) {
               <p>Can't call from here? Dial 999 from any phone.</p>
             </section>
           ) : null}
-          <More />
+          {MORE}
         </div>
       </div>
     </div>

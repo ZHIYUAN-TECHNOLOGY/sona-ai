@@ -1,0 +1,17 @@
+/* Health summary (features/health-summary): the patient overview's history and timeline patterns, on one page. */
+.hs { display: grid; gap: var(--space-4); }
+.hs-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
+.hs-history { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); }
+.hs-history dt { color: var(--muted); font-size: var(--text-small); margin-bottom: var(--space-1); }
+.hs-history dd { margin: 0; }
+.hs-text { margin: 0 0 var(--space-2); }
+.hs-list { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }
+.hs-timeline { margin: var(--space-2) 0 0; padding: 0; list-style: none; display: grid; gap: var(--space-2); }
+.hs-timeline li { display: grid; grid-template-columns: 7rem 1fr; gap: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--line); }
+.hs-timeline li:last-child { border-bottom: 0; padding-bottom: 0; }
+.hs-timeline time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.hs-timeline small { display: block; color: var(--muted); }
+@container page (max-width: 660px) {
+  .hs-pair, .hs-history { grid-template-columns: minmax(0, 1fr); }
+  .hs-timeline li { grid-template-columns: 1fr; gap: 0; }
+}

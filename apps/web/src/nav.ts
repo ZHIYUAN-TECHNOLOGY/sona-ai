@@ -51,6 +51,7 @@ export const CARE_NAV: NavGroup[] = [
     { to: "/care/home", icon: "home", label: "Home" },
     { to: "/care/follow-ups", icon: "calendar", label: "Follow-ups" },
     { to: "/care/visit-summaries", icon: "file", label: "Visit summaries" },
+    { to: "/care/health-summary", icon: "user", label: "Health summary" },
     { to: "/care/medicines", icon: "pill", label: "Medicines" },
     { to: "/care/results", icon: "flask", label: "Results" },
     { to: "/care/readings", icon: "activity", label: "Readings" },

@@ -34,4 +34,9 @@ test("the health summary is the patient's own record, only in their hospital, an
   await expect(healthSummaryOf({ ...context, hospitalId: "other" } as never)).rejects.toMatchObject({ code: "NOT_FOUND" });
   const beds = createRouterClient(appRouter, { context: { db, session: session("beds"), now: () => now } });
   await expect(beds.patients.summary({ patientId: "SYN-1042" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  await expect(beds.patients.summaryData({ patientId: "SYN-1042" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  // The page reads the very object the PDF renders.
+  await addClinician(db, "doc");
+  const doctor = createRouterClient(appRouter, { context: { db, session: session("doc"), now: () => now } });
+  expect(await doctor.patients.summaryData({ patientId: "SYN-1042" })).toEqual(s);
 });

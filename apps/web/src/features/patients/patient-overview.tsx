@@ -18,6 +18,8 @@ import { orpc } from "@/lib/orpc";
 import { downloadServerPdf } from "@/lib/pdf/render";
 import "@/styles/pages/patient-overview.css";
 
+import { HealthSummaryView } from "@/features/health-summary/summary-view";
+
 import { JoinCode } from "./join-code";
 import { allergyChip, type PatientRow, patientMeta, StatusChip } from "./patient-list";
 import { LabCharts, PatientResults, useTrends } from "./patient-trends";
@@ -51,6 +53,7 @@ const TABS = [
   { id: "timeline", label: "Timeline" },
   { id: "results", label: "Results" },
   { id: "medicines", label: "Medicines" },
+  { id: "summary", label: "Health summary" },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
 
@@ -64,6 +67,8 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
   const timeline = useQuery({ ...orpc.encounter.timeline.queryOptions({ input: { encounterId } }), enabled: hasVisit });
   const doses = useQuery({ ...orpc.adherence.get.queryOptions({ input: { patientId: patient.id } }), enabled: canRead });
   const trends = useTrends(patient.id, canRead);
+  // The Health summary tab reads the summary only once opened; its PDF is the same object, rendered by the server.
+  const healthSummary = useQuery({ ...orpc.patients.summaryData.queryOptions({ input: { patientId: patient.id } }), enabled: canRead && tab === "summary" });
   const summary = useMutation(orpc.patients.summary.mutationOptions({ onSuccess: downloadServerPdf }));
 
   const events = timeline.data ? [...timeline.data].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()) : [];
@@ -99,14 +104,19 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
         actions={
           canRead ? (
             <>
-              {/* With doses behind, the summary's suggested step is the Message button. */}
-              {behind ? null : <Button to="/pro/messages" search={{ patient: patient.id }} icon="message" variant="secondary">Message</Button>}
-              {/* The server's PDF of the record, to send to another hospital on transfer. */}
-              <Button icon="download" variant="secondary" pending={summary.isPending} onClick={() => summary.mutate({ patientId: patient.id })}>
-                {summary.isPending ? "Making the PDF…" : "Download health summary"}
-              </Button>
-              {/* The visit page reads encounterId from the URL itself. */}
-              {visit ? <Button {...visit} variant="primary" icon="arrow-right">Open the visit</Button> : null}
+              {tab === "summary" ? (
+                // Reviewed on screen, then sent: the server's PDF of this same summary, for another hospital on transfer.
+                <Button icon="download" variant="primary" pending={summary.isPending} onClick={() => summary.mutate({ patientId: patient.id })}>
+                  {summary.isPending ? "Making the PDF…" : "Download health summary"}
+                </Button>
+              ) : (
+                <>
+                  {/* With doses behind, the summary's suggested step is the Message button. */}
+                  {behind ? null : <Button to="/pro/messages" search={{ patient: patient.id }} icon="message" variant="secondary">Message</Button>}
+                  {/* The visit page reads encounterId from the URL itself. */}
+                  {visit ? <Button {...visit} variant="primary" icon="arrow-right">Open the visit</Button> : null}
+                </>
+              )}
             </>
           ) : undefined
         }
@@ -208,6 +218,10 @@ function Loaded({ patient, canRead, canCode }: { patient: PatientRow; canRead: b
             </ol>
           )}
         </Card>
+      ) : tab === "summary" ? (
+        healthSummary.isPending ? <EmptyState>Loading the health summary…</EmptyState>
+          : healthSummary.isError ? <EmptyState>The health summary could not be loaded: {healthSummary.error.message}</EmptyState>
+          : <HealthSummaryView s={healthSummary.data} />
       ) : tab === "results" ? (
         <>
           <div className="po-wrap po-full"><PatientResults patientId={patient.id} /></div>

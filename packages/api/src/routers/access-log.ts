@@ -24,7 +24,7 @@ const SEEN_AS: Record<string, string> = {
   "scan.upload": "scanned a handwritten note", "scan.read": "read a scanned note", "scan.apply": "added a scanned note to the record",
   "messages.list": "read care messages", "messages.thread": "read care messages", "messages.reply": "replied to a care message",
   "messages.draft": "drafted a reply to a care message", "messages.handle": "marked care messages handled", "messages.photo": "viewed a medicine photo", "messages.resolveMedicinePhoto": "decided a medicine photo",
-  "adherence.get": "viewed doses taken", "patients.summary": "exported a health summary", "care.healthSummary": "exported their own health summary",
+  "adherence.get": "viewed doses taken", "patients.summary": "exported a health summary", "patients.summaryData": "viewed the health summary", "care.healthSummary": "exported their own health summary",
   "checkIns.list": "viewed check-ins", "evidence.ask": "asked for evidence", "evidence.stream": "asked for evidence", "tasks.create": "created a task",
   "results.receive": "recorded a result", "care.code": "gave a Sona Care code",
   "training.samples": "reviewed training samples", "training.decide": "decided a training sample", "training.export": "exported a training dataset",
