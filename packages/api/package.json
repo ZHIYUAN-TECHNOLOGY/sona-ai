@@ -11,6 +11,7 @@
     "test": "bun test src"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "3.0.66",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
@@ -19,6 +20,7 @@
     "@sona-ai/db": "workspace:*",
     "@sona-ai/domain": "workspace:*",
     "@takumi-rs/helpers": "^2.14.0",
+    "ai": "7.0.133",
     "drizzle-orm": "catalog:",
     "takumi-pdf": "^0.15.0",
     "unpdf": "^1.8.1",

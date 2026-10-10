@@ -67,13 +67,45 @@ export function searchDoctors<T extends Pick<DoctorRow, "name" | "specialty" | "
     .sort((a, b) => Number(b.careTeam) - Number(a.careTeam) || b.rating - a.rating);
 }
 
+type PatientContext = Context & { hospitalId: string; patientId: string };
+
+/** The hospital's directory with free slots; `search` (a question's words) keeps only the doctors it finds. */
+export async function doctorsFor(context: PatientContext, search?: string) {
+  const all = await doctorsAt(context.db, context.hospitalId);
+  return withSlots(context.db, context.hospitalId, search ? searchDoctors(all, search) : all, clockOf(context));
+}
+
+/**
+ * One request per patient, doctor and slot (a replay returns it); the slot must still be free. It is
+ * a task for the care team on the patient's latest visit ("Amelia asks to see Dr. Lim · Thu 10:30").
+ * The app's booking (care.bookings.request) and Sona Care's chat agent both ask through here.
+ */
+export async function requestBooking(context: PatientContext, input: z.infer<typeof requestInput>) {
+  const { db, hospitalId, patientId } = context, now = clockOf(context);
+  const [doctor] = await withSlots(db, hospitalId, await doctorsAt(db, hospitalId, eq(doctors.id, input.doctorId)), now);
+  if (!doctor) throw new ORPCError("NOT_FOUND", { message: "We couldn't find that doctor", data: { code: "DOCTOR_UNKNOWN" } });
+  const id = `booking:${patientId}:${doctor.id}:${input.startsAt.getTime()}`;
+  const [existing] = await db.select({ id: bookingRequests.id }).from(bookingRequests).where(eq(bookingRequests.id, id));
+  if (!existing) {
+    if (!doctor.nextSlots.some(d => d.times.some(t => t.getTime() === input.startsAt.getTime())))
+      throw new ORPCError("CONFLICT", { message: "That time is no longer free. Please choose another.", data: { code: "SLOT_TAKEN" } });
+    const [patient] = await db.select({ name: patients.name, encounterId: encounters.id }).from(patients)
+      .leftJoin(encounters, eq(encounters.patientId, patients.id)).where(eq(patients.id, patientId)).orderBy(desc(encounters.updatedAt)).limit(1);
+    const words = slotWords(input.startsAt);
+    await db.insert(tasks).values({
+      id, hospitalId, encounterId: patient!.encounterId, kind: "booking", title: `${patient!.name.split(" ")[0]} asks to see ${shortName(doctor.name)} · ${words.weekday} ${words.time}`,
+      owner: "Care team", due: "Today", sourceId: id, idempotencyKey: id,
+    }).onConflictDoNothing();
+    await db.insert(bookingRequests).values({ id, hospitalId, patientId, doctorId: doctor.id, startsAt: input.startsAt, reason: input.reason || null, taskId: id, createdAt: now })
+      .onConflictDoNothing();
+  }
+  return (await listRequests(db, hospitalId, eq(bookingRequests.id, id)))[0]!;
+}
+
 /** Patient side, under care.doctors and care.bookings. */
 export const careDoctorsRouter = {
   /** The hospital's directory with free slots; `search` (a question's words) keeps only the doctors it finds. */
-  list: patientProcedure.input(z.object({ search: z.string().trim().max(500).optional() }).optional()).handler(async ({ context, input }) => {
-    const all = await doctorsAt(context.db, context.hospitalId);
-    return withSlots(context.db, context.hospitalId, input?.search ? searchDoctors(all, input.search) : all, clockOf(context));
-  }),
+  list: patientProcedure.input(z.object({ search: z.string().trim().max(500).optional() }).optional()).handler(({ context, input }) => doctorsFor(context, input?.search)),
   get: patientProcedure.input(z.object({ id: z.string().min(1) })).handler(async ({ context, input }) => {
     const [doctor] = await withSlots(context.db, context.hospitalId, await doctorsAt(context.db, context.hospitalId, eq(doctors.id, input.id)), clockOf(context));
     if (!doctor) throw new ORPCError("NOT_FOUND", { message: "We couldn't find that doctor", data: { code: "DOCTOR_UNKNOWN" } });
@@ -83,31 +115,8 @@ export const careDoctorsRouter = {
 
 export const careBookingsRouter = {
   list: patientProcedure.handler(({ context }) => listRequests(context.db, context.hospitalId, eq(bookingRequests.patientId, context.patientId))),
-  /**
-   * One request per patient, doctor and slot (a replay returns it); the slot must still be free. It is
-   * a task for the care team on the patient's latest visit ("Amelia asks to see Dr. Lim · Thu 10:30").
-   */
-  request: patientProcedure.input(requestInput).handler(async ({ context, input }) => {
-    const { db, hospitalId, patientId } = context, now = clockOf(context);
-    const [doctor] = await withSlots(db, hospitalId, await doctorsAt(db, hospitalId, eq(doctors.id, input.doctorId)), now);
-    if (!doctor) throw new ORPCError("NOT_FOUND", { message: "We couldn't find that doctor", data: { code: "DOCTOR_UNKNOWN" } });
-    const id = `booking:${patientId}:${doctor.id}:${input.startsAt.getTime()}`;
-    const [existing] = await db.select({ id: bookingRequests.id }).from(bookingRequests).where(eq(bookingRequests.id, id));
-    if (!existing) {
-      if (!doctor.nextSlots.some(d => d.times.some(t => t.getTime() === input.startsAt.getTime())))
-        throw new ORPCError("CONFLICT", { message: "That time is no longer free. Please choose another.", data: { code: "SLOT_TAKEN" } });
-      const [patient] = await db.select({ name: patients.name, encounterId: encounters.id }).from(patients)
-        .leftJoin(encounters, eq(encounters.patientId, patients.id)).where(eq(patients.id, patientId)).orderBy(desc(encounters.updatedAt)).limit(1);
-      const words = slotWords(input.startsAt);
-      await db.insert(tasks).values({
-        id, hospitalId, encounterId: patient!.encounterId, kind: "booking", title: `${patient!.name.split(" ")[0]} asks to see ${shortName(doctor.name)} · ${words.weekday} ${words.time}`,
-        owner: "Care team", due: "Today", sourceId: id, idempotencyKey: id,
-      }).onConflictDoNothing();
-      await db.insert(bookingRequests).values({ id, hospitalId, patientId, doctorId: doctor.id, startsAt: input.startsAt, reason: input.reason || null, taskId: id, createdAt: now })
-        .onConflictDoNothing();
-    }
-    return (await listRequests(db, hospitalId, eq(bookingRequests.id, id)))[0]!;
-  }),
+  /** A request for a free slot (requestBooking). */
+  request: patientProcedure.input(requestInput).handler(({ context, input }) => requestBooking(context, input)),
 };
 
 /** Clinician side: the care-team doctors' free slots (Book in), open requests, and the decision. */

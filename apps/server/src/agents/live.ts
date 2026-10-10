@@ -14,7 +14,7 @@ import { withVoiceInput } from "agents/voice";
 
 import { announcer, followUpAgents, libraryOf } from "../context";
 import { getDb } from "../services";
-import { patientOf } from "./voice";
+import { patientOf } from "./patient";
 
 type Language = keyof typeof LINES;
 

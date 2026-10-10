@@ -6,6 +6,7 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { answer, conditionOf, doctorQuestion, historyOf, leadOf, shown, spoken, startingLine, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
+import { CHAT_AGENT_ON, replyOf, type CareChat } from "@/features/assistant/agent-replies";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import { Composer } from "@/features/assistant/composer";
 import { Icon, type IconName } from "@/lib/icons";
@@ -29,6 +30,9 @@ import { palette, type } from "@/lib/theme";
 import { AccentText, Call999, CircleButton, LoadError, pillStyle, surfaceStyle, inkPill } from "@/lib/ui";
 import { useDischarge } from "@/features/discharge/row";
 import { client, orpc, queryClient } from "@/utils/orpc";
+
+// Required only with the flag on, so a build without it never runs the chat SDK's modules.
+const CareChatLink: typeof import("@/features/assistant/chat-agent").CareChatLink | undefined = CHAT_AGENT_ON ? require("@/features/assistant/chat-agent").CareChatLink : undefined;
 
 /**
  * Ask Sona Care (the AI Health Companion kit's "Ask Nomi"), a full screen from the orb in the dock.
@@ -73,6 +77,8 @@ export default function Assistant() {
   const scroll = useRef<ScrollView>(null);
   const input = useRef<RNTextInput>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
+  // Behind EXPO_PUBLIC_CARE_CHAT_AGENT: her chat agent, which remembers the conversation (features/assistant/chat-agent).
+  const [agent, setAgent] = useState<CareChat>();
   const [chat, setChat] = useState(0);
   const [draft, setDraft] = useState("");
   const [voice, setVoice] = useState(false);
@@ -89,11 +95,17 @@ export default function Assistant() {
   const rest = rows.filter(s => !turns.some(t => t.question === s.question));
 
   // Real calls: the question to the model grounded in the plan (care.ask), with this chat so far so a follow-up is
-  // read with it (the new question's own turn is not in `turns` yet); a doctor question to the directory.
+  // read with it (the new question's own turn is not in `turns` yet); a doctor question to the directory. Her chat
+  // agent, behind its flag, keeps the conversation itself.
   const answerOf = (question: string) => {
+    if (agent) return agent.ask(question).then(a => replyOf(question, a, asks, lang));
     const history = historyOf(turns, lang);
     return answer(question, asks, { ask: q => client.care.ask({ question: q, history }), doctors: search => client.care.doctors.list(search ? { search } : undefined) }, condition, lang);
   };
+  // Her stored conversation, shown as Ask opens (the agent answers follow-ups from it).
+  useEffect(() => {
+    if (agent?.history.length) setTurns(ts => ts.length ? ts : agent.history.map(h => ({ question: h.question, reply: replyOf(h.question, h.answer, asks, lang), requestId: newRequestId(), ready: true })));
+  }, [agent]);
   const ask = (question: string) => {
     // Asked (typed, or a suggestion tapped while typing): the keyboard goes down, or it covers the answer and leaves only its chips in view.
     Keyboard.dismiss();
@@ -149,7 +161,7 @@ export default function Assistant() {
     patch(turn.requestId, { rated: turn.rated === r ? undefined : r });
     if (turn.rated !== r) AccessibilityInfo.announceForAccessibility(t("ask.thanks"));
   };
-  const fresh = () => { flood.set(0); setTurns([]); setChat(c => c + 1); };
+  const fresh = () => { flood.set(0); setTurns([]); setChat(c => c + 1); agent?.clear(); };
   const newChat = () => Alert.alert(t("ask.newChatTitle"), t("ask.newChatLine"), [
     { text: t("common.cancel"), style: "cancel" },
     { text: t("ask.newChat"), onPress: fresh },
@@ -158,12 +170,15 @@ export default function Assistant() {
   const joined = state === "joined";
   const canSend = joined && !!draft.trim() && !working;
   const lastAnswer = [...turns].reverse().find(t => t.ready);
+  const link = CareChatLink && <CareChatLink onChat={setAgent} />;
 
   if (voice) return <Animated.View entering={still ? undefined : FadeIn.duration(240)} style={{ flex: 1 }}>
+    {link}
     <VoiceMode questions={rows} answer={askAloud} language={lang} medicines={medicines} first={lastAnswer && spoken(lastAnswer.reply, lang)} onChat={() => setVoice(false)} onType={() => { setTypeNext(true); setVoice(false); }} />
   </Animated.View>;
 
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+    {link}
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 4 }}>
       <CircleButton icon="back" label={t("common.back")} onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} />
       <View style={{ opacity: turns.length ? 1 : 0.4 }} pointerEvents={turns.length ? "auto" : "none"}>
