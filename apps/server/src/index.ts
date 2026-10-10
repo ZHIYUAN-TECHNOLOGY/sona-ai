@@ -119,6 +119,11 @@ app.get("/live", async (c) => {
 // Sona Care's live voice: a WebSocket to the signed-in patient's own voice agent (see agents/voice.ts).
 app.get("/agents/sona-voice-agent/:id", voiceRoute);
 
+// Universal links: the discharge QR (/care/join?code=…) opens Sona Care when it is installed, Sona Care web otherwise.
+app.get("/.well-known/apple-app-site-association", (c) => c.json({
+  applinks: { details: [{ appIDs: ["LTF2YZMF2D.ai.zhiyuantech.sona.care"], components: [{ "/": "/care/join*" }] }] },
+}));
+
 app.get("/", (c) => {
   return c.text("OK");
 });
