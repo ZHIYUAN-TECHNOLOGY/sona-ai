@@ -326,7 +326,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <div class="fact glass"><b>4 surfaces</b><span>Sona Pro on iPhone and web for staff. Sona Care on iPhone and web for patients.</span></div>
     <div class="fact glass"><b>10 models</b><span>All trained by us. All run in AWS Malaysia.</span></div>
     <div class="fact glass"><b>~10 s</b><span>From a 3-minute, 4-person consultation to a full note.</span></div>
-    <div class="fact glass"><b>1,219 commits</b><span>Since the first one on 22 Sep 2026. Two founders, both write code.</span></div>
+    <div class="fact glass"><b>1,348 commits</b><span>Since the first one on 22 Sep 2026. Two founders, both write code.</span></div>
   </div>
 </div></header>
 
@@ -499,6 +499,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <div class="point glass"><h3>Audio not kept</h3><p>Consultation audio is transcribed in memory and not stored. The note and transcript stay in the record.</p></div>
     <div class="point glass"><h3>A person approves</h3><p>Every AI output is a draft until staff approve it. Nothing leaves for an insurer or a patient without a person.</p></div>
     <div class="point glass"><h3>Roles and access log</h3><p>Doctors, nurses, bed managers and management each see what their role needs. Every access is logged.</p></div>
+    <div class="point glass"><h3>Honest answers</h3><p>Sona never says she saved, booked or told anyone unless it happened. When a patient's chat is an emergency, the care team is told every time.</p></div>
     <div class="point glass"><h3>Safety without AI</h3><p>If a model is down, safety still runs on rules: red-flag words always get the 999 line and a care-team task.</p></div>
   </div>
   <div class="feature" style="margin-top:40px">
@@ -520,7 +521,8 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <div><b>1 OCT</b><span>Sona Pro and Sona Care on TestFlight. Live voice calls with Sona.</span></div>
     <div><b>4 TO 7 OCT</b><span>Every model moved to servers in Malaysia. Streaming voice call chosen after a day of live tests.</span></div>
     <div><b>8 OCT</b><span>The whole patient journey recorded in one take across web and both apps.</span></div>
-    <div><b>9 OCT</b><span>1,219 commits. End-to-end test suite across Sona Pro and Sona Care, web and iOS.</span></div>
+    <div><b>9 OCT</b><span>End-to-end test suite across Sona Pro and Sona Care, web and iOS.</span></div>
+    <div><b>11 OCT</b><span>1,348 commits. Dose reminders, missed doses pushed to the doctor's phone, and answers that stream in.</span></div>
   </div>
 </div></section>
 
@@ -599,7 +601,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
 
 <footer><div class="wrap">
   <p class="close">Built in Malaysia. Trained on Malaysia. Runs in Malaysia.</p>
-  <p>Recorded on the staging system, 5 to 9 Oct 2026. Patients, records and the insurer are synthetic.</p>
+  <p>Recorded on the staging system, 5 to 11 Oct 2026. Patients, records and the insurer are synthetic.</p>
   <p style="margin-top:6px">Chest X-ray: Mikael Häggström, M.D. · Wikimedia Commons · CC0 1.0</p>
 </div></footer>
 
@@ -617,15 +619,20 @@ const GROUPS = [
     on: { pi: "Records the room, counts the voices live, names each with one tap, drafts the note.", pw: "Drafts the note from a pasted transcript on the visit page; the note opens there too." },
     clips: [["scribe", "The consultation to the saved note", 1, "pi"], ["scribe-record", "Recording, live voice count", 1, "pi"], ["scribe-who", "Who said what, one tap each", 1, "pi"], ["scribe-note", "Note drafted and saved", 1, "pi"]] },
   { id: "voice", title: "Patients call Sona. It talks back, in their language.", tag: "Voice, speech to speech",
-    what: "Four calls in English, Malay and Chinese: you hear her question, then Sona's answer. Sona answers anything the patient asks, from her own record when it matters, out loud with a Malaysian voice we trained. The orb turns to light while she talks.",
+    what: "Four calls in English, Malay and Chinese: you hear her question, then Sona's answer. Sona answers anything the patient asks, from her own record when it matters, out loud with a Malaysian voice we trained. The orb turns to light while she talks. The call says “Connecting to Sona” until Sona can really hear, then “Listening”.",
     proof: ["Reply starts in 1.5 to 2.25 s", "Malay, English, Chinese"],
-    on: { ci: "Talk to Sona: she speaks, Sona answers aloud in her language.", cw: "Ask Sona by typing; answers come from her record, in her language.", pi: "Staff ask by voice anywhere in the app; the answer lands in the page." },
+    on: { ci: "Talk to Sona: she speaks, Sona answers aloud in her language.", cw: "Ask Sona by typing; the answer streams in as Sona writes it, from her record, in her language.", pi: "Staff ask by voice anywhere in the app; the answer lands in the page with record cards and drafted tasks to confirm." },
     clips: [["voice", "Four calls, sound on", 1, "ci"], ["voice-allergy", "\"Am I allergic to any medicine?\"", 1, "ci"], ["voice-malay", "In Malay: which medicine do I take?", 1, "ci"], ["voice-chinese", "In Chinese: what to watch for", 1, "ci"], ["voice-general", "A general question", 1, "ci"], ["care-web-ask", "Ask Sona on the web, then in Malay", 0, "cw"]] },
   { id: "home", title: "Sona follows her home and brings problems back to the team.", tag: "Sona Care and Sona Pro together",
     what: "Discharge reaches her phone within a second. On day 2 she speaks Malay; Sona answers aloud, hears a red flag, tells her to call 999 and gives the care team a task. Day 2 is the demo clock moved forward, and the clip says so.",
     proof: ["Two apps, one record", "Red flags always reach staff"],
     on: { ci: "Plan and leaflet arrive at discharge; day-2 check-in; a red flag gets the 999 line.", pw: "The care team gets the task and books her in from the flag.", pi: "Urgent messages come first on Today, with a reply Sona drafts for the doctor to edit." },
     clips: [["day2", "Day 2 at home, in Malay", 1, "ci"], ["home-discharge", "Discharge lands on her phone", 0, "both"], ["home-staff", "The care team gets a task", 0, "pw"], ["home-phone", "Her plan and Malay leaflet arrive", 0, "both"], ["home-checkin", "Day-2 check-in flagged to the doctor", 0, "both"], ["home-urgent", "Chest pain: 999 first, staff told", 0, "both"], ["home-booked", "Booked in from the flag", 0, "both"]] },
+  { id: "doses", title: "A missed dose at home reaches her doctor.", tag: "Doses at home",
+    what: "Sona Care reminds her at each dose time, even offline, and the lock screen never names the medicine. She can ask to be reminded again in 15 minutes. If a dose is still not taken 6 hours late, her doctor gets one row on My Day and a push on a locked phone. The demo clock moves the hospital to day 1, and the clip shows it.",
+    proof: ["Medicine name never on the lock screen", "Doctor told after 6 h late", "Doses taken on the huddle brief"],
+    on: { ci: "Reminders at dose times, private on the lock screen; remind me in 15 minutes.", pi: "A push to the locked phone and a My Day row when doses are missed; doses taken on the ward's huddle brief." },
+    clips: [["dose-lock", "Her lock screen at dose time", 0, "ci"], ["dose-later", "Remind me in 15 minutes", 0, "ci"], ["dose-missed", "Doses missed: her doctor's phone", 0, "pi"], ["dose-clock", "The demo clock moves to day 1", 0, "pi"], ["dose-taken", "Doses taken, on the huddle brief", 0, "pi"]] },
   { id: "letter", title: "The insurer says no. Sona appeals. Approved.", tag: "Guarantee letter",
     what: "Sona drafts the insurer's guarantee letter from the note, ties every code to a line of the note, and holds the letter until the insurer's criteria are met. When the insurer denies it, Sona drafts the appeal from the same note; the doctor edits and sends it.",
     proof: ["Every code cites a line of the note", "Not sent until criteria are met"],
@@ -652,9 +659,9 @@ const GROUPS = [
     on: { pw: "The visit page and Sona's brief; every order checked against her record before it is placed (dose, allergies, interactions, kidney and liver); discharge plan and readiness.", pi: "Brief me, what else could this be, scan a handwritten note." },
     clips: [["cl-visit", "The visit page knows her", 0, "pw"], ["cl-dose", "A wrong dose stopped", 0, "pw"], ["cl-ask", "Ask Sona for a brief", 0, "pi"], ["cl-reason", "What else could this be?", 0, "pi"], ["cl-hand", "A handwritten note into the record", 0, "pi"], ["cl-rx", "Allergy checked, order recorded", 0, "pi"], ["cl-discharge", "Discharge plan and readiness", 0, "pw"]] },
   { id: "care", title: "Her own app, in Malay, English or Chinese.", tag: "Sona Care for patients",
-    what: "Her plan, medicines and warning signs in plain words. She asks anything, checks a medicine box by photo, marks doses, reads the leaflet in her language, books a follow-up and carries her health summary to another hospital.",
+    what: "Her plan, medicines and warning signs in plain words. She asks anything and the answer streams in: cards from her record first, then Sona's words as they are written. She checks a medicine box by photo, marks doses, reads the leaflet in her language, books a follow-up and carries her health summary to another hospital.",
     proof: ["Three languages", "Answers say where they came from"],
-    on: { ci: "Her day, doses, photo check of a medicine box, leaflet, booking, Malay and Chinese.", cw: "Her day, Ask Sona, plan and warning signs as a PDF, health summary for another hospital." },
+    on: { ci: "Her day, doses and dose reminders, answers that stream in, photo check of a medicine box, leaflet, booking, Malay and Chinese.", cw: "Her day, Ask Sona with answers that stream in, plan and warning signs as a PDF, health summary for another hospital." },
     clips: [["care-orb", "The orb turns to light as she talks", 1, "ci"], ["care-web-day", "Her day and medicines", 0, "cw"], ["care-summary", "Health summary for another hospital", 0, "cw"], ["care-web-plan", "Plan, warning signs and PDF", 0, "cw"], ["care-plan", "Her plan after discharge", 0, "ci"], ["care-record", "Answers from her own record", 0, "ci"], ["care-worry", "When to worry", 0, "ci"], ["care-dose", "Dose taken", 0, "ci"], ["care-photo", "Is this my medicine?", 0, "ci"], ["care-leaflet", "Her leaflet, in her language", 0, "ci"], ["care-malay", "In Malay", 0, "ci"], ["care-chinese", "In Chinese", 0, "ci"], ["care-doctor", "Which doctor should I see?", 0, "ci"], ["care-book", "Book a follow-up", 0, "ci"]] },
 ];
 

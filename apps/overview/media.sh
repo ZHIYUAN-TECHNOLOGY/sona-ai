@@ -95,3 +95,21 @@ care-book|B/5-sona-care-patient/11-book-a-follow-up.mp4|4.5|
 care-summary|B/14-problem-proofs/health-summary-to-another-hospital.mp4|4.5|
 privacy|B/12-web-ops-and-privacy/02-privacy-de-identified.mp4|4.5|
 LIST
+
+# 11 Oct dose-reminder shots: portrait iPhone recordings, waiting cut, set on the page's light background.
+# id | source | kept seconds as select ranges | poster s
+D=~/Documents/sona-ai/pitch/dose-reminder-2026-10-11
+while IFS='|' read -r id src keep pt; do
+  [[ $# -gt 0 && ! " $* " =~ " $id " ]] && continue
+  [[ -f "$O/$id.mp4" ]] && continue
+  ffmpeg -nostdin -loglevel error -y -i "$D/$src" -an -c:v libx264 -preset slow -crf 26 -movflags +faststart \
+    -vf "fps=30,select='$keep',setpts=N/30/TB,scale=-2:840,pad=1600:900:(ow-iw)/2:(oh-ih)/2:color=0xEEF1F8,format=yuv420p" "$O/$id.mp4"
+  ffmpeg -nostdin -loglevel error -y -ss "$pt" -i "$O/$id.mp4" -frames:v 1 -vf scale=960:-2 -q:v 4 "$O/$id.jpg"
+  printf '%-16s %5.1fs\n' "$id" "$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$O/$id.mp4")"
+done <<'DOSE'
+dose-lock|shot3-care-lockscreen-take.mp4|between(t,28,38)+between(t,65,92)|8
+dose-later|shot2-care-remind-me-later.mp4|between(t,0,9)+between(t,20,29)|4
+dose-clock|shot1-pro-demo-clock-day1.mp4|between(t,0,23)|18
+dose-missed|shot5-pro-missed-dose-push.mp4|between(t,12,23)|6
+dose-taken|shot4-pro-doses-taken.mp4|between(t,0,13)|9
+DOSE
