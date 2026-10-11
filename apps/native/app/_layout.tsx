@@ -10,6 +10,7 @@ import { palette } from "@/components/sona/theme";
 import { BackButton, CloseButton } from "@/components/sona/ui";
 import { CriticalAlert } from "@/features/critical";
 import { LiveUpdates } from "@/features/live/channel";
+import { StaffPush } from "@/features/notifications";
 import { underVisit } from "@/features/encounter/navigation";
 import { EncounterProvider } from "@/features/encounter/store";
 import { ScribePlayback } from "@/features/scribe";
@@ -69,5 +70,5 @@ export default function RootLayout() {
     <Stack.Screen name="library-ocr" options={{ title: "Read with OCR" }} />
     <Stack.Screen name="library-scanned" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
     <Stack.Screen name="library-add" options={{ title: "Add a source" }} />
-  </Stack><LiveUpdates /><CriticalAlert /></EncounterProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
+  </Stack><LiveUpdates /><StaffPush /><CriticalAlert /></EncounterProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
 }

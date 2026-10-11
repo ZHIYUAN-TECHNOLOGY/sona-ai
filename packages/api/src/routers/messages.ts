@@ -13,7 +13,7 @@ import { SAMPLE_PHOTO_KEY } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure } from "../index";
 import { stubModels } from "../models";
-import { tellPatient, when } from "../push";
+import { tellPatient, tellStaff, when } from "../push";
 import type { Role } from "../roles";
 import { lastDischarge, patientPlan } from "./care-plan";
 import { SONA_AUTHOR, ruleOf, tellCall999 } from "./check-ins";
@@ -90,8 +90,10 @@ export const careMessagesRouter = {
       sourceIds: [id], model: triage.source === "model" ? triage.model : "fixture", approvedBy: null,
     }).onConflictDoNothing();
     // The task shares the message's ID, so a replay inserts neither.
-    await db.insert(tasks).values({ id, hospitalId, encounterId: patient!.encounterId, kind: "message", title, owner: "Attending doctor", due: "Today", sourceId: id, idempotencyKey: id })
-      .onConflictDoNothing();
+    const [asked] = await db.insert(tasks).values({ id, hospitalId, encounterId: patient!.encounterId, kind: "message", title, owner: "Attending doctor", due: "Today", sourceId: id, idempotencyKey: id })
+      .onConflictDoNothing().returning({ id: tasks.id });
+    // Only an urgent one is a My Day row, so only that one reaches a locked phone; a resend pushes nothing.
+    if (asked && triage?.label === "urgent") await tellStaff(context, hospitalId, { title: "Urgent message", body: title });
     const at = clockOf(context);
     await db.insert(careMessages).values({ id, hospitalId, patientId, from: "patient", authorId: context.session.user.id, text: input.text, taskId: id, createdAt: at, triage: triage?.label, triageReason: triage?.reason, attachment: input.attachment })
       .onConflictDoNothing();

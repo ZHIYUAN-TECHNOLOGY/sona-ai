@@ -71,6 +71,9 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "evidence.ask": [CARE, "ask for evidence"],
   "evidence.stream": [CARE, "ask for evidence"],
   "adherence.get": [CLINICAL_READ, "see doses taken"],
+  // Clinical detail reaches the phone (a name and what is wrong), so only those who may read it register one.
+  "staffPush.register": [CLINICAL_READ, "get Sona Pro notifications on this phone"],
+  "staffPush.unregister": [CLINICAL_READ, "stop Sona Pro notifications on this phone"],
   "results.list": [CLINICAL_READ, "see results"],
   "results.receive": [CARE, "record a result"],
   "results.acknowledge": [DOCTOR, "acknowledge a result"],

@@ -1,4 +1,4 @@
-import { pushTokens } from "@sona-ai/db/schema/clinical";
+import { pushTokens, staffPushTokens } from "@sona-ai/db/schema/clinical";
 import { appointmentWords } from "@sona-ai/domain/care";
 import { and, eq, inArray } from "drizzle-orm";
 
@@ -25,8 +25,14 @@ export async function unregisterPushToken(db: Context["db"], token: string, user
 }
 
 export async function notifyPatient(context: PushContext, hospitalId: string, patientId: string, push: Push) {
+  const phones = await context.db.select({ token: pushTokens.token }).from(pushTokens).where(and(eq(pushTokens.hospitalId, hospitalId), eq(pushTokens.patientId, patientId)))
+    .catch(error => { console.error("push failed", error); return []; });
+  await send(context, phones, push, gone => context.db.delete(pushTokens).where(inArray(pushTokens.token, gone)));
+}
+
+/** One batch to these phones; the ones Expo says are gone are forgotten (`forget`). Never throws. */
+async function send(context: PushContext, phones: { token: string }[], push: Push, forget: (gone: string[]) => Promise<unknown>) {
   try {
-    const phones = await context.db.select({ token: pushTokens.token }).from(pushTokens).where(and(eq(pushTokens.hospitalId, hospitalId), eq(pushTokens.patientId, patientId)));
     if (!phones.length) return;
     const response = await (context.fetch ?? fetch)(EXPO_PUSH_URL, {
       method: "POST", headers: { "content-type": "application/json", accept: "application/json" },
@@ -37,7 +43,7 @@ export async function notifyPatient(context: PushContext, hospitalId: string, pa
     // One ticket per message, in order.
     const { data = [] } = (await response.json()) as { data?: { status: string; details?: { error?: string } }[] };
     const gone = phones.filter((_, i) => data[i]?.details?.error === "DeviceNotRegistered").map(p => p.token);
-    if (gone.length) await context.db.delete(pushTokens).where(inArray(pushTokens.token, gone));
+    if (gone.length) await forget(gone);
   } catch (error) {
     console.error("push failed", error);
   }
@@ -114,4 +120,25 @@ export async function tellPatient(context: PushContext, hospitalId: string, pati
   } catch (error) {
     console.error("push failed", error);
   }
+}
+
+/** A clinician's phone in Sona Pro; a token that moves to another clinician (a shared phone) follows them. */
+export async function registerStaffToken(db: Context["db"], row: { token: string; platform: string; userId: string; hospitalId: string }) {
+  const { token: _, ...rest } = row;
+  await db.insert(staffPushTokens).values(row).onConflictDoUpdate({ target: staffPushTokens.token, set: { ...rest, updatedAt: new Date() } });
+}
+
+export async function unregisterStaffToken(db: Context["db"], token: string, userId: string) {
+  await db.delete(staffPushTokens).where(and(eq(staffPushTokens.token, token), eq(staffPushTokens.userId, userId)));
+}
+
+/**
+ * What puts a row on My Day, pushed to the hospital's clinicians so it reaches a locked phone: a patient worse or
+ * urgent at home, an urgent message, a booking request, doses missed, a critical result. Tapping opens My Day.
+ * ponytail: every clinician of the hospital with Sona Pro hears it; route by care team or role once there are rosters.
+ */
+export async function tellStaff(context: PushContext, hospitalId: string, news: { title: string; body: string }) {
+  const phones = await context.db.select({ token: staffPushTokens.token }).from(staffPushTokens).where(eq(staffPushTokens.hospitalId, hospitalId))
+    .catch(error => { console.error("push failed", error); return []; });
+  await send(context, phones, { ...news, data: { url: "sona-ai:///" } }, gone => context.db.delete(staffPushTokens).where(inArray(staffPushTokens.token, gone)));
 }

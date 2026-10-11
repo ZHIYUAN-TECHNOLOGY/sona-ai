@@ -14,6 +14,7 @@ import { claimRouter } from "./claim";
 import { completeTask, createTask, dayRouter, patientsRouter, resultsRouter } from "./day"; // lane T, T2
 import { demoRouter } from "./demo";
 import { adherenceRouter } from "./doses";
+import { registerStaffToken, unregisterStaffToken } from "../push";
 import { opsRouter } from "./ops";
 import { dischargeRouter } from "./discharge";
 import { bookingsRouter, careBookingsRouter, careDoctorsRouter } from "./bookings";
@@ -62,6 +63,13 @@ export const appRouter = {
   demo: demoRouter,
   // Sona Care doses taken, read by the care team (flagged rows on My Day say what was missed).
   adherence: adherenceRouter,
+  // Sona Pro on a clinician's phone: its Expo push token, so My Day's urgent rows reach it locked (see ../push tellStaff).
+  staffPush: {
+    register: protectedProcedure.input(z.object({ token: z.string().trim().min(1).max(200), platform: z.enum(["ios", "android"]) }))
+      .handler(async ({ context, input }) => { await registerStaffToken(context.db, { ...input, userId: context.session.user.id, hospitalId: context.hospitalId }); return { registered: true }; }),
+    unregister: protectedProcedure.input(z.object({ token: z.string().trim().min(1).max(200) }))
+      .handler(async ({ context, input }) => { await unregisterStaffToken(context.db, input.token, context.session.user.id); return { registered: false }; }),
+  },
   // Management: this week's numbers from the loops' own rows (the ops counter on the ward view).
   ops: opsRouter,
   // Sona Care, the patient app; `messages` is the care team's side of its thread (announced as "messages")
