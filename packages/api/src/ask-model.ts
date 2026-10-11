@@ -135,13 +135,16 @@ function withGeneral(spec: AskSpec, general: string): AskSpec {
  * failed the spec's check, so a good answer was thrown away and the clinician was told the model was off. The same for a
  * column that is not one of leaves: the rows listed under the lead, an id listed twice or under itself, or a child it
  * never wrote (10 Oct, gate: "his Hb how much ah?"); each id it did write is kept once, under the root. `rows: false` (a
- * page with no rows to copy, as a visit's record is lines only) leaves out any rows it wrote from the lines.
+ * page with no rows to copy, as a visit's record is lines only) leaves out any rows it wrote from the lines; given the
+ * page's row ids, a rows element none of whose rows is one of them is left out the same way (11 Oct: the web's ward
+ * vitals are lines, and Gemma listed the beds she read as rows of her own, so "lowest SpO2 92%, Bed 11" was thrown away).
+ * A rows element mixing the page's rows with others is kept, and groundedSpec refuses it.
  */
-export function lifted<T>(reply: T, rows = true): T {
+export function lifted<T>(reply: T, rows: boolean | Set<string> = true): T {
   const read = reply as any, inner = read?.elements;
   if (!inner || typeof inner !== "object") return reply;
   const { general, evidence, marks, ...rest } = inner;
-  const elements: Record<string, any> = Object.fromEntries(Object.entries(rest).filter(([, el]: [string, any]) => rows || el?.type !== "AskRows").map(([id, el]: [string, any]) => {
+  const elements: Record<string, any> = Object.fromEntries(Object.entries(rest).filter(([, el]: [string, any]) => el?.type !== "AskRows" || rows === true || (rows instanceof Set && !(Array.isArray(el.props?.rows) && el.props.rows.length > 0 && el.props.rows.every((r: any) => !rows.has(r?.id))))).map(([id, el]: [string, any]) => {
     if (el?.type === "AskLead" && typeof el.props?.text === "string") el = { ...el, props: { ...el.props, text: untagged(el.props.text) } };
     if (!el || typeof el !== "object" || Array.isArray(el.children) || !Array.isArray(el.props?.children)) return [id, el];
     const { children, ...props } = el.props;
@@ -190,7 +193,7 @@ export async function freeAnswer(baseten: Baseten, input: { scope: string; quest
   const user = `Page: ${input.scope}\nQuestion: ${input.question}\n\nWhat the page says:\n${context.lines.join("\n") || "(nothing)"}\n\nThe page's rows:\n${context.rows.map(r => JSON.stringify(r)).join("\n") || "(none)"}`;
   try {
     // Through the adapter's box gate: a cold brain is woken and not waited for.
-    const read = lifted(jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 1500, true)), context.rows.length > 0);
+    const read = lifted(jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 1500, true)), context.rows.length > 0 && new Set(context.rows.map(r => r.id)));
     const spec = groundedSpec(read, context, input.question);
     const text = typeof read?.general === "string" ? untagged(read.general).trim().slice(0, LEAD_MAX) : "";
     if (spec) {

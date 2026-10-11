@@ -47,3 +47,11 @@ test("a free answer's marks come in the shared kinds, grouped or as the old list
   expect(await ask([{ text: "Hypokalaemia", kind: "finding" }, { text: "arrhythmias", kind: "alert" }])).toEqual([{ text: "Hypokalaemia", kind: "condition" }, { text: "arrhythmias", kind: "warning" }]);
   expect(await ask(undefined)).toBeUndefined();
 });
+
+test("rows Gemma wrote from the page's lines are left out and her lead kept; rows mixing the page's with her own stay for the check to refuse", () => {
+  const spec = (rows: { id: string }[]) => ({ root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0", "f-1"] }, "f-0": { type: "AskLead", props: { text: "Lowest SpO2 is 92%." }, children: [] }, "f-1": { type: "AskRows", props: { rows }, children: [] } } });
+  const page = new Set(["SYN-1086"]);
+  expect(Object.keys(lifted(spec([{ id: "Bed 11" }, { id: "Bed 12" }]), page).elements)).toEqual(["f", "f-0"]);
+  expect((lifted(spec([{ id: "Bed 11" }]), page).elements as any).f.children).toEqual(["f-0"]);
+  expect(Object.keys(lifted(spec([{ id: "SYN-1086" }, { id: "Bed 11" }]), page).elements)).toEqual(["f", "f-0", "f-1"]);
+});

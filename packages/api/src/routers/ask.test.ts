@@ -95,7 +95,7 @@ test("an invalid or ungrounded free answer is fixture, marked unanswered (the mo
     "not json at all",
     spec("Siti Aminah needs you first."), // a name not on the page
     spec("Daniel's potassium is 2.1."), // a number not on the page
-    spec("Daniel needs you.", [{ ...context.rows[0], id: "SYN-9999" }]), // a row the page doesn't have
+    spec("Daniel needs you.", [context.rows[0], { ...context.rows[0], id: "SYN-9999" }]), // a row the page doesn't have, beside one it does
     spec("Daniel needs you.", [{ ...context.rows[0], detail: "Chest pain" }]), // a row's words changed
     spec("Daniel needs you.", [{ ...context.rows[0], op: "open:SYN-1042" }]), // another row's op
     spec("Daniel needs you.", [{ ...context.rows[0], op: "task-done:SYN-1086:t1" }]),
@@ -110,6 +110,11 @@ test("an invalid or ungrounded free answer is fixture, marked unanswered (the mo
   for (reply of rejected) expect(await client.ask.free(free)).toEqual({ source: "fixture", unanswered: true, ...typeof reply === "object" && "elements" in reply! && { spec: pageSays } });
   // A page that says nothing has nothing to stand in.
   expect(await client.ask.free({ ...free, context: { lines: [], rows: context.rows } })).toEqual({ source: "fixture", unanswered: true });
+  // Rows none of which is the page's (written from its lines) are never shown; the grounded lead still answers.
+  reply = spec("Daniel needs you.", [{ ...context.rows[0], id: "SYN-9999" }]);
+  const kept = await client.ask.free(free) as { source: string; spec: { elements: Record<string, { type: string }> } };
+  expect(kept.source).toBe("model");
+  expect(Object.values(kept.spec.elements).map(e => e.type)).toEqual(["AskColumn", "AskLead"]);
 });
 
 test("a list longer than an answer may show is cut to its first 12 rows, whoever wrote it, instead of failing the whole answer", async () => {
