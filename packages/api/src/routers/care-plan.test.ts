@@ -9,7 +9,7 @@ import { eq, sql } from "drizzle-orm";
 import { patientsFor } from "../audience";
 import type { Change } from "../events";
 import { stubModels, type Models } from "../models";
-import { planText } from "./care-plan";
+import { planText, recordText } from "./care-plan";
 import { scheduleCheckIns } from "./check-ins";
 import { appRouter } from "./index";
 
@@ -135,17 +135,32 @@ test("azithromycin reads as current until its last dose has gone by on the demo 
   clock.now = new Date("2026-09-28T13:59:00+08:00"); // Monday's dose can still be logged
   const during = await read();
   expect(during.medicines.changed[0]).toMatchObject({ line: "Now a tablet once a day, for 2 more days", endsAt: new Date("2026-09-28T08:00:00+08:00") });
-  expect(planText(during)).toContain("- Azithromycin (changed): Now a tablet once a day, for 2 more days; 1 tablet, with or without food; last dose Mon, 28 Sep 2026\n");
+  expect(planText(during, clock.now)).toContain("- Azithromycin (changed): Now a tablet once a day, for 2 more days; 1 tablet, with or without food; at 08:00; last dose Mon, 28 Sep 2026\n");
   clock.now = new Date("2026-09-28T14:00:00+08:00");
   const after = await read();
   expect(after.medicines.changed[0]).toMatchObject({ finished: true, line: "Course finished, nothing left to take" });
-  expect(planText(after)).toContain("- Azithromycin (changed): Course finished, nothing left to take; last dose Mon, 28 Sep 2026\n");
-  expect(planText(after)).toContain("- Cetirizine (continue): Keep taking it as before; 1 tablet at night\n");
+  expect(planText(after, clock.now)).toContain("- Azithromycin (changed): Course finished, nothing left to take; last dose Mon, 28 Sep 2026\n");
+  expect(planText(after, clock.now)).toContain("- Cetirizine (continue): Keep taking it as before; 1 tablet at night; at 21:00\n");
+  // One she still takes with no times says so, so a next dose is not made up; a stopped one says nothing of times.
+  expect(planText(after, clock.now)).toContain("- Paracetamol (new): For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day; no set times\n");
+  expect(planText(after, clock.now)).toContain("- Salbutamol nebuliser (stopped): Use your own inhaler instead, when you need it\n");
   expect((await read("ms")).medicines.changed[0]!.line).toBe("Kursus sudah tamat, tiada lagi untuk diambil");
 });
 
+test("her record says she is home and for how long; only one still in hospital reads that the ward nurse brings each dose", async () => {
+  const { db, clock, discharge } = await world();
+  const record = async () => (await recordText({ db, session: null, now: () => clock.now, hospitalId: "demo", patientId: "SYN-1042" })).text;
+  expect(await record()).toStartWith("Still in hospital: the ward nurse brings each dose;");
+  await discharge("visit-1042", { followUp: "2w", language: "en", dischargedAt: "2026-09-26T00:00:00.000Z" }); // 08:00 in Malaysia
+  expect(await record()).toStartWith("At home since Sat, 26 Sep 2026 08:00 (today)\n");
+  clock.now = new Date("2026-09-28T07:00:00+08:00"); // two Malaysian days on, though not 48 hours
+  const home = await record();
+  expect(home).toStartWith("At home since Sat, 26 Sep 2026 08:00 (2 days)\n");
+  expect(home).not.toContain("ward nurse");
+});
+
 test("the plan's check-ins are the visit's own, including one the check-in agent brought forward", async () => {
-  const { db, amelia, discharge } = await world();
+  const { db, clock, amelia, discharge } = await world();
   const out = "2026-09-26T07:40:00.000Z", amy = { id: "SYN-1042", name: "Amelia Tan" };
   await discharge("visit-1042", { followUp: "2w", language: "en", dischargedAt: out, checkInDays: [2, 7, 14] });
   await scheduleCheckIns(db, "demo", amy, "visit-1042", "en", new Date(out), [2, 7, 14]);
@@ -154,7 +169,7 @@ test("the plan's check-ins are the visit's own, including one the check-in agent
   if (plan.status !== "discharged") throw new Error("expected a discharged plan");
   expect(plan.checkIns.map(c => c.day)).toEqual([2, 4, 7, 14]);
   expect(plan.checkIns[1]!.date).toEqual(new Date("2026-09-30T10:00:00+08:00"));
-  expect(planText(plan)).toContain("Check-ins: day 2, day 4, day 7 and day 14 after discharge");
+  expect(planText(plan, clock.now)).toContain("Check-ins: day 2, day 4, day 7 and day 14 after discharge (Mon, 28 Sep 2026; Wed, 30 Sep 2026; Sat, 03 Oct 2026; Sat, 10 Oct 2026)");
 });
 
 test("the plan and follow-ups come in the language Sona Care asks for, English per string where a word is missing", async () => {

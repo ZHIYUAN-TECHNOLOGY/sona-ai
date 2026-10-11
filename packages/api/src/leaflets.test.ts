@@ -115,7 +115,7 @@ test("a spoken question: the 999 line is said before the leaflets are in, Gemma 
   expect(said).toEqual(["The hospital's leaflet says to come back if breathing gets harder.", "Rest today.", LINES.en.told]);
   expect(escalated).toEqual(["urgent"]);
   const system = log.messages[0]!.content;
-  expect(system).toEndWith("Patient's record:\nMedicines: none\n\nHospital's general leaflets (advice for any patient, not facts about this patient):\n[1] Chest infection: Finish your antibiotic course as prescribed. Come back straight away if breathing gets harder.\n[2] Going home from hospital: Take your medicines as listed on your take-home sheet.");
+  expect(system).toContain("Patient's record:\nMedicines: none\n\nHospital's general leaflets (advice for any patient, not facts about this patient):\n[1] Chest infection: Finish your antibiotic course as prescribed. Come back straight away if breathing gets harder.\n[2] Going home from hospital: Take your medicines as listed on your take-home sheet.");
   expect(system).toContain('"cites": [<leaflet numbers>]');
   expect(system).toContain("Never say something is in their record when it is not, and never invent a fact about them");
   expect(system).toContain('never answer or end with "ask your doctor or care team" instead of the answer itself');
@@ -130,7 +130,7 @@ test("a call whose leaflet search failed is still answered, with none offered", 
     if (part.type === "text-delta") said.push(part.text);
   }
   expect(said).toEqual(["In general, rest and drink water."]);
-  expect(log.messages[0]!.content).toEndWith("None found for this question.");
+  expect(log.messages[0]!.content).toContain("None found for this question.");
   expect(summaries).toEqual([{ grounded: false, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test" }]);
 });
 

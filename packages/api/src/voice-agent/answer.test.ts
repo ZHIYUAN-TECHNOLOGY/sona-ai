@@ -195,7 +195,7 @@ test("server-sent events: text split anywhere (a character's bytes too) comes ba
 test("the chat alternates turns, as chat templates require; flags may be fenced or missing; sentences split as spoken", () => {
   const chat = messagesFor({ question: "after food?", plan: PLAN, language: "ms", history: [{ role: "assistant", content: "Hello." }, { role: "user", content: "When do I take it" }, { role: "user", content: "the antibiotic" }] });
   expect(chat.map(m => [m.role, m.role === "system" ? "" : m.content])).toEqual([["system", ""], ["user", "When do I take it\nthe antibiotic\nafter food?"]]);
-  expect(chat[0]!.content).toContain("answer in Malay");
+  expect(chat[0]!.content).toContain("Say the words in Malay, whatever language their record or the leaflets are in");
 
   expect(flagsOf('```json\n{"triage": "worse", "inPlan": true}\n```\nYour plan says')).toEqual([{ triage: "worse", inPlan: true }, "\nYour plan says"]);
   expect(flagsOf('{"triage": "wor')).toBeUndefined();

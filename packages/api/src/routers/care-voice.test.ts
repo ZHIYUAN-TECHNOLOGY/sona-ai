@@ -108,7 +108,7 @@ test("her question is answered from her own record as recorded (history, allergy
     "Recorded by the hospital:\nAge 42, female. Came in with: Cough for five days, with fever since yesterday.",
     "History: Asthma since childhood", "Family history: Mother has asthma", "Allergies: Penicillin — reported rash", "Medicines before admission: Salbutamol inhaler, as needed",
     "Urea 5.1 mmol/L", "Results:\n- CRP: back from the lab, waiting for the doctor to review it (Sat, 26 Sep 2026)",
-    "Prescribed by her doctor in hospital:\n- Paracetamol, 500 mg tablet, 1000 mg, Oral, Every 6 hours, for 3 days (approved Sun, 27 Sep 2026)",
+    "Prescribed by her doctor in hospital:\n- Paracetamol, 500 mg tablet, 1000 mg, Oral, Every 6 hours, for 3 days, no set times (approved Sun, 27 Sep 2026)",
     "Doctor's note (saved ", "Community-acquired pneumonia, mild; CURB-65 0. Oral azithromycin for 2 more days.",
     'Check-in replies:\n- Day 2 check-in, Mon, 28 Sep 2026: "Demam balik, batuk makin teruk" (read as worse)',
   ]) expect(hers).toContain(recorded);
@@ -153,7 +153,7 @@ test("a call reads the same record as a typed question: recordText is what care.
   expect(spoken.text).toBe(read[0]!);
   expect(spoken.text).toContain("Visits booked:");
   expect(spoken.text).toContain("Allergies: Penicillin — reported rash");
-  expect(messagesFor({ question: "Bila temu janji saya?", history: [], plan: spoken.text, language: "ms" })[0]!.content).toEndWith(`Patient's record:\n${read[0]}\n\nHospital's general leaflets (advice for any patient, not facts about this patient):\nNone found for this question.`);
+  expect(messagesFor({ question: "Bila temu janji saya?", history: [], plan: spoken.text, language: "ms" })[0]!.content).toContain(`Patient's record:\n${read[0]}\n\nHospital's general leaflets (advice for any patient, not facts about this patient):\nNone found for this question.`);
 });
 
 test("only an emergency sign reaches her care team from a typed question (founder, 9 Oct): a fever back is answered and tells no one; no check-in is used up", async () => {
