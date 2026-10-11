@@ -1,15 +1,20 @@
 // Dev only: Sona's answer kit (components/ai) in every state, with Sona content. Rendered by the dev gallery.
+import type { Mark } from "@sona-ai/domain/answer-parts";
 import type { Claim, Reference } from "@sona-ai/domain/evidence";
 import { useEffect, useState } from "react";
 
-import { Artifact, Conversation, Notice, type Phase, Response, RuleAnswer, type RuleRow, Sources, Steps, Suggestions, Turn } from "@/components/ai";
+import { AnswerCards, Artifact, Conversation, Notice, type Phase, Response, Review, RuleAnswer, type RuleRow, Sources, Steps, Suggestions, Turn } from "@/components/ai";
 import { ImageLoader } from "@/components/image-loader";
+import { MarkedFor } from "@/components/marked";
 import { Button, Card, Tabs } from "@/components/primitives";
 import { SonaOrb, SonaOrbMark } from "@/components/sona-orb";
+import { CareAnswer } from "@/features/care-ask/answer";
 import { FilmStage } from "@/features/imaging/film-stage";
 import { LOADER_COPY, type LoaderState } from "@/lib/image-loader";
 import { BLOOM_MS, type OrbState } from "@/lib/sona-orb";
 import "@/styles/film.css";
+
+import { CARE_FACTS, CARE_STEPS, PRO_CARDS } from "./answer-cards";
 
 // A real chest X-ray (CC BY, apps/native/features/imaging/assets/PROVENANCE.md) and a drawn page for the loader.
 const XRAY = new URL("../../../native/features/imaging/assets/normal-pa-chest.jpg", import.meta.url).href;
@@ -112,6 +117,50 @@ function OrbGallery() {
   );
 }
 
+// One sentence with every mark kind, as the model marks it (answer-parts MARK_KINDS).
+const MARKED = "Chest pain with a CRP of 86 is not confirmed as pneumonia yet: keep azithromycin 500 mg twice daily for 3 days and watch the fever.";
+const MARKS: Mark[] = [
+  { text: "Chest pain", kind: "warning" }, { text: "CRP of 86", kind: "test" }, { text: "not confirmed", kind: "caution" }, { text: "pneumonia", kind: "condition" },
+  { text: "azithromycin", kind: "medicine" }, { text: "500 mg twice daily for 3 days", kind: "dose" }, { text: "fever", kind: "symptom" },
+];
+// Pretends to make an action's call, so the receipt shows.
+const pretend = () => new Promise(done => setTimeout(done, 700));
+
+/**
+ * Every answer card kind (dev/answer-cards.ts) and every mark kind, in each app's look, at the Sona panel's width
+ * (about 400 px: cards stack) or wide (two abreast): what the cards' container query does.
+ */
+function CardsGallery() {
+  const [look, setLook] = useState<"pro" | "care">("care");
+  const [width, setWidth] = useState<"panel" | "wide">("panel");
+  return (
+    <Card title="Answer cards">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+        <Tabs label="App" value={look} onChange={setLook} tabs={[{ id: "care", label: "Sona Care" }, { id: "pro", label: "Sona Pro" }]} />
+        <Tabs label="Width" value={width} onChange={setWidth} tabs={[{ id: "panel", label: "Panel, 400 px" }, { id: "wide", label: "Wide" }]} />
+      </div>
+      <div className={look} style={{ maxWidth: width === "panel" ? 400 : 760, borderRadius: 16, background: "var(--canvas)" }}>
+        <Conversation className="ai-gallery-cards">
+          <Turn question="Is my potassium OK, and when do I see Dr. Lim?" by="Sona Med">
+            <p style={{ margin: 0 }}><MarkedFor app={look} text={MARKED} marks={MARKS} /></p>
+            <AnswerCards cards={look === "care" ? CARE_FACTS : PRO_CARDS} app={look} confirm={pretend} />
+          </Turn>
+          <Turn question="What should I watch for at home?" by="Sona Med">
+            <AnswerCards cards={CARE_STEPS} app={look} confirm={pretend} />
+            <Review title="Discharge Amelia Tan today?" items={["Oral switch done", "Afebrile 48 h"]} what="Ask.free's confirm card: an op the web cannot run." confirm="Discharge" done="Discharged." />
+          </Turn>
+          {look === "care" ? (
+            <Turn question="I have chest pain and can't breathe">
+              <CareAnswer reply={{ answer: "Chest pain with trouble breathing needs care now. Call 999.", urgent: true, grounded: false, marks: [{ text: "Chest pain", kind: "warning" }, { text: "Call 999", kind: "warning" }], cards: [{ type: "warning", level: "urgent", title: "Call 999 if", items: ["Chest pain", "Lips turning blue"] }] }} />
+            </Turn>
+          ) : null}
+        </Conversation>
+      </div>
+      <style>{".ai-gallery-cards { height: 720px; }"}</style>
+    </Card>
+  );
+}
+
 export function AiGallery({ worst }: { worst?: boolean }) {
   const [look, setLook] = useState<"pro" | "care">("pro");
   const [phase, setPhase] = useState<Phase>("read");
@@ -124,6 +173,7 @@ export function AiGallery({ worst }: { worst?: boolean }) {
 
   return (
     <>
+    <CardsGallery />
     <OrbGallery />
     <LoaderGallery />
     <FilmScanGallery />

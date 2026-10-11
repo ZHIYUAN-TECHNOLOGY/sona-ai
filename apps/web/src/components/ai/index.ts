@@ -1,6 +1,7 @@
 // Sona's answer kit: our own take on Vercel's AI Elements (conversation, reasoning steps, response with inline
-// citations, sources, suggestions, artifact, composer), in plain CSS on the design tokens (styles/ai.css). Props only,
-// no fetching, except the composer's voice transcription.
+// citations, sources, suggestions, an answer's cards and drafted actions, artifact, composer), in plain CSS on the
+// design tokens (styles/ai.css). Props only, no fetching, except the composer's voice transcription.
+export { AnswerCards, Review } from "./answer-cards";
 export { Artifact } from "./artifact";
 export { Composer, focusComposer } from "./composer";
 export { Conversation, Notice, Shimmer, SonaMark, Suggestions, Turn } from "./conversation";

@@ -1,4 +1,5 @@
 import { can } from "@sona-ai/api/roles";
+import { partsOf } from "@sona-ai/domain/answer-parts";
 import type { Reference } from "@sona-ai/domain/evidence";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -104,6 +105,8 @@ function TurnView({ turn, last, picked, onPick, onAsk }: { turn: Turn; last: boo
   const byN = new Map(references.map(r => [r.n, r]));
   const film = (r: Reference) => r.encounterId ? <FilmCard reference={r} encounterId={r.encounterId} picked={picked === r.n} onPick={() => onPick(r.n)} /> : null;
   const asked = answer?.claims.length ? answer.followUps : [];
+  // The words the model coloured, once the answer carries them; until then the word lists colour.
+  const { marks } = partsOf(answer);
   return (
     <AnswerTurn question={turn.question} by={answer && !label ? answerBy(answer) : undefined}>
       {turn.failed ? (
@@ -113,13 +116,13 @@ function TurnView({ turn, last, picked, onPick, onAsk }: { turn: Turn; last: boo
           <Steps phase={phaseOf(turn)} sources={references.length || undefined} />
           {label && <span className="ev-label"><Chip tone="soon">{label}</Chip></span>}
           {(answer || turn.bottomLine || turn.claims.length > 0) && (
-            <Response bottomLine={turn.bottomLine} claims={turn.claims} references={references} onCite={onPick}>
+            <Response bottomLine={turn.bottomLine} claims={turn.claims} references={references} onCite={onPick} marks={marks}>
               {points.length > 0 && (
                 <section className="ev-points" aria-label="For this patient">
                   <h4>For this patient</h4>
                   <ul>
                     {points.map((p, i) => (
-                      <li key={i}><Marked text={p.text} /><span className="ai-cites">{p.cites.map(n => <InlineCitation key={n} n={n} reference={byN.get(n)} onSelect={onPick} />)}</span>
+                      <li key={i}><Marked text={p.text} marks={marks} /><span className="ai-cites">{p.cites.map(n => <InlineCitation key={n} n={n} reference={byN.get(n)} onSelect={onPick} />)}</span>
                         <span className="ev-fact">From the record: “{p.fact}”</span>
                       </li>
                     ))}
@@ -128,7 +131,7 @@ function TurnView({ turn, last, picked, onPick, onAsk }: { turn: Turn; last: boo
               )}
               {answer && answer.claims.length === 0 && (
                 <Notice kind="empty" action={last ? <Suggestions items={answer.followUps.length ? answer.followUps : EXAMPLES} onPick={onAsk} /> : undefined}>
-                  {answer.general ? <>The sources did not answer this. General knowledge, not from the sources: <Marked text={answer.general} /></> : "The sources did not answer this question."}
+                  {answer.general ? <>The sources did not answer this. General knowledge, not from the sources: <Marked text={answer.general} marks={marks} /></> : "The sources did not answer this question."}
                 </Notice>
               )}
               {answer && "cutShort" in answer && answer.cutShort && <p className="ev-note">The answer was cut short. Ask again for the rest.</p>}

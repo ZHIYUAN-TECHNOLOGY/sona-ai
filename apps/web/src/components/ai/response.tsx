@@ -1,3 +1,4 @@
+import type { Mark } from "@sona-ai/domain/answer-parts";
 import type { Claim, Reference } from "@sona-ai/domain/evidence";
 import { type PointerEvent, type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
@@ -87,17 +88,18 @@ export function InlineCitation({ n, reference, onSelect }: { n: number; referenc
 /**
  * An answer's text: the bottom line in bold, then its claims as a tight list, each with its citation chips. Claims
  * that arrive later (streaming) fade in. `onCite` replaces the default citation click (open the Sources at it).
+ * `marks`: the words the model chose to colour, when it sent them (`partsOf`); else the word lists colour.
  * `children` follow the claims (Sources, Suggestions).
  */
-export function Response({ bottomLine, claims, references = [], onCite, children }: { bottomLine?: string; claims: Claim[]; references?: Reference[]; onCite?: (n: number) => void; children?: ReactNode }) {
+export function Response({ bottomLine, claims, references = [], onCite, marks, children }: { bottomLine?: string; claims: Claim[]; references?: Reference[]; onCite?: (n: number) => void; marks?: Mark[]; children?: ReactNode }) {
   const byN = new Map(references.map(r => [r.n, r]));
   return (
     <div className="ai-response">
-      {bottomLine ? <p className="ai-bottom-line"><Marked text={bottomLine} /></p> : null}
+      {bottomLine ? <p className="ai-bottom-line"><Marked text={bottomLine} marks={marks} /></p> : null}
       {claims.length ? (
         <ul className="ai-claims">
           {claims.map((c, i) => (
-            <li key={i}><Marked text={c.text} /><span className="ai-cites">{c.cites.map(n => <InlineCitation key={n} n={n} reference={byN.get(n)} onSelect={onCite} />)}</span></li>
+            <li key={i}><Marked text={c.text} marks={marks} /><span className="ai-cites">{c.cites.map(n => <InlineCitation key={n} n={n} reference={byN.get(n)} onSelect={onCite} />)}</span></li>
           ))}
         </ul>
       ) : null}

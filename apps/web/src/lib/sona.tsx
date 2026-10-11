@@ -1,15 +1,16 @@
+import { type ActionCard, type Mark, partsOf } from "@sona-ai/domain/answer-parts";
 import type { Reference } from "@sona-ai/domain/evidence";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { createContext, isValidElement, type ReactNode, type RefObject, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Conversation, Notice, Response, RuleAnswer, Sources, Steps, Suggestions, Turn as Asked } from "@/components/ai";
+import { AnswerCards, Conversation, Notice, Response, Review, RuleAnswer, Sources, Steps, Suggestions, Turn as Asked } from "@/components/ai";
 import { MarkedFor } from "@/components/marked";
-import type { Chosen } from "../../../care/features/assistant/terms";
 import { Button } from "@/components/primitives";
+import { CareAnswer, type CareReply, spokenOf } from "@/features/care-ask/answer";
 import { FilmCard } from "@/features/evidence/film-card";
 import { answerBy, answerFilm } from "@/features/evidence/thread";
 
-import { client } from "./orpc";
+import { client, queryClient } from "./orpc";
 import { type FreeAnswer, historyOf, phaseOf, rowPatient, rulesAnswer, type Said, type SonaAnswer } from "./sona-answer";
 import { PANEL_KEY, type PanelState, parsePanel } from "./sona-panel";
 
@@ -44,11 +45,30 @@ export function plain(e: unknown): string {
 const isAnswer = (value: unknown): value is SonaAnswer => typeof value === "object" && value !== null && !isValidElement(value) && "kind" in value;
 const asAnswer = (value: SonaAnswer | ReactNode): SonaAnswer => (isAnswer(value) ? value : typeof value === "string" ? { kind: "text", text: value } : { kind: "node", node: value });
 
+/**
+ * A call an answer's button made: what went wrong comes back in plain words; once it worked, every page showing what it
+ * changed reads it again. ponytail: refetches every active query; name the keys if that ever costs.
+ */
+const called = (call: Promise<unknown>) => call.then(() => { void queryClient.invalidateQueries(); }, (e: unknown) => { throw new Error(plain(e)); });
+
+/**
+ * Confirms a card Sona drafted with the procedure the app's own pages call, its payload checked again there
+ * (answer-parts: book, logDose, logReading and tellCareTeam are a patient's, createTask a clinician's).
+ */
+export const confirmCard = (card: ActionCard, requestId: string) => called(
+  card.do === "book" ? client.care.bookings.request(card.payload)
+    : card.do === "logDose" ? client.care.doses.take(card.payload)
+    // The server refuses a kind outside its reading kinds.
+    : card.do === "logReading" ? client.care.readings.add(card.payload as Parameters<typeof client.care.readings.add>[0])
+    : card.do === "tellCareTeam" ? client.care.messages.send({ ...card.payload, requestId })
+    : client.tasks.create({ ...card.payload, requestId }),
+);
+
+/** Sona Care's default in the panel: care.ask with the thread so far, drawn as the Ask page draws it (no 999 card lost). */
 async function askCare(question: string, _update: unknown, history: Said[]): Promise<SonaAnswer> {
-  const res = (await client.care.ask({ question, history })) as { answer?: string; careTeam?: { line?: string }; sources?: { title: string }[]; marks?: Chosen[] };
+  const res = (await client.care.ask({ question, history })) as CareReply;
   if (!res.answer) throw new Error("Sona can't answer right now. Please try again in a minute.");
-  const text = [res.answer, res.careTeam?.line].filter(Boolean).join("\n\n");
-  return { kind: "text", text, ...res.marks && { marks: res.marks }, ...(res.sources?.length ? { note: `From: ${res.sources.map(source => source.title).join(", ")}` } : {}) };
+  return { kind: "node", text: spokenOf(res), node: <CareAnswer reply={res} confirm={confirmCard} /> };
 }
 
 /** The Sona panel's default in Sona Pro: the server reads the hospital's Today, Ward and Tasks itself (scope "web") and answers, by rule when the model is off. */
@@ -134,8 +154,8 @@ export function useSonaContext(label: string | undefined) {
   }, [label, setContext]);
 }
 
-/** An answer's paragraphs, its words coloured as the app colours them (Sona Care: medicine, dose, warning; Sona Pro: its five). */
-const paragraphs = (text: string, app: App, chosen?: Chosen[]) => text.split(/\n{2,}/).map((line, i) => <p key={i}><MarkedFor app={app} text={line} chosen={chosen} /></p>);
+/** An answer's paragraphs, its words coloured as the app colours them: the model's `marks` when it sent them, else the word lists. */
+const paragraphs = (text: string, app: App, marks?: Mark[]) => text.split(/\n{2,}/).map((line, i) => <p key={i}><MarkedFor app={app} text={line} marks={marks} /></p>);
 
 /** Who wrote an answer, for the caption under Sona's mark: "rules", the model, or what stood in for it. */
 function byOf(answer?: SonaAnswer) {
@@ -147,6 +167,7 @@ function byOf(answer?: SonaAnswer) {
 /** A visit's answer as it arrives: the steps, the film when it leads, the claims with citations, then sources and what to ask next. */
 function EvidenceAnswer({ answer: { turn, encounterId }, ask }: { answer: Extract<SonaAnswer, { kind: "evidence" }>; ask: (q: string) => void }) {
   const done = turn.answer;
+  const { marks } = partsOf(done);
   const film = answerFilm(turn.references, turn.claims, encounterId);
   // On a patient's page, only that visit's films.
   const filmOf = (r: Reference) => (r.encounterId && (!encounterId || r.encounterId === encounterId) ? <FilmCard reference={r} encounterId={r.encounterId} /> : null);
@@ -157,11 +178,11 @@ function EvidenceAnswer({ answer: { turn, encounterId }, ask }: { answer: Extrac
       <Steps phase={phaseOf(turn)} sources={turn.references.length || undefined} />
       {film ? <FilmCard reference={film} encounterId={film.encounterId!} /> : null}
       {written ? (
-        <Response bottomLine={turn.bottomLine} claims={turn.claims} references={turn.references}>
+        <Response bottomLine={turn.bottomLine} claims={turn.claims} references={turn.references} marks={marks}>
           {done ? <><Sources references={turn.references} image={filmOf} />{next}</> : null}
         </Response>
       ) : done?.general ? (
-        <div className="sona-general"><p className="sona-note">General knowledge, not from the sources</p>{paragraphs(done.general, "pro")}{next}</div>
+        <div className="sona-general"><p className="sona-note">General knowledge, not from the sources</p>{paragraphs(done.general, "pro", marks)}{next}</div>
       ) : done ? <Notice kind="empty" action={next} /> : null}
     </>
   );
@@ -175,12 +196,23 @@ function Answer({ turn, ask }: { turn: Turn; ask: (q: string) => void }) {
   if (!answer) return <Notice kind="thinking" />;
   if (answer.kind === "evidence") return <EvidenceAnswer answer={answer} ask={ask} />;
   if (answer.kind === "node") return answer.node;
-  if (answer.kind === "text") return <div className="sona-text">{paragraphs(answer.text, app, answer.marks)}{answer.note ? <p className="sona-note">{answer.note}</p> : null}</div>;
+  if (answer.kind === "text") return <div className="sona-text">{paragraphs(answer.text, app)}{answer.note ? <p className="sona-note">{answer.note}</p> : null}</div>;
   const open = (row: { op?: string }) => {
     const patientId = rowPatient(row);
-    if (patientId) void navigate({ to: "/pro/patients/$patientId", params: { patientId } });
+    return patientId ? navigate({ to: "/pro/patients/$patientId", params: { patientId } }) : undefined;
   };
-  return <RuleAnswer lead={answer.lead} rows={answer.rows} heading={answer.heading} onOpen={open} chosen={answer.marks} />;
+  const { review } = answer;
+  // A confirm card's op on the web: open a patient, or mark a task done (`task-done:<patient>:<task>`); the rest are the phone's pages.
+  const task = review?.op.startsWith("task-done:") ? review.op.split(":").at(-1) : undefined;
+  const run = review && (rowPatient(review) ? () => open(review)! : task ? () => called(client.tasks.complete({ taskId: task })) : undefined);
+  return (
+    <>
+      <RuleAnswer lead={answer.lead} rows={answer.rows} heading={answer.heading} onOpen={open} marks={answer.marks} />
+      {answer.general ? <p className="sona-note">General answer · not from this hospital's records</p> : null}
+      {review ? <Review {...review} onConfirm={run} off="Open this in the Sona app to do it." /> : null}
+      {answer.cards ? <AnswerCards cards={answer.cards} app={app} confirm={confirmCard} /> : null}
+    </>
+  );
 }
 
 /** The page's turns as a thread that follows the newest: the Sona panel's body. Nothing until the first question. */
@@ -219,7 +251,7 @@ export function SonaThread() {
               {turn.state === "error" ? <p>{turn.error}</p>
                 : turn.state === "pending" || !answer ? <p className="sona-turn-note">Sona is thinking…</p>
                 : answer.kind === "node" ? answer.node
-                : answer.kind === "text" ? <>{paragraphs(answer.text, app, answer.marks)}{answer.note ? <p className="sona-turn-note">{answer.note}</p> : null}</>
+                : answer.kind === "text" ? <>{paragraphs(answer.text, app)}{answer.note ? <p className="sona-turn-note">{answer.note}</p> : null}</>
                 : <p><MarkedFor app={app} text={(answer.kind === "rules" ? answer.lead : answer.turn.bottomLine) ?? ""} /></p>}
             </div>
           </article>

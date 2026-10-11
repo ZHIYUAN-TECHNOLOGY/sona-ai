@@ -28,3 +28,12 @@ test("the call's wire format: encode, decode, captions, mic PCM and the gate", (
   for (let i = 0; i < 5; i++) ({ gate: g, mark } = step(g, 0, 100, false));
   expect(mark).toBe("end_of_speech");
 });
+
+test("a call answer's sona_turn brings its 999 flag and coloured words, until the next answer starts", () => {
+  const said = reduce(quiet, parse('{"type":"transcript_end","text":"Chest pain needs care now."}')!);
+  const turn = reduce(said, parse('{"type":"sona_turn","grounded":false,"urgent":true,"source":"model","marks":[{"text":"Chest pain","kind":"alert"},{"text":"x","kind":"sparkle"}]}')!);
+  expect(turn).toMatchObject({ said: "Chest pain needs care now.", urgent: true, marks: [{ text: "Chest pain", kind: "warning" }] });
+  // An older agent's sona_turn has no marks: the word lists colour, as before.
+  expect(reduce(said, parse('{"type":"sona_turn","grounded":true,"urgent":false}')!)).toMatchObject({ urgent: false, marks: undefined });
+  expect(reduce(turn, { type: "transcript_start", role: "assistant" })).toMatchObject({ said: "", urgent: undefined, marks: undefined });
+});

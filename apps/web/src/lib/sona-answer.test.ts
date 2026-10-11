@@ -28,15 +28,23 @@ test("an ask spec becomes a rule answer: lead, rows, only patient ops kept, who 
   expect(answer!.rows.map(rowPatient)).toEqual(["p1", undefined]);
 });
 
-test("calm rows are counted, a review adds its items, the model is named, and an empty spec is no answer", () => {
+test("calm rows are counted, a review stays a confirm card, the model is named, and an empty spec is no answer", () => {
   const calm = rulesAnswer({ source: "model", model: "gemma-4-26b-a4b", spec: spec(
     { type: "AskLead", props: { text: "Two visits today." } },
     { type: "AskRows", props: { rows: [{ id: "a", title: "A", detail: "9:00", tone: "calm" }, { id: "b", title: "B", detail: "10:00", tone: "calm" }] } },
   ) });
   expect(calm).toMatchObject({ by: "Sona Med", heading: "2 items" });
-  const review = rulesAnswer({ source: "fixture", spec: spec({ type: "AskReview", props: { title: "Discharge Amelia?", items: ["Oral switch done"] } }) });
-  expect(review).toEqual({ kind: "rules", lead: "Discharge Amelia?", rows: [{ title: "Oral switch done", tone: "calm" }], heading: "1 item", by: undefined });
+  const ask = { title: "Discharge Amelia?", items: ["Oral switch done"], what: "Marks her task done.", confirm: "Mark done", done: "Done.", op: "task-done:p1:t1" };
+  expect(rulesAnswer({ source: "fixture", spec: spec({ type: "AskReview", props: ask }) })).toEqual({ kind: "rules", lead: "", rows: [], review: ask, by: undefined });
   expect(rulesAnswer({ source: "fixture" })).toBeUndefined();
+});
+
+test("ask.free's parts ride beside the spec: old mark kinds read as new, cards kept, a general answer labelled; a card alone is an answer", () => {
+  const potassium = { type: "result", test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low", source: "Lab result" };
+  const answer = rulesAnswer({ source: "model", model: "gemma-4-26b-a4b", general: true, spec: spec({ type: "AskLead", props: { text: "Hypokalaemia: low potassium of 3.1." } }),
+    marks: [{ text: "Hypokalaemia", kind: "finding" }, { text: "low potassium of 3.1", kind: "alert" }], cards: [potassium, { type: "chart" }] });
+  expect(answer).toMatchObject({ marks: [{ text: "Hypokalaemia", kind: "condition" }, { text: "low potassium of 3.1", kind: "warning" }], cards: [potassium], general: true });
+  expect(rulesAnswer({ source: "model", cards: [potassium] })).toMatchObject({ lead: "", rows: [], cards: [potassium] });
 });
 
 test("stream events move an evidence turn through search, read, write and done", () => {

@@ -1,5 +1,7 @@
+import type { Mark } from "@sona-ai/domain/answer-parts";
+
 import { Icon } from "@/components/icon";
-import { Marked, type ProChosen } from "@/components/marked";
+import { Marked } from "@/components/marked";
 
 import { type RuleTone, ruleHeading } from "./summary";
 import "@/styles/ai.css";
@@ -13,10 +15,10 @@ const TONE_WORD: Record<RuleTone, string> = { urgent: "Urgent", soon: "Soon", go
  * ("2 patients need you", or `heading`), then one row per item with its tone dot, title and detail. A row with an `op`
  * opens with `onOpen(row)` and shows a chevron.
  */
-export function RuleAnswer({ lead, rows, noun, heading, onOpen, chosen }: { lead: string; rows: RuleRow[]; noun?: [string, string]; heading?: string; onOpen?: (row: RuleRow) => void; /** The words the model chose to colour in the lead. */ chosen?: ProChosen[] }) {
+export function RuleAnswer({ lead, rows, noun, heading, onOpen, marks }: { lead: string; rows: RuleRow[]; noun?: [string, string]; heading?: string; onOpen?: (row: RuleRow) => void; /** The words the model chose to colour in the lead. */ marks?: Mark[] }) {
   return (
     <div className="ai-rule">
-      {lead.split(/\n{2,}/).map((part, i) => <p key={i} className={i ? "ai-general" : "ai-bottom-line"}><Marked text={part} chosen={chosen} /></p>)}
+      {lead ? lead.split(/\n{2,}/).map((part, i) => <p key={i} className={i ? "ai-general" : "ai-bottom-line"}><Marked text={part} marks={marks} /></p>) : null}
       {rows.length ? (
         <div className="ai-rule-group">
           <p className="ai-rule-heading">{heading ?? ruleHeading(rows, noun)}</p>
