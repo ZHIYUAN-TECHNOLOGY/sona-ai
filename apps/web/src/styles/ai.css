@@ -271,6 +271,8 @@ a.ai-card:active { transform: scale(0.99); }
 .ai-review-what, .ai-review-off { margin: 0; font-size: var(--text-small); line-height: 1.4; color: var(--muted); }
 .ai-review-error { margin: 0; font-size: var(--text-small); line-height: 1.4; font-weight: 600; color: var(--amber); }
 .ai-review-act { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-top: var(--space-1); }
+/* Sona Care's 48px tap floor for a patient's confirm button (Pro keeps the small one). */
+.care .ai-review-act .btn { min-height: var(--tap); }
 .ai-review-done {
   display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 12px 14px; border-radius: var(--radius-group);
   background: var(--green-wash); color: var(--ink); font-weight: 600; line-height: 1.4; outline: none; transition: opacity 200ms var(--ai-ease);
@@ -280,4 +282,8 @@ a.ai-card:active { transform: scale(0.99); }
 @media (hover: hover) {
   a.ai-card:hover { background: var(--surface); }
   a.ai-card:hover .ai-card-go { transform: translateX(2px); color: var(--ink); }
+}
+@media (prefers-reduced-motion: reduce) {
+  a.ai-card, .ai-card-go, .ai-review-done { transition: none; }
+  a.ai-card:active, a.ai-card:hover .ai-card-go { transform: none; }
 }
