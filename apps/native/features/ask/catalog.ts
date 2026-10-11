@@ -6,7 +6,8 @@ import { ASK_PROPS as PROPS, checkAskSpec } from "@sona-ai/api/ask-spec";
  * The parts a Sona answer on a page is built from (docs/design-direction.md, Sona on every page).
  * The app's own rules fill them from its data; a free question's answer (ask.free) is built by the
  * model from the same parts, checked on the server with the same schemas (@sona-ai/api/ask-spec).
- * Actions are op strings the app owns and checks (`runOp`), never code.
+ * Actions are op strings the app owns and checks (`runOp`), never code. An answer's cards are not a part here: they ride
+ * beside the spec (`Answer.cards`, drawn by ./cards.tsx), so an older build's check never refuses a newer answer.
  */
 export const askCatalog = defineCatalog(schema, {
   actions: {},

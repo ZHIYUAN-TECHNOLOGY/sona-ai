@@ -1,4 +1,5 @@
 import type { Spec } from "@json-render/core";
+import type { AnswerCard, Mark } from "@sona-ai/domain/answer-parts";
 import { formatRM } from "@sona-ai/domain/audit";
 import { bedKind } from "@sona-ai/domain/ward";
 import { waited } from "@/features/inbox/state";
@@ -13,8 +14,10 @@ export type Row = { id: string; title: string; detail: string; tone: Tone; op?: 
 /**
  * `worth` is whether the answer has anything to show; only then is it offered as the page's ✦ suggestion.
  * `action` is what that suggestion says when the answer leads to a review card (it still opens the answer, then the review, then a receipt).
+ * A model's answer (ask.free) may also carry the words of its lead to colour (`marks`; none: leave it plain) and the
+ * record's cards shown under it (`cards`), both from @sona-ai/domain/answer-parts.
  */
-export type Answer = { id: string; question: string; spec: Spec; worth: boolean; action?: string };
+export type Answer = { id: string; question: string; spec: Spec; worth: boolean; action?: string; marks?: Mark[]; cards?: AnswerCard[] };
 
 export const SCOPE_LABEL: Record<Scope, string> = { discharge: "This discharge", claim: "This guarantee letter", xray: "This X-ray", today: "Your day", patients: "Patients", tasks: "Your tasks", ward: "Ward 4B", handover: "Handover", inbox: "Messages", audit: "Coding audit", training: "Training data", note: "This note", scan: "This scan", visit: "This visit" };
 export const PLACEHOLDER: Record<Scope, string> = { discharge: "Ask about this discharge…", claim: "Ask about this letter…", xray: "Ask about this X-ray…", today: "Ask about your day…", patients: "Ask about your patients…", tasks: "Ask about your tasks…", ward: "Ask about the ward…", handover: "Ask about the handover…", inbox: "Ask about your messages…", audit: "Ask about the audit…", training: "Ask about training data…", note: "Ask about this note…", scan: "Ask about this scan…", visit: "Ask anything…" };
@@ -108,11 +111,11 @@ export function leadOf(answer: Answer): string | undefined {
   return (lead?.props as { text?: string } | undefined)?.text;
 }
 
-/** The answer without its lead, for when the lead is said above it; undefined when the lead was all of it. */
+/** The answer without its lead, for when the lead is said above it; undefined when the lead was all of it (its cards count too). */
 export function withoutLead(answer: Answer): Answer | undefined {
   const { root, elements } = answer.spec, top = elements[root];
   const children = top?.children?.filter(id => elements[id]?.type !== "AskLead") ?? [];
-  if (!top || !children.length) return undefined;
+  if (!top || (!children.length && !answer.cards?.length)) return undefined;
   const kept = Object.fromEntries(Object.entries(elements).filter(([, e]) => e.type !== "AskLead"));
   return { ...answer, spec: { ...answer.spec, elements: { ...kept, [root]: { ...top, children } } } };
 }

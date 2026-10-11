@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { askContextSchema } from "@sona-ai/api/ask-spec";
-import { askContext, beforeSigning, forWhichPatient, blocking, exportBlockers, leadOf, matchQuestion, mostMoney, needsYou, noteNext, overdue, soonest, suggestion, toCheck, toFollowUp, toWatch, waitingLongest, withoutLead } from "./answers";
+import { askContext, beforeSigning, column, forWhichPatient, blocking, exportBlockers, leadOf, matchQuestion, mostMoney, needsYou, noteNext, overdue, soonest, suggestion, toCheck, toFollowUp, toWatch, waitingLongest, withoutLead } from "./answers";
 import { validateAskSpec } from "./catalog";
 import { withSaved } from "./saved";
 
@@ -176,4 +176,11 @@ test("attachments sent from Today ask whose they are: each patient a row that op
   expect(validateAskSpec(a.spec)).not.toBeNull();
   const rows = Object.values(a.spec.elements).find(e => e.type === "AskRows").props.rows;
   expect(rows).toEqual([{ id: "SYN-1042", title: "Amelia Tan", detail: "42 · Respiratory review", tone: "calm", op: "open:SYN-1042" }]);
+});
+
+test("a lead-only answer with cards keeps them once its lead is said above it", () => {
+  const card = { type: "steps", title: "Next", items: ["Recheck U&E"] };
+  const answer = { id: "free", question: "Q", worth: true, spec: column("f", [{ type: "AskLead", props: { text: "Potassium is low." } }]), cards: [card] };
+  expect(withoutLead(answer).cards).toEqual([card]);
+  expect(withoutLead({ ...answer, cards: undefined })).toBeUndefined();
 });
