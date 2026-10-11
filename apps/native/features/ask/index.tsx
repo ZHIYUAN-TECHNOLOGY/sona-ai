@@ -106,7 +106,8 @@ export function answerNow(question: string, answers: Answer[], live: boolean): R
 export async function answerFree(scope: Scope, question: string, answers: Answer[], encounterId?: string): Promise<Reply> {
   try {
     // A visit's question sends the visit too: the server adds its patient's record, so "her last potassium" is answered from it.
-    const r = await api.ask.free({ scope, question, context: askContext(answers), encounterId });
+    // `cards`: this build shows them, so the server may draft a task to confirm (an older server ignores it).
+    const r = await api.ask.free({ scope, question, context: askContext(answers), encounterId, cards: true });
     // Its coloured words and cards ride beside the spec, read loosely: what this app cannot read is left out, never the answer.
     const free = (spec: unknown): Answer => { const { marks, cards } = partsOf(r); return { id: "free", question, spec: spec as Answer["spec"], worth: true, ...marks && { marks }, ...cards && { cards } }; };
     // A clinical question the literature answers (the model's own reading of it, not a word list) goes to the evidence, cited.

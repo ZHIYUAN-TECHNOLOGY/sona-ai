@@ -2,13 +2,14 @@ import { encounters, patients } from "@sona-ai/db/schema/clinical";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { webAnswer } from "../ask-context";
+import { webAnswer, webPage } from "../ask-context";
 import { proCards } from "../answer-cards";
 import { freeAnswer, routeRequest } from "../ask-model";
 import { askContextSchema, type AskContext } from "../ask-spec";
 import type { Context } from "../context";
-import { decideTurn, laneOf, proLane } from "../decide";
+import { decideTurn, laneOf, proLane, type Decision } from "../decide";
 import { protectedProcedure } from "../index";
+import { can } from "../roles";
 import { recordText } from "./evidence";
 
 /**
@@ -16,7 +17,7 @@ import { recordText } from "./evidence";
  * and the app keeps its keyword routing and its page's rule-based answers. The web (scope "web") sends no page data:
  * the server reads it and always answers (./ask-context). A free question the Clef fast lane is sure of (../decide) is
  * answered by the rules at once, with its `lane`: the ward's list, or a task for the open visit drafted as an action
- * card (`cards`) the doctor confirms; Gemma answers the rest as before.
+ * card (`cards`) the doctor confirms, for an app that shows cards; Gemma answers the rest as before.
  */
 export const askRouter = {
   /** Which card answers a typed or spoken visit request (Laya). `patient` is the visit label, e.g. "Respiratory review". */
@@ -27,22 +28,34 @@ export const askRouter = {
     scope: z.string().max(40), question: z.string().trim().min(1).max(500), context: askContextSchema.default({ lines: [], rows: [] }),
     /** The open visit: its patient's record is read here and added to the page's lines, so "her last potassium" is hers. */
     encounterId: z.string().max(80).optional(),
+    /** The app shows an answer's `cards`: an older Sona Pro shows the spec alone, so it is never drafted a task it cannot confirm. */
+    cards: z.literal(true).optional(),
   }))
     .handler(async ({ context, input }) => {
-      // Clef's read (none while CLEF_LANE is off), beside the visit's record; at most DECIDE_MS.
-      const decide = () => decideTurn(context.clef, { app: "pro", said: input.question, open: Boolean(input.encounterId) });
+      // A visit's record and rows only for a role that may open the visit: a bed manager sees the ward, not clinical detail.
+      const encounterId = can(context.role, "encounter.get") ? input.encounterId : undefined;
+      // Clef's read (none while CLEF_LANE is off), never waited for: the lane takes a turn only when Clef is in before the
+      // turn's own reads are, so a turn Gemma answers is never slower for it. Its log line is kept after the answer.
+      let decision: Decision | undefined;
+      const deciding = decideTurn(context.clef, { app: "pro", said: input.question, open: Boolean(encounterId) }).then(d => { decision = d; });
+      context.waitUntil?.(deciding);
+      const fast = (open: Parameters<typeof proLane>[4]) => {
+        const lane = laneOf(decision, "pro", input.question);
+        return lane && proLane(context, lane, decision!, input.question, open).catch(error => { console.error("lane not answered", error); return undefined; });
+      };
       if (input.scope === "web") {
-        const decision = await decide(), lane = laneOf(decision, "pro", input.question);
-        return (lane && await proLane(context, lane, decision!, input.question)) || webAnswer(context, input.question);
+        const page = await webPage(context);
+        return (await fast({ page })) || webAnswer(context, input.question, page);
       }
       if (!context.baseten) return { source: "fixture" as const };
-      const [decision, record] = await Promise.all([decide(), input.encounterId ? visitRecord(context, context.hospitalId, input.encounterId) : []]);
-      const lane = laneOf(decision, "pro", input.question);
-      const fast = lane && await proLane(context, lane, decision!, input.question, input.encounterId);
-      if (fast) return fast;
-      const answer = await freeAnswer(context.baseten, { ...input, context: { ...input.context, lines: [...input.context.lines, ...record] } });
-      // The visit's own rows for what the answer names (../answer-cards), beside the spec; a card that cannot be read never fails the answer.
-      const cards = "marks" in answer ? await proCards(context, { encounterId: input.encounterId, marks: answer.marks }).catch(() => []) : [];
+      const record = encounterId ? visitRecord(context, context.hospitalId, encounterId) : [];
+      await Promise.race([record, deciding]);
+      const answered = await fast({ encounterId, drafts: input.cards });
+      if (answered) return answered;
+      const answer = await freeAnswer(context.baseten, { ...input, context: { ...input.context, lines: [...input.context.lines, ...await record] } });
+      // The visit's own rows for what the answer names (../answer-cards), beside the spec; none for an answer the app sends to
+      // the evidence instead. A card that cannot be read never fails the answer.
+      const cards = "marks" in answer && !("evidence" in answer) ? await proCards(context, { encounterId, marks: answer.marks }).catch(() => []) : [];
       return { ...answer, ...cards.length > 0 && { cards } };
     }),
 };

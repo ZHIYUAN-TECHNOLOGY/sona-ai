@@ -42,7 +42,6 @@ If unsure between two labels, choose the more serious one.`;
  * the words a patient's eye should land on, by kind (@sona-ai/domain/answer-parts MarkKind; the hue is each kind's).
  * Grouped by kind, each phrase once: a kind on every word cost about 2.5 times the tokens (11 Oct review: 8.3 s against
  * 5.7 s grouped), and seven kinds would cost more; marksIn puts back one mark per time the words appear.
- * Shared with the call's closing line (voice-agent/answer.ts).
  */
 export const MARKS_RULE = `Set "marks" to the words in your answer a patient's eye should land on, so they can be coloured, grouped by kind, each copied exactly as written in the answer (same language and spelling), each phrase once:
   - "warning": what must not be missed: a warning sign to act on (chest pain, lips turn blue), an allergy and what it is to (allergy to penicillin), a result far out of range, and calling 999.

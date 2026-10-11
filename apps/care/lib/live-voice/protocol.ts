@@ -6,7 +6,7 @@ import { marksOf, type Mark } from "@sona-ai/domain/answer-parts";
  * (./pcm). The agent answers with JSON events (its status, the patient's words, Sona's answer as it is written) and
  * binary audio, one frame per sentence, MP3 unless audio_config says otherwise; a sentence Sona's voice could not make
  * comes as `sona_say` with no audio instead (apps/server/src/agents/voice.ts), and `sona_turn` follows the last sentence
- * with how the answer went (here only its `marks`, the words to colour). An interrupt stops the answer being spoken.
+ * with how the answer went (here only its `marks`, the words to colour, which the voice agent does not send yet). An interrupt stops the answer being spoken.
  * Pure, so bun can test it; the socket and the audio live in ./session.
  */
 export const PROTOCOL_VERSION = 1;

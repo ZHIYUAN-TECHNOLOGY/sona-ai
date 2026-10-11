@@ -335,3 +335,18 @@ test("Clef's emergency read, never waited for, puts the 999 line before Gemma's 
     expect([calm.escalated, calm.summaries[0]!.urgent]).toEqual([[], false]);
   }
 });
+
+test("Clef's raise still makes the task when Gemma's \"worse\" came first and was read as fine; when that made one, there is no second", async () => {
+  for (const made of [false, true]) {
+    let clef!: (yes: boolean) => void;
+    const calls: [string, boolean | undefined][] = [];
+    const { turn } = turnOf({
+      question: "ayah saya tiba-tiba keliru tak kenal orang cakap merepek", emergency: new Promise<boolean>(resolve => { clef = resolve; }),
+      chat: gemma(['{"triage":"worse","inPlan":false}\nBawa ayah anda ke hospital.']).chat,
+      // Clef answers once Gemma's "worse" is in: its task is made, or read as fine (none).
+      escalate: async (label, raised) => { calls.push([label, raised]); if (label === "worse") { clef(true); return made; } return true; },
+    });
+    expect((await spoken(turn)).at(-1)).toBe(LINES.en.told);
+    expect(calls).toEqual(made ? [["worse", undefined]] : [["worse", undefined], ["urgent", true]]);
+  }
+});

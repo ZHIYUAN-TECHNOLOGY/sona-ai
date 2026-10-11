@@ -10,13 +10,14 @@ An answer keeps its words exactly as today. Three optional fields ride beside th
 | `cards?: AnswerCard[]` | Facts and drafted actions shown under the words | The server, from the database. Never the model |
 | `lane?: Lane` | `{ intent, confidence, by: "clef-omni" }` when the Clef fast lane answered the turn without Gemma | The server. Telemetry and debugging only |
 
-They go on `care.ask`, `ask.free` and a live call's `sona_turn` event (apps/server/src/agents/live.ts, voice.ts). The web portals call the same oRPC procedures, so they get the same fields.
+They go on `care.ask` and `ask.free`. The web portals call the same oRPC procedures, so they get the same fields. A call's `sona_turn` does not carry them yet: the call's prompt asks Gemma for no marks. The Care app and the web call page read `sona_turn.marks` loosely, so they colour a call's answer once it does.
 
 **Reading them:** every client calls `partsOf(answer)`. It reads all three loosely: an unknown mark kind, an unknown card type or a card missing a field is left out, never the answer. An old server sends none of them, and the answer shows as it does today.
 
 ## Backward compatibility
 
 - Every new field is optional. The judge iPhone builds ignore `cards` and `lane` (care.ask's answer is read loosely in `apps/care/features/assistant/answers.ts`; ask.free's `spec` is unchanged), and they drop `sona_turn` altogether.
+- No answer's words lean on a card an old build cannot show. A Care booking, dose or reading draft rides under Gemma's own answer. A Pro task is drafted only when the app sends `cards: true` on ask.free (an older server ignores the field), so the judge Sona Pro build still gets Gemma's answer to "remind me to…".
 - `marks` already exists on care.ask and ask.free. New kinds are safe on old builds: the Care app colours only medicine, dose and warning (`INK` in `apps/care/features/assistant/marked.tsx`) and shows any other kind as semibold ink, with no crash; the Pro app ignores ask.free's marks. New clients read old kinds through `markKindOf`.
 - Cards are a field beside `spec`, not an `AskCards` element in the ask catalogue: an old build's `checkAskSpec` refuses an element type it does not know, and the whole answer would vanish. So `packages/api/src/ask-spec.ts` is unchanged apart from a note saying this.
 - A card object may grow fields: unknown fields are stripped, so an older app keeps the card.
@@ -51,10 +52,10 @@ The server builds cards from database rows the answer is about. The model's word
 | `result` | test, value, unit?, flag? (high, low, normal, critical), range?, at?, source | `lab_results`; flag from the lab, else `rangeFlagOf`; critical from `criticalOf`; range from lab-ranges.ts | critical: urgent; high or low: soon; else calm |
 | `reading` | label, value, unit, at?, flag? | `observations` (home readings: `source = "patient"`, labels and units from `READING_KINDS`; ward vitals for Pro) | as result |
 | `appointment` | title, when, where?, status | `appointments` (`followUpTiming` gives upcoming, due-soon, attended, missed) and `booking_requests` (requested, confirmed, declined) | confirmed: good; due-soon, requested, declined, missed: soon; else calm |
-| `warning` | level (urgent, soon, info), title, items | The plan's warning signs (`warningSigns`); urgent only on a turn the 999 rules flagged | urgent: urgent; soon: soon; info: calm |
-| `steps` | title, items (1 to 8) | The plan's instructions, or the cited leaflet's steps | calm |
+| `warning` | level (urgent, soon, info), title, items | The plan's warning signs (`warningSigns`); urgent on a turn the 999 rules, Gemma or Clef flagged | urgent: urgent; soon: soon; info: calm |
+| `steps` | title, items (1 to 8) | Not built yet. Every surface draws it, for when the plan's instructions or a cited leaflet's steps are | calm |
 | `doctor` | id, name, specialty, room, rating, careTeam? | `doctors` (care.doctors.list); the same fields as Care's doctor card | calm |
-| `action` | do, title, items?, what?, confirm, done, payload | A lane intent, or Gemma's urgent or tell-care-team flag | calm |
+| `action` | do, title, items?, what?, confirm, done, payload | A lane intent Clef is sure of (below). `tellCareTeam` is not drafted yet: an urgent turn already tells the care team | calm |
 
 The `source` on medicine and result is the line the screen shows, in the answer's language ("Your discharge plan", "Lab result").
 
@@ -72,12 +73,18 @@ An action card is a draft. Nothing happens until the person taps `confirm` (UX r
 
 ## The Clef fast lane
 
-The lane is `clef-omni` on Workers AI (`env.AI`). It is approved for routing and triage only (Jay, 11 Oct, an exception to Malaysia-only). It is sent the transcript and a short de-identified state, nothing else that identifies the patient. These rules come from the Clef trial (152/160 intents right, median 0.28 s; at confidence 0.7 it took 44 of 160 turns with no errors, and no medical or emergency question):
+The lane is `clef-omni` on Workers AI (`env.AI`), on while `CLEF_LANE` is "1" (`packages/api/src/decide.ts`). It is approved for routing and triage only (Jay, 11 Oct, an exception to Malaysia-only). It is sent the transcript and one fixed line about the app, nothing from the record. These rules come from the Clef trial (152/160 intents right, median 0.28 s; at confidence 0.7 it took 44 of 160 turns with no errors, and no medical or emergency question):
 
 - **The lane takes only these intents** (`LANE_INTENTS`): Care book_appointment, next_appointment, log_dose, log_reading; Pro create_task, ward_overview. It never answers a medical question and never decides an emergency. `laneSchema` refuses any other intent.
-- **These turns skip the lane:** a turn with cancel, wait, undo, batal or 取消. A turn that also asks a question (a `noul` question, `asks_question`) goes to Gemma.
-- **Escalation** (tell the care team) happens if any one of these holds: the 999 keyword floor, Gemma's urgent flag or its tell-care-team flag, or Clef's emergency probability is 0.25 or more. Nothing cancels an escalation.
-- `lane` is set only when the lane answered the turn. The Pro app may add "fast" to its model label. Patients see nothing of it.
+- **These turns skip the lane:** confidence under 0.7, an emergency read of 0.25 or more, the 999 words, a turn with cancel, wait, undo, batal or 取消, a turn Clef reads as calling off, changing or moving something already planned, and a turn that also asks a question (`asks_question`).
+- **Clef is never waited for.** It runs beside the turn's own reads (her record and the leaflet search; the visit's record; the web's page) and takes the turn only when it is in first, so an answer Gemma gives is never slower for it.
+- **What the lane does:**
+  - Care next_appointment: answered at once from her visits (`comingVisits`, the same list Gemma's visit cards use), without Gemma. This is the only Care turn Gemma does not answer.
+  - Care book, log_dose and log_reading: Gemma answers as always (a sugar of 2.1 or four paracetamol needs her words), and the lane's drafted action rides under the answer, unless Gemma flags it urgent. A dose is drafted only for the medicine she names; one she does not name is never guessed.
+  - Pro ward_overview: the web's rule answer for the ward's list.
+  - Pro create_task: a task for the open visit, said as "Drafted, not added yet", with its Review card. Only for an app that sends `cards: true` (the new Sona Pro build; the web panel opens no visit), and only for a role that may add a task. An older build shows the spec alone, so it gets Gemma's answer as before.
+- **Escalation** (tell the care team) happens if any one of these holds: the 999 keyword floor, Gemma's urgent flag, or Clef's emergency probability is 0.25 or more. Nothing cancels an escalation. Clef's read makes the care team's task urgent and brings the 999 warning card, but it does not set the answer's `urgent`: that stays Gemma's, because the Care app shows its 999 card in place of the words on an urgent answer, and a near miss (0.22) is close to the cut.
+- `lane` is set only when the lane answered the turn. Patients see nothing of it.
 
 ## Which surface renders what
 
@@ -89,16 +96,16 @@ All four surfaces keep the answer inside their existing shell: the Pro in-page c
 | medicine | Glass row (`surfaceStyle`, as `DoctorCard`): name, dose and times, how; tap opens `/medicine` | `ListCard` row | `ListRow` (title name, detail dose and times) | rule row |
 | result, reading | Glass row: value and unit large, flag as a word in its tone, range and when below | `ListCard` row with `Status` in its tone | `ListRow` with `tone` | rule row with tone |
 | appointment | Glass row: title, day and time, where, status word; tap opens Visits | `ListCard` row with `Status` | `ListRow` with `tone` | rule row with tone |
-| warning | urgent: the existing `Call999` card; soon or info: a plain list under a heading | urgent: `features/care-messages/urgent-card.tsx`; else a list | `Notice` (`warning` for soon), `AlertRow` for urgent | `Signal` in its tone, then the list |
+| warning | urgent: the existing `Call999` card; soon or info: a plain list under a heading | urgent: `features/care-messages/urgent-card.tsx`; else a list | `Notice` (`warning` for soon); urgent is a red block of its own (`AlertRow` is amber) | `Signal` in its tone, then the list |
 | steps | Numbered list under a heading | Numbered list | Numbered list in a `Surface` | Numbered list |
-| doctor | The existing `DoctorCard` | `ListRow` with avatar, opens the doctor | not used | not used |
+| doctor | The existing `DoctorCard` | `ListRow` with avatar, opens Follow-ups, where she books | not used | not used |
 | action | One glass card: title, items, what, the ink `Action` pill, then `Done` | `Card` with `Button` and a done line | The existing `Review` (title, items, what, confirm, done) | A port of `Review` (`Card` + `Button`) in place of the flattened rows |
 
 Pro uses medicine, result, reading, appointment, warning, steps and createTask. The doctor card and the book, logDose, logReading and tellCareTeam actions are Care only.
 
 ## Colour table
 
-One semantic token per mark kind and per tone. Web names are CSS variables under `.pro` and `.care` in `apps/web/src/styles/tokens.css`. Native names are keys to add beside `palette` in each app's theme file (`apps/native/components/sona/theme.ts`, `apps/care/lib/theme.ts`).
+One semantic token per mark kind and per tone. Web names are CSS variables under `.pro` and `.care` in `apps/web/src/styles/tokens.css`. On the iPhone, Sona Pro's marks are `TINT` in `apps/native/components/sona/marked-text.tsx`, and Sona Care's are `markInk` and `tones` in `apps/care/lib/theme.ts`.
 
 Sona Pro draws a mark as a tinted chip: the text colour on its wash. Sona Care draws a mark as coloured semibold text with no wash, as today. The text colours below are deeper than the plain `palette` colours, so they still reach 4.5:1 on the darkest part of Pro's canvas gradient (#CDDEF5) under a wash.
 

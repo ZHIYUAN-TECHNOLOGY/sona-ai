@@ -281,20 +281,22 @@ test("Sona Pro's lane: the ward's list and a task for the open visit come by the
   const db = await createTestDb();
   await seedDemo(db, new Date("2026-09-26T15:40:00+08:00"));
   await addClinician(db, "dr-aisyah");
+  await addClinician(db, "mgmt-ong", undefined, "management");
   const now = new Date("2026-09-28T10:00:00+08:00");
-  const doctor = createRouterClient(appRouter, { context: { db, session: user("dr-aisyah"), baseten: up.baseten, clef: ai, now: () => now } });
+  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), baseten: up.baseten, clef: ai, now: () => now } });
+  const doctor = as("dr-aisyah");
   const chats = () => up.calls.filter(c => c.url.includes("chat/completions")).length;
 
-  // The ward's list is the web's rule answer to the same question (what the bar gives with no model), on any page.
+  // The ward's list is the web's rule answer to the same question (what the bar gives with no model).
   const rules = await createRouterClient(appRouter, { context: { db, session: user("dr-aisyah"), now: () => now } }).ask.free({ scope: "web", question: TRIAL.p026.said });
-  for (const scope of ["today", "web"]) {
-    expect(await doctor.ask.free({ scope, question: TRIAL.p026.said })).toEqual({ source: "rules", spec: rules.spec!, lane: { intent: "ward_overview", confidence: 0.8241, by: "clef-omni" } });
-  }
+  expect(await doctor.ask.free({ scope: "web", question: TRIAL.p026.said })).toEqual({ source: "rules", spec: rules.spec!, lane: { intent: "ward_overview", confidence: 0.8241, by: "clef-omni" } });
+  expect(chats()).toBe(0);
 
-  // A task for the open visit, drafted from the doctor's words: for the doctor who asked, due today.
-  const visit = { scope: "visit", encounterId: "visit-1042" };
+  // A task for the open visit, drafted from the doctor's words for an app that shows cards: for the doctor who asked, due
+  // today, said as a draft until it is added.
+  const visit = { scope: "visit", encounterId: "visit-1042", cards: true as const };
   const task = await doctor.ask.free({ ...visit, question: TRIAL.p013.said });
-  expect(task).toMatchObject({ source: "rules", spec: { elements: { "t-0": { props: { text: "Task for dr-aisyah, due today: Remind me to recheck her K+ at 4 pm." } } } }, lane: { intent: "create_task" } });
+  expect(task).toMatchObject({ source: "rules", spec: { elements: { "t-0": { props: { text: "Drafted, not added yet: a task for dr-aisyah, due today: Remind me to recheck her K+ at 4 pm." } } } }, lane: { intent: "create_task" } });
   const [draft] = partsOf(task).cards!;
   expect(draft).toEqual({
     type: "action", do: "createTask", title: "Remind me to recheck her K+ at 4 pm", items: ["Owner: dr-aisyah", "Due: 2026-09-28"],
@@ -306,16 +308,28 @@ test("Sona Pro's lane: the ward's list and a task for the open visit come by the
   expect(partsOf(await doctor.ask.free({ ...visit, question: ho })).cards![0]).toMatchObject({ payload: { owner: "House officer", title: "Get the HO to chase the blood cultures for bed 7" } });
   expect(chats()).toBe(0);
 
-  // No visit open, or Clef unsure (0.1767): Gemma answers as before.
-  expect(await doctor.ask.free({ scope: "today", question: TRIAL.p013.said })).toMatchObject({ source: "model" });
+  // Gemma answers as before: an older app that shows no cards (the judge builds would read the draft as done), a role
+  // that may not add a task, no visit open (nothing to read first, so Gemma never waits for Clef), or Clef unsure (0.1767).
+  expect(await doctor.ask.free({ scope: "visit", encounterId: "visit-1042", question: TRIAL.p013.said })).toMatchObject({ source: "model" });
+  expect(await as("mgmt-ong").ask.free({ ...visit, question: TRIAL.p013.said })).toMatchObject({ source: "model" });
+  expect(await doctor.ask.free({ scope: "today", question: TRIAL.p026.said })).toMatchObject({ source: "model" });
   expect(await doctor.ask.free({ ...visit, question: TRIAL.p005.said })).toMatchObject({ source: "model" });
-  expect(chats()).toBe(2);
+  expect(chats()).toBe(4);
 });
 
-test("a free answer on a visit carries cards from that visit's own rows for the words it marks", async () => {
+test("a free answer on a visit carries cards from that visit's own rows for the words it marks; a bed manager's reads neither record nor rows", async () => {
   const marks = { warning: ["low potassium of 3.1 mmol/L"] };
   const answered = { ...spec("Daniel's potassium is low.", []), general: "A low potassium of 3.1 mmol/L needs replacing.", marks };
-  const client = await nurse(boxes(() => gemma(answered)).baseten);
-  const r = await client.ask.free({ scope: "visit", question: "Daniel's potassium?", context: { lines: ["Daniel Rahman's potassium is back."], rows: [] }, encounterId: "visit-1086" });
+  const up = boxes(() => gemma(answered));
+  const client = await nurse(up.baseten);
+  const asked = { scope: "visit", question: "Daniel's potassium?", context: { lines: ["Daniel Rahman's potassium is back."], rows: [] }, encounterId: "visit-1086" };
+  const r = await client.ask.free(asked);
   expect(r).toMatchObject({ source: "model", marks: [{ text: "low potassium of 3.1 mmol/L", kind: "warning" }], cards: [{ type: "result", test: "Potassium", value: "3.1", flag: "low" }] });
+  // Bed managers see the ward, not results or notes (roles.ts): ask.free on a visit was their way round that.
+  const db = await createTestDb();
+  await seedDemo(db, new Date("2026-09-26T15:40:00+08:00"));
+  await addClinician(db, "beds-raj", undefined, "bed-manager");
+  const beds = await createRouterClient(appRouter, { context: { db, session: user("beds-raj"), baseten: up.baseten } }).ask.free(asked);
+  expect(beds.cards).toBeUndefined();
+  expect(String(up.calls.filter(c => c.url.includes("chat/completions")).at(-1)!.init.body)).not.toContain("This visit's patient record (");
 });

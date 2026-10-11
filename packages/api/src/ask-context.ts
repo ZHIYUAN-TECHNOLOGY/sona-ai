@@ -100,6 +100,8 @@ export async function webPage(asker: Asker) {
   return { context, specs: { needs: column(needsLead, ranked), blocked: column(blockedLead, blockedRows), due: column(dueLead, dueRows) } };
 }
 
+export type WebPage = Awaited<ReturnType<typeof webPage>>;
+
 /**
  * Which of the bar's three questions this is, in English or Malay ("apa perlu saya buat dulu", "katil mana tersekat",
  * "apa yang perlu hari ini"); undefined for anything else. "First" wins over "today", and a bare "need" comes last,
@@ -120,10 +122,10 @@ const UNANSWERED = "Sona couldn't answer that from this page. Try asking it anot
 /**
  * ask.free for the web: every question by the model with the page data when it answers (9 Oct: the bar's three too, for
  * the judges); the bar's three otherwise by rule, which also stands in for a general answer to one of them (it is about
- * this hospital's page); anything else then what the pages say, else the off line.
+ * this hospital's page); anything else then what the pages say, else the off line. `page`: the page when already read.
  */
-export async function webAnswer(asker: Asker & { baseten?: Baseten }, question: string) {
-  const page = await webPage(asker);
+export async function webAnswer(asker: Asker & { baseten?: Baseten }, question: string, page?: WebPage) {
+  page ??= await webPage(asker);
   const rule = ruleFor(question);
   const asked = asker.baseten ? await freeAnswer(asker.baseten, { scope: "web", question, context: page.context }) : undefined;
   // A general answer loses to the page's own rule answer, unless Gemma read a clinical question the literature answers.

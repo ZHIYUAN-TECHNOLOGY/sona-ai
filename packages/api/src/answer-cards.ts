@@ -1,8 +1,9 @@
-import { bookingRequests, doctors, encounters, labResults, observations, receipts } from "@sona-ai/db/schema/clinical";
+import { appointments, bookingRequests, doctors, encounters, labResults, observations, receipts } from "@sona-ai/db/schema/clinical";
 import { cardsOf, type AnswerCard, type Mark, type MarkKind } from "@sona-ai/domain/answer-parts";
 import { patientMeds, warningSigns, type PatientMed } from "@sona-ai/domain/care";
 import { criticalOf } from "@sona-ai/domain/critical";
 import type { Language } from "@sona-ai/domain/discharge";
+import { shortName } from "@sona-ai/domain/doctors";
 import { rangeFlagOf, rangeWhy } from "@sona-ai/domain/lab-ranges";
 import { and, asc, desc, eq, gte } from "drizzle-orm";
 
@@ -46,6 +47,8 @@ const READING_WORDS: Record<keyof typeof READING_KINDS, Record<Exclude<Language,
   blood_pressure: { ms: "Tekanan darah", zh: "血压" }, heart_rate: { ms: "Kadar nadi", zh: "心率" }, temperature: { ms: "Suhu", zh: "体温" },
   weight: { ms: "Berat badan", zh: "体重" }, blood_glucose: { ms: "Gula dalam darah", zh: "血糖" }, oxygen_saturation: { ms: "Tahap oksigen", zh: "血氧" },
 };
+/** A home reading's name as she reads it, in her language. */
+export const readingLabel = (kind: keyof typeof READING_KINDS, lang: Language) => lang === "en" ? READING_KINDS[kind].label : READING_WORDS[kind][lang];
 /** Words cut to a card field's length, so a long plan line never drops its card (answer-parts refuses a card past its limits). */
 const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
 /** Whether `a` holds `b` as whole words (either way round), case aside: "low potassium of 3.1" holds "Potassium". */
@@ -99,24 +102,32 @@ export function resultCard(r: Pick<LabRow, "test" | "value" | "unit" | "flag" | 
   };
 }
 
+/** A visit still to come, as her Schedule shows it or as she asked for it; `day`: a recall or the discharge review, which has a day, not a time. */
+export type Coming = { title: string; date: Date; status: Extract<AnswerCard, { type: "appointment" }>["status"]; where?: string; day: boolean };
+
 /**
- * Her visits still to come, earliest first, as cards: the ones her Schedule shows (followUpsOf: booked, recalls, the
- * discharge review) and the times she asked for that the care team has yet to confirm (as visitsText reads them).
+ * Her visits still to come, earliest first (as visitsText reads them): the ones her Schedule shows (followUpsOf: booked,
+ * with the doctor's room, recalls, the discharge review) and the times she asked for that the care team has yet to
+ * confirm. One list for the lane's next-visit answer (../decide) and an answer's visit cards, so both say the same.
  */
-async function careVisits(context: PatientContext, lang: Language): Promise<AnswerCard[]> {
+export async function comingVisits(context: PatientContext, lang: Language): Promise<Coming[]> {
   const { db, hospitalId, patientId } = context;
-  const [visits, asked] = await Promise.all([
+  const [visits, rooms, asked] = await Promise.all([
     followUpsOf(context, lang),
+    db.select({ id: appointments.id, room: doctors.room }).from(appointments).innerJoin(doctors, eq(doctors.id, appointments.doctorId))
+      .where(and(eq(appointments.hospitalId, hospitalId), eq(appointments.patientId, patientId))),
     db.select({ doctor: doctors.name, specialty: doctors.specialty, room: doctors.room, at: bookingRequests.startsAt }).from(bookingRequests).innerJoin(doctors, eq(doctors.id, bookingRequests.doctorId))
       .where(and(eq(bookingRequests.hospitalId, hospitalId), eq(bookingRequests.patientId, patientId), eq(bookingRequests.status, "requested"), gte(bookingRequests.startsAt, clockOf(context)))),
   ]);
-  const coming = [
-    ...visits.filter(v => v.status === "upcoming" || v.status === "due-soon").map(v => ({ title: v.title, date: v.date, status: v.status })),
-    ...asked.map(r => ({ title: `${r.doctor}, ${r.specialty}`, date: r.at, status: "requested" as const, where: r.room })),
+  const room = new Map(rooms.map(r => [r.id, r.room]));
+  const coming: Coming[] = [
+    ...visits.filter(v => v.status === "upcoming" || v.status === "due-soon").map(v => ({ title: v.title, date: v.date, status: v.status, where: room.get(v.id), day: v.id.startsWith("recall:") || v.id === "discharge-review" })),
+    ...asked.map(r => ({ title: `${shortName(r.doctor)}, ${r.specialty}`, date: r.at, status: "requested" as const, where: r.room, day: false })),
   ];
-  return coming.sort((a, b) => a.date.getTime() - b.date.getTime())
-    .map(v => ({ type: "appointment", title: clip(v.title, 120), when: v.date.toISOString(), ..."where" in v && { where: clip(v.where, 120) }, status: v.status }));
+  return coming.sort((a, b) => a.date.getTime() - b.date.getTime());
 }
+/** A visit as its card. */
+export const visitCard = (v: Coming): AnswerCard => ({ type: "appointment", title: clip(v.title, 120), when: v.date.toISOString(), ...v.where && { where: clip(v.where, 120) }, status: v.status });
 
 /** Her own home readings (care-readings), the latest of each kind, named in her language and in English. */
 async function homeReadings(context: PatientContext, lang: Language): Promise<Named[]> {
@@ -124,7 +135,7 @@ async function homeReadings(context: PatientContext, lang: Language): Promise<Na
   const lower = new Map(rows.map(r => [r.id, r.value]));
   const latest = [...new Map(rows.filter(r => r.kind in READING_KINDS).reverse().map(r => [r.kind, r])).values()];
   return latest.map(r => {
-    const kind = r.kind as keyof typeof READING_KINDS, label = lang === "en" ? READING_KINDS[kind].label : READING_WORDS[kind][lang], low = lower.get(`${r.id}-d`);
+    const kind = r.kind as keyof typeof READING_KINDS, label = readingLabel(kind, lang), low = lower.get(`${r.id}-d`);
     return { names: [label, READING_KINDS[kind].label], on: ["test", "warning", "caution"], card: { type: "reading", label, value: low === undefined ? `${r.value}` : `${r.value}/${low}`, unit: r.unit, at: r.observedAt.toISOString() } };
   });
 }
@@ -146,7 +157,7 @@ export async function careCards(context: PatientContext, input: { plan: Plan; ma
       : undefined,
     wanted("test", "warning", "caution") ? db.select().from(labResults).where(eq(labResults.patientId, patientId)).orderBy(desc(labResults.receivedAt)) : [],
     wanted("test") ? homeReadings(context, lang) : [],
-    VISITS.has(input.from ?? "") ? careVisits(context, lang) : [],
+    VISITS.has(input.from ?? "") ? comingVisits(context, lang).then(v => v.map(visitCard)) : [],
   ]);
   // Released to her as on her Results screen (care-results): acknowledged by a doctor, and not a sample still at the lab.
   const released = labs.filter(r => r.acknowledgedAt !== null && r.flag !== "pending" && r.value);

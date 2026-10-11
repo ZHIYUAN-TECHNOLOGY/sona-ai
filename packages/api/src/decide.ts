@@ -1,34 +1,35 @@
-import { appointments, bookingRequests, doctors } from "@sona-ai/db/schema/clinical";
 import { LANE_INTENTS, cardsOf, type AnswerCard, type Lane, type Mark } from "@sona-ai/domain/answer-parts";
 import { patientMeds } from "@sona-ai/domain/care";
 import type { Language } from "@sona-ai/domain/discharge";
 import { shortName } from "@sona-ai/domain/doctors";
 import { MISSED_AFTER, doseKey, doseSlots } from "@sona-ai/domain/doses";
-import { and, asc, eq, gte, inArray } from "drizzle-orm";
 
-import { ruleFor, webPage } from "./ask-context";
+import { comingVisits, readingLabel, visitCard } from "./answer-cards";
+import { ruleFor, webPage, type WebPage } from "./ask-context";
 import { checkAskSpec } from "./ask-spec";
 import { clockOf, type Context } from "./context";
 import { PASSAGES_MS } from "./leaflets";
-import type { Role } from "./roles";
+import { can, type Role } from "./roles";
 import { doctorsFor } from "./routers/bookings";
-import { followUpsOf, lastDischarge, planOf, takenKeys } from "./routers/care-plan";
+import { lastDischarge, planOf, takenKeys } from "./routers/care-plan";
 import { READING_KINDS } from "./routers/care-readings";
 import type { WorkersAi } from "./workers-models";
 
 /**
  * The Clef fast lane (docs/answer-parts.md). clef-omni on Workers AI reads what a patient or a doctor just said, beside
  * the usual answer: what they want, how sure it is, whether they also ask a question or call something off, and how
- * likely it is an emergency happening now. When it is sure of a lane turn (book, next visit, a dose or a reading in Sona
- * Care; a task or the ward's list in Sona Pro), Sona answers it at once from the database without Gemma; anything else
- * Gemma answers as before, and Clef's read is only logged. Its emergency read always reaches the care team.
+ * likely it is an emergency happening now. When it is sure of a lane turn, Sona answers it at once from the database
+ * without Gemma (her next visit in Sona Care; a task or the ward's list in Sona Pro), or drafts its action under Gemma's
+ * answer (a booking, a dose or a reading in Sona Care, which may need Gemma's words); anything else Gemma answers as
+ * before. Its emergency read always reaches the care team. It is never waited for: a turn takes its read only when it
+ * is in before the turn's own reads are.
  * Approved for routing and triage only (Jay, 11 Oct: an exception to Malaysia-only), so it is sent the words and a fixed
  * line about the app, nothing from the record. Rules and numbers from the Clef trial (11 Oct, .scratch-eval/clef-trial).
  */
 export const CLEF_MODEL = "@cf/cloudflare/clef-omni";
 export type App = keyof typeof LANE_INTENTS;
 
-/** Clef's whole read gets as long as the leaflet search it runs beside, then the turn goes on without it. */
+/** Clef's read gives up after this long (as the leaflet search does): what the care team and a turn's end wait for at most. */
 export const DECIDE_MS = PASSAGES_MS;
 /** A lane turn needs this confidence: 44 of the trial's 160 turns, none wrong, and no medical or emergency question. */
 export const LANE_AT = 0.7;
@@ -73,7 +74,8 @@ const QUESTIONS = {
   care: {
     intent: INTENT.care,
     asks_question: { type: "noul", instructions: "Apart from booking, a visit's time or place, or a dose or reading they took, does the message also ask a health, medicine or result question that needs an answer?" },
-    cancels: { type: "noul", instructions: "Does the message cancel, undo or put off something, or say wait or never mind?" },
+    // "change or move" (11 Oct review): a reschedule read as a new booking, 0.98 ("我想改一下复诊的时间"), and drafted a second visit.
+    cancels: { type: "noul", instructions: "Does the message cancel, undo, change or move something already planned, put it off, or say wait or never mind?" },
     reading: {
       type: "choice", instructions: "Which home reading does the message give, if any?",
       criteria: {
@@ -176,60 +178,36 @@ export function laneOf(decision: Decision | undefined, app: App, said: string, u
   return { intent: decision.intent as Lane["intent"], confidence: decision.confidence, by: "clef-omni" };
 }
 
-// --- Sona Care's lane answers ---------------------------------------------------------------------------------------
+// --- Sona Care's lane --------------------------------------------------------------------------------------------------
 
 type PatientContext = Context & { hospitalId: string; patientId: string };
-/**
- * A lane answer in Sona Care: Sona's own line in her language, the words to colour in it, and cards from her record.
- * Always `grounded` (her visits, doses, the reading she gave, her care team), so no app captions it a general answer.
- */
-export type LaneAnswer = { answer: string; grounded: boolean; from?: string; marks: Mark[]; cards: AnswerCard[] };
+/** Sona Care's answer to a next-visit turn: Sona's own line in her language, the words to colour in it, and her visits as cards. */
+export type LaneAnswer = { answer: string; grounded: boolean; from: string; marks: Mark[]; cards: AnswerCard[] };
 type Draft = { what: string; confirm: string; done: string };
 type Kind = keyof typeof READING_KINDS;
 
 /** Sona's lane lines, worded as Sona Care's app words them (the Doctors tab, her care team). */
-const SAY: Record<Language, {
-  book(doctor: string, when: string): string; booking: Draft;
-  next(title: string, when: string, where?: string): string; noVisit: string;
-  dose(name: string, when: string): string; dosing: Draft;
-  reading(reading: string): string; saving: Draft;
-  plan: string; kinds: Record<Kind, string>;
-}> = {
+const SAY: Record<Language, { next(title: string, when: string, where?: string): string; noVisit: string; booking: Draft; dosing: Draft; saving: Draft }> = {
   en: {
-    book: (doctor, when) => `The first free time with ${doctor} is ${when}. You can ask for it, or another time on Doctors; your care team confirms it.`,
-    booking: { what: "Your care team confirms the time and lets you know.", confirm: "Request this time", done: "Requested. Your care team will confirm it." },
     next: (title, when, where) => `Your next visit is ${title}, ${when}${where ? `, at ${where}` : ""}.`,
     noVisit: "You have no visit booked. To book one, pick a doctor and a time on Doctors.",
-    dose: (name, when) => `Your ${name} dose due ${when} is ready to mark as taken.`,
+    booking: { what: "Your care team confirms the time and lets you know.", confirm: "Request this time", done: "Requested. Your care team will confirm it." },
     dosing: { what: "Marks this dose taken, so your care team sees it.", confirm: "Mark taken", done: "Marked as taken." },
-    reading: reading => `${reading}, ready to save to your readings.`,
     saving: { what: "Saves it to your readings, so your care team sees it.", confirm: "Save reading", done: "Saved to your readings." },
-    plan: "Your discharge plan",
-    kinds: { blood_pressure: "Blood pressure", heart_rate: "Heart rate", temperature: "Temperature", weight: "Weight", blood_glucose: "Blood glucose", oxygen_saturation: "Oxygen saturation" },
   },
   ms: {
-    book: (doctor, when) => `Masa kosong terawal dengan ${doctor} ialah ${when}. Anda boleh memintanya, atau masa lain di Doktor; pasukan penjagaan anda akan mengesahkannya.`,
-    booking: { what: "Pasukan penjagaan anda mengesahkan masa dan memaklumkan anda.", confirm: "Minta masa ini", done: "Sudah diminta. Pasukan penjagaan anda akan mengesahkannya." },
     next: (title, when, where) => `Lawatan anda yang seterusnya: ${title}, ${when}${where ? `, di ${where}` : ""}.`,
     noVisit: "Anda belum ada lawatan. Untuk menempah, pilih doktor dan masa di Doktor.",
-    dose: (name, when) => `Dos ${name} anda pada ${when} sedia untuk ditanda sudah diambil.`,
+    booking: { what: "Pasukan penjagaan anda mengesahkan masa dan memaklumkan anda.", confirm: "Minta masa ini", done: "Sudah diminta. Pasukan penjagaan anda akan mengesahkannya." },
     dosing: { what: "Tanda dos ini sudah diambil, supaya pasukan penjagaan anda nampak.", confirm: "Tanda sudah ambil", done: "Sudah ditanda diambil." },
-    reading: reading => `${reading}, sedia untuk disimpan dalam bacaan anda.`,
     saving: { what: "Simpan dalam bacaan anda, supaya pasukan penjagaan anda nampak.", confirm: "Simpan bacaan", done: "Sudah disimpan dalam bacaan anda." },
-    plan: "Pelan discaj anda",
-    kinds: { blood_pressure: "Tekanan darah", heart_rate: "Kadar nadi", temperature: "Suhu badan", weight: "Berat badan", blood_glucose: "Gula dalam darah", oxygen_saturation: "Tahap oksigen" },
   },
   zh: {
-    book: (doctor, when) => `${doctor}最早的空档是${when}。您可以申请这个时间，或在“医生”页选择其他时间；护理团队会确认。`,
-    booking: { what: "护理团队会确认时间并通知您。", confirm: "申请这个时间", done: "已申请，护理团队会确认。" },
     next: (title, when, where) => `您的下一次预约：${title}，${when}${where ? `，地点：${where}` : ""}。`,
     noVisit: "您还没有预约。要预约，请在“医生”页选择医生和时间。",
-    dose: (name, when) => `您${when}的${name}可以标记为已服用。`,
+    booking: { what: "护理团队会确认时间并通知您。", confirm: "申请这个时间", done: "已申请，护理团队会确认。" },
     dosing: { what: "标记这一剂已服用，护理团队可以看到。", confirm: "标记已服用", done: "已标记为已服用。" },
-    reading: reading => `${reading}，可以保存到您的测量记录。`,
     saving: { what: "保存到您的测量记录，护理团队可以看到。", confirm: "保存读数", done: "已保存到您的测量记录。" },
-    plan: "您的出院计划",
-    kinds: { blood_pressure: "血压", heart_rate: "心率", temperature: "体温", weight: "体重", blood_glucose: "血糖", oxygen_saturation: "血氧" },
   },
 };
 
@@ -242,103 +220,69 @@ const whenOf = (at: Date, language: Language, day = false) =>
 const EARLY_MS = 3600_000;
 
 /**
- * Sona Care's answer to a lane turn, from her record and the hospital's directory; none when it has nothing sure to say
- * (no free doctor, no open dose of one medicine, a reading's numbers unclear), and Gemma answers instead. Every card is
- * read back through `cardsOf`, so one that does not fit the contract is left out, never the answer.
+ * The one lane turn Sona Care answers without Gemma: when her next visit is, from her visits as her Schedule shows them
+ * (comingVisits, the same list an answer's visit cards come from), with the times she asked for as cards beside it.
  */
-export async function careLane(context: PatientContext, lane: Lane, decision: Decision, said: string, language: Language): Promise<LaneAnswer | undefined> {
-  const say = SAY[language];
-  const answer = (a: LaneAnswer | undefined) => a && { ...a, cards: cardsOf(a.cards) };
-  if (lane.intent === "book_appointment") return answer(await book(context, said, say, language));
-  if (lane.intent === "next_appointment") return answer(await nextVisit(context, say, language));
-  if (lane.intent === "log_dose") return answer(await dose(context, said, say, language));
-  if (lane.intent === "log_reading") return answer(reading(decision, said, say));
-  return undefined;
-}
-
-/** The doctors her words find (the care team when they find none), up to 3, and a request drafted for the first one's first free time. */
-async function book(context: PatientContext, said: string, say: (typeof SAY)[Language], language: Language): Promise<LaneAnswer | undefined> {
-  const found = await doctorsFor(context, said);
-  const shown = (found.length ? found : (await doctorsFor(context)).filter(d => d.careTeam)).slice(0, 3);
-  const first = shown.find(d => d.nextSlots.length), at = first?.nextSlots[0]?.times[0];
-  if (!first || !at) return undefined;
-  const when = whenOf(at, language);
-  return {
-    answer: say.book(`${first.name} (${first.specialty})`, when), grounded: true, from: "visits", marks: [{ text: when, kind: "dose" }],
-    cards: [
-      ...shown.map(d => ({ type: "doctor" as const, id: d.id, name: d.name, specialty: d.specialty, room: d.room, rating: d.rating, careTeam: d.careTeam })),
-      { type: "action", do: "book", title: `${shortName(first.name)}, ${when}`, items: [first.specialty, first.room], ...say.booking,
-        payload: { doctorId: first.id, startsAt: at.toISOString(), reason: said.trim().slice(0, 200) } },
-    ],
-  };
-}
-
-/** Her coming visits (as her Schedule shows them, with the doctor's room when it has one) and the times she asked for. */
-async function nextVisit(context: PatientContext, say: (typeof SAY)[Language], language: Language): Promise<LaneAnswer> {
-  const { db, hospitalId, patientId } = context, now = clockOf(context);
-  const [visits, asked] = await Promise.all([
-    followUpsOf(context, language),
-    db.select({ doctor: doctors.name, specialty: doctors.specialty, room: doctors.room, at: bookingRequests.startsAt }).from(bookingRequests).innerJoin(doctors, eq(doctors.id, bookingRequests.doctorId))
-      .where(and(eq(bookingRequests.hospitalId, hospitalId), eq(bookingRequests.patientId, patientId), eq(bookingRequests.status, "requested"), gte(bookingRequests.startsAt, now)))
-      .orderBy(asc(bookingRequests.startsAt)),
-  ]);
-  const coming = visits.filter(v => v.status === "upcoming" || v.status === "due-soon");
-  const rooms = coming.length ? new Map((await db.select({ id: appointments.id, room: doctors.room }).from(appointments).innerJoin(doctors, eq(doctors.id, appointments.doctorId))
-    .where(inArray(appointments.id, coming.map(v => v.id)))).map(r => [r.id, r.room])) : new Map<string, string>();
-  const cards: AnswerCard[] = [
-    ...coming.map(v => ({ type: "appointment" as const, title: v.title, when: v.date.toISOString(), ...rooms.has(v.id) && { where: rooms.get(v.id)! }, status: v.status })),
-    ...asked.map(r => ({ type: "appointment" as const, title: `${shortName(r.doctor)}, ${r.specialty}`, when: r.at.toISOString(), where: r.room, status: "requested" as const })),
-  ].slice(0, 3);
-  const next = coming[0];
+export async function nextVisit(context: PatientContext, language: Language): Promise<LaneAnswer> {
+  const say = SAY[language], visits = await comingVisits(context, language), next = visits.find(v => v.status !== "requested");
+  const cards = cardsOf(visits.slice(0, 3).map(visitCard));
   if (!next) return { answer: say.noVisit, grounded: true, from: "visits", marks: [], cards };
-  // A recall or the discharge review has a day, not a time (visitsText says the same).
-  const when = whenOf(next.date, language, next.id.startsWith("recall:") || next.id === "discharge-review");
-  return { answer: say.next(next.title, when, rooms.get(next.id)), grounded: true, from: "visits", marks: [{ text: when, kind: "dose" }], cards };
+  const when = whenOf(next.date, language, next.day);
+  return { answer: say.next(next.title, when, next.where), grounded: true, from: "visits", marks: [{ text: when, kind: "dose" }], cards };
 }
 
 /**
- * The dose she means: of her take-home medicines, the not-yet-marked doses from MISSED_AFTER ago to EARLY_MS ahead, of
- * the one medicine she names, or of the only medicine with one open; the nearest to now. Two medicines open and none named
- * (or one still in hospital, with no take-home plan) is not sure, so Gemma answers.
+ * What a booking, dose or reading turn Clef is sure of drafts for her to confirm, under Gemma's answer and never in
+ * place of it (a sugar of 2.1 or four paracetamol needs Gemma's words): a request for the first free time with the doctor
+ * her words find, the open dose of the medicine she names, or the reading she gave. None when nothing is sure, and none
+ * passes `cardsOf` that does not fit the contract.
  */
-async function dose(context: PatientContext, said: string, say: (typeof SAY)[Language], language: Language): Promise<LaneAnswer | undefined> {
+export async function careDraft(context: PatientContext, lane: Lane, decision: Decision, said: string, language: Language): Promise<AnswerCard | undefined> {
+  const say = SAY[language];
+  const draft = lane.intent === "book_appointment" ? await book(context, said, say.booking, language)
+    : lane.intent === "log_dose" ? await dose(context, said, say.dosing, language)
+    : lane.intent === "log_reading" ? reading(decision, said, say.saving, language) : undefined;
+  return cardsOf([draft])[0];
+}
+
+/** A request for the first free time of the first doctor her words find (her care team when they find none) who has one. */
+async function book(context: PatientContext, said: string, booking: Draft, language: Language): Promise<AnswerCard | undefined> {
+  const found = await doctorsFor(context, said);
+  const first = (found.length ? found : (await doctorsFor(context)).filter(d => d.careTeam)).slice(0, 3).find(d => d.nextSlots.length), at = first?.nextSlots[0]?.times[0];
+  if (!first || !at) return undefined;
+  return { type: "action", do: "book", title: `${shortName(first.name)}, ${whenOf(at, language)}`, items: [first.specialty, first.room], ...booking,
+    payload: { doctorId: first.id, startsAt: at.toISOString(), reason: said.trim().slice(0, 200) } };
+}
+
+/**
+ * The dose she means: of her take-home medicines, the not-yet-marked doses from MISSED_AFTER ago to EARLY_MS ahead of
+ * the one medicine she names, the nearest to now. One she does not name is never guessed: "my paracetamol" while only
+ * her antibiotic is open would mark the antibiotic taken. None named, two named, or still in hospital: no draft.
+ */
+async function dose(context: PatientContext, said: string, dosing: Draft, language: Language): Promise<AnswerCard | undefined> {
   const { db, hospitalId, patientId } = context, now = clockOf(context).getTime();
-  // Her take-home schedule as doseScheduleOf reads it, in her language for the card.
   const [home, plan, keys] = await Promise.all([lastDischarge(db, hospitalId, patientId), planOf(db, hospitalId, patientId), takenKeys(db, hospitalId, patientId)]);
   if (!home) return undefined;
   const m = patientMeds(plan, language), taken = new Set(keys), out = new Date(home.dischargedAt), words = said.toLowerCase();
-  const open = [...m.new, ...m.changed, ...m.continue].flatMap(med => doseSlots(med, out, new Date(now + EARLY_MS))
+  const named = [...m.new, ...m.changed, ...m.continue].filter(med => words.includes(med.name.toLowerCase().split(" ")[0]!)).flatMap(med => doseSlots(med, out, new Date(now + EARLY_MS))
     .filter(at => !taken.has(doseKey(med.name, at)) && now - at.getTime() < MISSED_AFTER).map(at => ({ med, at })));
-  const named = open.filter(d => words.includes(d.med.name.toLowerCase().split(" ")[0]!));
-  const pool = named.length ? named : open;
-  if (new Set(pool.map(d => d.med.name)).size !== 1) return undefined;
-  const { med, at } = pool.sort((a, b) => Math.abs(a.at.getTime() - now) - Math.abs(b.at.getTime() - now))[0]!;
-  const when = whenOf(at, language);
-  return {
-    answer: say.dose(med.name, when), grounded: true, from: "doses", marks: [{ text: med.name, kind: "medicine" }, { text: when, kind: "dose" }],
-    cards: [
-      { type: "medicine", name: med.name, ...med.take && { how: med.take }, ...med.at?.length && { times: med.at }, source: say.plan },
-      { type: "action", do: "logDose", title: med.name, items: [when], ...say.dosing, payload: { key: doseKey(med.name, at) } },
-    ],
-  };
+  if (new Set(named.map(d => d.med.name)).size !== 1) return undefined;
+  const { med, at } = named.sort((a, b) => Math.abs(a.at.getTime() - now) - Math.abs(b.at.getTime() - now))[0]!;
+  return { type: "action", do: "logDose", title: med.name, items: [whenOf(at, language)], ...dosing, payload: { key: doseKey(med.name, at) } };
 }
 
 /**
  * The reading she gave, drafted to save: Clef's pick of which reading, and its numbers only when they are plain (one, or
- * two for a blood pressure, upper first, each in range); anything else (a time beside it, a number in words) Gemma answers.
- * ponytail: digits only; a spoken "one thirty eight over eighty six" goes to Gemma until number words are read.
+ * two for a blood pressure, upper first, each in range); anything else (a time beside it, a number in words) drafts nothing.
+ * ponytail: digits only; a spoken "one thirty eight over eighty six" drafts nothing until number words are read.
  */
-function reading(decision: Decision, said: string, say: (typeof SAY)[Language]): LaneAnswer | undefined {
+function reading(decision: Decision, said: string, saving: Draft, language: Language): AnswerCard | undefined {
   const kind = decision.picks.reading as Kind | undefined;
   if (!kind || !(kind in READING_KINDS)) return undefined;
   const { unit, min, max } = READING_KINDS[kind], bp = kind === "blood_pressure";
   const numbers = (said.match(/\d+(?:\.\d+)?/g) ?? []).map(Number), [value, value2] = numbers as [number, number | undefined];
   if (numbers.length !== (bp ? 2 : 1) || value < min || value > max || (bp && !(value2! >= 30 && value2! < value))) return undefined;
-  const shown = `${say.kinds[kind]} ${bp ? `${value}/${value2}` : value} ${unit}`;
-  return {
-    answer: say.reading(shown), grounded: true, marks: [{ text: shown, kind: "test" }],
-    cards: [{ type: "action", do: "logReading", title: shown, ...say.saving, payload: { kind, value, ...bp && { value2 } } }],
-  };
+  return { type: "action", do: "logReading", title: `${readingLabel(kind, language)} ${bp ? `${value}/${value2}` : value} ${unit}`, ...saving, payload: { kind, value, ...bp && { value2 } } };
 }
 
 // --- Sona Pro's lane answers ----------------------------------------------------------------------------------------
@@ -350,17 +294,21 @@ const MYT = 8 * 3600_000, DAY = 86_400_000;
 
 /**
  * Sona Pro's answer to a lane turn, as ask.free answers (an ask-catalogue spec, by the rules: the words are the page's
- * own or the doctor's): the ward's list (the web's rule answers, webPage) or a task drafted from the doctor's words for
- * the open visit, as an action card the doctor confirms (tasks.create). None for a task with no visit open.
+ * own or the doctor's): the ward's list (the web's rule answers, from `page` when ask.free has already read it) or a task
+ * drafted from the doctor's words for the open visit, as an action card the doctor confirms (tasks.create). A task is
+ * drafted only for an app that shows the card (`drafts`: an older Sona Pro shows the words alone, with nothing to
+ * confirm them by), on an open visit, for a role that may add one; otherwise none, and Gemma answers.
  */
-export async function proLane(context: Clinician, lane: Lane, decision: Decision, question: string, encounterId?: string) {
-  if (lane.intent === "ward_overview") return { source: "rules" as const, spec: (await webPage(context)).specs[ruleFor(question) ?? "needs"], lane };
-  if (lane.intent !== "create_task" || !encounterId) return undefined;
+export async function proLane(context: Clinician, lane: Lane, decision: Decision, question: string, open: { encounterId?: string; drafts?: boolean; page?: WebPage } = {}) {
+  if (lane.intent === "ward_overview") return { source: "rules" as const, spec: (open.page ?? await webPage(context)).specs[ruleFor(question) ?? "needs"], lane };
+  const { encounterId } = open;
+  if (lane.intent !== "create_task" || !encounterId || !open.drafts || !can(context.role, "tasks.create")) return undefined;
   const words = question.trim().replace(/[.!?。]+$/, ""), title = (words.charAt(0).toUpperCase() + words.slice(1)).slice(0, 200);
   const pick = decision.picks.owner, owner = (pick === "self" ? context.session?.user.name : OWNERS[pick ?? "other"]) || OWNERS.other!;
   const days = decision.picks.due === "today" ? 0 : decision.picks.due === "tomorrow" ? 1 : undefined;
   const due = days === undefined ? undefined : new Date(Math.floor((clockOf(context).getTime() + MYT) / DAY + days) * DAY).toISOString().slice(0, 10);
-  const lead = `Task for ${owner}${days === undefined ? "" : `, due ${days ? "tomorrow" : "today"}`}: ${title}.`;
+  // Said as a draft: nothing is added until the doctor taps Add task.
+  const lead = `Drafted, not added yet: a task for ${owner}${days === undefined ? "" : `, due ${days ? "tomorrow" : "today"}`}: ${title}.`;
   const spec = checkAskSpec({ root: "t", elements: { t: { type: "AskColumn", props: {}, children: ["t-0"] }, "t-0": { type: "AskLead", props: { text: lead.slice(0, 280) }, children: [] } } });
   const cards = cardsOf([{
     type: "action", do: "createTask", title, items: [`Owner: ${owner}`, ...due ? [`Due: ${due}`] : []],

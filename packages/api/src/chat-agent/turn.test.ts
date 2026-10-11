@@ -2,9 +2,10 @@ import { bookingRequests, tasks } from "@sona-ai/db/schema/clinical";
 import { DEMO_HOSPITAL, seedDemo } from "@sona-ai/db/seed";
 import { createTestDb } from "@sona-ai/db/testing";
 import { readUIMessageStream, type UIMessage, type UIMessageChunk } from "ai";
-import { expect, test } from "bun:test";
+import { beforeEach, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
+import { boxState } from "../baseten-models";
 import type { Library } from "../context";
 import type { Change } from "../events";
 import { stubModels } from "../models";
@@ -13,6 +14,9 @@ import { doctorsFor } from "../routers/bookings";
 import { LINES } from "../voice-agent/answer";
 import { asAnswer } from "./client";
 import { alternating, chatTurn, historyFor, recentTurns, sonaMed, type ChatTurn } from "./turn";
+
+// Each test starts knowing nothing about the boxes: another file's box left "starting" made Sona say so here (whole-suite runs).
+beforeEach(() => boxState.clear());
 
 const say = (role: "user" | "assistant", text: string, id = crypto.randomUUID()): UIMessage => ({ id, role, parts: [{ type: "text", text }] });
 /** n questions, each answered. */
@@ -144,12 +148,13 @@ test("an emergency she reports now reaches her care team with no model at all; t
   expect(await db.select().from(tasks).where(eq(tasks.kind, "check-in"))).toHaveLength(1);
 });
 
-test("an emergency Clef reads (no 999 words, the model calling no tool) reaches her care team once, urgent, beside the model's words", async () => {
+test("an emergency Clef reads (no 999 words, the model calling no tool) reaches her care team once, as an urgent task, beside the model's words", async () => {
   const { db, context } = await world();
   const { ai } = clefReplay(replay("c049", "c054"));
   const { med } = brain([{ text: "Bawa ayah anda ke hospital sekarang." }, { text: "Bagus, teruskan." }]);
   const { answer } = await answerOf(chatTurn({ context: { ...context, clef: ai }, messages: [say("user", TRIAL.c049.said)], med }));
-  expect(answer).toMatchObject({ answer: "Bawa ayah anda ke hospital sekarang.", urgent: true, careTeam: { line: LINES.en.told } });
+  // `urgent` stays the model's: the phone would show the 999 card in place of the model's words.
+  expect(answer).toMatchObject({ answer: "Bawa ayah anda ke hospital sekarang.", urgent: false, careTeam: { line: LINES.en.told } });
   const [task] = await db.select().from(tasks).where(eq(tasks.kind, "check-in"));
   expect(task!.id).toBe(answer.careTeam!.taskId);
   // Below 0.25 (insulin taken, 0.2233): nobody is told.

@@ -198,7 +198,8 @@ function say(writer: UIMessageStreamWriter, text: string) {
  * The turn as the AI SDK's UI message stream (what AIChatAgent's onChatMessage returns): Sona Med's words and tool calls as
  * they come, then one `finish` carrying ChatMeta. A question naming an emergency sign reaches the care team whatever the
  * model does (care.ask's keyword floor, callNow), as does one Clef reads as an emergency (../decide, beside the model,
- * never waited for before it: urgent, whatever the care team's reader says); the model's own tellCareTeam call shares the same task.
+ * never waited for before it: an urgent task, whatever the care team's reader says, though the answer's `urgent` stays the
+ * model's); the model's own tellCareTeam call shares the same task.
  */
 export function chatTurn(turn: ChatTurn): Response {
   const question = textOf(turn.messages.findLast(m => m.role === "user") ?? { role: "user", parts: [] });
@@ -207,10 +208,8 @@ export function chatTurn(turn: ChatTurn): Response {
   const tell = (raised = false) => found.told ??= tellCareTeam(context, context.hospitalId, context.patientId, question, raised ? CLEF_MODEL : undefined)
     .catch(error => { console.error("care team not told", error); return undefined; });
   // The floor's task waits for Clef's read (at once while it is off), so one task carries both.
-  const clef = emergencyOf(context.clef, question).then(yes => {
-    found.urgent ||= yes;
-    if (yes || callNow(question)) void tell(yes);
-  });
+  // Clef's read is not the model's urgent flag: a near miss would drop the model's words for the 999 card on the phone.
+  const clef = emergencyOf(context.clef, question).then(yes => { if (yes || callNow(question)) void tell(yes); });
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
@@ -240,7 +239,8 @@ export function chatTurn(turn: ChatTurn): Response {
       const told = found.told && await within(found.told, TOLD_WAIT_MS);
       const meta: ChatMeta = {
         source: answered ? "model" : "fixture", ...answered ? { model: BRAIN_MODEL } : waking ? { waking } : {},
-        grounded: answered && found.record, urgent: found.urgent || told?.label === "urgent",
+        // A task its reader read as urgent makes the answer urgent; one only Clef raised (read by Clef) does not.
+        grounded: answered && found.record, urgent: found.urgent || (told?.label === "urgent" && !("model" in told.readBy && told.readBy.model === CLEF_MODEL)),
         // Only a leaflet that was offered this turn can be a source: a number the model made up names nothing.
         sources: citedSources([...text.matchAll(/\[(\d+)\]/g)].map(m => Number(m[1])), found.passages),
         ...told && { careTeam: { taskId: told.taskId, title: told.title, line: lines.told } },

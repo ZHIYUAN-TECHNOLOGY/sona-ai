@@ -90,34 +90,48 @@ test("a lane turn Clef is sure of is answered at once from her record, in her la
   expect(asked).toEqual([]);
 });
 
-test("the lane's drafts are what the app's own calls take: a booking, a dose and a reading, each confirmed by her", async () => {
-  const bp = "my blood pressure this morning 138/86";
-  const { ai } = clefReplay({ ...replay("c021"), "I just took my azithromycin": TRIAL.c053, [bp]: { ...TRIAL.c030, picks: { reading: "blood_pressure" } } });
-  const { amelia, clock } = await clefWorld(noGemma([]), ai);
+test("a booking, dose or reading Clef is sure of is drafted under Gemma's answer, never in its place, as the app's own call takes it", async () => {
+  const asked: string[] = [];
+  const bp = "my blood pressure this morning 138/86", low = "sugar just now 2.1", other = "I just took my paracetamol";
+  const { ai } = clefReplay({
+    ...replay("c021", "c035"), "I just took my azithromycin": TRIAL.c053, [other]: TRIAL.c053,
+    [bp]: { ...TRIAL.c030, picks: { reading: "blood_pressure" } }, [low]: { ...TRIAL.c030, picks: { reading: "blood_glucose" } },
+  });
+  // Gemma reads a sugar of 2.1 as urgent (11 Oct review: the lane once answered it "ready to save", Gemma never asked).
+  const models: Models = { ...stubModels, answerFromPlan: async ({ question }) => { asked.push(question); return { answer: "Gemma's answer.", grounded: false, urgent: question === low, source: "model", model: "gemma-test" }; } };
+  const { amelia, clock } = await clefWorld(models, ai);
   const action = (a: { cards?: unknown }) => partsOf(a).cards!.find(c => c.type === "action")!;
 
   const book = await amelia.care.ask({ question: TRIAL.c021.said });
-  expect(book.answer).toBe("The first free time with Dr. Lim Wei Jie (Respiratory) is Wed 30 Sep at 09:00. You can ask for it, or another time on Doctors; your care team confirms it.");
-  expect(partsOf(book).cards!.map(c => c.type)).toEqual(["doctor", "action"]);
-  // From her care team and visits, never captioned a general answer.
-  expect(book).toMatchObject({ grounded: true, from: "visits" });
+  expect(book).toMatchObject({ answer: "Gemma's answer.", model: "gemma-test" });
+  // Gemma answered, so the turn carries no lane: the draft is the lane's only part.
+  expect(partsOf(book)).toEqual({ cards: [action(book)] });
   const draft = action(book);
-  expect(draft).toMatchObject({ do: "book", confirm: "Request this time", payload: { doctorId: "lim", startsAt: "2026-09-30T01:00:00.000Z" } });
+  expect(draft).toMatchObject({ do: "book", items: ["Respiratory", expect.any(String)], confirm: "Request this time", payload: { doctorId: "lim", startsAt: "2026-09-30T01:00:00.000Z" } });
   if (draft.do === "book") expect(await amelia.care.bookings.request(draft.payload)).toMatchObject({ doctorId: "lim", status: "requested" });
+  // Her next visit is still the booked one; the time she asked for, sooner, comes first among the cards, by date.
+  const next = await amelia.care.ask({ question: TRIAL.c035.said });
+  expect(next.answer).toBe("Your next visit is Clinic review, Mon 12 Oct.");
+  expect(partsOf(next).cards!.map(c => c.type === "appointment" && `${c.status} ${c.when}`)).toEqual(["requested 2026-09-30T01:00:00.000Z", "upcoming 2026-10-12T02:05:00.000Z"]);
 
   const reading = await amelia.care.ask({ question: bp });
-  expect(reading).toMatchObject({ answer: "Blood pressure 138/86 mmHg, ready to save to your readings.", grounded: true, marks: [{ text: "Blood pressure 138/86 mmHg", kind: "test" }] });
   const save = action(reading);
+  expect(save).toMatchObject({ do: "logReading", title: "Blood pressure 138/86 mmHg", confirm: "Save reading" });
   if (save.do === "logReading") expect(await amelia.care.readings.add(save.payload)).toMatchObject({ kind: "blood_pressure", value: 138, value2: 86 });
+  // A reading Gemma reads as urgent drafts nothing: the 999 card leads, and nothing to save.
+  const urgent = await amelia.care.ask({ question: low });
+  expect(urgent).toMatchObject({ answer: "Gemma's answer.", urgent: true });
+  expect(partsOf(urgent).cards!.map(c => c.type)).toEqual(["warning"]);
 
   // The next morning her 08:00 azithromycin is open (last night's cetirizine is past marking).
   clock.now = new Date("2026-09-29T08:20:00+08:00");
   const dose = await amelia.care.ask({ question: "I just took my azithromycin" });
-  expect(dose).toMatchObject({ answer: "Your Azithromycin dose due Tue 29 Sep at 08:00 is ready to mark as taken.", from: "doses", lane: { intent: "log_dose" } });
-  expect(partsOf(dose).cards![0]).toEqual({ type: "medicine", name: "Azithromycin", how: "1 tablet, with or without food", times: ["08:00"], source: "Your discharge plan" });
   const take = action(dose);
+  expect(take).toMatchObject({ do: "logDose", title: "Azithromycin", confirm: "Mark taken" });
+  // While it is open, a medicine with none (paracetamol, as needed) is never matched to it: no draft to mark the antibiotic.
+  expect(partsOf(await amelia.care.ask({ question: other })).cards).toBeUndefined();
   if (take.do === "logDose") expect(await amelia.care.doses.take(take.payload)).toEqual({ key: "Azithromycin@2026-09-29T00:00:00.000Z" });
-  expect([draft.do, save.do, take.do]).toEqual(["book", "logReading", "logDose"]);
+  expect(asked).toEqual([TRIAL.c021.said, bp, low, "I just took my azithromycin", other]);
 });
 
 test("Gemma answers what the lane is not sure of: a question besides, something called off, numbers in words, a slow or missing Clef", async () => {
@@ -147,22 +161,26 @@ test("Gemma answers what the lane is not sure of: a question besides, something 
   expect(off.calls).toHaveLength(0);
 });
 
-test("an emergency Clef reads (0.25 or more) reaches her care team once and makes the answer urgent, Gemma's words kept; nothing lowers it", async () => {
+test("an emergency Clef reads (0.25 or more) reaches her care team once and brings the 999 card; `urgent` and Gemma's words stay Gemma's", async () => {
   const { ai } = clefReplay(replay("c049", "c054"));
   let urgent = false;
   const models: Models = { ...stubModels, answerFromPlan: async () => ({ answer: "Bawa ayah anda ke hospital sekarang.", grounded: false, urgent, source: "model", model: "gemma-test" }) };
   const { amelia, db } = await clefWorld(models, ai);
-  // No 999 words, and Gemma did not flag it: Clef's 0.2676 does, and the task says Clef read it.
+  // No 999 words, and Gemma did not flag it: Clef's 0.2676 does, and the task says Clef read it. Not `urgent`: the phone
+  // would show its 999 card in place of Gemma's words, and a near miss (insulin, 0.2233) is that close.
   const first = await amelia.care.ask({ question: TRIAL.c049.said });
-  expect(first).toMatchObject({ answer: "Bawa ayah anda ke hospital sekarang.", urgent: true, careTeam: { label: "urgent", readBy: { source: "model", model: CLEF_MODEL, decidedBy: "model" }, line: LINES.en.told } });
+  expect(first).toMatchObject({ answer: "Bawa ayah anda ke hospital sekarang.", urgent: false, careTeam: { label: "urgent", readBy: { source: "model", model: CLEF_MODEL, decidedBy: "model" }, line: LINES.en.told } });
+  expect(partsOf(first).cards![0]).toMatchObject({ type: "warning", level: "urgent", title: "Call 999 now" });
   // Gemma's own urgent flag on the same words rides on the same task.
   urgent = true;
   const again = await amelia.care.ask({ question: TRIAL.c049.said });
   expect(again.careTeam?.taskId).toBe(first.careTeam!.taskId);
   expect(await db.select().from(tasks).where(eq(tasks.kind, "check-in"))).toHaveLength(1);
-  // Insulin taken (0.2233) is not an emergency, and Clef never makes an urgent answer calm.
+  // Insulin taken (0.2233) is not an emergency: no 999 card. Clef never makes an urgent answer calm.
   urgent = false;
-  expect(await amelia.care.ask({ question: TRIAL.c054.said })).toMatchObject({ urgent: false });
+  const calm = await amelia.care.ask({ question: TRIAL.c054.said });
+  expect(calm).toMatchObject({ urgent: false });
+  expect(partsOf(calm).cards).toBeUndefined();
   urgent = true;
   expect(await amelia.care.ask({ question: TRIAL.c054.said })).toMatchObject({ urgent: true });
 });

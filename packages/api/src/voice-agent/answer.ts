@@ -240,9 +240,15 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
   const lines = LINES[turn.language], summary: TurnSummary = { grounded: false, urgent: false, source: "fixture", sources: [], withheld: 0, ...turn.heard && { ear: turn.heard } };
   let told: Promise<boolean> | undefined, said = false, passages: Passage[] = [], raised = false;
   const began = Date.now(), timing: TurnTiming = {}, mark = (step: keyof TurnTiming) => { timing[step] ??= Date.now() - began; };
-  const escalate = (label: "worse" | "urgent", clef?: boolean) => { told ??= turn.escalate(label, clef).catch(() => false); };
-  // ponytail: the first escalation makes the one task, so a "worse" flag read as fine before Clef answers (0.28 s median) loses its raise.
-  turn.emergency?.then(yes => { if (yes && !turn.signal.aborted) { raised = true; escalate("urgent", true); } }, () => {});
+  const escalate = (label: "worse" | "urgent") => { told ??= turn.escalate(label).catch(() => false); };
+  // Clef's raise makes the task when nothing has yet, or when the escalation before it made none (a "worse" read as fine).
+  turn.emergency?.then(yes => {
+    if (!yes || turn.signal.aborted) return;
+    raised = true;
+    const raise = () => turn.escalate("urgent", true).catch(() => false);
+    const first = told;
+    told = first ? first.then(made => made || raise()) : raise();
+  }, () => {});
   function* say(text: string): Generator<Part> {
     said = true;
     mark("firstSentence");

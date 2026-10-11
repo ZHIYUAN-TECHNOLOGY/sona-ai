@@ -21,7 +21,7 @@ import { registerPushToken, unregisterPushToken } from "../push";
 import { setTrainingConsent, trainingConsentOf } from "./training";
 import { LINES, callNow } from "../voice-agent/answer";
 import { tellCareTeam } from "../voice-agent/care-team";
-import { CLEF_MODEL, EMERGENCY_AT, careLane, decideTurn, laneOf } from "../decide";
+import { CLEF_MODEL, EMERGENCY_AT, careDraft, decideTurn, laneOf, nextVisit, type Decision } from "../decide";
 
 /**
  * Errors a patient can see carry a stable `data.code` (CODE_UNKNOWN, SPEECH_OFF, …) so Sona Care can
@@ -151,44 +151,55 @@ export const careRouter = {
    * General advice rests on the hospital's own patient leaflets when one fits (../leaflets): `sources` names the leaflets
    * the answer used, by title; empty when it used none, or none could be found in time. `withheld` is always 0 (the
    * answer is no longer filtered), kept so clients that read it still do.
-   * The Clef fast lane (../decide) reads the question beside the leaflet search: an emergency it reads also reaches the
-   * care team and makes the answer urgent; a lane turn it is sure of (book, her next visit, a dose or a reading she took)
-   * is answered at once from her record, with `cards` and `lane`, and Gemma is not asked. Old apps read only the words.
+   * The Clef fast lane (../decide) reads the question beside her record and the leaflet search, never waited for: an
+   * emergency it reads also reaches the care team and brings the 999 card (in `cards`; `urgent` stays Gemma's, so no app
+   * drops Gemma's words for it); her next visit, when Clef is sure of it before her record is read, is answered at once
+   * from her visits, with `cards` and `lane`, and Gemma is not asked; a booking, dose or reading it is sure of is drafted
+   * as an action card under Gemma's answer. Old apps read only the words.
    */
   ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(2000), history: z.array(z.object({ question: z.string().trim().min(1).max(2000), answer: z.string().trim().max(4000) })).max(6).optional() })).handler(async ({ context, input }) => {
-    // The hospital's leaflets for the question are searched while her record is read. The search never fails the answer
-    // and is given PASSAGES_MS from here, so the gates below run when they did before, whatever it does.
-    const found = leafletHits(context.library, context.hospitalId, input.question);
-    // Clef's read (none while CLEF_LANE is off) runs beside the search with the same limit (DECIDE_MS), so Gemma is asked when it was.
-    const deciding = decideTurn(context.clef, { app: "care", said: input.question });
-    // Her visits and her record are real whether or not she has gone home; only the take-home plan waits for discharge.
-    // A part that cannot be read never fails the answer (recordText): the gates below must still run.
-    const { plan, text: record } = await recordText(context);
-    const decision = await deciding;
-    // A real emergency only: the 999 keyword floor, Clef's emergency read, or the model's own urgent flag, one task for all.
-    // Clef's read is urgent whatever the care team's reader says (nothing cancels an escalation); the floor's is the reader's call. Never fails the answer.
-    const emergency = (decision?.emergency ?? 0) >= EMERGENCY_AT;
-    let told: ReturnType<typeof tellCareTeam> | undefined;
-    const tell = () => told ??= tellCareTeam(context, context.hospitalId, context.patientId, input.question, emergency ? CLEF_MODEL : undefined)
-      .catch(error => { console.error("care team not told", error); return undefined; });
-    const floor = callNow(input.question);
-    if (floor || emergency) void tell();
     // The question's own language (an English question gets English, even when her papers are in Malay).
-    const language = languageOf(input.question);
+    const language = languageOf(input.question), floor = callNow(input.question);
+    // The hospital's leaflets for the question are searched while her record is read. The search never fails the answer
+    // and is given PASSAGES_MS from here; a part of her record that cannot be read never fails it either (recordText).
+    // Her visits and her record are real whether or not she has gone home; only the take-home plan waits for discharge.
+    const reads = Promise.all([recordText(context), leafletHits(context.library, context.hospitalId, input.question)]);
+    // Clef's read beside them (none while CLEF_LANE is off), at most DECIDE_MS.
+    let decision: Decision | undefined;
+    const deciding = decideTurn(context.clef, { app: "care", said: input.question }).then(d => { decision = d; });
+    const raised = () => (decision?.emergency ?? 0) >= EMERGENCY_AT;
+    // A real emergency only: the 999 keyword floor, Clef's emergency read, or the model's own urgent flag, one task for all.
+    // Clef's read is urgent whatever the care team's reader says (nothing cancels an escalation); the floor's is the reader's
+    // call. The floor's task waits for Clef's read (at once while it is off), so one task carries both. Never fails the answer.
+    let told: ReturnType<typeof tellCareTeam> | undefined;
+    const tell = () => told ??= tellCareTeam(context, context.hospitalId, context.patientId, input.question, raised() ? CLEF_MODEL : undefined)
+      .catch(error => { console.error("care team not told", error); return undefined; });
+    void deciding.then(() => { if (floor || raised()) void tell(); });
+    // A booking, dose or reading Clef is sure of is drafted beside Gemma's answer, never in its place.
+    const drafting = deciding.then(() => {
+      const lane = laneOf(decision, "care", input.question, floor);
+      return lane && lane.intent !== "next_appointment" ? careDraft(context, lane, decision!, input.question, language).catch(error => { console.error("lane not drafted", error); return undefined; }) : undefined;
+    });
+    await Promise.race([reads, deciding]);
     const lane = laneOf(decision, "care", input.question, floor);
-    const fast = lane && await careLane(context, lane, decision!, input.question, language).catch(error => { console.error("lane not answered", error); return undefined; });
-    if (fast) return { ...fast, urgent: false, source: "model" as const, model: CLEF_MODEL, withheld: 0, sources: [], lane };
-    const passages = passagesIn(await found, language);
+    if (lane?.intent === "next_appointment") {
+      const visit = await nextVisit(context, language).catch(error => { console.error("lane not answered", error); return undefined; });
+      if (visit) return { ...visit, urgent: false, source: "model" as const, model: CLEF_MODEL, withheld: 0, sources: [], lane };
+    }
+    const [{ plan, text: record }, hits] = await reads;
+    const passages = passagesIn(hits, language);
     // Sona's told line is Sona's, said once a task exists: kept out of what the model reads back, so it never echoes it.
     const history = input.history?.map(t => ({ ...t, answer: TOLD.reduce((a, line) => a.split(line).join(""), t.answer).trim() }));
     const { cites, ...answer } = await (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: record, language, passages, history });
+    await deciding; // long since in (DECIDE_MS at most), unless the model answered at once
     const careTeam = await (told ?? (answer.urgent ? tell() : undefined));
     // Only a leaflet that was offered can be a source: a number Gemma made up names nothing.
     const sources = citedSources(cites, passages);
-    const urgent = answer.urgent || emergency;
-    // Cards from her own rows for what the model's answer names (../answer-cards); a card that cannot be read never fails the answer.
-    const cards = answer.source === "model" ? await careCards(context, { plan, ...answer, urgent: floor || urgent, language }).catch(() => []) : [];
-    return { ...answer, urgent, withheld: 0, sources, ...careTeam && { careTeam: { ...careTeam, line: LINES[language].told } }, ...cards.length > 0 && { cards } };
+    // Cards from her own rows for what the model's answer names (../answer-cards), the 999 card first on any emergency, then
+    // the lane's draft unless Gemma read it urgent; a card that cannot be read never fails the answer.
+    const draft = answer.urgent ? undefined : await drafting;
+    const cards = [...answer.source === "model" ? await careCards(context, { plan, ...answer, urgent: floor || answer.urgent || raised(), language }).catch(() => []) : [], ...draft ? [draft] : []];
+    return { ...answer, withheld: 0, sources, ...careTeam && { careTeam: { ...careTeam, line: LINES[language].told } }, ...cards.length > 0 && { cards } };
   }),
 
   /**
