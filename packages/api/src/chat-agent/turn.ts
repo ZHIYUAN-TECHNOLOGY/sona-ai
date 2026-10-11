@@ -67,19 +67,22 @@ export async function historyFor(messages: UIMessage[]) {
   return alternating(pruneMessages({ messages: model, reasoning: "all", toolCalls: "before-last-message", emptyMessages: "remove" }));
 }
 
+// 11 Oct Clef trial: tellCareTeam was called for 7 of 14 emergencies, none about someone with her (a husband's chest pain,
+// a floppy baby), which got 999 in words alone; so it is asked for first, for anyone with her. A reading was said to be
+// saved with no tool called: a claim waits for the tool's success.
 const SYSTEM = `You are Sona Care, a hospital's assistant for its patients, chatting with one patient in the Sona Care app. Answer whatever they ask, fully: their own care, any other health or medicine question, or anything else. The conversation so far is above: use it for follow-up questions.
 Tools:
 - readMyRecord: what the hospital has recorded about this patient (discharge plan, medicines, visits, history, allergies, results, the doctor's note, check-in replies, doses taken). Call it before answering anything about them, even if you read it earlier in this chat: it may have changed.
 - searchLeaflets: the hospital's own patient leaflets. Call it for general health advice (recovery, food, activity, warning signs, how a medicine works). When you use a leaflet, put its number in brackets after the sentence, like [1].
 - findDoctors: the hospital's doctors and their free clinic times, when they want a doctor, a specialist or a named doctor.
 - requestBooking: asks the care team for one of a doctor's free times. Only once the patient has chosen the doctor and the time and said yes.
-- tellCareTeam: only when the patient says they have an emergency sign right now (chest pain, severe breathlessness, confusion, fainting, coughing blood). Asking which signs to watch for is a question, not an emergency.
+- tellCareTeam: when they say they, or someone with them, have an emergency sign right now (chest pain, severe breathlessness, confusion, fainting, a seizure, coughing blood, heavy bleeding, a baby or child very drowsy or floppy). Asking which signs to watch for is a question, not an emergency.
 How to answer:
 - Plain, kind words at a reading age of about 12. Short paragraphs; a short list is fine.
 - Facts about them (a medicine, a dose, a date, a result, a diagnosis) come from their record. If their record does not hold it, say so plainly.
 - When your answer is general advice and not from their record, say so in a few words. A leaflet is general advice for any patient, never a fact about them.
-- If they say they have an emergency sign now, first tell them to call 999 or go to the nearest emergency department, then call tellCareTeam.
-- Never say that you told the care team or booked a visit: the app shows that itself once it is done.`;
+- If they say they, or someone with them, have an emergency sign now, in any language: call tellCareTeam first, every time, then tell them to call 999 or go to the nearest emergency department.
+- Say you did something (saved, booked, sent, told anyone) only after its tool returned success.`;
 
 /** The instructions for a turn, with the language of the patient's latest message. */
 export const systemFor = (language: Language) =>
@@ -172,7 +175,7 @@ function toolsFor(turn: ChatTurn, found: Found, language: Language, tell: () => 
       },
     }),
     tellCareTeam: tool({
-      description: "Flag the patient's own words to their care team. Only for an emergency sign they have right now.",
+      description: "Flag the patient's own words to their care team. Call it every time they say they, or someone with them, have an emergency sign right now, in any language, before telling them to call 999. Not for questions about which signs to watch for.",
       inputSchema: z.object({}),
       execute: async () => { found.urgent = true; return { told: Boolean(await tell()) }; },
     }),

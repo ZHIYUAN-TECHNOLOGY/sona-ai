@@ -56,6 +56,13 @@ test("typed and spoken answers both put her record's numbers, an asthma attack a
   }
 });
 
+test("neither a typed nor a spoken answer says Sona did something only the app does (11 Oct Clef trial: \"sudah simpan bacaan\" with nothing saved)", async () => {
+  let typed = "";
+  await chatModels(async system => { typed = system; return { answer: "ok" }; }, "chat-test", stubModels).answerFromPlan({ question: "BP saya 135/85", plan: "", language: "ms" });
+  const spoken = messagesFor({ question: "BP saya 135/85", plan: "", language: "ms", history: [] })[0]!.content;
+  for (const prompt of [typed, spoken]) expect(prompt).toContain("Never say you saved, recorded, booked or sent anything, or told their doctor or care team, or that you will.");
+});
+
 test("marks are read grouped by kind or as the old list, each colouring every time its words stand in the answer, as the answer writes them", () => {
   const answer = "Take Paracetamol 1 g every 6 hours for the fever, at most 4 g a day; 1 glass of water with it. Call 999 if you have chest pain. Paracetamol is safe with azithromycin.";
   const grouped = { medicine: ["paracetamol", "Azithromycin", "ibuprofen"], dose: ["1 g", "every 6 hours", "4 g a day"], symptom: ["fever", "pain"], warning: ["Call 999", "chest pain"], sparkle: ["water"] };

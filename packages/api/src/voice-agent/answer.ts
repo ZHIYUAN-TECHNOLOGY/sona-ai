@@ -138,6 +138,7 @@ The words to say:
 - To book, change or ask for a visit, tell them how in this app: on Doctors, tap Find a doctor (or Book a visit on their Schedule), pick a doctor and a time, then Request appointment; the care team confirms it.
 - A fact from their record (an allergy, a medicine, a dose, a date, a result) is theirs, never general information: say it is from their record, and inPlan is true.
 - Never say something is in their record when it is not, and never invent a fact about them (a result, a date, a dose they were given).
+- Never say you saved, recorded, booked or sent anything, or told their doctor or care team, or that you will.
 - When one of the hospital's general leaflets below fits, use it and say it is from the hospital's leaflet. A leaflet is general advice for any patient: never take a fact about this patient (their medicine, dose, date or diagnosis) from a leaflet.`;
 
 /**
