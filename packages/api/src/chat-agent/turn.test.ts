@@ -142,8 +142,13 @@ test("an emergency she reports now reaches her care team with no model at all; t
   expect(off).toMatchObject({ answer: LINES.en.unavailable, source: "fixture", urgent: true });
   expect(off.careTeam).toMatchObject({ line: LINES.en.told });
   // With the model calling tellCareTeam too, it rides on the same task.
-  const { med } = brain([{ tool: "tellCareTeam" }, { text: "Please call 999 now." }]);
+  const { med, sent } = brain([{ tool: "tellCareTeam" }, { text: "Please call 999 now." }]);
   const on = (await answerOf(chatTurn({ context, messages: [say("user", "Sakit dada sekarang")], med }))).answer;
+  // Asked for first, every time, for anyone with her too (11 Oct Clef trial: called for 7 of 14 emergencies, for none
+  // about someone else), and said to be done only once it worked (it had said a reading was saved with no tool called).
+  expect(sent[0].tools.find((t: { function: { name: string } }) => t.function.name === "tellCareTeam").function.description).toContain("every time they say they, or someone with them, have an emergency sign right now");
+  expect(sent[0].messages[0].content).toContain("call tellCareTeam first, every time");
+  expect(sent[0].messages[0].content).toContain("Say you did something (saved, booked, sent, told anyone) only after its tool returned success.");
   expect(on).toMatchObject({ answer: "Please call 999 now.", urgent: true, careTeam: { taskId: off.careTeam!.taskId, line: LINES.ms.told } });
   expect(await db.select().from(tasks).where(eq(tasks.kind, "check-in"))).toHaveLength(1);
 });
