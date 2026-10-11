@@ -44,11 +44,14 @@ test("typed and spoken answers both put her record's numbers, an asthma attack a
   let typed = "";
   await chatModels(async system => { typed = system; return { answer: "ok" }; }, "chat-test", stubModels).answerFromPlan({ question: "How much water?", plan: "", language: "en" });
   const spoken = messagesFor({ question: "How much water?", plan: "", language: "en", history: [] })[0]!.content;
+  // A typed answer's emergency signs name a drowsy baby: the child doses had pulled "my baby has a high fever and is very
+  // lethargic" into a dose with no 999 (10 Oct gate). A call's own triage word already says 999.
+  expect(typed).toContain("a baby or child very drowsy, floppy or hard to wake)");
   for (const prompt of [typed, spoken]) {
     expect(prompt).toContain("their record's own number when it holds one (their dose, a fluid limit)");
     expect(prompt).toContain("1 puff every 30 to 60 seconds up to 10");
     expect(prompt).toContain("(with heart failure or kidney disease, their fluid limit instead)");
-    expect(prompt).toMatch(/a baby under 3 months with a fever must (be seen by|see) a doctor today, who sets the dose: say that first, with no amount/);
+    expect(prompt).toContain("(a baby under 1 year: by their own weight only; under 3 months with a fever: a doctor must see them today and sets the dose, so no amount)");
     expect(prompt).toContain("a line with no times has none to count from: say how often it is taken");
   }
 });
