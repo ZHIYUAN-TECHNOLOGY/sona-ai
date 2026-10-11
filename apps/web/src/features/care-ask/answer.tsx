@@ -1,9 +1,10 @@
-import { partsOf } from "@sona-ai/domain/answer-parts";
+import { type AnswerCard, partsOf } from "@sona-ai/domain/answer-parts";
 
 import { AnswerCards, type ConfirmCard } from "@/components/ai/answer-cards";
 import { CareMarked } from "@/components/marked";
 import { Chip } from "@/components/primitives";
 import { UrgentCard } from "@/features/care-messages/urgent-card";
+import type { Live } from "@/lib/sona-answer";
 import "@/styles/pages/care-ask.css";
 
 /** What care.ask (or her chat agent) sends back, read loosely: an older server sends less, a newer one more (`marks`, `cards`). */
@@ -39,24 +40,31 @@ export function Call999({ title = "If this is happening now, call 999", items = 
   );
 }
 
+const same = (a: AnswerCard) => (b: AnswerCard) => JSON.stringify(a) === JSON.stringify(b);
+
 /**
  * A Sona Care answer, on the Ask page and in the Sona panel. The 999 card leads when the turn is urgent (the 999 rules
  * or the model flagged it), with the plan's warning signs when the server sent them; the model's words always follow,
  * never replaced. Then the care team's line, the cards from her record (a drafted action confirmed with `confirm`) and
- * where it is from.
+ * where it is from. Streamed (`live`, care.askStream), it shows what has come so far: the 999 card, the lane's drafted
+ * card with Sona's line over it, then the words, plain; once whole (`reply`), the marks and the rest of the cards join
+ * them, and the lane's card stays over the words while the answer still has it, so nothing above them moves.
  */
-export function CareAnswer({ reply, confirm }: { reply: CareReply; confirm?: ConfirmCard }) {
-  const { marks, cards = [] } = partsOf(reply);
-  const sos = cards.find(c => c.type === "warning" && c.level === "urgent");
+export function CareAnswer({ reply, live, confirm }: { reply?: CareReply; live?: Live; confirm?: ConfirmCard }) {
+  const { marks, cards = [] } = partsOf(reply ?? {});
+  const sos = reply ? cards.find(c => c.type === "warning" && c.level === "urgent") : live?.sos;
+  const lane = live?.lane && (!reply || cards.some(same(live.lane.card))) ? live.lane : undefined;
+  const words = reply ? reply.answer ?? "" : live?.words;
   return (
     <>
-      {reply.source === "fixture" ? <Chip tone="neutral">Sample answer</Chip> : null}
-      {reply.urgent || sos ? <Call999 {...sos?.type === "warning" && { title: sos.title, items: sos.items }} /> : null}
+      {reply?.source === "fixture" ? <Chip tone="neutral">Sample answer</Chip> : null}
+      {reply?.urgent || sos ? <Call999 {...sos?.type === "warning" && { title: sos.title, items: sos.items }} /> : null}
+      {lane ? <>{lane.lead ? <p>{lane.lead}</p> : null}<AnswerCards cards={[lane.card]} app="care" confirm={confirm} /></> : null}
       {/* Keeps the answer's own line breaks: a numbered list stays a list. */}
-      <p className="ask-answer"><CareMarked text={reply.answer ?? ""} marks={marks} /></p>
-      {reply.careTeam?.line ? <p><CareMarked text={reply.careTeam.line} /></p> : null}
-      <AnswerCards cards={cards.filter(c => c !== sos)} app="care" confirm={confirm} />
-      {sourceLines(reply).map(line => <p key={line} className="sona-turn-note">{line}</p>)}
+      {reply || words ? <p className="ask-answer"><CareMarked text={words ?? ""} marks={reply ? marks : []} /></p> : <p className="sona-turn-note">Sona is thinking…</p>}
+      {reply?.careTeam?.line ? <p><CareMarked text={reply.careTeam.line} /></p> : null}
+      {reply ? <AnswerCards cards={cards.filter(c => c !== sos && !(lane && same(lane.card)(c)))} app="care" confirm={confirm} /> : null}
+      {reply ? sourceLines(reply).map(line => <p key={line} className="sona-turn-note">{line}</p>) : null}
     </>
   );
 }

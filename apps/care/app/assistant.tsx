@@ -5,7 +5,8 @@ import { AccessibilityInfo, ActivityIndicator, Alert, Keyboard, Pressable, Scrol
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { answer, conditionOf, doctorQuestion, historyOf, leadOf, shown, spoken, startingLine, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
+import type { AnswerCard } from "@sona-ai/domain/answer-parts";
+import { answer, conditionOf, doctorQuestion, historyOf, leadOf, shown, spoken, startingLine, streamed, suggestions, urgent, wantsDoctor, type Live, type Reply } from "@/features/assistant/answers";
 import { CHAT_AGENT_ON, replyOf, type CareChat } from "@/features/assistant/agent-replies";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import { Composer } from "@/features/assistant/composer";
@@ -45,9 +46,10 @@ const CareChatLink: typeof import("@/features/assistant/chat-agent").CareChatLin
  * directory (care.doctors.list), and warning words put the 999 line first. A problem they report reaches their care
  * team (care.ask makes the task), and Sona's line saying so closes the answer. Each question goes with the chat's last
  * 6 turns (historyOf), typed or spoken, so a follow-up ("How does it help?") is read with them. + starts a new chat,
- * empty (nothing is stored, so no history button).
+ * empty (nothing is stored, so no history button). A typed question is streamed (care.askStream, `live`): the 999 card
+ * or the lane's drafted card first, then the words as Sona writes them; her marks and the cards land when it is whole.
  */
-type Turn = { question: string; reply: Reply; requestId: string; ready: boolean; saved?: boolean; sent?: boolean; rated?: "up" | "down" };
+type Turn = { question: string; reply: Reply; requestId: string; ready: boolean; live?: Live; saved?: boolean; sent?: boolean; rated?: "up" | "down" };
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 /** Suggestions refresh after Grok's new-chat pop: all at once (no stagger), a fade and a short drop into place. */
 const drop = () => {
@@ -94,11 +96,13 @@ export default function Assistant() {
 
   // Real calls: the question to the model grounded in the plan (care.ask), with this chat so far so a follow-up is
   // read with it (the new question's own turn is not in `turns` yet); a doctor question to the directory. Her chat
-  // agent, behind its flag, keeps the conversation itself.
-  const answerOf = (question: string) => {
+  // agent, behind its flag, keeps the conversation itself. With `onLive`, the answer is streamed (care.askStream).
+  const answerOf = (question: string, onLive?: (live: Live) => void) => {
     if (agent) return agent.ask(question).then(a => replyOf(question, a, asks, lang));
     const history = historyOf(turns, lang);
-    return answer(question, asks, { ask: q => client.care.ask({ question: q, history }), doctors: search => client.care.doctors.list(search ? { search } : undefined) }, condition, lang);
+    const whole = (q: string) => client.care.ask({ question: q, history });
+    const ask = onLive ? (q: string) => streamed(() => client.care.askStream({ question: q, history }), () => whole(q), onLive) : whole;
+    return answer(question, asks, { ask, doctors: search => client.care.doctors.list(search ? { search } : undefined) }, condition, lang);
   };
   // Her stored conversation, shown as Ask opens (the agent answers follow-ups from it).
   useEffect(() => {
@@ -119,7 +123,7 @@ export default function Assistant() {
     }
     setTurns(ts => [...ts, { question, reply: { kind: "none", urgent: false }, requestId, ready: false }]);
     if (!still) flood.set(withTiming(1, { duration: 400, easing: EASE_OUT }));
-    void answerOf(question).then(next => {
+    void answerOf(question, live => patch(requestId, { live })).then(next => {
       flood.set(withTiming(0, { duration: 600, easing: EASE_OUT }));
       patch(requestId, { reply: next, ready: true });
       say(next);
@@ -234,10 +238,16 @@ function TurnView({ t, medicines, lead, flood, enter, visitDay, busy, error, onS
   busy: boolean; error: Error | null; onSave: () => void; onSend: () => void; onRate: (r: "up" | "down") => void;
 }) {
   const lang = useLang(), tr = tFor(lang);
-  const r = t.reply;
-  const [bold, more] = leadOf(shown(r, lang));
-  // The words the model chose to colour, when it answered (the word lists colour an authored answer), and the server's cards.
-  const chosen = r.kind === "plan" ? r.asked.marks : undefined, cards = r.kind === "plan" ? r.asked.cards : undefined;
+  const r = t.reply, live = t.ready ? undefined : t.live;
+  // While it streams, the words so far, plain; whole, the answer with the words the model chose to colour (the word
+  // lists colour an authored answer), and the server's cards.
+  const [bold, more] = leadOf(live ? live.words : shown(r, lang));
+  const chosen = live ? [] : r.kind === "plan" ? r.asked.marks : undefined, cards = r.kind === "plan" ? r.asked.cards : undefined;
+  // The cards a stream showed over the words stay there once the answer is whole, while it still has them; the rest follow the words.
+  const same = (a: AnswerCard) => (b: AnswerCard) => JSON.stringify(a) === JSON.stringify(b);
+  const above = [t.live?.sos, t.live?.lane?.card].filter((c): c is AnswerCard => !!c && (!t.ready || !!cards?.some(same(c))));
+  const line = t.live?.lane && above.includes(t.live.lane.card) ? t.live.lane.lead : undefined;
+  const under = cards?.filter(c => !above.some(same(c)));
   // A message to the care team Sona drafted is the way to tell them: no second button offering the same.
   const drafted = cards?.some(c => c.type === "action" && c.do === "tellCareTeam");
   return <View style={{ gap: 12 }}>
@@ -245,35 +255,42 @@ function TurnView({ t, medicines, lead, flood, enter, visitDay, busy, error, onS
       <Text selectable style={{ ...type.body, color: palette.ink }}>{t.question}</Text>
     </Animated.View>
     {r.kind === "none" && r.urgent && <Animated.View entering={enter(1)}><Call999 label={tr("ask.call999")} line={tr("ask.call999Line")} /></Animated.View>}
-    {!t.ready ? (lead && <Working doctors={wantsDoctor(t.question)} flood={flood} />)
+    {above.length > 0 && <Animated.View entering={enter(1)} style={{ gap: 10 }}>
+      {line && <Text style={{ ...type.body, color: palette.muted }}>{line}</Text>}
+      <AnswerCards cards={above} />
+    </Animated.View>}
+    {!t.ready && !live?.words ? (lead && <Working doctors={wantsDoctor(t.question)} flood={flood} />)
       : <Animated.View entering={enter(1)} style={{ gap: 12 }}>
         <Text selectable style={{ fontSize: 17, lineHeight: 26, letterSpacing: -0.3, color: palette.ink }}>
           {/* Her medicines, how much and when, and warning signs in colour, so the answer can be scanned (terms.ts). */}
           <Marked text={bold} medicines={medicines} chosen={chosen} />{more ? <>{lang === "zh" ? "" : " "}<Marked text={more} medicines={medicines} chosen={chosen} /></> : null}
         </Text>
-        {r.kind === "plan" && <Caption text={r.asked.source} />}
-        {/* From their record and one of the hospital's leaflets: the leaflet is named too. */}
-        {r.kind === "plan" && r.asked.leaflet && <Caption text={r.asked.leaflet} />}
-        {/* Answered without the model while it starts: say so, so asking again later makes sense. */}
-        {r.kind !== "doctors" && r.waking ? <Text style={{ ...type.footnote, color: palette.faint }}>{startingLine(r.waking, lang)}</Text> : null}
-        <AnswerCards cards={cards} />
-        {r.kind === "doctors" && <View style={{ gap: 8 }}>
-          <Text style={{ ...type.overline, color: palette.faint }}>{tr("ask.doctorsHead")}</Text>
-          {r.doctors.map(d => <DoctorCard key={d.id} d={d} />)}
-        </View>}
-        <View style={{ flexDirection: "row", marginLeft: -12 }}>
-          <IconAction icon="copy" label={tr("ask.copy")} onPress={() => void Share.share({ message: spoken(r, lang) })} />
-          <IconAction icon="thumbsUp" label={tr("ask.helpful")} on={t.rated === "up"} onPress={() => onRate("up")} />
-          <IconAction icon="thumbsDown" label={tr("ask.notHelpful")} on={t.rated === "down"} onPress={() => onRate("down")} />
-        </View>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-          {r.kind === "plan" && (t.saved ? <Done text={tr("ask.savedFor", { day: visitDay })} /> : <Action icon="save" label={tr("ask.save")} onPress={onSave} />)}
-          {/* Already told: sending it is no longer the one step that matters, so it is offered as after any answer. */}
-          {t.sent ? <Done text={tr("ask.sent")} /> : r.kind === "none" && !r.careTeam
-            ? <Action icon="chat" label={tr("ask.sendTeam")} busy={busy} ink onPress={onSend} />
-            : !drafted && <Action icon="chat" label={tr("ask.askTeam")} busy={busy} onPress={onSend} />}
-        </View>
-        {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error, lang)}</Text>}
+        {/* The rest comes once the answer is whole: with its own entrance after streamed words, inside the answer's otherwise. */}
+        {t.ready && <Animated.View entering={t.live?.words ? enter(1) : undefined} style={{ gap: 12 }}>
+          {r.kind === "plan" && <Caption text={r.asked.source} />}
+          {/* From their record and one of the hospital's leaflets: the leaflet is named too. */}
+          {r.kind === "plan" && r.asked.leaflet && <Caption text={r.asked.leaflet} />}
+          {/* Answered without the model while it starts: say so, so asking again later makes sense. */}
+          {r.kind !== "doctors" && r.waking ? <Text style={{ ...type.footnote, color: palette.faint }}>{startingLine(r.waking, lang)}</Text> : null}
+          <AnswerCards cards={under} />
+          {r.kind === "doctors" && <View style={{ gap: 8 }}>
+            <Text style={{ ...type.overline, color: palette.faint }}>{tr("ask.doctorsHead")}</Text>
+            {r.doctors.map(d => <DoctorCard key={d.id} d={d} />)}
+          </View>}
+          <View style={{ flexDirection: "row", marginLeft: -12 }}>
+            <IconAction icon="copy" label={tr("ask.copy")} onPress={() => void Share.share({ message: spoken(r, lang) })} />
+            <IconAction icon="thumbsUp" label={tr("ask.helpful")} on={t.rated === "up"} onPress={() => onRate("up")} />
+            <IconAction icon="thumbsDown" label={tr("ask.notHelpful")} on={t.rated === "down"} onPress={() => onRate("down")} />
+          </View>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+            {r.kind === "plan" && (t.saved ? <Done text={tr("ask.savedFor", { day: visitDay })} /> : <Action icon="save" label={tr("ask.save")} onPress={onSave} />)}
+            {/* Already told: sending it is no longer the one step that matters, so it is offered as after any answer. */}
+            {t.sent ? <Done text={tr("ask.sent")} /> : r.kind === "none" && !r.careTeam
+              ? <Action icon="chat" label={tr("ask.sendTeam")} busy={busy} ink onPress={onSend} />
+              : !drafted && <Action icon="chat" label={tr("ask.askTeam")} busy={busy} onPress={onSend} />}
+          </View>
+          {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error, lang)}</Text>}
+        </Animated.View>}
       </Animated.View>}
   </View>;
 }

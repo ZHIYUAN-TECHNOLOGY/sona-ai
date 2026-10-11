@@ -40,6 +40,8 @@
 .frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn { display: flex; flex-direction: column; gap: var(--space-3); padding: 0; border: 0; background: none; }
 .frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-q { align-self: flex-end; max-width: 75%; margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-group); background: var(--blue-wash); color: var(--ink); font-size: inherit; font-weight: 500; }
 .frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-a { position: relative; align-self: flex-start; max-width: 85%; margin-left: calc(var(--avatar-sm) + var(--space-3)); padding: var(--space-4); border: 1px solid var(--hairline); border-radius: var(--radius-group); background: var(--canvas); }
+/* An answer with cards is as wide as it may be from its first card, so a card shown before the words never reflows as they come. */
+.frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-a:has(.ai-cards) { width: 85%; }
 .frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-a::before { content: "S"; position: absolute; top: 0; left: calc(-1 * (var(--avatar-sm) + var(--space-3))); display: grid; place-items: center; width: var(--avatar-sm); height: var(--avatar-sm); border-radius: 50%; background: var(--navy); color: var(--on-ai); font-size: 15px; font-weight: 600; }
 .frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-note { font-size: max(15px, var(--text-small)); }
 .sona-turn-a .ask-listen { display: flex; margin-top: var(--space-3); }

@@ -126,6 +126,29 @@ export async function answer(question: string, asks: Asked[], api: Api, conditio
   return api.ask(q).then(a => ({ ...(a.source === "model" || partsOf(a).lane ? fromModel(a, lang) : { ...fallback, ...wakingOf(a) }), ...toldOf(a) }), () => fallback);
 }
 
+type Part = Awaited<ReturnType<AppRouterClient["care"]["askStream"]>> extends AsyncIterable<infer P> ? P : never;
+/**
+ * What a streamed answer shows before it is whole (care.askStream): the 999 card, the card the fast lane drafted with
+ * Sona's line over it, and Gemma's words so far.
+ */
+export type Live = { sos?: AnswerCard; lane?: { card: AnswerCard; lead?: string }; words: string };
+/**
+ * care.askStream read as it comes, each change to `onLive`, ending with the answer care.ask gives (`whole`, which a
+ * server without askStream, or a stream that breaks, is asked instead).
+ */
+export async function streamed(stream: () => Promise<AsyncIterable<Part>>, whole: () => Promise<PlanAnswer>, onLive: (live: Live) => void): Promise<PlanAnswer> {
+  let live: Live = { words: "" };
+  try {
+    for await (const part of await stream()) {
+      if (part.type === "answer") return part.answer;
+      live = part.type === "words" ? { ...live, words: live.words.slice(0, part.at) + part.text }
+        : part.type === "call999" ? { ...live, sos: part.card } : { ...live, lane: { card: part.card, lead: part.lead } };
+      onLive(live);
+    }
+  } catch { /* asked whole below */ }
+  return whole();
+}
+
 /** The server's `careTeam`, there only once the task is made (read loosely: older servers never send it). */
 function toldOf(a: PlanAnswer) {
   const told = (a as { careTeam?: CareTeam }).careTeam;

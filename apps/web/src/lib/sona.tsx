@@ -11,7 +11,7 @@ import { FilmCard } from "@/features/evidence/film-card";
 import { answerBy, answerFilm } from "@/features/evidence/thread";
 
 import { client, queryClient } from "./orpc";
-import { type FreeAnswer, historyOf, phaseOf, rowPatient, rulesAnswer, type Said, type SonaAnswer } from "./sona-answer";
+import { type FreeAnswer, historyOf, type Live, phaseOf, rowPatient, rulesAnswer, type Said, type SonaAnswer, streamed } from "./sona-answer";
 import { PANEL_KEY, type PanelState, parsePanel } from "./sona-panel";
 
 export type { SonaAnswer } from "./sona-answer";
@@ -64,11 +64,16 @@ export const confirmCard = (card: ActionCard, requestId: string) => called(
     : client.tasks.create({ ...card.payload, requestId }),
 );
 
-/** Sona Care's default in the panel: care.ask with the thread so far, drawn as the Ask page draws it (no 999 card lost). */
-async function askCare(question: string, _update: unknown, history: Said[]): Promise<SonaAnswer> {
-  const res = (await client.care.ask({ question, history })) as CareReply;
+/**
+ * Sona Care's default in the panel: care.ask with the thread so far, drawn as the Ask page draws it (no 999 card lost),
+ * streamed (care.askStream) so what has come shows while the rest is written.
+ */
+async function askCare(question: string, update: (answer: SonaAnswer) => void, history: Said[]): Promise<SonaAnswer> {
+  let live: Live | undefined;
+  const show = (now: Live) => { live = now; update({ kind: "node", node: <CareAnswer live={now} confirm={confirmCard} /> }); };
+  const res = (await streamed(() => client.care.askStream({ question, history }), () => client.care.ask({ question, history }), show)) as CareReply;
   if (!res.answer) throw new Error("Sona can't answer right now. Please try again in a minute.");
-  return { kind: "node", text: spokenOf(res), node: <CareAnswer reply={res} confirm={confirmCard} /> };
+  return { kind: "node", text: spokenOf(res), node: <CareAnswer reply={res} live={live} confirm={confirmCard} /> };
 }
 
 /** The Sona panel's default in Sona Pro: the server reads the hospital's Today, Ward and Tasks itself (scope "web") and answers, by rule when the model is off. */
@@ -249,7 +254,7 @@ export function SonaThread() {
             <h2 className="sona-turn-q">{turn.question}</h2>
             <div className="sona-turn-a" role={turn.state === "error" ? "alert" : undefined}>
               {turn.state === "error" ? <p>{turn.error}</p>
-                : turn.state === "pending" || !answer ? <p className="sona-turn-note">Sona is thinking…</p>
+                : !answer ? <p className="sona-turn-note">Sona is thinking…</p>
                 : answer.kind === "node" ? answer.node
                 : answer.kind === "text" ? <>{paragraphs(answer.text, app)}{answer.note ? <p className="sona-turn-note">{answer.note}</p> : null}</>
                 : <p><MarkedFor app={app} text={(answer.kind === "rules" ? answer.lead : answer.turn.bottomLine) ?? ""} /></p>}

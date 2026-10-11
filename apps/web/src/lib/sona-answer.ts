@@ -65,6 +65,29 @@ export function rulesAnswer(res: FreeAnswer): Extract<SonaAnswer, { kind: "rules
   };
 }
 
+/**
+ * What a streamed Sona Care answer shows before it is whole (care.askStream): the 999 card, the card the fast lane
+ * drafted with Sona's line over it, and the words so far.
+ */
+export type Live = { sos?: AnswerCard; lane?: { card: AnswerCard; lead?: string }; words: string };
+type Part<T> = { type: "call999"; card: AnswerCard } | { type: "lane"; card: AnswerCard; lead?: string } | { type: "words"; at: number; text: string } | { type: "answer"; answer: T };
+/**
+ * care.askStream read as it comes, each change to `onLive`, ending with the answer care.ask gives (`whole`, which a
+ * server without askStream, or a stream that breaks, is asked instead).
+ */
+export async function streamed<T>(stream: () => Promise<AsyncIterable<Part<T>>>, whole: () => Promise<T>, onLive: (live: Live) => void): Promise<T> {
+  let live: Live = { words: "" };
+  try {
+    for await (const part of await stream()) {
+      if (part.type === "answer") return part.answer;
+      live = part.type === "words" ? { ...live, words: live.words.slice(0, part.at) + part.text }
+        : part.type === "call999" ? { ...live, sos: part.card } : { ...live, lane: { card: part.card, lead: part.lead } };
+      onLive(live);
+    }
+  } catch { /* asked whole below */ }
+  return whole();
+}
+
 /** Where a streamed evidence turn is, for the Steps line: searching, reading the sources, writing, or done (answered or failed). */
 export function phaseOf(turn: EvidenceTurn): Phase {
   if (turn.answer || turn.failed) return "done";

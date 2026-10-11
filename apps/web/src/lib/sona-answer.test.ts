@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 
 import { type Answer, apply, newTurn } from "@/features/evidence/thread";
 
-import { historyOf, phaseOf, rowPatient, rulesAnswer } from "./sona-answer";
+import { historyOf, type Live, phaseOf, rowPatient, rulesAnswer, streamed } from "./sona-answer";
 
 const spec = (...parts: { type: string; props: Record<string, unknown> }[]) => ({
   root: "r",
@@ -78,4 +78,16 @@ test("a follow-up goes with the thread so far: the last 6 answered turns, oldest
   expect(historyOf(Array.from({ length: 8 }, (_, i) => said(`Q${i}`, `A${i}`))).map(h => h.question)).toEqual(["Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]);
   const long = historyOf([said("q".repeat(2500), "a".repeat(5000))])[0]!;
   expect([long.question.length, long.answer.length]).toEqual([2000, 4000]);
+});
+
+test("a streamed Care answer: cards first, then the words as each piece lands (a retry starts them again), then the whole answer", async () => {
+  const sos = { type: "warning" as const, level: "urgent" as const, title: "Call 999 now", items: [] };
+  const parts = [{ type: "call999" as const, card: sos }, { type: "words" as const, at: 0, text: "Rest" }, { type: "words" as const, at: 4, text: " now." }, { type: "words" as const, at: 0, text: "Duduk." }, { type: "answer" as const, answer: { answer: "Duduk." } }];
+  const seen: Live[] = [];
+  const whole = async () => ({ answer: "asked whole" });
+  expect(await streamed(async () => (async function* () { yield* parts; })(), whole, live => seen.push(live))).toEqual({ answer: "Duduk." });
+  expect(seen.map(l => l.words)).toEqual(["", "Rest", "Rest now.", "Duduk."]);
+  expect(seen.at(-1)!.sos).toEqual(sos);
+  // A server without askStream, or a stream that breaks: care.ask's whole answer.
+  expect(await streamed(async () => { throw new Error("no askStream"); }, whole, () => {})).toEqual({ answer: "asked whole" });
 });

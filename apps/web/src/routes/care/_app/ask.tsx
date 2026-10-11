@@ -13,7 +13,7 @@ import { Listen } from "@/features/care-ask/listen";
 import { authClient } from "@/lib/auth-client";
 import { client, orpc } from "@/lib/orpc";
 import { confirmCard, useSonaAsk } from "@/lib/sona";
-import type { Said, SonaAnswer } from "@/lib/sona-answer";
+import { type Live, type Said, type SonaAnswer, streamed } from "@/lib/sona-answer";
 import "@/styles/pages/care-ask.css";
 
 export const Route = createFileRoute("/care/_app/ask")({ component: Page });
@@ -59,18 +59,21 @@ function Next({ question, spoken }: { question: string; spoken: string }) {
 
 /**
  * This page's answer to the Sona bar and the chips: `care.ask`, with the thread so far (`history`) so a follow-up is
- * read with it, or her chat agent behind its flag (it keeps the conversation itself). The answer carries its words
- * (`text`) for the next question's history. A failure is a plain line with "Try again".
+ * read with it, or her chat agent behind its flag (it keeps the conversation itself). care.ask's answer is streamed
+ * (care.askStream): what has come shows as it comes, in the same place the whole answer then takes. The answer carries
+ * its words (`text`) for the next question's history. A failure is a plain line with "Try again".
  */
-const answerWith = (get: (question: string, history: Said[]) => Promise<CareReply>) => async (question: string, _update: unknown, history: Said[]): Promise<SonaAnswer | ReactNode> => {
-  let res: CareReply;
-  try { res = await get(question, history); }
+const answerWith = (get: (question: string, history: Said[], onLive: (live: Live) => void) => Promise<CareReply>) => async (question: string, update: (answer: SonaAnswer) => void, history: Said[]): Promise<SonaAnswer | ReactNode> => {
+  let res: CareReply, live: Live | undefined;
+  // The same shape as the whole answer's node below, so its CareAnswer (and a drafted card's state) carries over.
+  const show = (now: Live) => { live = now; update({ kind: "node", node: <><CareAnswer live={now} confirm={confirmCard} />{null}</> }); };
+  try { res = await get(question, history, show); }
   catch { return <Failed question={question} line="Sona can't answer right now. Try again." />; }
   if (!res.answer) return <Failed question={question} line={res.waking ? `Sona is starting (about ${res.waking} min). Try again then.` : "Sona can't answer right now. Try again."} />;
   const spoken = spokenOf(res);
-  return { kind: "node", text: spoken, node: <><CareAnswer reply={res} confirm={confirmCard} /><Next question={question} spoken={spoken} /></> };
+  return { kind: "node", text: spoken, node: <><CareAnswer reply={res} live={live} confirm={confirmCard} /><Next question={question} spoken={spoken} /></> };
 };
-const answer = answerWith((question, history) => client.care.ask({ question, history }) as Promise<CareReply>);
+const answer = answerWith((question, history, show) => streamed(() => client.care.askStream({ question, history }), () => client.care.ask({ question, history }), show) as Promise<CareReply>);
 // The agent's own line (no model, or it is starting) reads as care.ask's fixture: "Try again".
 const fromAgent = (ask: AgentAsk) => answerWith(question => ask(question).then(a => a.source === "model" ? a : { ...a, answer: "" }));
 
