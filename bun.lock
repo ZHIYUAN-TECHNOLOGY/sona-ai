@@ -289,6 +289,9 @@
     },
     "packages/domain": {
       "name": "@sona-ai/domain",
+      "dependencies": {
+        "zod": "catalog:",
+      },
       "devDependencies": {
         "@sona-ai/config": "workspace:*",
         "typescript": "^6.0.3",

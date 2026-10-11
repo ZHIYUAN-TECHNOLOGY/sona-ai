@@ -11,6 +11,10 @@ export const askOp = z.string().regex(/^(open|go|tab|task-done):[\w\-/:.]+$/);
 export const askRow = z.object({ id: z.string().max(64), title: z.string().max(120), detail: z.string().max(160), tone: askTone, op: askOp.optional() }).strict();
 /** A lead's longest: a general answer to a clinician runs to a short paragraph (9 Oct: 600 raised to 1,500 for Sona Pro). */
 export const LEAD_MAX = 1500;
+/**
+ * An answer's cards ride beside the spec (`cards`, @sona-ai/domain/answer-parts), never as an element here: an older
+ * build's checkAskSpec refuses a type it does not know, which would hide the whole answer on it.
+ */
 export const ASK_PROPS = {
   AskColumn: z.object({}).strict(),
   AskLead: z.object({ text: z.string().min(1).max(LEAD_MAX) }).strict(),
