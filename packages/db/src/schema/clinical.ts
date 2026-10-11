@@ -41,6 +41,12 @@ export const pushTokens = pgTable("push_tokens", {
   platform: text("platform").notNull(), updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, t => [index("push_tokens_patient").on(t.patientId)]);
 
+/** Sona Pro: a clinician's phone, so My Day's urgent rows reach it with the app closed (packages/api/src/push.ts tellStaff). */
+export const staffPushTokens = pgTable("staff_push_tokens", {
+  token: text("token").primaryKey(), userId: text("user_id").notNull(), hospitalId: text("hospital_id").notNull(),
+  platform: text("platform").notNull(), updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, t => [index("staff_push_tokens_hospital").on(t.hospitalId)]);
+
 /**
  * The hospital's clinicians as patients see them in Find a doctor (SYNTHETIC in the demo): specialty,
  * room, languages, and weekly clinic sessions (weekday 0 Sun … 6 Sat, "HH:MM" Malaysia time).

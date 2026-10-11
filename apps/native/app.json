@@ -42,6 +42,7 @@
         }
       ],
       "expo-image",
+      "expo-notifications",
       "expo-asset",
       "./plugins/with-scene-lifecycle",
       [

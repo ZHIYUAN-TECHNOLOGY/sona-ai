@@ -3,6 +3,7 @@ import { TextInput, View } from "react-native";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action } from "@/components/sona/ui";
+import { forgetPhone } from "@/features/notifications";
 import { authClient } from "@/lib/auth-client";
 import { queryClient } from "@/utils/orpc";
 
@@ -40,4 +41,4 @@ export function SignIn() {
 export const SIGN_IN_PROMPT = "Sign in to use your hospital's records.";
 
 /** Signs out, then re-runs the open queries without the session. */
-export const signOut = () => { void authClient.signOut().then(() => queryClient.refetchQueries()); };
+export const signOut = () => { void forgetPhone().then(() => authClient.signOut()).then(() => queryClient.refetchQueries()); };

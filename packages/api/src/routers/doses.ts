@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure } from "../index";
+import { tellStaff } from "../push";
 import { doseScheduleOf, lastDischarge, takenKeys } from "./care-plan";
 
 /**
@@ -76,6 +77,8 @@ export async function raiseMissedDoses(db: Context["db"], hospitalId: string, no
       const id = `dose:${patientId}:${sourceId}`;
       await db.insert(tasks).values({ id, hospitalId, encounterId: visit.encounterId, kind: "dose", title, owner: "Attending doctor", due: "Today", sourceId, idempotencyKey: id })
         .onConflictDoNothing();
+      // A new row pushes once; its count moving on later does not, so a locked phone is not told every hour.
+      await tellStaff({ db }, hospitalId, { title: "Doses missed", body: title });
     }
     told.push(patientId);
   }

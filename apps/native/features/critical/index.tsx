@@ -18,7 +18,7 @@ import { acknowledgeResult, refreshServerData, useServerData } from "@/features/
  * Critical result alert (after Qure's qER pattern): a value past the lab's call-now limit drops a
  * banner over whatever screen is open, with a clock running since it arrived, until someone
  * acknowledges it. Live mode polls the server's results; fixture mode uses a local stand-in.
- * ponytail: in-app only; a push to a locked phone needs expo-notifications and a development build.
+ * A locked phone hears it as a push (features/notifications, sent when the result lands).
  */
 type Critical = { id: string; patientId: string; patientName: string; test: string; value: string; unit?: string | null; flag: string; receivedAt: Date };
 
