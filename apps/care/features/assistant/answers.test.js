@@ -222,3 +222,21 @@ test("an answer's lead sentence is split from the rest, never at Dr.", () => {
   expect(leadOf("See Dr. Tan first. Then rest.")).toEqual(["See Dr. Tan first.", "Then rest."]);
   expect(leadOf("One sentence only.")).toEqual(["One sentence only.", ""]);
 });
+
+test("an answer's marks and cards ride beside its words, read loosely: old kinds renamed, what this build can't read left out; a lane's answer shows too", async () => {
+  const medicine = { type: "medicine", name: "Azithromycin", dose: "1 tablet", times: ["08:00"], source: "Your discharge plan" };
+  const reply = await answer("How do I take it?", [], api(modelSays({
+    answer: "Take azithromycin 1 tablet once a day.", grounded: true, urgent: false, from: "medicines",
+    marks: [{ text: "azithromycin", kind: "medicine" }, { text: "once a day", kind: "when" }, { text: "1 tablet", kind: "sparkle" }],
+    cards: [medicine, { type: "chart", points: [] }, { type: "result", test: "Potassium" }],
+  })));
+  expect(reply.asked.marks).toEqual([{ text: "azithromycin", kind: "medicine" }, { text: "once a day", kind: "dose" }]);
+  expect(reply.asked.cards).toEqual([medicine]);
+  // An older server sends neither: no marks (the word lists colour) and no cards.
+  const plain = await answer("Can I drink coffee?", [], api(modelSays({ answer: "Yes, a cup is fine.", grounded: false, urgent: false })));
+  expect(plain.asked.marks).toBeUndefined();
+  expect(plain.asked.cards).toBeUndefined();
+  // The Clef fast lane answered the turn: its words show whatever its source says.
+  const lane = await answer("When is my next visit?", [], api(async () => ({ answer: "Your clinic review is on 24 October.", grounded: true, urgent: false, source: "lane", lane: { intent: "next_appointment", confidence: 0.93, by: "clef-omni" } })));
+  expect(lane.asked.answer).toBe("Your clinic review is on 24 October.");
+});

@@ -146,7 +146,7 @@ export function useLiveVoice({ voice, voices, onFlood }: { voice?: SonaVoice; vo
 
   const phase: LivePhase = starting || talk.call !== "off" ? "on" : lost ? "lost" : talk.ready ? "ready" : "off";
   return {
-    phase, available, status: talk.status, audible, upto, standIn, error, heard: talk.heard, said: talk.said,
+    phase, available, status: talk.status, audible, upto, standIn, error, heard: talk.heard, said: talk.said, marks: talk.marks,
     start,
     end: () => { live.current?.end(); quietPhone(); },
     /** A suggested question, asked in the conversation. */
