@@ -10,7 +10,7 @@ import { useServerBeds, useWardFailure } from "@/features/live/ward-sync";
 import { dayVisits } from "@/features/patients/record";
 import { localDate } from "@/features/tasks/state";
 import { wardBeds } from "@/features/ward/model";
-import { flaggedItems, reportItems } from "@/features/check-ins/model";
+import { doseItems, flaggedItems, reportItems } from "@/features/check-ins/model";
 import { useCheckIns, useKeptFlags } from "@/features/check-ins/state";
 import { useKeptBookings } from "@/features/bookings/parts";
 import { useInbox } from "@/features/inbox";
@@ -105,6 +105,7 @@ export function useNeedsYou(): Need[] {
   const items = [
     ...flaggedItems(checkIns, kept),
     ...reportItems(server?.tasks ?? [], checkIns, id => roster.find(p => p.encounterId === id)?.id, kept),
+    ...doseItems(server?.tasks ?? [], id => roster.find(p => p.encounterId === id)?.id),
     ...inbox ? messageItems(inbox.threads, new Date(inbox.now)) : [],
     // One just decided stays a beat, showing its receipt.
     ...requests, ...keptBookings.filter(k => !requests.some(r => r.id === k.id)),

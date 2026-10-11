@@ -11,6 +11,7 @@ import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
 import { wakeWatches } from "../watches";
 import { wakeFollowUps } from "./check-ins";
+import { raiseMissedDoses } from "./doses";
 
 /**
  * The demo clock's controls: jump the demo hospital to the first or second check-in, the day-1 dose
@@ -87,6 +88,7 @@ export const demoRouter = {
     await db.update(hospitals).set({ clockOffsetMs: offset }).where(eq(hospitals.id, hospitalId));
     const now = new Date(real + offset);
     await wakeFollowUps(context, hospitalId, now);
+    await raiseMissedDoses(db, hospitalId, now);
     await wakeWatches(context, hospitalId);
     return status(db, hospitalId, now);
   }),

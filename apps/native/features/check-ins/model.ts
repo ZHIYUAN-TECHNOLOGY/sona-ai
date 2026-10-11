@@ -87,3 +87,16 @@ export function reportItems(tasks: ReportTask[], checkIns: CheckIn[], patientOf:
     };
   });
 }
+
+/**
+ * Doses she has missed at home (the hourly check raises one "dose" task per patient, packages/api/src/routers/doses.ts):
+ * an amber row titled "Amelia: 2 Azithromycin doses missed", below a booking request, opening her sheet where the
+ * adherence line is. It leaves once she marks a dose taken again.
+ */
+export function doseItems(tasks: ReportTask[], patientOf: (encounterId: string) => string | undefined): DayItem[] {
+  return tasks.filter(t => t.kind === "dose" && !t.completed).map(t => ({
+    id: `dose-${t.id}`, kind: "task" as const, title: t.title, detail: "Missed at home",
+    reason: "Not marked taken in Sona Care", tone: "soon" as const, score: 70, at: new Date(t.createdAt).getTime(),
+    patientId: t.encounterId ? patientOf(t.encounterId) : undefined, open: CHECK_IN,
+  }));
+}
