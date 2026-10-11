@@ -5,23 +5,26 @@ import { usePreventRemove } from "expo-router/react-navigation";
 import { createContext, use, useRef, useState, type ReactNode } from "react";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, { FadeIn } from "react-native-reanimated";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { List, ListRow } from "@/components/sona/list";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
-import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Icon, Notice, Surface } from "@/components/sona/ui";
+import { palette, type } from "@/components/sona/theme";
+import { Action, Notice } from "@/components/sona/ui";
 import { VoiceDock } from "@/features/encounter/voice-dock";
 import type { LiveAdapter } from "@/features/encounter/sona-live";
 import type { Attachment } from "@/components/sona/attachments-menu";
 import { carry } from "@/features/encounter/carry";
 import { openPatients, openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
-import { api, useLive } from "@/features/live";
+import { api, requestId, useLive } from "@/features/live";
+import { createServerTask } from "@/features/live/server-day";
+import { partsOf } from "@sona-ai/domain/answer-parts";
 import { startingReply, wakingOf } from "@/features/live/waking";
 import { PLACEHOLDER, SCOPE_LABEL, askContext, forWhichPatient, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
+import { AnswerCards, OpsContext, Review } from "./cards";
 import { askCatalog, validateAskSpec } from "./catalog";
+import { taskOfOp } from "./parts";
 import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
 import { routePrompt } from "@/features/encounter/state";
 import { EVIDENCE, answerOf, type Entry, type Reply } from "./thread";
@@ -33,26 +36,6 @@ const DockHeight = createContext(0);
 /** The measured height of the Sona dock over this page (0 while hidden or outside `WithSona`), to pad by instead of ASK_SPACE. */
 export const useDockHeight = () => use(DockHeight);
 const tap = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
-
-type Ops = { run: (op: string) => void };
-const OpsContext = createContext<Ops>({ run: () => {} });
-
-/** A consequential action: what will happen, then Confirm; afterwards the receipt in its place. */
-function Review({ title, items, what, confirm, done, op }: { title: string; items: string[]; what: string; confirm: string; done: string; op: string }) {
-  const { run } = use(OpsContext);
-  const [confirmed, setConfirmed] = useState(false);
-  if (confirmed) return <Animated.View entering={FadeIn.duration(200)} style={{ flexDirection: "row", gap: 10, alignItems: "center", padding: 14, borderRadius: radius.group, backgroundColor: "rgba(15,110,102,0.10)" }}>
-    <Icon name="checkmark.circle.fill" size={18} color={palette.green} />
-    <Text style={{ ...type.subhead, flex: 1, fontWeight: "600", color: palette.ink }}>{done}</Text>
-  </Animated.View>;
-  return <Surface feature style={{ padding: 16, gap: 10 }}>
-    <Text style={{ ...type.overline, color: palette.blue }}>Review before confirming</Text>
-    <Text style={{ ...type.headline, color: palette.ink }}>{title}</Text>
-    {items.map(item => <Text key={item} style={{ ...type.subhead, color: palette.ink }}>· {item}</Text>)}
-    <Text style={{ ...type.footnote, color: palette.muted }}>{what}</Text>
-    <Action label={confirm} onPress={() => { run(op); setConfirmed(true); }} />
-  </Surface>;
-}
 
 const { registry } = defineRegistry(askCatalog, {
   components: {
@@ -66,33 +49,49 @@ const { registry } = defineRegistry(askCatalog, {
   },
 });
 
+/** One request ID per drafted task, so confirming again after a lost reply returns the saved task instead of adding another. */
+const taskRequests = new Map<string, string>();
+
 /**
  * The ops an answer may run, and nothing else: open a visit, go to a page, change the page's tab or
- * filter, or mark a task done (after the answer's review card). `leave` closes whatever shows the answer first.
+ * filter, or mark a task done or add a drafted one (after the answer's review card). `leave` closes whatever shows the
+ * answer first. A drafted task only comes from the server, so it is saved there as the follow-up tasks screen saves one,
+ * and the op resolves once it is.
  */
 export function useRunOp(leave: () => void, onTab?: (tab: string) => void) {
   const { updateEncounter } = useEncounter();
   const navigation = useNavigation();
-  return (op: string) => {
+  return (op: string): void | Promise<unknown> => {
     const [kind, ...rest] = op.split(":");
     const arg = rest.join(":");
     if (kind === "open") { leave(); setTimeout(() => openSession(arg), 250); }
     else if (kind === "go") { leave(); setTimeout(() => router.push(arg as never), 250); }
     else if (kind === "tab") { leave(); if (onTab) onTab(arg); else openTab(navigation, arg); }
     else if (kind === "task-done") { const [patientId, taskId] = rest; if (patientId && taskId) updateEncounter(current => ({ ...current, tasks: current.tasks.map(t => t.id === taskId ? { ...t, completed: true } : t) }), false, patientId); }
+    else if (kind === "task-new") {
+      const task = taskOfOp(arg);
+      if (!task) return Promise.reject(new Error("Sona's draft is not a task the app can add."));
+      const id = taskRequests.get(arg) ?? requestId();
+      taskRequests.set(arg, id);
+      return createServerTask({ ...task, requestId: id });
+    }
   };
 }
 
 /** Where a day-wide answer's page action leads by default: a Patients tab (the Patients page under this one, if open), or the ward filtered. */
 const openTab = (navigation: Parameters<typeof openPatients>[0], tab: string) => tab === "blocked" ? router.push({ pathname: "/ward", params: { filter: "blocked" } }) : openPatients(navigation, { tab });
 
-/** An answer as a view from the ask catalogue, with its question and its label (rule-based, or the model that drafted it); nothing renders if the spec fails the checks. */
-export function AnswerView({ answer, run, question = true, model }: { answer: Answer; run: (op: string) => void; question?: boolean; model?: string }) {
-  const spec = validateAskSpec(answer.spec);
-  if (!spec) return null;
+/** An answer as a view from the ask catalogue, then its cards, with its question and its label (rule-based, or the model that drafted it); nothing renders if the spec fails the checks and it has no cards. */
+export function AnswerView({ answer, run, question = true, model }: { answer: Answer; run: (op: string) => void | Promise<unknown>; question?: boolean; model?: string }) {
+  const spec = validateAskSpec(answer.spec), cards = answer.cards ?? [];
+  if (!spec && !cards.length) return null;
   return <View style={{ gap: 14 }}>
     {question && <Text style={{ ...type.footnote, color: palette.muted }}>{answer.question}</Text>}
-    <OpsContext value={{ run }}><JSONUIProvider initialState={{}}><Renderer spec={spec} registry={registry} includeStandard={false} /></JSONUIProvider></OpsContext>
+    <OpsContext value={{ run }}>
+      {spec && <JSONUIProvider initialState={{}}><Renderer spec={spec} registry={registry} includeStandard={false} /></JSONUIProvider>}
+      {/* The record's facts and a drafted step, under the words (docs/answer-parts.md); an old server sends none. */}
+      <AnswerCards cards={cards} />
+    </OpsContext>
     {model ? <SampleLabel source="model" model={model} /> : <SampleLabel source="fixture" rule />}
   </View>;
 }
@@ -108,10 +107,12 @@ export async function answerFree(scope: Scope, question: string, answers: Answer
   try {
     // A visit's question sends the visit too: the server adds its patient's record, so "her last potassium" is answered from it.
     const r = await api.ask.free({ scope, question, context: askContext(answers), encounterId });
+    // Its coloured words and cards ride beside the spec, read loosely: what this app cannot read is left out, never the answer.
+    const free = (spec: unknown): Answer => { const { marks, cards } = partsOf(r); return { id: "free", question, spec: spec as Answer["spec"], worth: true, ...marks && { marks }, ...cards && { cards } }; };
     // A clinical question the literature answers (the model's own reading of it, not a word list) goes to the evidence, cited.
-    if (r.source === "model") return "evidence" in r && r.evidence ? EVIDENCE : { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model, general: "general" in r };
+    if (r.source === "model") return "evidence" in r && r.evidence ? EVIDENCE : { answer: free(r.spec), model: r.model, general: "general" in r };
     // The model's words did not keep to the page, so the server sent the page's own lines: shown as the rules' answer.
-    if ("spec" in r && r.spec) return { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true } };
+    if ("spec" in r && r.spec) return { answer: free(r.spec) };
     const waking = wakingOf(r);
     return waking ? { notice: startingReply(waking), again: true } : { notice: "unanswered" in r && r.unanswered ? "Sona couldn't answer that." : only(answers) };
   } catch {

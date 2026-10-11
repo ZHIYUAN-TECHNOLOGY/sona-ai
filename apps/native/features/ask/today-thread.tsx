@@ -80,7 +80,7 @@ export function ThreadEntry({ entry, fresh = false, onAgain, onEvidence, onOnce,
         </View>}
       </View>
       : <>
-        {text && <StreamedLead text={text} animate={fresh} />}
+        {text && <StreamedLead text={text} terms={said?.answer.marks} animate={fresh} />}
         <Animated.View entering={fresh && !reduced ? FadeInDown.duration(220) : undefined} style={{ gap: 14 }}>
           {/* An answer from general knowledge says so: it is not from this hospital's records. */}
           {said?.general && <Caption>General answer · not from this hospital's records</Caption>}

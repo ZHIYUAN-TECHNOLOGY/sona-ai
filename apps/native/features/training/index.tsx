@@ -187,13 +187,13 @@ function SampleCard({ sample, reducedMotion, busy, error, onDecide }: { sample: 
 const chips = (text: string) => placeholderParts(text).filter(p => p.placeholder).length;
 /*
  * Redactions are colour-coded by what was taken out: people plum, ID numbers olive, contact details ocean. They stay
- * clear of the clinical key (violet medicine, teal finding, blue symptom, amber caution), and [LEAK] keeps the alert red
+ * clear of the clinical key (blue medicine, violet dose, teal condition and symptom, amber caution), and [LEAK] keeps the warning red
  * (must not miss). The chip's own label says the kind too, so colour is never the only cue.
  */
 const PEOPLE = { color: "#8E3A78", backgroundColor: "rgba(142,58,120,0.12)" };
 const ID_NUMBER = { color: "#5C6A1E", backgroundColor: "rgba(92,106,30,0.13)" };
 const CONTACT = { color: "#1B6C8F", backgroundColor: "rgba(27,108,143,0.12)" };
-const REDACTED: Record<Placeholder, { color: string; backgroundColor: string }> = { NAME: PEOPLE, IC: ID_NUMBER, MRN: ID_NUMBER, PHONE: CONTACT, EMAIL: CONTACT, LEAK: TINT.alert };
+const REDACTED: Record<Placeholder, { color: string; backgroundColor: string }> = { NAME: PEOPLE, IC: ID_NUMBER, MRN: ID_NUMBER, PHONE: CONTACT, EMAIL: CONTACT, LEAK: TINT.warning };
 const chipStyle = (placeholder: Placeholder) => ({ fontWeight: "600" as const, ...REDACTED[placeholder] });
 
 /** "OpenMed removed 4 names · 1 phone number", each count in its chips' colour: the card's key. */

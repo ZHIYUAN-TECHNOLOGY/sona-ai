@@ -3,7 +3,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { QuestionList } from "@/components/sona/list";
-import { MarkedText, TINT, segments, type Mark } from "@/components/sona/marked-text";
+import { MarkedText, markStyle, segments, type Mark } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -242,7 +242,7 @@ function ClaimLine({ claim, references, onCite }: { claim: Claim; references: Re
       {words.map((w, i) => {
         // The space inside a term of several words takes the tint too, so "intensive care" is one tint, not two.
         const joined = w.mark && w.space && words[i + 1]?.mark === w.mark;
-        return <Text key={i} accessible={false} style={{ ...type.callout, color: palette.ink }}>{w.mark ? <Text style={{ ...TINT[w.mark], fontWeight: "500" }}>{joined ? `${w.word} ` : w.word}</Text> : w.word}{w.space && !joined ? " " : ""}</Text>;
+        return <Text key={i} accessible={false} style={{ ...type.callout, color: palette.ink }}>{w.mark ? <Text style={markStyle(w.mark)}>{joined ? `${w.word} ` : w.word}</Text> : w.word}{w.space && !joined ? " " : ""}</Text>;
       })}
       {claim.cites.map(n => { const r = references.find(x => x.n === n), on = open === n;
         return <Pressable key={n} accessibilityRole="button" accessibilityState={{ expanded: on }} accessibilityLabel={`Source ${n}${r ? `, ${DESIGN_WORDS[r.design]}, ${[r.from, r.year].filter(Boolean).join(" ")}` : ""}`} accessibilityHint="Shows what this source says"

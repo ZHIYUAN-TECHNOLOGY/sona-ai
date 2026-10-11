@@ -43,7 +43,7 @@ test("a pneumonia answer is tied to the patient only when CURB-65 is complete an
 
 test("evidence text keeps its key terms but never paints a general finding as a patient's alert", () => {
   expect(calmTerms("Not routinely: steroids are for severe pneumonia treated in intensive care."))
-    .toBe("Not routinely: [[steroids|medicine]] are for [[severe pneumonia|finding]] treated in [[intensive care|finding]].");
+    .toBe("Not routinely: [[steroids|medicine]] are for [[severe pneumonia|condition]] treated in [[intensive care|condition]].");
   expect(calmTerms("No key terms here.")).toBe("No key terms here.");
 });
 

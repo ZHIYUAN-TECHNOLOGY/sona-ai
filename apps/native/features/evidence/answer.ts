@@ -10,11 +10,11 @@ export type Step = { step: "search" } | { step: "read"; studies: number; passage
 export type StepLine = { key: Step["step"]; text: string; done: boolean };
 
 /**
- * Evidence text with its key terms marked, red kept for alerts about a patient: in general evidence, "severe pneumonia"
- * or "intensive care" is a finding (teal), not a must-not-miss for anyone. The marks go in as markup, so the dictionary
+ * Evidence text with its key terms marked, red kept for warnings about a patient: in general evidence, "severe pneumonia"
+ * or "intensive care" is a condition (teal), not a must-not-miss for anyone. The marks go in as markup, so the dictionary
  * is not run again on the text.
  */
-export const calmTerms = (text: string) => segments(text).map(s => (s.mark ? `[[${s.text}|${s.mark === "alert" ? "finding" : s.mark}]]` : s.text)).join("");
+export const calmTerms = (text: string) => segments(text).map(s => (s.mark ? `[[${s.text}|${s.mark === "warning" ? "condition" : s.mark}]]` : s.text)).join("");
 
 const sources = (n: number) => `${n} source${n === 1 ? "" : "s"}`;
 /**

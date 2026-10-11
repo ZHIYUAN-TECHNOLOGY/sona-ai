@@ -1,3 +1,4 @@
+import type { Mark } from "@sona-ai/domain/answer-parts";
 import { authoredAnswer, isRehearsed } from "@sona-ai/domain/evidence";
 import { router, useIsFocused } from "expo-router";
 import { DrawnCheck } from "@/components/sona/parts";
@@ -116,10 +117,10 @@ export function VisitEnd({ latest, patient, encounter, hasSteps, onPick }: { lat
   </View>;
 }
 
-/** Words arrive in a quick sweep, the way Monogram's answers settle in. */
-export function StreamedLead({ text, animate }: { text: string; animate: boolean }) {
+/** Words arrive in a quick sweep, the way Monogram's answers settle in. `terms`: the model's marks, which alone colour it. */
+export function StreamedLead({ text, terms, animate }: { text: string; terms?: Mark[]; animate: boolean }) {
   const { reducedMotion } = useAccessibleEffects();
-  const words = { length: wordCount(text) };
+  const words = { length: wordCount(text, terms) };
   const [shown, setShown] = useState(animate && !reducedMotion ? 0 : words.length);
   useEffect(() => {
     if (shown >= words.length) return;
@@ -127,7 +128,7 @@ export function StreamedLead({ text, animate }: { text: string; animate: boolean
     return () => clearTimeout(timer);
   }, [shown, words.length]);
   // Key terms become chips; a highlight sweeps across them once a fresh answer finishes streaming.
-  return <SweptLead text={text} shown={shown} sweep={animate && !reducedMotion} style={{ ...type.title, color: palette.ink }} />;
+  return <SweptLead text={text} terms={terms} shown={shown} sweep={animate && !reducedMotion} style={{ ...type.title, color: palette.ink }} />;
 }
 
 /** The top bar's buttons: the shell's liquid glass button, as the bar's below. */
