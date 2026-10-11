@@ -1,7 +1,7 @@
 import { triageByRules } from "@sona-ai/domain/messages";
 import { expect, test } from "bun:test";
 
-import { chatModels, marksIn } from "./chat-models";
+import { chatModels, marksIn, streamingAnswer, stringSoFar } from "./chat-models";
 import { stubModels } from "./models";
 import { messagesFor } from "./voice-agent/answer";
 
@@ -78,4 +78,20 @@ test("the typed answer asks for every kind of mark, grouped", async () => {
   await chatModels(async system => { typed = system; return { answer: "ok" }; }, "chat-test", stubModels).answerFromPlan({ question: "Bila makan ubat?", plan: "", language: "ms" });
   for (const kind of ["warning", "caution", "medicine", "dose", "condition", "symptom", "test"]) expect(typed).toContain(`  - "${kind}": `);
   expect(typed).toContain(`"marks": {"<kind>": ["<words copied from the answer>"]}`);
+});
+
+test("a streamed answer: its words so far as each piece lands (a cut escape waits for its rest), and a retry starts them again", async () => {
+  expect(stringSoFar('{"answer": "Ambil \\"Panadol\\" \\u996d', "answer")).toBe('Ambil "Panadol" 饭');
+  expect(stringSoFar('{"answer": "Ambil \\"Panadol\\" \\u99', "answer")).toBe('Ambil "Panadol" ');
+  expect(stringSoFar('{"answer": "a\\nb\\\\', "answer")).toBe("a\nb\\");
+  expect(stringSoFar('{"answer": "a\\', "answer")).toBe("a");
+  expect(stringSoFar('{"grounded": true, "answ', "answer")).toBeUndefined();
+  expect(stringSoFar('{"answer": "done", "from": "x"}', "answer")).toBe("done");
+  // Gemma's first reply is "{}" (10 Oct gate), so she is asked again: the words come from the second.
+  const replies = ["{}", JSON.stringify({ answer: "Take paracetamol 1 g [2] every 6 hours.", grounded: false, urgent: false, cites: [2], marks: { dose: ["1 g"] } })];
+  const heard: string[] = [];
+  const answer = await streamingAnswer(async () => (async function* () { yield* replies.shift()!.match(/[\s\S]{1,4}/g)!; })(), "chat-test", stubModels, w => heard.push(w))({ question: "How much paracetamol?", plan: "", language: "en" });
+  expect(answer).toEqual({ answer: "Take paracetamol 1 g every 6 hours.", grounded: false, urgent: false, cites: [2], marks: [{ text: "1 g", kind: "dose" }], source: "model", model: "chat-test" });
+  expect(heard.at(-1)).toBe(answer.answer);
+  expect(heard.some(w => w.includes("["))).toBe(false);
 });

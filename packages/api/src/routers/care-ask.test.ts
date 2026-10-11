@@ -7,6 +7,7 @@ import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
+import { BOXES, basetenModels, boxState, type Baseten } from "../baseten-models";
 import { chatModels, type Chat } from "../chat-models";
 import { CLEF_MODEL, clefOf } from "../decide";
 import { TRIAL, clefReplay, replay } from "../fixtures/clef-trial";
@@ -24,13 +25,13 @@ const user = (id: string) => ({
 const world = async (models: Models) => (await clefWorld(models)).amelia;
 
 /** The same world with Clef (`clef`), its database, and a clock to move her day on. */
-async function clefWorld(models: Models, clef?: WorkersAi) {
+async function clefWorld(models: Models, clef?: WorkersAi, baseten?: Baseten) {
   const clock = { now: new Date("2026-09-28T10:05:00+08:00") }, now = clock.now, db = await createTestDb();
   await seedDemo(db, new Date("2026-09-26T15:40:00+08:00"));
   await addClinician(db, "dr-aisyah");
   await db.update(guaranteeLetters).set({ status: "received", receivedAt: now }).where(eq(guaranteeLetters.id, "gl-1042"));
   await db.update(encounters).set({ state: { discharge: { glReceived: true, medsConfirmed: true, followUp: "2w", language: "ms" } } }).where(eq(encounters.id, "visit-1042"));
-  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), now: () => clock.now, models, clef } });
+  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), now: () => clock.now, models, clef, baseten } });
   const doctor = as("dr-aisyah"), amelia = as("amelia-account");
   await doctor.discharge.request({ encounterId: "visit-1042", requestId: "req-d1", approvedBy: "dr-aisyah" });
   await amelia.care.join({ code: (await doctor.care.code({ encounterId: "visit-1042" })).code });
@@ -192,4 +193,62 @@ test("a model answer naming her medicine carries its card from her plan; one nam
   const asked = await amelia.care.ask({ question: "Apa ubat saya?" });
   expect(asked.marks).toEqual(marks);
   expect(asked.cards).toEqual([{ type: "medicine", name: "Azithromycin", dose: "1 tablet, sebelum atau selepas makan", how: "Kini sebiji tablet sehari, selama 2 hari lagi", times: ["08:00"], source: "Pelan discaj anda" }]);
+});
+
+/** Box ① answering `reply` (JSON, as Gemma writes it): whole when asked whole (care.ask), a few characters a millisecond when streamed. */
+function brain(reply: string): Baseten {
+  // Up, whatever an earlier test file left it as (the adapter keeps what it learns for the isolate).
+  boxState.delete("brain");
+  const piece = (content: string) => new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`);
+  const fetcher = (async (url: string, init: RequestInit) => {
+    if (!url.includes(BOXES.brain) || url.endsWith("/health")) return new Response("ok");
+    if (!JSON.parse(init.body as string).stream) return Response.json({ choices: [{ message: { content: reply } }] });
+    const pieces = reply.match(/[\s\S]{1,5}/g)!;
+    return new Response(new ReadableStream({ async pull(c) { await Bun.sleep(1); const p = pieces.shift(); if (p) c.enqueue(piece(p)); else c.close(); } }), { headers: { "content-type": "text/event-stream" } });
+  }) as typeof fetch;
+  return { apiKey: "k", fetcher };
+}
+type Streamed = Awaited<ReturnType<Awaited<ReturnType<typeof world>>["care"]["askStream"]>>;
+/** Every event of one streamed answer, in order, and its words put together as the app puts them. */
+async function streamed(events: Streamed) {
+  const all = [];
+  let words = "";
+  for await (const e of events) { all.push(e); if (e.type === "words") words = words.slice(0, e.at) + e.text; }
+  return { all, words, answer: all.at(-1)!.type === "answer" ? (all.at(-1) as { answer: unknown }).answer : undefined };
+}
+
+test("askStream: the lane's drafted card with its line first, then Gemma's words as she writes them, then care.ask's own answer", async () => {
+  const reply = JSON.stringify({ answer: "Dr Lim has a morning free next week [1].\n- Tap \"Request this time\" to ask for it.", grounded: false, urgent: false, from: "", cites: [], marks: { dose: ["next week"] } });
+  const baseten = brain(reply), { ai } = clefReplay(replay("c021", "c021"));
+  const { amelia } = await clefWorld(basetenModels(baseten), ai, baseten);
+  const asked = await amelia.care.ask({ question: TRIAL.c021.said });
+  const { all, words, answer } = await streamed(await amelia.care.askStream({ question: TRIAL.c021.said }));
+  // Exactly care.ask's answer, its words put together from the pieces, with no leaflet number on the way.
+  expect(answer).toEqual(asked);
+  expect(words).toBe("Dr Lim has a morning free next week.\n- Tap \"Request this time\" to ask for it.");
+  expect(all.filter(e => e.type === "words").length).toBeGreaterThan(5);
+  expect(all.some(e => e.type === "words" && /\[/.test(e.text))).toBe(false);
+  // The draft and its line come before the first word, so the words never move down.
+  expect(all[0]).toEqual({ type: "lane", lead: "Here is a time you can request.", card: partsOf(asked).cards!.find(c => c.type === "action")! });
+  expect(all.slice(1, -1).every(e => e.type === "words")).toBe(true);
+});
+
+test("askStream: the 999 card at once, again with her warning signs once her record is read, before any word; the care team told once", async () => {
+  const reply = JSON.stringify({ answer: "Call 999 now. Sit down and rest.", grounded: false, urgent: true, cites: [], marks: { warning: ["Call 999"] } });
+  const baseten = brain(reply);
+  const { amelia, db } = await clefWorld(basetenModels(baseten), undefined, baseten);
+  const { all, answer } = await streamed(await amelia.care.askStream({ question: "I have chest pain right now" }));
+  expect(all[0]).toEqual({ type: "call999", card: { type: "warning", level: "urgent", title: "Call 999 now", items: [] } });
+  expect(all[1]).toMatchObject({ type: "call999", card: { type: "warning", level: "urgent", items: expect.arrayContaining([expect.any(String)]) } });
+  expect(all[2]!.type).toBe("words");
+  expect(answer).toMatchObject({ answer: "Call 999 now. Sit down and rest.", urgent: true, careTeam: { line: LINES.en.told } });
+  expect(partsOf(answer).cards![0]).toEqual((all[1] as { card: unknown }).card);
+  expect(await db.select().from(tasks).where(eq(tasks.kind, "check-in"))).toHaveLength(1);
+});
+
+test("askStream with no hosted Gemma: the answer still comes, whole, as care.ask's", async () => {
+  const amelia = await world({ ...stubModels, answerFromPlan: async () => ({ answer: "Ambil ubat.", grounded: true, urgent: false, source: "model", model: "gemma-test" }) });
+  const { all, answer } = await streamed(await amelia.care.askStream({ question: "Apa ubat saya?" }));
+  expect(all).toHaveLength(1);
+  expect(answer).toEqual(await amelia.care.ask({ question: "Apa ubat saya?" }));
 });

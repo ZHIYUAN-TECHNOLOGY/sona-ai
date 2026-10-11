@@ -198,3 +198,44 @@ export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Mo
     },
   };
 }
+
+/** A chat whose reply comes as it is written: the pieces of its text, in order (an OpenAI-style stream's deltas). */
+export type ChatDeltas = (system: string, user: string, maxTokens?: number) => Promise<AsyncIterable<string>>;
+
+/**
+ * The string under `key` in JSON still being written, as far as it has come (all of it once it closes), unescaped;
+ * undefined until it starts. An escape cut off at the end waits for its next piece.
+ */
+export function stringSoFar(json: string, key: string): string | undefined {
+  const start = new RegExp(`"${key}"\\s*:\\s*"`).exec(json);
+  if (!start) return undefined;
+  const from = start.index + start[0].length;
+  let end = from;
+  for (; end < json.length && json[end] !== '"'; end++) {
+    if (json[end] !== "\\") continue;
+    const length = json[end + 1] === "u" ? 6 : 2;
+    if (end + length > json.length) break;
+    end += length - 1;
+  }
+  try { return JSON.parse(`"${json.slice(from, end)}"`) as string; } catch { return undefined; }
+}
+
+/**
+ * answerFromPlan as Gemma writes it (care.askStream): the same prompt, retries and reading as chatModels' (the whole
+ * reply is read at the end exactly as there), over a chat that streams, with `heard` told the answer so far each time it
+ * grows: its "answer" string before it closes, leaflet numbers left out as the finished answer leaves them out. A retry
+ * starts it again from its first word.
+ */
+export function streamingAnswer(stream: ChatDeltas, model: string, fallback: Models, heard: (soFar: string) => void): Models["answerFromPlan"] {
+  const chat: Chat = async (system, user, maxTokens) => {
+    let reply = "";
+    for await (const piece of await stream(system, user, maxTokens)) {
+      reply += piece;
+      const soFar = stringSoFar(reply, "answer");
+      // A leaflet number still being written ("[1") is left out too, so it never flashes up.
+      if (soFar !== undefined) heard(unnumbered(soFar).replace(/\s*\[\d*$/, "").trimStart());
+    }
+    return jsonIn(reply);
+  };
+  return chatModels(chat, model, fallback).answerFromPlan;
+}
