@@ -146,3 +146,17 @@ test("noise that reads as no words never cuts Sona off; words do, just before th
   await Bun.sleep(0);
   expect(events).toEqual(["cut", "Saya sesak nafas"]);
 });
+
+test("the call says listening only once the ears are warm: waitUntilReady waits for them, and a warm-up that fails still lets the call start", async () => {
+  let warm!: () => void;
+  const session = new SonaTranscriber(async () => ({ text: "", source: "model" }) as Heard, () => {}, {}, () => new Promise<void>(done => { warm = done; })).createSession();
+  let ready = false;
+  const waiting = session.waitUntilReady().then(() => { ready = true; });
+  await Bun.sleep(10);
+  expect(ready).toBe(false);
+  warm();
+  await waiting;
+  expect(ready).toBe(true);
+  await new SonaTranscriber(async () => ({ text: "", source: "model" }) as Heard, () => {}, {}, () => Promise.reject(new Error("box down"))).createSession().waitUntilReady();
+  await new SonaTranscriber(async () => ({ text: "", source: "model" }) as Heard).createSession().waitUntilReady();
+});

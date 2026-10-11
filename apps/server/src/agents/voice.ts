@@ -90,7 +90,7 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
       // The ears and Sona's voice share box ②: while it starts, the phone reads this too.
       else if (waking) this.#tell(connection, lines.hearingStarting(waking), { reason: "starting", waking });
       else this.#tell(connection, lines.missed, { reason: "notice" });
-    });
+    }, {}, () => this.#baseten ? warmBoxes(this.#baseten) : Promise.resolve());
   }
 
   /** When the current call began: its turns are the conversation Gemma reads (getConversationHistory). */

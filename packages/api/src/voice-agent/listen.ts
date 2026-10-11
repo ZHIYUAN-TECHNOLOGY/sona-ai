@@ -130,12 +130,21 @@ export type SessionHooks = { onSpeechStart?: (text?: string) => void; onUtteranc
 /** What the ASR made of a turn: the words from the model, or a fixture with no words (`waking` while box ② starts). */
 export type Heard = Awaited<ReturnType<Models["transcribe"]>>;
 
+/** The longest a call waits for its boxes to be warm before it says "listening" anyway (READY_MS on the phone is for the socket). */
+export const WARM_MS = 20_000;
+
 export class SonaTranscriber {
   constructor(
     private readonly hear: (wav: Uint8Array) => Promise<Heard>,
     /** A turn the ASR could not read: `waking` minutes while it starts, none when the call failed or no model is on. */
     private readonly unheard: (waking?: number) => void = () => {},
     private readonly options: TurnOptions = {},
+    /**
+     * Resolves once the ears can hear a turn at once (voice.ts: warmBoxes). The SDK says "listening" only after the
+     * session's waitUntilReady, so the phone shows "Connecting to Sona…" meanwhile, not "Listening…" over a box that
+     * stalls on its first request (11 Oct, staging: the first question after opening the call went unheard).
+     */
+    private readonly ready?: () => Promise<unknown>,
   ) {}
 
   createSession(hooks: SessionHooks = {}) {
@@ -157,6 +166,10 @@ export class SonaTranscriber {
       else this.unheard(heard?.waking);
     };
     return {
+      /** The SDK awaits this before "listening": the boxes warm, or WARM_MS, whichever comes first; never fails the call. */
+      waitUntilReady: async () => {
+        if (this.ready) await Promise.race([this.ready().catch(() => {}), new Promise(done => setTimeout(done, WARM_MS))]);
+      },
       /** Raw PCM16 LE from the phone, in chunks of any size (an odd byte waits for its pair). */
       feed: (chunk: ArrayBuffer) => {
         if (closed) return;
