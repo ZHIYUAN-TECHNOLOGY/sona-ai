@@ -1,7 +1,7 @@
 import { triageByRules } from "@sona-ai/domain/messages";
 import { expect, test } from "bun:test";
 
-import { chatModels } from "./chat-models";
+import { chatModels, marksIn } from "./chat-models";
 import { stubModels } from "./models";
 import { messagesFor } from "./voice-agent/answer";
 
@@ -54,4 +54,28 @@ test("typed and spoken answers both put her record's numbers, an asthma attack a
     expect(prompt).toContain("(a baby under 1 year: by their own weight only; under 3 months with a fever: a doctor must see them today and sets the dose, so no amount)");
     expect(prompt).toContain("a line with no times has none to count from: say how often it is taken");
   }
+});
+
+test("marks are read grouped by kind or as the old list, each colouring every time its words stand in the answer, as the answer writes them", () => {
+  const answer = "Take Paracetamol 1 g every 6 hours for the fever, at most 4 g a day; 1 glass of water with it. Call 999 if you have chest pain. Paracetamol is safe with azithromycin.";
+  const grouped = { medicine: ["paracetamol", "Azithromycin", "ibuprofen"], dose: ["1 g", "every 6 hours", "4 g a day"], symptom: ["fever", "pain"], warning: ["Call 999", "chest pain"], sparkle: ["water"] };
+  expect(marksIn(grouped, answer)).toEqual([
+    { text: "Paracetamol", kind: "medicine" }, { text: "1 g", kind: "dose" }, { text: "every 6 hours", kind: "dose" }, { text: "fever", kind: "symptom" },
+    { text: "4 g a day", kind: "dose" }, { text: "Call 999", kind: "warning" }, { text: "chest pain", kind: "warning" }, { text: "Paracetamol", kind: "medicine" }, { text: "azithromycin", kind: "medicine" },
+  ]);
+  // A reply from before 11 Oct (a list, the old kind names) still colours, in the new kinds.
+  expect(marksIn([{ text: "1 g", kind: "when" }, { text: "low potassium", kind: "alert" }, { text: "Hypokalaemia", kind: "finding" }], "1 g now. Hypokalaemia, a low potassium.")).toEqual([
+    { text: "1 g", kind: "dose" }, { text: "Hypokalaemia", kind: "condition" }, { text: "low potassium", kind: "warning" },
+  ]);
+  // Chinese has no spaces between words: a phrase inside a longer run still colours.
+  expect(marksIn({ dose: ["饭后"], medicine: ["阿奇霉素"] }, "阿奇霉素每天一次，饭后服用。")).toEqual([{ text: "阿奇霉素", kind: "medicine" }, { text: "饭后", kind: "dose" }]);
+  expect(marksIn(undefined, answer)).toBeUndefined();
+  expect(marksIn({}, answer)).toEqual([]);
+});
+
+test("the typed answer asks for every kind of mark, grouped", async () => {
+  let typed = "";
+  await chatModels(async system => { typed = system; return { answer: "ok" }; }, "chat-test", stubModels).answerFromPlan({ question: "Bila makan ubat?", plan: "", language: "ms" });
+  for (const kind of ["warning", "caution", "medicine", "dose", "condition", "symptom", "test"]) expect(typed).toContain(`  - "${kind}": `);
+  expect(typed).toContain(`"marks": {"<kind>": ["<words copied from the answer>"]}`);
 });

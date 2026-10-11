@@ -1,6 +1,8 @@
+import type { Mark } from "@sona-ai/domain/answer-parts";
+
 import { LEAD_MAX, checkAskSpec, type AskContext, type AskSpec } from "./ask-spec";
 import { BOXES, BRAIN_MODEL, answered, boxes, starting, wakingOf, type Baseten } from "./baseten-models";
-import { jsonIn } from "./chat-models";
+import { jsonIn, marksIn } from "./chat-models";
 import { layaEvaluator, pickCard } from "./laya";
 
 /**
@@ -41,9 +43,9 @@ Rules:
 - "general": what general clinical knowledge adds for this clinician (likely causes, what to check, usual management or doses), in up to 5 short sentences; leave it out when it adds nothing. It is shown labelled as general knowledge.
 - A visit's patient record, when the page has one, is the page's data: any question about this patient (their readings, results, medicines, allergies, history, stay or plan) takes this shape, even when most of the answer is general knowledge; the lead says what the record holds, or that it does not record what was asked, and "general" adds only general clinical knowledge, never a fact about this patient (those are the lead's).
 When the page's data does not answer it, answer from general medical, hospital and everyday knowledge instead, in up to 5 short sentences, as {"general": "<text>", "evidence": <true or false>}. "evidence" is true only for a clinical question that published studies or guidelines answer (whether a treatment or test helps, a dose, a risk, a prognosis). You have not seen this hospital's other records: never state a fact about a specific patient, bed, task or number there.
-In either shape, add "marks": every clinical term in your lead and in "general" a clinician's eye should land on, so it is coloured, each copied exactly as you wrote it, as [{"text": "<words>", "kind": "<kind>"}]. Kinds: "alert" for what must not be missed (an allergy, a critical or abnormal result with its value, an emergency sign); "medicine" for each medicine, drug class or treatment; "finding" for each diagnosis or condition; "symptom" for each symptom or sign; "caution" for what is unconfirmed, pending or missing. Never mark a person's name, a bed, a task or a count. The shortest phrase that carries each, at most 12; [] when none fits.
+In either shape, add "marks": the clinical words in your lead and in "general" a clinician's eye should land on, so they are coloured, grouped by kind, each copied exactly as you wrote it, each phrase once, as {"<kind>": ["<words>"]}. Kinds: "warning" for what must not be missed (an allergy, a critical or clearly abnormal result with its value, an emergency sign); "caution" for what is unconfirmed, pending or missing, or a value just out of range; "medicine" for each medicine, drug class or treatment; "dose" for a dose, how often, for how long or when; "condition" for each diagnosis or condition; "symptom" for each symptom or sign; "test" for a test or measurement, with its value when given. Never mark a person's name, a bed, a task or a count. The shortest phrase that carries each, at most 12 in all; {} when none fits.
 Write the lead and "general" as plain sentences: no tags or markup in them; the colouring comes only from "marks".
-Example: lead "Daniel Rahman has a low potassium of 3.1 mmol/L." and general "Hypokalaemia can cause arrhythmias and muscle weakness; check an ECG and give oral or IV potassium." give "marks": [{"text": "low potassium of 3.1 mmol/L", "kind": "alert"}, {"text": "Hypokalaemia", "kind": "finding"}, {"text": "arrhythmias", "kind": "alert"}, {"text": "muscle weakness", "kind": "symptom"}, {"text": "ECG", "kind": "caution"}, {"text": "oral or IV potassium", "kind": "medicine"}].`;
+Example: lead "Daniel Rahman has a low potassium of 3.1 mmol/L." and general "Hypokalaemia can cause arrhythmias and muscle weakness; check an ECG and give oral or IV potassium." give "marks": {"warning": ["low potassium of 3.1 mmol/L", "arrhythmias"], "condition": ["Hypokalaemia"], "symptom": ["muscle weakness"], "test": ["ECG"], "medicine": ["oral or IV potassium"]}.`;
 
 const TOKEN = /[\p{L}\p{N}][\p{L}\p{N}+'’-]*(?:\.\d+)*/gu;
 const bare = (word: string) => word.toLowerCase().replace(/['’]s$/, ""); // "Amelia's" is Amelia
@@ -176,13 +178,11 @@ export const untagged = (text: string) => text.replace(/<(\/?)([A-Za-z][^<>]*)(>
   const name = /^[\w-]+\/?$/.test(inner.trim()), next = text[at + tag.length] ?? "", prev = text[at - 1] ?? "";
   return name && (/\w/.test(next) || /\w/.test(prev)) ? "" : inner.replace(/\/$/, "");
 }).replace(/ {2,}/g, " ").trim();
-const MARK_KINDS = new Set(["alert", "medicine", "finding", "symptom", "caution"]);
-type ProMark = { text: string; kind: "alert" | "medicine" | "finding" | "symptom" | "caution" };
 /** The model's marks that name words really in the answer's lead (with its general part), as `{ marks }`; none when it gave none. */
-function marksOf(marks: unknown, spec: AskSpec): { marks?: ProMark[] } {
-  if (!Array.isArray(marks)) return {};
+function marksOf(marks: unknown, spec: AskSpec): { marks?: Mark[] } {
   const said = Object.values(spec.elements).flatMap(e => (e.type === "AskLead" ? [String(e.props.text)] : [])).join("\n");
-  return { marks: marks.flatMap(m => (MARK_KINDS.has(m?.kind) && typeof m?.text === "string" && m.text.trim() && said.includes(m.text.trim()) ? [{ text: m.text.trim().slice(0, 80), kind: m.kind }] : [])).slice(0, 20) };
+  const kept = marksIn(marks, said);
+  return kept ? { marks: kept } : {};
 }
 
 export async function freeAnswer(baseten: Baseten, input: { scope: string; question: string; context: AskContext }) {

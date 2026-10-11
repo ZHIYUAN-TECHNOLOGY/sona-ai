@@ -2,6 +2,7 @@ import { readReply } from "@sona-ai/domain/check-ins";
 import { CODES, appealByRules, type AppealLetter, type Code, type DenialCode, type Sentence } from "@sona-ai/domain/claim";
 import { draftByRules, triageByRules, type DraftPlan, type MessageLabel } from "@sona-ai/domain/messages";
 import { planFor, type Language } from "@sona-ai/domain/discharge";
+import type { Mark } from "@sona-ai/domain/answer-parts";
 import type { Claim, PatientPoint } from "@sona-ai/domain/evidence";
 import type { DetectedFinding } from "@sona-ai/domain/findings";
 import { deidentifyByRules, type KnownIdentity, type Replacement } from "@sona-ai/domain/training";
@@ -120,7 +121,7 @@ export type Models = {
    * one fits; `cites` the numbers of those the answer used, as the model wrote them (care.ask keeps only numbers offered).
    * `history`: the chat's earlier turns, oldest first, so a follow-up ("How does it help?") is read in their light.
    */
-  answerFromPlan(input: { question: string; plan: string; language: Language; passages?: Passage[]; history?: { question: string; answer: string }[] }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string; cites?: number[]; /** The words to colour, the model's choice (chat-models MARKS_RULE). */ marks?: { text: string; kind: "medicine" | "dose" | "warning" }[] }>;
+  answerFromPlan(input: { question: string; plan: string; language: Language; passages?: Passage[]; history?: { question: string; answer: string }[] }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string; cites?: number[]; /** The words to colour, the model's choice (chat-models MARKS_RULE). */ marks?: Mark[] }>;
   /**
    * Sona Care: what one of the patient's own lab results means, in plain words in their language. Only asked for a
    * result a doctor has acknowledged (care.results.explain). What such a value commonly means, in general terms, is fine.

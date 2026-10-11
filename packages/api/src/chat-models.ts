@@ -2,6 +2,7 @@ import { languageOf } from "@sona-ai/domain/language";
 import { readReply } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
 import { triageByRules } from "@sona-ai/domain/messages";
+import { markKindOf, type Mark } from "@sona-ai/domain/answer-parts";
 
 import { leafletsText, unnumbered } from "./leaflets";
 import type { Models } from "./models";
@@ -38,23 +39,52 @@ If unsure between two labels, choose the more serious one.`;
 
 /**
  * What Sona Care colours in an answer, chosen by the model (the app's word lists only stand in when it chose nothing):
- * the words a patient scans for. Shared with the call's closing line (voice-agent/answer.ts).
+ * the words a patient's eye should land on, by kind (@sona-ai/domain/answer-parts MarkKind; the hue is each kind's).
+ * Grouped by kind, each phrase once: a kind on every word cost about 2.5 times the tokens (11 Oct review: 8.3 s against
+ * 5.7 s grouped), and seven kinds would cost more; marksIn puts back one mark per time the words appear.
+ * Shared with the call's closing line (voice-agent/answer.ts).
  */
-export const MARKS_RULE = `Set "marks" to the words in your answer a patient scans for, so they can be coloured, each copied exactly as written in the answer (same language and spelling):
-  - "medicine": every medicine's name (paracetamol, azithromycin, ubat batuk), never its dose.
-  - "when": every dose and amount (500 mg, 1 g, satu tablet), how often or when to take it (every 6 hours, sekali sehari, 饭后), for how long (for 2 more days), and every visit, check-in or date (clinic review, day 2 and day 7, Saturday, 24 October 2026).
-  - "warning": every warning sign to act on (chest pain, lips turn blue), an allergy and what it is to (allergy to penicillin), and calling 999.
-  Mark the shortest phrase that carries each, every time it appears; [] when the answer has none.
-  Example: answer "Take paracetamol 1 g every 6 hours, at most 4 g a day. Call 999 if you have chest pain." gives marks [{"text": "paracetamol", "kind": "medicine"}, {"text": "1 g", "kind": "when"}, {"text": "every 6 hours", "kind": "when"}, {"text": "4 g a day", "kind": "when"}, {"text": "Call 999", "kind": "warning"}, {"text": "chest pain", "kind": "warning"}].`;
-const MARK_KINDS = { medicine: "medicine", when: "dose", dose: "dose", warning: "warning" } as const;
-export type ModelMark = { text: string; kind: "medicine" | "dose" | "warning" };
-/** The model's marks that name words really in `text`, as the apps' Mark kinds; undefined when it gave none (the apps' word lists then mark). */
-export function marksIn(marks: unknown, text: string): ModelMark[] | undefined {
-  if (!Array.isArray(marks)) return undefined;
-  return marks.flatMap(m => {
-    const kind = MARK_KINDS[m?.kind as keyof typeof MARK_KINDS], words = typeof m?.text === "string" ? m.text.trim() : "";
-    return kind && words && text.includes(words) ? [{ text: words.slice(0, 80), kind }] : [];
-  }).slice(0, 20);
+export const MARKS_RULE = `Set "marks" to the words in your answer a patient's eye should land on, so they can be coloured, grouped by kind, each copied exactly as written in the answer (same language and spelling), each phrase once:
+  - "warning": what must not be missed: a warning sign to act on (chest pain, lips turn blue), an allergy and what it is to (allergy to penicillin), a result far out of range, and calling 999.
+  - "caution": something to check: what is not yet confirmed, pending or missing, or a value just out of range (waiting for the doctor to review it, slightly high).
+  - "medicine": every medicine, drug class or treatment by name (paracetamol, azithromycin, ubat batuk, antibiotics), never its dose.
+  - "dose": every dose and amount (500 mg, 1 g, satu tablet), how often or when to take it (every 6 hours, sekali sehari, 饭后), for how long (for 2 more days), and every visit, check-in, date or time (clinic review, day 2 and day 7, Saturday, 24 October 2026, 8 am).
+  - "condition": a diagnosis or condition (pneumonia, asthma, darah tinggi).
+  - "symptom": a symptom or sign that is not a warning sign (cough, a mild fever, sakit tekak).
+  - "test": a test or measurement, with its value when the answer gives one (potassium 3.1 mmol/L, blood pressure, X-ray).
+  The shortest phrase that carries each; leave out a kind with none; {} when the answer has none.
+  Example: answer "Take paracetamol 1 g every 6 hours for the fever, at most 4 g a day. Call 999 if you have chest pain." gives "marks": {"medicine": ["paracetamol"], "dose": ["1 g", "every 6 hours", "4 g a day"], "symptom": ["fever"], "warning": ["Call 999", "chest pain"]}.`;
+/** Gemma's longest mark (a phrase, not a sentence), and the most coloured words in one answer (answer-parts marksOf keeps 24). */
+const MARK_CHARS = 80, MARKS_MAX = 24;
+/** Where `words` stand in a text as words: a Latin letter or digit at either end must not run on ("1 g" is not in "1 glass"); Chinese has no spaces to check. */
+export const wordsIn = (text: string, words: string) => {
+  const latin = (c = "") => /[\p{Script=Latin}\p{N}]/u.test(c), escaped = words.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = `${latin(words[0]) ? "(?<![\\p{Script=Latin}\\p{N}])" : ""}${escaped}${latin(words.at(-1)) ? "(?![\\p{Script=Latin}\\p{N}])" : ""}`;
+  return Array.from(text.matchAll(new RegExp(pattern, "giu")), at => ({ from: at.index, to: at.index + at[0].length }));
+};
+/**
+ * The model's marks that name words really in `text`, as answer-parts Marks in reading order, one each time the words
+ * appear (an app colours each mark once, in turn: terms.ts chosenIn), each copied as the text has it, so a mark that only
+ * differs in case still colours; undefined when it gave none (Sona Care's word lists then colour), [] when it chose none.
+ * Read grouped by kind (`{"dose": ["1 g"]}`), as the prompts ask, or as a list of `{text, kind}`, as they did before 11 Oct;
+ * an old kind name reads as its new one (markKindOf: alert, finding, when). Overlapping words keep the earlier, longer one.
+ */
+export function marksIn(marks: unknown, text: string): Mark[] | undefined {
+  const listed: unknown[] | undefined = Array.isArray(marks) ? marks : marks && typeof marks === "object"
+    ? Object.entries(marks).flatMap(([kind, words]) => (Array.isArray(words) ? words : [words]).map(words => ({ text: words, kind }))) : undefined;
+  if (!listed) return undefined;
+  const seen = new Set<string>(), found: (Mark & { from: number; to: number })[] = [];
+  for (const m of listed) {
+    const { text: said, kind: named } = (m ?? {}) as { text?: unknown; kind?: unknown };
+    const kind = markKindOf(named), words = typeof said === "string" ? said.trim() : "";
+    if (!kind || !words || words.length > MARK_CHARS || seen.has(words.toLowerCase())) continue;
+    seen.add(words.toLowerCase());
+    for (const at of wordsIn(text, words)) found.push({ ...at, kind, text: text.slice(at.from, at.to) });
+  }
+  const kept: Mark[] = [];
+  let end = 0;
+  for (const f of found.sort((a, b) => a.from - b.from || b.to - a.to)) if (f.from >= end) { kept.push({ text: f.text, kind: f.kind }); end = f.to; }
+  return kept.slice(0, MARKS_MAX);
 }
 
 // Kept in step with the call's prompt (VOICE in voice-agent/answer.ts): the same rules, there as spoken words.
@@ -78,7 +108,7 @@ Rules:
 - Set "cites" to the numbers of the general leaflets your answer used, [] when it used none. Never write a leaflet's number in the answer itself.
 - If they say they HAVE an emergency sign now (chest pain, severe breathlessness, confusion, fainting, coughing blood, a baby or child very drowsy, floppy or hard to wake), set "urgent" to true and tell them to call 999 now. A question about which signs to watch for is not urgent: answer it.
 ${MARKS_RULE}
-Answer with JSON only: {"answer": "<text>", "grounded": true|false, "urgent": true|false, "from": "<which part of the record: medicines, leaflet, warning signs, follow-up, visits, history, allergies, results, note, check-ins or doses; empty if not from the record>", "cites": [<leaflet numbers>], "marks": [{"text": "<words copied from the answer>", "kind": "medicine" | "when" | "warning"}]}.`;
+Answer with JSON only: {"answer": "<text>", "grounded": true|false, "urgent": true|false, "from": "<which part of the record: medicines, leaflet, warning signs, follow-up, visits, history, allergies, results, note, check-ins or doses; empty if not from the record>", "cites": [<leaflet numbers>], "marks": {"<kind>": ["<words copied from the answer>"]}}.`;
 
 /** Up to about 6 sentences, or a short list, and its marks, in JSON: room for it in any of the three languages. */
 const ANSWER_TOKENS = 1000;
