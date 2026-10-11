@@ -86,6 +86,17 @@ The lane is `clef-omni` on Workers AI (`env.AI`), on while `CLEF_LANE` is "1" (`
 - **Escalation** (tell the care team) happens if any one of these holds: the 999 keyword floor, Gemma's urgent flag, or Clef's emergency probability is 0.25 or more. Nothing cancels an escalation. Clef's read makes the care team's task urgent and brings the 999 warning card, but it does not set the answer's `urgent`: that stays Gemma's, because the Care app shows its 999 card in place of the words on an urgent answer, and a near miss (0.22) is close to the cut.
 - `lane` is set only when the lane answered the turn. Patients see nothing of it.
 
+## Streaming: care.askStream
+
+`care.askStream` (`packages/api/src/routers/care.ts`) streams the same turn as `care.ask`. It sends these events in order:
+
+1. `call999`: sent the moment the 999 keyword floor fires, then again with her plan's warning signs once her record is read. Clef's emergency read sends it too.
+2. `lane`: the lane's drafted card, with a one-line lead (`LEAD`, in en, ms and zh).
+3. `words`: `{at, text}`, which replaces the text from `at` on, so a Gemma retry restarts at 0.
+4. `answer`: exactly care.ask's payload.
+
+Marks, captions and the other cards arrive only with `answer`. `care.ask` is unchanged, so old builds keep working. Typed questions stream on the Care iPhone (`streamed` in `features/assistant/answers.ts`) and on the Care web Ask page and Sona panel (`lib/sona-answer.ts`). Both fall back to `care.ask` on any error. Voice mode and the app's own urgent-words path still call `care.ask`.
+
 ## Which surface renders what
 
 All four surfaces keep the answer inside their existing shell: the Pro in-page conversation (no new sheets), and the web's right-side Sona panel. Cards stack under the words with the surface's usual gap. They appear with the answer's own entrance, and with none under Reduce Motion.
