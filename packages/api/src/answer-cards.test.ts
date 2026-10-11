@@ -67,6 +67,17 @@ test("a symptom on her come-back list brings the list, not when the answer is th
 test("an answer from her visits shows the next one still to come (today's 15:55 visit has gone by)", async () => {
   const { context, plan } = await amelia();
   expect(await careCards(context, { plan, from: "follow-up", marks: [], language: "en" })).toEqual([{ type: "appointment", title: "Clinic review", when: "2026-10-10T07:40:00.000Z", status: "upcoming" }]);
+  // Gemma often names several parts (live, 11 Oct: "follow-up, check-ins, visits"): the visit card still comes.
+  expect(await careCards(context, { plan, from: "follow-up, check-ins, visits requested", marks: [], language: "en" })).toHaveLength(1);
+});
+
+test("her next visit is never one whose time has gone by today, though her Schedule still shows it due soon", async () => {
+  const { context, plan } = await amelia();
+  const at = (time: string) => ({ ...context, now: () => new Date(`2026-09-26T${time}:00+08:00`) });
+  const next = async (time: string) => (await careCards(at(time), { plan, from: "visits", marks: [], language: "en" }))[0];
+  // Her 15:55 clinic visit on the day she went home: next at 15:50, gone by at 16:30 (the review is next).
+  expect(await next("15:50")).toMatchObject({ title: "Clinic visit", status: "due-soon" });
+  expect(await next("16:30")).toMatchObject({ title: "Clinic review", status: "upcoming" });
 });
 
 test("Pro: a visit's prescriptions, results and ward readings as the lead names them; none off a visit", async () => {

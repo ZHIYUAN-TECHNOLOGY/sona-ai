@@ -57,7 +57,8 @@ const names = (a: string, b: string) => b.length > 1 && a.length > 1 && (wordsIn
 const onList = (sign: string, said: string) => names(sign, said) || said.split(/\s+/).some(w => w.length >= 4 && wordsIn(sign, w).length > 0);
 /** One card per thing: a medicine, test or reading by name, a visit by its time, one warning. */
 const keyOf = (c: AnswerCard) => `${c.type}:${c.type === "medicine" ? c.name : c.type === "result" ? c.test : c.type === "reading" ? c.label : c.type === "appointment" ? c.when : c.type === "doctor" ? c.id : ""}`.toLowerCase();
-const VISITS = new Set(["visits", "follow-up"]);
+/** Whether an answer is from her visits: Gemma's `from` is one part, or often several ("follow-up, check-ins, visits"). */
+const fromVisits = (from = "") => from.toLowerCase().split(/\s*,\s*/).some(part => part === "visits" || part === "follow-up");
 
 const warningCard = (level: "urgent" | "soon", lang: Language, signs: string[]): AnswerCard =>
   ({ type: "warning", level, title: (level === "urgent" ? SAY.call999 : SAY.comeBack)[lang], items: signs.slice(0, 8).map(s => clip(s, 160)) });
@@ -75,7 +76,7 @@ export function cardsFor(answer: { marks?: Mark[]; urgent?: boolean; from?: stri
     add(facts.named.find(n => n.on.includes(mark.kind) && n.names.some(name => names(mark.text, name)))?.card);
     if ((mark.kind === "symptom" || mark.kind === "warning") && answer.from !== "warning signs" && facts.signs?.some(s => onList(s, mark.text))) add(warningCard("soon", lang, facts.signs));
   }
-  if (VISITS.has(answer.from ?? "") && !cards.some(c => c.type === "appointment")) add(facts.visits?.[0]);
+  if (fromVisits(answer.from) && !cards.some(c => c.type === "appointment")) add(facts.visits?.[0]);
   return cardsOf(cards).slice(0, ANSWER_CARDS);
 }
 
@@ -119,9 +120,11 @@ export async function comingVisits(context: PatientContext, lang: Language): Pro
     db.select({ doctor: doctors.name, specialty: doctors.specialty, room: doctors.room, at: bookingRequests.startsAt }).from(bookingRequests).innerJoin(doctors, eq(doctors.id, bookingRequests.doctorId))
       .where(and(eq(bookingRequests.hospitalId, hospitalId), eq(bookingRequests.patientId, patientId), eq(bookingRequests.status, "requested"), gte(bookingRequests.startsAt, clockOf(context)))),
   ]);
-  const room = new Map(rooms.map(r => [r.id, r.room]));
+  const room = new Map(rooms.map(r => [r.id, r.room])), now = clockOf(context);
+  // A visit with a time that has gone by today is still "due soon" on her Schedule, but not her next one (visitsText: "earlier today").
   const coming: Coming[] = [
-    ...visits.filter(v => v.status === "upcoming" || v.status === "due-soon").map(v => ({ title: v.title, date: v.date, status: v.status, where: room.get(v.id), day: v.id.startsWith("recall:") || v.id === "discharge-review" })),
+    ...visits.filter(v => v.status === "upcoming" || v.status === "due-soon").map(v => ({ title: v.title, date: v.date, status: v.status, where: room.get(v.id), day: v.id.startsWith("recall:") || v.id === "discharge-review" }))
+      .filter(v => v.day || v.date >= now),
     ...asked.map(r => ({ title: `${shortName(r.doctor)}, ${r.specialty}`, date: r.at, status: "requested" as const, where: r.room, day: false })),
   ];
   return coming.sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -157,7 +160,7 @@ export async function careCards(context: PatientContext, input: { plan: Plan; ma
       : undefined,
     wanted("test", "warning", "caution") ? db.select().from(labResults).where(eq(labResults.patientId, patientId)).orderBy(desc(labResults.receivedAt)) : [],
     wanted("test") ? homeReadings(context, lang) : [],
-    VISITS.has(input.from ?? "") ? comingVisits(context, lang).then(v => v.map(visitCard)) : [],
+    fromVisits(input.from) ? comingVisits(context, lang).then(v => v.map(visitCard)) : [],
   ]);
   // Released to her as on her Results screen (care-results): acknowledged by a doctor, and not a sample still at the lab.
   const released = labs.filter(r => r.acknowledgedAt !== null && r.flag !== "pending" && r.value);
