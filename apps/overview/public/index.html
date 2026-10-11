@@ -395,7 +395,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
       <div class="row"><span class="eyebrow">September plan</span><span class="was">Small AI models on each phone. Zero cloud.</span></div>
       <div class="arrow">NOW</div>
       <div class="row"><span class="eyebrow">What we built</span><span>Full-size models on a private server the hospital controls: its own server room, or its private cloud in Malaysia. Today they run on our private servers in Malaysia.</span></div>
-      <div class="row"><span class="eyebrow">Same promise</span><span>Local models. Patient data stays in Malaysia. No outside AI company sees it.</span></div>
+      <div class="row"><span class="eyebrow">Same promise</span><span>Local models. Patient records stay in Malaysia. No outside AI company sees them.</span></div>
     </div>
     <div class="why glass">
       <ol>
@@ -407,7 +407,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
       </ol>
     </div>
   </div>
-  <p class="still">Still private: every AI model runs in Malaysia, and no patient text goes to an outside AI company.</p>
+  <p class="still">Still private: every model that reads patient records runs in Malaysia.</p>
 </div></section>
 
 <!--
@@ -443,7 +443,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
 <section id="architecture"><div class="wrap">
   <span class="eyebrow">Architecture · every diagram</span>
   <h2>One system. Four screens. One server. Our models.</h2>
-  <p class="lead">Two iPhone apps and two web portals talk to one Sona server. Every AI model sits on its own server in Malaysia. Tap any diagram to see it full size.</p>
+  <p class="lead">Two iPhone apps and two web portals talk to one Sona server. Every Sona model sits on its own server in Malaysia. Tap any diagram to see it full size.</p>
   <div class="diagrams">
     <figure class="diagram glass"><img src="media/01-system-context.dark.svg" alt="System context diagram" loading="lazy"><figcaption><b>System context.</b> Who uses Sona, through which app, and which outside systems it talks to. The insurer gets one link by email; the lab system posts results straight in.</figcaption></figure>
     <figure class="diagram glass"><img src="media/02-deployment.dark.svg" alt="Where it runs diagram" loading="lazy"><figcaption><b>Where it runs.</b> Every Sona model on its own server in AWS Malaysia: three on GPUs, three on CPUs, called with signed requests. Sona Privacy sits beside them.</figcaption></figure>
@@ -491,10 +491,10 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
 
 <section id="privacy"><div class="wrap">
   <span class="eyebrow">Private by design</span>
-  <h2>Patient data never leaves Malaysia for an AI company.</h2>
+  <h2>Patient records never leave Malaysia.</h2>
   <p class="lead">Under PDPA 2024 a breach means mandatory notice and fines up to RM1 million. Local models are how a hospital uses AI and stays compliant.</p>
   <div class="points">
-    <div class="point glass"><h3>Every model in Malaysia</h3><p>All ten run in AWS Malaysia (ap-southeast-5, Kuala Lumpur) on servers we control. No patient text is sent to an outside AI company.</p></div>
+    <div class="point glass"><h3>Every model in Malaysia</h3><p>All ten run in AWS Malaysia (ap-southeast-5, Kuala Lumpur) on servers we control. Every model that reads patient records runs in Malaysia.</p></div>
     <div class="point glass"><h3>Names stripped first</h3><p>Sona Privacy removes names, IC numbers and phone numbers before anything is saved for training, saved from a scan, or searched outside, like PubMed.</p></div>
     <div class="point glass"><h3>Audio not kept</h3><p>Consultation audio is transcribed in memory and not stored. The note and transcript stay in the record.</p></div>
     <div class="point glass"><h3>A person approves</h3><p>Every AI output is a draft until staff approve it. Nothing leaves for an insurer or a patient without a person.</p></div>
@@ -506,7 +506,7 @@ footer .close { font: 600 clamp(22px, 3vw, 30px)/1.3 var(--title); color: var(--
     <div><div class="player"><video controls preload="none" playsinline poster="media/privacy.jpg" src="media/privacy.mp4?v=4"></video></div><p class="caption">Sona Privacy at work: the patient chose to share. Her doctor's note becomes a training sample with her name replaced by [NAME] before anything is kept, and a search for her name finds nothing.</p></div>
     <figure class="diagram glass" style="margin:0"><img src="media/03-data-privacy.dark.svg" alt="Data and privacy diagram: audio goes to Sona Speech in memory only; evidence, training and scans pass through Sona Privacy, which strips identifiers, before storage or outside search." loading="lazy"><figcaption>Red paths pass through Sona Privacy. Audio reaches Sona Speech in memory only.</figcaption></figure>
   </div>
-  <p class="promise">Every AI model runs in Malaysia. <span>Real patient data will only ever be stored in Malaysia.</span></p>
+  <p class="promise">Every model that reads patient records runs in Malaysia. <span>Real patient data will only ever be stored in Malaysia.</span></p>
 </div></section>
 
 <section id="progress"><div class="wrap">
