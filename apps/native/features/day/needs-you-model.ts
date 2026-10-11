@@ -47,7 +47,7 @@ export function shownInNeeds(needs: Need[]) {
   const tasks = new Set(items.filter(i => i.kind === "check-in").map(i => i.id.replace(/^check-in-/, "")));
   const messaged = new Set(items.filter(i => i.kind === "message").map(i => i.patientId));
   // ponytail: a thread inside the inbox's 5 s Undo window reads handled, so its task can show here for those seconds.
-  return (task: { id: string }, patientId: string) => tasks.has(task.id) || task.id.startsWith("booking:") || (task.id.startsWith("message:") && messaged.has(patientId));
+  return (task: { id: string }, patientId: string) => tasks.has(task.id) || task.id.startsWith("booking:") || task.id.startsWith("dose:") || (task.id.startsWith("message:") && messaged.has(patientId));
 }
 
 /** A visit on the day in view: today's open; another day's are the authored clinic list, read-only, seen or to prepare. */

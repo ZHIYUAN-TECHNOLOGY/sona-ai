@@ -86,7 +86,7 @@ export const notes = pgTable("notes", {
 /** Follow-ups, blocker owners and coding queries are all tasks; idempotency_key makes creation replay-safe. */
 export const tasks = pgTable("tasks", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), encounterId: text("encounter_id"),
-  kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge", "finding", "check-in", "message", "booking"] }).notNull(),
+  kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge", "finding", "check-in", "message", "booking", "dose"] }).notNull(),
   title: text("title").notNull(), owner: text("owner").notNull(), due: text("due"), completed: boolean("completed").default(false).notNull(),
   sourceId: text("source_id"), idempotencyKey: text("idempotency_key").unique(), createdAt: created(),
 }, t => [index("tasks_hospital").on(t.hospitalId, t.kind)]);
