@@ -4,6 +4,7 @@ import { and, desc, eq } from "drizzle-orm";
 
 import type { Context } from "../context";
 import { stubModels } from "../models";
+import { tellStaff } from "../push";
 import { lastDischarge } from "../routers/care-plan";
 
 /**
@@ -33,7 +34,10 @@ export async function tellCareTeam(context: Context, hospitalId: string, patient
   const [open] = encounterId ? await db.select({ id: tasks.id }).from(tasks)
     .where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.encounterId, encounterId), eq(tasks.kind, "check-in"), eq(tasks.title, title), eq(tasks.completed, false))) : [];
   const id = open?.id ?? crypto.randomUUID();
-  if (!open) await db.insert(tasks).values({ id, hospitalId, encounterId, kind: "check-in", title, owner: "Attending doctor", due: "Today", sourceId: id, idempotencyKey: `check-in:${id}` });
+  if (!open) {
+    await db.insert(tasks).values({ id, hospitalId, encounterId, kind: "check-in", title, owner: "Attending doctor", due: "Today", sourceId: id, idempotencyKey: `check-in:${id}` });
+    await tellStaff(context, hospitalId, { title: `${flag.label === "urgent" ? "Urgent" : "Worse"}${discharged ? " at home" : ""}`, body: title });
+  }
   await context.announce?.(hospitalId, { topic: "checkIns", patientId }).catch(() => {});
   // `readBy`: who read the patient's words as worse or urgent, so the task is never shown as a model's call when the
   // keyword rule made it (the stub, a failed model, or the rule's urgent words over a milder model reading).

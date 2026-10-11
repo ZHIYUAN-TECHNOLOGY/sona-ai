@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure } from "../index";
-import { tellPatient } from "../push";
+import { tellPatient, tellStaff } from "../push";
 
 /**
  * Real booking. Patients find a doctor (the hospital's directory, SYNTHETIC in the demo) and request a
@@ -91,11 +91,10 @@ export async function requestBooking(context: PatientContext, input: z.infer<typ
       throw new ORPCError("CONFLICT", { message: "That time is no longer free. Please choose another.", data: { code: "SLOT_TAKEN" } });
     const [patient] = await db.select({ name: patients.name, encounterId: encounters.id }).from(patients)
       .leftJoin(encounters, eq(encounters.patientId, patients.id)).where(eq(patients.id, patientId)).orderBy(desc(encounters.updatedAt)).limit(1);
-    const words = slotWords(input.startsAt);
-    await db.insert(tasks).values({
-      id, hospitalId, encounterId: patient!.encounterId, kind: "booking", title: `${patient!.name.split(" ")[0]} asks to see ${shortName(doctor.name)} · ${words.weekday} ${words.time}`,
-      owner: "Care team", due: "Today", sourceId: id, idempotencyKey: id,
-    }).onConflictDoNothing();
+    const words = slotWords(input.startsAt), title = `${patient!.name.split(" ")[0]} asks to see ${shortName(doctor.name)} · ${words.weekday} ${words.time}`;
+    await db.insert(tasks).values({ id, hospitalId, encounterId: patient!.encounterId, kind: "booking", title, owner: "Care team", due: "Today", sourceId: id, idempotencyKey: id })
+      .onConflictDoNothing();
+    await tellStaff(context, hospitalId, { title: "Booking request", body: title });
     await db.insert(bookingRequests).values({ id, hospitalId, patientId, doctorId: doctor.id, startsAt: input.startsAt, reason: input.reason || null, taskId: id, createdAt: now })
       .onConflictDoNothing();
   }

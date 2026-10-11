@@ -15,7 +15,7 @@ import type { Change } from "../events";
 import { protectedProcedure } from "../index";
 import { stubModels, type Models } from "../models";
 import { followUpsToAdd } from "./findings";
-import { tellPatient } from "../push";
+import { tellPatient, tellStaff } from "../push";
 import { captureSample } from "./training";
 
 /**
@@ -242,10 +242,13 @@ export async function replyToCheckIn(context: Context, hospitalId: string, input
   // The same problem again, while its task is still open, rides on that task: the doctor sees one item, not one per message.
   const [open] = flag ? await db.select({ id: tasks.id }).from(tasks)
     .where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.encounterId, row.checkIn.encounterId), eq(tasks.kind, "check-in"), eq(tasks.title, flag.title), eq(tasks.completed, false))) : [];
-  if (flag && !open) await db.insert(tasks).values({
-    id, hospitalId, encounterId: row.checkIn.encounterId, kind: "check-in", title: flag.title, owner: "Attending doctor", due: "Today",
-    sourceId: id, idempotencyKey: `check-in:${id}`,
-  }).onConflictDoNothing();
+  if (flag && !open) {
+    await db.insert(tasks).values({
+      id, hospitalId, encounterId: row.checkIn.encounterId, kind: "check-in", title: flag.title, owner: "Attending doctor", due: "Today",
+      sourceId: id, idempotencyKey: `check-in:${id}`,
+    }).onConflictDoNothing();
+    await tellStaff(context, hospitalId, { title: `${read.label === "urgent" ? "Urgent" : "Worse"} at home`, body: flag.title });
+  }
   await db.insert(checkInReplies).values({
     id, checkInId: row.checkIn.id, text: input.text, label: read.label, source: keptReader(read), taskId: flag ? open?.id ?? id : null, receivedAt: at,
   });

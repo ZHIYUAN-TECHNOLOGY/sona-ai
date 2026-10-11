@@ -7,9 +7,9 @@ import { doseKey, doseSlots, type ScheduledMed } from "@sona-ai/domain/doses";
  * The demo clock: dose times are hospital (demo) time, while the phone fires on its own clock, so a
  * reminder is set for `dose time − offset`; one whose real time has passed is skipped.
  *
- * Honest limit: these are local, rebuilt whenever the app runs. A plan changed by the care team while
- * the app stays closed is only picked up at the next open; waking the phone for that needs remote push,
- * which needs `eas init` (an EAS projectId), not done here.
+ * Honest limit: these are local, rebuilt whenever the app runs. The take-home plan is fixed at discharge
+ * today (nothing changes it after), so a closed app never holds a stale week; a plan the care team can edit
+ * later would need a push to rebuild them.
  */
 export const REMINDER_PREFIX = "dose:";
 /** A week of doses ahead, at most 60 (iOS keeps only 64 pending local notifications per app). */

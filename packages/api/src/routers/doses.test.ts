@@ -1,6 +1,6 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { encounters, guaranteeLetters, hospitals, patients } from "@sona-ai/db/schema/clinical";
+import { encounters, guaranteeLetters, hospitals, patients, tasks } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { doseKey } from "@sona-ai/domain/doses";
@@ -8,6 +8,7 @@ import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import type { Change } from "../events";
+import { raiseMissedDoses } from "./doses";
 import { appRouter } from "./index";
 
 const user = (id: string) => ({
@@ -66,4 +67,33 @@ test("a key that is not one of her doses is refused, and another hospital cannot
   const other = createRouterClient(appRouter, { context: { db, session: user("dr-other") } });
   expect((await other.adherence.get({ patientId: "SYN-1042" }).catch(e => e)).code).toBe("NOT_FOUND");
   expect((await doctor.adherence.get({ patientId: (await db.select().from(patients))[0]!.id })).due).toBeGreaterThanOrEqual(0);
+});
+
+test("a missed dose puts one row on My Day: it follows the count, clears when she takes a dose, and returns only for a new miss", async () => {
+  const { db, amelia } = await world();
+  const doseTasks = () => db.select().from(tasks).where(eq(tasks.kind, "dose"));
+  const at = (iso: string) => new Date(iso);
+
+  // Mon 10:05: the doses she skipped since Saturday read as missed, so the attending doctor gets one row.
+  expect(await raiseMissedDoses(db, "demo", at("2026-09-28T10:05:00+08:00"))).toEqual(["SYN-1042"]);
+  const [first] = await doseTasks();
+  expect(first).toMatchObject({ encounterId: "visit-1042", owner: "Attending doctor", due: "Today", completed: false });
+  expect(first!.title).toMatch(/^Amelia: .*missed/);
+  // The same hour again changes nothing.
+  expect(await raiseMissedDoses(db, "demo", at("2026-09-28T10:05:00+08:00"))).toEqual([]);
+
+  // The next morning more doses have slipped past: the same row, its count updated.
+  expect(await raiseMissedDoses(db, "demo", at("2026-09-29T08:00:00+08:00"))).toEqual(["SYN-1042"]);
+  const rows = await doseTasks();
+  expect(rows.length).toBe(1);
+  expect(rows[0]!.title).not.toBe(first!.title);
+
+  // She takes a dose: back on track, the row leaves My Day and the next check does not raise it again.
+  const plan = await amelia.care.discharge();
+  if (plan.status !== "discharged") throw new Error("not discharged");
+  const med = [...plan.medicines.new, ...plan.medicines.changed, ...plan.medicines.continue].find(m => m.at?.length)!;
+  const [hh, mm] = med.at![0]!.split(":");
+  await amelia.care.doses.take({ key: doseKey(med.name, at(`2026-09-28T${hh}:${mm}:00+08:00`)) });
+  expect((await doseTasks()).every(t => t.completed)).toBe(true);
+  expect(await raiseMissedDoses(db, "demo", at("2026-09-29T08:00:00+08:00"))).toEqual([]);
 });

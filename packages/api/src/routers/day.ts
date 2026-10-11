@@ -12,6 +12,7 @@ import { clockOffsetOf, shifted } from "../clock";
 import { clockOf, type Context } from "../context";
 import { changeFor } from "../events";
 import { protectedProcedure } from "../index";
+import { tellStaff } from "../push";
 
 /** Marks one of the caller's hospital's tasks done; completing it again returns the same task. */
 export const completeTask = protectedProcedure.input(z.object({ taskId: z.string().min(1) })).handler(async ({ context: { db, hospitalId }, input }) => {
@@ -60,9 +61,9 @@ const resultInput = z.object({
  * otherwise it keeps the lab's own flag, or, when the lab sent none, high or low against the usual adult range.
  * The one path for a result, whoever sends it: the lab's system (labFeed) or a signed-in clinician (results.receive).
  */
-async function receiveResult(context: Pick<Context, "db" | "now">, hospitalId: string, input: z.infer<typeof resultInput>) {
+async function receiveResult(context: Pick<Context, "db" | "now" | "fetch">, hospitalId: string, input: z.infer<typeof resultInput>) {
   const { db } = context;
-  const [patient] = await db.select({ id: patients.id, sex: patients.sex }).from(patients).where(and(eq(patients.id, input.patientId), eq(patients.hospitalId, hospitalId)));
+  const [patient] = await db.select({ id: patients.id, sex: patients.sex, name: patients.name }).from(patients).where(and(eq(patients.id, input.patientId), eq(patients.hospitalId, hospitalId)));
   if (!patient) throw new ORPCError("NOT_FOUND", { message: `No patient ${input.patientId}` });
   // A sample the lab was still running (a ward and discharge blocker) is filled in place, keeping its ID; anything else is a new result.
   const [pending] = await db.select({ id: labResults.id }).from(labResults)
@@ -72,6 +73,8 @@ async function receiveResult(context: Pick<Context, "db" | "now">, hospitalId: s
   if (pending) await db.update(labResults).set(values).where(eq(labResults.id, id));
   else await db.insert(labResults).values({ id, patientId: input.patientId, test: input.test, sourceId: id, ...values });
   const [result] = await listResults(db, hospitalId, eq(labResults.id, id));
+  // A value past the call-now limit is the banner over every open screen; a locked phone hears it too.
+  if (result!.critical) await tellStaff(context, hospitalId, { title: "Critical result", body: `${patient.name.split(" ")[0]}: ${input.test} ${input.value}${input.unit ? ` ${input.unit}` : ""}` });
   return result!;
 }
 

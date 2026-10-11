@@ -1,6 +1,6 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { encounters, guaranteeLetters, pushTokens } from "@sona-ai/db/schema/clinical";
+import { encounters, guaranteeLetters, pushTokens, staffPushTokens } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
@@ -115,4 +115,29 @@ test("a booking decision reads as the patient's words, in Malay when her plan is
   const at = new Date("2026-10-01T02:30:00Z");
   expect(pushFor({ kind: "confirmed", doctor: "Dr. Lim", at }, "en")).toEqual({ title: "Visit confirmed", body: "Dr. Lim will see you · Thu 1 Oct, 10:30 AM", data: { url: "sona-care:///follow-ups" } });
   expect(pushFor({ kind: "declined", doctor: "Dr. Lim", at }, "ms").body).toBe("Dr. Lim tidak dapat berjumpa anda Kha 1 Okt, 10:30 PG. Pilih masa lain dalam Sona Care");
+});
+
+test("Sona Pro: a doctor's phone registers, a critical result reaches it, and a bed manager cannot register one", async () => {
+  const db = await createTestDb();
+  await seedDemo(db);
+  await addClinician(db, "dr-aisyah");
+  await addClinician(db, "bm-farid", "demo", "bed-manager");
+  const expo = fakeExpo();
+  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), fetch: expo.fetch } });
+  const doctor = as("dr-aisyah");
+
+  expect((await as("bm-farid").staffPush.register({ token: "ExponentPushToken[bm]", platform: "ios" }).catch(e => e)).code).toBe("FORBIDDEN");
+  await doctor.staffPush.register({ token: "ExponentPushToken[dr]", platform: "ios" });
+  expect((await db.select().from(staffPushTokens)).map(t => [t.token, t.userId, t.hospitalId])).toEqual([["ExponentPushToken[dr]", "dr-aisyah", "demo"]]);
+
+  // A normal value is a row, not a push; one past the call-now limit pushes to the doctor's phone and opens My Day.
+  await doctor.results.receive({ patientId: "SYN-1086", test: "Sodium", value: "140", unit: "mmol/L" });
+  expect(expo.sent).toHaveLength(0);
+  await doctor.results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" });
+  expect(expo.sent).toHaveLength(1);
+  expect(expo.sent[0]!.messages[0]).toMatchObject({ to: "ExponentPushToken[dr]", title: "Critical result", body: "Daniel: Potassium 2.6 mmol/L", data: { url: "sona-ai:///" } });
+
+  // Signed out: the phone hears nothing more.
+  await doctor.staffPush.unregister({ token: "ExponentPushToken[dr]" });
+  expect(await db.select().from(staffPushTokens)).toEqual([]);
 });

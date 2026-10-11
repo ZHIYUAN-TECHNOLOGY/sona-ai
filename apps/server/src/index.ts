@@ -14,6 +14,7 @@ import { createAuth, getDb } from "./services";
 import { runNightlyAudit } from "@sona-ai/api/audit-job";
 import { decideReview, renderReviewPage, reviewPacket } from "@sona-ai/api/insurer";
 import { wakeFollowUps } from "@sona-ai/api/routers/check-ins";
+import { raiseMissedDoses } from "@sona-ai/api/routers/doses";
 import { labFeed } from "@sona-ai/api/routers/day";
 import { hospitals } from "@sona-ai/db/schema/clinical";
 import { careLinkOf, hospitalOf } from "@sona-ai/api/routers/hospital";
@@ -159,6 +160,9 @@ export default {
         // Patients whose check-in just arrived see it without reopening the app.
         await Promise.all(patientIds.map(patientId => announce?.(id, { topic: "checkIns", patientId }).catch(() => {})));
         console.log(`check-ins ${controller.cron}: ${id} sent ${sent}`);
+        // Doses missed since the last hour: a row on My Day for the attending doctor, which re-reads at once.
+        const missed = await raiseMissedDoses(db, id, at);
+        await Promise.all(missed.map(patientId => announce?.(id, { topic: "doses", patientId }).catch(() => {})));
         continue;
       }
       const { raised } = await runNightlyAudit(db, id, at);

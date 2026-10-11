@@ -41,6 +41,12 @@ export const pushTokens = pgTable("push_tokens", {
   platform: text("platform").notNull(), updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, t => [index("push_tokens_patient").on(t.patientId)]);
 
+/** Sona Pro: a clinician's phone, so My Day's urgent rows reach it with the app closed (packages/api/src/push.ts tellStaff). */
+export const staffPushTokens = pgTable("staff_push_tokens", {
+  token: text("token").primaryKey(), userId: text("user_id").notNull(), hospitalId: text("hospital_id").notNull(),
+  platform: text("platform").notNull(), updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, t => [index("staff_push_tokens_hospital").on(t.hospitalId)]);
+
 /**
  * The hospital's clinicians as patients see them in Find a doctor (SYNTHETIC in the demo): specialty,
  * room, languages, and weekly clinic sessions (weekday 0 Sun … 6 Sat, "HH:MM" Malaysia time).
@@ -86,7 +92,7 @@ export const notes = pgTable("notes", {
 /** Follow-ups, blocker owners and coding queries are all tasks; idempotency_key makes creation replay-safe. */
 export const tasks = pgTable("tasks", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), encounterId: text("encounter_id"),
-  kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge", "finding", "check-in", "message", "booking"] }).notNull(),
+  kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge", "finding", "check-in", "message", "booking", "dose"] }).notNull(),
   title: text("title").notNull(), owner: text("owner").notNull(), due: text("due"), completed: boolean("completed").default(false).notNull(),
   sourceId: text("source_id"), idempotencyKey: text("idempotency_key").unique(), createdAt: created(),
 }, t => [index("tasks_hospital").on(t.hospitalId, t.kind)]);

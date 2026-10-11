@@ -1,12 +1,13 @@
 import { ORPCError } from "@orpc/server";
-import { doseLogs, patients } from "@sona-ai/db/schema/clinical";
-import { adherence, doseSlots, missedLine, parseDoseKey } from "@sona-ai/domain/doses";
+import { careLinks, doseLogs, patients, tasks } from "@sona-ai/db/schema/clinical";
+import { adherence, doseKey, doseSlots, missedLine, parseDoseKey } from "@sona-ai/domain/doses";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure } from "../index";
-import { doseScheduleOf, takenKeys } from "./care-plan";
+import { tellStaff } from "../push";
+import { doseScheduleOf, lastDischarge, takenKeys } from "./care-plan";
 
 /**
  * Doses taken, from Sona Care's hold to take, so the care team sees adherence: the patient marks a
@@ -32,6 +33,10 @@ export const careDosesRouter = {
     if (!real) throw new ORPCError("BAD_REQUEST", { message: "That isn't one of your doses", data: { code: "DOSE_UNKNOWN" } });
     await context.db.insert(doseLogs).values({ id: `${context.patientId}|${input.key}`, hospitalId: context.hospitalId, patientId: context.patientId, key: input.key, takenAt: clockOf(context) })
       .onConflictDoNothing();
+    // Taking a dose again is back on track: her missed-doses row leaves My Day (the "doses" announce re-reads it).
+    const visit = await lastDischarge(context.db, context.hospitalId, context.patientId);
+    if (visit) await context.db.update(tasks).set({ completed: true })
+      .where(and(eq(tasks.hospitalId, context.hospitalId), eq(tasks.encounterId, visit.encounterId), eq(tasks.kind, "dose"), eq(tasks.completed, false)));
     return { key: input.key };
   }),
 };
@@ -44,3 +49,38 @@ export const adherenceRouter = {
     return adherenceOf(context, context.hospitalId, p.id);
   }),
 };
+
+/**
+ * The hourly cron's dose check: a linked patient with doses missed (not taken MISSED_AFTER past due) gets one
+ * "dose" task for the attending doctor ("Amelia: 2 Azithromycin doses missed"), an amber row on My Day. It rides on
+ * her open one (the title follows the count) and is raised once per newest missed dose (its sourceId), so a row the
+ * doctor or her next dose cleared stays cleared until another dose is missed. Returns whose row is new or changed.
+ */
+export async function raiseMissedDoses(db: Context["db"], hospitalId: string, now: Date) {
+  const linked = await db.selectDistinct({ patientId: careLinks.patientId, name: patients.name }).from(careLinks)
+    .innerJoin(patients, eq(patients.id, careLinks.patientId)).where(eq(careLinks.hospitalId, hospitalId));
+  const told: string[] = [];
+  for (const { patientId, name } of linked) {
+    const [visit, schedule] = await Promise.all([lastDischarge(db, hospitalId, patientId), doseScheduleOf(db, hospitalId, patientId)]);
+    if (!visit || !schedule) continue;
+    const a = adherence(schedule.meds, schedule.dischargedAt, await takenKeys(db, hospitalId, patientId), now);
+    const line = missedLine(a);
+    if (!line) continue;
+    const newest = a.missed.reduce((x, y) => (y.dueAt > x.dueAt ? y : x));
+    const sourceId = doseKey(newest.name, newest.dueAt), title = `${name.split(" ")[0]}: ${line}`;
+    const mine = await db.select({ id: tasks.id, completed: tasks.completed, sourceId: tasks.sourceId }).from(tasks)
+      .where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.encounterId, visit.encounterId), eq(tasks.kind, "dose")));
+    if (mine.some(t => t.sourceId === sourceId)) continue;
+    const open = mine.find(t => !t.completed);
+    if (open) await db.update(tasks).set({ title, sourceId }).where(eq(tasks.id, open.id));
+    else {
+      const id = `dose:${patientId}:${sourceId}`;
+      await db.insert(tasks).values({ id, hospitalId, encounterId: visit.encounterId, kind: "dose", title, owner: "Attending doctor", due: "Today", sourceId, idempotencyKey: id })
+        .onConflictDoNothing();
+      // A new row pushes once; its count moving on later does not, so a locked phone is not told every hour.
+      await tellStaff({ db }, hospitalId, { title: "Doses missed", body: title });
+    }
+    told.push(patientId);
+  }
+  return told;
+}

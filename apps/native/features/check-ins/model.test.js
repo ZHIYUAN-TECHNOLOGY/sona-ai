@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { flaggedItems, reportItems } from "./model";
+import { doseItems, flaggedItems, reportItems } from "./model";
 
 const at = new Date("2026-10-04T06:02:00Z");
 const clock = `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
@@ -22,4 +22,11 @@ test("a task a reply flagged is not listed twice, and other kinds and done tasks
   expect(rows.map(r => r.id)).toEqual(["check-in-t-reply", "check-in-t-report"]);
   // Just booked in: the row stays while it offers the same-visit follow-ups.
   expect(reportItems(tasks, replied, patientOf, ["t-done"]).map(r => r.id)).toEqual(["check-in-t-report", "check-in-t-done"]);
+});
+
+test("missed doses are one amber row per open dose task, below a booking request, and not a check-in flag", () => {
+  const tasks = [task({ id: "dose:SYN-1042:x", kind: "dose", title: "Amelia: 2 Azithromycin doses missed" }), task({ id: "dose:done", kind: "dose", completed: true })];
+  expect(doseItems(tasks, patientOf)).toEqual([{ id: "dose-dose:SYN-1042:x", kind: "task", title: "Amelia: 2 Azithromycin doses missed", detail: "Missed at home",
+    reason: "Not marked taken in Sona Care", tone: "soon", score: 70, at: at.getTime(), patientId: "SYN-1042", open: { view: "check-in" } }]);
+  expect(reportItems(tasks, [], patientOf)).toEqual([]);
 });
