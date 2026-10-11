@@ -82,11 +82,11 @@ test("the gates fire first: an emergency sign reaches the care team while the le
   const order: string[] = [];
   let found!: (hits: RetrievalHit[]) => void;
   const lib = library(() => new Promise(resolve => { found = resolve; }));
-  const chat: Chat = async () => { order.push("gemma asked"); return { answer: "Call 999 now.", grounded: false, urgent: true, cites: [] }; };
+  const chat: Chat = async () => { order.push("gemma asked"); return { answer: "Sila hubungi 999 sekarang dan pergi ke hospital.", grounded: false, urgent: true, cites: [] }; };
   const { amelia, doctor } = await world(chat, lib, { classifyReply: async () => { order.push("care team's reader"); setTimeout(() => { order.push("leaflets found"); found([CHEST]); }, 50); return { label: "urgent", symptom: "Chest pain", source: "model", model: "gemma-test" }; } });
   const answer = await amelia.care.ask({ question: "Sakit dada dan sesak nafas" });
   expect(order).toEqual(["care team's reader", "leaflets found", "gemma asked"]);
-  expect(answer).toMatchObject({ urgent: true, sources: [], careTeam: { title: "Amelia: chest pain", line: LINES.en.told } });
+  expect(answer).toMatchObject({ urgent: true, sources: [], careTeam: { title: "Amelia: chest pain", line: LINES.ms.told } });
   expect((await doctor.tasks.list()).some(t => t.title === "Amelia: chest pain")).toBe(true);
 });
 
