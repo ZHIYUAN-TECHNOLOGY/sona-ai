@@ -49,13 +49,13 @@ const asAnswer = (value: SonaAnswer | ReactNode): SonaAnswer => (isAnswer(value)
  * A call an answer's button made: what went wrong comes back in plain words; once it worked, every page showing what it
  * changed reads it again. ponytail: refetches every active query; name the keys if that ever costs.
  */
-const settle = (call: Promise<unknown>) => call.then(() => { void queryClient.invalidateQueries(); }, (e: unknown) => { throw new Error(plain(e)); });
+const called = (call: Promise<unknown>) => call.then(() => { void queryClient.invalidateQueries(); }, (e: unknown) => { throw new Error(plain(e)); });
 
 /**
  * Confirms a card Sona drafted with the procedure the app's own pages call, its payload checked again there
  * (answer-parts: book, logDose, logReading and tellCareTeam are a patient's, createTask a clinician's).
  */
-export const confirmCard = (card: ActionCard, requestId: string) => settle(
+export const confirmCard = (card: ActionCard, requestId: string) => called(
   card.do === "book" ? client.care.bookings.request(card.payload)
     : card.do === "logDose" ? client.care.doses.take(card.payload)
     // The server refuses a kind outside its reading kinds.
@@ -204,7 +204,7 @@ function Answer({ turn, ask }: { turn: Turn; ask: (q: string) => void }) {
   const { review } = answer;
   // A confirm card's op on the web: open a patient, or mark a task done (`task-done:<patient>:<task>`); the rest are the phone's pages.
   const task = review?.op.startsWith("task-done:") ? review.op.split(":").at(-1) : undefined;
-  const run = review && (rowPatient(review) ? () => open(review)! : task ? () => settle(client.tasks.complete({ taskId: task })) : undefined);
+  const run = review && (rowPatient(review) ? () => open(review)! : task ? () => called(client.tasks.complete({ taskId: task })) : undefined);
   return (
     <>
       <RuleAnswer lead={answer.lead} rows={answer.rows} heading={answer.heading} onOpen={open} marks={answer.marks} />
