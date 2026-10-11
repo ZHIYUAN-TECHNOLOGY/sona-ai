@@ -179,7 +179,10 @@ export function laneOf(decision: Decision | undefined, app: App, said: string, u
 // --- Sona Care's lane answers ---------------------------------------------------------------------------------------
 
 type PatientContext = Context & { hospitalId: string; patientId: string };
-/** A lane answer in Sona Care: Sona's own line in her language, the words to colour in it, and cards from her record. */
+/**
+ * A lane answer in Sona Care: Sona's own line in her language, the words to colour in it, and cards from her record.
+ * Always `grounded` (her visits, doses, the reading she gave, her care team), so no app captions it a general answer.
+ */
 export type LaneAnswer = { answer: string; grounded: boolean; from?: string; marks: Mark[]; cards: AnswerCard[] };
 type Draft = { what: string; confirm: string; done: string };
 type Kind = keyof typeof READING_KINDS;
@@ -261,7 +264,7 @@ async function book(context: PatientContext, said: string, say: (typeof SAY)[Lan
   if (!first || !at) return undefined;
   const when = whenOf(at, language);
   return {
-    answer: say.book(`${first.name} (${first.specialty})`, when), grounded: false, marks: [{ text: when, kind: "dose" }],
+    answer: say.book(`${first.name} (${first.specialty})`, when), grounded: true, from: "visits", marks: [{ text: when, kind: "dose" }],
     cards: [
       ...shown.map(d => ({ type: "doctor" as const, id: d.id, name: d.name, specialty: d.specialty, room: d.room, rating: d.rating, careTeam: d.careTeam })),
       { type: "action", do: "book", title: `${shortName(first.name)}, ${when}`, items: [first.specialty, first.room], ...say.booking,
@@ -333,7 +336,7 @@ function reading(decision: Decision, said: string, say: (typeof SAY)[Language]):
   if (numbers.length !== (bp ? 2 : 1) || value < min || value > max || (bp && !(value2! >= 30 && value2! < value))) return undefined;
   const shown = `${say.kinds[kind]} ${bp ? `${value}/${value2}` : value} ${unit}`;
   return {
-    answer: say.reading(shown), grounded: false, marks: [{ text: shown, kind: "test" }],
+    answer: say.reading(shown), grounded: true, marks: [{ text: shown, kind: "test" }],
     cards: [{ type: "action", do: "logReading", title: shown, ...say.saving, payload: { kind, value, ...bp && { value2 } } }],
   };
 }

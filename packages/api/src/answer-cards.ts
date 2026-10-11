@@ -1,17 +1,14 @@
 import { bookingRequests, doctors, encounters, labResults, observations, receipts } from "@sona-ai/db/schema/clinical";
-import { cardsOf, type AnswerCard, type Lane, type Mark, type MarkKind } from "@sona-ai/domain/answer-parts";
+import { cardsOf, type AnswerCard, type Mark, type MarkKind } from "@sona-ai/domain/answer-parts";
 import { patientMeds, warningSigns, type PatientMed } from "@sona-ai/domain/care";
 import { criticalOf } from "@sona-ai/domain/critical";
 import type { Language } from "@sona-ai/domain/discharge";
-import type { Doctor } from "@sona-ai/domain/doctors";
-import { MISSED_AFTER, doseKey, doseSlots } from "@sona-ai/domain/doses";
 import { rangeFlagOf, rangeWhy } from "@sona-ai/domain/lab-ranges";
 import { and, asc, desc, eq, gte } from "drizzle-orm";
 
 import { wordsIn } from "./chat-models";
 import { clockOf, type Context } from "./context";
-import { doctorsFor } from "./routers/bookings";
-import { followUpsOf, lastDischarge, planOf, takenKeys, type patientPlan } from "./routers/care-plan";
+import { followUpsOf, planOf, type patientPlan } from "./routers/care-plan";
 import { READING_KINDS } from "./routers/care-readings";
 
 /**
@@ -19,8 +16,7 @@ import { READING_KINDS } from "./routers/care-readings";
  * medicine, result, reading or visit the answer's words name (its marks, the model's choice), her come-back list when a
  * symptom on it is named, and the 999 card on an urgent turn. A word the model wrote that names no row of hers gives no
  * card (a medicine she does not take, a test she never had), and a patient sees a result's value only once a doctor has
- * acknowledged it, as her Results screen does (care-results). The Clef fast lane's turns get their cards here too
- * (careLaneCards, proLaneCards): drafts she or the clinician confirms before anything happens.
+ * acknowledged it, as her Results screen does (care-results).
  * care.ask calls careCards and ask.free proCards with what they already read; each reads only the rows its marks need.
  */
 export const ANSWER_CARDS = 3;
@@ -37,32 +33,19 @@ export type CardFacts = {
   visits?: AnswerCard[];
 };
 
-/** What a card says in the patient's language (Sona Care's own words where it has them: ask.plan, hs.comeBack, book.*). */
+/** What a card says in the patient's language (Sona Care's own words where it has them: ask.plan, hs.comeBack). */
 const SAY = {
   plan: { en: "Your discharge plan", ms: "Pelan discaj anda", zh: "您的出院计划" },
   lab: { en: "Lab result", ms: "Keputusan makmal", zh: "化验结果" },
   stopped: { en: "Stopped", ms: "Dihentikan", zh: "已停用" },
   comeBack: { en: "Come back straight away if", ms: "Datang semula segera jika", zh: "出现以下情况请立即回来" },
   call999: { en: "Call 999 now", ms: "Hubungi 999 sekarang", zh: "请立即拨打999" },
-  visitWith: { en: "Visit with", ms: "Lawatan dengan", zh: "复诊医生：" },
-  bookWhat: { en: "This asks your care team for this time. It is booked once they confirm; you will see it on your Schedule.", ms: "Ini meminta masa ini daripada pasukan penjagaan anda. Ia ditempah selepas mereka sahkan; anda akan melihatnya dalam Jadual anda.", zh: "这是向医护团队申请这个时间。他们确认后才算预约成功，您会在日程上看到。" },
-  bookConfirm: { en: "Send request", ms: "Hantar permintaan", zh: "发送申请" },
-  bookDone: { en: "Request sent. Your care team will confirm the time.", ms: "Permintaan dihantar. Pasukan penjagaan anda akan mengesahkan masanya.", zh: "申请已发送。医护团队会确认时间。" },
-  doseWhat: { en: "Marks this dose as taken. Your care team sees it.", ms: "Tandakan dos ini sebagai sudah diambil. Pasukan penjagaan anda dapat melihatnya.", zh: "把这一剂标记为已服用。医护团队可以看到。" },
-  doseConfirm: { en: "Mark as taken", ms: "Tanda sudah diambil", zh: "标记为已服用" },
-  doseDone: { en: "Marked as taken.", ms: "Sudah ditanda diambil.", zh: "已标记为已服用。" },
-  readingWhat: { en: "Saves it to your readings. Your care team sees it.", ms: "Simpan dalam bacaan anda. Pasukan penjagaan anda dapat melihatnya.", zh: "保存到您的测量记录。医护团队可以看到。" },
-  readingConfirm: { en: "Save reading", ms: "Simpan bacaan", zh: "保存测量" },
-  readingDone: { en: "Saved to your readings.", ms: "Disimpan dalam bacaan anda.", zh: "已保存到您的测量记录。" },
 } satisfies Record<string, Record<Language, string>>;
 /** A home reading's name as she reads it (care-readings READING_KINDS has the English). */
 const READING_WORDS: Record<keyof typeof READING_KINDS, Record<Exclude<Language, "en">, string>> = {
   blood_pressure: { ms: "Tekanan darah", zh: "血压" }, heart_rate: { ms: "Kadar nadi", zh: "心率" }, temperature: { ms: "Suhu", zh: "体温" },
   weight: { ms: "Berat badan", zh: "体重" }, blood_glucose: { ms: "Gula dalam darah", zh: "血糖" }, oxygen_saturation: { ms: "Tahap oksigen", zh: "血氧" },
 };
-const LOCALE: Record<Language, string> = { en: "en-GB", ms: "ms-MY", zh: "zh-CN" };
-/** "Thu 15 Oct at 10:30", "Kha, 15 Okt, 10:30 PG", in Malaysia time. */
-const dayTime = (at: Date, lang: Language) => at.toLocaleString(LOCALE[lang], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" });
 /** Words cut to a card field's length, so a long plan line never drops its card (answer-parts refuses a card past its limits). */
 const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
 /** Whether `a` holds `b` as whole words (either way round), case aside: "low potassium of 3.1" holds "Potassium". */
@@ -200,86 +183,4 @@ export async function proCards(context: Context & { hospitalId: string }, input:
     return { names: [label], on: ["test", "warning", "caution"], card: { type: "reading", label: clip(label, 60), value: o.unit === "AMT" ? `${o.value}/10` : `${o.value}`, unit: clip(o.unit, 20), at: o.observedAt.toISOString() } };
   });
   return cardsFor(input, { named: [...medicines, ...labs.filter(r => r.flag !== "pending" && r.value).map(r => resultCard(r, "en")), ...vitals] });
-}
-
-/**
- * What the fast lane read in the turn besides its intent, all optional: the medicine she took, the doctor or specialty and
- * time she asked for, the reading she gave, the task the clinician dictated. The app's own call checks each again.
- */
-export type LaneSaid = {
-  medicine?: string; doctor?: string; startsAt?: Date; reason?: string;
-  reading?: { kind: string; value: number; value2?: number; takenAt?: Date };
-  task?: { encounterId: string; title: string; owner: string; due?: string };
-};
-
-/** A drafted visit request: the doctor's card, then the time she asked for when it is free, else the doctor's first free one (care.bookings.request). */
-export function bookCards(found: (Pick<Doctor, "id" | "name" | "specialty" | "room" | "rating" | "careTeam"> & { nextSlots: { times: Date[] }[] })[], said: LaneSaid, lang: Language): AnswerCard[] {
-  const doctor = found[0];
-  if (!doctor) return [];
-  const free = doctor.nextSlots.flatMap(d => d.times), at = said.startsAt && free.find(t => t.getTime() === said.startsAt!.getTime()) || free[0];
-  const card: AnswerCard = { type: "doctor", id: doctor.id, name: doctor.name, specialty: doctor.specialty, room: doctor.room, rating: doctor.rating, ...doctor.careTeam !== undefined && { careTeam: doctor.careTeam } };
-  if (!at) return [card];
-  return [card, {
-    type: "action", do: "book", title: clip(`${SAY.visitWith[lang]} ${doctor.name}`, 160), items: [dayTime(at, lang), clip(doctor.room, 160)],
-    what: SAY.bookWhat[lang], confirm: SAY.bookConfirm[lang], done: SAY.bookDone[lang],
-    payload: { doctorId: doctor.id, startsAt: at.toISOString(), ...said.reason?.trim() && { reason: clip(said.reason.trim(), 200) } },
-  }];
-}
-
-/**
- * The dose she most likely means to mark taken: of her timed take-home medicines (the one she named, when she did), the
- * latest dose due by an hour from now and not yet past being missed, that she has not marked; none when there is none.
- */
-export function doseCard(medicines: PatientMed[], out: Date, taken: string[], now: Date, said: LaneSaid, lang: Language): AnswerCard[] {
-  const due = medicines.filter(m => m.at?.length && !m.finished && (!said.medicine || names(said.medicine, m.name)))
-    .flatMap(m => doseSlots(m, out, new Date(now.getTime() + 3600_000)).map(at => ({ m, at, key: doseKey(m.name, at) })))
-    .filter(d => now.getTime() - d.at.getTime() < MISSED_AFTER && !taken.includes(d.key)).sort((a, b) => b.at.getTime() - a.at.getTime())[0];
-  if (!due) return [];
-  return [{
-    type: "action", do: "logDose", title: clip(`${due.m.name} · ${dayTime(due.at, lang)}`, 160), ...due.m.take && { items: [clip(due.m.take, 160)] },
-    what: SAY.doseWhat[lang], confirm: SAY.doseConfirm[lang], done: SAY.doseDone[lang], payload: { key: due.key },
-  }];
-}
-
-/** A drafted home reading (care.readings.add), only when it is one a person can show (READING_KINDS' ranges; a blood pressure needs both numbers, the upper first). */
-export function readingCard(reading: LaneSaid["reading"], lang: Language): AnswerCard[] {
-  const kind = reading && READING_KINDS[reading.kind as keyof typeof READING_KINDS];
-  if (!reading || !kind || reading.value < kind.min || reading.value > kind.max) return [];
-  const bp = reading.kind === "blood_pressure";
-  if (bp && (reading.value2 === undefined || reading.value2 >= reading.value || reading.value2 < 30 || reading.value2 > 160)) return [];
-  const label = lang === "en" ? kind.label : READING_WORDS[reading.kind as keyof typeof READING_KINDS][lang];
-  return [{
-    type: "action", do: "logReading", title: clip(`${label} ${reading.value}${bp ? `/${reading.value2}` : ""} ${kind.unit}`, 160), what: SAY.readingWhat[lang], confirm: SAY.readingConfirm[lang], done: SAY.readingDone[lang],
-    payload: { kind: reading.kind, value: reading.value, ...bp && { value2: reading.value2 }, ...reading.takenAt && { takenAt: reading.takenAt.toISOString() } },
-  }];
-}
-
-/** Sona Care's fast-lane turns: her next visits, a drafted visit request, the dose to mark taken, the reading to save. */
-export async function careLaneCards(context: PatientContext, input: { intent: Lane["intent"]; said?: LaneSaid; language: Language }): Promise<AnswerCard[]> {
-  const { db, hospitalId, patientId } = context, said = input.said ?? {}, lang = input.language, now = clockOf(context);
-  if (input.intent === "next_appointment") return (await careVisits(context, lang)).slice(0, ANSWER_CARDS);
-  if (input.intent === "book_appointment") {
-    // The doctor or specialty she named, else her care team.
-    const named = said.doctor ? await doctorsFor(context, said.doctor) : [];
-    return cardsOf(bookCards(named.length ? named : (await doctorsFor(context)).filter(d => d.careTeam), said, lang));
-  }
-  if (input.intent === "log_reading") return cardsOf(readingCard(said.reading, lang));
-  if (input.intent === "log_dose") {
-    const [left, plan, taken] = await Promise.all([lastDischarge(db, hospitalId, patientId), planOf(db, hospitalId, patientId), takenKeys(db, hospitalId, patientId)]);
-    if (!left) return [];
-    const m = patientMeds(plan, lang, { out: left.dischargedAt, now });
-    return cardsOf(doseCard([...m.new, ...m.changed, ...m.continue], new Date(left.dischargedAt), taken, now, said, lang));
-  }
-  return [];
-}
-
-/** Sona Pro's fast-lane turns: a drafted task for the visit (tasks.create; the app adds requestId). A ward overview is the ward's own rows (ask-context), so no cards. */
-export function proLaneCards(input: { intent: Lane["intent"]; said?: LaneSaid }): AnswerCard[] {
-  const task = input.said?.task;
-  if (input.intent !== "create_task" || !task?.title.trim() || !task.owner.trim()) return [];
-  return cardsOf([{
-    type: "action", do: "createTask", title: "New task", items: [clip(task.title, 160), clip(`Owner: ${task.owner}`, 160), ...task.due ? [`Due ${task.due}`] : []],
-    what: "Adds it to this visit's tasks.", confirm: "Create task", done: "Task created.",
-    payload: { encounterId: task.encounterId, title: clip(task.title.trim(), 200), owner: clip(task.owner.trim(), 80), ...task.due && { due: task.due } },
-  }]);
 }

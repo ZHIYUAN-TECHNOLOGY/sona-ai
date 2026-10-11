@@ -311,3 +311,11 @@ test("Sona Pro's lane: the ward's list and a task for the open visit come by the
   expect(await doctor.ask.free({ ...visit, question: TRIAL.p005.said })).toMatchObject({ source: "model" });
   expect(chats()).toBe(2);
 });
+
+test("a free answer on a visit carries cards from that visit's own rows for the words it marks", async () => {
+  const marks = { warning: ["low potassium of 3.1 mmol/L"] };
+  const answered = { ...spec("Daniel's potassium is low.", []), general: "A low potassium of 3.1 mmol/L needs replacing.", marks };
+  const client = await nurse(boxes(() => gemma(answered)).baseten);
+  const r = await client.ask.free({ scope: "visit", question: "Daniel's potassium?", context: { lines: ["Daniel Rahman's potassium is back."], rows: [] }, encounterId: "visit-1086" });
+  expect(r).toMatchObject({ source: "model", marks: [{ text: "low potassium of 3.1 mmol/L", kind: "warning" }], cards: [{ type: "result", test: "Potassium", value: "3.1", flag: "low" }] });
+});

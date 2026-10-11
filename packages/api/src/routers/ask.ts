@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { webAnswer } from "../ask-context";
+import { proCards } from "../answer-cards";
 import { freeAnswer, routeRequest } from "../ask-model";
 import { askContextSchema, type AskContext } from "../ask-spec";
 import type { Context } from "../context";
@@ -39,7 +40,10 @@ export const askRouter = {
       const lane = laneOf(decision, "pro", input.question);
       const fast = lane && await proLane(context, lane, decision!, input.question, input.encounterId);
       if (fast) return fast;
-      return freeAnswer(context.baseten, { ...input, context: { ...input.context, lines: [...input.context.lines, ...record] } });
+      const answer = await freeAnswer(context.baseten, { ...input, context: { ...input.context, lines: [...input.context.lines, ...record] } });
+      // The visit's own rows for what the answer names (../answer-cards), beside the spec; a card that cannot be read never fails the answer.
+      const cards = "marks" in answer ? await proCards(context, { encounterId: input.encounterId, marks: answer.marks }).catch(() => []) : [];
+      return { ...answer, ...cards.length > 0 && { cards } };
     }),
 };
 

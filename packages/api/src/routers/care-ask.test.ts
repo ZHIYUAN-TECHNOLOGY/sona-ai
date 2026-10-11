@@ -99,12 +99,14 @@ test("the lane's drafts are what the app's own calls take: a booking, a dose and
   const book = await amelia.care.ask({ question: TRIAL.c021.said });
   expect(book.answer).toBe("The first free time with Dr. Lim Wei Jie (Respiratory) is Wed 30 Sep at 09:00. You can ask for it, or another time on Doctors; your care team confirms it.");
   expect(partsOf(book).cards!.map(c => c.type)).toEqual(["doctor", "action"]);
+  // From her care team and visits, never captioned a general answer.
+  expect(book).toMatchObject({ grounded: true, from: "visits" });
   const draft = action(book);
   expect(draft).toMatchObject({ do: "book", confirm: "Request this time", payload: { doctorId: "lim", startsAt: "2026-09-30T01:00:00.000Z" } });
   if (draft.do === "book") expect(await amelia.care.bookings.request(draft.payload)).toMatchObject({ doctorId: "lim", status: "requested" });
 
   const reading = await amelia.care.ask({ question: bp });
-  expect(reading).toMatchObject({ answer: "Blood pressure 138/86 mmHg, ready to save to your readings.", marks: [{ text: "Blood pressure 138/86 mmHg", kind: "test" }] });
+  expect(reading).toMatchObject({ answer: "Blood pressure 138/86 mmHg, ready to save to your readings.", grounded: true, marks: [{ text: "Blood pressure 138/86 mmHg", kind: "test" }] });
   const save = action(reading);
   if (save.do === "logReading") expect(await amelia.care.readings.add(save.payload)).toMatchObject({ kind: "blood_pressure", value: 138, value2: 86 });
 
@@ -163,4 +165,13 @@ test("an emergency Clef reads (0.25 or more) reaches her care team once and make
   expect(await amelia.care.ask({ question: TRIAL.c054.said })).toMatchObject({ urgent: false });
   urgent = true;
   expect(await amelia.care.ask({ question: TRIAL.c054.said })).toMatchObject({ urgent: true });
+});
+
+test("a model answer naming her medicine carries its card from her plan; one naming a medicine she does not take carries none", async () => {
+  const answer = "Ambil Azithromycin sekali sehari. Panadol boleh untuk demam.";
+  const marks = [{ text: "Azithromycin", kind: "medicine" as const }, { text: "Panadol", kind: "medicine" as const }];
+  const amelia = await world({ ...stubModels, answerFromPlan: async () => ({ answer, grounded: true, urgent: false, marks, source: "model", model: "gemma-test" }) });
+  const asked = await amelia.care.ask({ question: "Apa ubat saya?" });
+  expect(asked.marks).toEqual(marks);
+  expect(asked.cards).toEqual([{ type: "medicine", name: "Azithromycin", dose: "1 tablet, sebelum atau selepas makan", how: "Kini sebiji tablet sehari, selama 2 hari lagi", times: ["08:00"], source: "Pelan discaj anda" }]);
 });

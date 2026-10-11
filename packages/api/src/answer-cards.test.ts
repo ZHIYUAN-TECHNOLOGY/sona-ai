@@ -1,13 +1,12 @@
 import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
-import { doseLogs, encounters, labResults, observations, receipts } from "@sona-ai/db/schema/clinical";
+import { encounters, labResults, observations, receipts } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { createTestDb } from "@sona-ai/db/testing";
 import { partsOf, type AnswerCard } from "@sona-ai/domain/answer-parts";
-import { doseKey } from "@sona-ai/domain/doses";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
-import { bookCards, careCards, careLaneCards, cardsFor, doseCard, planMedicines, proCards, proLaneCards, readingCard, resultCard } from "./answer-cards";
+import { careCards, cardsFor, planMedicines, proCards, resultCard } from "./answer-cards";
 import { patientPlan } from "./routers/care-plan";
 
 const NOW = new Date("2026-09-28T10:05:00+08:00"), OUT = "2026-09-26T07:40:00.000Z"; // home since 15:40 on 26 Sep
@@ -95,38 +94,8 @@ test("old answers still read, and a new one's cards reach a client through parts
   expect((cards[0] as Extract<AnswerCard, { type: "medicine" }>).how).toHaveLength(160);
 });
 
-test("fast-lane drafts: a visit request at a free time, the dose due now, a reading a person can show, a clinician's task", async () => {
-  const lim = { id: "lim", name: "Dr. Lim Wei Jie", specialty: "Respiratory", room: "Clinic 3B", rating: 4.8, careTeam: true, nextSlots: [{ times: [new Date("2026-10-01T02:30:00Z"), new Date("2026-10-01T03:00:00Z")] }] };
-  const [doctor, book] = bookCards([lim], { startsAt: new Date("2026-10-01T03:00:00Z"), reason: "still coughing" }, "en");
-  expect(doctor).toMatchObject({ type: "doctor", id: "lim" });
-  expect(book).toMatchObject({ type: "action", do: "book", title: "Visit with Dr. Lim Wei Jie", items: ["Thu 1 Oct at 11:00", "Clinic 3B"], payload: { doctorId: "lim", startsAt: "2026-10-01T03:00:00.000Z", reason: "still coughing" } });
-  // A time that is not free gives the doctor's first free one.
-  expect(bookCards([lim], { startsAt: new Date("2026-10-01T09:00:00Z") }, "ms")[1]).toMatchObject({ payload: { startsAt: "2026-10-01T02:30:00.000Z" }, confirm: "Hantar permintaan" });
-
-  const azithro = { name: "Azithromycin", line: "Now a tablet once a day", take: "1 tablet", at: ["08:00"] };
-  const due = doseCard([azithro], new Date(OUT), [], NOW, {}, "en");
-  expect(due).toMatchObject([{ type: "action", do: "logDose", payload: { key: doseKey("Azithromycin", new Date("2026-09-28T08:00:00+08:00")) } }]);
-  expect(doseCard([azithro], new Date(OUT), [doseKey("Azithromycin", new Date("2026-09-28T08:00:00+08:00"))], NOW, {}, "en")).toEqual([]);
-  expect(doseCard([azithro], new Date(OUT), [], NOW, { medicine: "cetirizine" }, "en")).toEqual([]);
-
-  expect(readingCard({ kind: "blood_pressure", value: 130, value2: 85 }, "en")).toMatchObject([{ do: "logReading", title: "Blood pressure 130/85 mmHg", payload: { kind: "blood_pressure", value: 130, value2: 85 } }]);
-  expect(readingCard({ kind: "blood_pressure", value: 130 }, "en")).toEqual([]);
-  expect(readingCard({ kind: "temperature", value: 98.6 }, "en")).toEqual([]); // Fahrenheit is not a °C a person shows
-
-  const task = proLaneCards({ intent: "create_task", said: { task: { encounterId: "visit-1086", title: "Repeat potassium tomorrow", owner: "Nurse", due: "2026-09-29" } } });
-  expect(task).toMatchObject([{ do: "createTask", payload: { encounterId: "visit-1086", title: "Repeat potassium tomorrow", owner: "Nurse", due: "2026-09-29" } }]);
-  expect(proLaneCards({ intent: "ward_overview" })).toEqual([]);
-});
-
-test("Care fast-lane cards read her own rows: her next visits, the dose due now", async () => {
+test("her home blood pressure, once she has logged one, is a reading card when an answer names it", async () => {
   const { db, context } = await amelia();
-  expect(await careLaneCards(context, { intent: "next_appointment", language: "en" })).toEqual([{ type: "appointment", title: "Clinic review", when: "2026-10-10T07:40:00.000Z", status: "upcoming" }]);
-  const [dose] = await careLaneCards(context, { intent: "log_dose", language: "en" });
-  expect(dose).toMatchObject({ do: "logDose", payload: { key: doseKey("Azithromycin", new Date("2026-09-28T08:00:00+08:00")) } });
-  await db.insert(doseLogs).values({ id: "d1", hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042", key: doseKey("Azithromycin", new Date("2026-09-28T08:00:00+08:00")), takenAt: NOW });
-  expect(await careLaneCards(context, { intent: "log_dose", language: "en" })).toEqual([]);
-  expect(await careLaneCards(context, { intent: "log_reading", said: { reading: { kind: "heart_rate", value: 72 } }, language: "en" })).toMatchObject([{ do: "logReading" }]);
-  // Her home blood pressure, once she has logged one, is a reading card when an answer names it.
   await db.insert(observations).values([
     { id: "bp1", patientId: "SYN-1042", kind: "blood_pressure", value: 128, unit: "mmHg", sourceId: "sona-care", source: "patient", observedAt: NOW },
     { id: "bp1-d", patientId: "SYN-1042", kind: "blood_pressure_diastolic", value: 82, unit: "mmHg", sourceId: "sona-care", source: "patient", observedAt: NOW },

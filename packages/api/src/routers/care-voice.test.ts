@@ -183,5 +183,6 @@ test("the model's own urgent flag reaches the care team when no keyword does; a 
   expect((await doctor.tasks.list()).filter(t => t.kind === "check-in").map(t => t.id)).toEqual([answer.careTeam!.taskId]);
 
   const broken = await world({ ...stubModels, answerFromPlan, classifyReply: async () => { throw new Error("model down"); } });
-  expect(await broken.amelia.care.ask({ question: "Sakit dada" })).toEqual({ answer: "Hubungi 999 sekarang.", grounded: false, urgent: true, sources: [], withheld: 0, source: "model", model: "gemma-test" });
+  // No care-team line when the report failed; the 999 card from her plan still leads the cards.
+  expect(await broken.amelia.care.ask({ question: "Sakit dada" })).toEqual({ answer: "Hubungi 999 sekarang.", grounded: false, urgent: true, sources: [], withheld: 0, source: "model", model: "gemma-test", cards: [expect.objectContaining({ type: "warning", level: "urgent", title: "Hubungi 999 sekarang" })] });
 });

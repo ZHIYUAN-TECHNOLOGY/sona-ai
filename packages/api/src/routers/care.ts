@@ -10,6 +10,7 @@ import { checkInReplySchema, xrayUploadSchema } from "../contracts";
 import { listCheckIns, replyToCheckIn } from "./check-ins";
 import { clockOffsetOf } from "../clock";
 import { languageOf } from "@sona-ai/domain/language";
+import { careCards } from "../answer-cards";
 import { citedSources, leafletHits, passagesIn } from "../leaflets";
 import { stubModels } from "../models";
 import { recordText } from "./care-plan";
@@ -162,7 +163,7 @@ export const careRouter = {
     const deciding = decideTurn(context.clef, { app: "care", said: input.question });
     // Her visits and her record are real whether or not she has gone home; only the take-home plan waits for discharge.
     // A part that cannot be read never fails the answer (recordText): the gates below must still run.
-    const { text: record } = await recordText(context);
+    const { plan, text: record } = await recordText(context);
     const decision = await deciding;
     // A real emergency only: the 999 keyword floor, Clef's emergency read, or the model's own urgent flag, one task for all.
     // Clef's read is urgent whatever the care team's reader says (nothing cancels an escalation); the floor's is the reader's call. Never fails the answer.
@@ -184,7 +185,10 @@ export const careRouter = {
     const careTeam = await (told ?? (answer.urgent ? tell() : undefined));
     // Only a leaflet that was offered can be a source: a number Gemma made up names nothing.
     const sources = citedSources(cites, passages);
-    return { ...answer, urgent: answer.urgent || emergency, withheld: 0, sources, ...careTeam && { careTeam: { ...careTeam, line: LINES[language].told } } };
+    const urgent = answer.urgent || emergency;
+    // Cards from her own rows for what the model's answer names (../answer-cards); a card that cannot be read never fails the answer.
+    const cards = answer.source === "model" ? await careCards(context, { plan, ...answer, urgent: floor || urgent, language }).catch(() => []) : [];
+    return { ...answer, urgent, withheld: 0, sources, ...careTeam && { careTeam: { ...careTeam, line: LINES[language].told } }, ...cards.length > 0 && { cards } };
   }),
 
   /**
