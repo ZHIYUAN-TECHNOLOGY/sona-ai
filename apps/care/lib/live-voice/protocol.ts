@@ -1,10 +1,13 @@
+import { marksOf, type Mark } from "@sona-ai/domain/answer-parts";
+
 /**
  * The Cloudflare Agents voice protocol (agents/voice, version 1), spoken as its VoiceClient speaks it: one WebSocket to
  * the agent; the phone says hello, then start_call, then streams the mic as binary frames of 16 kHz mono 16-bit PCM
  * (./pcm). The agent answers with JSON events (its status, the patient's words, Sona's answer as it is written) and
  * binary audio, one frame per sentence, MP3 unless audio_config says otherwise; a sentence Sona's voice could not make
- * comes as `sona_say` with no audio instead (apps/server/src/agents/voice.ts). An interrupt stops the answer being
- * spoken. Pure, so bun can test it; the socket and the audio live in ./session.
+ * comes as `sona_say` with no audio instead (apps/server/src/agents/voice.ts), and `sona_turn` follows the last sentence
+ * with how the answer went (here only its `marks`, the words to colour). An interrupt stops the answer being spoken.
+ * Pure, so bun can test it; the socket and the audio live in ./session.
  */
 export const PROTOCOL_VERSION = 1;
 // Sona Care's voice agent (SonaVoiceAgent on the Worker) at the Agents SDK's default route; the instance is the signed-in
@@ -27,6 +30,8 @@ export type ServerEvent =
   | { type: "transcript_interim"; text: string }
   | { type: "playback_interrupt" }
   | { type: "sona_say"; text: string; reason: "starting" | "slow" | "unavailable" | "notice"; waking?: number }
+  /** Read loosely (answer-parts marksOf): an older agent sends no marks, and the word lists colour the answer. */
+  | { type: "sona_turn"; marks?: unknown }
   | { type: "error"; message: string };
 
 export type ClientMessage =
@@ -38,7 +43,7 @@ export type ClientMessage =
   | { type: "interrupt" }
   | { type: "text_message"; text: string };
 
-const EVENTS = new Set<string>(["welcome", "status", "audio_config", "transcript", "transcript_start", "transcript_delta", "transcript_end", "transcript_interim", "playback_interrupt", "sona_say", "error"]);
+const EVENTS = new Set<string>(["welcome", "status", "audio_config", "transcript", "transcript_start", "transcript_delta", "transcript_end", "transcript_interim", "playback_interrupt", "sona_say", "sona_turn", "error"]);
 
 /** A text frame from the agent as an event; undefined for the rest (diagnostics, metrics, the agent's other messages). */
 export function parse(data: string): ServerEvent | undefined {
@@ -55,12 +60,13 @@ export function parse(data: string): ServerEvent | undefined {
  * `answer` counts Sona's answers, so each is read once; `spoken` counts the sentences of the current one sent so far,
  * `frames` those that came as audio (the rest came as sona_say), and `done` says the agent has sent all of it (its status
  * went back to listening). `muted`: Sona was cut off, so audio still in flight from that answer is dropped until the next
- * one. `dropped`: the agent ended the call itself (refused it, or its speech recognition failed).
+ * one. `dropped`: the agent ended the call itself (refused it, or its speech recognition failed). `marks`: the words of
+ * the current answer the model chose to colour, once its `sona_turn` has come.
  */
 export type Talk = {
   ready: boolean; call: "off" | "starting" | "on"; status: Status;
   heard?: string; said?: string; answer: number; spoken: number; frames: number; written: boolean; done: boolean; muted: boolean;
-  format: AudioFormat; rate: number; error?: string; dropped: boolean;
+  format: AudioFormat; rate: number; error?: string; dropped: boolean; marks?: Mark[];
 };
 export const quiet: Talk = { ready: false, call: "off", status: "idle", answer: 0, spoken: 0, frames: 0, written: true, done: true, muted: false, format: "mp3", rate: 16_000, dropped: false };
 
@@ -83,10 +89,11 @@ export function reduce(t: Talk, a: Action): Talk {
     }
     // The agent clears the interim line with "" as it starts answering; the words stay until the final ones arrive.
     case "transcript_interim": return a.text ? { ...t, heard: a.text } : t;
-    case "transcript": return a.role === "user" ? { ...t, heard: a.text } : { ...t, said: a.text, answer: t.answer + 1, spoken: 0, frames: 0, written: true, done: false, muted: false };
-    case "transcript_start": return { ...t, said: "", answer: t.answer + 1, spoken: 0, frames: 0, written: false, done: false, muted: false };
+    case "transcript": return a.role === "user" ? { ...t, heard: a.text } : { ...t, said: a.text, answer: t.answer + 1, spoken: 0, frames: 0, written: true, done: false, muted: false, marks: undefined };
+    case "transcript_start": return { ...t, said: "", answer: t.answer + 1, spoken: 0, frames: 0, written: false, done: false, muted: false, marks: undefined };
     case "transcript_delta": return { ...t, said: (t.said ?? "") + a.text };
     case "transcript_end": return { ...t, said: a.text, written: true };
+    case "sona_turn": return { ...t, marks: marksOf(a.marks) };
     case "error": return { ...t, error: a.message };
   }
 }

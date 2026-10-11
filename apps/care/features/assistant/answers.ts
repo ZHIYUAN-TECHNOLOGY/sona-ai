@@ -1,4 +1,5 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
+import { partsOf, type AnswerCard } from "@sona-ai/domain/answer-parts";
 import type { Chosen } from "./terms";
 import { formatDate, tFor, type Lang } from "@/lib/i18n";
 import { listOf, type Discharged } from "../discharge/lines";
@@ -18,11 +19,15 @@ export type Visit = { title: string; date: Date | string; why?: string; inDays?:
  * `kind` picks the suggestion row's icon: a missed dose, a medicine, a visit. `leaflet`: a second caption, on an answer
  * that is from their record and also from one of the hospital's leaflets ("From the hospital's leaflet · Chest infection").
  */
-export type Asked = { question: string; answer: string; source: string; leaflet?: string; kind: "dose" | "medicine" | "visit"; /** The words the model chose to colour (terms.ts Chosen); none on an authored answer. */ marks?: Chosen[] };
+export type Asked = {
+  question: string; answer: string; source: string; leaflet?: string; kind: "dose" | "medicine" | "visit";
+  /** The words the model chose to colour (terms.ts Chosen); none on an authored answer. */ marks?: Chosen[];
+  /** The server's cards under the words (answer-parts AnswerCard: her medicines, results, visits, a drafted action); none on an authored answer. */ cards?: AnswerCard[];
+};
 
 const MYT = 8 * 3600_000;
 /** "8:00 AM" ("8:00 PG", "上午8:00") from the plan's "HH:MM" (already Malaysia time). */
-const time = (hhmm: string, lang: Lang) => {
+export const time = (hhmm: string, lang: Lang) => {
   const [h = 0, m = 0] = hhmm.split(":").map(Number);
   return formatDate(lang, Date.UTC(2000, 0, 1, h, m) - MYT, "time");
 };
@@ -117,7 +122,8 @@ export async function answer(question: string, asks: Asked[], api: Api, conditio
   const asked = asks.find(a => a.question.toLowerCase() === lower);
   if (!asked && wantsDoctor(q)) return doctorsFor(q, api.doctors, condition, lang).catch(() => NONE);
   const fallback = asked ? { kind: "plan" as const, asked } : NONE;
-  return api.ask(q).then(a => ({ ...(a.source === "model" ? fromModel(a, lang) : { ...fallback, ...wakingOf(a) }), ...toldOf(a) }), () => fallback);
+  // A turn the Clef fast lane answered (`lane`) is an answer too, whatever its source says.
+  return api.ask(q).then(a => ({ ...(a.source === "model" || partsOf(a).lane ? fromModel(a, lang) : { ...fallback, ...wakingOf(a) }), ...toldOf(a) }), () => fallback);
 }
 
 /** The server's `careTeam`, there only once the task is made (read loosely: older servers never send it). */
@@ -166,9 +172,10 @@ export function fromModel(a: PlanAnswer, lang: Lang): Exclude<Reply, { kind: "do
   const titles = ((a as { sources?: { title: string }[] }).sources ?? []).map(s => s.title);
   const leaflet = titles.length ? t("ask.leaflet", { title: listOf(titles, lang) }) : undefined;
   // One caption says where the answer is from; an answer from their record and a leaflet says both. "General" is only what is from neither.
-  // The words the model chose to colour (read loosely: older servers never send them; the word lists then colour).
-  const marks = (a as { marks?: Chosen[] }).marks;
-  return { kind: "plan", asked: { question: "", answer: a.answer, source: record ?? leaflet ?? t("ask.general"), ...record && leaflet && { leaflet }, kind: "medicine", ...marks && { marks } } };
+  // The words the model chose to colour, each kind as it is now (an old "when" is a dose), and the cards under them; read
+  // loosely (answer-parts partsOf): older servers send neither and the word lists colour; a card this build can't read is left out.
+  const { marks, cards } = partsOf(a);
+  return { kind: "plan", asked: { question: "", answer: a.answer, source: record ?? leaflet ?? t("ask.general"), ...record && leaflet && { leaflet }, kind: "medicine", ...marks && { marks }, ...cards && { cards } } };
 }
 
 /** An answer split into its lead sentence (shown bold) and the rest; "Dr." never ends a sentence. */

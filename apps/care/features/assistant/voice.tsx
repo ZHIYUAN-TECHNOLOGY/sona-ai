@@ -8,6 +8,7 @@ import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useShared
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { spoken, type Asked, type Reply } from "@/features/assistant/answers";
+import type { Chosen } from "@/features/assistant/terms";
 import { languageOf, pickVoices, preview, standInFor, voiceFor, type SonaVoice } from "@/features/assistant/voices";
 import { FIRST_MS, sayInSonaVoice } from "./sona-voice";
 import { useLiveVoice } from "./live";
@@ -52,7 +53,7 @@ const EASE_IN_OUT = Easing.bezier(0.77, 0, 0.175, 1);
 export type Suggestion = { question: string; icon: IconName };
 export const SUGGEST_ICON: Record<Asked["kind"] | "doctor", IconName> = { dose: "alarm", medicine: "pill", visit: "calendar", doctor: "doctor" };
 
-export function VoiceMode({ questions, answer, first, language, medicines, onChat, onType }: { questions: Suggestion[]; medicines?: string[]; answer: (question: string) => Reply | Promise<Reply>; first?: string; language?: "en" | "ms" | "zh"; onChat: () => void; onType: () => void }) {
+export function VoiceMode({ questions, answer, first, firstMarks, language, medicines, onChat, onType }: { questions: Suggestion[]; medicines?: string[]; answer: (question: string) => Reply | Promise<Reply>; first?: string; /** The words the model chose to colour in `first`. */ firstMarks?: Chosen[]; language?: "en" | "ms" | "zh"; onChat: () => void; onType: () => void }) {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
   const lang = useLang(), t = tFor(lang);
@@ -61,6 +62,8 @@ export function VoiceMode({ questions, answer, first, language, medicines, onCha
   const [picking, setPicking] = useState(false);
   // The answer on show (the chat's last one on arrival) and how far into it the voice has read.
   const [said, setSaid] = useState(first);
+  // The words the model chose to colour in it (none: the word lists colour), as the chat colours them.
+  const [marks, setMarks] = useState(firstMarks);
   const [upto, setUpto] = useState<number>();
   const [speaking, setSpeaking] = useState(false);
   // 0 quiet, 1 speaking: floods the orb.
@@ -78,7 +81,7 @@ export function VoiceMode({ questions, answer, first, language, medicines, onCha
   // When a call ends, its last exchange stays on screen, and the orb can read it again.
   useEffect(() => {
     if (inCall) return;
-    if (live.said) setSaid(live.said);
+    if (live.said) { setSaid(live.said); setMarks(live.marks); }
     if (live.heard) setHeard(live.heard);
     talk.set(still ? 0 : withTiming(0, { duration: 600, easing: EASE_OUT }));
   }, [inCall]);
@@ -147,7 +150,7 @@ export function VoiceMode({ questions, answer, first, language, medicines, onCha
     else { const hi = t("voice.ready"); speak(hi, voiceFor(hi, v, voices ?? [])); }
   };
   // With no answer from the plan, Sona replies in the language the question was asked in, not the app's.
-  const ask = async (q: string) => { const r = await answer(q); read(spoken(r, r.kind === "none" ? languageOf(q) : lang)); };
+  const ask = async (q: string) => { const r = await answer(q); setMarks(r.kind === "plan" ? r.asked.marks : undefined); read(spoken(r, r.kind === "none" ? languageOf(q) : lang)); };
   const replay = () => { if (speaking) stop(); else if (said) read(said); };
   /** The mic: start a conversation (live, where there is one), send the turn now, or (while Sona talks, or in a live call) stop and end it. */
   const main = () => {
@@ -204,7 +207,7 @@ export function VoiceMode({ questions, answer, first, language, medicines, onCha
       {standInLine && voice.hosted && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{standInLine}</Text>}
       {words && <Text selectable accessibilityLabel={t("voice.youSaid", { q: words })} style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>“{words}”</Text>}
       {shown && <Text accessibilityLiveRegion="polite" selectable style={{ fontSize: 24, lineHeight: 32, fontWeight: "600", letterSpacing: -0.6, color: palette.ink, textAlign: "center", marginTop: 4 }}>
-        <Marked text={shown} medicines={medicines} weight="600" lit={lit} />
+        <Marked text={shown} medicines={medicines} chosen={inCall && live.said ? live.marks : marks} weight="600" lit={lit} />
       </Text>}
       <View style={{ alignSelf: "stretch", marginTop: 8 }}>
         {questions.map(s => <SuggestionRow key={s.question} s={s} aloud onPress={() => { if (inCall) live.say(s.question); else void ask(s.question); }} />)}

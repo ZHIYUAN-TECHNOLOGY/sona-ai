@@ -1,3 +1,5 @@
+import type { Hue, Tone } from "@sona-ai/domain/answer-parts";
+
 /**
  * Sona Care's tokens (the AI Health Companion kit's style guide, 27 Sep 2026): a #FAFAFA canvas under
  * a lilac and mint aurora, near-white cards on a #F5F5F5 hairline, content in three greys (#1F1F1F,
@@ -12,10 +14,22 @@ export const palette = {
   blue: "#2563EB", blueWash: "#EFF6FF", line: "#F5F5F5", white: "#FFFFFF",
   green: "#15803D", amber: "#C2410C", red: "#C81E2E", dark: "#1F1F1F",
   amberWash: "#FFF7ED", amberEdge: "#FED7AA", redWash: "#FEF2F2", redEdge: "#FECACA", mutedWash: "#F5F5F5", greenWash: "#F0FDF4",
-  azure: "#2563EB", violet: "#9333EA",
+  azure: "#2563EB", violet: "#9333EA", teal: "#0F766E",
   // Fills (dots, bars, badges), never text: the kit's 500 shades.
   success: "#22C55E", warning: "#F97316", error: "#EF4444", feature: "#A855F7", info: "#3B82F6", away: "#FB923C",
 };
+
+/**
+ * A marked word in an answer, by its kind's hue (answer-parts MARK_HUE; docs/answer-parts.md, colour table): coloured
+ * semibold text with no wash, each 4.75:1 or more on white, the canvas and the blue wash. Red must not miss, amber
+ * check, blue a medicine, violet how much and when, teal what she has; a test stays ink, marked by weight only.
+ */
+export const markInk = { red: palette.red, amber: palette.amber, blue: palette.blue, violet: palette.violet, teal: palette.teal, ink: palette.ink } satisfies Record<Hue, string>;
+/** A card's flag, status or level (answer-parts `toneOf`): its word in `fg` on `bg`, always written out. */
+export const tones = {
+  urgent: { fg: palette.red, bg: palette.redWash }, soon: { fg: palette.amber, bg: palette.amberWash },
+  good: { fg: palette.green, bg: palette.greenWash }, calm: { fg: palette.muted, bg: palette.mutedWash },
+} satisfies Record<Tone, { fg: string; bg: string }>;
 
 /** Sona Care's headline gradient (the user's pick, 27 Sep): ink easing through azure into violet across the bold line. */
 export const accent = ["#1F1F1F", "#2563EB", "#9333EA"] as const;

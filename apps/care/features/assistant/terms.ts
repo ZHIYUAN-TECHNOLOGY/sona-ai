@@ -1,10 +1,13 @@
+import type { MarkKind } from "@sona-ai/domain/answer-parts";
+
 /**
  * The words in Sona's answers a patient looks for, in colour (the UX rule "meaningful highlights"): a medicine in the
  * blue the plan tags new medicines with, how much and when (a dose, its timing, and a visit or check-in and its date) in violet, and a warning sign or an allergy in red, the
  * colour kept for "call the hospital". English, Malay and Chinese; her own medicines come from her plan, so a name the
- * lists below don't know is still found. Pure, so bun can test it.
+ * lists below don't know is still found. Pure, so bun can test it. The model's own marks may use every kind of the
+ * shared contract (answer-parts MarkKind: also caution, condition, symptom and test); the lists here find only these three.
  */
-export type Mark = "medicine" | "dose" | "warning";
+export type Mark = MarkKind;
 export type Piece = { text: string; mark?: Mark };
 
 const words = (alternatives: string, flags = "giu") => new RegExp(`(?<![\\p{L}\\d])(?:${alternatives})(?![\\p{L}\\d])`, flags);

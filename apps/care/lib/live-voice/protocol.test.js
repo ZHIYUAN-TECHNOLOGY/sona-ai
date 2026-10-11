@@ -10,10 +10,10 @@ test("the agent is reached at the Agents SDK's default route: wss on a https ser
   expect(agentUrl("http://localhost:3000", "u1")).toBe("ws://localhost:3000/agents/sona-voice-agent/u1");
 });
 
-test("only the protocol's own events and sona_say are read; diagnostics, metrics, the agent's other messages and broken frames are skipped", () => {
+test("only the protocol's own events, sona_say and sona_turn are read; diagnostics, metrics, the agent's other messages and broken frames are skipped", () => {
   expect(parse('{"type":"status","status":"listening"}')).toEqual({ type: "status", status: "listening" });
   expect(parse('{"type":"metrics","llm_ms":1}')).toBeUndefined();
-  expect(parse('{"type":"sona_turn","grounded":true}')).toBeUndefined();
+  expect(parse('{"type":"sona_timing","brain":1}')).toBeUndefined();
   expect(parse('{"type":"diagnostic","event":"x","timestamp":1}')).toBeUndefined();
   expect(parse("not json")).toBeUndefined();
   expect(parse("null")).toBeUndefined();
@@ -91,4 +91,13 @@ test("sentences are cut where the agent cuts them: after 。！？ with no space
   expect(cut("Please see Dr. Aisyah on Tuesday. Bring your medicines.")).toEqual(["Please see Dr. Aisyah on Tuesday.", "Bring your medicines."]);
   expect(cut("Your plan says this\nTake it after breakfast.")).toEqual(["Your plan says this", "Take it after breakfast."]);
   expect(agentUrl("https://sona.example.dev", "u1", "ms")).toBe("wss://sona.example.dev/agents/sona-voice-agent/u1?lang=ms");
+});
+
+test("an answer's marks come with its sona_turn, old kinds renamed, and go when the next answer starts", () => {
+  const answered = run([{ type: "transcript_start", role: "assistant" }, { type: "transcript_end", text: "Take 1 tablet once a day." },
+    { type: "sona_turn", grounded: true, marks: [{ text: "1 tablet", kind: "dose" }, { text: "once a day", kind: "when" }, { text: "x", kind: "nope" }] }]);
+  expect(answered.marks).toEqual([{ text: "1 tablet", kind: "dose" }, { text: "once a day", kind: "dose" }]);
+  expect(run([{ type: "transcript_start", role: "assistant" }], answered).marks).toBeUndefined();
+  // An agent from before marks: none, so the word lists colour it.
+  expect(run([{ type: "sona_turn", grounded: true }]).marks).toBeUndefined();
 });

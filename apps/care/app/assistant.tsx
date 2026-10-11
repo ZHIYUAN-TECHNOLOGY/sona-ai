@@ -13,10 +13,9 @@ import { Icon, type IconName } from "@/lib/icons";
 import { Dictation, MicButton } from "@/features/assistant/mic";
 import { SUGGEST_ICON, SuggestionRow, VoiceMode, type Suggestion } from "@/features/assistant/voice";
 import { Marked } from "@/features/assistant/marked";
+import { Action, AnswerCards, DoctorCard, Done, newRequestId } from "@/features/assistant/answer-cards";
 import { medicinesOf } from "@/features/assistant/terms";
 import { useListen } from "@/lib/listen";
-import { DoctorAvatar } from "@/features/doctors/avatar";
-import type { Doctor } from "@/features/doctors/data";
 import { useNextDose, useNow } from "@/features/doses";
 import { errorText } from "@/features/errors";
 import { dayLabel, nextVisit } from "@/features/follow-ups/lines";
@@ -27,7 +26,7 @@ import { orbPad, SonaOrb } from "@/lib/orb";
 import { VoiceOrb } from "@/lib/voice-orb";
 import { AnimatedText, Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { AccentText, Call999, CircleButton, LoadError, pillStyle, surfaceStyle, inkPill } from "@/lib/ui";
+import { AccentText, Call999, CircleButton, LoadError } from "@/lib/ui";
 import { useDischarge } from "@/features/discharge/row";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
@@ -49,7 +48,6 @@ const CareChatLink: typeof import("@/features/assistant/chat-agent").CareChatLin
  * empty (nothing is stored, so no history button).
  */
 type Turn = { question: string; reply: Reply; requestId: string; ready: boolean; saved?: boolean; sent?: boolean; rated?: "up" | "down" };
-const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 /** Suggestions refresh after Grok's new-chat pop: all at once (no stagger), a fade and a short drop into place. */
 const drop = () => {
@@ -174,7 +172,7 @@ export default function Assistant() {
 
   if (voice) return <Animated.View entering={still ? undefined : FadeIn.duration(240)} style={{ flex: 1 }}>
     {link}
-    <VoiceMode questions={rows} answer={askAloud} language={lang} medicines={medicines} first={lastAnswer && spoken(lastAnswer.reply, lang)} onChat={() => setVoice(false)} onType={() => { setTypeNext(true); setVoice(false); }} />
+    <VoiceMode questions={rows} answer={askAloud} language={lang} medicines={medicines} first={lastAnswer && spoken(lastAnswer.reply, lang)} firstMarks={lastAnswer?.reply.kind === "plan" ? lastAnswer.reply.asked.marks : undefined} onChat={() => setVoice(false)} onType={() => { setTypeNext(true); setVoice(false); }} />
   </Animated.View>;
 
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
@@ -238,8 +236,10 @@ function TurnView({ t, medicines, lead, flood, enter, visitDay, busy, error, onS
   const lang = useLang(), tr = tFor(lang);
   const r = t.reply;
   const [bold, more] = leadOf(shown(r, lang));
-  // The words the model chose to colour, when it answered; the word lists colour an authored answer.
-  const chosen = r.kind === "plan" ? r.asked.marks : undefined;
+  // The words the model chose to colour, when it answered (the word lists colour an authored answer), and the server's cards.
+  const chosen = r.kind === "plan" ? r.asked.marks : undefined, cards = r.kind === "plan" ? r.asked.cards : undefined;
+  // A message to the care team Sona drafted is the way to tell them: no second button offering the same.
+  const drafted = cards?.some(c => c.type === "action" && c.do === "tellCareTeam");
   return <View style={{ gap: 12 }}>
     <Animated.View entering={enter(0)} style={{ alignSelf: "flex-end", maxWidth: "86%", backgroundColor: palette.white, borderRadius: 22, borderCurve: "continuous", borderWidth: 1, borderColor: palette.line, paddingHorizontal: 16, paddingVertical: 11 }}>
       <Text selectable style={{ ...type.body, color: palette.ink }}>{t.question}</Text>
@@ -256,6 +256,7 @@ function TurnView({ t, medicines, lead, flood, enter, visitDay, busy, error, onS
         {r.kind === "plan" && r.asked.leaflet && <Caption text={r.asked.leaflet} />}
         {/* Answered without the model while it starts: say so, so asking again later makes sense. */}
         {r.kind !== "doctors" && r.waking ? <Text style={{ ...type.footnote, color: palette.faint }}>{startingLine(r.waking, lang)}</Text> : null}
+        <AnswerCards cards={cards} />
         {r.kind === "doctors" && <View style={{ gap: 8 }}>
           <Text style={{ ...type.overline, color: palette.faint }}>{tr("ask.doctorsHead")}</Text>
           {r.doctors.map(d => <DoctorCard key={d.id} d={d} />)}
@@ -270,7 +271,7 @@ function TurnView({ t, medicines, lead, flood, enter, visitDay, busy, error, onS
           {/* Already told: sending it is no longer the one step that matters, so it is offered as after any answer. */}
           {t.sent ? <Done text={tr("ask.sent")} /> : r.kind === "none" && !r.careTeam
             ? <Action icon="chat" label={tr("ask.sendTeam")} busy={busy} ink onPress={onSend} />
-            : <Action icon="chat" label={tr("ask.askTeam")} busy={busy} onPress={onSend} />}
+            : !drafted && <Action icon="chat" label={tr("ask.askTeam")} busy={busy} onPress={onSend} />}
         </View>
         {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error, lang)}</Text>}
       </Animated.View>}
@@ -285,38 +286,11 @@ function Caption({ text }: { text: string }) {
   </View>;
 }
 
-/** A sample doctor inline in an answer: their initials disc, name, specialty and where; tap for their page. */
-function DoctorCard({ d }: { d: Doctor }) {
-  const t = useT();
-  return <Pressable accessibilityRole="button" accessibilityLabel={t("ask.doctorA11y", { name: d.name, specialty: d.specialty, team: d.careTeam ? t("ask.yourTeamA11y") : "", rating: d.rating, room: d.room })} accessibilityHint={t("ask.openPage")}
-    onPress={() => router.push({ pathname: "/doctor", params: { id: d.id } })}
-    style={({ pressed }) => [surfaceStyle, { minHeight: 76, flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 24, transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
-    <DoctorAvatar doctor={d} size={48} />
-    <View style={{ flex: 1, gap: 2 }}>
-      <Text style={{ ...type.headline, color: palette.ink }}>{d.name}</Text>
-      <Text style={{ ...type.footnote, color: palette.muted }}>{d.specialty} · ★ {d.rating} · {d.room}</Text>
-      {d.careTeam && <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{t("ask.yourTeam")}</Text>}
-    </View>
-    <Icon name="next" color={palette.pale} size={18} />
-  </Pressable>;
-}
-
 /** A small icon under an answer (copy, helpful, not helpful): 48 pt to tap, ink and filled once chosen. */
 function IconAction({ icon, label, onPress, on }: { icon: IconName; label: string; onPress: () => void; on?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={on === undefined ? undefined : { selected: on }} onPress={onPress}
     style={({ pressed }) => ({ width: 48, height: 48, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.5 : 1 })}>
     <Icon name={icon} color={on ? palette.ink : palette.faint} size={18} weight={on ? "fill" : "regular"} />
-  </Pressable>;
-}
-
-/** A next step under an answer: a white capsule with an icon and a plain label. `ink` for the one that matters. */
-function Action({ icon, label, onPress, busy, ink }: { icon: IconName; label: string; onPress: () => void; busy?: boolean; ink?: boolean }) {
-  const fg = ink ? palette.white : palette.ink;
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ busy, disabled: busy }} disabled={busy} onPress={onPress}
-    style={({ pressed }) => [pillStyle, { maxWidth: "100%", minHeight: 48, paddingHorizontal: 16, paddingVertical: 6, flexDirection: "row", alignItems: "center", gap: 7, transform: [{ scale: pressed ? 0.96 : 1 }] },
-      ink && inkPill]}>
-    {busy ? <ActivityIndicator color={fg} /> : <Icon name={icon} color={fg} size={16} />}
-    <Text style={{ flexShrink: 1, fontSize: 15, fontWeight: "600", color: fg }}>{label}</Text>
   </Pressable>;
 }
 
@@ -328,9 +302,4 @@ function Working({ doctors, flood }: { doctors: boolean; flood: SharedValue<numb
     <View style={{ margin: -orbPad(28) }}><SonaOrb size={28} flood={flood} lift={false} awake /></View>
     <AnimatedText entering={FadeIn.duration(200)} style={{ ...type.body, color: palette.faint }}>{label}</AnimatedText>
   </View>;
-}
-
-/** The done line that replaces a next-step button once it has happened. */
-function Done({ text }: { text: string }) {
-  return <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.green, flexShrink: 1, paddingVertical: 12 }}>✓ {text}</Text>;
 }

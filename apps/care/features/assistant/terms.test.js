@@ -37,3 +37,9 @@ test("the model's own marks win, found in turn so a dose said twice is marked tw
   expect(marked(text, [], []).filter(p => p.mark)).toEqual([]);
   expect(marked(text, [], chosen).map(p => p.text).join("")).toBe(text);
 });
+
+test("the model may mark every kind of the shared contract: a condition, a symptom, a test, a caution", () => {
+  const text = "Your chest infection is better, but the cough may last. Your potassium of 3.1 mmol/L is a little low.";
+  const chosen = [{ text: "chest infection", kind: "condition" }, { text: "cough", kind: "symptom" }, { text: "potassium of 3.1 mmol/L", kind: "test" }, { text: "a little low", kind: "caution" }];
+  expect(marked(text, [], chosen).filter(p => p.mark).map(p => `${p.mark}:${p.text}`)).toEqual(["condition:chest infection", "symptom:cough", "test:potassium of 3.1 mmol/L", "caution:a little low"]);
+});
