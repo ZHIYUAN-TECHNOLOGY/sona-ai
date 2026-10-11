@@ -252,3 +252,13 @@ test("askStream with no hosted Gemma: the answer still comes, whole, as care.ask
   expect(all).toHaveLength(1);
   expect(answer).toEqual(await amelia.care.ask({ question: "Apa ubat saya?" }));
 });
+
+test("askStream: Gemma's urgent flag tells the care team even when she leaves before the end", async () => {
+  const reply = JSON.stringify({ answer: "That sounds serious. Please go to the emergency department now and have the wound seen today.", grounded: false, urgent: true, cites: [] });
+  const baseten = brain(reply);
+  const { amelia, db } = await clefWorld(basetenModels(baseten), undefined, baseten);
+  const told = () => db.select().from(tasks).where(eq(tasks.kind, "check-in"));
+  for await (const e of await amelia.care.askStream({ question: "My wound is red, hot and getting worse" })) if (e.type === "words") break;
+  for (let i = 0; i < 100 && (await told()).length === 0; i++) await Bun.sleep(20);
+  expect(await told()).toHaveLength(1);
+});

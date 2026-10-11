@@ -158,6 +158,9 @@ async function* answering(context: PatientContext, input: z.infer<typeof askInpu
   let read: Awaited<ReturnType<Models["answerFromPlan"]>>;
   if (brain) {
     const words = written(brain, asked);
+    // Her urgent flag tells the care team even if she leaves before the end (leaving cancels the stream, so not below).
+    const flagged = Promise.all([words.done, deciding]).then(([a]) => a.urgent ? tell() : undefined);
+    context.waitUntil?.(flagged);
     // Gemma is writing; what goes above her words first. Clef is in by now, or within DECIDE_MS.
     const draft = await drafting;
     if (floor || raised()) {
