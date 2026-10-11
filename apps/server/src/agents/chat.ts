@@ -2,6 +2,7 @@ import { AIChatAgent, type OnChatMessageOptions } from "@cloudflare/ai-chat";
 import { basetenModels } from "@sona-ai/api/baseten-models";
 import { chatTurn, sonaMed } from "@sona-ai/api/chat-agent/turn";
 import { clockOffsetOf, shifted } from "@sona-ai/api/clock";
+import { clefOf } from "@sona-ai/api/decide";
 import { stubModels } from "@sona-ai/api/models";
 import { hosted } from "@sona-ai/api/sagemaker";
 import { getAgentByName } from "agents";
@@ -36,7 +37,7 @@ export class SonaChatAgent extends AIChatAgent<Cloudflare.Env> {
     // As a route's context, for her alone: the hospital's demo clock, live updates, and the visit's check-in agent.
     const context = {
       db, session: null, models: this.#baseten ? basetenModels(this.#baseten) : stubModels, now: shifted(undefined, await clockOffsetOf(db, hospitalId)),
-      announce: announcer(env), followUps: followUpAgents(env), hospitalId, patientId,
+      announce: announcer(env), followUps: followUpAgents(env), hospitalId, patientId, clef: clefOf(env),
     };
     return chatTurn({ context, messages: this.messages, med: this.#med, library: libraryOf(db, env), signal: options?.abortSignal });
   }

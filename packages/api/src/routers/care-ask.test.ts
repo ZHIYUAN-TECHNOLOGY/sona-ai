@@ -1,14 +1,18 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { encounters, guaranteeLetters } from "@sona-ai/db/schema/clinical";
+import { encounters, guaranteeLetters, tasks } from "@sona-ai/db/schema/clinical";
+import { partsOf } from "@sona-ai/domain/answer-parts";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import { chatModels, type Chat } from "../chat-models";
+import { CLEF_MODEL, clefOf } from "../decide";
+import { TRIAL, clefReplay, replay } from "../fixtures/clef-trial";
 import { stubModels, type Models } from "../models";
 import { LINES } from "../voice-agent/answer";
+import type { WorkersAi } from "../workers-models";
 import { appRouter } from "./index";
 
 const user = (id: string) => ({
@@ -17,17 +21,20 @@ const user = (id: string) => ({
 } as unknown as Session);
 
 /** Amelia discharged in Malay and joined (care-voice.test's world), asking with `models`. */
-async function world(models: Models) {
-  const now = new Date("2026-09-28T10:05:00+08:00"), db = await createTestDb();
+const world = async (models: Models) => (await clefWorld(models)).amelia;
+
+/** The same world with Clef (`clef`), its database, and a clock to move her day on. */
+async function clefWorld(models: Models, clef?: WorkersAi) {
+  const clock = { now: new Date("2026-09-28T10:05:00+08:00") }, now = clock.now, db = await createTestDb();
   await seedDemo(db, new Date("2026-09-26T15:40:00+08:00"));
   await addClinician(db, "dr-aisyah");
   await db.update(guaranteeLetters).set({ status: "received", receivedAt: now }).where(eq(guaranteeLetters.id, "gl-1042"));
   await db.update(encounters).set({ state: { discharge: { glReceived: true, medsConfirmed: true, followUp: "2w", language: "ms" } } }).where(eq(encounters.id, "visit-1042"));
-  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), now: () => now, models } });
+  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), now: () => clock.now, models, clef } });
   const doctor = as("dr-aisyah"), amelia = as("amelia-account");
   await doctor.discharge.request({ encounterId: "visit-1042", requestId: "req-d1", approvedBy: "dr-aisyah" });
   await amelia.care.join({ code: (await doctor.care.code({ encounterId: "visit-1042" })).code });
-  return amelia;
+  return { amelia, db, clock };
 }
 
 test("the model's answer reaches her whole: nothing is withheld and no not-found line is added (founder, 9 Oct)", async () => {
@@ -60,4 +67,100 @@ test("a follow-up is read in the light of the chat so far (staging, 9 Oct: \"How
   expect(asked[1]!.said).toStartWith("Patient's question, written in English.");
   const seven = Array.from({ length: 7 }, () => ({ question: "Why?", answer: "Because." }));
   expect((await amelia.care.ask({ question: "And then?", history: seven }).catch(e => e)).code).toBe("BAD_REQUEST");
+});
+
+/** A Gemma that must not be asked: a lane turn is answered without it. */
+const noGemma = (asked: string[]): Models => ({ ...stubModels, answerFromPlan: async ({ question }) => { asked.push(question); return { answer: "Gemma's answer.", grounded: false, urgent: false, source: "model", model: "gemma-test" }; } });
+
+test("a lane turn Clef is sure of is answered at once from her record, in her language, with cards and no Gemma", async () => {
+  const asked: string[] = [];
+  const { ai } = clefReplay(replay("c035", "c057", "c077"));
+  const { amelia } = await clefWorld(noGemma(asked), ai);
+  const answer = await amelia.care.ask({ question: TRIAL.c035.said });
+  expect(answer).toEqual({
+    answer: "Your next visit is Clinic review, Mon 12 Oct.", grounded: true, from: "visits", urgent: false, source: "model", model: CLEF_MODEL, withheld: 0, sources: [],
+    marks: [{ text: "Mon 12 Oct", kind: "dose" }],
+    cards: [{ type: "appointment", title: "Clinic review", when: "2026-10-12T02:05:00.000Z", status: "upcoming" }],
+    lane: { intent: "next_appointment", confidence: 0.9232, by: "clef-omni" },
+  });
+  // Every client reads it through the contract as it was sent.
+  expect(partsOf(answer)).toEqual({ marks: answer.marks, cards: answer.cards, lane: answer.lane });
+  expect((await amelia.care.ask({ question: TRIAL.c057.said })).answer).toBe("Lawatan anda yang seterusnya: Semakan klinik, Isn, 12 Okt.");
+  expect((await amelia.care.ask({ question: TRIAL.c077.said })).answer).toBe("您的下一次预约：门诊复诊，10月12日 周一。");
+  expect(asked).toEqual([]);
+});
+
+test("the lane's drafts are what the app's own calls take: a booking, a dose and a reading, each confirmed by her", async () => {
+  const bp = "my blood pressure this morning 138/86";
+  const { ai } = clefReplay({ ...replay("c021"), "I just took my azithromycin": TRIAL.c053, [bp]: { ...TRIAL.c030, picks: { reading: "blood_pressure" } } });
+  const { amelia, clock } = await clefWorld(noGemma([]), ai);
+  const action = (a: { cards?: unknown }) => partsOf(a).cards!.find(c => c.type === "action")!;
+
+  const book = await amelia.care.ask({ question: TRIAL.c021.said });
+  expect(book.answer).toBe("The first free time with Dr. Lim Wei Jie (Respiratory) is Wed 30 Sep at 09:00. You can ask for it, or another time on Doctors; your care team confirms it.");
+  expect(partsOf(book).cards!.map(c => c.type)).toEqual(["doctor", "action"]);
+  const draft = action(book);
+  expect(draft).toMatchObject({ do: "book", confirm: "Request this time", payload: { doctorId: "lim", startsAt: "2026-09-30T01:00:00.000Z" } });
+  if (draft.do === "book") expect(await amelia.care.bookings.request(draft.payload)).toMatchObject({ doctorId: "lim", status: "requested" });
+
+  const reading = await amelia.care.ask({ question: bp });
+  expect(reading).toMatchObject({ answer: "Blood pressure 138/86 mmHg, ready to save to your readings.", marks: [{ text: "Blood pressure 138/86 mmHg", kind: "test" }] });
+  const save = action(reading);
+  if (save.do === "logReading") expect(await amelia.care.readings.add(save.payload)).toMatchObject({ kind: "blood_pressure", value: 138, value2: 86 });
+
+  // The next morning her 08:00 azithromycin is open (last night's cetirizine is past marking).
+  clock.now = new Date("2026-09-29T08:20:00+08:00");
+  const dose = await amelia.care.ask({ question: "I just took my azithromycin" });
+  expect(dose).toMatchObject({ answer: "Your Azithromycin dose due Tue 29 Sep at 08:00 is ready to mark as taken.", from: "doses", lane: { intent: "log_dose" } });
+  expect(partsOf(dose).cards![0]).toEqual({ type: "medicine", name: "Azithromycin", how: "1 tablet, with or without food", times: ["08:00"], source: "Your discharge plan" });
+  const take = action(dose);
+  if (take.do === "logDose") expect(await amelia.care.doses.take(take.payload)).toEqual({ key: "Azithromycin@2026-09-29T00:00:00.000Z" });
+  expect([draft.do, save.do, take.do]).toEqual(["book", "logReading", "logDose"]);
+});
+
+test("Gemma answers what the lane is not sure of: a question besides, something called off, numbers in words, a slow or missing Clef", async () => {
+  const asked: string[] = [];
+  const spoken = TRIAL.c030.said, worried = "my bp just now 150/95 is that too high should i worry";
+  const { ai, calls } = clefReplay({
+    [spoken]: { ...TRIAL.c030, picks: { reading: "blood_pressure" } }, [worried]: { ...TRIAL.c030, asks: 0.93, picks: { reading: "blood_pressure" } },
+    "cancel my appointment next week": TRIAL.c021,
+  });
+  const { amelia } = await clefWorld(noGemma(asked), ai);
+  for (const question of [worried, "cancel my appointment next week", spoken]) {
+    const answer = await amelia.care.ask({ question });
+    expect(answer).toMatchObject({ answer: "Gemma's answer.", model: "gemma-test" });
+    expect(partsOf(answer)).toEqual({});
+  }
+  expect(asked).toEqual([worried, "cancel my appointment next week", spoken]);
+  expect(calls).toHaveLength(3);
+
+  // Clef that never answers: Gemma's answer, after DECIDE_MS at most.
+  const slow = await clefWorld(noGemma([]), { run: () => new Promise(() => {}) });
+  const began = Date.now();
+  expect(await slow.amelia.care.ask({ question: TRIAL.c035.said })).toMatchObject({ answer: "Gemma's answer." });
+  expect(Date.now() - began).toBeLessThan(2000);
+  // CLEF_LANE off: no Clef in the context, so it is never called, and the answer is today's.
+  const off = clefReplay(replay("c035"));
+  expect(await (await clefWorld(noGemma([]), clefOf({ CLEF_LANE: "", AI: off.ai }))).amelia.care.ask({ question: TRIAL.c035.said })).toMatchObject({ answer: "Gemma's answer." });
+  expect(off.calls).toHaveLength(0);
+});
+
+test("an emergency Clef reads (0.25 or more) reaches her care team once and makes the answer urgent, Gemma's words kept; nothing lowers it", async () => {
+  const { ai } = clefReplay(replay("c049", "c054"));
+  let urgent = false;
+  const models: Models = { ...stubModels, answerFromPlan: async () => ({ answer: "Bawa ayah anda ke hospital sekarang.", grounded: false, urgent, source: "model", model: "gemma-test" }) };
+  const { amelia, db } = await clefWorld(models, ai);
+  // No 999 words, and Gemma did not flag it: Clef's 0.2676 does, and the task says Clef read it.
+  const first = await amelia.care.ask({ question: TRIAL.c049.said });
+  expect(first).toMatchObject({ answer: "Bawa ayah anda ke hospital sekarang.", urgent: true, careTeam: { label: "urgent", readBy: { source: "model", model: CLEF_MODEL, decidedBy: "model" }, line: LINES.en.told } });
+  // Gemma's own urgent flag on the same words rides on the same task.
+  urgent = true;
+  const again = await amelia.care.ask({ question: TRIAL.c049.said });
+  expect(again.careTeam?.taskId).toBe(first.careTeam!.taskId);
+  expect(await db.select().from(tasks).where(eq(tasks.kind, "check-in"))).toHaveLength(1);
+  // Insulin taken (0.2233) is not an emergency, and Clef never makes an urgent answer calm.
+  urgent = false;
+  expect(await amelia.care.ask({ question: TRIAL.c054.said })).toMatchObject({ urgent: false });
+  urgent = true;
+  expect(await amelia.care.ask({ question: TRIAL.c054.said })).toMatchObject({ urgent: true });
 });

@@ -11,6 +11,7 @@ import { z } from "zod";
 import { BRAIN_MODEL, boxes, starting, wakingOf, type Baseten } from "../baseten-models";
 import { LANGUAGE_NAME } from "../chat-models";
 import type { Context, Library } from "../context";
+import { CLEF_MODEL, emergencyOf } from "../decide";
 import { citedSources, leafletHits, passagesIn, type Passage } from "../leaflets";
 import { doctorsFor, requestBooking } from "../routers/bookings";
 import { recordText } from "../routers/care-plan";
@@ -196,14 +197,20 @@ function say(writer: UIMessageStreamWriter, text: string) {
 /**
  * The turn as the AI SDK's UI message stream (what AIChatAgent's onChatMessage returns): Sona Med's words and tool calls as
  * they come, then one `finish` carrying ChatMeta. A question naming an emergency sign reaches the care team whatever the
- * model does (care.ask's keyword floor, callNow); the model's own tellCareTeam call shares the same task.
+ * model does (care.ask's keyword floor, callNow), as does one Clef reads as an emergency (../decide, beside the model,
+ * never waited for before it: urgent, whatever the care team's reader says); the model's own tellCareTeam call shares the same task.
  */
 export function chatTurn(turn: ChatTurn): Response {
   const question = textOf(turn.messages.findLast(m => m.role === "user") ?? { role: "user", parts: [] });
   const language = languageOf(question), lines = LINES[language];
   const { context } = turn, found: Found = { record: false, urgent: false, passages: [], doctors: [] };
-  const tell = () => found.told ??= tellCareTeam(context, context.hospitalId, context.patientId, question).catch(error => { console.error("care team not told", error); return undefined; });
-  if (callNow(question)) void tell();
+  const tell = (raised = false) => found.told ??= tellCareTeam(context, context.hospitalId, context.patientId, question, raised ? CLEF_MODEL : undefined)
+    .catch(error => { console.error("care team not told", error); return undefined; });
+  // The floor's task waits for Clef's read (at once while it is off), so one task carries both.
+  const clef = emergencyOf(context.clef, question).then(yes => {
+    found.urgent ||= yes;
+    if (yes || callNow(question)) void tell(yes);
+  });
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
@@ -229,6 +236,7 @@ export function chatTurn(turn: ChatTurn): Response {
       if (turn.signal?.aborted) return;
       const answered = Boolean(text.trim());
       if (!answered) say(writer, waking ? lines.starting(waking) : lines.unavailable);
+      await clef; // long since in (DECIDE_MS at most), unless the model failed at once
       const told = found.told && await within(found.told, TOLD_WAIT_MS);
       const meta: ChatMeta = {
         source: answered ? "model" : "fixture", ...answered ? { model: BRAIN_MODEL } : waking ? { waking } : {},

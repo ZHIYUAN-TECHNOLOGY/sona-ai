@@ -6,13 +6,16 @@ import { webAnswer } from "../ask-context";
 import { freeAnswer, routeRequest } from "../ask-model";
 import { askContextSchema, type AskContext } from "../ask-spec";
 import type { Context } from "../context";
+import { decideTurn, laneOf, proLane } from "../decide";
 import { protectedProcedure } from "../index";
 import { recordText } from "./evidence";
 
 /**
  * Sona's ask bar on the models (./ask-model). Without a Baseten key both answer `{ source: "fixture" }`,
  * and the app keeps its keyword routing and its page's rule-based answers. The web (scope "web") sends no page data:
- * the server reads it and always answers (./ask-context).
+ * the server reads it and always answers (./ask-context). A free question the Clef fast lane is sure of (../decide) is
+ * answered by the rules at once, with its `lane`: the ward's list, or a task for the open visit drafted as an action
+ * card (`cards`) the doctor confirms; Gemma answers the rest as before.
  */
 export const askRouter = {
   /** Which card answers a typed or spoken visit request (Laya). `patient` is the visit label, e.g. "Respiratory review". */
@@ -25,9 +28,17 @@ export const askRouter = {
     encounterId: z.string().max(80).optional(),
   }))
     .handler(async ({ context, input }) => {
-      if (input.scope === "web") return webAnswer(context, input.question);
+      // Clef's read (none while CLEF_LANE is off), beside the visit's record; at most DECIDE_MS.
+      const decide = () => decideTurn(context.clef, { app: "pro", said: input.question, open: Boolean(input.encounterId) });
+      if (input.scope === "web") {
+        const decision = await decide(), lane = laneOf(decision, "pro", input.question);
+        return (lane && await proLane(context, lane, decision!, input.question)) || webAnswer(context, input.question);
+      }
       if (!context.baseten) return { source: "fixture" as const };
-      const record = input.encounterId ? await visitRecord(context, context.hospitalId, input.encounterId) : [];
+      const [decision, record] = await Promise.all([decide(), input.encounterId ? visitRecord(context, context.hospitalId, input.encounterId) : []]);
+      const lane = laneOf(decision, "pro", input.question);
+      const fast = lane && await proLane(context, lane, decision!, input.question, input.encounterId);
+      if (fast) return fast;
       return freeAnswer(context.baseten, { ...input, context: { ...input.context, lines: [...input.context.lines, ...record] } });
     }),
 };

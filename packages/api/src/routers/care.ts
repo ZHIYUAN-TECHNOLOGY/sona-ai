@@ -20,6 +20,7 @@ import { registerPushToken, unregisterPushToken } from "../push";
 import { setTrainingConsent, trainingConsentOf } from "./training";
 import { LINES, callNow } from "../voice-agent/answer";
 import { tellCareTeam } from "../voice-agent/care-team";
+import { CLEF_MODEL, EMERGENCY_AT, careLane, decideTurn, laneOf } from "../decide";
 
 /**
  * Errors a patient can see carry a stable `data.code` (CODE_UNKNOWN, SPEECH_OFF, …) so Sona Care can
@@ -149,27 +150,41 @@ export const careRouter = {
    * General advice rests on the hospital's own patient leaflets when one fits (../leaflets): `sources` names the leaflets
    * the answer used, by title; empty when it used none, or none could be found in time. `withheld` is always 0 (the
    * answer is no longer filtered), kept so clients that read it still do.
+   * The Clef fast lane (../decide) reads the question beside the leaflet search: an emergency it reads also reaches the
+   * care team and makes the answer urgent; a lane turn it is sure of (book, her next visit, a dose or a reading she took)
+   * is answered at once from her record, with `cards` and `lane`, and Gemma is not asked. Old apps read only the words.
    */
   ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(2000), history: z.array(z.object({ question: z.string().trim().min(1).max(2000), answer: z.string().trim().max(4000) })).max(6).optional() })).handler(async ({ context, input }) => {
     // The hospital's leaflets for the question are searched while her record is read. The search never fails the answer
     // and is given PASSAGES_MS from here, so the gates below run when they did before, whatever it does.
     const found = leafletHits(context.library, context.hospitalId, input.question);
+    // Clef's read (none while CLEF_LANE is off) runs beside the search with the same limit (DECIDE_MS), so Gemma is asked when it was.
+    const deciding = decideTurn(context.clef, { app: "care", said: input.question });
     // Her visits and her record are real whether or not she has gone home; only the take-home plan waits for discharge.
     // A part that cannot be read never fails the answer (recordText): the gates below must still run.
     const { text: record } = await recordText(context);
-    // A real emergency only: the 999 keyword floor, or the model's own urgent flag; the care team's reader then decides. Never fails the answer.
-    const tell = () => tellCareTeam(context, context.hospitalId, context.patientId, input.question).catch(error => { console.error("care team not told", error); return undefined; });
-    const floor = callNow(input.question) ? tell() : undefined;
+    const decision = await deciding;
+    // A real emergency only: the 999 keyword floor, Clef's emergency read, or the model's own urgent flag, one task for all.
+    // Clef's read is urgent whatever the care team's reader says (nothing cancels an escalation); the floor's is the reader's call. Never fails the answer.
+    const emergency = (decision?.emergency ?? 0) >= EMERGENCY_AT;
+    let told: ReturnType<typeof tellCareTeam> | undefined;
+    const tell = () => told ??= tellCareTeam(context, context.hospitalId, context.patientId, input.question, emergency ? CLEF_MODEL : undefined)
+      .catch(error => { console.error("care team not told", error); return undefined; });
+    const floor = callNow(input.question);
+    if (floor || emergency) void tell();
     // The question's own language (an English question gets English, even when her papers are in Malay).
     const language = languageOf(input.question);
+    const lane = laneOf(decision, "care", input.question, floor);
+    const fast = lane && await careLane(context, lane, decision!, input.question, language).catch(error => { console.error("lane not answered", error); return undefined; });
+    if (fast) return { ...fast, urgent: false, source: "model" as const, model: CLEF_MODEL, withheld: 0, sources: [], lane };
     const passages = passagesIn(await found, language);
     // Sona's told line is Sona's, said once a task exists: kept out of what the model reads back, so it never echoes it.
     const history = input.history?.map(t => ({ ...t, answer: TOLD.reduce((a, line) => a.split(line).join(""), t.answer).trim() }));
     const { cites, ...answer } = await (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: record, language, passages, history });
-    const told = await (floor ?? (answer.urgent ? tell() : undefined));
+    const careTeam = await (told ?? (answer.urgent ? tell() : undefined));
     // Only a leaflet that was offered can be a source: a number Gemma made up names nothing.
     const sources = citedSources(cites, passages);
-    return { ...answer, withheld: 0, sources, ...told && { careTeam: { ...told, line: LINES[language].told } } };
+    return { ...answer, urgent: answer.urgent || emergency, withheld: 0, sources, ...careTeam && { careTeam: { ...careTeam, line: LINES[language].told } } };
   }),
 
   /**
