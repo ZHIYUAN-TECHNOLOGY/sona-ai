@@ -40,6 +40,9 @@ export function Call999({ title = "If this is happening now, call 999", items = 
   );
 }
 
+/** The 999 card a streamed answer already showed (care.askStream), kept when no answer follows: once shown, it stays. */
+export const shown999 = (live?: Live) => live?.sos?.type === "warning" ? <Call999 title={live.sos.title} items={live.sos.items} /> : null;
+
 const same = (a: AnswerCard) => (b: AnswerCard) => JSON.stringify(a) === JSON.stringify(b);
 
 /**
@@ -52,7 +55,7 @@ const same = (a: AnswerCard) => (b: AnswerCard) => JSON.stringify(a) === JSON.st
  */
 export function CareAnswer({ reply, live, confirm }: { reply?: CareReply; live?: Live; confirm?: ConfirmCard }) {
   const { marks, cards = [] } = partsOf(reply ?? {});
-  const sos = reply ? cards.find(c => c.type === "warning" && c.level === "urgent") : live?.sos;
+  const sos = (reply ? cards.find(c => c.type === "warning" && c.level === "urgent") : undefined) ?? live?.sos;
   const lane = live?.lane && (!reply || cards.some(same(live.lane.card))) ? live.lane : undefined;
   const words = reply ? reply.answer ?? "" : live?.words;
   return (

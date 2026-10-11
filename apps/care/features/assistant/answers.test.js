@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { DOCTORS, matchDoctors } from "../doctors/data";
-import { answer, conditionOf, doctorQuestion, historyOf, leadOf, NO_ANSWER, shown, spoken, startingLine, suggestions, urgent, wantsDoctor } from "./answers";
+import { answer, conditionOf, doctorQuestion, historyOf, leadOf, liveAbove, NO_ANSWER, shown, spoken, startingLine, suggestions, urgent, wantsDoctor } from "./answers";
 
 const medicines = {
   new: [{ name: "Paracetamol", line: "For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day" }],
@@ -239,4 +239,16 @@ test("an answer's marks and cards ride beside its words, read loosely: old kinds
   // The Clef fast lane answered the turn: its words show whatever its source says.
   const lane = await answer("When is my next visit?", [], api(async () => ({ answer: "Your clinic review is on 24 October.", grounded: true, urgent: false, source: "lane", lane: { intent: "next_appointment", confidence: 0.93, by: "clef-omni" } })));
   expect(lane.asked.answer).toBe("Your clinic review is on 24 October.");
+});
+
+test("cards a stream showed stay over the words once whole: the 999 card whatever comes, the lane's while the answer has it", () => {
+  const sos = { type: "warning", level: "urgent", title: "Call 999 now", items: [] };
+  const card = { type: "action", do: "logReading", label: "Save reading", payload: {} };
+  const live = { sos, lane: { card }, words: "Rest" };
+  expect(liveAbove(live, false, { kind: "none", urgent: false })).toEqual([sos, card]);
+  // No answer came (Gemma starting): the 999 card stays; the lane's card goes with the answer that had none.
+  expect(liveAbove(live, true, { kind: "none", urgent: false, waking: 2 })).toEqual([sos]);
+  expect(liveAbove(live, true, { kind: "plan", asked: { question: "q", answer: "a", source: "s", cards: [sos, card] } })).toEqual([sos, card]);
+  // The reply's own 999 line is up: not twice.
+  expect(liveAbove(live, true, { kind: "none", urgent: true })).toEqual([]);
 });

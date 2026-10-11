@@ -5,7 +5,7 @@ import { lazy, Suspense, useCallback, useMemo, useState, type ReactNode } from "
 import { EmptyState, PageHeader } from "@/components/page";
 import { Button, Card, ListCard, ListRow } from "@/components/primitives";
 import { RightRail } from "@/components/rail";
-import { CareAnswer, type CareReply, spokenOf } from "@/features/care-ask/answer";
+import { CareAnswer, type CareReply, shown999, spokenOf } from "@/features/care-ask/answer";
 import { Call } from "@/features/care-ask/call";
 import { browserLang } from "@/features/care-follow-ups/dates";
 import { langOf } from "@/features/care-medicines/model";
@@ -67,9 +67,11 @@ const answerWith = (get: (question: string, history: Said[], onLive: (live: Live
   let res: CareReply, live: Live | undefined;
   // The same shape as the whole answer's node below, so its CareAnswer (and a drafted card's state) carries over.
   const show = (now: Live) => { live = now; update({ kind: "node", node: <><CareAnswer live={now} confirm={confirmCard} />{null}</> }); };
+  // A 999 card already shown stays when no answer comes (Gemma starting or down).
+  const failed = (line: string) => <>{shown999(live)}<Failed question={question} line={line} /></>;
   try { res = await get(question, history, show); }
-  catch { return <Failed question={question} line="Sona can't answer right now. Try again." />; }
-  if (!res.answer) return <Failed question={question} line={res.waking ? `Sona is starting (about ${res.waking} min). Try again then.` : "Sona can't answer right now. Try again."} />;
+  catch { return failed("Sona can't answer right now. Try again."); }
+  if (!res.answer) return failed(res.waking ? `Sona is starting (about ${res.waking} min). Try again then.` : "Sona can't answer right now. Try again.");
   const spoken = spokenOf(res);
   return { kind: "node", text: spoken, node: <><CareAnswer reply={res} live={live} confirm={confirmCard} /><Next question={question} spoken={spoken} /></> };
 };

@@ -6,7 +6,7 @@ import { createContext, isValidElement, type ReactNode, type RefObject, use, use
 import { AnswerCards, Conversation, Notice, Response, Review, RuleAnswer, Sources, Steps, Suggestions, Turn as Asked } from "@/components/ai";
 import { MarkedFor } from "@/components/marked";
 import { Button } from "@/components/primitives";
-import { CareAnswer, type CareReply, spokenOf } from "@/features/care-ask/answer";
+import { CareAnswer, type CareReply, shown999, spokenOf } from "@/features/care-ask/answer";
 import { FilmCard } from "@/features/evidence/film-card";
 import { answerBy, answerFilm } from "@/features/evidence/thread";
 
@@ -71,8 +71,13 @@ export const confirmCard = (card: ActionCard, requestId: string) => called(
 async function askCare(question: string, update: (answer: SonaAnswer) => void, history: Said[]): Promise<SonaAnswer> {
   let live: Live | undefined;
   const show = (now: Live) => { live = now; update({ kind: "node", node: <CareAnswer live={now} confirm={confirmCard} /> }); };
-  const res = (await streamed(() => client.care.askStream({ question, history }), () => client.care.ask({ question, history }), show)) as CareReply;
-  if (!res.answer) throw new Error("Sona can't answer right now. Please try again in a minute.");
+  const res = (await streamed(() => client.care.askStream({ question, history }), () => client.care.ask({ question, history }), show).catch(() => ({}))) as CareReply;
+  if (!res.answer) {
+    const line = "Sona can't answer right now. Please try again in a minute.", sos = shown999(live);
+    // A 999 card already shown stays when no answer comes (Gemma starting or down).
+    if (!sos) throw new Error(line);
+    return { kind: "node", node: <>{sos}<p>{line}</p></> };
+  }
   return { kind: "node", text: spokenOf(res), node: <CareAnswer reply={res} live={live} confirm={confirmCard} /> };
 }
 

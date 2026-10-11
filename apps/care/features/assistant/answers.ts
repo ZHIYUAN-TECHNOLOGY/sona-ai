@@ -132,6 +132,15 @@ type Part = Awaited<ReturnType<AppRouterClient["care"]["askStream"]>> extends As
  * Sona's line over it, and Gemma's words so far.
  */
 export type Live = { sos?: AnswerCard; lane?: { card: AnswerCard; lead?: string }; words: string };
+export const sameCard = (a: AnswerCard) => (b: AnswerCard) => JSON.stringify(a) === JSON.stringify(b);
+/**
+ * The cards a stream showed over the words, kept there once the answer is whole (`ready`): the lane's while the answer
+ * still has it; the 999 card whatever comes (no answer while Gemma starts), unless the reply's own 999 line is up.
+ */
+export function liveAbove(live: Live | undefined, ready: boolean, r: Reply): AnswerCard[] {
+  const cards = r.kind === "plan" ? r.asked.cards : undefined;
+  return [live?.sos, live?.lane?.card].filter((c): c is AnswerCard => !!c && (!ready || (c === live?.sos ? !(r.kind === "none" && r.urgent) : !!cards?.some(sameCard(c)))));
+}
 /**
  * care.askStream read as it comes, each change to `onLive`, ending with the answer care.ask gives (`whole`, which a
  * server without askStream, or a stream that breaks, is asked instead).

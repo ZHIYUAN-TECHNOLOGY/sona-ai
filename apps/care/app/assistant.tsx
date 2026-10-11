@@ -5,8 +5,7 @@ import { AccessibilityInfo, ActivityIndicator, Alert, Keyboard, Pressable, Scrol
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { AnswerCard } from "@sona-ai/domain/answer-parts";
-import { answer, conditionOf, doctorQuestion, historyOf, leadOf, shown, spoken, startingLine, streamed, suggestions, urgent, wantsDoctor, type Live, type Reply } from "@/features/assistant/answers";
+import { answer, conditionOf, doctorQuestion, historyOf, leadOf, liveAbove, sameCard, shown, spoken, startingLine, streamed, suggestions, urgent, wantsDoctor, type Live, type Reply } from "@/features/assistant/answers";
 import { CHAT_AGENT_ON, replyOf, type CareChat } from "@/features/assistant/agent-replies";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import { Composer } from "@/features/assistant/composer";
@@ -243,11 +242,10 @@ function TurnView({ t, medicines, lead, flood, enter, visitDay, busy, error, onS
   // lists colour an authored answer), and the server's cards.
   const [bold, more] = leadOf(live ? live.words : shown(r, lang));
   const chosen = live ? [] : r.kind === "plan" ? r.asked.marks : undefined, cards = r.kind === "plan" ? r.asked.cards : undefined;
-  // The cards a stream showed over the words stay there once the answer is whole, while it still has them; the rest follow the words.
-  const same = (a: AnswerCard) => (b: AnswerCard) => JSON.stringify(a) === JSON.stringify(b);
-  const above = [t.live?.sos, t.live?.lane?.card].filter((c): c is AnswerCard => !!c && (!t.ready || !!cards?.some(same(c))));
+  // The cards a stream showed over the words stay there once the answer is whole (liveAbove); the rest follow the words.
+  const above = liveAbove(t.live, t.ready, r);
   const line = t.live?.lane && above.includes(t.live.lane.card) ? t.live.lane.lead : undefined;
-  const under = cards?.filter(c => !above.some(same(c)));
+  const under = cards?.filter(c => !above.some(sameCard(c)));
   // A message to the care team Sona drafted is the way to tell them: no second button offering the same.
   const drafted = cards?.some(c => c.type === "action" && c.do === "tellCareTeam");
   return <View style={{ gap: 12 }}>

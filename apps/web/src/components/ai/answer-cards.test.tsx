@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { CareMarked, Marked } from "@/components/marked";
 import { CARE_FACTS, CARE_STEPS, PRO_CARDS } from "@/dev/answer-cards";
-import { CareAnswer, sourceLines } from "@/features/care-ask/answer";
+import { CareAnswer, shown999, sourceLines } from "@/features/care-ask/answer";
 
 import { AnswerCards } from "./answer-cards";
 
@@ -60,4 +60,11 @@ test("a Sona Care answer: the 999 card first when urgent, the words kept, cards,
   // The urgent warning card becomes the 999 card, not a second red card.
   expect(urgent).not.toContain('data-tone="urgent"');
   expect(renderToStaticMarkup(<CareAnswer reply={{ answer: "Take it after food.", grounded: true }} />)).not.toContain("Call 999");
+});
+
+test("a 999 card a stream showed stays: in the whole answer without one, and when no answer comes", () => {
+  const live = { sos: { type: "warning" as const, level: "urgent" as const, title: "Call 999 now", items: ["Chest pain"] }, words: "" };
+  expect(renderToStaticMarkup(<CareAnswer reply={{ answer: "Rest now.", grounded: false }} live={live} />)).toContain("Call 999 now");
+  expect(renderToStaticMarkup(<>{shown999(live)}</>)).toContain("Chest pain");
+  expect(shown999({ words: "Rest" })).toBeNull();
 });
