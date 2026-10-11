@@ -10,9 +10,9 @@ const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 /**
  * A thread that scrolls by itself: it follows the newest turn as it grows, stops following when the reader scrolls up
  * (a "Jump to latest" pill appears), and follows again on a new turn. Give it a height (flex: 1, min-height: 0, or a
- * max-height); it is a `role="log"`, so screen readers hear new turns.
+ * max-height); it is a `role="log"`, so screen readers hear new turns, each once it is whole (`busy` while one streams).
  */
-export function Conversation({ label = "Sona's answers", className, children }: { label?: string; className?: string; children: ReactNode }) {
+export function Conversation({ label = "Sona's answers", className, busy, children }: { label?: string; className?: string; busy?: boolean; children: ReactNode }) {
   const scroller = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const following = useRef(true);
@@ -45,7 +45,7 @@ export function Conversation({ label = "Sona's answers", className, children }: 
   return (
     <div className={`ai-conversation${className ? ` ${className}` : ""}`}>
       <div ref={scroller} className="ai-conversation-scroll" onScroll={onScroll}>
-        <div ref={content} className="ai-conversation-content" role="log" aria-label={label}>{children}</div>
+        <div ref={content} className="ai-conversation-content" role="log" aria-label={label} aria-busy={busy}>{children}</div>
       </div>
       {away ? (
         <button type="button" className="ai-latest" onClick={() => toLatest(true)}>

@@ -231,7 +231,7 @@ export function SonaTurns({ className }: { className?: string }) {
   const { ask } = use(AskContext)!;
   if (!turns.length) return null;
   return (
-    <Conversation className={className}>
+    <Conversation className={className} busy={turns.some(t => t.state === "pending")}>
       {turns.map(turn => (
         <Asked key={turn.id} question={turn.question} by={turn.state === "done" ? byOf(turn.answer) : undefined}>
           <Answer turn={turn} ask={ask} />
@@ -251,7 +251,7 @@ export function SonaThread() {
   const last = turns.at(-1);
   useEffect(() => { newest.current?.scrollIntoView({ block: "nearest" }); }, [last?.id, last?.state]);
   return (
-    <section className="sona-thread" aria-label="Sona's answers" aria-live="polite">
+    <section className="sona-thread" aria-label="Sona's answers" aria-live="polite" aria-busy={turns.some(t => t.state === "pending")}>
       {turns.map(turn => {
         const answer = turn.answer;
         return (

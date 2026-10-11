@@ -81,7 +81,7 @@ function Page() {
           <Suggestions items={EXAMPLES} onPick={q => void ask(q)} label="Example questions" />
         </div>
       ) : (
-        <Conversation label="Evidence answers" className="ev-conversation">
+        <Conversation label="Evidence answers" className="ev-conversation" busy={busyNow}>
           {turns.map((turn, i) => (
             <TurnView key={turn.id} turn={turn} last={i === turns.length - 1 && !busyNow} picked={reading && picked?.turn === turn.id ? picked.n : undefined}
               onPick={n => pick({ turn: turn.id, n })} onAsk={q => void ask(q)} />
