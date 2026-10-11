@@ -108,7 +108,7 @@ test("her question is answered from her own record as recorded (history, allergy
     "Recorded by the hospital:\nAge 42, female. Came in with: Cough for five days, with fever since yesterday.",
     "History: Asthma since childhood", "Family history: Mother has asthma", "Allergies: Penicillin — reported rash", "Medicines before admission: Salbutamol inhaler, as needed",
     "Urea 5.1 mmol/L", "Results:\n- CRP: back from the lab, waiting for the doctor to review it (Sat, 26 Sep 2026)",
-    "Prescribed by her doctor in hospital:\n- Paracetamol, 500 mg tablet, 1000 mg, Oral, Every 6 hours, for 3 days (approved Sun, 27 Sep 2026)",
+    "Prescribed by her doctor in hospital:\n- Paracetamol, 500 mg tablet, 1000 mg, Oral, Every 6 hours, for 3 days, no set times (approved Sun, 27 Sep 2026)",
     "Doctor's note (saved ", "Community-acquired pneumonia, mild; CURB-65 0. Oral azithromycin for 2 more days.",
     'Check-in replies:\n- Day 2 check-in, Mon, 28 Sep 2026: "Demam balik, batuk makin teruk" (read as worse)',
   ]) expect(hers).toContain(recorded);

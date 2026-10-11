@@ -141,6 +141,9 @@ test("azithromycin reads as current until its last dose has gone by on the demo 
   expect(after.medicines.changed[0]).toMatchObject({ finished: true, line: "Course finished, nothing left to take" });
   expect(planText(after, clock.now)).toContain("- Azithromycin (changed): Course finished, nothing left to take; last dose Mon, 28 Sep 2026\n");
   expect(planText(after, clock.now)).toContain("- Cetirizine (continue): Keep taking it as before; 1 tablet at night; at 21:00\n");
+  // One she still takes with no times says so, so a next dose is not made up; a stopped one says nothing of times.
+  expect(planText(after, clock.now)).toContain("- Paracetamol (new): For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day; no set times\n");
+  expect(planText(after, clock.now)).toContain("- Salbutamol nebuliser (stopped): Use your own inhaler instead, when you need it\n");
   expect((await read("ms")).medicines.changed[0]!.line).toBe("Kursus sudah tamat, tiada lagi untuk diambil");
 });
 

@@ -48,7 +48,7 @@ test("typed and spoken answers both put her record's numbers, an asthma attack a
     expect(prompt).toContain("their record's own number when it holds one (their dose, a fluid limit)");
     expect(prompt).toContain("1 puff every 30 to 60 seconds up to 10");
     expect(prompt).toContain("(with heart failure or kidney disease, their fluid limit instead)");
-    expect(prompt).toMatch(/a baby under 3 months with a fever must (be seen by|see) a doctor today: say that first/);
-    expect(prompt).toContain("never a clock time it does not give");
+    expect(prompt).toMatch(/a baby under 3 months with a fever must (be seen by|see) a doctor today, who sets the dose: say that first, with no amount/);
+    expect(prompt).toContain("a line with no times has none to count from: say how often it is taken");
   }
 });

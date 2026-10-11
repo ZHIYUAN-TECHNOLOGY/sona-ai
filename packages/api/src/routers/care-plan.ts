@@ -81,14 +81,15 @@ export async function patientPlan(context: PatientContext, lang: Language = "en"
 
 /**
  * The plan as plain text for the model: only what the patient's own app already shows them. A course gives its last dose,
- * and a timed medicine its daily times (Malaysia), so "when is my next dose" is counted from Now, not made up.
+ * and a timed medicine its daily times (Malaysia), so "when is my next dose" is counted from Now, not made up; one she still
+ * takes with no times says so, or Gemma made one up (10 Oct review: twice a day said as "9:30 pm tonight").
  * It opens with how long she has been home (Malaysian calendar days on the demo clock): an ISO "Discharged:" time left Gemma
  * answering as if she were still on the ward (10 Oct gate: 141 of 178 answers said the ward nurse brings each dose).
  */
 export function planText(plan: Extract<Awaited<ReturnType<typeof patientPlan>>, { status: "discharged" }>, now: Date) {
   const out = new Date(plan.dischargedAt), days = malaysianDay(now) - malaysianDay(out);
   const meds = Object.entries(plan.medicines).flatMap(([group, list]) => list.map(m =>
-    `- ${m.name} (${group}): ${[m.line, !m.finished && m.take, !m.finished && m.at?.length && `at ${m.at.join(" and ")}`, m.endsAt && `last dose ${malaysiaDay(m.endsAt)}`].filter(Boolean).join("; ")}`));
+    `- ${m.name} (${group}): ${[m.line, !m.finished && m.take, !m.finished && group !== "stopped" && (m.at?.length ? `at ${m.at.join(" and ")}` : "no set times"), m.endsAt && `last dose ${malaysiaDay(m.endsAt)}`].filter(Boolean).join("; ")}`));
   return [
     `At home since ${malaysiaTime(out)} (${days > 0 ? `${days} day${days > 1 ? "s" : ""}` : "today"})`,
     "Medicines:", ...meds,
@@ -194,6 +195,8 @@ const NOTE_CHARS = 1200, REPLIES_MAX = 5, REPLY_CHARS = 200, MISSED_MAX = 5;
 /**
  * The prescriptions her doctor approved on her visits (Sona Pro's prescribing), the newest of each medicine, as lines
  * with their dose, route, how often and for how long: what the ward gives her, which no other part of the record holds.
+ * The ward sets the times, so each says it has none ("no set times"): Gemma made one up from Now (10 Oct review: "tomorrow
+ * at 6:30 am"). ponytail: a call still does (4 of 4 in a probe); the ward's own dose times would end it.
  */
 async function prescribed(db: PatientContext["db"], hospitalId: string, patientId: string) {
   const rows = await db.select({ payload: receipts.payload, at: receipts.createdAt }).from(receipts).innerJoin(encounters, eq(encounters.id, receipts.encounterId))
@@ -201,7 +204,7 @@ async function prescribed(db: PatientContext["db"], hospitalId: string, patientI
   type Ordered = { medication?: string; formulation?: string; dose?: string; unit?: string; route?: string; frequency?: string; duration?: string };
   const newest = new Map<string, { r: Ordered; at: Date }>();
   for (const { payload, at } of rows) { const r = payload as Ordered; if (r.medication && !newest.has(r.medication.toLowerCase())) newest.set(r.medication.toLowerCase(), { r, at }); }
-  return [...newest.values()].map(({ r, at }) => `- ${[r.medication, r.formulation, r.dose && `${r.dose} ${r.unit ?? ""}`.trim(), r.route, r.frequency, r.duration && `for ${r.duration}`].filter(Boolean).join(", ")} (approved ${malaysiaDay(at)})`);
+  return [...newest.values()].map(({ r, at }) => `- ${[r.medication, r.formulation, r.dose && `${r.dose} ${r.unit ?? ""}`.trim(), r.route, r.frequency, r.duration && `for ${r.duration}`, "no set times"].filter(Boolean).join(", ")} (approved ${malaysiaDay(at)})`);
 }
 
 export async function recordText(context: PatientContext) {
