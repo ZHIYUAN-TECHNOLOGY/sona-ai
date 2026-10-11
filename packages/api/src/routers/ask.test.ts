@@ -333,3 +333,13 @@ test("a free answer on a visit carries cards from that visit's own rows for the 
   expect(beds.cards).toBeUndefined();
   expect(String(up.calls.filter(c => c.url.includes("chat/completions")).at(-1)!.init.body)).not.toContain("This visit's patient record (");
 });
+
+test("web: Gemma reads each ward bed's latest chart reading, so \"anyone desaturate overnight?\" is answered from the ward", async () => {
+  const { calls, baseten } = boxes(() => gemma({ general: "x" }));
+  await (await webDoctor(baseten)).ask.free(web("anyone desaturate overnight in the ward?"));
+  const asked = JSON.parse(String(calls.find(c => c.url.includes("chat/completions"))!.init.body)).messages[1].content as string;
+  expect(asked).toContain("each admitted bed's latest chart reading");
+  expect(asked).toContain("no overnight series");
+  expect(asked).toContain("Bed 11 Ganesan Muthu: SpO2 92%, T 36.9 °C, P 90, RR 20, BP 132/78");
+  expect(asked.split("\n").filter(l => l.length > 300)).toEqual([]);
+});

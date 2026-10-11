@@ -1,6 +1,6 @@
-import { appointments, bookingRequests, encounters, labResults, patients, tasks } from "@sona-ai/db/schema/clinical";
+import { appointments, bookingRequests, encounters, labResults, observations, patients, tasks } from "@sona-ai/db/schema/clinical";
 import { bedKind } from "@sona-ai/domain/ward";
-import { and, asc, desc, eq, gte, isNull, lt } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lt } from "drizzle-orm";
 
 import { freeAnswer, pageLines } from "./ask-model";
 import { checkAskSpec, type AskContext, type AskSpec } from "./ask-spec";
@@ -96,11 +96,46 @@ export async function webPage(asker: Asker) {
   // The page data for the model: the three answers, then every other open task (the Tasks page), within the schema's limits.
   const rows = new Map<string, Row>();
   for (const row of [...ranked, ...blockedRows, ...dueRows, ...open.map(taskRow)]) if (!rows.has(row.id)) rows.set(row.id, row);
-  const context: AskContext = { lines: [...Object.values(answers).map(a => clip(`${a.question} ${a.lead}`, 300)), `Open tasks: ${open.length}.`], rows: [...rows.values()].slice(0, 40) };
+  // The Ward page's latest chart reading per admitted bed, for a role that sees clinical detail ("anyone desaturate overnight?").
+  const charted = may("encounter.get") ? await wardVitals(asker, beds) : [];
+  const context: AskContext = { lines: [...Object.values(answers).map(a => clip(`${a.question} ${a.lead}`, 300)), `Open tasks: ${open.length}.`, ...charted], rows: [...rows.values()].slice(0, 40) };
   return { context, specs: { needs: column(needsLead, ranked), blocked: column(blockedLead, blockedRows), due: column(dueLead, dueRows) } };
 }
 
 export type WebPage = Awaited<ReturnType<typeof webPage>>;
+
+const VITAL: Record<string, string> = { "oxygen-saturation": "SpO2", temperature: "T", pulse: "P", "respiratory-rate": "RR" };
+/**
+ * Each admitted bed's latest ward observations as page lines, several beds a line (a page has at most 20 lines of 300
+ * characters): "Bed 11 Ganesan Muthu: SpO2 92%, T 36.9 °C, P 90, RR 20, BP 132/78". The chart holds one reading a bed, so
+ * the header says so: a question about overnight is answered from the latest reading, never as a trend.
+ * ponytail: latest reading only; a trend needs the chart's series per bed, not one line each.
+ */
+async function wardVitals(asker: Asker, beds: Awaited<ReturnType<typeof liveBeds>>) {
+  const admitted = beds.filter(b => b.patientId && b.name);
+  const ids = admitted.map(b => b.patientId!);
+  if (!ids.length) return [];
+  const rows = await asker.db.select().from(observations).where(and(inArray(observations.patientId, ids), eq(observations.source, "clinical")))
+    .orderBy(desc(observations.observedAt)).catch(() => []);
+  let at: Date | undefined;
+  const bedLines = admitted.flatMap(b => {
+    const mine = rows.filter(o => o.patientId === b.patientId), latest = (kind: string) => mine.find(o => o.kind === kind);
+    if (!mine.length) return [];
+    at = !at || mine[0]!.observedAt > at ? mine[0]!.observedAt : at;
+    const read = Object.entries(VITAL).flatMap(([kind, name]) => { const o = latest(kind); return o ? [`${name} ${o.value}${o.unit === "%" ? "%" : o.unit === "°C" ? " °C" : ""}`] : []; });
+    const sys = latest("systolic"), dia = latest("diastolic");
+    if (sys && dia) read.push(`BP ${sys.value}/${dia.value}`);
+    return read.length ? [`${b.bed} ${b.name}: ${read.join(", ")}`] : [];
+  });
+  if (!bedLines.length) return [];
+  const lines = [`Ward observations, each admitted bed's latest chart reading (taken ${dayOf(at!)} ${timeOf(at!)}; one reading a bed, no overnight series; SpO2 %, T °C, P and RR a minute, BP mmHg):`];
+  for (const line of bedLines) {
+    const last = lines.length > 1 ? lines[lines.length - 1]! : undefined;
+    if (last && last.length + line.length + 2 <= 300) lines[lines.length - 1] = `${last}; ${line}`;
+    else lines.push(line);
+  }
+  return lines;
+}
 
 /**
  * Which of the bar's three questions this is, in English or Malay ("apa perlu saya buat dulu", "katil mana tersekat",
