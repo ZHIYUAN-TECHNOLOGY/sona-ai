@@ -54,9 +54,10 @@
 .sona-thread:empty { display: none; }
 .sona-turn { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius-card); padding: var(--space-4); }
 .sona-turn-q { margin: 0 0 var(--space-2); font-size: var(--text-small); line-height: 1.4; font-weight: 600; color: var(--muted); }
+/* Spacing for the answer's own parts only: its cards and their lists keep their own (styles/ai.css). */
 .sona-turn-a p, .sona-turn-a ul { margin: 0; }
-.sona-turn-a > * + *, .sona-turn-a div > * + * { margin-top: var(--space-2); }
-.sona-turn-a ul { padding-left: var(--space-5); }
+.sona-turn-a > * + * { margin-top: var(--space-2); }
+.sona-turn-a > ul { padding-left: var(--space-5); }
 .sona-turn-note { font-size: var(--text-small); color: var(--muted); }
 .sona-turn[data-state="error"] .sona-turn-a { color: var(--amber); }
 

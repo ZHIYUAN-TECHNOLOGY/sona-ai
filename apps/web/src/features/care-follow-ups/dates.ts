@@ -6,7 +6,7 @@ const LOCALE: Record<Lang, string> = { en: "en-MY", ms: "ms-MY", zh: "zh-CN" };
 
 /** The browser's language as one the server speaks; English otherwise. */
 export function browserLang(): Lang {
-  const l = typeof navigator === "undefined" ? "" : navigator.language.toLowerCase();
+  const l = (typeof navigator === "undefined" ? "" : navigator.language ?? "").toLowerCase();
   return l.startsWith("ms") ? "ms" : l.startsWith("zh") ? "zh" : "en";
 }
 

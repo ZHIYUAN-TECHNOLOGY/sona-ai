@@ -106,16 +106,32 @@ button, input, textarea, select { font: inherit; color: inherit; }
 :is(.pro, .care) { --glass-blur: saturate(180%) blur(22px); --shadow-card: var(--glass-rim), var(--edge), 0 1px 2px rgb(29 31 35 / 0.04), 0 8px 24px rgb(29 31 35 / 0.05); }
 /* Sona Care keeps patient sizes after the shared pass above: overlines and chips at 15px, card titles at 19px (rem, so 200% text scales). */
 .care { --text-overline: 0.9375rem; --text-title: 1.1875rem; }
-/* Clinical terms: one colour per kind, the same five the phone apps use (rules in apps/native/components/sona/marked-terms.ts). */
-.mark { padding: 0 0.28em; border-radius: 0.4em; font-weight: 600; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
-.mark[data-mark="alert"] { color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }
-.mark[data-mark="medicine"] { color: #5A3DB8; background: rgb(110 80 210 / 0.11); }
-.mark[data-mark="finding"] { color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); }
-.mark[data-mark="symptom"] { color: #1E4FB8; background: rgb(36 91 204 / 0.1); }
-.mark[data-mark="caution"] { color: var(--amber); background: color-mix(in srgb, var(--amber) 14%, transparent); }
-/* Sona Care's answers: as the patient app colours them (apps/care/features/assistant/marked.tsx), semibold, no wash. */
-.care-mark { font-weight: 600; }
-.care-mark[data-mark="medicine"] { color: var(--blue); }
-.care-mark[data-mark="dose"] { color: #9333EA; }
-.care-mark[data-mark="warning"] { color: var(--red); }
+/* Coloured words, one hue per kind in both apps (@sona-ai/domain/answer-parts MARK_HUE; docs/answer-parts.md, colour table):
+   red must not miss, amber check, blue a medicine, violet how much and when, teal what the patient has, ink a test. Sona Pro
+   draws a mark as a chip (its text on a tinted wash), Sona Care as coloured semibold text. Never colour alone: every mark is
+   semibold, "must not miss" is underlined and "check" dotted. Each text colour is 4.5:1 or more on its darkest canvas. */
+.pro {
+  --mark-warning: #8F3434; --mark-warning-wash: rgb(162 62 62 / 0.12);
+  --mark-caution: #764510; --mark-caution-wash: rgb(139 85 24 / 0.14);
+  --mark-medicine: #1E4FB8; --mark-medicine-wash: rgb(36 91 204 / 0.1);
+  --mark-dose: #5A3DB8; --mark-dose-wash: rgb(110 80 210 / 0.11);
+  --mark-teal: #0B5E57; --mark-teal-wash: rgb(15 110 102 / 0.12);
+  --mark-test: #1D1F23; --mark-test-wash: rgb(29 31 35 / 0.06);
+}
+.care { --mark-warning: #C81E2E; --mark-caution: #C2410C; --mark-medicine: #2563EB; --mark-dose: #9333EA; --mark-teal: #0F766E; --mark-test: #1F1F1F; }
+/* Dark, as the colour table gives it: both apps are light-only today, so nothing sets data-theme yet. */
+.pro[data-theme="dark"] {
+  --mark-warning: #F09A9A; --mark-warning-wash: rgb(240 154 154 / 0.16); --mark-caution: #E8B66E; --mark-caution-wash: rgb(232 182 110 / 0.16);
+  --mark-medicine: #8FB2F5; --mark-medicine-wash: rgb(143 178 245 / 0.16); --mark-dose: #BCA8F5; --mark-dose-wash: rgb(188 168 245 / 0.16);
+  --mark-teal: #6CCFC2; --mark-teal-wash: rgb(108 207 194 / 0.16); --mark-test: #ECEDEF; --mark-test-wash: rgb(236 237 239 / 0.1);
+}
+.care[data-theme="dark"] { --mark-warning: #FF8A8A; --mark-caution: #FDBA74; --mark-medicine: #93C5FD; --mark-dose: #D8B4FE; --mark-teal: #5EEAD4; --mark-test: #F5F5F5; }
+:is(.mark, .care-mark) { font-weight: 600; color: var(--mark-ink, inherit); text-decoration-thickness: 2px; text-underline-offset: 2px; }
+.mark { padding: 0 0.28em; border-radius: 0.4em; background: var(--mark-wash, transparent); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+:is(.mark, .care-mark)[data-mark="warning"] { --mark-ink: var(--mark-warning); --mark-wash: var(--mark-warning-wash); text-decoration-line: underline; }
+:is(.mark, .care-mark)[data-mark="caution"] { --mark-ink: var(--mark-caution); --mark-wash: var(--mark-caution-wash); text-decoration-line: underline; text-decoration-style: dotted; }
+:is(.mark, .care-mark)[data-mark="medicine"] { --mark-ink: var(--mark-medicine); --mark-wash: var(--mark-medicine-wash); }
+:is(.mark, .care-mark)[data-mark="dose"] { --mark-ink: var(--mark-dose); --mark-wash: var(--mark-dose-wash); }
+:is(.mark, .care-mark):is([data-mark="condition"], [data-mark="symptom"]) { --mark-ink: var(--mark-teal); --mark-wash: var(--mark-teal-wash); }
+:is(.mark, .care-mark)[data-mark="test"] { --mark-ink: var(--mark-test); --mark-wash: var(--mark-test-wash); }
 .mark-key { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--text-small); }
