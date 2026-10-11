@@ -8,6 +8,7 @@ import type { Change } from "./events";
 import type { Models } from "./models";
 import type { EncounterSnapshot } from "./routers/encounter";
 import type { Watches } from "./watches";
+import type { WorkersAi } from "./workers-models";
 
 export type EncounterStore = {
   edit(hospitalId: string, edit: EncounterEdit): Promise<EncounterSnapshot>;
@@ -48,6 +49,8 @@ export type Context = {
   watches?: Watches;
   /** The Worker's waitUntil: work that finishes after the answer is sent (the access trail). Absent (tests), it is awaited. */
   waitUntil?: (promise: Promise<unknown>) => void;
+  /** Workers AI for the Clef fast lane (./decide clefOf: the AI binding while CLEF_LANE is "1"). Absent, Clef is never called. */
+  clef?: WorkersAi;
 };
 
 /** Images (the uploaded bytes) and text queries to BiomedCLIP's shared 512-d space, normalised, so either compares by cosine. */

@@ -7,6 +7,7 @@ import { getAgentByName } from "agents";
 import { basetenModels, basetenReranker } from "@sona-ai/api/baseten-models";
 import type { EncounterStore } from "@sona-ai/api/context";
 import type { Watches } from "@sona-ai/api/watches";
+import { clefOf } from "@sona-ai/api/decide";
 import { workersEmbedder } from "@sona-ai/api/workers-models";
 import { awsOf, endpointsOf, hosted, sagemakerEmbedder, sagemakerImageEmbedder } from "@sona-ai/api/sagemaker";
 import { ingest, reindex, search, stubEmbedder, type Reranker } from "@sona-ai/retrieval/retrieval";
@@ -46,6 +47,8 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     followUps: followUpAgents(context.env as Env),
     watches: watchAgents(context.env as Env),
     waitUntil: promise => context.executionCtx.waitUntil(promise),
+    // The Clef fast lane on Workers AI while CLEF_LANE is "1" (packages/api/src/decide.ts); off, Clef is never called.
+    clef: clefOf(context.env as Env),
   };
 }
 

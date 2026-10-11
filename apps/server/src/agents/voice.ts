@@ -1,6 +1,7 @@
 import { basetenModels } from "@sona-ai/api/baseten-models";
 import { clockOffsetOf, shifted } from "@sona-ai/api/clock";
 import type { Context as ApiContext } from "@sona-ai/api/context";
+import { CLEF_MODEL, clefOf, emergencyOf } from "@sona-ai/api/decide";
 import { leafletHits, passagesIn } from "@sona-ai/api/leaflets";
 import { stubModels } from "@sona-ai/api/models";
 import { lastDischarge, recordText } from "@sona-ai/api/routers/care-plan";
@@ -150,8 +151,10 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16"
       plan: record?.text,
       passages: found.then(hits => passagesIn(hits, language)),
       language,
-      escalate: async () => {
-        const told = await tellCareTeam(await context, hospitalId, patientId, transcript);
+      // Clef's emergency read beside Gemma (none while CLEF_LANE is off): the 999 line and the care team, never waited for.
+      emergency: emergencyOf(clefOf(this.env), transcript),
+      escalate: async (_label, raised) => {
+        const told = await tellCareTeam(await context, hospitalId, patientId, transcript, raised ? CLEF_MODEL : undefined);
         if (told) send(connection, { type: "sona_care_team", ...told });
         return Boolean(told);
       },

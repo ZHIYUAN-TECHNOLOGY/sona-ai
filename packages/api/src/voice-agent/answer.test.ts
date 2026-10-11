@@ -317,3 +317,21 @@ test("a cut before any sentence keeps nothing, so a patient cut off mid-pause st
   for await (const _ of keepingSaid(parts, abort.signal, text => saved.push(text))) break;
   expect(saved).toEqual([]);
 });
+
+test("Clef's emergency read, never waited for, puts the 999 line before Gemma's next sentence and tells the care team, raised to urgent", async () => {
+  const raised: (boolean | undefined)[] = [];
+  const { turn, summaries } = turnOf({
+    question: "ayah saya tiba-tiba keliru tak kenal orang cakap merepek", language: "ms", emergency: Promise.resolve(true),
+    chat: gemma(["fine\nBawa ayah anda ke hospital. ", "Keliru secara tiba-tiba perlu diperiksa."]).chat,
+    escalate: async (_label, clef) => { raised.push(clef); return true; },
+  });
+  expect(await spoken(turn)).toEqual([LINES.ms.call999, "Bawa ayah anda ke hospital.", "Keliru secara tiba-tiba perlu diperiksa.", LINES.ms.told]);
+  expect(raised).toEqual([true]);
+  expect(summaries[0]!.urgent).toBe(true);
+  // Clef slow or saying no: the turn goes on as before, waiting for nothing and telling nobody.
+  for (const emergency of [new Promise<boolean>(() => {}), Promise.resolve(false)]) {
+    const calm = turnOf({ question: "When is my review?", emergency, chat: gemma(["fine\nYour review is on 12 October."]).chat });
+    expect(await spoken(calm.turn)).toEqual(["Your review is on 12 October."]);
+    expect([calm.escalated, calm.summaries[0]!.urgent]).toEqual([[], false]);
+  }
+});

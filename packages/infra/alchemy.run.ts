@@ -76,8 +76,10 @@ export const server = Cloudflare.Worker("server", {
     AWS_ACCESS_KEY_ID: Config.String("AWS_ACCESS_KEY_ID").pipe(Config.withDefault("")),
     AWS_SECRET_ACCESS_KEY: Config.Redacted("AWS_SECRET_ACCESS_KEY").pipe(Config.withDefault(Redacted.make(""))),
     AWS_SESSION_TOKEN: Config.Redacted("AWS_SESSION_TOKEN").pipe(Config.withDefault(Redacted.make(""))),
-    // Workers AI: EmbeddingGemma embeds the library (packages/api/src/workers-models.ts).
+    // Workers AI: EmbeddingGemma embeds the library (packages/api/src/workers-models.ts), and Clef-omni reads turns for the fast lane.
     AI: Cloudflare.Workers.AI(),
+    // "1" turns on the Clef fast lane (packages/api/src/decide.ts, docs/answer-parts.md). Off by default: Clef is never called.
+    CLEF_LANE: Config.String("CLEF_LANE").pipe(Config.withDefault("")),
   },
   // Nightly coding audit (flow 5), 02:00 Malaysia time; after-discharge check-ins (flow 7) go out hourly.
   crons: ["0 18 * * *", "0 * * * *"],

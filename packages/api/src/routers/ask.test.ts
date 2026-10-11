@@ -4,11 +4,13 @@ import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
 import { tasks } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
+import { partsOf } from "@sona-ai/domain/answer-parts";
 import { beforeEach, expect, test } from "bun:test";
 
 import { groundedSpec } from "../ask-model";
 import type { AskContext } from "../ask-spec";
 import { boxState, type Baseten } from "../baseten-models";
+import { TRIAL, clefReplay, replay } from "../fixtures/clef-trial";
 import { appRouter } from "./index";
 
 // Each test starts knowing nothing about the boxes (the adapter keeps what it learns for the isolate).
@@ -267,4 +269,45 @@ test("a visit's free question reads that visit's patient record on the server, s
   // A visit the clinician's hospital does not hold reads nothing: the model sees only the page.
   await client.ask.free({ ...asked, encounterId: "visit-elsewhere" });
   expect(chats()[1]).not.toContain("This visit's patient record ("); // the record's own header (the prompt speaks of a visit's patient record)
+});
+
+test("Sona Pro's lane: the ward's list and a task for the open visit come by the rules at once, with their lane, and Gemma is not asked", async () => {
+  const ho = "Get the HO to chase the blood cultures for bed 7.";
+  const { ai } = clefReplay({
+    ...replay("p026", "p005"), [TRIAL.p013.said]: { ...TRIAL.p013, picks: { owner: "self", due: "today" } },
+    [ho]: { choice: "create_task", confidence: 0.7484, p: [0.0258, 0.0106, 0.8817, 0.0218, 0.0119, 0.008, 0.0302, 0.01], picks: { owner: "house_officer", due: "later" } },
+  });
+  const up = boxes(() => gemma({ root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "AskLead", props: { text: "Gemma's answer." }, children: [] } } }));
+  const db = await createTestDb();
+  await seedDemo(db, new Date("2026-09-26T15:40:00+08:00"));
+  await addClinician(db, "dr-aisyah");
+  const now = new Date("2026-09-28T10:00:00+08:00");
+  const doctor = createRouterClient(appRouter, { context: { db, session: user("dr-aisyah"), baseten: up.baseten, clef: ai, now: () => now } });
+  const chats = () => up.calls.filter(c => c.url.includes("chat/completions")).length;
+
+  // The ward's list is the web's rule answer to the same question (what the bar gives with no model), on any page.
+  const rules = await createRouterClient(appRouter, { context: { db, session: user("dr-aisyah"), now: () => now } }).ask.free({ scope: "web", question: TRIAL.p026.said });
+  for (const scope of ["today", "web"]) {
+    expect(await doctor.ask.free({ scope, question: TRIAL.p026.said })).toEqual({ source: "rules", spec: rules.spec!, lane: { intent: "ward_overview", confidence: 0.8241, by: "clef-omni" } });
+  }
+
+  // A task for the open visit, drafted from the doctor's words: for the doctor who asked, due today.
+  const visit = { scope: "visit", encounterId: "visit-1042" };
+  const task = await doctor.ask.free({ ...visit, question: TRIAL.p013.said });
+  expect(task).toMatchObject({ source: "rules", spec: { elements: { "t-0": { props: { text: "Task for dr-aisyah, due today: Remind me to recheck her K+ at 4 pm." } } } }, lane: { intent: "create_task" } });
+  const [draft] = partsOf(task).cards!;
+  expect(draft).toEqual({
+    type: "action", do: "createTask", title: "Remind me to recheck her K+ at 4 pm", items: ["Owner: dr-aisyah", "Due: 2026-09-28"],
+    what: "Adds it to this visit's tasks.", confirm: "Add task", done: "Added to Tasks.",
+    payload: { encounterId: "visit-1042", title: "Remind me to recheck her K+ at 4 pm", owner: "dr-aisyah", due: "2026-09-28" },
+  });
+  // Confirmed, the draft is tasks.create's own input.
+  if (draft?.type === "action" && draft.do === "createTask") expect(await doctor.tasks.create({ ...draft.payload, requestId: "lane-1" })).toMatchObject({ title: "Remind me to recheck her K+ at 4 pm", owner: "dr-aisyah", due: "2026-09-28" });
+  expect(partsOf(await doctor.ask.free({ ...visit, question: ho })).cards![0]).toMatchObject({ payload: { owner: "House officer", title: "Get the HO to chase the blood cultures for bed 7" } });
+  expect(chats()).toBe(0);
+
+  // No visit open, or Clef unsure (0.1767): Gemma answers as before.
+  expect(await doctor.ask.free({ scope: "today", question: TRIAL.p013.said })).toMatchObject({ source: "model" });
+  expect(await doctor.ask.free({ ...visit, question: TRIAL.p005.said })).toMatchObject({ source: "model" });
+  expect(chats()).toBe(2);
 });

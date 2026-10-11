@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import type { Library } from "../context";
 import type { Change } from "../events";
 import { stubModels } from "../models";
+import { TRIAL, clefReplay, replay } from "../fixtures/clef-trial";
 import { doctorsFor } from "../routers/bookings";
 import { LINES } from "../voice-agent/answer";
 import { asAnswer } from "./client";
@@ -141,6 +142,20 @@ test("an emergency she reports now reaches her care team with no model at all; t
   const on = (await answerOf(chatTurn({ context, messages: [say("user", "Sakit dada sekarang")], med }))).answer;
   expect(on).toMatchObject({ answer: "Please call 999 now.", urgent: true, careTeam: { taskId: off.careTeam!.taskId, line: LINES.ms.told } });
   expect(await db.select().from(tasks).where(eq(tasks.kind, "check-in"))).toHaveLength(1);
+});
+
+test("an emergency Clef reads (no 999 words, the model calling no tool) reaches her care team once, urgent, beside the model's words", async () => {
+  const { db, context } = await world();
+  const { ai } = clefReplay(replay("c049", "c054"));
+  const { med } = brain([{ text: "Bawa ayah anda ke hospital sekarang." }, { text: "Bagus, teruskan." }]);
+  const { answer } = await answerOf(chatTurn({ context: { ...context, clef: ai }, messages: [say("user", TRIAL.c049.said)], med }));
+  expect(answer).toMatchObject({ answer: "Bawa ayah anda ke hospital sekarang.", urgent: true, careTeam: { line: LINES.en.told } });
+  const [task] = await db.select().from(tasks).where(eq(tasks.kind, "check-in"));
+  expect(task!.id).toBe(answer.careTeam!.taskId);
+  // Below 0.25 (insulin taken, 0.2233): nobody is told.
+  const calm = (await answerOf(chatTurn({ context: { ...context, clef: ai }, messages: [say("user", TRIAL.c054.said)], med }))).answer;
+  expect(calm).toMatchObject({ urgent: false });
+  expect(calm.careTeam).toBeUndefined();
 });
 
 test("while Sona Med's box starts, Sona says how long and the model is not asked; a failing box gets her can't-answer line", async () => {

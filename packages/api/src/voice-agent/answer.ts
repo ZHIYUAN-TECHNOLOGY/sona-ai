@@ -13,8 +13,8 @@ export { languageOf } from "@sona-ai/domain/language";
  * so far and what they just said go to Gemma (box ①), streaming. Gemma answers anything: their own care from the record, any
  * other health or general question from what it knows (user, 1 Oct: no limit on what Sona may answer). Each sentence is
  * handed on as soon as it is written, so Sona starts talking while Gemma is still writing. An emergency sign gets the 999
- * line first, from the keyword floor before Gemma is even asked or from Gemma's own flag; a patient who reports feeling
- * worse is passed to their care team (`escalate`).
+ * line first, from the keyword floor before Gemma is even asked, from Gemma's own flag, or from Clef's emergency read
+ * beside it (`emergency`); a patient who reports feeling worse is passed to their care team (`escalate`).
  */
 
 /** What withVoice reads from onTurn (AI SDK stream parts): each sentence, then an end, so it is spoken as soon as it is out. */
@@ -55,8 +55,16 @@ export type AnswerTurn = {
   /** Who heard the question, for the turn's summary; none when it was typed. */
   heard?: Heard;
   signal: AbortSignal;
-  /** Tells the care team; true once a flagged task is made. */
-  escalate(label: "worse" | "urgent"): Promise<boolean>;
+  /**
+   * Clef's read of the question (../decide emergencyOf), started beside Gemma and never waited for: true makes the turn
+   * urgent, the 999 line said before Gemma's next sentence and the care team told. None: Clef is off.
+   */
+  emergency?: Promise<boolean>;
+  /**
+   * Tells the care team; true once a flagged task is made. `raised`: Clef read an emergency, so the task is urgent
+   * whatever the care team's reader makes of the words (tellCareTeam's `raisedBy`).
+   */
+  escalate(label: "worse" | "urgent", raised?: boolean): Promise<boolean>;
   /** How the turn went, once it has all been said. */
   done?(summary: TurnSummary): void;
   /** Where the turn's wait went, once it has all been said (TurnTiming). */
@@ -230,9 +238,11 @@ function within(promise: Promise<boolean>, ms: number) {
 
 export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
   const lines = LINES[turn.language], summary: TurnSummary = { grounded: false, urgent: false, source: "fixture", sources: [], withheld: 0, ...turn.heard && { ear: turn.heard } };
-  let told: Promise<boolean> | undefined, said = false, passages: Passage[] = [];
+  let told: Promise<boolean> | undefined, said = false, passages: Passage[] = [], raised = false;
   const began = Date.now(), timing: TurnTiming = {}, mark = (step: keyof TurnTiming) => { timing[step] ??= Date.now() - began; };
-  const escalate = (label: "worse" | "urgent") => { told ??= turn.escalate(label).catch(() => false); };
+  const escalate = (label: "worse" | "urgent", clef?: boolean) => { told ??= turn.escalate(label, clef).catch(() => false); };
+  // ponytail: the first escalation makes the one task, so a "worse" flag read as fine before Clef answers (0.28 s median) loses its raise.
+  turn.emergency?.then(yes => { if (yes && !turn.signal.aborted) { raised = true; escalate("urgent", true); } }, () => {});
   function* say(text: string): Generator<Part> {
     said = true;
     mark("firstSentence");
@@ -245,6 +255,7 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
     yield* say(lines.call999);
   }
   function* sayModel(sentence: string): Generator<Part> {
+    if (raised) yield* urgentFirst();
     // The 999 line already led; Gemma's own call to 999 would only repeat it. The told line is Sona's, said once a task exists.
     if ((summary.urgent && EMERGENCY.test(sentence)) || TOLD.includes(sentence)) return;
     yield* say(sentence);
@@ -301,6 +312,7 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
     }
   } else summary.waking = got?.waking;
 
+  if (raised) yield* urgentFirst();
   if (!said) yield* say(summary.waking ? lines.starting(summary.waking) : lines.unavailable);
   if (told && await within(told, TOLD_WAIT_MS) && !turn.signal.aborted) yield* say(lines.told);
   if (!turn.signal.aborted) { turn.done?.(summary); turn.timed?.(timing); }
