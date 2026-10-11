@@ -340,6 +340,7 @@ test("web: Gemma reads each ward bed's latest chart reading, so \"anyone desatur
   const asked = JSON.parse(String(calls.find(c => c.url.includes("chat/completions"))!.init.body)).messages[1].content as string;
   expect(asked).toContain("each admitted bed's latest chart reading");
   expect(asked).toContain("no overnight series");
+  expect(asked).toContain("lowest SpO2 Bed 11 Ganesan Muthu 92%");
   expect(asked).toContain("Bed 11 Ganesan Muthu: SpO2 92%, T 36.9 °C, P 90, RR 20, BP 132/78");
   expect(asked.split("\n").filter(l => l.length > 300)).toEqual([]);
 });

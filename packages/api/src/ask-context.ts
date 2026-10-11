@@ -108,7 +108,7 @@ const VITAL: Record<string, string> = { "oxygen-saturation": "SpO2", temperature
 /**
  * Each admitted bed's latest ward observations as page lines, several beds a line (a page has at most 20 lines of 300
  * characters): "Bed 11 Ganesan Muthu: SpO2 92%, T 36.9 °C, P 90, RR 20, BP 132/78". The chart holds one reading a bed, so
- * the header says so: a question about overnight is answered from the latest reading, never as a trend.
+ * the header says so, and names the lowest SpO2: a question about overnight is answered from the latest reading, never as a trend.
  * ponytail: latest reading only; a trend needs the chart's series per bed, not one line each.
  */
 async function wardVitals(asker: Asker, beds: Awaited<ReturnType<typeof liveBeds>>) {
@@ -117,18 +117,20 @@ async function wardVitals(asker: Asker, beds: Awaited<ReturnType<typeof liveBeds
   if (!ids.length) return [];
   const rows = await asker.db.select().from(observations).where(and(inArray(observations.patientId, ids), eq(observations.source, "clinical")))
     .orderBy(desc(observations.observedAt)).catch(() => []);
-  let at: Date | undefined;
+  let at: Date | undefined, lowest: { bed: string; spo2: number } | undefined;
   const bedLines = admitted.flatMap(b => {
     const mine = rows.filter(o => o.patientId === b.patientId), latest = (kind: string) => mine.find(o => o.kind === kind);
     if (!mine.length) return [];
     at = !at || mine[0]!.observedAt > at ? mine[0]!.observedAt : at;
     const read = Object.entries(VITAL).flatMap(([kind, name]) => { const o = latest(kind); return o ? [`${name} ${o.value}${o.unit === "%" ? "%" : o.unit === "°C" ? " °C" : ""}`] : []; });
+    const spo2 = latest("oxygen-saturation")?.value;
+    if (spo2 !== undefined && (!lowest || spo2 < lowest.spo2)) lowest = { bed: `${b.bed} ${b.name}`, spo2 };
     const sys = latest("systolic"), dia = latest("diastolic");
     if (sys && dia) read.push(`BP ${sys.value}/${dia.value}`);
     return read.length ? [`${b.bed} ${b.name}: ${read.join(", ")}`] : [];
   });
   if (!bedLines.length) return [];
-  const lines = [`Ward observations, each admitted bed's latest chart reading (taken ${dayOf(at!)} ${timeOf(at!)}; one reading a bed, no overnight series; SpO2 %, T °C, P and RR a minute, BP mmHg):`];
+  const lines = [`Ward observations, each admitted bed's latest chart reading (taken ${dayOf(at!)} ${timeOf(at!)}; one reading a bed, no overnight series; SpO2 %, T °C, P and RR a minute, BP mmHg)${lowest ? `; lowest SpO2 ${lowest.bed} ${lowest.spo2}%` : ""}:`];
   for (const line of bedLines) {
     const last = lines.length > 1 ? lines[lines.length - 1]! : undefined;
     if (last && last.length + line.length + 2 <= 300) lines[lines.length - 1] = `${last}; ${line}`;
