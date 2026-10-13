@@ -1,0 +1,33 @@
+flowchart LR
+    staff["👩‍⚕️ Hospital staff<br/>doctor · nurse · bed manager · management"]
+    patient["🧑 Patient after discharge"]
+    insurer["🏢 Insurer<br/>(one link, no login)"]
+    lab["🧪 Lab system"]
+
+    subgraph apps["Sona apps"]
+        pro["Sona Pro<br/>iPhone + web"]
+        care["Sona Care<br/>iPhone + web"]
+    end
+
+    subgraph server["Sona server"]
+        api["API · live updates · voice calls<br/>roles · access log · agents"]
+        privacy["🔒 Sona Privacy<br/>strips names, IC and phone numbers"]
+    end
+
+    subgraph my["🇲🇾 AWS Malaysia (ap-southeast-5, Kuala Lumpur)"]
+        models["Sona models<br/>Med · Vision · Speech · Voice · Listen<br/>Router · Search ×3 · Privacy"]
+    end
+
+    db[("Sona database<br/>records · vector search")]
+
+    pubmed["PubMed<br/>public abstracts"]
+
+    staff --> pro
+    patient --> care
+    pro <--> api
+    care <--> api
+    api <--> models
+    api <--> db
+    api --> privacy --> pubmed
+    api -- "guarantee letter link" --> insurer
+    lab -- "results" --> api

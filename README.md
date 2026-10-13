@@ -69,6 +69,13 @@ Every AI output is a **draft until a person approves it**. Nothing goes to an in
 
 ## Architecture
 
+<a href="docs/images/architecture.png"><img src="docs/images/architecture.png" alt="Sona architecture: staff and patients use Sona Pro and Sona Care, which talk to one Sona server; the Sona models run in AWS Malaysia; names are stripped by Sona Privacy before any outside search" width="100%"></a>
+
+<sub>👆 Tap the diagram to open it full size.</sub>
+
+<details>
+<summary>Interactive version (zoom and pan)</summary>
+
 ```mermaid
 flowchart LR
     staff["👩‍⚕️ Hospital staff<br/>doctor · nurse · bed manager · management"]
@@ -104,6 +111,8 @@ flowchart LR
     api -- "guarantee letter link" --> insurer
     lab -- "results" --> api
 ```
+
+</details>
 
 Two iPhone apps and two web portals talk to one Sona server. The insurer gets one link by email and
 needs no login. The lab system posts results straight in.
@@ -187,14 +196,6 @@ Prices are a proposal. Path: department, then hospital, then hospital group, the
 Our goal by the November final is one department in shadow mode: staff approve every output, then go
 live in one department, measuring note time, letter turnaround, discharge wait and patients reached at
 home. **If you know that hospital, talk to us.**
-
-## What's real
-
-**Real:** both iPhone apps, both web portals, the server, the database, the live updates between apps,
-every AI answer from our models in AWS Malaysia, and the voice calls.
-
-**Synthetic:** Amelia Tan and every other patient, the insurer, and the consultation voices. No real
-patient data exists anywhere in Sona yet.
 
 ## Team · Zhiyuan Technology
 
