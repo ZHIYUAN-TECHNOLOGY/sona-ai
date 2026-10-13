@@ -12,7 +12,7 @@ On AI models we trained ourselves, running in Malaysia.
 
 *Every feature in video, the live system to try, and the numbers behind it.*
 
-**Ten models. All trained by us. All in Malaysia.**
+**Six models. All trained by us. All in Malaysia.**
 
 </div>
 
@@ -20,7 +20,7 @@ On AI models we trained ourselves, running in Malaysia.
 > **Want to test Sona live?** To save cost, the servers that host our AI models are temporarily in hibernate mode.
 > Email **[ngchwanlii@zhiyuantech.ai](mailto:ngchwanlii@zhiyuantech.ai)** and we will wake them up for you.
 
-| 4 screens | 10 models | ~10 s | 3.5× |
+| 4 screens | 6 models | ~10 s | 3.5× |
 |:---:|:---:|:---:|:---:|
 | Sona Pro (iPhone + web) for staff,<br>Sona Care (iPhone + web) for patients | All trained by us,<br>all hosted in AWS Malaysia | From a 3-minute, 4-person<br>consultation to a full note | Fewer word errors than the next<br>best model on Malaysian clinic speech |
 
@@ -94,7 +94,7 @@ flowchart LR
     end
 
     subgraph my["🇲🇾 AWS Malaysia (ap-southeast-5, Kuala Lumpur)"]
-        models["Sona models<br/>Med · Vision · Speech · Voice · Listen<br/>Router · Search ×3 · Privacy"]
+        models["Sona models<br/>Med · Vision · Speech<br/>Voice · Turn · Privacy"]
     end
 
     db[("Sona database<br/>records · vector search")]
@@ -124,7 +124,7 @@ Postgres with vector search · Better-Auth · models served on AWS SageMaker in 
 
 **Every model that reads patient records runs in Malaysia. Patient records never leave Malaysia.**
 
-- 🇲🇾 **Models in Malaysia.** All ten Sona models run in AWS Malaysia (Kuala Lumpur), on servers we control. In a hospital, they run on the hospital's own servers.
+- 🇲🇾 **Models in Malaysia.** All six Sona models run in AWS Malaysia (Kuala Lumpur), on servers we control. In a hospital, they run on the hospital's own servers.
 - 🔒 **Names stripped first.** Sona Privacy removes names, IC numbers and phone numbers before anything is saved for training, saved from a scan, or searched outside (like PubMed).
 - 🎙 **Audio not kept.** Consultation audio is transcribed in memory and not stored. The note and transcript stay in the record.
 - ✅ **A person approves.** Every AI output is a draft until staff approve it.
@@ -140,15 +140,13 @@ and we only ship a model when it beats the alternatives on our own tests in Engl
 |---|---|---|
 | **Sona Med** | The reasoning: notes, letters, appeals, evidence answers, replies to patients, discharge plans. Built on Gemma 4 26B. | Our best 8B model scored 8 to 16 points lower on medical exams, so Sona uses the 26B. |
 | **Sona Speech** | Hears medical Manglish: Malay, English and Chinese mixed in one sentence. Built on Qwen3-ASR 1.7B. | 4.1% words wrong on clinic speech; 30 of 31 drug names right |
-| **Sona Listen** | Tells voices apart: who said what in the room. | 97.1% of turns to the right person, up to 8 people |
 | **Sona Voice** | Speaks Sona's replies in a Malaysian nurse's voice, trained on 4.35 hours of her speech. Built on VoxCPM2. | Reply starts 1.5 to 2.25 s after the patient stops |
 | **Sona Vision** | Reads chest X-rays, handwritten notes, documents and medicine boxes. Built on MedGemma 1.5 4B. | X-ray read in about 4 s |
-| **Sona Router** | Picks which part of Sona answers each request. | Right 92% of the time in 41 ms, against 90% for a 26B general model and 34% before training |
-| **Sona Search** (3 models) | Finds the right page in the hospital's library, finds similar X-rays, ranks what it found. | |
-| **Sona Privacy** | Strips names, IC numbers and phone numbers. Built on OpenMed PII mClinicalE5. | |
+| **Sona Turn** | Knows when the speaker has finished, so Sona replies at the right moment in a voice call. Built on Smart Turn v3.2. | — |
+| **Sona Privacy** | Strips names, IC numbers and phone numbers. Built on OpenMed PII mClinicalE5. | — |
 
 We also trained models we did **not** ship because they lost on our tests: a one-model voice call
-(worse medical answers), an end-of-turn detector, and two search fine-tunes (both less accurate).
+(worse medical answers) and two search fine-tunes (both less accurate).
 
 🤗 **Model weights:** [huggingface.co/zhiyuantechnology](https://huggingface.co/zhiyuantechnology)
 
