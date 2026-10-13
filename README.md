@@ -2,136 +2,213 @@
 
 # 🩺 Sona AI
 
-**A clinical assistant for Malaysian hospitals.**
-Sona Pro for clinicians. Sona Care for patients.
+### Private, agentic AI for Malaysian hospitals.
 
-### 👉 [Judges, start here: sona-overview.zhiyuantech.workers.dev](https://sona-overview.zhiyuantech.workers.dev/)
+A scribe writes the note. **Sona runs the work after it**: the insurer's guarantee letter, the ward,
+the discharge, and the patient's first days at home. In Malay, English and Chinese.
+On AI models we trained ourselves, running in Malaysia.
 
-Ten models. All trained by us. All in Malaysia.<br>
-Every model that reads patient records runs in Malaysia. Patient records never leave Malaysia.
+## 👉 [Judges, start here: sona-overview.zhiyuantech.workers.dev](https://sona-overview.zhiyuantech.workers.dev/)
+
+*Every feature in video, the live system to try, and the numbers behind it.*
+
+**Ten models. All trained by us. All in Malaysia.**
 
 </div>
 
 > [!NOTE]
-> **Want to try Sona live?** To save cost, the servers that host our AI models are temporarily in hibernate mode.
-> Email us at [ngchwanlii@zhiyuantech.ai](mailto:ngchwanlii@zhiyuantech.ai) and we will wake them up for you.
+> **Want to test Sona live?** To save cost, the servers that host our AI models are temporarily in hibernate mode.
+> Email **[ngchwanlii@zhiyuantech.ai](mailto:ngchwanlii@zhiyuantech.ai)** and we will wake them up for you.
 
-## Our models on Hugging Face
-
-All of our models are published under **[huggingface.co/zhiyuantechnology](https://huggingface.co/zhiyuantechnology)**.
-
----
-
-> The rest of this README describes our earlier on-device scribe prototype.
-
-## The problem
-
-A Malaysian GP sees a patient every 5–10 minutes. Documentation is written after
-hours, from memory, in a second or third language. Existing AI scribes assume
-monolingual English speech and stream raw patient audio to overseas servers —
-a non-starter for clinical confidentiality and for clinics with unreliable
-connectivity.
-
-## The answer: everything on-device
-
-Sona runs the **entire clinical pipeline locally on an iPhone** — speech
-recognition, de-identification, note generation, document OCR, semantic search.
-Airplane mode is a supported configuration, not a failure state. The app proves
-it live: an on-screen network badge and an append-only audit log showing
-**"0 bytes transmitted."**
-
-```
- 🎙 Record consult (BM / EN / 中文, code-switching)
-      │  whisper-large-v3-turbo — on-device, tri-lingual
-      ▼
- 🧑‍⚕️ Speaker separation + tap-to-correct transcript
-      │
-      ▼
- 🔒 PRIVACY GATE — deterministic de-identification
-      │  names, IC, phone, address → NAME_1, IC_1, …
-      │  re-ID map sealed on-device; models see tokens only
-      ▼
- 📝 AI SOAP note — on-device LLM (llama.rn / ExecuTorch)
-      │  Subjective · Objective · Assessment · Plan · Orders
-      │  clinical highlighting: doses ▪ timeframes ▪ red flags
-      ▼
- ✍️ Clinician reviews line-by-line → signs → raw audio destroyed
-```
-
-## Features
-
-| | Feature | What makes it different |
-|---|---|---|
-| 🎙 | **AI Transcribe** | Whisper large-v3-turbo on-device; handles true Malaysian code-switch — *"batuk berkahak three days, 有一点 sesak"* — with Mandarin kept in 中文 script, never mistranslated |
-| 🔒 | **Privacy Gate** | De-identification runs *before* any LLM sees text. Deterministic engine (regex + rules — auditable, no model hallucination in the safety layer). Uncertain matches surface for one-tap clinician confirmation |
-| 📝 | **AI SOAP Note** | On-device LLM drafts structured notes with a hybrid clinical highlighter: doses/vitals (deterministic — digits are never left to a model), timeframes, and context-aware red flags where negation matters (*"no chest pain"* stays unmarked) |
-| 📄 | **AI SmartScan** | Native document scanner (VisionKit) → on-device OCR (PP-OCR, tri-lingual charset) → auto de-ID → structured document note. Garbled scan text is copied as written, never guessed. Page images are destroyed after OCR |
-| 💊 | **Medication safety** | Note orders are checked against an on-device drug-interaction reference at review time |
-| 🔍 | **Knowledge & search** | On-device RAG over clinical guidelines with multilingual embeddings — a *"sakit dada"* query matches English chest-pain guidance |
-| 📤 | **Export** | FHIR R4 / PDF for EMR ingest — re-identified locally, only at the clinician's explicit action |
-| 🎞 | **Audit trail** | Append-only, on-device log of every pipeline stage — recording, redaction, generation, signing — with the network counter alongside |
-
-## On-device model stack
-
-| Task | Model | Runtime |
-|---|---|---|
-| Speech-to-text | Whisper large-v3-turbo (+ bundled Malaysian Whisper offline fallback) | whisper.cpp via `whisper.rn` |
-| Clinical notes & doc summaries | Bonsai-8B (GGUF) — with Qwen3 via ExecuTorch as fallback engine | `llama.rn` / `react-native-executorch` |
-| Embeddings (search/RAG) | paraphrase-multilingual-MiniLM-L12-v2 | ExecuTorch |
-| Document OCR | PP-OCRv6 (24 MB, Malay + English + 中文 charset) | ExecuTorch (+ Apple Vision fallback) |
-
-Model choices are **evidence-gated, not vibes-gated**: this repo ships the
-evaluation harnesses (`tools/note-eval`, `tools/stt-eval`) that every candidate
-must pass — recall / hallucination / format gates for notes, WER/CER with a
-*Mandarin-stays-Mandarin* kill criterion for speech. Six challenger models were
-rejected on these gates in July 2026 alone; the results are committed alongside
-the code.
-
-## Why on-device matters in healthcare
-
-1. **Confidentiality by architecture** — PHI cannot leak from a server that was
-   never sent anything. The de-identification boundary means even the on-device
-   LLM only ever sees `NAME_1`, `IC_1` tokens.
-2. **Works where clinics are** — rural Malaysia, basement pharmacies, airplane
-   mode. No connectivity dependence, no per-consult API cost.
-3. **Auditable safety** — deterministic redaction and deterministic
-   dose-highlighting where mistakes are dangerous; the LLM is boxed into the
-   parts where language fluency helps and gated by eval harnesses where it
-   doesn't.
-
-## Getting started
-
-```bash
-bun install
-cd apps/native
-npx expo run:ios --configuration Release --device   # physical iPhone recommended
-```
-
-First consult downloads the note model once; the bundled Malaysian Whisper
-works fully offline out of the box. A Demo Mode (hidden: long-press the Version
-row in Settings) arms scripted transcript + seeded data for reproducible
-walkthroughs.
-
-## Repo map
-
-```
-apps/native/            Expo app — the product
-  lib/pipeline/         STT, redaction, note generation, engines
-  lib/vision/           SmartScan: scanner, OCR, doc summaries
-  lib/meds/             drug-interaction reference
-  lib/knowledge/        on-device RAG
-tools/note-eval/        note-model evaluation harness + results
-tools/stt-eval/         STT evaluation harness + results
-tools/demo-site/        the hosted demo page (R2 + Workers)
-docs/model-roadmap.md   model decisions, with receipts
-```
+| 4 screens | 10 models | ~10 s | 3.5× |
+|:---:|:---:|:---:|:---:|
+| Sona Pro (iPhone + web) for staff,<br>Sona Care (iPhone + web) for patients | All trained by us,<br>all hosted in AWS Malaysia | From a 3-minute, 4-person<br>consultation to a full note | Fewer word errors than the next<br>best model on Malaysian clinic speech |
 
 ---
+
+## Our bet: every hospital group owns its AI
+
+We are **not** trying to out-build the world's giant medical AI models, and we don't ask hospitals to send
+their patients' records to one.
+
+**We give each hospital group its own AI.** Sona's models run on a private server the hospital controls,
+in its own server room or its private cloud in Malaysia. They are fine-tuned for Malaysian medicine,
+Malaysian languages and that hospital's own guidelines. The hospital keeps its data, its models and its
+compliance. We bring the models, the apps, and the training that keeps improving them.
+
+That is how a Malaysian hospital uses AI **and** stays on the right side of PDPA 2024, where a breach
+means mandatory notice and fines of up to RM1 million.
+
+## The problem: one patient, one week, three breaks
+
+Amelia is our synthetic demo patient. Her week breaks in three places:
+
+| 1 · Clinic | 2 · Admission | 3 · Home |
+|---|---|---|
+| **2 hours** at the desk for every hour with patients. Her doctor writes notes instead of looking at her. <sub>Sinsky et al., Ann Intern Med 2016</sub> | **67%** of private specialists have seen a guarantee letter revoked or denied. Her letter is denied after admission. <sub>CodeBlue survey of 855 specialists, Oct 2025</sub> | **1 in 5** patients is harmed in the weeks after discharge. On day 2 at home she gets worse, and nobody knows. <sub>Forster et al., Ann Intern Med 2003</sub> |
+
+**Why now:** MediAsas goes nationwide in January 2027 with a fixed price per diagnosis, so every extra
+bed-day and every wrong code becomes the hospital's loss. And Malaysia is putting RM1 billion into
+electronic records across about 150 hospitals: hospitals are going digital now.
+
+## What Sona does
+
+| | Feature | What it does |
+|---|---|---|
+| 🎙 | **Ambient scribe** | Listens to the consultation, tells up to 8 voices apart, keeps Malay and Chinese as spoken, and drafts a colour-coded note in about 10 seconds. |
+| 📞 | **Voice, speech to speech** | Patients talk to Sona in Malay, English or Chinese. Sona answers out loud from her own record, in a Malaysian voice we trained. Replies start in 1.5 to 2.25 s. |
+| 🏠 | **Follows the patient home** | Discharge reaches her phone within a second. A red flag on day 2 gets the 999 line and becomes a task for her care team. |
+| 📄 | **Guarantee letters and appeals** | Drafts the insurer's letter from the note, ties every code to a sentence, checks the insurer's rules before sending, and writes the appeal if it is denied. |
+| 🩻 | **Chest X-ray** | Sona Vision drafts a read in about 4 seconds, marks the finding, and opens similar films from the hospital beside the answer. |
+| 📚 | **Evidence with sources** | Answers clinical questions from PubMed and the hospital's own guidelines, with numbered citations, applied to the patient in the visit. |
+| 🛏 | **Hospital operations** | Ranks patients by need, shows what holds every bed and who owns each blocker, writes the huddle brief, and raises critical lab results the moment they land. |
+| 💊 | **Safety checks** | Checks a prescription before it is placed and stops a wrong dose. Scans a handwritten note into the record. |
+| 📱 | **Sona Care for patients** | Her plan, medicines and warning signs in plain words, in her language. Dose reminders, a medicine-box photo check, booking, and a health summary she can take to another hospital. |
+
+Every AI output is a **draft until a person approves it**. Nothing goes to an insurer or a patient without staff.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    staff["👩‍⚕️ Hospital staff<br/>doctor · nurse · bed manager · management"]
+    patient["🧑 Patient after discharge"]
+    insurer["🏢 Insurer<br/>(one link, no login)"]
+    lab["🧪 Lab system"]
+
+    subgraph apps["Sona apps"]
+        pro["Sona Pro<br/>iPhone + web"]
+        care["Sona Care<br/>iPhone + web"]
+    end
+
+    subgraph server["Sona server"]
+        api["API · live updates · voice calls<br/>roles · access log · agents"]
+        privacy["🔒 Sona Privacy<br/>strips names, IC and phone numbers"]
+    end
+
+    subgraph my["🇲🇾 AWS Malaysia (ap-southeast-5, Kuala Lumpur)"]
+        models["Sona models<br/>Med · Vision · Speech · Voice · Listen<br/>Router · Search ×3 · Privacy"]
+    end
+
+    db[("Sona database<br/>records · vector search")]
+
+    pubmed["PubMed<br/>public abstracts"]
+
+    staff --> pro
+    patient --> care
+    pro <--> api
+    care <--> api
+    api <--> models
+    api <--> db
+    api --> privacy --> pubmed
+    api -- "guarantee letter link" --> insurer
+    lab -- "results" --> api
+```
+
+Two iPhone apps and two web portals talk to one Sona server. The insurer gets one link by email and
+needs no login. The lab system posts results straight in.
+
+**Stack:** Bun + Turborepo · Expo (React Native) for iPhone · Hono + oRPC API on Cloudflare Workers ·
+Postgres with vector search · Better-Auth · models served on AWS SageMaker in Malaysia.
+
+## Private by design
+
+**Every model that reads patient records runs in Malaysia. Patient records never leave Malaysia.**
+
+- 🇲🇾 **Models in Malaysia.** All ten Sona models run in AWS Malaysia (Kuala Lumpur), on servers we control. In a hospital, they run on the hospital's own servers.
+- 🔒 **Names stripped first.** Sona Privacy removes names, IC numbers and phone numbers before anything is saved for training, saved from a scan, or searched outside (like PubMed).
+- 🎙 **Audio not kept.** Consultation audio is transcribed in memory and not stored. The note and transcript stay in the record.
+- ✅ **A person approves.** Every AI output is a draft until staff approve it.
+- 👥 **Roles and access log.** Doctors, nurses, bed managers and management each see what their role needs. Every access is logged.
+- 🚨 **Safety without AI.** If a model is down, safety still runs on rules: red-flag words always get the 999 line and a care-team task.
+
+## Our own AI models
+
+Sona is not a wrapper around someone else's chatbot. We fine-tuned, hosted and measured every model,
+and we only ship a model when it beats the alternatives on our own tests in English, Malay and Chinese.
+
+| Model | What it does | Measured |
+|---|---|---|
+| **Sona Med** | The reasoning: notes, letters, appeals, evidence answers, replies to patients, discharge plans. Built on Gemma 4 26B. | Our best 8B model scored 8 to 16 points lower on medical exams, so Sona uses the 26B. |
+| **Sona Speech** | Hears medical Manglish: Malay, English and Chinese mixed in one sentence. Built on Qwen3-ASR 1.7B. | 4.1% words wrong on clinic speech; 30 of 31 drug names right |
+| **Sona Listen** | Tells voices apart: who said what in the room. | 97.1% of turns to the right person, up to 8 people |
+| **Sona Voice** | Speaks Sona's replies in a Malaysian nurse's voice, trained on 4.35 hours of her speech. Built on VoxCPM2. | Reply starts 1.5 to 2.25 s after the patient stops |
+| **Sona Vision** | Reads chest X-rays, handwritten notes, documents and medicine boxes. Built on MedGemma 1.5 4B. | X-ray read in about 4 s |
+| **Sona Router** | Picks which part of Sona answers each request. | Right 92% of the time in 41 ms, against 90% for a 26B general model and 34% before training |
+| **Sona Search** (3 models) | Finds the right page in the hospital's library, finds similar X-rays, ranks what it found. | |
+| **Sona Privacy** | Strips names, IC numbers and phone numbers. Built on OpenMed PII mClinicalE5. | |
+
+We also trained models we did **not** ship because they lost on our tests: a one-model voice call
+(worse medical answers), an end-of-turn detector, and two search fine-tunes (both less accurate).
+
+🤗 **Model weights:** [huggingface.co/zhiyuantechnology](https://huggingface.co/zhiyuantechnology)
+
+## Benchmarks: Malaysian clinic speech
+
+Sona Speech against the strongest speech models a Malaysian hospital could use today, including Malaysia's own ILMU.
+Same scoring for every model; lower is better.
+
+| Model | 444 clinic clips<br>words wrong | Drug names | 15 real phone recordings<br>words wrong | Drug names |
+|---|:---:|:---:|:---:|:---:|
+| **Sona Speech (ours)** | **4.1%** | **30/31** | **10.0%** | **10/10** |
+| Open base model (before our training) | 14.4% | 20/31 | 21.3% | 8/10 |
+| Whisper large-v3 (OpenAI) | 15.4% | 22/31 | 54.0% | 5/10 |
+| ILMU ASR v4.2 (YTL, Malaysia) | 16.5% | 20/31 | 24.6% | 6/10 |
+
+**3.5× fewer word errors than the next best model on clinic speech, and every drug name but one.**
+
+<sub>Measured 9 Oct 2026. The 444 clips are our own synthetic consultations in mixed Malay, English and Mandarin,
+voiced with voices never used in training. The 15 phone recordings are real, from one speaker.</sub>
+
+## Where Sona sits
+
+| Product | Writes the note | Runs the work after (letter, ward, follow-up) | Where models run |
+|---|:---:|:---:|:---:|
+| **Sona** | ✅ | ✅ | Malaysia, on the hospital's own AI |
+| Qmed Scribe | ✅ | Not seen on its public pages | On-premise option |
+| Heidi | ✅ | Not seen on its public pages | Abroad or not shown |
+| Global scribes | ✅ | Not seen on their public pages | US and EU |
+
+<sub>Placed from each company's public pages, 8 Oct 2026.</sub>
+
+## Business model
+
+Doctors get the scribe free. **The hospital pays for what saves it money.**
+
+- **Platform:** about RM1,800 per bed a year
+- **Usage:** RM20 per guarantee letter, RM30 per patient followed home
+- **Optional:** 10% of recovered claims
+
+For one 300-bed hospital, freed beds alone return about **5.9×** what Sona costs (scenario numbers; the pilot measures them).
+Prices are a proposal. Path: department, then hospital, then hospital group, then ASEAN.
+
+## Next: one department, eight weeks
+
+Our goal by the November final is one department in shadow mode: staff approve every output, then go
+live in one department, measuring note time, letter turnaround, discharge wait and patients reached at
+home. **If you know that hospital, talk to us.**
+
+## What's real
+
+**Real:** both iPhone apps, both web portals, the server, the database, the live updates between apps,
+every AI answer from our models in AWS Malaysia, and the voice calls.
+
+**Synthetic:** Amelia Tan and every other patient, the insurer, and the consultation voices. No real
+patient data exists anywhere in Sona yet.
+
+## Team · Zhiyuan Technology
+
+Two founders. Both write the code. Over 1,300 commits since the first one on 22 Sep 2026.
+
+- **Jay Ng**, Founder & CEO. Builds Sona's apps, servers and models. Before: Software Engineer, TreeRing, Silicon Valley.
+- **Wilfred Foo Thien Hau**, Co-founder & CMO. Software engineer, co-builds Sona.
+
+📧 [ngchwanlii@zhiyuantech.ai](mailto:ngchwanlii@zhiyuantech.ai)
 
 <div align="center">
 
-**Sona** · ZHIYUAN Technology · Built for the future of Malaysian primary care
+**Built in Malaysia. Trained on Malaysia. Runs in Malaysia.**
 
-*Demo: [sona-demo.zhiyuantech.workers.dev](https://sona-demo.zhiyuantech.workers.dev)*
+<sub>MAIC 2026 · Track T2 · AI for Healthcare & Medical</sub>
 
 </div>
