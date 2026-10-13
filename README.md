@@ -1,18 +1,28 @@
 <div align="center">
 
-# 🩺 Sona — On-Device AI Clinical Scribe
+# 🩺 Sona AI
 
-**Every model runs on the phone. Patient audio and text never leave the device.**
+**A clinical assistant for Malaysian hospitals.**
+Sona Pro for clinicians. Sona Care for patients.
 
-An AI scribe built for Malaysian primary care — where consults flow between
-**Bahasa Melayu, English, and 中文 in a single conversation**, and where patient
-privacy cannot depend on someone else's cloud.
+### 👉 [Judges, start here: sona-overview.zhiyuantech.workers.dev](https://sona-overview.zhiyuantech.workers.dev/)
 
-🎬 **[Watch the live demo →](https://sona-demo.zhiyuantech.workers.dev)**
+Ten models. All trained by us. All in Malaysia.<br>
+Every model that reads patient records runs in Malaysia. Patient records never leave Malaysia.
 
 </div>
 
+> [!NOTE]
+> **Want to try Sona live?** To save cost, the servers that host our AI models are temporarily in hibernate mode.
+> Email us at [ngchwanlii@zhiyuantech.ai](mailto:ngchwanlii@zhiyuantech.ai) and we will wake them up for you.
+
+## Our models on Hugging Face
+
+All of our models are published under **[huggingface.co/zhiyuantechnology](https://huggingface.co/zhiyuantechnology)**.
+
 ---
+
+> The rest of this README describes our earlier on-device scribe prototype.
 
 ## The problem
 
