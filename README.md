@@ -139,7 +139,7 @@ only ship one when it beats the alternatives on our own tests in English, Malay 
 
 | Model | What it does | Measured | Weights |
 |---|---|---|---|
-| **Sona Med** | The reasoning: notes, letters, appeals, evidence answers, replies to patients, discharge plans. Built on Gemma 4 26B. | Our best 8B model scored 8 to 16 points lower on medical exams, so Sona uses the 26B. | Base model: [Gemma 4 26B AWQ](https://huggingface.co/cyankiwi/gemma-4-26B-A4B-it-qat-AWQ-INT4) |
+| **Sona Med** | The reasoning: notes, letters, appeals, evidence answers, replies to patients, discharge plans. Built on Gemma 4 26B. | Our best 8B model scored 8 to 16 points lower on medical exams, so Sona uses the 26B. | [sona-med](https://huggingface.co/zhiyuantechnology/sona-med)<br><sub>Base model, unchanged: [Gemma 4 26B AWQ](https://huggingface.co/cyankiwi/gemma-4-26B-A4B-it-qat-AWQ-INT4)</sub> |
 | **Sona Speech** | Hears medical Manglish: Malay, English and Chinese mixed in one sentence. Built on Qwen3-ASR 1.7B. | 4.1% words wrong on clinic speech; 30 of 31 drug names right | **Trained by us:** [sona-speech](https://huggingface.co/zhiyuantechnology/sona-speech) |
 | **Sona Voice** | Speaks Sona's replies in a Malaysian nurse's voice, trained on 4.35 hours of her speech. Built on VoxCPM2. | Reply starts 1.5 to 2.25 s after the patient stops | **Trained by us:** [sona-voice](https://huggingface.co/zhiyuantechnology/sona-voice) |
 | **Sona Vision** | Reads chest X-rays, handwritten notes, documents and medicine boxes. Built on MedGemma 1.5 4B. | X-ray read in about 4 s | Base model: [MedGemma 1.5 4B](https://huggingface.co/google/medgemma-1.5-4b-it) |
@@ -149,7 +149,7 @@ only ship one when it beats the alternatives on our own tests in English, Malay 
 We also trained models we did **not** ship because they lost on our tests: a one-model voice call
 (worse medical answers) and two search fine-tunes (both less accurate).
 
-Med, Vision and Privacy run unchanged open models, so we link their original makers.
+Med, Vision and Privacy run unchanged open models. Our copies credit their original makers and licences.
 
 🤗 **Our models on Hugging Face:** [huggingface.co/zhiyuantechnology](https://huggingface.co/zhiyuantechnology)
 
