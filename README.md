@@ -6,13 +6,13 @@
 
 A scribe writes the note. **Sona runs the work after it**: the insurer's guarantee letter, the ward,
 the discharge, and the patient's first days at home. In Malay, English and Chinese.
-On AI models we trained ourselves, running in Malaysia.
+On private AI models running in Malaysia, with speech and voice trained by us for Malaysian patients.
 
 ## 👉 [Judges, start here: sona-overview.zhiyuantech.workers.dev](https://sona-overview.zhiyuantech.workers.dev/)
 
 *Every feature in video, the live system to try, and the numbers behind it.*
 
-**Six models. All trained by us. All in Malaysia.**
+**Six AI models. All in Malaysia. Speech and voice trained by us.**
 
 </div>
 
@@ -22,7 +22,7 @@ On AI models we trained ourselves, running in Malaysia.
 
 | 4 screens | 6 models | ~10 s | 3.5× |
 |:---:|:---:|:---:|:---:|
-| Sona Pro (iPhone + web) for staff,<br>Sona Care (iPhone + web) for patients | All trained by us,<br>all hosted in AWS Malaysia | From a 3-minute, 4-person<br>consultation to a full note | Fewer word errors than the next<br>best model on Malaysian clinic speech |
+| Sona Pro (iPhone + web) for staff,<br>Sona Care (iPhone + web) for patients | All hosted in AWS Malaysia,<br>speech and voice trained by us | From a 3-minute, 4-person<br>consultation to a full note | Fewer word errors than the next<br>best model on Malaysian clinic speech |
 
 ---
 
@@ -32,8 +32,8 @@ We are **not** trying to out-build the world's giant medical AI models, and we d
 their patients' records to one.
 
 **We give each hospital group its own AI.** Sona's models run on a private server the hospital controls,
-in its own server room or its private cloud in Malaysia. They are fine-tuned for Malaysian medicine,
-Malaysian languages and that hospital's own guidelines. The hospital keeps its data, its models and its
+in its own server room or its private cloud in Malaysia. They are tuned for Malaysian languages
+and that hospital's own guidelines. The hospital keeps its data, its models and its
 compliance. We bring the models, the apps, and the training that keeps improving them.
 
 That is how a Malaysian hospital uses AI **and** stays on the right side of PDPA 2024, where a breach
@@ -131,24 +131,27 @@ Postgres with vector search · Better-Auth · models served on AWS SageMaker in 
 - 👥 **Roles and access log.** Doctors, nurses, bed managers and management each see what their role needs. Every access is logged.
 - 🚨 **Safety without AI.** If a model is down, safety still runs on rules: red-flag words always get the 999 line and a care-team task.
 
-## Our own AI models
+## Our AI models
 
-Sona is not a wrapper around someone else's chatbot. We fine-tuned, hosted and measured every model,
-and we only ship a model when it beats the alternatives on our own tests in English, Malay and Chinese.
+Sona is not a wrapper around someone else's chatbot. We pick the strongest open model for each job, host it
+in Malaysia, and train our own where Malaysia needs it most: speech and voice. We tested every model, and we
+only ship one when it beats the alternatives on our own tests in English, Malay and Chinese.
 
-| Model | What it does | Measured |
-|---|---|---|
-| **Sona Med** | The reasoning: notes, letters, appeals, evidence answers, replies to patients, discharge plans. Built on Gemma 4 26B. | Our best 8B model scored 8 to 16 points lower on medical exams, so Sona uses the 26B. |
-| **Sona Speech** | Hears medical Manglish: Malay, English and Chinese mixed in one sentence. Built on Qwen3-ASR 1.7B. | 4.1% words wrong on clinic speech; 30 of 31 drug names right |
-| **Sona Voice** | Speaks Sona's replies in a Malaysian nurse's voice, trained on 4.35 hours of her speech. Built on VoxCPM2. | Reply starts 1.5 to 2.25 s after the patient stops |
-| **Sona Vision** | Reads chest X-rays, handwritten notes, documents and medicine boxes. Built on MedGemma 1.5 4B. | X-ray read in about 4 s |
-| **Sona Turn** | Knows when the speaker has finished, so Sona replies at the right moment in a voice call. Built on Smart Turn v3.2. | — |
-| **Sona Privacy** | Strips names, IC numbers and phone numbers. Built on OpenMed PII mClinicalE5. | — |
+| Model | What it does | Measured | Weights |
+|---|---|---|---|
+| **Sona Med** | The reasoning: notes, letters, appeals, evidence answers, replies to patients, discharge plans. Built on Gemma 4 26B. | Our best 8B model scored 8 to 16 points lower on medical exams, so Sona uses the 26B. | Base model: [Gemma 4 26B AWQ](https://huggingface.co/cyankiwi/gemma-4-26B-A4B-it-qat-AWQ-INT4) |
+| **Sona Speech** | Hears medical Manglish: Malay, English and Chinese mixed in one sentence. Built on Qwen3-ASR 1.7B. | 4.1% words wrong on clinic speech; 30 of 31 drug names right | **Trained by us:** [sona-speech](https://huggingface.co/zhiyuantechnology/sona-speech) |
+| **Sona Voice** | Speaks Sona's replies in a Malaysian nurse's voice, trained on 4.35 hours of her speech. Built on VoxCPM2. | Reply starts 1.5 to 2.25 s after the patient stops | **Trained by us:** [sona-voice](https://huggingface.co/zhiyuantechnology/sona-voice) |
+| **Sona Vision** | Reads chest X-rays, handwritten notes, documents and medicine boxes. Built on MedGemma 1.5 4B. | X-ray read in about 4 s | Base model: [MedGemma 1.5 4B](https://huggingface.co/google/medgemma-1.5-4b-it) |
+| **Sona Turn** | Knows when the speaker has finished, so Sona replies at the right moment in a voice call. Built on Smart Turn v3.2. | — | [sona-turn](https://huggingface.co/zhiyuantechnology/sona-turn) |
+| **Sona Privacy** | Strips names, IC numbers and phone numbers. Built on OpenMed PII mClinicalE5. | — | Base model: [OpenMed PII mClinicalE5](https://huggingface.co/OpenMed/OpenMed-PII-mClinicalE5-Large-560M-v1) |
 
 We also trained models we did **not** ship because they lost on our tests: a one-model voice call
 (worse medical answers) and two search fine-tunes (both less accurate).
 
-🤗 **Model weights:** [huggingface.co/zhiyuantechnology](https://huggingface.co/zhiyuantechnology)
+Med, Vision and Privacy run unchanged open models, so we link their original makers.
+
+🤗 **Our models on Hugging Face:** [huggingface.co/zhiyuantechnology](https://huggingface.co/zhiyuantechnology)
 
 ## Benchmarks: Malaysian clinic speech
 
