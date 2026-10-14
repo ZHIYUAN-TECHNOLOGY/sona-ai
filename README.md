@@ -144,7 +144,7 @@ only ship one when it beats the alternatives on our own tests in English, Malay 
 | **Sona Voice** | Speaks Sona's replies in a Malaysian nurse's voice, trained on 4.35 hours of her speech. Built on VoxCPM2. | Reply starts 1.5 to 2.25 s after the patient stops | **Trained by us:** [sona-voice](https://huggingface.co/zhiyuantechnology/sona-voice) |
 | **Sona Vision** | Reads chest X-rays, handwritten notes, documents and medicine boxes. Built on MedGemma 1.5 4B. | X-ray read in about 4 s | Base model: [MedGemma 1.5 4B](https://huggingface.co/google/medgemma-1.5-4b-it) |
 | **Sona Turn** | Knows when the speaker has finished, so Sona replies at the right moment in a voice call. Built on Smart Turn v3.2. | — | [sona-turn](https://huggingface.co/zhiyuantechnology/sona-turn) |
-| **Sona Privacy** | Strips names, IC numbers and phone numbers. Built on OpenMed PII mClinicalE5. | — | Base model: [OpenMed PII mClinicalE5](https://huggingface.co/OpenMed/OpenMed-PII-mClinicalE5-Large-560M-v1) |
+| **Sona Privacy** | Strips names, IC numbers and phone numbers. Built on OpenMed PII mClinicalE5. | — | [sona-privacy](https://huggingface.co/zhiyuantechnology/sona-privacy)<br><sub>Base model, unchanged: [OpenMed PII mClinicalE5](https://huggingface.co/OpenMed/OpenMed-PII-mClinicalE5-Large-560M-v1)</sub> |
 
 We also trained models we did **not** ship because they lost on our tests: a one-model voice call
 (worse medical answers) and two search fine-tunes (both less accurate).
