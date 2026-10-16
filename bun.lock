@@ -84,6 +84,13 @@
         "typescript": "~6.0.3",
       },
     },
+    "apps/demo-prep": {
+      "name": "demo-prep",
+      "dependencies": {
+        "@sona-ai/db": "workspace:*",
+        "@sona-ai/domain": "workspace:*",
+      },
+    },
     "apps/native": {
       "name": "native",
       "version": "1.0.0",
@@ -1585,6 +1592,8 @@
     "defaults": ["defaults@1.0.4", "", { "dependencies": { "clone": "^1.0.2" } }, "sha512-eFuaLoy/Rxalv2kr+lqMlUnrDWV+3j4pljOIJgLIhI058IQfWJ7vXhyEIHu+HtC738klGALYxOKDO0bQP3tg8A=="],
 
     "defu": ["defu@6.1.7", "", {}, "sha512-7z22QmUWiQ/2d0KkdYmANbRUVABpZ9SNYyH5vx6PZ+nE5bcC0l7uFvEfHlyld/HcGBFTL536ClDt3DEcSlEJAQ=="],
+
+    "demo-prep": ["demo-prep@workspace:apps/demo-prep"],
 
     "depd": ["depd@2.0.0", "", {}, "sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw=="],
 

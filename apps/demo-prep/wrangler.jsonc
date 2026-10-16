@@ -1,0 +1,10 @@
+{
+  // The pitch-day prep page: resets the staging demo hospital and walks Amelia to discharge through the real app routes on the staging Worker.
+  "name": "sona-demo-prep",
+  "main": "dist/index.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-10-01",
+  "services": [{ "binding": "SONA", "service": "sona-ai-server-staging-uxfqzyce5rxhzsju" }],
+  "vars": { "SONA_URL": "https://sona-ai-server-staging-uxfqzyce5rxhzsju.zhiyuantech.workers.dev" }
+  // Secrets: PREP_KEY (the page's password), DATABASE_URL (staging Neon, for the reset).
+}
