@@ -1,0 +1,14 @@
+{
+  "name": "demo-prep",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build.ts",
+    "dev": "bun build.ts && npx wrangler dev",
+    "deploy": "bun build.ts && npx wrangler deploy"
+  },
+  "dependencies": {
+    "@sona-ai/domain": "workspace:*",
+    "@sona-ai/db": "workspace:*"
+  }
+}
