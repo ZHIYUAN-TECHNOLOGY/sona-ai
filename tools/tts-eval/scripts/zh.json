@@ -1,0 +1,3602 @@
+[
+ {
+  "id": "zh_0001",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "口渴是因为发烧流失了水分，多喝点水就会好。"
+ },
+ {
+  "id": "zh_0002",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "布洛芬最多吃五天，痛风还没好就要回来看医生。"
+ },
+ {
+  "id": "zh_0003",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "要拔牙或者做小手术前，记得告诉医生您在吃氯吡格雷。"
+ },
+ {
+  "id": "zh_0004",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "每天散步半个小时，傍晚天气凉的时候去最好。"
+ },
+ {
+  "id": "zh_0005",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "糖尿病药不是吃了就可以随便吃甜的，饮食还是要控制。"
+ },
+ {
+  "id": "zh_0006",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "家人如果要跟医生谈，可以一起进诊室。"
+ },
+ {
+  "id": "zh_0007",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "如果一天要用四五次喷雾器，表示哮喘控制得不好，要回来看。"
+ },
+ {
+  "id": "zh_0008",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "腹泻期间勤洗手，特别是上完厕所和煮饭之前。"
+ },
+ {
+  "id": "zh_0009",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "咳到晚上睡不着，又发烧了一个星期，就要回来看。"
+ },
+ {
+  "id": "zh_0010",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "病房晚上会有护士值班，有事随时叫我们。"
+ },
+ {
+  "id": "zh_0011",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "抽血的地方按住五分钟，今天不要提重物。"
+ },
+ {
+  "id": "zh_0012",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "出院后如果有什么不明白，都可以打电话来问我们。"
+ },
+ {
+  "id": "zh_0013",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "覆诊那天如果发烧咳嗽，来的时候记得戴口罩。"
+ },
+ {
+  "id": "zh_0014",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "斋戒月期间诊所的时间有改，下午四点就关门。"
+ },
+ {
+  "id": "zh_0015",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "小朋友发烧三十九度以上，又抽筋，马上送急诊。"
+ },
+ {
+  "id": "zh_0016",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "明天的手术名单有两个是我们病房的，术前同意书都签好了。"
+ },
+ {
+  "id": "zh_0017",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "腹泻的宝宝照常喝母乳，不用停。"
+ },
+ {
+  "id": "zh_0018",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "口渴的时候喝白开水，不要喝汽水或者含糖饮料。"
+ },
+ {
+  "id": "zh_0019",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "安娣的情况已经稳定了，家人可以先回去休息。"
+ },
+ {
+  "id": "zh_0020",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这个退烧塞剂是放在屁股的，小朋友吞不下药时才用。"
+ },
+ {
+  "id": "zh_0021",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "如果呼吸越来越困难，讲话都接不上气，马上叫救护车。"
+ },
+ {
+  "id": "zh_0022",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "咳到胸口痛，是肌肉太用力，不是心脏的问题。"
+ },
+ {
+  "id": "zh_0023",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "针头按下去之后，数到十才拔出来，这样药才会全部进去。"
+ },
+ {
+  "id": "zh_0024",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "血糖一直高过二十，又呕吐、呼吸很急，马上回来。"
+ },
+ {
+  "id": "zh_0025",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "伤口旁边的皮肤可以用湿毛巾擦，伤口本身不要碰。"
+ },
+ {
+  "id": "zh_0026",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "二十四号床晚上十点血糖三点二，给了糖水，半小时后复验是六点五。"
+ },
+ {
+  "id": "zh_0027",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "政府退休人员的话，记得带上退休证。"
+ },
+ {
+  "id": "zh_0028",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "眼睛突然看不见一半，或者眼前一片黑，要马上来。"
+ },
+ {
+  "id": "zh_0029",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "家里有老人和小孩，病人暂时用自己的碗筷。"
+ },
+ {
+  "id": "zh_0030",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "化验结果大部分都正常，只是血糖稍微高一点。"
+ },
+ {
+  "id": "zh_0031",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "腹泻又脚抽筋、很累，可能是盐分流失太多，要回来。"
+ },
+ {
+  "id": "zh_0032",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "格列齐特如果那餐没吃饭，那餐的药也跳过。"
+ },
+ {
+  "id": "zh_0033",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "骨痛热症病人如果突然很烦躁、坐立不安，马上带来。"
+ },
+ {
+  "id": "zh_0034",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "骨痛热症那位病人今天血小板四万，还要继续观察。"
+ },
+ {
+  "id": "zh_0035",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "家人可以帮安娣按摩小腿，避免久躺血液不流通。"
+ },
+ {
+  "id": "zh_0036",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "胸口痛含了舌下药片也没好，五分钟后就叫救护车。"
+ },
+ {
+  "id": "zh_0037",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "三个月以下的宝宝发烧，不管几度都要马上来看。"
+ },
+ {
+  "id": "zh_0038",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "覆诊前三天记得每天验一次血糖，把记录本带来。"
+ },
+ {
+  "id": "zh_0039",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "剪脚指甲要剪平，不要剪太短，也不要赤脚走路。"
+ },
+ {
+  "id": "zh_0040",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "安哥走路还不稳，起身时家人要在旁边扶着。"
+ },
+ {
+  "id": "zh_0041",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "脚肿的话，坐着时把脚抬高放在小凳子上。"
+ },
+ {
+  "id": "zh_0042",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "覆诊前一个星期，我们会发短信提醒您。"
+ },
+ {
+  "id": "zh_0043",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "血压药最好早上吃，吃完再量一次血压记下来。"
+ },
+ {
+  "id": "zh_0044",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "华法林这星期改了，星期一三五吃一粒半，其他日子一粒。"
+ },
+ {
+  "id": "zh_0045",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "水果可以吃，但一次一份就好，榴莲和红毛丹要少吃。"
+ },
+ {
+  "id": "zh_0046",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "吃布洛芬后胃痛得很厉害，大便又黑，马上回来。"
+ },
+ {
+  "id": "zh_0047",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "喂药的时候让宝宝坐起来，不要躺着喂。"
+ },
+ {
+  "id": "zh_0048",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "洗澡水不要太热，头晕的人洗澡时门不要锁。"
+ },
+ {
+  "id": "zh_0049",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "上呼吸道感染主要是休息，多喝温水，过几天就会好。"
+ },
+ {
+  "id": "zh_0050",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "安娣，不用紧张，打针只是像蚂蚁咬一下。"
+ },
+ {
+  "id": "zh_0051",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "喉咙痛可以含这个药片，一天最多六片。"
+ },
+ {
+  "id": "zh_0052",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "益生菌可以跟抗生素隔开两个小时吃。"
+ },
+ {
+  "id": "zh_0053",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "药房说二甲双胍这个厂牌缺货，暂时用别的厂牌代替。"
+ },
+ {
+  "id": "zh_0054",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "中风后回家，浴室要放防滑垫，旁边装扶手。"
+ },
+ {
+  "id": "zh_0055",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "安娣，必理痛一天最多吃八粒，吃多了会伤肝的。"
+ },
+ {
+  "id": "zh_0056",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这些药在药房的第三号柜台拿，拿了先核对名字。"
+ },
+ {
+  "id": "zh_0057",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "二号床的病人神志比早上清醒，可以自己吃饭了。"
+ },
+ {
+  "id": "zh_0058",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "这段时间请家人帮忙买菜煮饭，您好好养病。"
+ },
+ {
+  "id": "zh_0059",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "药袋上的红色贴纸表示这个药会让人想睡。"
+ },
+ {
+  "id": "zh_0060",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "手上吊针的地方有点冷，是因为药水比体温低。"
+ },
+ {
+  "id": "zh_0061",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "尿道感染吃了两天药，灼热感应该会减轻很多。"
+ },
+ {
+  "id": "zh_0062",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "毛巾、牙刷和杯子这几天都不要跟家人共用。"
+ },
+ {
+  "id": "zh_0063",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "伤口红肿发热，流脓或者有臭味，要回来给医生看。"
+ },
+ {
+  "id": "zh_0064",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "痛的关节可以冰敷，每次十五分钟，用毛巾包着冰块。"
+ },
+ {
+  "id": "zh_0065",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "每天照护士教的动作做手脚运动，一天做三次。"
+ },
+ {
+  "id": "zh_0066",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "药有点苦，可以吃完马上喝点水或者吃块饼干。"
+ },
+ {
+  "id": "zh_0067",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "伤口看起来干干净净，愈合得很好。"
+ },
+ {
+  "id": "zh_0068",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "用完布地奈德记得漱口，把水吐掉，不然喉咙容易长白斑。"
+ },
+ {
+  "id": "zh_0069",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "血糖低过四，吃了糖还是没有好转，要叫救护车。"
+ },
+ {
+  "id": "zh_0070",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "拆线的时候不会很痛，只是有点拉拉的感觉。"
+ },
+ {
+  "id": "zh_0071",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "泼尼松龙早上吃完早餐后吃，比较不会影响睡眠。"
+ },
+ {
+  "id": "zh_0072",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "这床的出院要等社工来看，家人还没安排好照顾的人。"
+ },
+ {
+  "id": "zh_0073",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "痰里有一点血丝先观察，如果咳出一大口血，立刻来。"
+ },
+ {
+  "id": "zh_0074",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "小朋友拉肚子带血又发烧，要马上带来。"
+ },
+ {
+  "id": "zh_0075",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "十三号床转去心脏病房了，床位要清洁后才能收新病人。"
+ },
+ {
+  "id": "zh_0076",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "我帮您把药盒分好了，星期一到星期日，早午晚三格。"
+ },
+ {
+  "id": "zh_0077",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "您的肾功能报告正常，不用担心吃药伤肾。"
+ },
+ {
+  "id": "zh_0078",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "每种药我都写好时间了，您回家照着袋子上的吃就可以。"
+ },
+ {
+  "id": "zh_0079",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "如果不确定要不要来，宁愿来给我们看一下。"
+ },
+ {
+  "id": "zh_0080",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "医生说如果明天没发烧，就可以准备出院了。"
+ },
+ {
+  "id": "zh_0081",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "煮饭用少油，多用蒸和煮，少用炸。"
+ },
+ {
+  "id": "zh_0082",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "监测器响是因为夹子松了，不是您的心跳有问题。"
+ },
+ {
+  "id": "zh_0083",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "发烧超过三天还不退，就要回来再验血。"
+ },
+ {
+  "id": "zh_0084",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "心力衰竭的人如果咳出粉红色泡沫痰，立刻叫救护车。"
+ },
+ {
+  "id": "zh_0085",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "四号床的心电图做好了，放在病历第一页。"
+ },
+ {
+  "id": "zh_0086",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "呕吐停了，今天可以试着吃一点粥。"
+ },
+ {
+  "id": "zh_0087",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "护士长问明天的出院名单，我整理好放在桌上了。"
+ },
+ {
+  "id": "zh_0088",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "阿莫西林最好每八个小时吃一次，比如早上七点、下午三点、晚上十一点。"
+ },
+ {
+  "id": "zh_0089",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "肺炎的抗生素先打吊针三天，然后换成口服的。"
+ },
+ {
+  "id": "zh_0090",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "布洛芬一定要饭后吃，空肚子吃会胃痛。"
+ },
+ {
+  "id": "zh_0091",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "呼吸诊所的覆诊在三楼，记得带上您的喷雾器，护士要看您怎么用。"
+ },
+ {
+  "id": "zh_0092",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "大便带血或者变成黑色，要尽快回来检查。"
+ },
+ {
+  "id": "zh_0093",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "有尿道感染又发冷发抖得很厉害，可能细菌进了血，要赶快来。"
+ },
+ {
+  "id": "zh_0094",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "六个星期内不要提超过五公斤的东西。"
+ },
+ {
+  "id": "zh_0095",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "讲话突然含糊，手拿不稳杯子，就算好了也要来检查。"
+ },
+ {
+  "id": "zh_0096",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "糖尿病饮食就是少糖、少油，白饭减半，多吃青菜。"
+ },
+ {
+  "id": "zh_0097",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "退烧不等于好了，骨痛热症第四到第六天要特别小心。"
+ },
+ {
+  "id": "zh_0098",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃华法林期间，绿色蔬菜可以吃，但是份量不要忽多忽少。"
+ },
+ {
+  "id": "zh_0099",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "这次住院的医药费，柜台的同事会跟您解释清楚。"
+ },
+ {
+  "id": "zh_0100",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "二十号床的担保信刚批了，可以通知家属办出院。"
+ },
+ {
+  "id": "zh_0101",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "中风后要长期吃阿托伐他汀和氯吡格雷，保护血管。"
+ },
+ {
+  "id": "zh_0102",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "隔离房还有一间空的，肺结核的病人可以安排进去。"
+ },
+ {
+  "id": "zh_0103",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "烟一定要戒，这是对肺最好的事情。"
+ },
+ {
+  "id": "zh_0104",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "这个检查不会痛，只是躺着几分钟就好。"
+ },
+ {
+  "id": "zh_0105",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "走路喘的话就停下来休息，不要勉强。"
+ },
+ {
+  "id": "zh_0106",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "这个病人没有保险，医药费要先去柜台问押金。"
+ },
+ {
+  "id": "zh_0107",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "药房今天人手不够，出院药可能要等一个小时。"
+ },
+ {
+  "id": "zh_0108",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这粒药可以压碎混在粥里，喂老人家比较容易。"
+ },
+ {
+  "id": "zh_0109",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "氨氯地平每天早上吃一粒，血压正常了也要继续吃。"
+ },
+ {
+  "id": "zh_0110",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "头三天不要开车，吃止痛药的时候也不要开。"
+ },
+ {
+  "id": "zh_0111",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "今天有五个出院，床位应该够急诊那边用。"
+ },
+ {
+  "id": "zh_0112",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "新入院的是肺炎病人，需要吸氧，我安排在靠近护士站的床。"
+ },
+ {
+  "id": "zh_0113",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "呼吸有烂苹果的味道，又一直呕吐，是糖尿病的急症。"
+ },
+ {
+  "id": "zh_0114",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "二甲双胍要跟饭一起吃，刚开始可能会有点拉肚子，过几天就会好。"
+ },
+ {
+  "id": "zh_0115",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "胰岛素针头要垂直插进去，瘦的人可以轻轻捏起皮肤。"
+ },
+ {
+  "id": "zh_0116",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "哮喘的小朋友还是可以运动，运动前先喷一下药。"
+ },
+ {
+  "id": "zh_0117",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "您的号码是二十三号，在五号房间外面等。"
+ },
+ {
+  "id": "zh_0118",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "哮喘控制好的话，完全可以像正常人一样生活。"
+ },
+ {
+  "id": "zh_0119",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "空腹那天胰岛素先不要打，带着来，验完血吃了早餐才打。"
+ },
+ {
+  "id": "zh_0120",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "回家后三天内，如果还觉得累，就多躺着休息。"
+ },
+ {
+  "id": "zh_0121",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "物理治疗安排在每个星期二和四，一共六次。"
+ },
+ {
+  "id": "zh_0122",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这个抗生素要吃完一整个疗程，不要因为好转了就自己停药。"
+ },
+ {
+  "id": "zh_0123",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "血糖机每次验完，把数字记在本子上，覆诊带来给医生看。"
+ },
+ {
+  "id": "zh_0124",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "如果要喷两下，中间等一分钟左右再喷第二下。"
+ },
+ {
+  "id": "zh_0125",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "烟霾严重的时候尽量留在室内，出门记得戴口罩。"
+ },
+ {
+  "id": "zh_0126",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "一号床的心衰病人今天比昨天轻了一公斤，出入水量都记好了。"
+ },
+ {
+  "id": "zh_0127",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "胰岛素打在肚子上，离肚脐两指宽，每次换个位置打。"
+ },
+ {
+  "id": "zh_0128",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "肠胃炎这几天吃清淡一点，白粥、饼干、香蕉都可以。"
+ },
+ {
+  "id": "zh_0129",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "皮肤痒的话，西替利嗪可以连续吃几天，好了就停。"
+ },
+ {
+  "id": "zh_0130",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "华法林漏吃了一天，第二天照原来的份量吃，不要补。"
+ },
+ {
+  "id": "zh_0131",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "肠胃炎开的这包药是止吐的，饭前半小时吃。"
+ },
+ {
+  "id": "zh_0132",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "买面包、饼干的时候，看看包装上写的盐分。"
+ },
+ {
+  "id": "zh_0133",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "如果那天没吃东西，就不要打饭前那一针胰岛素。"
+ },
+ {
+  "id": "zh_0134",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "如果家人神志不清，叫不醒，立刻打电话叫救护车。"
+ },
+ {
+  "id": "zh_0135",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "氯吡格雷如果漏吃，想起来就吃，但快到下一次就跳过。"
+ },
+ {
+  "id": "zh_0136",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "心力衰竭一天喝的水，汤和粥都要算进去。"
+ },
+ {
+  "id": "zh_0137",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "空腹的时候可以喝白开水，但不要喝咖啡或者美禄。"
+ },
+ {
+  "id": "zh_0138",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "七号床的出院单医生已经签了，等药房的药就可以走。"
+ },
+ {
+  "id": "zh_0139",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "培哚普利可能会让您干咳，如果咳到睡不着，覆诊时跟医生讲。"
+ },
+ {
+  "id": "zh_0140",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "脚肿比入院时消了很多，利尿药有在起作用。"
+ },
+ {
+  "id": "zh_0141",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "十号床的吊针位置肿了，我重新在另一只手打。"
+ },
+ {
+  "id": "zh_0142",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "打针的位置如果摸到硬块，就避开那里打。"
+ },
+ {
+  "id": "zh_0143",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "呕吐的话，补液盐每五分钟喝一小口就好，不要一次灌。"
+ },
+ {
+  "id": "zh_0144",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "年纪大了血压偶尔高一点，只要平时稳定就好。"
+ },
+ {
+  "id": "zh_0145",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "睡前两个小时不要吃东西，胃酸比较不会倒流。"
+ },
+ {
+  "id": "zh_0146",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "洗澡时吸一下热水的蒸气，鼻子会比较通。"
+ },
+ {
+  "id": "zh_0147",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "每天称体重的秤最好放在同一个地方，穿差不多的衣服。"
+ },
+ {
+  "id": "zh_0148",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "有骨痛热症的话千万不要吃布洛芬，只能吃扑热息痛。"
+ },
+ {
+  "id": "zh_0149",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "抗生素如果有剩，不要留着下次自己吃。"
+ },
+ {
+  "id": "zh_0150",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "糖尿病的脚伤口变黑或者发臭，不要拖，马上回来。"
+ },
+ {
+  "id": "zh_0151",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "化验结果显示没有心脏病发作，您可以放心。"
+ },
+ {
+  "id": "zh_0152",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "打胰岛素之前先验血糖，把数字写在这本小册子上。"
+ },
+ {
+  "id": "zh_0153",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "胆固醇降下来了，看来阿托伐他汀有效果。"
+ },
+ {
+  "id": "zh_0154",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃氨氯地平有些人脚踝会有点肿，如果很明显就告诉医生。"
+ },
+ {
+  "id": "zh_0155",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "华法林诊所每两个星期来一次，验血后等半个小时拿结果。"
+ },
+ {
+  "id": "zh_0156",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃了抗生素有点软便是正常的，多喝水就好。"
+ },
+ {
+  "id": "zh_0157",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "奥美拉唑是保护胃的，要连续吃两个星期，不要吃几天就停。"
+ },
+ {
+  "id": "zh_0158",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "量血压前半小时不要喝咖啡，也不要抽烟。"
+ },
+ {
+  "id": "zh_0159",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "喉咙痛可以用温盐水漱口，早晚各一次。"
+ },
+ {
+  "id": "zh_0160",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "今天可以下床走动了，恢复得比预期快。"
+ },
+ {
+  "id": "zh_0161",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "您的覆诊是两个星期后，星期三早上九点。"
+ },
+ {
+  "id": "zh_0162",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "晚上症状加重，诊所关了，就直接去急诊部。"
+ },
+ {
+  "id": "zh_0163",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "尿道感染的抗生素吃五天，这几天多喝水，不要憋尿。"
+ },
+ {
+  "id": "zh_0164",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "酒要戒掉，特别是吃二甲双胍和华法林的时候。"
+ },
+ {
+  "id": "zh_0165",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "下午两点有三个出院，一个新入院的从手术室上来。"
+ },
+ {
+  "id": "zh_0166",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "小便带血或者完全尿不出来，马上回来。"
+ },
+ {
+  "id": "zh_0167",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "透明的胰岛素如果变混浊或者有结块，就不要再用了。"
+ },
+ {
+  "id": "zh_0168",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "扑热息痛五百毫克，每次两粒，一天不超过四次。"
+ },
+ {
+  "id": "zh_0169",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "脚肿突然加重，晚上躺下就喘，要尽快回来。"
+ },
+ {
+  "id": "zh_0170",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "如果忘记吃二甲双胍，下一餐记得吃就好，不要一次吃两份。"
+ },
+ {
+  "id": "zh_0171",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "椰浆饭和炒粿条油太多，一个星期吃一次就好。"
+ },
+ {
+  "id": "zh_0172",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "氯沙坦一天一次，每天差不多同一个时间吃就好。"
+ },
+ {
+  "id": "zh_0173",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "慢慢来，不用急着一次讲完，我在这里听您说。"
+ },
+ {
+  "id": "zh_0174",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "肺结核诊所每个月覆诊一次，护士会帮您验痰。"
+ },
+ {
+  "id": "zh_0175",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "验血抽了几管，看起来很多，其实对身体没有影响。"
+ },
+ {
+  "id": "zh_0176",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "奥美拉唑是为了保护胃，因为您同时在吃氯吡格雷。"
+ },
+ {
+  "id": "zh_0177",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "剧烈头痛我们已经做了扫描，没有发现出血。"
+ },
+ {
+  "id": "zh_0178",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这次的泼尼松龙只吃五天，短疗程不需要慢慢减。"
+ },
+ {
+  "id": "zh_0179",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "急诊还有四个等床位的病人，我已经跟床位管理处报告。"
+ },
+ {
+  "id": "zh_0180",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "下次覆诊前要验血，看看吃氯沙坦之后肾功能怎样。"
+ },
+ {
+  "id": "zh_0181",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "回家后这一个星期多休息，不要搬重的东西。"
+ },
+ {
+  "id": "zh_0182",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "高烧三天终于退了，今天最高只有三十七度半。"
+ },
+ {
+  "id": "zh_0183",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "您对青霉素过敏，所以医生没有开阿莫西林给您。"
+ },
+ {
+  "id": "zh_0184",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "伤口裂开或者一直流血，用干净的布压住马上来。"
+ },
+ {
+  "id": "zh_0185",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "肺结核的病人如果咳出很多血，要马上来急诊。"
+ },
+ {
+  "id": "zh_0186",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "饭后吃的意思是吃完饭十五分钟内吃，不用等太久。"
+ },
+ {
+  "id": "zh_0187",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "药膏薄薄涂一层在皮疹上，一天两次，洗完澡涂最好。"
+ },
+ {
+  "id": "zh_0188",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "刚开始吃降血压药，起身要慢慢来，先坐一下才站起来。"
+ },
+ {
+  "id": "zh_0189",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "营养师的预约在同一天的十一点，就在糖尿病诊所旁边。"
+ },
+ {
+  "id": "zh_0190",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "糖尿病不是绝症，按时吃药、控制饮食，一样可以活得好好的。"
+ },
+ {
+  "id": "zh_0191",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "高血压很常见，只要每天吃药，就不容易有并发症。"
+ },
+ {
+  "id": "zh_0192",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "覆诊那天请提早十五分钟到，先去柜台登记。"
+ },
+ {
+  "id": "zh_0193",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "小便化验要取中段尿，手指不要碰到瓶子里面。"
+ },
+ {
+  "id": "zh_0194",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "吃太多扑热息痛，就算没有不舒服，也要马上来验血。"
+ },
+ {
+  "id": "zh_0195",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "支气管炎咳得厉害的话，医生开了沙丁胺醇帮您放松气管。"
+ },
+ {
+  "id": "zh_0196",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这个利尿药可能会让您口渴，但每天喝水不要超过一点五升。"
+ },
+ {
+  "id": "zh_0197",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "病房的口服补液盐用完了，我已经向药房申请。"
+ },
+ {
+  "id": "zh_0198",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃多西环素的时候尽量避开太阳，皮肤比较容易晒伤。"
+ },
+ {
+  "id": "zh_0199",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "支气管炎很常见，大多数人两三个星期就会好。"
+ },
+ {
+  "id": "zh_0200",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "天气热的时候不要在大太阳下做工，多喝水。"
+ },
+ {
+  "id": "zh_0201",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "这是您的预约单，日期、时间和地点都写在上面了。"
+ },
+ {
+  "id": "zh_0202",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "安哥，这包是早上的，这包是晚上的，我在上面画了太阳和月亮。"
+ },
+ {
+  "id": "zh_0203",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "胃不舒服的时候少量多餐，一天吃五六小餐。"
+ },
+ {
+  "id": "zh_0204",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "氯沙坦会让钾升高，所以香蕉和椰水不要喝太多。"
+ },
+ {
+  "id": "zh_0205",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "回家后两三天伤口还会渗一点血水，是正常的。"
+ },
+ {
+  "id": "zh_0206",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "如果您正在喂母乳，吃药前先跟药剂师确认。"
+ },
+ {
+  "id": "zh_0207",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "沙丁胺醇是急救用的，喘的时候才用，要随身带着。"
+ },
+ {
+  "id": "zh_0208",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃了肺结核药，小便变成橙红色是正常的，不用怕。"
+ },
+ {
+  "id": "zh_0209",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "急诊那边的病人可以上来了，床位已经准备好。"
+ },
+ {
+  "id": "zh_0210",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "血压量到一百八、一百一，又头痛得很厉害，立刻来医院。"
+ },
+ {
+  "id": "zh_0211",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "抽筋超过五分钟，马上叫救护车，不要往嘴里塞东西。"
+ },
+ {
+  "id": "zh_0212",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "化验结果还在等，最快今天傍晚就有了。"
+ },
+ {
+  "id": "zh_0213",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃华法林的时候，刷牙流血或者身上一块块瘀青，要告诉我们。"
+ },
+ {
+  "id": "zh_0214",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "小朋友的肠胃炎很常见，只要喝得下水，一般不会有问题。"
+ },
+ {
+  "id": "zh_0215",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "头晕到站不稳，看东西有重影，不要等，马上来。"
+ },
+ {
+  "id": "zh_0216",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "血糖机一直显示太高，测不出数字，要立刻来医院。"
+ },
+ {
+  "id": "zh_0217",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "停车场在后面，停满的话可以停对面的多层停车场。"
+ },
+ {
+  "id": "zh_0218",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "一边的脸突然麻痹，眼睛闭不起来，今天就要来看。"
+ },
+ {
+  "id": "zh_0219",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "骨痛热症出院后，隔天要回来验血看血小板。"
+ },
+ {
+  "id": "zh_0220",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "保险公司要医生补一份报告，担保信才能批下来。"
+ },
+ {
+  "id": "zh_0221",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "每天晚上检查双脚有没有伤口，糖尿病的人脚伤不容易好。"
+ },
+ {
+  "id": "zh_0222",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "安哥晚上有点乱，是不习惯住院的环境，家人陪着会好一点。"
+ },
+ {
+  "id": "zh_0223",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "家里不要有人抽烟，烟味会让哮喘发作。"
+ },
+ {
+  "id": "zh_0224",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "吸氧的时候鼻子干是正常的，我帮您加一点湿度。"
+ },
+ {
+  "id": "zh_0225",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "喷雾器吸完如果还喘，二十分钟后可以再喷一次。"
+ },
+ {
+  "id": "zh_0226",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "小便变成可乐色，眼睛发黄，要尽快回来验血。"
+ },
+ {
+  "id": "zh_0227",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "对药物有任何疑问都可以问我，不要不好意思。"
+ },
+ {
+  "id": "zh_0228",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "糖尿病诊所在一楼，从正门进来右手边。"
+ },
+ {
+  "id": "zh_0229",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "如果有保险卡，覆诊的时候一起带来。"
+ },
+ {
+  "id": "zh_0230",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "小朋友用喷雾器要接储雾罐，面罩盖紧口鼻。"
+ },
+ {
+  "id": "zh_0231",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "宝宝发烧的时候比较爱哭，这是正常的。"
+ },
+ {
+  "id": "zh_0232",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "吊针的地方有点瘀青，热敷几天就会退。"
+ },
+ {
+  "id": "zh_0233",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "类固醇长期吃要补钙，医生会一起开钙片。"
+ },
+ {
+  "id": "zh_0234",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "足部检查一年一次，这次覆诊顺便一起做了。"
+ },
+ {
+  "id": "zh_0235",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "安娣，这个药是长期吃的，不是吃完这一盒就可以。"
+ },
+ {
+  "id": "zh_0236",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "布地奈德是预防用的，就算不喘也要每天早晚喷。"
+ },
+ {
+  "id": "zh_0237",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "十七号床的尿液培养出来了，细菌对阿莫西林有抗药性。"
+ },
+ {
+  "id": "zh_0238",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "小朋友呼吸时肋骨下陷，鼻翼一扇一扇的，要立刻来。"
+ },
+ {
+  "id": "zh_0239",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "化验室打电话来，十一号床的血红蛋白只有七，要不要输血等医生决定。"
+ },
+ {
+  "id": "zh_0240",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "腹泻好了之后，先不要马上吃辣的和生的东西。"
+ },
+ {
+  "id": "zh_0241",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "晚上起身上厕所，床边留一盏小灯。"
+ },
+ {
+  "id": "zh_0242",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "斋戒月期间禁食，糖尿病药的时间要先跟医生商量。"
+ },
+ {
+  "id": "zh_0243",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "眼科检查排在下个月，糖尿病要每年检查一次眼底。"
+ },
+ {
+  "id": "zh_0244",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "阿托伐他汀晚上睡前吃，这样降胆固醇的效果比较好。"
+ },
+ {
+  "id": "zh_0245",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "每天早上上完厕所、吃早餐前量体重，写在本子上。"
+ },
+ {
+  "id": "zh_0246",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "路边摊的冰水和生菜这段时间先不要吃。"
+ },
+ {
+  "id": "zh_0247",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "清洁部说床位半小时后就可以用。"
+ },
+ {
+  "id": "zh_0248",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "阿奇霉素一天一次，连续吃三天，每次500毫克。"
+ },
+ {
+  "id": "zh_0249",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "刚才的血糖有点低，吃了东西之后已经回到六点多了。"
+ },
+ {
+  "id": "zh_0250",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "中风后说话还不清楚，家人要耐心，慢慢跟他讲。"
+ },
+ {
+  "id": "zh_0251",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "肚子痛得很厉害，摸起来硬硬的，马上来急诊。"
+ },
+ {
+  "id": "zh_0252",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "打针后有点酸是正常的，过一两天就不会了。"
+ },
+ {
+  "id": "zh_0253",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "如果当天有事来不了，打去诊所的预约处改期。"
+ },
+ {
+  "id": "zh_0254",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "心跳有时候快一点，可能是太紧张，我们再量一次看看。"
+ },
+ {
+  "id": "zh_0255",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "住院期间我们每四个小时量一次体温和血压，是例行的。"
+ },
+ {
+  "id": "zh_0256",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "咳嗽还会拖一阵子，肺炎好了之后咳嗽才会慢慢停。"
+ },
+ {
+  "id": "zh_0257",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "皮疹不要用热水烫，也不要乱涂偏方。"
+ },
+ {
+  "id": "zh_0258",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "粥里可以加点盐，补充流失的盐分。"
+ },
+ {
+  "id": "zh_0259",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "心悸的时候如果还头晕、快晕倒，要立刻来看。"
+ },
+ {
+  "id": "zh_0260",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "出院后头几天胃口不好没关系，少量多吃几餐就可以。"
+ },
+ {
+  "id": "zh_0261",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "喷雾器的吸口每星期用温水洗一次，晾干再用。"
+ },
+ {
+  "id": "zh_0262",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "腹泻时肚子咕噜咕噜响是正常的，肠子在动。"
+ },
+ {
+  "id": "zh_0263",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "十四号早上八点回来拆线，拆线在外科诊所。"
+ },
+ {
+  "id": "zh_0264",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "发烧是身体在对抗病菌，吃了药会慢慢退的。"
+ },
+ {
+  "id": "zh_0265",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "神志比较模糊是因为感染，治好了会慢慢清醒过来。"
+ },
+ {
+  "id": "zh_0266",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "如果覆诊前已经好了，也还是要回来给医生看一下。"
+ },
+ {
+  "id": "zh_0267",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "还没开封的胰岛素放冰箱，但是不能放冷冻格，会坏掉的。"
+ },
+ {
+  "id": "zh_0268",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "刚做完造影检查，今天多喝水，把药水排出来。"
+ },
+ {
+  "id": "zh_0269",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "骨痛热症退烧后如果肚子痛、一直呕吐，马上回来。"
+ },
+ {
+  "id": "zh_0270",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "中风病人的吞咽测试还没做，所以暂时不能吃东西。"
+ },
+ {
+  "id": "zh_0271",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "骨痛热症那床的红细胞压积升高了，医生要把吊针调快。"
+ },
+ {
+  "id": "zh_0272",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "鼻窦炎可以用温盐水洗鼻子，一天两次。"
+ },
+ {
+  "id": "zh_0273",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "皮疹按下去不会褪色，又发烧，要立刻来急诊。"
+ },
+ {
+  "id": "zh_0274",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "家里的血压机每天早晚各量一次，坐下休息五分钟再量。"
+ },
+ {
+  "id": "zh_0275",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "十一号床的病人今天情绪比较低落，我已经转介给辅导员。"
+ },
+ {
+  "id": "zh_0276",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "这次没带药来没关系，下次记得全部装在袋子里带来。"
+ },
+ {
+  "id": "zh_0277",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "说话不清楚会慢慢改善，语言治疗会帮到您。"
+ },
+ {
+  "id": "zh_0278",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "三号床的化验结果出来了，钾偏低，已经通知医生。"
+ },
+ {
+  "id": "zh_0279",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "吃华法林的时候撞到头，就算不痛也要来检查。"
+ },
+ {
+  "id": "zh_0280",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "阿奇霉素空腹吃或者饭后吃都可以，但每天时间要一样。"
+ },
+ {
+  "id": "zh_0281",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这个药饭前吃，就是吃饭前半个小时。"
+ },
+ {
+  "id": "zh_0282",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "拉茶和冰咖啡都很甜，糖尿病人最好叫无糖的。"
+ },
+ {
+  "id": "zh_0283",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "药吃完了不要自己去药店买一样的，先让医生看过。"
+ },
+ {
+  "id": "zh_0284",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "做胃镜那天要有人陪，做完不能自己开车回家。"
+ },
+ {
+  "id": "zh_0285",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "多西环素吃七天，每天两次，每次一百毫克。"
+ },
+ {
+  "id": "zh_0286",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "牙龈出血、流鼻血不停，或者皮肤出现红点，要马上来医院。"
+ },
+ {
+  "id": "zh_0287",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "培哚普利吃了如果嘴唇或舌头肿起来，要马上停药来急诊。"
+ },
+ {
+  "id": "zh_0288",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "头部撞到之后一直呕吐或者很想睡，要来急诊。"
+ },
+ {
+  "id": "zh_0289",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "小朋友嘴唇干裂、眼睛凹下去，是脱水了，要赶快来。"
+ },
+ {
+  "id": "zh_0290",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "这种皮疹是药物引起的，停了药几天就会退。"
+ },
+ {
+  "id": "zh_0291",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "回去工作之前，先休息满医生给的病假。"
+ },
+ {
+  "id": "zh_0292",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "很多人第一次打胰岛素都会怕，练习几次就习惯了。"
+ },
+ {
+  "id": "zh_0293",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "您吃了格列齐特如果觉得手抖、冒冷汗，马上吃颗糖或者喝点果汁。"
+ },
+ {
+  "id": "zh_0294",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "开了的胰岛素笔可以放在室温，一个月内用完就可以了。"
+ },
+ {
+  "id": "zh_0295",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "胰岛素晚上的剂量改成十八个单位，早上的不变。"
+ },
+ {
+  "id": "zh_0296",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "住院的这几天不用担心工作，先把身体养好。"
+ },
+ {
+  "id": "zh_0297",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "皮肤痒的时候用冷毛巾敷一下，穿宽松的棉质衣服。"
+ },
+ {
+  "id": "zh_0298",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "肺部照片显示阴影小了，肺炎在好转。"
+ },
+ {
+  "id": "zh_0299",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃完药觉得心跳很快，可能是沙丁胺醇的副作用，休息一下会好。"
+ },
+ {
+  "id": "zh_0300",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "心电图安排在同一天，验完血就去三楼做。"
+ },
+ {
+  "id": "zh_0301",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "药房说胰岛素笔要半个小时后才送上来。"
+ },
+ {
+  "id": "zh_0302",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "您的孩子很勇敢，抽血一下子就好了。"
+ },
+ {
+  "id": "zh_0303",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "覆诊那天会比较多人，建议早一点来拿号码。"
+ },
+ {
+  "id": "zh_0304",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "呕吐到连水都喝不进，超过六个小时，就要回来。"
+ },
+ {
+  "id": "zh_0305",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "二甲双胍从今天开始改成每次一千毫克，早晚各一次。"
+ },
+ {
+  "id": "zh_0306",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "咳嗽药水吃了会想睡，晚上睡前吃最合适。"
+ },
+ {
+  "id": "zh_0307",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "每天来诊所吃肺结核药，护士会看着您吃下去。"
+ },
+ {
+  "id": "zh_0308",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "眼底检查会滴散瞳药水，那天最好有家人陪您来，不要自己开车。"
+ },
+ {
+  "id": "zh_0309",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "退烧后有点累是正常的，身体需要时间恢复。"
+ },
+ {
+  "id": "zh_0310",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "发烧的时候穿薄一点，用温水擦身，不要用冰水。"
+ },
+ {
+  "id": "zh_0311",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "咳嗽的时候用纸巾遮住嘴巴，用完丢掉再洗手。"
+ },
+ {
+  "id": "zh_0312",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "氯吡格雷每天一粒，不可以自己停，停了容易再中风。"
+ },
+ {
+  "id": "zh_0313",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "痛风的降尿酸药，发作期间不要自己开始吃，也不要停。"
+ },
+ {
+  "id": "zh_0314",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "手术后第一天可以吃流质，第二天再慢慢吃软的。"
+ },
+ {
+  "id": "zh_0315",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "小朋友的退烧药是按体重算的，他十五公斤，每次七点五毫升。"
+ },
+ {
+  "id": "zh_0316",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "家里的氧气机要远离火炉，旁边绝对不能抽烟。"
+ },
+ {
+  "id": "zh_0317",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "您的家人刚才打电话来问，我跟他们说您今天很好。"
+ },
+ {
+  "id": "zh_0318",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "睡觉时多垫一个枕头，呼吸会比较舒服。"
+ },
+ {
+  "id": "zh_0319",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "鼻窦炎引起的头痛，鼻子通了就会舒服很多。"
+ },
+ {
+  "id": "zh_0320",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "情况变坏的话，先打给救护车，再通知家人。"
+ },
+ {
+  "id": "zh_0321",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "五号床的病人拒绝打针，我已经记录下来，也跟医生讲了。"
+ },
+ {
+  "id": "zh_0322",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "胰岛素打多了，人冒汗又迷糊，家人先喂糖水，再叫救护车。"
+ },
+ {
+  "id": "zh_0323",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "下次覆诊医生会看您的血压记录，每天记得量。"
+ },
+ {
+  "id": "zh_0324",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "十二号床的保险担保信还在等，保险公司说下午才回复。"
+ },
+ {
+  "id": "zh_0325",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "心跳很快又胸口闷，休息了也没好转，马上打救护车。"
+ },
+ {
+  "id": "zh_0326",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "覆诊那天请带上预约卡、身份证和所有的药。"
+ },
+ {
+  "id": "zh_0327",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "哮喘发作后医生开了五天的泼尼松龙，每天早上吃八粒。"
+ },
+ {
+  "id": "zh_0328",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "怀孕的话要先告诉医生，有些药是不能吃的。"
+ },
+ {
+  "id": "zh_0329",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "眼药水一次一滴，滴完闭上眼睛一两分钟。"
+ },
+ {
+  "id": "zh_0330",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "奶粉不用冲淡，照平时的比例冲就可以。"
+ },
+ {
+  "id": "zh_0331",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "出院总结还没打好，医生说查完房就写。"
+ },
+ {
+  "id": "zh_0332",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "孕妇有高烧或者出血，不要等，直接来急诊。"
+ },
+ {
+  "id": "zh_0333",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "血压量到一百二、八十，是药起作用了，不要自己停。"
+ },
+ {
+  "id": "zh_0334",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "保险公司说担保信最快傍晚才发，出院可能要拖到晚上。"
+ },
+ {
+  "id": "zh_0335",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "预约卡上写了日期，如果那天没空，提早打电话来改。"
+ },
+ {
+  "id": "zh_0336",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "喷雾器放在房间里就好，不要放在车上晒太阳。"
+ },
+ {
+  "id": "zh_0337",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "您的孩子现在睡得很好，没有再喘了。"
+ },
+ {
+  "id": "zh_0338",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "您以前有胃溃疡，所以不能吃布洛芬，只能吃扑热息痛。"
+ },
+ {
+  "id": "zh_0339",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "剧烈头痛，是这辈子最痛的那种，要马上来急诊。"
+ },
+ {
+  "id": "zh_0340",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "一边小腿突然肿起来，又红又痛，可能是血块，要马上来。"
+ },
+ {
+  "id": "zh_0341",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "喷雾器如果从嘴角冲出白雾，表示没有吸好，要重新喷。"
+ },
+ {
+  "id": "zh_0342",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "慢性阻塞性肺病的人每年要打一次流感疫苗。"
+ },
+ {
+  "id": "zh_0343",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "华法林的血检下星期二要做，看看剂量要不要调整。"
+ },
+ {
+  "id": "zh_0344",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "骨痛热症的病人手脚冰冷、坐起来就晕，这是休克的前兆。"
+ },
+ {
+  "id": "zh_0345",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吸了沙丁胺醇之后憋气十秒钟，然后才慢慢呼出来。"
+ },
+ {
+  "id": "zh_0346",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "十六号床的安娣跌倒风险高，床栏已经拉起来了。"
+ },
+ {
+  "id": "zh_0347",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "血库说血已经配好了，可以派人下去拿。"
+ },
+ {
+  "id": "zh_0348",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "胸口像被大石压住，冒冷汗，很可能是心脏病，马上打救护车。"
+ },
+ {
+  "id": "zh_0349",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这个类固醇药膏不要涂在脸上，也不要连续涂超过一个星期。"
+ },
+ {
+  "id": "zh_0350",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "胰岛素笔用之前先喷两个单位，确定针头通了。"
+ },
+ {
+  "id": "zh_0351",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "转诊信已经写好了，拿去专科诊所预约。"
+ },
+ {
+  "id": "zh_0352",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "一天两次的药，就是早上八点和晚上八点，隔十二个小时。"
+ },
+ {
+  "id": "zh_0353",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "上呼吸道感染就是普通感冒，不需要打针。"
+ },
+ {
+  "id": "zh_0354",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "拉肚子一天超过十次，而且没力气站起来，要回来吊针。"
+ },
+ {
+  "id": "zh_0355",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "手术后发烧三十八度以上，伤口又很痛，打电话来病房。"
+ },
+ {
+  "id": "zh_0356",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "吃药后嘴唇、眼睛肿起来，喉咙紧紧的，马上来急诊。"
+ },
+ {
+  "id": "zh_0357",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "咳出来的痰从黄色变成白色，表示感染在消退。"
+ },
+ {
+  "id": "zh_0358",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "伤口的敷料是防水的，可以直接洗澡，洗完轻轻拍干。"
+ },
+ {
+  "id": "zh_0359",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "退烧后还是要休息，不要马上去打球。"
+ },
+ {
+  "id": "zh_0360",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "家里有楼梯的话，安哥这几天先睡楼下的房间。"
+ },
+ {
+  "id": "zh_0361",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "二甲双胍如果要做造影检查，前后两天要先停。"
+ },
+ {
+  "id": "zh_0362",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "纱布每两天换一次，如果湿了就马上换。"
+ },
+ {
+  "id": "zh_0363",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "二十二号床今天可以出院，可是担保信还在等，家属要先等一下。"
+ },
+ {
+  "id": "zh_0364",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "睡觉的时候挂蚊帐，免得家里其他人也被传染。"
+ },
+ {
+  "id": "zh_0365",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "痰多的话，可以喝温水，轻拍背部帮助咳出来。"
+ },
+ {
+  "id": "zh_0366",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "布地奈德用在雾化机里，一次一支，做完记得洗脸。"
+ },
+ {
+  "id": "zh_0367",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "喉咙痛到口水都吞不下，一直流口水，要立刻来。"
+ },
+ {
+  "id": "zh_0368",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "西替利嗪晚上吃，吃了可能会有点想睡，开车要小心。"
+ },
+ {
+  "id": "zh_0369",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "高烧三十九度半，吃了退烧药也不退，要回来看。"
+ },
+ {
+  "id": "zh_0370",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "过期的药拿回医院药房，我们帮您处理。"
+ },
+ {
+  "id": "zh_0371",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "气喘的时候嘴唇发白、手脚冰冷，马上叫救护车。"
+ },
+ {
+  "id": "zh_0372",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "胃镜前六个小时不要吃东西，两个小时前连水也不要喝。"
+ },
+ {
+  "id": "zh_0373",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "出门前在手脚涂一层蚊怕水，白天也要防蚊。"
+ },
+ {
+  "id": "zh_0374",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "医生开了三个月的药，够吃到下一次覆诊。"
+ },
+ {
+  "id": "zh_0375",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "慢性阻塞性肺病的喷雾要每天用，不是喘了才用。"
+ },
+ {
+  "id": "zh_0376",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "体温三十八度半，是有点发烧，我们先给您吃扑热息痛。"
+ },
+ {
+  "id": "zh_0377",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "病假单已经给您了，放好拿去给公司。"
+ },
+ {
+  "id": "zh_0378",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "您现在的血压一百四、九十，稍微偏高，等药效出来就会降。"
+ },
+ {
+  "id": "zh_0379",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "您的血压今天是一百三十、八十五，比上次好很多了。"
+ },
+ {
+  "id": "zh_0380",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "睡觉的时候侧睡，痰会比较容易咳出来。"
+ },
+ {
+  "id": "zh_0381",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "心力衰竭的利尿药早上吃，不然晚上会一直起身上厕所。"
+ },
+ {
+  "id": "zh_0382",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "痛风的关节痛又发高烧，关节很红很热，要回来看。"
+ },
+ {
+  "id": "zh_0383",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "下次来之前要空腹十个小时，晚上十点后不要吃东西。"
+ },
+ {
+  "id": "zh_0384",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "口服补液盐不要加糖，也不要用汽水冲。"
+ },
+ {
+  "id": "zh_0385",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "高血压的人眼睛突然看不清楚，要立刻来医院。"
+ },
+ {
+  "id": "zh_0386",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "您的药物过敏记录我们已经写进病历了。"
+ },
+ {
+  "id": "zh_0387",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "肺炎的病人如果呼吸越来越快，一分钟超过三十次，要马上回来。"
+ },
+ {
+  "id": "zh_0388",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "心脏诊所的覆诊改到下个月五号，下午两点。"
+ },
+ {
+  "id": "zh_0389",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "看看喷雾器侧边的数字，剩下二十下的时候就要来拿新的。"
+ },
+ {
+  "id": "zh_0390",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "小朋友每拉一次，就给他喝五十到一百毫升的补液盐。"
+ },
+ {
+  "id": "zh_0391",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "胰岛素出门要放在保冷袋，天气太热会影响药效。"
+ },
+ {
+  "id": "zh_0392",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "可以喝点温蜂蜜水润喉，但一岁以下的宝宝不可以。"
+ },
+ {
+  "id": "zh_0393",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "氧气鼻管每个星期换一次，平时用清水洗干净。"
+ },
+ {
+  "id": "zh_0394",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "小朋友发烧时让他多喝水，衣服不要包太多层。"
+ },
+ {
+  "id": "zh_0395",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "大便带一点鲜血，医生检查过是痔疮，不用太担心。"
+ },
+ {
+  "id": "zh_0396",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "这个病人的化验结果是骨痛热症，床边要挂蚊帐。"
+ },
+ {
+  "id": "zh_0397",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "头晕可能是刚才起身太快，您先坐一下，慢慢来。"
+ },
+ {
+  "id": "zh_0398",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "做呼吸运动时，鼻子吸气，嘴巴像吹蜡烛一样慢慢呼出来。"
+ },
+ {
+  "id": "zh_0399",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "医药费在一楼的柜台付，付完拿收据去药房。"
+ },
+ {
+  "id": "zh_0400",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "中风的黄金时间很短，看到症状不要等，也不要先吃药。"
+ },
+ {
+  "id": "zh_0401",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "胰岛素笔快没了，看到剩下不到十个单位就换新的一支。"
+ },
+ {
+  "id": "zh_0402",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "多西环素不要跟胃药或者钙片同时吃。"
+ },
+ {
+  "id": "zh_0403",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "夜里咳得比较多是正常的，躺下来痰会往上涌。"
+ },
+ {
+  "id": "zh_0404",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "如果早上忘了喷布地奈德，想到就补喷，晚上照常。"
+ },
+ {
+  "id": "zh_0405",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "脱水的情况已经好转了，吊针可以拔掉了。"
+ },
+ {
+  "id": "zh_0406",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "化验结果大概三天出来，覆诊的时候医生会跟您解释。"
+ },
+ {
+  "id": "zh_0407",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "覆诊当天带上家里的血压机，我们帮您看看准不准。"
+ },
+ {
+  "id": "zh_0408",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "华法林跟很多药会冲突，买任何成药之前先问药剂师。"
+ },
+ {
+  "id": "zh_0409",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "喷雾器用之前先摇一摇，呼气呼干净，再慢慢吸进去。"
+ },
+ {
+  "id": "zh_0410",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "六个小时都没有小便，要马上来医院。"
+ },
+ {
+  "id": "zh_0411",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "家里积水的花盆、水桶都要倒干净，不让蚊子繁殖。"
+ },
+ {
+  "id": "zh_0412",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "糖浆开了之后放冰箱，七天后没喝完就不要再用了。"
+ },
+ {
+  "id": "zh_0413",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "呕吐停了之后，先吃几块苏打饼干，再慢慢吃正常饭。"
+ },
+ {
+  "id": "zh_0414",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "您今天的血氧是九十七，很好，不用再吸氧了。"
+ },
+ {
+  "id": "zh_0415",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "走楼梯的时候扶着栏杆，一步一步来。"
+ },
+ {
+  "id": "zh_0416",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "阿莫西林一天吃三次，每次五百毫克，饭后吃比较不伤胃。"
+ },
+ {
+  "id": "zh_0417",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "用这个量杯量，不要用家里的汤匙，份量会不准。"
+ },
+ {
+  "id": "zh_0418",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃阿托伐他汀如果肌肉酸痛得很厉害，要停药打电话来问。"
+ },
+ {
+  "id": "zh_0419",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "胸口痛是胃酸倒流引起的，吃了奥美拉唑会好转。"
+ },
+ {
+  "id": "zh_0420",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这是新的剂量，我帮您在旧的药袋上划掉了。"
+ },
+ {
+  "id": "zh_0421",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "如果吃药后起了皮疹，嘴唇肿起来，要马上停药回来。"
+ },
+ {
+  "id": "zh_0422",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "慢性阻塞性肺病虽然不能根治，但可以控制得很好。"
+ },
+ {
+  "id": "zh_0423",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "伤口痒是正在愈合，忍一忍，不要去抓。"
+ },
+ {
+  "id": "zh_0424",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "氯吡格雷和阿司匹林一起吃，比较容易瘀青，这是正常的。"
+ },
+ {
+  "id": "zh_0425",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "华法林每天晚上同一时间吃，剂量一定要按照卡上写的。"
+ },
+ {
+  "id": "zh_0426",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃降血脂药期间，柚子不要吃太多。"
+ },
+ {
+  "id": "zh_0427",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这个类固醇吃了胃口会变好，也可能会让血糖升高一点。"
+ },
+ {
+  "id": "zh_0428",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "今天白班病床占用率是九成五，只剩一张空床。"
+ },
+ {
+  "id": "zh_0429",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "皮疹变成大片水泡，或者眼睛和嘴巴也烂，马上停药来急诊。"
+ },
+ {
+  "id": "zh_0430",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "头痛多数是因为太累和缺水，喝点水休息一下看看。"
+ },
+ {
+  "id": "zh_0431",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "药丸不要掰开吃，这是缓释的，要整粒吞下去。"
+ },
+ {
+  "id": "zh_0432",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "肺炎刚好，体力要慢慢恢复，不要急着回去上班。"
+ },
+ {
+  "id": "zh_0433",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "肺结核头两个星期在家要戴口罩，尽量不要跟小孩同房。"
+ },
+ {
+  "id": "zh_0434",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "家属要求见医生，我已经约了下午三点。"
+ },
+ {
+  "id": "zh_0435",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "八号床的病人想自动出院，我已经请医生来跟他谈。"
+ },
+ {
+  "id": "zh_0436",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "可以多跟安哥聊天、看旧照片，帮助他恢复。"
+ },
+ {
+  "id": "zh_0437",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "这张单子拿去化验室，他们会帮您抽血。"
+ },
+ {
+  "id": "zh_0438",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "这个心电图看起来正常，胸口痛可能是肌肉拉伤。"
+ },
+ {
+  "id": "zh_0439",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "改预约要至少三天前通知，不然要重新排。"
+ },
+ {
+  "id": "zh_0440",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "穿软一点的鞋，袜子不要太紧。"
+ },
+ {
+  "id": "zh_0441",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "奥美拉唑早上空腹吃，吃了半个小时后才吃早餐。"
+ },
+ {
+  "id": "zh_0442",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "五号床今天大便三次都带血，已经拿样本去化验。"
+ },
+ {
+  "id": "zh_0443",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "宝宝不肯喝奶，又一直很想睡，叫不太醒，赶快来。"
+ },
+ {
+  "id": "zh_0444",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "慢性阻塞性肺病的人如果嘴唇发紫、很想睡，要马上叫救护车。"
+ },
+ {
+  "id": "zh_0445",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "喷了三次喷雾器还是喘，讲不出完整的句子，就直接来急诊。"
+ },
+ {
+  "id": "zh_0446",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "在家可以慢慢走动，躺太久反而不好。"
+ },
+ {
+  "id": "zh_0447",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "小朋友的疫苗下个月补打，记得带他的健康手册。"
+ },
+ {
+  "id": "zh_0448",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "长途坐车后突然呼吸困难、胸口刺痛，立刻来急诊。"
+ },
+ {
+  "id": "zh_0449",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "痛风的痛一般三到五天就会减轻，冰敷会帮到您。"
+ },
+ {
+  "id": "zh_0450",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "心力衰竭的药比较多，每一粒都很重要，不要挑着吃。"
+ },
+ {
+  "id": "zh_0451",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "体重超重的话，慢慢减，每个月减一两公斤就很好。"
+ },
+ {
+  "id": "zh_0452",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "二十一号床的家属投诉等药太久，我已经去药房催了。"
+ },
+ {
+  "id": "zh_0453",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "暂时不要喝牛奶和咖啡，油炸的东西也先别吃。"
+ },
+ {
+  "id": "zh_0454",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "每天记下大便的次数，如果还是拉很多就要回来。"
+ },
+ {
+  "id": "zh_0455",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "尿道感染每天喝八杯水，上完厕所从前往后擦。"
+ },
+ {
+  "id": "zh_0456",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "吐了一次不代表病情变坏，我们会继续观察。"
+ },
+ {
+  "id": "zh_0457",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "扑热息痛发烧的时候才吃，两次之间至少隔四个小时。"
+ },
+ {
+  "id": "zh_0458",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "如果不小心多吃了一粒华法林，先不要慌，打电话来问。"
+ },
+ {
+  "id": "zh_0459",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "雾化机的面罩每次用完拿去冲水，放干净的地方晾干。"
+ },
+ {
+  "id": "zh_0460",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "很多感冒药本身就有扑热息痛，买的时候要看清楚。"
+ },
+ {
+  "id": "zh_0461",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "胸口痛超过十五分钟，痛到手臂或下巴，要立刻来急诊。"
+ },
+ {
+  "id": "zh_0462",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "叫到您的名字，就进去第三号诊室。"
+ },
+ {
+  "id": "zh_0463",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "心悸的人少喝咖啡、浓茶和能量饮料。"
+ },
+ {
+  "id": "zh_0464",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "格列齐特早上早餐前吃，吃了一定要吃东西，不然血糖会太低。"
+ },
+ {
+  "id": "zh_0465",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "出门旅行的话，胰岛素放手提行李，不要托运。"
+ },
+ {
+  "id": "zh_0466",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "老人家突然变得很糊涂，认不得家人，要马上带来医院。"
+ },
+ {
+  "id": "zh_0467",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "十四号床今天放了胸腔引流管，引流量我每四个小时记一次。"
+ },
+ {
+  "id": "zh_0468",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "夜班有两个病人需要每小时观察，我写在交班本上了。"
+ },
+ {
+  "id": "zh_0469",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "发烧三十八度以上才吃扑热息痛，不到就多喝水休息。"
+ },
+ {
+  "id": "zh_0470",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "冲好的补液盐放不过一天，喝不完就倒掉再冲新的。"
+ },
+ {
+  "id": "zh_0471",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "痛风发作的时候，止痛药要饭后吃，多喝水帮忙排尿酸。"
+ },
+ {
+  "id": "zh_0472",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "混合型胰岛素用之前要轻轻滚动十次，不要大力摇。"
+ },
+ {
+  "id": "zh_0473",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "高血压的话，汤不要喝完，酱油和辣椒酱也少放。"
+ },
+ {
+  "id": "zh_0474",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "药房问十九号床的华法林剂量，医生今天改成三毫克。"
+ },
+ {
+  "id": "zh_0475",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "胸口痛的时候先坐下，不要自己开车来，叫救护车。"
+ },
+ {
+  "id": "zh_0476",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "拆线之前伤口不要泡水，也不要去游泳。"
+ },
+ {
+  "id": "zh_0477",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "痛风期间少吃内脏、海鲜和啤酒，多喝白开水。"
+ },
+ {
+  "id": "zh_0478",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "吊针拔掉的地方又红又肿，而且越来越痛，要回来看。"
+ },
+ {
+  "id": "zh_0479",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "骨痛热症的皮疹在恢复期出现，其实是好转的迹象。"
+ },
+ {
+  "id": "zh_0480",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "三号床对青霉素过敏，手带已经换成红色的了。"
+ },
+ {
+  "id": "zh_0481",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "出院后三天回来诊所量血压，看看新药有没有效。"
+ },
+ {
+  "id": "zh_0482",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "小便的颜色是淡黄色，就表示水喝够了。"
+ },
+ {
+  "id": "zh_0483",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "语言治疗师会在出院前来看安哥，教家人怎么喂食。"
+ },
+ {
+  "id": "zh_0484",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "喘鸣声比昨天小了，喷雾药有效果。"
+ },
+ {
+  "id": "zh_0485",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "目前男病房还有两张空床位，女病房已经满了。"
+ },
+ {
+  "id": "zh_0486",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "您体重比较轻，扑热息痛每次一粒就够了。"
+ },
+ {
+  "id": "zh_0487",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "喝酒会让血压和血糖都不稳定，最好完全不喝。"
+ },
+ {
+  "id": "zh_0488",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "哮喘的人家里要少用地毯，床单每星期用热水洗。"
+ },
+ {
+  "id": "zh_0489",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "辣的、酸的和太油的暂时不要吃，让胃休息一下。"
+ },
+ {
+  "id": "zh_0490",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "鼻窦炎的喷鼻药每边鼻孔喷一下，头稍微向前低。"
+ },
+ {
+  "id": "zh_0491",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "口服补液盐一包冲两百毫升温开水，慢慢一口一口喝。"
+ },
+ {
+  "id": "zh_0492",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "您的血小板从三万升到八万，已经过了危险期。"
+ },
+ {
+  "id": "zh_0493",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "做肺功能测试前四个小时不要用喷雾器，除非真的很喘。"
+ },
+ {
+  "id": "zh_0494",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "九号床的家属想转去私人医院，病历复印要明天才拿得到。"
+ },
+ {
+  "id": "zh_0495",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "吃饭不要太咸，腌菜、咸鱼、酱料这段时间都少吃。"
+ },
+ {
+  "id": "zh_0496",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "家里多开窗通风，特别是病人睡的房间。"
+ },
+ {
+  "id": "zh_0497",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "那个声音是机器在量血压，不是出了什么事。"
+ },
+ {
+  "id": "zh_0498",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "心跳突然很慢，头晕到快晕倒，马上来急诊。"
+ },
+ {
+  "id": "zh_0499",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "这个皮疹是病毒引起的，不痒不痛的话，过几天就会退。"
+ },
+ {
+  "id": "zh_0500",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "医生下午会来跟您解释报告，有什么问题可以先写下来。"
+ },
+ {
+  "id": "zh_0501",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "验血是早上七点半开始，先到二楼的验血处拿号码。"
+ },
+ {
+  "id": "zh_0502",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "降血压药不要等头晕才吃，每天都要按时吃。"
+ },
+ {
+  "id": "zh_0503",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "泼尼松龙不能突然停，医生会教您慢慢减量。"
+ },
+ {
+  "id": "zh_0504",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "出院后先吃软一点的东西，像粥和蒸蛋。"
+ },
+ {
+  "id": "zh_0505",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "糖化血红蛋白从九降到七，您真的做得很好。"
+ },
+ {
+  "id": "zh_0506",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "吐出来的东西有血，或者像咖啡渣，马上来医院。"
+ },
+ {
+  "id": "zh_0507",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "支气管炎大多数是病毒引起的，不一定需要抗生素。"
+ },
+ {
+  "id": "zh_0508",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "伤口保持干燥，洗澡时用塑料袋包好。"
+ },
+ {
+  "id": "zh_0509",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "骨痛热症好了以后，体力会差一两个星期，这是正常的。"
+ },
+ {
+  "id": "zh_0510",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "负压病房现在满了，新来的肺结核病人要先留在急诊。"
+ },
+ {
+  "id": "zh_0511",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "打针前先看看剂量窗口，转到十二个单位再按下去。"
+ },
+ {
+  "id": "zh_0512",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "鼻窦炎如果眼睛周围肿起来，看东西模糊，要马上来。"
+ },
+ {
+  "id": "zh_0513",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "验糖化血红蛋白不用空腹，随时来都可以。"
+ },
+ {
+  "id": "zh_0514",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "家里准备一个体温计，发烧就量一量记下来。"
+ },
+ {
+  "id": "zh_0515",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "十五号床的家属在问几时可以出院，医生查房后再确认。"
+ },
+ {
+  "id": "zh_0516",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "喘鸣越来越大声，或者突然听不到了，都是危险的信号。"
+ },
+ {
+  "id": "zh_0517",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "血压药跟糖尿病药可以一起吃，不会冲突的。"
+ },
+ {
+  "id": "zh_0518",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "格列齐特减成半粒，因为您最近血糖有点偏低。"
+ },
+ {
+  "id": "zh_0519",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "七号床的阿莫西林改成吊针了，药房已经送上来。"
+ },
+ {
+  "id": "zh_0520",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "骨痛热症期间，看看小便量，一天要有四五次。"
+ },
+ {
+  "id": "zh_0521",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这是您的药物清单，去其他诊所看病的时候拿给医生看。"
+ },
+ {
+  "id": "zh_0522",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "用过的针头放进硬的塑料瓶，满了拿来医院丢。"
+ },
+ {
+  "id": "zh_0523",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "十八号床的血压一百六、一百，已经报告主治医生。"
+ },
+ {
+  "id": "zh_0524",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "心力衰竭听起来很吓人，其实意思是心脏的力气比较弱。"
+ },
+ {
+  "id": "zh_0525",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "小朋友误吞了药，把药瓶带着马上来急诊。"
+ },
+ {
+  "id": "zh_0526",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "脖子硬、怕光，又发烧头痛，要立刻来急诊。"
+ },
+ {
+  "id": "zh_0527",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "肺结核是可以治好的，只要把六个月的药吃完。"
+ },
+ {
+  "id": "zh_0528",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "肺结核的药每天空腹吃，一次都不能漏，要吃满六个月。"
+ },
+ {
+  "id": "zh_0529",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "多西环素不要跟牛奶一起吃，要隔开两个小时。"
+ },
+ {
+  "id": "zh_0530",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "下个月的覆诊刚好是公共假期，我们帮您改到隔天。"
+ },
+ {
+  "id": "zh_0531",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "物理治疗师下午会来病房，帮十二号床的安哥做步行训练。"
+ },
+ {
+  "id": "zh_0532",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "泼尼松龙会让人情绪比较激动，家人要多体谅一下。"
+ },
+ {
+  "id": "zh_0533",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "如果喘到要坐起来才能睡，就要回来调整药物。"
+ },
+ {
+  "id": "zh_0534",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "回家后继续吃阿莫西林七天，把疗程完成。"
+ },
+ {
+  "id": "zh_0535",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "喘鸣是气管收窄的声音，用了药就会放松。"
+ },
+ {
+  "id": "zh_0536",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "血糖早上是七点二，控制得不错，继续保持。"
+ },
+ {
+  "id": "zh_0537",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "不舒服就按床边的铃，我们随时会过来。"
+ },
+ {
+  "id": "zh_0538",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "您担心的事我会转告医生，让他来跟您谈。"
+ },
+ {
+  "id": "zh_0539",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "煮开的水放凉再喝，比较安全。"
+ },
+ {
+  "id": "zh_0540",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "八号床的吊针快滴完了，下一包已经挂在旁边。"
+ },
+ {
+  "id": "zh_0541",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "喷雾器每天要用超过四次，表示哮喘在变坏，这星期内要回来。"
+ },
+ {
+  "id": "zh_0542",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "病人的出院药已经核对过，一共七种，都跟单子一样。"
+ },
+ {
+  "id": "zh_0543",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "医生说您的中风比较轻，手的力气会慢慢回来。"
+ },
+ {
+  "id": "zh_0544",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "突然一边手脚无力、嘴歪、讲话不清楚，这是中风，马上送医院。"
+ },
+ {
+  "id": "zh_0545",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃利尿药的这段时间，每天早上起身量一次体重。"
+ },
+ {
+  "id": "zh_0546",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "头晕的时候先坐下来，慢慢起身，避免跌倒。"
+ },
+ {
+  "id": "zh_0547",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "七天后回来拆线，这段时间伤口不要涂任何东西。"
+ },
+ {
+  "id": "zh_0548",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "一天吃三餐，定时定量，不要一餐吃很多。"
+ },
+ {
+  "id": "zh_0549",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "如果嘴唇变紫，或者手指发黑，不要等，立刻打救护车。"
+ },
+ {
+  "id": "zh_0550",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "这几种情况，不管白天晚上，直接来急诊，不用预约。"
+ },
+ {
+  "id": "zh_0551",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "二十五号床的血培养结果还没出，最快明天早上。"
+ },
+ {
+  "id": "zh_0552",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "明天早上八点有两个病人要空腹做检查，今晚十二点开始禁食。"
+ },
+ {
+  "id": "zh_0553",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "一天之内体重增加两公斤以上，要打电话来心脏诊所。"
+ },
+ {
+  "id": "zh_0554",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "肠镜前一天要喝清肠药，那天只能吃流质。"
+ },
+ {
+  "id": "zh_0555",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "心悸是因为贫血，补了铁以后会慢慢改善。"
+ },
+ {
+  "id": "zh_0556",
+  "lang": "zh",
+  "kind": "ward",
+  "text": "三号床的高烧退了，今天最高三十七度八。"
+ },
+ {
+  "id": "zh_0557",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "吞咽还不太好，食物要煮软一点，喝水时坐直慢慢喝。"
+ },
+ {
+  "id": "zh_0558",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这是新的药，吃了之后如果有什么不舒服，随时打去诊所问。"
+ },
+ {
+  "id": "zh_0559",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "出院的药够吃两个星期，快吃完前记得来覆诊拿药。"
+ },
+ {
+  "id": "zh_0560",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "如果吐了药，半小时内吐的就再吃一次，超过就不用。"
+ },
+ {
+  "id": "zh_0561",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "吃华法林期间小便变红，或者流鼻血止不住，立刻来医院。"
+ },
+ {
+  "id": "zh_0562",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "去茶室喝咖啡，记得叫少甜或者无糖。"
+ },
+ {
+  "id": "zh_0563",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "吃泼尼松龙的这几天，血糖可能会偏高，要多验几次。"
+ },
+ {
+  "id": "zh_0564",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "骨痛热症在家要多喝水，每天至少喝两升半。"
+ },
+ {
+  "id": "zh_0565",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "宝宝哭的时候没有眼泪，尿布一直是干的，就是脱水了，赶快来。"
+ },
+ {
+  "id": "zh_0566",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "低血糖时先吃三颗糖，十五分钟后再验一次。"
+ },
+ {
+  "id": "zh_0567",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "吃了两个星期的药，您已经不会再传染给家人了。"
+ },
+ {
+  "id": "zh_0568",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "氨氯地平的药丸很小，老人家可以用药盒分好一个星期。"
+ },
+ {
+  "id": "zh_0569",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "验血前一天晚上可以照常吃药，早上的药等验完血才吃。"
+ },
+ {
+  "id": "zh_0570",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "出院后第一个星期，每天量两次体温。"
+ },
+ {
+  "id": "zh_0571",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "腹泻的时候不要自己买止泻药给小朋友吃。"
+ },
+ {
+  "id": "zh_0572",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "呼吸困难是因为肺里有积水，抽出来以后会舒服很多。"
+ },
+ {
+  "id": "zh_0573",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "西替利嗪一天一粒就够，皮肤很痒也不要多吃。"
+ },
+ {
+  "id": "zh_0574",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "疤痕可以等伤口完全好了再涂药膏。"
+ },
+ {
+  "id": "zh_0575",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这瓶阿莫西林糖浆每次5毫升，一天三次，要摇匀再倒。"
+ },
+ {
+  "id": "zh_0576",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "验痰的话，早上起身第一口痰吐进这个瓶子，盖紧带来。"
+ },
+ {
+  "id": "zh_0577",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "以前的旧药先不要吃了，医生已经换成新的。"
+ },
+ {
+  "id": "zh_0578",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "吃完饭不要马上躺下，至少等半个小时。"
+ },
+ {
+  "id": "zh_0579",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "安哥吞药丸有困难的话，我们可以换成药水。"
+ },
+ {
+  "id": "zh_0580",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "所有的药都放高一点，不要让孙子拿到。"
+ },
+ {
+  "id": "zh_0581",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "您的扫描安排在二十号，前一晚十二点后不要吃东西。"
+ },
+ {
+  "id": "zh_0582",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "这么晚了还没睡吗？睡不着的话可以叫我陪您聊聊。"
+ },
+ {
+  "id": "zh_0583",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "两种退烧药不要一起吃，里面都有扑热息痛。"
+ },
+ {
+  "id": "zh_0584",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "支气管炎咳嗽可能拖两三个星期，多喝温水会舒服一点。"
+ },
+ {
+  "id": "zh_0585",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "针头每次都要换新的，重复用会痛，也容易发炎。"
+ },
+ {
+  "id": "zh_0586",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "专科诊所会打电话给您安排时间，大概一个星期内。"
+ },
+ {
+  "id": "zh_0587",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "下星期一再来验一次肾功能，因为换了新的血压药。"
+ },
+ {
+  "id": "zh_0588",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "这个止咳药一天三次，每次10毫升，不要超过。"
+ },
+ {
+  "id": "zh_0589",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "多西环素要用一大杯水送服，吃完半小时内不要躺下。"
+ },
+ {
+  "id": "zh_0590",
+  "lang": "zh",
+  "kind": "homecare",
+  "text": "老人家在家要注意有没有喝够水，天气热很容易脱水。"
+ },
+ {
+  "id": "zh_0591",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "腹泻已经少很多了，今天只拉了两次，表示在好转。"
+ },
+ {
+  "id": "zh_0592",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "药要放在阴凉的地方，不要放在车里，也不要给太阳晒。"
+ },
+ {
+  "id": "zh_0593",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "老人家两天没吃东西，水也喝不下，要带来医院。"
+ },
+ {
+  "id": "zh_0594",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "中药和保健品暂时先不要吃，等医生看过再说。"
+ },
+ {
+  "id": "zh_0595",
+  "lang": "zh",
+  "kind": "reassure",
+  "text": "骨痛热症大部分人都能完全康复，您现在的情况很稳定。"
+ },
+ {
+  "id": "zh_0596",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "用储雾罐的话，喷一下之后慢慢吸五次就可以。"
+ },
+ {
+  "id": "zh_0597",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "阿奇霉素吃完三天，药效还会持续几天，所以不用担心。"
+ },
+ {
+  "id": "zh_0598",
+  "lang": "zh",
+  "kind": "appointment",
+  "text": "两个星期后回来照肺部的片，看看肺炎好了没有。"
+ },
+ {
+  "id": "zh_0599",
+  "lang": "zh",
+  "kind": "medication",
+  "text": "鼻敏感吃西替利嗪，早上吃会想睡的话就改到晚上。"
+ },
+ {
+  "id": "zh_0600",
+  "lang": "zh",
+  "kind": "redflag",
+  "text": "腰侧很痛又发高烧，可能是肾脏发炎，今天就要来。"
+ }
+]

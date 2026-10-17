@@ -1,0 +1,60 @@
+/* Sona Care readings and visit prep. Nothing here colours a value: the page does not judge readings. */
+.rd { display: flex; flex-direction: column; gap: var(--space-5); }
+.rd-calm { margin: 0; color: var(--muted); font-size: var(--text-body); }
+
+.rd-form .field label, .rd-prep .field label { font-size: var(--text-body); }
+.rd-form .field input, .rd-prep .field input { font-size: var(--text-body); }
+.rd-form .field-hint, .rd-form .field-error, .rd-prep .field-error { font-size: var(--text-body); }
+
+/* Two columns: the trend and the list, with the form in the rail. One column when narrow. */
+.rd-body { display: grid; grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr); gap: var(--space-5); align-items: start; }
+.rd-main, .rd-rail { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+.rd-main > .card, .rd-form { display: flex; flex-direction: column; gap: var(--space-4); }
+@container page (max-width: 880px) { .rd-body { grid-template-columns: minmax(0, 1fr); } }
+
+/* The latest value of each measure, inside the chart card: one measure never sits alone in a wide row. */
+.rd-stats { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); margin: 0; }
+.rd-stats div { display: flex; flex-direction: column; min-width: 0; }
+.rd-stats dt { color: var(--muted); font-size: var(--text-body); }
+.rd-stats dd { margin: 0; font-size: var(--text-body); color: var(--muted); font-variant-numeric: tabular-nums; }
+.rd-stats strong { color: var(--ink); font-size: var(--text-panel); font-weight: 600; margin-right: var(--space-2); }
+.rd .chart text { font-size: calc(15px * var(--chart-k, 1)); }
+.rd-calm { max-width: 70ch; }
+.rd-more { align-self: flex-start; }
+
+/* Pills: the kind of reading. The chosen one is washed blue. */
+.rd-kinds { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.rd-kinds button { min-height: var(--tap); padding: 0 var(--space-4); border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-size: var(--text-body); cursor: pointer; }
+.rd-kinds button[aria-pressed="true"] { background: var(--blue-wash); border-color: var(--blue); font-weight: 600; }
+
+/* The 7/30/90-day switch: one track, the chosen one filled. */
+.rd-seg { display: inline-flex; padding: var(--space-1); border-radius: 999px; background: var(--canvas); border: 1px solid var(--line); }
+.rd-seg button { min-height: var(--tap); padding: 0 var(--space-4); border: 0; border-radius: 999px; background: none; color: var(--ink); font: inherit; font-size: var(--text-body); cursor: pointer; white-space: nowrap; }
+.rd-seg button[aria-pressed="true"] { background: var(--blue); color: var(--surface); font-weight: 600; }
+.rd-kinds button:focus-visible, .rd-seg button:focus-visible, .rd-switch input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.rd-form .card-title, .rd-head .card-title { margin: 0; }
+.rd-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: var(--space-4); align-items: start; }
+.rd-inputs > :last-child, .rd-inputs > :first-child:nth-last-child(2) { grid-column: 1 / -1; }
+.rd-form .field input { min-height: 56px; font-variant-numeric: tabular-nums; }
+/* The button sits at the right; "Saved." settles beside it. */
+.rd-actions { display: flex; flex-direction: row-reverse; justify-content: flex-start; align-items: center; gap: var(--space-3); font-size: var(--text-body); color: var(--muted); }
+.rd-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+
+.rd-chart h3, .rd-sees h3 { margin: 0 0 var(--space-2); font-size: var(--text-body); font-weight: 600; }
+.rd-chart h3:not(:first-child) { margin-top: var(--space-4); }
+
+.rd-log { margin: 0; padding: 0; list-style: none; font-variant-numeric: tabular-nums; }
+.rd-log li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); min-height: var(--tap); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--line); font-size: var(--text-body); }
+.rd-log li:first-child { border-top: 0; }
+
+/* Visit prep, on Follow-ups. */
+.rd-prep { margin: var(--space-5) 0; }
+.rd-switch { display: flex; align-items: center; gap: var(--space-3); min-height: var(--tap); font-size: var(--text-body); cursor: pointer; }
+.rd-switch input { width: 24px; height: 24px; margin: 0; accent-color: var(--blue); }
+.rd-sees { padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-group); background: var(--canvas); }
+.rd-sees-text { margin: 0; white-space: pre-wrap; font-size: var(--text-body); }
+
+/* On a phone the 7 / 30 / 90 days switch shares the card's width instead of running past its edge. */
+.rd-seg { max-width: 100%; }
+.rd-seg button { flex: 1 1 auto; min-width: 0; padding-inline: clamp(var(--space-2), 2vw, var(--space-4)); }

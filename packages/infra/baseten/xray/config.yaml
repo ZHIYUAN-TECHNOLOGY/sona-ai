@@ -1,0 +1,35 @@
+# Box ③ X-ray: MedGemma 1.5 4B, FP8, on one L4. Scales to zero; the Worker wakes it when an image is attached.
+# Needs the Hugging Face account behind the hf_access_token secret to have accepted MedGemma's terms.
+model_name: sona-xray
+base_image:
+  image: vllm/vllm-openai:v0.29.0-cu129
+weights:
+  - source: "hf://google/medgemma-1.5-4b-it@91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b"
+    mount_location: /app/checkpoint/model
+    auth:
+      auth_method: CUSTOM_SECRET
+      auth_secret_name: hf_access_token
+docker_server:
+  start_command: >-
+    vllm serve /app/checkpoint/model
+    --served-model-name medgemma-1.5-4b
+    --host 0.0.0.0 --port 8000
+    --quantization fp8
+    --max-model-len 8192
+    --max-num-seqs 8
+    --gpu-memory-utilization 0.9
+    --limit-mm-per-prompt.image 1
+  readiness_endpoint: /health
+  liveness_endpoint: /health
+  predict_endpoint: /v1/chat/completions
+  server_port: 8000
+environment_variables:
+  VLLM_LOGGING_LEVEL: WARNING
+secrets:
+  hf_access_token: null
+resources:
+  instance_type: "L4:4x16"
+runtime:
+  health_checks:
+    startup_threshold_seconds: 1800
+  predict_concurrency: 8

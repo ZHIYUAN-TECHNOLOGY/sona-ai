@@ -1,21 +1,19 @@
 {
   "expo": {
-    "name": "med-ai",
-    "slug": "med-ai",
+    "name": "Sona Pro",
+    "slug": "sona-ai",
+    "owner": "zhiyuan-technology",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "med-ai",
+    "scheme": "sona-ai",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "ai.zhiyuantech.sona",
+      "appleTeamId": "LTF2YZMF2D",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Sona records the consult on-device to transcribe it. Audio never leaves the phone and is deleted when you sign.",
         "ITSAppUsesNonExemptEncryption": false
-      },
-      "bundleIdentifier": "ai.zhiyuantech.aurio",
-      "entitlements": {
-        "com.apple.developer.kernel.increased-memory-limit": true
       }
     },
     "android": {
@@ -26,12 +24,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.mybettertapp",
-      "permissions": [
-        "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
-        "android.permission.RECORD_AUDIO"
-      ]
+      "package": "com.anonymous.sonaai"
     },
     "web": {
       "output": "static",
@@ -43,50 +36,28 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "imageWidth": 140,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#F5F6F8"
         }
       ],
-      "expo-sqlite",
-      "react-native-audio-api",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "deploymentTarget": "17.0"
-          }
-        }
-      ],
+      "expo-image",
+      "expo-notifications",
       "expo-asset",
-      "expo-font",
-      "expo-secure-store",
-      "expo-status-bar",
-      "expo-web-browser",
+      "./plugins/with-scene-lifecycle",
       [
-        "react-native-enriched-markdown",
+        "expo-camera",
         {
-          "enableMath": false
+          "cameraPermission": "Sona uses the camera to scan paper pages, X-rays and wounds you attach to a visit or add to your library.",
+          "recordAudioAndroid": false
         }
       ],
       [
-        "expo-image-picker",
+        "expo-audio",
         {
-          "photosPermission": "Aurio reads text from document photos on-device to add to the consult. Photos stay on this phone.",
-          "cameraPermission": "Aurio scans documents (labs, referrals) on-device. Images stay on this phone."
+          "microphonePermission": "Sona listens while you hold or tap the orb, and while you record a consultation, to turn speech into text. Each recording is sent to your hospital's server to be transcribed, then deleted."
         }
-      ],
-      [
-        "react-native-document-scanner-plugin",
-        {
-          "cameraPermission": "Aurio scans documents (labs, referrals) on-device. Images stay on this phone."
-        }
-      ],
-      "./plugins/withObjcLinker",
-      "./plugins/withSigning"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -95,9 +66,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "e9fa4ed3-143f-4684-a54a-012383fac6a4"
+        "projectId": "7cddd66f-5a00-404b-9b22-f6e1c171e072"
       }
     },
-    "owner": "zhiyuan-technology"
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7cddd66f-5a00-404b-9b22-f6e1c171e072"
+    }
   }
 }

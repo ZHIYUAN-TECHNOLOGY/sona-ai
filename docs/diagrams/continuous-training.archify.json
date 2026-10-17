@@ -1,0 +1,282 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Sona continuous training loop",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "App"
+        },
+        "backend": {
+          "label": "Server step"
+        },
+        "security": {
+          "label": "Privacy / safety gate"
+        },
+        "database": {
+          "label": "Dataset"
+        },
+        "cloud": {
+          "label": "Baseten GPU"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "phones",
+      "label": "Phones \u00b7 Sona AI + Sona Care"
+    },
+    {
+      "id": "hospital",
+      "label": "Hospital tenant \u00b7 Sona server"
+    },
+    {
+      "id": "stopped",
+      "label": "Stopped",
+      "variant": "exception"
+    },
+    {
+      "id": "training",
+      "label": "Baseten \u00b7 training"
+    }
+  ],
+  "phases": [
+    {
+      "id": "collect",
+      "label": "Collect",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "protect",
+      "label": "Protect",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "security"
+    },
+    {
+      "id": "train",
+      "label": "Train",
+      "fromCol": 4,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "ship",
+      "label": "Ship",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "capture",
+    "consent",
+    "deid",
+    "review",
+    "dataset",
+    "train_job",
+    "evaluate",
+    "signoff",
+    "rollout"
+  ],
+  "nodes": [
+    {
+      "id": "capture",
+      "lane": "phones",
+      "col": 0,
+      "type": "frontend",
+      "label": "Real use",
+      "sublabel": "note edits, voice, replies",
+      "width": 160
+    },
+    {
+      "id": "consent",
+      "lane": "hospital",
+      "col": 1,
+      "type": "security",
+      "label": "Consent check",
+      "sublabel": "hospital + patient opt-in",
+      "width": 160
+    },
+    {
+      "id": "excluded",
+      "lane": "stopped",
+      "col": 1,
+      "type": "security",
+      "label": "Never used",
+      "sublabel": "no consent or excluded",
+      "width": 160
+    },
+    {
+      "id": "deid",
+      "lane": "hospital",
+      "col": 2,
+      "type": "security",
+      "label": "OpenMed de-identify",
+      "sublabel": "names, IC, phones out",
+      "tag": "raw stays here",
+      "width": 160
+    },
+    {
+      "id": "review",
+      "lane": "hospital",
+      "col": 3,
+      "type": "backend",
+      "label": "Review + leak gate",
+      "sublabel": "data steward sample",
+      "width": 160
+    },
+    {
+      "id": "blocked",
+      "lane": "stopped",
+      "col": 3,
+      "type": "security",
+      "label": "Blocked",
+      "sublabel": "identifier found",
+      "width": 160
+    },
+    {
+      "id": "dataset",
+      "lane": "hospital",
+      "col": 4,
+      "type": "database",
+      "label": "Versioned dataset",
+      "sublabel": "de-identified only",
+      "width": 160
+    },
+    {
+      "id": "train_job",
+      "lane": "training",
+      "col": 4,
+      "type": "cloud",
+      "label": "Fine-tune job",
+      "sublabel": "ASR, Gemma, voice",
+      "width": 160
+    },
+    {
+      "id": "evaluate",
+      "lane": "training",
+      "col": 5,
+      "type": "cloud",
+      "label": "Evaluate + shadow",
+      "sublabel": "beats current model?",
+      "width": 160
+    },
+    {
+      "id": "signoff",
+      "lane": "hospital",
+      "col": 5,
+      "type": "security",
+      "label": "Safety sign-off",
+      "sublabel": "clinical safety lead",
+      "width": 160
+    },
+    {
+      "id": "rollout",
+      "lane": "phones",
+      "col": 5,
+      "type": "frontend",
+      "label": "New model live",
+      "sublabel": "staged rollout",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "send",
+      "from": "capture",
+      "to": "consent",
+      "label": "queued"
+    },
+    {
+      "id": "no-consent",
+      "from": "consent",
+      "to": "excluded",
+      "label": "no",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "allowed",
+      "from": "consent",
+      "to": "deid",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-review",
+      "from": "deid",
+      "to": "review"
+    },
+    {
+      "id": "leak",
+      "from": "review",
+      "to": "blocked",
+      "label": "leak",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "approved",
+      "from": "review",
+      "to": "dataset",
+      "label": "approved",
+      "variant": "emphasis"
+    },
+    {
+      "id": "export",
+      "from": "dataset",
+      "to": "train_job",
+      "label": "export"
+    },
+    {
+      "id": "trained",
+      "from": "train_job",
+      "to": "evaluate"
+    },
+    {
+      "id": "passes",
+      "from": "evaluate",
+      "to": "signoff",
+      "label": "passes"
+    },
+    {
+      "id": "ship",
+      "from": "signoff",
+      "to": "rollout",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Privacy rules",
+      "items": [
+        "Raw notes and audio never leave the hospital tenant",
+        "Audio: identifiers bleeped using speech timestamps",
+        "Withdrawing consent drops rows from future datasets"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Best training signal",
+      "items": [
+        "Doctor's saved note vs the AI draft",
+        "Corrected transcripts of Manglish speech",
+        "Check-in replies the doctor re-labelled"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Every round repeats",
+      "items": [
+        "New model makes new drafts, doctors correct them",
+        "A model that is not better never ships"
+      ]
+    }
+  ]
+}

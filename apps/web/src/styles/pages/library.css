@@ -1,0 +1,42 @@
+.lib-form { display: grid; gap: var(--space-3); }
+.lib-form input:not([type="checkbox"]):not([type="range"]), .lib-form textarea {
+  width: 100%; min-height: var(--tap); padding: var(--space-2) var(--space-3); font: inherit; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm, 8px);
+}
+.lib-form textarea { min-height: 9rem; resize: vertical; }
+.lib-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); }
+.lib-modes .btn { justify-content: center; padding-inline: var(--space-2); white-space: nowrap; }
+.lib-row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.lib-note { color: var(--muted); font-size: var(--text-sm, 0.875rem); }
+.lib-error { color: var(--red); }
+.lib-clip { max-width: 28rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.xray-stage { overflow: auto; max-height: 70vh; background: var(--canvas); border: 1px solid var(--line); border-radius: var(--radius-md, 12px); }
+.xray-image { position: relative; transform-origin: top left; }
+.xray-image img, .xray-video { display: block; width: 100%; }
+.xray-box { position: absolute; border: 2px solid var(--blue); background: var(--blue-wash); opacity: 0.6; }
+.xray-box span { position: absolute; top: 0; left: 0; padding: 0 var(--space-1); background: var(--blue); color: var(--surface); font-size: var(--text-sm, 0.875rem); }
+.xray-findings { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-4); }
+
+.lib-title { display: flex; align-items: center; gap: var(--space-3); min-width: 13rem; }
+/* A camera file name has no spaces: it breaks where it must, so the year and Remove stay in the table. */
+.lib-title > div { min-width: 0; overflow-wrap: anywhere; }
+/* Three lines of a long title in the row; the whole title is in Selected source. */
+.lib-title strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
+.lib-file { flex: none; display: grid; place-items: center; width: var(--avatar-md); height: var(--avatar-md); border-radius: var(--radius-control); background: var(--fill-selected); color: var(--muted); }
+.lib-num { font-variant-numeric: tabular-nums; }
+.lib-detail { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: var(--space-4) 0 0; font-size: var(--text-small); }
+.lib-detail dt { color: var(--muted); }
+.lib-detail dd { margin: 0; text-align: right; }
+.lib-year { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; min-width: max-content; }
+/* A 250-character title wraps; the year, its chip and the row's buttons keep their own width beside it. */
+.lib-year .chip { white-space: nowrap; }
+/* Publisher and year share a row, so the add button stays in view in the rail. */
+.lib-pair { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem; gap: var(--space-2); }
+.lib-add textarea { min-height: 7rem; }
+.lib-add p { margin: 0; }
+/* The page being read (an ImageLoader): a 3:4 page, the photo fitted inside it. */
+.lib-scan { width: min(100%, 240px); aspect-ratio: 3 / 4; border-radius: var(--radius-control); background: var(--canvas); }
+.lib-scan .il-media { position: absolute; inset: 0; }
+.lib-scan img { width: 100%; height: 100%; object-fit: contain; }
+@container page (max-width: 720px) { .lib-title { min-width: 11rem; } }

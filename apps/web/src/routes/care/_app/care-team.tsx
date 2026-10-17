@@ -1,0 +1,137 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+
+import { EmptyState, PageHeader } from "@/components/page";
+import { Avatar, Button, Card } from "@/components/primitives";
+import { RightRail, WithRail } from "@/components/rail";
+import { orpc } from "@/lib/orpc";
+import "@/styles/pages/care-team.css";
+
+export const Route = createFileRoute("/care/_app/care-team")({ component: Page });
+
+/** Up to three plain topics from a doctor's search tags, without near repeats ("breath", "breathing") or words the role already says. */
+function topics(tags: string[], specialty: string) {
+  const role = specialty.toLowerCase();
+  const kept: string[] = [];
+  for (const raw of tags) {
+    const tag = raw.trim().toLowerCase();
+    if (tag && !role.includes(tag) && !kept.some(k => tag.startsWith(k) || k.startsWith(tag))) kept.push(tag);
+  }
+  return kept.slice(0, 3);
+}
+
+/** "Bahasa Melayu, English and Tamil". */
+const languages = new Intl.ListFormat("en", { type: "conjunction" });
+
+const urgent = (
+  <section className="ct-urgent" aria-labelledby="ct-urgent-title">
+    <h2 id="ct-urgent-title">In an emergency</h2>
+    <p>If you faint or have chest pain, call 999. Messages are not for emergencies.</p>
+    <Button variant="danger" href="tel:999">Call 999 now</Button>
+  </section>
+);
+
+function Page() {
+  const doctors = useQuery(orpc.care.doctors.list.queryOptions());
+  const me = useQuery(orpc.care.me.queryOptions());
+  const team = doctors.data?.filter(d => d.careTeam);
+  const hospital = me.data?.hospital;
+
+  const count = team?.length
+    ? `${team.length} ${team.length === 1 ? "doctor looks" : "doctors look"} after you`
+    : "The people looking after you";
+  const lead = hospital ? `${count} at ${hospital}.` : `${count}.`;
+
+  return (
+    <>
+      <PageHeader
+        title="Care team"
+        lead={lead}
+        actions={<Button variant="primary" to="/care/messages">Message your care team</Button>}
+      />
+      <WithRail
+        rail={
+          <RightRail label="How to reach us">
+            {urgent}
+            <Card title="How to reach us">
+              {hospital ? <p className="ct-hospital">{hospital}</p> : null}
+              <p className="ct-note">Write to your care team in Messages. One message reaches the whole team.</p>
+            </Card>
+            <YourData />
+          </RightRail>
+        }
+      >
+        {!team ? (
+          doctors.isError ? (
+            <EmptyState title="We could not load your care team" action={<Button onClick={() => void doctors.refetch()}>Try again</Button>}>
+              {doctors.error.message}
+            </EmptyState>
+          ) : <EmptyState>Loading your care team…</EmptyState>
+        ) : team.length === 0 ? (
+          <EmptyState title="No one is listed yet">You can still write to the ward in Messages.</EmptyState>
+        ) : (
+          <ul className="ct-grid">
+            {team.map(d => {
+              const ask = topics(d.tags, d.specialty);
+              return (
+              <li key={d.id}>
+                <Card className="ct-person">
+                  <div className="ct-who">
+                    <Avatar name={d.name} size="lg" />
+                    <div>
+                      <h2 className="ct-name">{d.name}</h2>
+                      <p className="ct-role">{d.specialty} doctor</p>
+                    </div>
+                  </div>
+                  {d.about ? <p className="ct-about">{d.about}</p> : null}
+                  {ask.length ? (
+                    <div className="ct-ask">
+                      <h3>Ask about</h3>
+                      <ul>{ask.map(t => <li key={t}>{t}</li>)}</ul>
+                    </div>
+                  ) : null}
+                  <p className="ct-foot">
+                    Find them in {d.room}.{d.languages.length ? ` Speaks ${languages.format(d.languages)}.` : ""}
+                  </p>
+                </Card>
+              </li>
+              );
+            })}
+          </ul>
+        )}
+      </WithRail>
+    </>
+  );
+}
+
+/** The patient's own choice (off until they switch it on): saved on change, put back if the save fails. */
+function YourData() {
+  const queryClient = useQueryClient();
+  const queryKey = orpc.care.trainingConsent.queryKey();
+  const consent = useQuery(orpc.care.trainingConsent.queryOptions());
+  const save = useMutation(orpc.care.setTrainingConsent.mutationOptions({
+    onMutate: async ({ consented }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const before = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, { consented, at: new Date() });
+      return { before };
+    },
+    onError: (_error, _input, kept) => queryClient.setQueryData(queryKey, kept?.before),
+    onSettled: () => queryClient.invalidateQueries({ queryKey }),
+  }));
+  const on = consent.data?.consented ?? false;
+  return (
+    <Card title="Your data" className="ct-data">
+      <p>You can let your check-in replies and your doctor's corrected notes about you, with your name and details removed, help improve Sona. Off unless you switch it on. Saying no changes nothing about your care.</p>
+      <label className="ct-switch">
+        <input type="checkbox" role="switch" checked={on} disabled={!consent.data || save.isPending} onChange={e => save.mutate({ consented: e.target.checked })} />
+        <span>Share to help improve Sona</span>
+      </label>
+      <p aria-live="polite">
+        {consent.isError ? "We could not load your choice. Try again later." : !consent.data ? "Loading your choice…"
+          : on ? "Your data is used for training, with your name and details removed." : "Your data is not used for training."}
+      </p>
+      {save.isError && <p role="alert">That was not saved, so your choice is unchanged. Try again.</p>}
+    </Card>
+  );
+}

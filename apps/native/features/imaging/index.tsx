@@ -1,0 +1,461 @@
+import { Text } from "@/components/sona/text";
+import * as Haptics from "expo-haptics";
+import { Image, type ImageSource } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
+import { router, Stack, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Linking, Pressable, TextInput, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
+import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
+import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
+import { wakingOf } from "@/features/live/waking";
+import { Caption, PressScale } from "@/components/sona/parts";
+import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
+import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
+import { IconRow, Section } from "@/components/sona/sections";
+import { palette, type, radius } from "@/components/sona/theme";
+import { Action, Chip, Expand, Glass, Icon, Insight, Notice, pillStyle, Reveal, Screen, SourceLink, Surface, surfaceStyle, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useEncounterSelect } from "@/features/encounter/store";
+import { sameShallow } from "@/features/live/keep-same";
+import type { Encounter, FeatureProps, Patient } from "@/features/encounter/types";
+import { RingedFilm, useFilm } from "@/features/evidence";
+import { FindingsCard } from "@/features/findings";
+import { onImage } from "@/features/findings/model";
+import { useFindings } from "@/features/live/findings-sync";
+import { useRole } from "@/features/live/roles";
+import { api } from "@/features/live";
+import { filmDate, groupFilms, type SimilarFilm } from "./compare";
+import { useXrayAttach, useXrayReading, useXrayUploadOf } from "./use-upload";
+import { FilmScan } from "./scan";
+import { scanOf, type ScanState } from "./upload";
+import { takeXray } from "@/features/library/scan-state";
+import { teachingImage, type TeachingImage } from "./fixture";
+import { ImageEdge, OriginalImageViewer, VIEWING } from "./viewer";
+import { NoVisit } from "@/components/sona/no-visit";
+
+export { OriginalImageViewer } from "./viewer";
+
+type Scenario = NonNullable<Encounter["imagingScenario"]>;
+const SCENARIOS: Record<Scenario, string> = { reference: "Reference", unsupported: "Unsupported category", "no-finding": "No finding result" };
+
+function haptic() { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); }
+
+/**
+ * The answer in the conversation: the image as hero with one provenance line, what the source says,
+ * then the one limit that travels with it. Tap the image to open the original.
+ */
+export function XrayCard({ patient, onOpen, onRequest, result }: FeatureProps) {
+  const encounter = useEncounterSelect(s => s.encounter);
+  const evidence = result?.imagingSnapshot ?? encounter;
+  const sections = result?.sections ?? 3;
+  const scenario = evidence?.imagingScenario ?? "reference";
+  const superseded = Boolean(result && result.revision !== encounter?.revision);
+  const busy = encounter?.requests.some(item => item.kind === "xray" && item.status === "streaming") ?? false;
+  const requestState = result ? encounter?.requests.find(item => item.id === result.requestId) : undefined;
+  const interrupted = requestState?.status === "failed" || requestState?.status === "cancelled";
+  const attachment = evidence?.imagingAttachment;
+  const referenceImage = evidence?.hideTeachingImage ? undefined : teachingImage;
+  const [sourceError, setSourceError] = useState(false);
+  const imageSource = attachment ? { uri: attachment.uri } : referenceImage?.source;
+  // Live mode: this card's own image, once stored, is read by the image model (MedGemma), labelled unvalidated; a reading of
+  // any other image is never shown here. Demo mode, and an image that was never sent, keep the honest sample.
+  const reading = useXrayReading(patient.encounterId, attachment?.uri);
+  const server = useXrayAttach();
+  // A compared film (an earlier one of this patient's, or a similar one) takes today's place until "Back to today's film".
+  const [shown, setShown] = useState<SimilarFilm>();
+  const openOriginal = () => { if (result && (attachment || referenceImage)) router.push({ pathname: "/xray", params: { recordCardId: result.id, patientId: result.patientId } }); else onOpen("xray"); };
+  return <View style={{ gap: 18 }}>
+    {shown ? <ComparedFilm film={shown} onBack={() => { haptic(); setShown(undefined); }} /> : <View style={{ gap: 8 }}>
+      <Preview source={imageSource} scan={scanOf(reading)} label={attachment ? "Selected local teaching image" : referenceImage ? "Reference radiograph, unrelated to this patient" : "Add a teaching image"} onPress={openOriginal} />
+      {attachment && <Caption icon={null}>{attachment.name} · {reading?.saving ? "saving to your hospital’s storage" : reading && !reading.failed ? "in your hospital’s storage" : "local, not uploaded or analysed"}</Caption>}
+      {!attachment && referenceImage && <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Caption icon={null}>Reference example, not this patient · {referenceImage.attribution} · {referenceImage.license}</Caption>
+        <SourceLink label="Source" onPress={() => { void Linking.openURL(referenceImage.sourceUrl).catch(() => setSourceError(true)); }} />
+      </View>}
+      {sourceError && <Notice warning>The source page could not be opened. Attribution remains available here.</Notice>}
+    </View>}
+    {sections < 2 && <AnalysisStatus interrupted={interrupted} />}
+    {sections >= 2 && <Reveal>{reading ? <ModelRead reading={reading} onRetry={attachment && server.live ? () => server.attach(patient.encounterId, attachment) : undefined} /> : <Findings scenario={scenario} attachment={Boolean(attachment)} summary={referenceImage?.referenceSummary} />}</Reveal>}
+    {sections === 2 && !interrupted && <Caption icon={null}>Completing provenance and limitations…</Caption>}
+    {/* Live, the sample's limits show only under a sample: a model's reading, a wait or a failure each say their own. */}
+    {sections >= 3 && (!reading || reading.data?.source === "fixture") && <Reveal><Limits sample={Boolean(attachment) || scenario !== "reference"} waking={wakingOf(reading?.data)} detail="The original stays available to inspect." /></Reveal>}
+    {/* Live, once this visit's film is in storage: what to set beside it. Demo mode has no hospital of films. */}
+    {sections >= 3 && server.live && attachment && <Reveal><Compare patient={patient} shown={shown?.encounterId} onShow={film => { haptic(); setShown(film); }} /></Reveal>}
+    {superseded && <Notice>This response preserves an earlier image and scenario. New requests use the current encounter image.</Notice>}
+    {(interrupted || sections >= 3 && scenario !== "reference") && <View style={{ alignSelf: "flex-start" }}>
+      <Action label={superseded ? "Analyse current encounter image" : "Retry analysis"} secondary icon="arrow.clockwise" disabled={busy} onPress={() => onRequest("xray")} />
+    </View>}
+  </View>;
+}
+
+/** The image as hero: a dark viewing tile that settles in (Arc's source-to-summary, calmed) and opens the original; scanned while the image model reads it. */
+export function Preview({ source, label, onPress, scan = "off" }: { source?: ImageSource | number; label: string; onPress: () => void; scan?: ScanState }) {
+  const { reducedMotion } = useAccessibleEffects();
+  return <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 8, scale: 0.97 })}>
+    <Pressable accessibilityRole={source ? "imagebutton" : "button"} accessibilityLabel={label} accessibilityHint={source ? "Opens the original image" : undefined} onPress={onPress}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98} style={{ ...VIEWING, aspectRatio: 1.25 }}>
+      {source
+        ? <Image source={source} contentFit="contain" style={{ flex: 1 }} transition={reducedMotion ? 0 : 200} />
+        : <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10 }}><Icon name="photo" size={32} color={palette.line} /><Text style={{ ...type.callout, color: palette.line }}>Add a teaching image</Text></View>}
+      {source && <FilmScan source={source} state={scan} />}
+      {source && <View pointerEvents="none" style={{ position: "absolute", right: 12, bottom: 12, width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }}>
+        <Icon name="arrow.up.left.and.arrow.down.right" size={14} color={palette.white} />
+      </View>}
+      <ImageEdge />
+    </PressScale>}</Pressable>
+  </Animated.View>;
+}
+
+type Similar = Awaited<ReturnType<typeof api.xray.similar>>;
+/**
+ * "Is this nodule new?": this patient's earlier films, then the hospital's films most like today's, each with what was
+ * read on it (open findings highlighted); a phrase at the row's end finds films by words instead. A tap sets one in
+ * today's place (`onShow`), a second tap or "Back to today's film" restores it. Placeholders, no spinners; nothing moves.
+ */
+function Compare({ patient, shown, onShow }: { patient: Patient; shown?: string; onShow: (film?: SimilarFilm) => void }) {
+  const [text, setText] = useState("");
+  const [asked, setAsked] = useState(""); // the phrase searched; empty means films like today's
+  const [result, setResult] = useState<Similar | "off" | "failed">();
+  useEffect(() => {
+    let gone = false;
+    setResult(undefined);
+    api.xray.similar(asked ? { text: asked } : { encounterId: patient.encounterId })
+      .then(r => { if (!gone) setResult(r); }, e => { if (!gone) setResult((e as { code?: string } | undefined)?.code === "SERVICE_UNAVAILABLE" ? "off" : "failed"); });
+    return () => { gone = true; };
+  }, [asked, patient.encounterId]);
+  const found = typeof result === "object" ? result : undefined;
+  const groups = found && groupFilms(found.films, patient.id, patient.encounterId);
+  const line = result === "off" ? "Film search is off"
+    : result === "failed" ? "Films could not be fetched"
+    : found && !found.indexed ? "Not indexed yet; re-upload to compare"
+    : groups && !groups.earlier.length && !groups.similar.length ? (asked ? `No films found for “${asked}”` : "No other films in this hospital yet")
+    : undefined;
+  const row = (label: string, films: SimilarFilm[]) => films.length > 0 && <View style={{ gap: 6 }}>
+    <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>{label}</Text>
+    <View style={{ flexDirection: "row", gap: 10 }}>{films.map(f => <Tile key={f.encounterId} film={f} shown={shown === f.encounterId} onPress={() => onShow(shown === f.encounterId ? undefined : f)} />)}</View>
+  </View>;
+  return <View style={{ gap: 10 }}>
+    <Text accessibilityRole="header" style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Compare</Text>
+    {line && <Caption icon={null}>{line}</Caption>}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16, alignItems: "flex-start" }}>
+      {groups && row(asked ? "This patient" : "This patient’s earlier films", groups.earlier)}
+      {groups && row(asked ? "In this hospital" : "Similar films in this hospital", groups.similar)}
+      <TextInput value={text} onChangeText={t => { setText(t); if (!t.trim()) setAsked(""); }} onSubmitEditing={() => setAsked(text.trim())} returnKeyType="search" clearButtonMode="while-editing" autoCapitalize="none" autoCorrect={false}
+        accessibilityLabel="Find films by words" placeholder="Find films: effusion on the left" placeholderTextColor={palette.placeholder}
+        style={{ width: 220, minHeight: 44, borderRadius: radius.control, paddingHorizontal: 14, fontSize: type.footnote.fontSize, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+    </ScrollView>
+  </View>;
+}
+
+const TILE = 116;
+/** One film to compare: grey with its date until its pixels arrive, then the film ringed; whose, when, and what was read on it. */
+function Tile({ film, shown, onPress }: { film: SimilarFilm; shown: boolean; onPress: () => void }) {
+  const data = useFilm(film.encounterId);
+  const ready = data && data !== "failed" ? data : undefined;
+  const date = filmDate(film.uploadedAt);
+  return <Pressable accessibilityRole="imagebutton" accessibilityLabel={`${film.patientName}, ${date}${film.findings.length ? `, ${film.findings.join(", ")}` : ""}`} accessibilityState={{ selected: shown }} accessibilityHint={shown ? "Back to today’s film" : "Shows this film in place of today’s"} onPress={onPress} style={{ width: TILE, gap: 5 }}>{({ pressed }) => <>
+    <PressScale pressed={pressed} scale={0.97} style={{ ...VIEWING, height: TILE * 0.8, backgroundColor: ready ? palette.ink : palette.line, borderWidth: 2, borderColor: shown ? palette.blue : "transparent" }}>
+      {ready ? <RingedFilm film={ready} /> : <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.caption, color: palette.muted }}>{data === "failed" ? "Not available" : date}</Text></View>}
+      <ImageEdge />
+    </PressScale>
+    <Text numberOfLines={1} style={{ ...type.caption, fontWeight: "600", color: palette.ink }}>{film.patientName}</Text>
+    <Text style={{ ...type.caption, color: palette.muted }}>{date}</Text>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+      {film.findings.map((label, i) => { const open = ready?.open.includes(label);
+        return <Text key={i} numberOfLines={1} style={{ ...type.caption, overflow: "hidden", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 9, color: open ? palette.blue : palette.muted, backgroundColor: open ? "#E6EEFC" : "rgba(20,28,40,0.05)" }}>{label}</Text>; })}
+    </View>
+  </>}</Pressable>;
+}
+
+/** The compared film in today's place, with its own marks, and the way back one tap away. */
+function ComparedFilm({ film, onBack }: { film: SimilarFilm; onBack: () => void }) {
+  const data = useFilm(film.encounterId);
+  const date = filmDate(film.uploadedAt);
+  return <View style={{ gap: 8 }}>
+    <View accessible accessibilityLabel={`${film.patientName}, ${date}`} style={{ ...VIEWING, aspectRatio: 1.25 }}>
+      {data && data !== "failed" ? <RingedFilm film={data} /> : <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.callout, color: palette.line }}>{data === "failed" ? "Film not available" : date}</Text></View>}
+      <ImageEdge />
+    </View>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <Chip label="Back to today’s film" icon={<Icon name="arrow.uturn.backward" size={14} />} onPress={onBack} />
+      <Caption icon={null}>{film.patientName} · {date}{film.findings.length ? ` · ${film.findings.join(", ")}` : ""}</Caption>
+    </View>
+  </View>;
+}
+
+/** While the fixture streams: a quiet status with a halftone sweep beside the image, never over its pixels. */
+function AnalysisStatus({ interrupted }: { interrupted: boolean }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const sweep = useSharedValue(0);
+  const live = !interrupted && !reducedMotion;
+  useEffect(() => {
+    if (!live) return;
+    sweep.set(withRepeat(withTiming(1, { duration: 1400, easing: Easing.linear }), -1));
+    return () => cancelAnimation(sweep);
+  }, [live, sweep]);
+  return <View accessibilityLiveRegion="polite" onLayout={e => setSize(e.nativeEvent.layout)} style={[surfaceStyle, { borderRadius: radius.group, padding: 14, gap: 3 }]}>
+    {live && size.width > 0 && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: radius.control, overflow: "hidden" }}><HalftoneShimmer width={size.width} height={size.height} progress={sweep} /></View>}
+    <Text style={{ ...type.subhead, fontWeight: "600", color: interrupted ? palette.amber : palette.ink }}>{interrupted ? "Response interrupted" : "Analysing"}</Text>
+    <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>{interrupted ? "The preview and attachment are kept." : "Preparing the sample response. No image inference is running."}</Text>
+  </View>;
+}
+
+/** Only ever the source's own description or an honest unavailable state; nothing is read from the pixels. */
+/** What an X-ray answer said, shown under the image so the viewer and its analysis are one page. */
+function AnalysisDetails({ snapshot, reading }: { snapshot?: Pick<Encounter, "imagingAttachment" | "hideTeachingImage" | "imagingScenario">; reading?: ReturnType<typeof useXrayReading> }) {
+  if (!snapshot) return null;
+  const attachment = Boolean(snapshot.imagingAttachment);
+  const scenario = snapshot.imagingScenario ?? "reference";
+  const summary = snapshot.hideTeachingImage ? undefined : teachingImage?.referenceSummary;
+  return <View style={{ gap: 14 }}>
+    <Text accessibilityRole="header" style={{ ...type.headline, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>Analysis</Text>
+    {/* Live: the same reading of this image as its card in the visit shows. */}
+    {reading ? <ModelRead reading={reading} /> : <Findings scenario={scenario} attachment={attachment} summary={summary} />}
+    {(!reading || reading.data?.source === "fixture") && <Limits sample={attachment || scenario !== "reference"} waking={wakingOf(reading?.data)} />}
+  </View>;
+}
+
+/** The answer's limits: a sample response is labelled as one (no conclusion from the image); the reference example says what it covers. */
+function Limits({ sample, detail, waking }: { sample: boolean; detail?: string; waking?: number }) {
+  return <View style={{ gap: 4 }}>
+    {sample && <SampleLabel source="fixture" waking={waking} what="X-ray" />}
+    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+      <Icon name="info.circle" size={15} color={palette.muted} />
+      <Caption icon={null}>{sample ? `No image-derived conclusion can be made.${detail ? ` ${detail}` : ""}` : "Describes only the published example, not this encounter, and does not establish model accuracy."}</Caption>
+    </View>
+  </View>;
+}
+
+/** The image model's reading of the uploaded X-ray: a draft description, never a validated read or a diagnosis. */
+function ModelRead({ reading, onRetry }: { reading: NonNullable<ReturnType<typeof useXrayReading>>; onRetry?: () => void }) {
+  // The read waits for the image to be stored: asked sooner, the server would read the visit's previous image.
+  if (reading.loading) return <Drafting label={reading.saving ? "Saving to your hospital’s storage…" : "Reading the image…"} slow={MODEL_SLOW} />;
+  // The stored image is read again without sending it again (`retry` is the read's own; absent when the upload failed or a newer image took its place).
+  const again = reading.retry && <View style={{ alignSelf: "flex-start" }}><Action label="Analyse again" secondary icon="arrow.clockwise" onPress={reading.retry} /></View>;
+  if (reading.error) return <View style={{ gap: 10 }}>
+    <Notice warning>{`Not read: ${reading.error}. Nothing has been concluded from this image.`}</Notice>
+    {reading.failed && onRetry && <View style={{ alignSelf: "flex-start" }}><Action label="Retry upload" secondary icon="arrow.clockwise" onPress={onRetry} /></View>}
+    {again}
+  </View>;
+  const data = reading.data;
+  // While the image model starts, the read is asked again by itself (useLiveXray), so there is nothing to redo.
+  if (!data || data.source !== "model") return <View style={{ gap: 10 }}>
+    <IconRow icon="eye.slash" title="Findings unavailable" detail={wakingOf(data)
+      ? "The image model is starting, so nothing has been read from this image yet. Its reading appears here by itself."
+      : "The image model didn’t answer in time, so nothing has been read from this image. Analyse again in a minute."} />
+    {!wakingOf(data) && again}
+  </View>;
+  return <View style={{ gap: 10 }}>
+    <Text accessibilityRole="header" style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>What the image model describes</Text>
+    {data.findings.map((f, i) => <Text key={i} selectable style={{ ...type.callout, color: palette.ink }}>{f}</Text>)}
+    <View style={{ gap: 4 }}>
+      <SampleLabel source="model" model={"model" in data ? data.model : undefined} storedAt={"storedAt" in data ? data.storedAt : undefined} />
+      <Caption icon={null}>Unvalidated: not a radiologist’s report or a diagnosis. Check it against the image.</Caption>
+    </View>
+  </View>;
+}
+
+function Findings({ scenario, attachment, summary }: { scenario: Scenario; attachment: boolean; summary?: string }) {
+  if (scenario === "unsupported") return <Notice warning>Unsupported category (simulation): outside chest radiography. No interpretation is available, and the image has not been classified by a model.</Notice>;
+  if (scenario === "no-finding" || attachment) return <IconRow icon="eye.slash" title="Findings unavailable" detail={attachment ? "Nothing has been read from this image. Its modality and clinical meaning have not been verified." : "This sample returned no finding result. That does not establish a normal examination."} />;
+  if (summary) return <IconRow icon="text.quote" title="In the uploader’s words, not a model reading" detail={summary} />;
+  return <Notice>No image is attached and no findings have been generated.</Notice>;
+}
+
+/**
+ * Focused viewer page: canvas like `Screen`, but a gesture-handler scroll view that stops scrolling while the image is zoomed
+ * (`Screen` has no scroll lock, so the pinch would fight the scroll). `bottom` pins the decision bar as `Screen` does.
+ */
+function ViewerPage({ children, scrollEnabled = true, bottom }: { children: ReactNode; scrollEnabled?: boolean; bottom?: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const [barHeight, setBarHeight] = useState(0);
+  const scroll = <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: "linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)" }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 20 }}>{children}{bottom ? <View style={{ height: barHeight }} /> : null}</ScrollView>;
+  if (!bottom) return scroll;
+  // ponytail: copies `Screen`'s bar; fold into the Page primitive once it takes a scroll lock.
+  return <View style={{ flex: 1 }}>
+    {scroll}
+    <View onLayout={e => setBarHeight(e.nativeEvent.layout.height)} style={{ position: "absolute", left: 16, right: 16, bottom: Math.max(insets.bottom, 12) }}>
+      <Glass style={{ padding: 12, gap: 10 }}>{bottom}</Glass>
+    </View>
+  </View>;
+}
+/** One line for what an X-ray answer said (the same cases `Findings` spells out), or that there is none yet. */
+function resultLine(snapshot?: Pick<Encounter, "imagingAttachment" | "hideTeachingImage" | "imagingScenario">, reading?: ReturnType<typeof useXrayReading>) {
+  if (!snapshot) return "Not analysed yet";
+  if (reading?.data?.source === "model") return "Described by the image model · unvalidated";
+  const scenario = snapshot.imagingScenario ?? "reference";
+  if (scenario === "unsupported") return "Unsupported category";
+  if (scenario === "no-finding" || snapshot.imagingAttachment) return "Findings unavailable";
+  if (!snapshot.hideTeachingImage && teachingImage?.referenceSummary) return "Reference description only";
+  return "No findings generated";
+}
+/** The page's insight: whose image this is (or that it is not this patient's), then what the analysis found. */
+function Heading({ identity, result, open = 0 }: { identity: string; result: string; open?: number }) {
+  return <View style={{ zIndex: 2 }}><Insight eyebrow={identity}>{open ? <><Tone of="soon">{open} {open === 1 ? "finding" : "findings"} to follow up</Tone> · </> : null}{result}</Insight></View>;
+}
+
+/** Menu pop (after Edits' discard menu): scales up from the trigger with a subtle spring overshoot while it fades in. */
+const MENU_SPRING = { duration: 300, dampingRatio: 0.8 };
+function menuIn() {
+  "worklet";
+  return {
+    initialValues: { opacity: 0, transform: [{ translateY: -6 }, { scale: 0.9 }] },
+    animations: { opacity: withTiming(1, { duration: 150, easing: EASE_OUT }), transform: [{ translateY: withSpring(0, MENU_SPRING) }, { scale: withSpring(1, MENU_SPRING) }] },
+  };
+}
+
+type MenuItem = { label: string; icon: string; disabled?: boolean; onPress: () => void };
+/** The `⋯` trigger, placed in the navigation header's right slot; it dips while its menu is open. */
+function MenuTrigger({ open, onPress }: { open: boolean; onPress: () => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  return <Pressable accessibilityRole="button" accessibilityLabel="Image options" accessibilityState={{ expanded: open }} onPress={() => { haptic(); onPress(); }} hitSlop={6}
+   >{({ pressed }) => <Animated.View style={{ ...pillStyle, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", transform: [{ scale: reducedMotion ? 1 : pressed ? 0.96 : open ? 0.92 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never}>
+    <Icon name="ellipsis" size={18} />
+  </Animated.View>}</Pressable>;
+}
+/** Secondary image actions: a compact glass menu that springs open from the header's `⋯`. */
+function MenuPanel({ items, onClose }: { items: MenuItem[]; onClose: () => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  return <Animated.View entering={reducedMotion ? FadeIn.duration(120) : menuIn} exiting={FadeOut.duration(120)} style={{ position: "absolute", top: 0, right: 0, width: 224, zIndex: 10, transformOrigin: "top right", boxShadow: "0 12px 32px rgba(24,32,48,0.18)", borderRadius: radius.group }}>
+    <Glass style={{ borderRadius: radius.card, paddingVertical: 4 }}>
+      {items.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityState={{ disabled: item.disabled }} disabled={item.disabled} onPress={() => { onClose(); item.onPress(); }}
+        style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 10, opacity: item.disabled ? 0.4 : 1, backgroundColor: pressed ? "rgba(20,28,40,0.06)" : "transparent" })}>
+        <Icon name={item.icon} size={17} />
+        <Text style={{ ...type.callout, color: palette.ink }}>{item.label}</Text>
+      </Pressable>)}
+    </Glass>
+  </Animated.View>;
+}
+
+export function XrayScreen() {
+  const { patient, encounter, updateEncounter, request, showDemoControls } = useEncounterSelect(s => ({ patient: s.patient, encounter: s.encounter, updateEncounter: s.updateEncounter, request: s.request, showDemoControls: s.showDemoControls }), sameShallow);
+  const { recordCardId, patientId: sourcePatientId } = useLocalSearchParams<{ recordCardId?: string; patientId?: string }>();
+  const savedCard = recordCardId ? encounter?.cards.find(card => card.id === recordCardId && card.kind === "xray" && card.patientId === patient?.id && card.encounterId === patient?.encounterId) : undefined;
+  const historical = Boolean(recordCardId);
+  const evidence = historical ? savedCard?.imagingSnapshot : encounter;
+  const { reducedMotion } = useAccessibleEffects();
+  const layout = reducedMotion ? undefined : LAYOUT;
+  const [picking, setPicking] = useState(false);
+  const [pickerError, setPickerError] = useState<string>();
+  const [showScenarios, setShowScenarios] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const activePatient = useRef(patient?.id);
+  // Live backend mode: the chosen image is also uploaded to the server, where Analyse has the image model read it.
+  const server = useXrayAttach();
+  const attachment = evidence?.imagingAttachment;
+  const referenceImage = evidence?.hideTeachingImage ? undefined : teachingImage;
+  // A local image has no source page: its provenance line says it stays on this device and is not analysed.
+  const upload = useXrayUploadOf(patient?.encounterId, attachment?.uri);
+  // The analysis shown under the image: the saved card's, else the latest when it is of the image shown (an analysis of an earlier
+  // image, or of the reference film, says nothing about this one). Live, the model's reading of that same image goes with it.
+  const latest = encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot;
+  const analysed = historical ? savedCard?.imagingSnapshot : latest?.imagingAttachment?.uri === attachment?.uri ? latest : undefined;
+  const analysis = useXrayReading(patient?.encounterId ?? "", analysed?.imagingAttachment?.uri);
+  // Demo flow 6: findings beyond the question asked, marked on the image and listed under it; only those read from it.
+  const found = useFindings();
+  const role = useRole();
+  const findings = onImage(found.findings, patient?.encounterId, attachment ? { key: upload?.key } : { reference: true });
+  const markers = useMemo(() => findings.filter(f => f.status !== "dismissed").map(f => ({ id: f.id, n: findings.indexOf(f) + 1, x: f.location.x, y: f.location.y, label: f.label, box: f.location.box })), [findings.map(f => `${f.id}:${f.status}`).join()]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The finding under the torch; one tap on a marker or its row, and a dismissed finding lets go of it.
+  const [focus, setFocus] = useState<string>();
+  const focused = markers.some(m => m.id === focus) ? focus : undefined;
+  const focusOn = useCallback((id: string | undefined) => { haptic(); setFocus(current => (id === current ? undefined : id)); }, []);
+  useEffect(() => { if (patient) found.detect(patient.encounterId); }, [found.live, patient?.encounterId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A newly stored image is read for findings at once (useXrayAttach), so its own marks (or none) are what it shows.
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  activePatient.current = patient?.id;
+  // A chest X-ray scanned from Add a source arrives here once its patient is chosen; it is kept on this device, or stored in live mode, like a picked image.
+  useEffect(() => {
+    if (!patient || historical) return;
+    const uri = takeXray();
+    if (!uri) return;
+    updateEncounter(current => ({ ...current, imagingAttachment: { uri, name: "Scanned X-ray" } }), true);
+    server.attach(patient.encounterId, { uri });
+  }, [patient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pickImage = async () => {
+    if (picking || historical) return;
+    const patientId = patient?.id;
+    setPicking(true); setPickerError(undefined);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: false, allowsMultipleSelection: false, base64: server.live, quality: server.live ? 0.8 : undefined });
+      if (result.canceled || !mounted.current || activePatient.current !== patientId) return;
+      const asset = result.assets[0];
+      if (!asset) return;
+      updateEncounter(current => ({ ...current, imagingAttachment: { uri: asset.uri, name: asset.fileName ?? "Selected teaching image" } }), true);
+      if (patient) server.attach(patient.encounterId, asset);
+    } catch { setPickerError("The photo library could not be opened. Try again or check access in Settings."); }
+    finally { setPicking(false); }
+  };
+  const kept = !upload ? "Kept on this device · not uploaded or analysed"
+    : upload.state === "uploading" ? "Saving to your hospital’s storage · not analysed"
+    : upload.state === "uploaded" ? "In your hospital’s storage · Analyse asks the image model to read it"
+    : `Kept on this device · upload failed: ${upload.error} · not analysed`;
+  const image: TeachingImage | undefined = attachment ? { id: attachment.uri, source: { uri: attachment.uri }, title: attachment.name, attribution: kept, license: "rights and deidentification not verified", sourceUrl: "" } : referenceImage;
+  const analysing = encounter?.requests.some(item => item.kind === "xray" && item.status === "streaming") ?? false;
+  const analyse = () => { if (!image || analysing || historical) return; request("xray", "Analyse X-ray"); if (router.canGoBack()) router.back(); };
+  const scenario = evidence?.imagingScenario ?? "reference";
+  const pickScenario = (value: Scenario) => { if (analysing) return; haptic(); updateEncounter(current => ({ ...current, imagingScenario: value }), true); setShowScenarios(false); };
+
+  if (!patient) return <NoVisit view="xray" what="an X-ray" />;
+  if (historical && (sourcePatientId !== patient.id || !savedCard?.imagingSnapshot)) return <Screen><Notice warning>This saved image is unavailable in the active patient’s encounter. No current image has been substituted.</Notice><Action label="Return to encounter" secondary onPress={() => (router.canGoBack() ? router.back() : undefined)} /></Screen>;
+  const open = findings.filter(f => f.status === "open").length;
+  if (historical) return <ViewerPage scrollEnabled={!zoomed}>
+    <Heading identity={`${patient.name} · saved revision ${savedCard?.revision} · ${attachment ? (upload?.state === "uploaded" ? "image in your hospital’s storage" : "local image, no model inference") : "reference example, not this patient"}`} result={resultLine(analysed, analysis)} open={open} />
+    {/* The visit's findings travel with its film, so a saved answer shows the same marks as the live view. */}
+    {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} scan={scanOf(analysis)} /> : <Notice>No image was attached when this response was created.</Notice>}
+    {image && <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} read={found.readOf(patient.encounterId)} onRead={role.can("findings.detect") ? () => found.detect(patient.encounterId) : undefined} />}
+    <AnalysisDetails snapshot={analysed} reading={analysis} />
+  </ViewerPage>;
+
+  if (!image) return <ViewerPage>
+    <Heading identity={`${patient.name} · no image attached`} result="No image to analyse yet" />
+    <Section icon="photo" tone="blue" title="An original image belongs here" subtitle="Image review will preserve the original pixels, with zoom, pan and reset controls.">
+      <View style={[VIEWING, { minHeight: 250, alignItems: "center", justifyContent: "center", gap: 18, padding: 26 }]}>
+        <Icon name="photo.badge.exclamationmark" color={palette.line} size={40} />
+        <Text selectable style={{ ...type.body, color: palette.line, textAlign: "center" }}>No licensed teaching radiograph has been attached to this demonstration.</Text>
+        <ImageEdge />
+      </View>
+      <Notice>There is no image analysis result to interpret. This empty state does not indicate a normal chest X-ray.</Notice>
+    </Section>
+    <Surface feature style={{ padding: 18, gap: 14 }}>
+      <Text selectable style={{ ...type.callout, color: palette.muted, paddingRight: 40 }}>{`Choose a deidentified teaching image you have permission to use. ${server.live ? "It stays in your hospital’s storage and" : "It stays on this device and"} is not analysed.`}</Text>
+      <Action label={picking ? "Opening photo library…" : "Choose teaching image"} icon="photo.badge.plus" disabled={picking} onPress={pickImage} />
+      {pickerError && <Notice warning>{pickerError}</Notice>}
+    </Surface>
+    {teachingImage && <Action label="Restore bundled reference" secondary onPress={() => updateEncounter(current => ({ ...current, hideTeachingImage: false }))} />}
+  </ViewerPage>;
+
+  // The decision stays in view: what analysing does, then the button.
+  return <ViewerPage scrollEnabled={!zoomed} bottom={<>
+    <Text style={{ ...type.footnote, paddingHorizontal: 4, color: palette.muted }}>{upload?.state === "uploaded" ? "Answers in the visit · the image model reads it; unvalidated" : "Answers in the visit · a sample response, nothing is read from the image"}</Text>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <View style={{ flex: 1 }}><Action label={analysing ? "Analysing…" : "Analyse X-ray"} icon="sparkles" disabled={analysing || picking} onPress={analyse} /></View>
+    </View>
+  </>}>
+    {/* Image actions live in the header's right slot; back is the chevron on the left. */}
+    <Stack.Screen options={{ headerRight: () => <MenuTrigger open={menuOpen} onPress={() => setMenuOpen(value => !value)} /> }} />
+    {menuOpen && <MenuPanel onClose={() => setMenuOpen(false)} items={[
+      { label: picking ? "Opening library…" : "Choose local image", icon: "photo.on.rectangle", disabled: picking || analysing, onPress: pickImage },
+      { label: "Remove image", icon: "trash", disabled: analysing, onPress: () => updateEncounter(current => ({ ...current, imagingAttachment: undefined, hideTeachingImage: true }), true) },
+    ]} />}
+    <Heading identity={attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"} result={analysing ? "Analysing…" : resultLine(analysed, analysis)} open={open} />
+    {pickerError && <Notice warning>{pickerError}</Notice>}
+    <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} scan={scanOf(analysis)} />
+    <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} read={found.readOf(patient.encounterId)} onRead={role.can("findings.detect") ? () => found.detect(patient.encounterId) : undefined} />
+    {/* The latest analysis sits right under the image: one page, no separate details screen. */}
+    <AnalysisDetails snapshot={analysed} reading={analysis} />
+
+    {/* Rehearsal only: which sample response the next analysis returns. */}
+    {showDemoControls && <Animated.View layout={layout} pointerEvents={analysing ? "none" : "auto"} style={{ gap: 10, opacity: analysing ? 0.45 : 1 }}>
+      <View style={{ alignSelf: "flex-start" }}>
+        <Chip label={`Demo response: ${SCENARIOS[scenario]}`} filled expanded={showScenarios} onPress={() => { haptic(); setShowScenarios(value => !value); }} accessibilityLabel={`Demo response, ${SCENARIOS[scenario]}. Change`} />
+      </View>
+      {showScenarios && <Expand key="scenarios" style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        {(Object.keys(SCENARIOS) as Scenario[]).map(value => <Chip key={value} label={SCENARIOS[value]} selected={scenario === value} onPress={() => pickScenario(value)} />)}
+      </Expand>}
+    </Animated.View>}
+  </ViewerPage>;
+}

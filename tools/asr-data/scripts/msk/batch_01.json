@@ -1,0 +1,776 @@
+[
+  {
+    "id": "msk_001",
+    "split": "train",
+    "condition": "Low back pain with sciatica",
+    "source": "Back pain",
+    "patient_persona": {
+      "description": "Mohd Hafiz bin Kamarudin, 38, male, parcel delivery driver in Shah Alam who hurt his back lifting a heavy box; smokes. First visit. Medium voice, a bit tense, fast colloquial Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Pei Shan, Malaysian Chinese woman in her 30s, GP at a Shah Alam clinic. Brisk and friendly; English-leaning, fluent colloquial Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Hafiz, silakan duduk. Sakit belakang ni dah berapa lama?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah tiga minggu, doktor. Masa angkat kotak besar kat lori, saya pusing badan, terus rasa macam tercabut. Last week sakit tu turun ke kaki kiri."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sampai mana sakit tu turun? Ada kebas, atau cucuk-cucuk?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sampai betis, kadang-kadang ibu jari kaki kebas. Duduk lama dalam lori memang seksa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. Ada susah nak buang air kecil, atau tak rasa bila buang air besar? Kebas kat celah kangkang?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada, doktor. Kencing macam biasa je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Demam, berat badan turun, atau sakit sampai terjaga malam?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada. Cuma pagi-pagi keras sikit, lepas jalan-jalan OK sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Selama ni makan ubat apa untuk sakit ni? Any painkiller from outside?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Beli Norgesic kat farmasi, dua biji tiga kali sehari. Lepas tu kawan bagi tramadol dia, saya makan dua malam, terus pening teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih bagi tahu. Please don't take your friend's medicine lagi. Tramadol tu boleh buat mengantuk, very dangerous kalau you drive lori."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Refleks you OK, kekuatan kaki pun OK. This is sciatica, saraf tertekan sikit. Tak perlu MRI sekarang, most people baik dalam enam minggu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat: naproxen 500mg dua kali sehari lepas makan, seminggu. Stop Norgesic tu. Jangan baring je, jalan sikit-sikit setiap hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kerja macam mana, doktor? Boss saya bising kalau cuti lama."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi MC tiga hari, lepas tu light duty, jangan angkat lebih dari sepuluh kilo. Kalau kaki jadi lemah atau susah kencing, terus pergi emergency."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Rokok pun kena cut down ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau boleh, stop terus. Smoking makes the disc heal slower. Datang balik dua minggu, we'll see your progress."
+      }
+    ]
+  },
+  {
+    "id": "msk_002",
+    "split": "train",
+    "condition": "Chronic mechanical low back pain follow-up",
+    "source": "Back pain",
+    "patient_persona": {
+      "description": "Ooi Gaik Lan, 52, female, runs a char kuey teow stall in Air Itam, Penang, standing ten hours a day; history of gastritis. Follow-up after physiotherapy. Loud, quick voice, Penang-flavoured Malaysian Mandarin with some Hokkien.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Khoo Boon Huat, Malaysian Chinese man in his 50s, family medicine specialist at a Penang clinic. Unhurried, practical; English-leaning, speaks Mandarin with English medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "黄女士，物理治疗做了六个礼拜，现在腰怎样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好一点啦 doctor。以前每天痛到七八分，现在大概四分。但是收档的时候还是酸。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那个 exercise 你在家有没有做？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有时候做，有时候没有。早上三点起来 prepare 料，晚上累到只想睡。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "明白。其实一天十分钟就够，比吃药有用。你现在 celecoxib 还在吃吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "还在吃，一天两粒。前几天胃又胀，吃了 Gaviscon 才好一点。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你以前有 gastritis，这个药吃久了 stomach 会受不了。我们慢慢减，改成 paracetamol 1 gram，three times a day。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Paracetamol 有用吗？我觉得 Panadol 没什么效。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "要按时吃才有效，不是痛了才吃。痛得厉害的那几天，才加一粒 celecoxib 200mg。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。那个档口的桌子很矮，我一直弯着腰炒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个很重要。叫你儿子把桌子垫高十公分，脚下放一个小 stool，两只脚轮流踩上去。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哎，这样简单的东西我都没想到。那我还需要照 X-ray 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不需要，你的 blood test 和 examination 都是 normal 的，这是 muscle 和关节劳损。三个月后再回来，如果腿开始麻或者无力，就早点来。"
+      }
+    ]
+  },
+  {
+    "id": "msk_003",
+    "split": "train",
+    "condition": "Acute low back pain, imaging request",
+    "source": "Back pain",
+    "patient_persona": {
+      "description": "Vikneswaran a/l Ramasamy, 45, male, IT project manager in Cyberjaya who sits ten hours a day and plays futsal at weekends. First visit, worried and insistent on an MRI. Fast, articulate Malaysian Indian English.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Izzah binti Ahmad, Malay woman in her 30s, GP at a Cyberjaya clinic. Calm and reassuring; mostly English with this patient, a few Malay words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my back suddenly locked on Saturday after futsal. Keluar kereta pun susah. I want an MRI, just to be safe."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I understand. Let me ask a few questions first. Does the pain go down either leg?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, it stays around the lower back, both sides. Worse when I bend forward nak pakai stokin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any numbness around the bottom, trouble passing urine, or weakness in the legs?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, nothing like that. But my father had a slipped disc and kena operation."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any fever, weight loss, history of cancer, or pain that wakes you at night?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No. Only when I pusing in bed it catches a bit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your nerves and reflexes are all normal. This is acute mechanical back pain, a muscle and joint strain. MRI won't change the treatment now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Are you sure? My colleague said better scan early."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Scanning early often shows disc bulges that most people have anyway, and it leads to worry and unnecessary procedures. If you get red flags, we scan straight away."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For pain, paracetamol 1 gram four times a day, and ibuprofen 400mg three times a day lepas makan, for five days. Keep moving, jalan sikit every hour."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Should I rest in bed? My wife says jangan bergerak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bed rest actually makes it slower to recover. Bangun every thirty minutes at work, and no futsal for about two weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay lah, fair enough. If it's not better, then macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If not better in four to six weeks, come back and we'll refer you for physio and reassess."
+      }
+    ]
+  },
+  {
+    "id": "msk_004",
+    "split": "train",
+    "condition": "Low back pain with red flags",
+    "source": "Back pain",
+    "patient_persona": {
+      "description": "Che Mek binti Ismail, 71, female, retired kuih seller in Kota Bharu, Kelantan; had breast cancer treated eight years ago. First visit. Soft, slow voice with Kelantanese Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wan Mohd Faizal, Kelantanese Malay man in his 40s, family medicine specialist at a Kota Bharu health clinic. Gentle, patient; speaks Kelantan-flavoured Malay with English medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, mak cik. Sakit belakang ni dah lama?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Waalaikumsalam. Dah dua bulan, doktor. Sakit sungguh, malam pun tak boleh tidur, baring pun sakit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sakit malam tu, bila baring pun tak kurang ke? Painkiller pun tak jalan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak kurang langsung. Siang tu pun sama. Anak kata sakit urat, dah pergi urut tiga kali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Berat badan ada turun, mak cik? Appetite, selera makan macam mana?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baju semua dah longgar. Makan pun tak lalu, sikit je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mak cik dulu pernah ada kanser payudara, kan? Treatment dekat hospital Kota Bharu?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, lapan tahun dulu. Doktor kata dah bersih, saya tak pergi check lagi dah tiga tahun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kaki ada lemah? Susah nak kencing atau tak tahan kencing, like urine keluar sendiri?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kaki kanan rasa berat sikit bila naik tangga. Kencing OK lagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mak cik, sakit belakang yang teruk waktu malam, dengan weight loss dan history of cancer, kita kena check betul-betul. Bukan sakit urat biasa."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor ingat kanser datang balik ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Belum tahu lagi, mak cik. Hari ni kita buat X-ray tulang belakang dan ambil darah. Saya juga buat surat refer ke hospital untuk MRI dalam minggu ni."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Untuk sakit, makan paracetamol 1 gram empat kali sehari. Jangan urut dulu kat belakang tu sampai kita dapat result."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Anak saya akan bawa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau kaki jadi lemah tiba-tiba atau tak boleh kencing, terus pergi emergency department, don't wait, jangan tunggu."
+      }
+    ]
+  },
+  {
+    "id": "msk_005",
+    "split": "train",
+    "condition": "Lumbar disc prolapse, ward round",
+    "source": "Back pain",
+    "patient_persona": {
+      "description": "Tiong Kah Hock, 49, male, timber yard supervisor in Sibu, Sarawak, admitted two days ago for severe sciatica; type 2 diabetes. Ward round, day 2. Gruff voice, Sarawakian Mandarin with some Malay and Hokkien.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Jessica Ling Hui Min, Sarawakian Chinese woman in her 30s, medical officer in the orthopaedic ward at a Sibu hospital. Efficient, kind; English-leaning, switches to Mandarin with this patient.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "张先生，早。昨晚睡得怎样？脚还 pain 吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好一点。打了那个 injection 以后，可以睡四个钟头。但是一坐起来，左脚就像电到一样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 MRI 出来了。L4 和 L5 中间的 disc 凸出来，压到左边的 nerve。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那要开刀吗？我很怕 operation。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "现在不一定。大部分人吃药加 physio，six to twelve weeks 会好。今天下午 neurosurgery team 会来看你。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "小便有没有问题？会不会尿不出来，或者屁股那边 numb numb 的？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，小便 normal。Nurse 有问过。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很好。你的 sugar 昨天比较高，十四点多，因为我们给你打了 dexamethasone。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "难怪我口好干。那我的 metformin 还要吃吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "要，继续 metformin 1 gram 一天两次。这几天我们加一点 insulin 控制，steroid 停了就不用。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "痛的话，paracetamol 1 gram 一天四次，加 pregabalin 75mg 晚上吃，是给神经痛的。可能会有点晕，下床慢慢来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor，我什么时候可以 discharge？木材厂没有我 tak boleh 啦。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果今天可以自己走去厕所，明天或后天就可以回家。回去以后，至少一个月不要抬重的木头。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好啦，我叫我弟弟先 jaga 着。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "回家以后如果脚突然没力，或者尿不出来，马上回 emergency，kalau tak nanti bahaya，OK？"
+      }
+    ]
+  },
+  {
+    "id": "msk_006",
+    "split": "train",
+    "condition": "Knee osteoarthritis, first visit",
+    "source": "Osteoarthritis",
+    "patient_persona": {
+      "description": "Rosnah binti Abdul Ghani, 62, female, housewife and part-time nasi lemak seller in Johor Bahru; overweight, hypertension. First visit. Warm, chatty, slightly breathless, Johor Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Arvind Pillai, Malaysian Indian man in his 40s, GP in Johor Bahru. Good-humoured, practical; English-leaning, speaks Malay with English medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, lutut saya dua-dua sakit, terutama yang kanan. Naik tangga rumah pun kena pegang besi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dah berapa lama, puan? Morning, pagi-pagi lutut keras tak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah dua tahun lebih. Pagi keras sekejap, dalam sepuluh minit. Petang lepas berdiri masak lagi teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada bengkak atau merah? Pernah lutut tiba-tiba terkunci?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bengkak sikit kadang-kadang. Tak pernah terkunci. Bunyi krek-krek bila bangun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Selama ni makan ubat apa untuk lutut? Any supplement?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya sapu minyak urut. Lepas tu jiran bagi ubat sakit lutut dari pasar malam, bungkus plastik, memang cepat hilang sakit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat tu masih ada? Next time bawa, saya nak tengok. Ubat macam tu kadang-kadang ada steroid campur, boleh naikkan gula dan tekanan darah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Patutlah BP saya naik bulan ni. Saya berhenti lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dari pemeriksaan, ni osteoarthritis, sendi lutut dah haus. Kita buat X-ray untuk confirm."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yang paling membantu: weight loss, lima kilo pun dah beza, dan buat quadriceps exercise, kuatkan otot paha. Saya refer ke physio."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat: paracetamol 1 gram tiga kali sehari. Sapu diclofenac gel dekat lutut, three times a day also, after mandi is best."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh saya makan glucosamine? Anak saya belikan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh cuba tiga bulan, tapi evidence dia tak kuat. Kalau tak rasa beza, tak payah beli lagi, jimat duit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Next time saya bawa ubat pasar malam tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Datang balik sebulan lagi dengan result X-ray. Kalau lutut bengkak merah dan panas, datang awal."
+      }
+    ]
+  },
+  {
+    "id": "msk_007",
+    "split": "train",
+    "condition": "Knee osteoarthritis follow-up, injection query",
+    "source": "Osteoarthritis",
+    "patient_persona": {
+      "description": "Leong Chee Wah, 67, male, retired tin-mining clerk in Ipoh who does tai chi every morning at the park; hypertension on amlodipine. Follow-up. Slow, gravelly Malaysian Mandarin with Cantonese colouring.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Teh Li Ying, Malaysian Chinese woman in her 40s, family medicine specialist at an Ipoh clinic. Patient, clear; English-leaning, speaks Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "梁伯，上次开给你的 celecoxib 吃了怎样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有效，吃了可以打太极。但是我女儿说这个药伤 kidney，叫我不要吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "她说得有道理，吃久了对 kidney 和 blood pressure 都不好。你的 BP 今天是 148 over 90，比上次高。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哦，原来是这个药。那我要怎样？脚痛就不能去 taman 了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们改成 paracetamol 1 gram，一天三次。痛得厉害的时候，才吃 celecoxib，一个礼拜不要超过三天。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我朋友说打一针就好，是真的吗？他说 very effective。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你说的是 steroid injection。打进 joint，可以减痛两三个月，but 一年不要打超过三四次。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那还有一种很贵的，说是润滑油那种 injection？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hyaluronic acid。有些人有效，有些人没什么效，一针几百块。如果你想试，我们可以讨论。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "几百块啊……先打那个便宜的吧。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好，今天就可以打右边的 knee。打完两天不要打太极，ice 敷一下。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 X-ray 看到关节空间窄了很多。如果以后走路越来越困难，可以考虑 knee replacement。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "开刀我怕。我七十岁都还没到，boleh tunggu 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，不是紧急的。继续做大腿的 exercise，保持体重，三个月后回来。"
+      }
+    ]
+  },
+  {
+    "id": "msk_008",
+    "split": "train",
+    "condition": "Knee osteoarthritis, X-ray results review",
+    "source": "Osteoarthritis",
+    "patient_persona": {
+      "description": "Saraswathy a/p Govindasamy, 58, female, retired kindergarten teacher in Klang, active temple volunteer who sits cross-legged on the floor. Results review. Clear, cheerful Malaysian Indian English with some Malay and Tamil-flavoured intonation.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Kai Jie, Malaysian Chinese man in his 30s, GP at a Klang clinic. Straightforward, warm; English with this patient.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Morning, Madam Saraswathy. Your knee X-ray is back. Both knees show osteoarthritis, the inner side more worn out than the outer."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, both knees ah? I thought only the left one sakit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The left is worse, but the right also started. That's why you feel pain getting up from the floor."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Every Friday at the kuil I sit on the floor for two, three hours. After that I can't straighten my legs, very lenguh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's the hardest position for the knees. Can you use a low stool or a chair at the side?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can, the aunties also do that. Only I feel malu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Many people do it, it's fine. Squatting and kneeling for long will make the pain worse."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my sister takes Arcoxia, she says very good. Can I take?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "You have high blood pressure, right? Etoricoxib can push your BP up. Your reading today is 142 over 88."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, I take amlodipine 5mg every morning, lepas sarapan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then let's try paracetamol 1 gram three times a day first, plus diclofenac gel on the knees. Arcoxia only for short periods when very bad."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "And I'm referring you to physio for quadriceps strengthening. Also, your BMI is 29, losing a bit of weight will help a lot."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, I'll try to kurangkan the ghee in my cooking. Susah sikit lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good plan. See you in two months, and kalau lutut bengkak or panas, come earlier."
+      }
+    ]
+  },
+  {
+    "id": "msk_009",
+    "split": "train",
+    "condition": "Knee osteoarthritis refill with kidney impairment",
+    "source": "Osteoarthritis",
+    "patient_persona": {
+      "description": "Ahmad bin Saad, 72, male, retired padi farmer in Kota Setar, Kedah; hypertension and type 2 diabetes. Came for a painkiller refill. Deep, slow voice, northern Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Siti Aminah binti Yusoff, Malay woman in her 40s, family medicine specialist at an Alor Setar health clinic. Firm but kind; speaks northern Malay with English medical terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya nak ambil ubat lutut lagi. Yang kuning tu, diclofenac. Dah habis minggu lepas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pak cik makan diclofenac tu berapa kali sehari?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga kali, doktor. Kalau tak makan, tak boleh turun sawah tengok cucu tanam padi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pak cik, result darah bulan ni, fungsi buah pinggang dah turun. eGFR 42, dulu 58."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Buah pinggang? Kidney? Saya tak rasa apa pun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Memang tak rasa, pak cik. Tapi ubat diclofenac ni, dengan kencing manis dan darah tinggi, boleh rosakkan buah pinggang lagi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Habis tu macam mana dengan sakit lutut saya?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita tukar ke paracetamol 1 gram tiga kali sehari. Tambah sapu gel kat lutut. Gel tu sikit je masuk darah, lebih selamat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Paracetamol tu kuat ke, doktor? Saya takut tak jalan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau makan ikut masa, regularly, dia boleh bantu. Kalau masih sakit sangat, we can try a steroid injection into the knee."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Satu lagi, pak cik guna tongkat? Masa jalan tadi, balance macam tak stabil."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada tongkat, tapi segan nak guna depan orang kampung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak payah segan. Guna tangan kiri, kurangkan beban lutut kanan. If jatuh, patah tulang, lagi susah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yalah, doktor. Ubat darah tinggi saya sama ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sama, perindopril 4mg pagi. We'll repeat the blood test in three months untuk tengok buah pinggang."
+      }
+    ]
+  },
+  {
+    "id": "msk_010",
+    "split": "train",
+    "condition": "Post total knee replacement follow-up",
+    "source": "Osteoarthritis",
+    "patient_persona": {
+      "description": "Goh Ah Moi, 70, female, retired seamstress in Melaka, six weeks after a left total knee replacement; lives with her son's family. Follow-up. Soft, cautious Malaysian Mandarin with Hokkien words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Farid Hakimi bin Osman, Malay man in his 40s, orthopaedic surgeon at a Melaka hospital. Cheerful, direct; English-leaning, speaks simple Mandarin phrases and switches to English with medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Auntie Goh, 你好。六个礼拜了，knee 怎样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor，好很多了。以前痛到不能走，现在可以去 pasar，只是还有一点肿。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有一点肿是正常的，可以到三个月。晚上痛吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "晚上有时候会痛醒，吃一粒 Panadol 就可以再睡。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. Physio 你有去吗？现在可以弯多少？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一个礼拜去两次。Physio 说九十度了。可是我在家很少做，怕痛，怕那个钉会松。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不会松的，Auntie，里面很稳。你不做 exercise，膝盖会变硬，以后很难弯。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "真的吗？我媳妇也一直骂我。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Every day 做三次，每次十分钟。Before exercise 半小时吃 Panadol，就不会那么痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那个 blood thinner，rivaroxaban，你吃完了吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "吃完了，吃了五个礼拜，semalam 最后一粒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. 伤口我看了，很干净。小腿有没有突然肿痛，或者喘？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，这些都没有。那我什么时候可以蹲下去？我们家是蹲的 toilet。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "蹲下去不建议，以后也最好不要。叫你儿子装一个 sitting toilet，或者买一个 commode chair。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我叫他去买。Next appointment 几时？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "六个礼拜后再照 X-ray。如果伤口红，流水，或者发烧，马上回来。"
+      }
+    ]
+  }
+]

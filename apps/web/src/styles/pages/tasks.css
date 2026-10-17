@@ -1,0 +1,29 @@
+td:has(> .tasks-title) { width: 100%; }
+.tasks-title { display: grid; gap: 2px; min-width: 10rem; }
+/* An assignee is up to 80 characters ("…a/l Subramaniam Pillai (Senior Staff Nurse, Wad Kardiologi 4B)"): wrap, not widen the table. */
+.tasks-owner { display: block; min-width: 6rem; max-width: 10rem; overflow-wrap: break-word; }
+/* A due written in words (up to 40 characters) wraps; dates stay on one line. */
+.tasks-due-note { display: block; min-width: 8rem; max-width: 12rem; white-space: normal; text-align: right; }
+.tasks-title strong { font-weight: 600; }
+.tasks-title[data-done] strong { color: var(--muted); text-decoration: line-through; }
+.tasks-muted { color: var(--muted); font-size: var(--text-small); }
+.tasks-source { display: inline-flex; min-width: 6rem; align-items: center; gap: var(--space-2); color: var(--muted); font-size: var(--text-small); }
+.tasks-source .icon { flex: none; }
+.tasks-due { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tasks-due[data-overdue] { color: var(--red); font-weight: 600; }
+.tasks-detail { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-3); margin: var(--space-3) 0; }
+.tasks-detail dt { color: var(--muted); font-size: var(--text-small); }
+.tasks-detail dd { margin: 0; }
+.tasks-form { display: grid; gap: var(--space-3); }
+.tasks-form .field input, .tasks-form .field select { width: 100%; }
+.tasks-form .btn, .tasks-actions .btn { justify-self: start; }
+.tasks-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.tasks-next { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--blue); cursor: pointer; }
+.tasks-pair { grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr)); }
+.tasks-add summary { font-size: var(--text-heading); font-weight: 600; letter-spacing: var(--track-tight); cursor: pointer; }
+.tasks-add[open] summary { margin-bottom: var(--space-4); }
+.tasks-error { margin: 0; color: var(--red); font-size: var(--text-small); }
+.tasks-detail-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.tasks-actions { margin-bottom: var(--space-3); }
+/* A narrow page: the columns give up their spare width so Mark done stays in view without scrolling sideways. */
+@container page (max-width: 720px) { .tasks-title { min-width: 8rem; } .tasks-source { min-width: 5rem; } .tasks-owner { max-width: 7rem; } }

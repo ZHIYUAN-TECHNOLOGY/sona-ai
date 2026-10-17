@@ -1,0 +1,104 @@
+/* A film wherever it shows: the stage (/pro/xray and the film panel), the Compare list, the film card in an answer
+   and the film panel's body. Tokens only. */
+.xr-zoom { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); font-size: var(--text-small); }
+/* The dark neutral stage the film sits on. */
+.xr-stage { --xr-fit: calc(56vh - 2 * var(--space-4)); position: relative; display: grid; place-items: center; min-height: 340px; padding: var(--space-4); border-radius: var(--radius-group); background: var(--ink); color: var(--surface); overflow: hidden; }
+.xr-scroll { max-width: 100%; max-height: var(--xr-fit); overflow: auto; border-radius: var(--radius-control); }
+/* The whole stage is the film's handle (features/imaging/pan.ts): an open hand, closed while dragging; no text selection mid-drag. */
+.xr-stage[data-pan] { cursor: grab; user-select: none; touch-action: none; }
+.xr-stage[data-pan="dragging"] { cursor: grabbing; }
+.xr-stage[data-pan="dragging"] .xr-scroll { scroll-behavior: auto; }
+/* ponytail: at fit size a film wider than the stage letterboxes inside its box, so drawn boxes drift; size the wrapper from naturalWidth if that shows up. */
+.xr-image { position: relative; width: fit-content; margin: 0 auto; }
+/* Zoom scales the film's height from its fit size (width follows its own shape), so zoom 1 is exactly the first render:
+   the old rule keyed on [style], which React leaves behind as style="" after a zoom, so the film never came back. */
+.xr-image img { display: block; height: calc(var(--xr-fit) * var(--xr-zoom, 1)); max-width: 100%; object-fit: contain; border-radius: var(--radius-control); }
+.xr-image[data-zoomed] img { max-width: none; }
+
+/* Sona Vision reading the film (features/imaging/film-scan.tsx), over the image's own box. Ice on the film, like the loader. */
+.fs { position: absolute; inset: 0; z-index: 1; overflow: hidden; border-radius: var(--radius-control); pointer-events: none; color: rgb(220 240 255 / 0.86); }
+.fs-canvas, .fs-css { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+/* Corner ticks: a frame that closes on the film as the read starts. */
+.fs-frame { position: absolute; inset: 10px; }
+.fs-frame > span { position: absolute; width: 14px; height: 14px; border: 0 solid rgb(190 228 255 / 0.72); }
+.fs-frame > span:nth-child(1) { top: 0; left: 0; border-width: 1.5px 0 0 1.5px; }
+.fs-frame > span:nth-child(2) { top: 0; right: 0; border-width: 1.5px 1.5px 0 0; }
+.fs-frame > span:nth-child(3) { bottom: 0; left: 0; border-width: 0 0 1.5px 1.5px; }
+.fs-frame > span:nth-child(4) { bottom: 0; right: 0; border-width: 0 1.5px 1.5px 0; }
+/* The readout, as a viewer annotates a film: what is reading, and for how long. Along the bottom edge, where a film's
+   own side markers (R/L, Dx/Sin) seldom are. */
+.fs-read, .fs-clock { position: absolute; bottom: 18px; font-size: 12px; font-weight: 500; line-height: 1.3; letter-spacing: 0.04em; text-shadow: 0 0 8px rgb(0 0 0 / 0.8); white-space: nowrap; }
+.fs-read { left: 22px; text-transform: uppercase; }
+.fs-read strong { font-weight: 600; color: rgb(255 255 255 / 0.95); }
+.fs-clock { right: 22px; font-variant-numeric: tabular-nums; }
+/* Without WebGPU or WebGL 2: a soft band of the house dither sweeping down and back (still under Reduce Motion). */
+.fs-css {
+  top: 0; height: 30%; color: rgb(173 219 250 / 0.6); background: var(--dither) 0 0 / var(--dither-size);
+  mask: linear-gradient(transparent, #000 50%, transparent); -webkit-mask: linear-gradient(transparent, #000 50%, transparent);
+  animation: fs-sweep 2.2s cubic-bezier(0.77, 0, 0.175, 1) infinite alternate;
+}
+@keyframes fs-sweep { from { transform: translateY(-100%); } to { transform: translateY(333%); } }
+@media (prefers-reduced-motion: reduce) { .fs-css { animation: none; opacity: 0; } }
+.xr-error { display: flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--red); font-size: var(--text-small); }
+.xr-note { margin: 0; color: var(--muted); font-size: var(--text-small); }
+
+/* Compare: a quiet find box, then small films in a grid that packs at phone width. */
+.xr-find input { width: 100%; min-height: var(--tap); padding: 0 var(--space-4); font: inherit; font-size: var(--text-body); color: var(--ink); background: var(--fill-field); border: 1px solid transparent; border-radius: var(--radius-control); }
+.xr-find input:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; background: var(--surface); }
+.xr-group { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+.xr-group-title { margin: 0; font-size: var(--text-small); font-weight: 600; color: var(--muted); }
+.xr-films { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.xr-film > :is(a, button) { display: grid; align-content: start; gap: var(--space-1); width: 100%; padding: 0; font: inherit; text-align: left; color: var(--ink); text-decoration: none; background: none; border: 0; cursor: pointer; transition: transform var(--quick) var(--ease); }
+.xr-film > :is(a, button):active { transform: scale(0.97); }
+.xr-film > :is(a, button):focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: var(--radius-control); }
+/* Like the film card's thumb: a 4:5 box, the image loader's own box inside it keeping the marks on what they mark. */
+.xr-thumb { display: grid; align-content: center; aspect-ratio: 4 / 5; border-radius: var(--radius-control); background: var(--ink); }
+.xr-film-who { margin-top: var(--space-1); font-weight: 600; font-size: var(--text-small); }
+.xr-film-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+
+/* The film in an answer: a 4:5 thumbnail beside its title, reading and findings; the whole card opens the panel. */
+.film-card {
+  display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: var(--space-3); width: 100%; max-width: 30rem; padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  font: inherit; text-align: left; color: var(--ink); background: color-mix(in srgb, var(--surface) 72%, transparent); border: 1px solid var(--hairline); border-radius: var(--radius-group);
+  cursor: pointer; transition: transform var(--quick) var(--ease), background var(--quick) var(--ease);
+}
+.film-card:active { transform: scale(0.97); }
+.film-card[data-picked="true"] { border-color: var(--blue); background: var(--blue-wash); }
+@media (hover: hover) { .film-card:hover { background: var(--surface); } .film-card:hover .film-open { color: var(--blue); } }
+.film-card-text { display: grid; align-content: start; gap: var(--space-1); min-width: 0; padding-top: 2px; }
+.film-card-title { font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.film-card-read { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; font-size: var(--text-small); line-height: var(--line-body); color: var(--muted); }
+.film-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-1); }
+.film-open { display: inline-flex; align-items: center; gap: 2px; margin-top: var(--space-1); font-size: var(--text-small); font-weight: 500; color: var(--placeholder); transition: color var(--quick) var(--ease); }
+
+/* The film itself in a fixed 4:5 box (an ImageLoader); its inner box is the image's own, so the marks stay on what they mark. */
+.film-thumb { position: relative; display: grid; align-content: center; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--radius-control); background: var(--ink); }
+.film-thumb .xr-box { border-width: 1.5px; }
+.film-thumb .xr-box span { padding: 0 2px; font-size: 10px; line-height: 1.3; }
+
+/* Thumb size: just the film, filling the Sources list's image slot. */
+.film-holder[data-size="thumb"] { display: contents; }
+.film-card[data-size="thumb"] { display: block; width: 100%; height: 100%; max-width: none; padding: 0; background: none; border: 0; border-radius: 0; }
+.film-card[data-size="thumb"] .film-thumb { height: 100%; aspect-ratio: auto; border-radius: 0; }
+
+/* The film panel: the film large on its stage, then the read and the findings. Its own width sets the film's fit. */
+.film-portal { display: contents; }
+.film-art { display: grid; gap: var(--space-5); container-type: inline-size; }
+.film-art .xr-stage { --xr-fit: min(58vh, calc(100cqi - 2 * var(--space-4))); min-height: 200px; }
+.film-art-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); margin-top: calc(var(--space-2) - var(--space-5)); }
+.film-art section { display: grid; gap: var(--space-2); }
+.film-art h3 { margin: 0; font-size: var(--text-small); font-weight: 600; color: var(--muted); }
+.film-lines { display: grid; gap: var(--space-1); margin: 0; padding-left: 1.1em; line-height: var(--line-body); }
+.film-lines li:first-child { font-weight: 600; }
+.film-findings { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.film-finding { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 2px var(--space-2); }
+.film-finding > :not(.film-num) { grid-column: 2; }
+.film-finding strong { font-weight: 600; }
+.film-num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: var(--radius-pill); background: var(--blue-wash); color: var(--blue); font-size: var(--text-small); font-weight: 600; }
+.film-finding .film-chips { margin-top: 2px; }
+.film-art .xr-group:first-of-type { margin-top: var(--space-3); }
+/* A phone gives the title the width: the two actions take their own row under it. */
+@media (max-width: 859px) {
+  .film-portal .ai-artifact-head { flex-wrap: wrap; }
+  .film-portal .ai-artifact-actions { order: 3; flex-basis: 100%; }
+}

@@ -1,8 +1,9 @@
 {
-  "extends": "@med-ai/config/tsconfig.base.json",
+  "extends": "@sona-ai/config/tsconfig.base.json",
+  "references": [{ "path": "../../packages/api" }],
+  "exclude": ["node_modules", "dist", "test", "src/**/*.test.ts"],
   "compilerOptions": {
-    "composite": true,
-    "outDir": "dist",
+    "noEmit": true,
     "paths": {
       "@/*": ["./src/*"]
     },

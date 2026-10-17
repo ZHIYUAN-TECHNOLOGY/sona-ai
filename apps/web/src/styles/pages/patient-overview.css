@@ -1,0 +1,22 @@
+/* Patient overview. Tokens only. */
+/* The allergy is one short chip; the full text is in the title. */
+.po-allergy { display: inline-block; max-width: 14rem; padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--red-wash); color: var(--red); font-size: var(--text-small); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+
+.po-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin: 0 0 var(--space-2); color: var(--muted); font-size: var(--text-small); }
+.po-legend i { display: inline-block; width: var(--space-3); height: 2px; margin-right: var(--space-1); background: var(--blue); vertical-align: middle; }
+.po-caption { margin: 0 0 var(--space-3); color: var(--muted); }
+.po-chart-pick { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-3); }
+
+.po-history { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); }
+@container page (max-width: 660px) { .po-history { grid-template-columns: minmax(0, 1fr); } }
+.po-history dt { color: var(--muted); font-size: var(--text-small); margin-bottom: var(--space-1); }
+.po-history dd { margin: 0; }
+.po-meter { width: 100%; margin: var(--space-2) 0; accent-color: var(--green); }
+/* A plain line inside a ListCard lines up with the card title. */
+.po-note { padding: 0 var(--space-3) var(--space-2); }
+
+/* Wrappers that only scope a rule: the card inside stays the layout's child. */
+.po-wrap { display: contents; }
+.po-step-only .insight-act { display: none; }
+/* Rail rows read in full, two lines before they cut: a medicine's strength or a result's value is never the part hidden. */
+.po-full :is(.list-title, .list-caption) { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }

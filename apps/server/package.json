@@ -3,28 +3,34 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsdown",
-    "check-types": "tsc -b",
-    "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server"
+    "build": "tsc -b ../../packages/api && tsdown",
+    "check-types": "tsc -b ../../packages/api && tsc --noEmit",
+    "compile": "bun build --compile --no-compile-autoload-dotenv --minify --sourcemap --bytecode ./src/index.ts --outfile server",
+    "env:generate": "varlock codegen",
+    "test": "bun test src"
   },
   "dependencies": {
-    "@med-ai/api": "*",
-    "@med-ai/db": "*",
-    "@med-ai/env": "*",
-    "@orpc/openapi": "^1.13.14",
-    "@orpc/server": "^1.13.14",
-    "@orpc/zod": "^1.13.14",
-    "dotenv": "^17.2.2",
-    "hono": "^4.8.2",
-    "zod": "^4.1.13"
+    "@cloudflare/ai-chat": "0.12.0",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "@sona-ai/api": "workspace:*",
+    "@sona-ai/auth": "workspace:*",
+    "@sona-ai/db": "workspace:*",
+    "@sona-ai/retrieval": "workspace:*",
+    "agents": "0.24.0",
+    "ai": "7.0.133",
+    "better-auth": "catalog:",
+    "hono": "^4.13.7",
+    "varlock": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20251213.0",
-    "@med-ai/config": "*",
-    "@types/node": "^22.13.14",
-    "alchemy": "^0.91.2",
-    "tsdown": "^0.21.9",
-    "typescript": "^6",
-    "wrangler": "^4.77.0"
+    "@cloudflare/workers-types": "catalog:",
+    "@sona-ai/config": "workspace:*",
+    "@sona-ai/infra": "workspace:*",
+    "@types/node": "catalog:",
+    "tsdown": "^0.23.0",
+    "typescript": "^6.0.3"
   }
 }

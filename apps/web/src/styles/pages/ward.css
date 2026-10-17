@@ -1,0 +1,34 @@
+/* Ward: ranked bed table, with the picked bed's blockers and owner controls first in the rail. Tokens only. */
+.ward-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
+/* A blocker in words with its owner menu beside it while both fit; at large text sizes the menu moves under the
+   words instead of past the panel. The words wrap, the menu keeps its width. */
+.ward-blocker { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.ward-blocker > :first-child { flex: 1 1 8ch; min-width: 0; overflow-wrap: anywhere; }
+.ward-owner { flex: none; inline-size: 8.5rem; max-inline-size: 100%; }
+/* Two lines: what the bed waits on, then who owns it. */
+.ward-waits { display: grid; min-width: 18ch; max-width: 34ch; }
+.ward-blocker .ward-waits { max-width: none; }
+.ward-unowned { color: var(--red); font-size: var(--text-small); font-weight: 600; }
+.ward-muted { color: var(--muted); font-size: var(--text-small); }
+.ward-counts { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2) var(--space-3); margin: 0; }
+.ward-counts dt { color: var(--muted); }
+.ward-counts dd { margin: 0; font-weight: 600; text-align: right; }
+.ward-error { color: var(--red); font-size: var(--text-small); }
+.ward-done { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-3) 0 0; font-size: var(--text-small); }
+.ward-done + .btn, .ward-plain + .btn, .ward-muted + .btn { margin-top: var(--space-3); }
+.ward-num { font-variant-numeric: tabular-nums; }
+.ward-plain { list-style: none; padding: 0; margin: 0; }
+.ward-gap { margin: var(--space-3) 0; }
+/* The bed's name is one line ending in "…" (full text on hover and in the side panel). Its forecast is a time the
+   reader compares, so it never ends in "…": the column keeps room for "Discharge tomorrow", and free text
+   ("Awaiting nursing home placement …") wraps to two lines before it clamps. */
+.ward-bed { display: grid; min-width: 17ch; max-width: 22ch; }
+.ward-bed > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ward-bed > .ward-muted { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+/* The first barrier's name ends in "…"; "+8 more" is a count, so the name gives way before it does. */
+.ward-first { display: flex; gap: 0.3em; min-width: 0; }
+.ward-first > :first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ward-more { flex: none; color: var(--muted); font-weight: 500; }
+/* The side panel is where a name is read in full: it wraps there instead of ending in "…". */
+.ward-detail .cell-person { max-width: none; }
+.ward-detail .cell-person-name { display: block; }

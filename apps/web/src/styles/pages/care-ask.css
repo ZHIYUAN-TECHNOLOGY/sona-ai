@@ -1,0 +1,92 @@
+/* Ask Sona. The frame renders the thread just before the page, so the page's parent becomes the grid:
+   header across, the conversation (or the call stage) in the main column, the rail beside it. */
+.frame-page.frame-page:has(> .ask-page) { display: grid; width: 100%; grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr); column-gap: var(--gap-card); row-gap: var(--gap-card); align-items: start; }
+.ask-page { display: contents; }
+.ask-page > .page-header, .ask-page > header { grid-column: 1 / -1; grid-row: 1; }
+.ask-page > .ask-stage { grid-column: 1; grid-row: 2; }
+.frame-page.frame-page:has(> .ask-page) > .sona-thread { grid-column: 1; grid-row: 3; }
+.ask-page > .ask-welcome { grid-column: 1 / -1; grid-row: 4; }
+.ask-page > .rail { grid-column: 2; grid-row: 2 / span 3; min-width: 0; width: auto; display: grid; gap: var(--gap-card); }
+/* A narrow page: everything spans both tracks, the rail under the conversation (the grid is the container itself, so its children move). */
+@container page (max-width: 880px) {
+  .ask-page > .ask-stage, .frame-page.frame-page:has(> .ask-page) > .sona-thread { grid-column: 1 / -1; }
+  .ask-page > .rail { grid-column: 1 / -1; grid-row: 5; }
+}
+
+/* The welcome shows until a question is asked or a call starts; the rail list takes over then (never both). */
+.frame-page:has(> .sona-thread > .sona-turn) .ask-welcome, .ask-page[data-call="on"] > .ask-welcome { display: none; }
+.ask-more { display: none; }
+.frame-page:has(> .sona-thread > .sona-turn) .ask-more, .ask-page[data-call="on"] .ask-more { display: block; }
+.ask-page > .rail:not(:has(.card, .ask-more)) { display: none; }
+/* Nothing in the rail before the first question: the welcome takes the full width. */
+.frame-page:not(:has(> .sona-thread > .sona-turn)) > .ask-page[data-call="off"] > .rail { display: none; }
+
+.ask-welcome .empty { font-size: max(17px, var(--text-body)); }
+.ask-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); list-style: none; padding: 0; margin: var(--space-4) 0 0; }
+.ask-chip { min-height: max(48px, var(--tap)); padding: var(--space-2) var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink); font: inherit; font-size: max(17px, 1em); cursor: pointer; transition: background var(--quick) var(--ease), border-color var(--quick) var(--ease); }
+.ask-chip:hover { border-color: var(--blue); background: var(--blue-wash); }
+.ask-chip:focus-visible, .ask-pill:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.ask-chip:active { transform: scale(0.98); }
+/* The rail list stays inside its column: questions wrap instead of running off the right edge. */
+.ask-page > .rail { grid-template-columns: minmax(0, 1fr); }
+.ask-more { min-width: 0; }
+.ask-more .list-title { white-space: normal; }
+.ask-more .list-row { min-height: max(48px, var(--tap)); font-size: max(17px, 1em); }
+
+.btn.ask-pill { min-height: max(48px, var(--tap)); padding-inline: var(--space-5); border-radius: var(--radius-pill); font-size: max(17px, 1em); }
+
+/* The conversation: the question as a bubble on the right, Sona's answer as a card on the left. */
+.frame-page.frame-page:has(> .ask-page) > .sona-thread { gap: var(--space-5); padding: var(--pad-card); background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--shadow-card); font-size: max(17px, var(--text-body)); line-height: var(--line-body); }
+.frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn { display: flex; flex-direction: column; gap: var(--space-3); padding: 0; border: 0; background: none; }
+.frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-q { align-self: flex-end; max-width: 75%; margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-group); background: var(--blue-wash); color: var(--ink); font-size: inherit; font-weight: 500; }
+.frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-a { position: relative; align-self: flex-start; max-width: 85%; margin-left: calc(var(--avatar-sm) + var(--space-3)); padding: var(--space-4); border: 1px solid var(--hairline); border-radius: var(--radius-group); background: var(--canvas); }
+/* An answer with cards is as wide as it may be from its first card, so a card shown before the words never reflows as they come. */
+.frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-a:has(.ai-cards) { width: 85%; }
+.frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-a::before { content: "S"; position: absolute; top: 0; left: calc(-1 * (var(--avatar-sm) + var(--space-3))); display: grid; place-items: center; width: var(--avatar-sm); height: var(--avatar-sm); border-radius: 50%; background: var(--navy); color: var(--on-ai); font-size: 15px; font-weight: 600; }
+.frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-note { font-size: max(15px, var(--text-small)); }
+.sona-turn-a .ask-listen { display: flex; margin-top: var(--space-3); }
+.ask-listen[aria-pressed="true"] { border-color: var(--blue); background: var(--blue-wash); color: var(--blue); }
+
+/* The call: a dark stage with a status pill, the orb, the caption bar and the dock. */
+.ask-stage { position: relative; display: grid; justify-items: center; align-content: center; gap: var(--space-4); min-height: min(560px, 62vh); padding: calc(var(--space-6) + var(--tap)) var(--pad-card) var(--pad-card); border-radius: var(--radius-card); background: var(--navy); color: var(--on-ai); font-size: max(17px, var(--text-body)); text-align: center; }
+.ask-stage p { margin: 0; }
+.ask-stage-status { position: absolute; top: var(--space-4); left: var(--space-4); display: inline-flex; align-items: center; gap: var(--space-2); min-height: 40px; max-width: calc(100% - 2 * var(--space-4)); padding: var(--space-2) var(--space-4); border: 1px solid var(--glass-edge); border-radius: var(--radius-pill); background: color-mix(in srgb, var(--on-ai) 12%, transparent); font-weight: 600; text-align: left; }
+.ask-stage-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--green); }
+.ask-stage:is([data-mood="connecting"], [data-mood="reconnecting"], [data-mood="idle"], [data-mood="thinking"]) .ask-stage-dot { background: var(--amber); }
+.ask-stage:is([data-mood="mic"], [data-mood="failed"]) .ask-stage-dot { background: var(--on-ai-soft); }
+.ask-orb { display: grid; place-items: center; width: 168px; height: 168px; border-radius: 50%; background: var(--ai-gradient); color: var(--on-ai); font-size: 64px; font-weight: 600; outline: 2px solid transparent; outline-offset: 10px; }
+.ask-stage[data-mood="listening"] .ask-orb { outline-color: color-mix(in srgb, var(--on-ai) 55%, transparent); }
+.ask-stage:is([data-mood="mic"], [data-mood="failed"]) .ask-orb { opacity: 0.45; }
+.ask-stage-hint { color: var(--on-ai-soft); }
+.ask-caption { width: min(100%, 640px); min-height: 56px; display: grid; place-items: center; padding: var(--space-3) var(--space-5); border-radius: var(--radius-group); background: color-mix(in srgb, var(--on-ai) 10%, transparent); }
+.ask-dock { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); padding: var(--space-2); border: 1px solid var(--glass-edge); border-radius: var(--radius-pill); background: color-mix(in srgb, var(--on-ai) 8%, transparent); }
+.btn.ask-end { border-color: var(--red); background: var(--red); color: var(--on-ai); }
+.btn.ask-close { border-color: var(--glass-edge); background: transparent; color: var(--on-ai); }
+@media (prefers-reduced-motion: no-preference) {
+  .ask-stage[data-mood="speaking"] .ask-orb { animation: ask-pulse 1.8s var(--ease) infinite alternate; }
+  .ask-stage[data-mood="listening"] .ask-orb { transition: outline-color var(--settle) var(--ease); }
+}
+@keyframes ask-pulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+
+.ask-lines { display: grid; gap: var(--space-3); font-size: max(17px, var(--text-body)); }
+.ask-line { margin: 0; }
+.ask-line span { display: block; color: var(--muted); font-size: max(15px, var(--text-small)); font-weight: 600; }
+.ask-quiet { margin: 0; color: var(--muted); font-size: max(17px, var(--text-body)); }
+
+/* Off a call the stage row is unused: the conversation (or the welcome) sits level with the rail. */
+.frame-page.frame-page:has(> .ask-page[data-call="off"]) > .sona-thread, .ask-page[data-call="off"] > .ask-welcome { grid-row: 2; }
+
+/* An answer's next steps, a failure with its "Try again", and room so the newest turn clears the floating Sona bar. */
+.ask-next { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); }
+.ask-next .ask-listen { margin-top: 0; }
+.ask-failed { display: grid; justify-items: start; gap: var(--space-3); color: var(--ink); }
+.ask-failed p { margin: 0; color: var(--amber); font-weight: 500; }
+.frame-page.frame-page:has(> .ask-page) > .sona-thread .sona-turn-a p { max-width: 70ch; }
+.ask-welcome .empty p { max-width: 60ch; margin-inline: auto; }
+.ask-next, .ask-failed { scroll-margin-bottom: calc(var(--tap) * 3); }
+/* Only the newest failure offers "Try again"; the rail of suggestions stays in view beside a long conversation. */
+.sona-turn:not(:last-child) .ask-failed .btn { display: none; }
+@container page (min-width: 881px) { .ask-page > .rail { position: sticky; top: var(--space-4); } }
+/* An answer keeps its line breaks (lists, paragraphs); a long link or question wraps inside its bubble. */
+.ask-answer { white-space: pre-line; }
+.frame-page.frame-page:has(> .ask-page) > .sona-thread :is(.sona-turn-q, .sona-turn-a) { overflow-wrap: anywhere; }

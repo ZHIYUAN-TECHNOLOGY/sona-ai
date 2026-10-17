@@ -1,0 +1,93 @@
+// @ts-expect-error apps/web has no bun types yet; add @types/bun and drop this line
+import { expect, test } from "bun:test";
+
+import { type Answer, apply, newTurn } from "@/features/evidence/thread";
+
+import { historyOf, type Live, phaseOf, rowPatient, rulesAnswer, streamed } from "./sona-answer";
+
+const spec = (...parts: { type: string; props: Record<string, unknown> }[]) => ({
+  root: "r",
+  elements: { r: { type: "AskColumn", props: {}, children: parts.map((_, i) => `p${i}`) }, ...Object.fromEntries(parts.map((p, i) => [`p${i}`, p])) },
+});
+
+test("an ask spec becomes a rule answer: lead, rows, only patient ops kept, who wrote it", () => {
+  const answer = rulesAnswer({
+    source: "rules",
+    spec: spec(
+      { type: "AskLead", props: { text: "Amelia Tan needs you first." } },
+      { type: "AskRows", props: { rows: [
+        { id: "p1", title: "Amelia Tan", detail: "NEWS 7", tone: "urgent", op: "open:p1" },
+        { id: "t1", title: "Chase the echo", detail: "", tone: "soon", op: "task-done:t1" },
+      ] } },
+    ),
+  });
+  expect(answer).toEqual({
+    kind: "rules", lead: "Amelia Tan needs you first.", by: "rules",
+    rows: [{ id: "p1", title: "Amelia Tan", detail: "NEWS 7", tone: "urgent", op: "open:p1" }, { id: "t1", title: "Chase the echo", tone: "soon" }],
+  });
+  expect(answer!.rows.map(rowPatient)).toEqual(["p1", undefined]);
+});
+
+test("calm rows are counted, a review stays a confirm card, the model is named, and an empty spec is no answer", () => {
+  const calm = rulesAnswer({ source: "model", model: "gemma-4-26b-a4b", spec: spec(
+    { type: "AskLead", props: { text: "Two visits today." } },
+    { type: "AskRows", props: { rows: [{ id: "a", title: "A", detail: "9:00", tone: "calm" }, { id: "b", title: "B", detail: "10:00", tone: "calm" }] } },
+  ) });
+  expect(calm).toMatchObject({ by: "Sona Med", heading: "2 items" });
+  const ask = { title: "Discharge Amelia?", items: ["Oral switch done"], what: "Marks her task done.", confirm: "Mark done", done: "Done.", op: "task-done:p1:t1" };
+  expect(rulesAnswer({ source: "fixture", spec: spec({ type: "AskReview", props: ask }) })).toEqual({ kind: "rules", lead: "", rows: [], review: ask, by: undefined });
+  expect(rulesAnswer({ source: "fixture" })).toBeUndefined();
+});
+
+test("ask.free's parts ride beside the spec: old mark kinds read as new, cards kept, a general answer labelled; a card alone is an answer", () => {
+  const potassium = { type: "result", test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low", source: "Lab result" };
+  const answer = rulesAnswer({ source: "model", model: "gemma-4-26b-a4b", general: true, spec: spec({ type: "AskLead", props: { text: "Hypokalaemia: low potassium of 3.1." } }),
+    marks: [{ text: "Hypokalaemia", kind: "finding" }, { text: "low potassium of 3.1", kind: "alert" }], cards: [potassium, { type: "chart" }] });
+  expect(answer).toMatchObject({ marks: [{ text: "Hypokalaemia", kind: "condition" }, { text: "low potassium of 3.1", kind: "warning" }], cards: [potassium], general: true });
+  expect(rulesAnswer({ source: "model", cards: [potassium] })).toMatchObject({ lead: "", rows: [], cards: [potassium] });
+});
+
+test("stream events move an evidence turn through search, read, write and done", () => {
+  let turn = newTurn("a", "Steroids for CAP?");
+  expect(phaseOf(turn)).toBe("search");
+  turn = apply(turn, { type: "step", step: "read", studies: 0, passages: 0, references: [] });
+  expect(phaseOf(turn)).toBe("read");
+  turn = apply(turn, { type: "step", step: "write" });
+  expect(phaseOf(turn)).toBe("write");
+  turn = apply(turn, { type: "bottomLine", text: "Not routinely." });
+  expect(phaseOf(turn)).toBe("write");
+  turn = apply(turn, { type: "answer", answer: { bottomLine: "Not routinely.", claims: [], references: [], source: "gemma" } as unknown as Answer });
+  expect(phaseOf(turn)).toBe("done");
+  expect(phaseOf({ ...newTurn("b", "?"), failed: "no" })).toBe("done");
+});
+
+test("a follow-up goes with the thread so far: the last 6 answered turns, oldest first, in the words shown; a new thread has none", () => {
+  const said = (question: string, text: string) => ({ question, state: "done", answer: { kind: "text" as const, text } });
+  expect(historyOf([])).toEqual([]);
+  // Still thinking, failed, or a page's answer with no words: not history.
+  expect(historyOf([
+    said("What is panadol?", "Panadol is paracetamol.\n\nI've let your care team know."),
+    { question: "Why?", state: "error" },
+    { question: "Shown", state: "done", answer: { kind: "node" as const, node: null } },
+    { question: "Asked", state: "done", answer: { kind: "node" as const, node: null, text: "Its words." } },
+    { question: "How does it help?", state: "pending" },
+  ])).toEqual([
+    { question: "What is panadol?", answer: "Panadol is paracetamol.\n\nI've let your care team know." },
+    { question: "Asked", answer: "Its words." },
+  ]);
+  expect(historyOf(Array.from({ length: 8 }, (_, i) => said(`Q${i}`, `A${i}`))).map(h => h.question)).toEqual(["Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]);
+  const long = historyOf([said("q".repeat(2500), "a".repeat(5000))])[0]!;
+  expect([long.question.length, long.answer.length]).toEqual([2000, 4000]);
+});
+
+test("a streamed Care answer: cards first, then the words as each piece lands (a retry starts them again), then the whole answer", async () => {
+  const sos = { type: "warning" as const, level: "urgent" as const, title: "Call 999 now", items: [] };
+  const parts = [{ type: "call999" as const, card: sos }, { type: "words" as const, at: 0, text: "Rest" }, { type: "words" as const, at: 4, text: " now." }, { type: "words" as const, at: 0, text: "Duduk." }, { type: "answer" as const, answer: { answer: "Duduk." } }];
+  const seen: Live[] = [];
+  const whole = async () => ({ answer: "asked whole" });
+  expect(await streamed(async () => (async function* () { yield* parts; })(), whole, live => seen.push(live))).toEqual({ answer: "Duduk." });
+  expect(seen.map(l => l.words)).toEqual(["", "Rest", "Rest now.", "Duduk."]);
+  expect(seen.at(-1)!.sos).toEqual(sos);
+  // A server without askStream, or a stream that breaks: care.ask's whole answer.
+  expect(await streamed(async () => { throw new Error("no askStream"); }, whole, () => {})).toEqual({ answer: "asked whole" });
+});

@@ -1,0 +1,820 @@
+[
+  {
+    "id": "infect_011",
+    "split": "train",
+    "condition": "Hand, foot and mouth disease",
+    "source": "Hand-foot-and-mouth disease",
+    "patient_persona": {
+      "description": "Tan Siew Ling, 31, female, bank officer in Johor Bahru, speaking for her daughter Xin Yi, 3, whose kindergarten had two cases last week. Quick, worried, Malaysian Mandarin with English words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kumaresan a/l Nadarajah, Malaysian Indian man in his 50s, GP at a Johor Bahru family clinic for 20 years. Grandfatherly; English with basic Mandarin phrases and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor，我女儿昨天开始发烧，今天嘴巴里面有很多 ulcer，吃不下东西。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, let me see. Xin Yi, open mouth, ahh. Yes, ulcers at the back. 手也有 spots 吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有，手掌有小小的红点，脚底也有。Kindergarten 上个礼拜有两个小朋友得 HFMD。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then this is hand, foot and mouth disease. It's a virus, 手足口病. Antibiotic won't help, it goes away by itself in about seven to ten days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那她不肯吃东西，怎么办？连 milk 都只喝一点点。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Give cold things. Cold milk, ice cream, jelly, porridge not too hot. Mouth sore, so hot food will pain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "发烧的药我给她吃 Uphamol，可以吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes. She is 14 kilo, so Uphamol 120mg per 5ml, give 8ml every six hours when fever. I also give you Bonjela-type gel for the ulcers, before meals."
+      },
+      {
+        "speaker": "Patient",
+        "text": "要看她几次小便吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, important. If she doesn't pee for more than six to eight hours, or very lemah, cannot wake up properly, bring her back or go hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "还有什么要特别注意的？网上说有的会影响脑。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Rare, but watch for sudden jerking when sleeping, vomiting many times, or very drowsy. Those are danger signs, 要马上去医院。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白。她什么时候可以回 kindergarten？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Keep her home until all the blisters dry, usually one week. The virus stays in stool for weeks, so wash hands after changing diapers."
+      },
+      {
+        "speaker": "Patient",
+        "text": "她已经不用 diaper 了，不过我会提醒 maid 洗手。玩具要不要洗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, wash toys with soap, or diluted Clorox for the hard ones. Siblings share towel? 不要 share。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，谢谢 doctor。"
+      }
+    ]
+  },
+  {
+    "id": "infect_012",
+    "split": "train",
+    "condition": "Hand, foot and mouth disease with poor oral intake",
+    "source": "Hand-foot-and-mouth disease",
+    "patient_persona": {
+      "description": "Encik Mohd Faizal bin Ibrahim, 34, male, fisherman's cooperative clerk in Kuala Terengganu, speaking for his son Irfan, 18 months. Deep, soft-spoken, Terengganu Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nor Azlina binti Hassan, Malay woman in her 30s, medical officer at a Kuala Terengganu health clinic. Calm and caring; Malay with English clinical words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik, Irfan ni dah berapa hari tak nak makan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dua hari dah, doktor. Susu pun dia tolak. Menangis je bila botol masuk mulut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya tengok dalam mulut dia ada banyak ulser, tapak tangan dan punggung ada ruam kecil. Ni penyakit tangan, kaki dan mulut, HFMD."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Taska dia ada tutup minggu lepas, katanya ada budak kena. Rupanya dia pun kena."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lampin dia berapa kali basah sejak pagi?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pagi tadi sekali. Lepas tu sampai sekarang kering. Dah pukul tiga petang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hmm, dah lebih lapan jam. Bibir dia kering, mata sikit cengkung. Capillary refill tiga saat. Dia dah mula dehydrated."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Teruk ke doktor? Kena masuk hospital?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya cuba dulu kat sini. Saya bagi Uphamol untuk sakit, tunggu setengah jam, lepas tu kita cuba bagi ORS guna picagari, sikit-sikit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "ORS tu air garam yang dalam paket tu ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, oral rehydration salt. Lima ml setiap lima minit. Kalau dia boleh telan dan tak muntah, kita teruskan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau dia tetap tak nak minum?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau dalam sejam tak berjaya, saya refer ke Hospital Sultanah Nur Zahirah untuk drip. Budak kecil cepat kering air badan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik doktor. Saya cuba. Dia suka air sejuk, boleh saya sejukkan ORS tu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, air sejuk kurang pedih untuk ulser. Aiskrim pun boleh, sebagai tambahan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Isteri saya mengandung empat bulan. Dia boleh jaga Irfan ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, tapi cuci tangan selalu lepas tukar lampin, dan jangan kongsi sudu. Kalau dia demam, suruh dia jumpa doktor."
+      }
+    ]
+  },
+  {
+    "id": "infect_013",
+    "split": "train",
+    "condition": "Hand, foot and mouth disease, follow-up",
+    "source": "Hand-foot-and-mouth disease",
+    "patient_persona": {
+      "description": "Mrs. Kalaivani a/p Subramaniam, 38, female, school canteen operator in Klang, speaking for her son Harish, 5. Chatty, warm, Malaysian Indian English with Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chan Pei Yee, Malaysian Chinese woman in her 30s, GP at a Klang clinic. Upbeat; English, switches to Malay for short instructions.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Mrs. Kalaivani, hi Harish. Day six already. How's he doing?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Much better, doctor. Fever gone since Saturday. Now he's eating nasi lemak like nothing happened."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good sign. Let me check. Mouth ulcers healing. Hands, the spots are drying. Feet also OK."
+      },
+      {
+        "speaker": "Patient",
+        "text": "But doctor, his fingernails, I saw one nail like peeling at the bottom. Is that normal, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, that can happen a few weeks after HFMD. The nail may even drop off, but a new one grows back. No need to worry."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, drop off? OK lah, as long as it grows back. When can he go back to tadika?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Once all blisters dry up, which is almost now. I'll write a letter, he can go back on Monday."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Good, because I cannot close my canteen for so long. My mother-in-law jaga him at home."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "One thing, the virus still comes out in the stool for a few weeks. So toilet time, cuci tangan dengan sabun, every time."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Even after he's well? Wah, tak tahu pula."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes. That's how it spreads in kindergartens. Your baby at home, how old?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Eleven months. So far no fever, but I'm so risau."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Watch her for one more week. If fever or not drinking milk, bring her in early. Don't let Harish share spoons with her."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doctor. Should I still give him ubat demam, the Uphamol?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No need anymore, no fever. You can stop. Balance ubat, just keep it for next time, check the expiry."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright. Thank you, doctor. Harish, cakap terima kasih to doctor."
+      }
+    ]
+  },
+  {
+    "id": "infect_014",
+    "split": "train",
+    "condition": "Hand, foot and mouth disease in an adult",
+    "source": "Hand-foot-and-mouth disease",
+    "patient_persona": {
+      "description": "Magdalene Jeli anak Ngumbang, 32, female, Iban childcare centre assistant in Kuching, Sarawak; outbreak at her centre. Soft, a little hoarse from a painful mouth, English mixed with Sarawak Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Abang Zulkarnain bin Abang Hamdan, Sarawakian Malay man in his 40s, GP at a Kuching clinic. Friendly, joking; English with Sarawak Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my mulut so painful, I cannot swallow. Also fever since Wednesday and my hands got red spots."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Where do you work? Anyone around you sick?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "I work at a childcare centre in Petra Jaya. Last week four children got HFMD. The centre tutup on Friday."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me look. Open your mouth. Yes, ulcers on the tongue and palate. Palms and soles got spots too. You caught HFMD from the kids."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Adults can get it? I thought only budak kecil."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Adults can, usually milder, but the mouth ulcers can be very painful. Some adults get more fever and body ache than children."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, my body sakit all over. Also the soles of my feet, walking also pain."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give you paracetamol 1 gram, four times a day, and a lignocaine mouth gel before meals. Also a mouthwash, benzydamine, gargle three times a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can I take ibuprofen? It works better untuk saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ibuprofen 400mg three times a day after food is OK, as long as your stomach is fine. No gastric problem?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No gastric, doktor. Doctor, I need MC. The centre opens again Monday."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I give you five days MC. Don't go back until the blisters dry. And tell your supervisor, they must report to the health office."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Already reported. The pejabat kesihatan came to check on Friday."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. At home, ada budak kecil?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "My niece, two years old, tinggal with us."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then separate towel, separate cup, wash hands a lot. Don't kiss her for this week, OK?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susah, she always wants me to carry. But OK, I'll try. Thank you, doctor."
+      }
+    ]
+  },
+  {
+    "id": "infect_015",
+    "split": "train",
+    "condition": "Hand, foot and mouth disease with neurological warning signs",
+    "source": "Hand-foot-and-mouth disease",
+    "patient_persona": {
+      "description": "Madam Leong Ah Moi, 61, female, retired hawker in Ipoh caring for her grandson Jun Hao, 2, while his parents work in KL. Cantonese-accented Malaysian Mandarin, worried, speaks fast.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Yap Kok Leong, Malaysian Chinese man in his 50s, paediatrician at an Ipoh private hospital. Serious but gentle; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我孙子手足口病第三天了，昨晚睡觉的时候一直突然跳一下，跳一下，好像被吓到那样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "一个晚上跳了几次？他醒着的时候有没有这样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "很多次，我数到十几次就不敢数了。今天早上他很想睡，叫他都不太理人。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有没有呕吐？手脚有没有发抖，或者走路不稳？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "早上吐了两次。走路……他平时会跑，今天站起来就要倒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Madam，这个我要讲清楚。睡觉时突然抽跳，加上很想睡、呕吐、走路不稳，这些是 EV71 影响脑的 warning signs。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "脑？这么严重？我以为手足口病一个礼拜就好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "大部分是这样。可是少数会变 encephalitis，要马上住院观察。他现在 heart rate 一百六十，有一点快。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要去哪里？这里住院吗？要 admit 多久？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们现在就 admit 他到 paediatric ward，可能要去 HDU 观察。我会安排验血，也可能要做 lumbar puncture。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那个抽骨髓的吗？他那么小，会不会很 pain？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不是骨髓，是从背后抽一点 spinal fluid，看看脑膜有没有发炎。会给他镇静，不会很痛。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我要打电话给他爸爸妈妈，他们在 KL，开车要两个钟头。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好，你打电话。你也跟他们说，要他们签 consent。你做得很对，早上就带来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我很怕是我照顾不好……"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不是你的错，这个病毒在 kindergarten 很容易传染。现在最重要是快点处理，护士会马上来帮你。"
+      }
+    ]
+  },
+  {
+    "id": "infect_016",
+    "split": "train",
+    "condition": "Chickenpox in an adult",
+    "source": "Chickenpox",
+    "patient_persona": {
+      "description": "Muhammad Aqil bin Roslan, 24, male, food-delivery rider in Setapak, Kuala Lumpur; no childhood chickenpox. Casual, fast, Malay with English slang.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Jessica Loh, Malaysian Chinese woman in her 30s, GP at a Setapak clinic. Direct, practical; English and fluent Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doc, semalam malam tiba-tiba ada bintik-bintik merah kat dada, pagi ni dah naik air. Gatal gila."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bila mula demam? Ada sakit kepala, badan lenguh?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Demam sikit dari kelmarin. Ingat penat kerja je, sebab saya rider, panas seharian."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pernah kena cacar air masa kecil? Chickenpox?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak pernah rasanya. Mak cakap adik-beradik semua kena, saya je tak kena. Housemate saya kena dua minggu lepas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ha, itu dia. Ni memang chickenpox. Lenting berair kat dada, belakang, sikit kat muka. Baru dalam 24 jam, jadi ubat antiviral masih berkesan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat apa tu, doc?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Acyclovir 800mg, lima kali sehari, tujuh hari. Setiap empat jam masa jaga, skip waktu tidur malam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lima kali sehari? Banyak tu. Kalau lupa satu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Set alarm kat phone. Kalau terlupa, makan bila ingat, tapi jangan double. Adult chickenpox boleh lebih teruk, sebab tu ubat ni penting."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Gatal ni macam mana? Tak tahan nak garu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Calamine lotion sapu kat bintik, dan cetirizine 10mg satu biji malam. Potong kuku pendek, jangan garu, nanti berparut atau kena jangkitan kuman."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh kerja tak? Kalau tak hantar makanan, takde duit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak boleh. Awak berjangkit sampai semua lenting jadi keras dan kering, lebih kurang seminggu. Saya bagi MC tujuh hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Seminggu takde income, aduh. OK lah, doc. Ada lagi yang kena jaga?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau batuk, sesak nafas, atau sakit dada, terus pergi hospital. Itu tanda paru-paru kena. Dan jangan merokok minggu ni."
+      }
+    ]
+  },
+  {
+    "id": "infect_017",
+    "split": "train",
+    "condition": "Chickenpox in a child",
+    "source": "Varicella",
+    "patient_persona": {
+      "description": "Lau Mei Kuan, 35, female, tuition centre owner in Kuching, Sarawak, speaking for her son Ethan, 6. Calm, organised, Sarawak Mandarin with English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Voon Kah Wai, Sarawakian Hakka man in his 40s, GP at a Kuching clinic. Patient, explains well; Mandarin with English medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，Ethan 前天开始有红点，现在全身都是水泡，班上有同学出水痘。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看看。嗯，有新有旧，有的已经结痂。这个是典型的 chickenpox，水痘。他有没有打过 varicella vaccine？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，那个要自费，我们当时没有打。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK。小孩子一般是 mild 的。发烧的话吃 paracetamol，不可以吃 aspirin，也最好不要吃 ibuprofen。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "为什么 ibuprofen 不可以？他平常发烧都吃 Nurofen。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "水痘的时候吃 ibuprofen，皮肤细菌感染的 risk 比较高。Paracetamol 就好，他 20 公斤，吃 10ml 的 250mg 那种。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "痒得很厉害，晚上一直抓，睡不着，一直 scratch。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我开 calamine lotion，还有 chlorpheniramine syrup 晚上吃，会让他比较好睡。指甲剪短，晚上可以戴 sock 在手上。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要吃抗病毒的药吗？我朋友的孩子有吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "健康的小孩一般不需要 acyclovir。除非有 eczema 或者免疫力比较差。Ethan 都没有，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有。不过家里有个两个月的 baby，他妹妹。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你自己小时候出过水痘吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有，我妈说我七岁出过。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那 baby 有你的 antibody 保护，risk 比较低。可是还是要尽量分开，如果 baby 发烧或出红点，马上带来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白。他什么时候可以回 school？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "要等全部水泡都结痂，大概五到七天。我写一封 letter 给学校。"
+      }
+    ]
+  },
+  {
+    "id": "infect_018",
+    "split": "train",
+    "condition": "Chickenpox exposure in pregnancy",
+    "source": "Chickenpox",
+    "patient_persona": {
+      "description": "Nadia binti Khairul Anuar, 29, female, marketing executive in George Town, Penang, 20 weeks pregnant with her first child; nephew had chickenpox at a family gathering. Clear, anxious, English-dominant with Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Boon Hock, Penang Chinese man in his 50s, obstetrician at a George Town private hospital. Calm, reassuring; English with some Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Nadia, your blood test is back. Varicella IgG is negative. That means you're not immune to chickenpox."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh no. I really thought I had it masa kecil. So my baby is in danger?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let's take it step by step. You were with your nephew on Saturday, so today is day four after exposure. We still have time to act."
+      },
+      {
+        "speaker": "Patient",
+        "text": "We were in the same room the whole makan tengah hari. He had spots already but nobody knew it was chickenpox."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That counts as significant exposure. The first option is VZIG, varicella zoster immunoglobulin. It's an injection of antibodies, best within ten days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is it safe for the baby?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, it's safe in pregnancy. The problem is supply. Our pharmacy is checking now. If it's not available, the alternative is acyclovir tablets."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tablets? Also safe? I'm scared to take any ubat now."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Acyclovir has been used a lot in pregnancy, no clear harm. Dose 800mg four times a day, from day seven to day fourteen after exposure."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doktor. What's the risk to the baby if I get chickenpox?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At 20 weeks, the risk of the baby being affected is small, around one to two percent. The bigger worry is you, pregnant women can get chickenpox pneumonia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So apa yang I kena watch for?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any fever or spots in the next three weeks, call us straight away. Cough or breathlessness, come to the labour ward terus, don't wait."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Should I jauhkan diri from other people?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "From day eight to day 21, avoid other pregnant women and newborns, in case you're incubating it. After delivery, we'll give you the vaccine."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright. I'll wait for the pharmacy. Terima kasih for explaining so clearly, doctor."
+      }
+    ]
+  },
+  {
+    "id": "infect_019",
+    "split": "train",
+    "condition": "Chickenpox with secondary bacterial infection",
+    "source": "Chickenpox",
+    "patient_persona": {
+      "description": "Puan Rahayu binti Samat, 30, female, homemaker in Batu Pahat, Johor, speaking for her daughter Aisyah, 4. Gentle, apologetic, Johor Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Gan Chee Hoong, Malaysian Chinese man in his 30s, medical officer at a Batu Pahat health clinic. Kind, straightforward; fluent Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, Aisyah kena cacar air minggu lepas. Dah nak baik, tapi dua hari ni ada yang bengkak dan bernanah kat kaki."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mari saya tengok. Hmm, yang ni merah, panas, ada nanah kuning. Keliling dia bengkak dalam tiga cm."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dia garu kuat sangat, saya tak dapat tahan. Malam dia garu masa tidur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa, puan, biasa berlaku. Kuman kulit masuk bila luka digaru. Ni dah jadi secondary bacterial infection."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bahaya ke doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yang ni masih kecil. Suhu dia 37.9, tak tinggi sangat. Dia masih aktif dan makan, kan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makan ada, tapi kurang sikit. Main pun masih main."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. Saya bagi antibiotic syrup, cloxacillin, dia 16 kilo, jadi 5ml empat kali sehari, lima hari. Makan sebelum makan, perut kosong."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sebelum makan ya. Krim ada tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada, fusidic acid cream, sapu nipis tiga kali sehari kat luka yang bernanah je. Cuci dulu dengan air bersih."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mak saya suruh mandi air daun semambu. Boleh ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mandi air suam biasa lebih selamat. Air daun tu kita tak tahu bersih ke tak, takut tambah jangkitan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, saya tak buat. Bila kena datang balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dua hari lagi, saya nak tengok merah tu kurang ke tak. Kalau merah merebak cepat, demam tinggi, atau dia lemau, datang terus hari tu juga."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Merah merebak, demam tinggi, lemau. Saya ingat. Terima kasih doktor."
+      }
+    ]
+  },
+  {
+    "id": "infect_020",
+    "split": "test",
+    "condition": "Varicella pneumonia",
+    "source": "Varicella",
+    "patient_persona": {
+      "description": "Mr. Rudy Majinbon, 35, male, Kadazan-Dusun construction site supervisor in Sandakan, Sabah; smokes a pack a day. Hoarse, coughing between phrases, Sabahan English and Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Ain binti Jamal, Malay woman in her 30s, medical registrar on the ward round at Hospital Duchess of Kent, Sandakan. Firm, warm; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Good morning, Mr. Rudy. I'm Dr. Nurul Ain. How's the breathing today compared to when you came in?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Better sikit, doctor. Yesterday I cannot even talk. Today can talk, but still batuk a lot."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your oxygen is 95 percent on two litres by nasal prong. When you came in on Tuesday, it was 86 on room air."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Eighty-six? That's why I felt like drowning. It's the chickenpox that go to the lungs, right?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, varicella pneumonia. The chest X-ray shows small patches in both lungs. Smokers have a much higher risk of this."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My wife already scolding me. I promise, after this no more rokok."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good, we'll help you with that. For now, we continue IV acyclovir, 10mg per kg, every eight hours. Today is day three."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berapa hari lagi with the drip?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually at least five days IV, then tablets to complete seven to ten days. Depends on your oxygen."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, the nurse said my buah pinggang need to check also. Why?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "IV acyclovir can affect the kidneys, so we check creatinine daily and make sure you drink enough. Today's creatinine is 88, normal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. Can my children visit? I rindu them already."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not yet. You're in isolation because you're still infectious. Have your kids had chickenpox?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "The small one, tiga tahun, never. The big one got it last year."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then the small one should see the klinik for the vaccine, and stay away until your spots are all crusted."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, I'll tell my isteri. Thank you, doctor."
+      }
+    ]
+  }
+]

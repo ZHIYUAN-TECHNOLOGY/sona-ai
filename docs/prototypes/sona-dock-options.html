@@ -1,0 +1,216 @@
+<title>Sona Dock Options</title>
+<style>
+:root{
+  --bg:#EEF0F3; --panel:#FFFFFF; --ink:#1D1F23; --muted:#59616B; --soft:#8A919B; --line:#D8DBE0;
+  --blue:#245BCC; --blueWash:#DDE8FB; --red:#A23E3E; --amber:#8B5518; --amberWash:#F4E7D4; --green:#0F6E66; --greenWash:#DCEFEA;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme:dark; --bg:#14161A; --panel:#1C1F24; --ink:#ECEEF1; --muted:#A5ACB6; --soft:#7D8591; --line:#2E323A;
+  --blue:#86A9F2; --blueWash:#1F2C45; --red:#EE9A9A; --amber:#E3B274; --amberWash:#382B1A; --green:#77C9B7; --greenWash:#16302B;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark; --bg:#14161A; --panel:#1C1F24; --ink:#ECEEF1; --muted:#A5ACB6; --soft:#7D8591; --line:#2E323A;
+  --blue:#86A9F2; --blueWash:#1F2C45; --red:#EE9A9A; --amber:#E3B274; --amberWash:#382B1A; --green:#77C9B7; --greenWash:#16302B;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding-inline:16px;padding-block:0 72px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-.02em}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.12;font-weight:700}
+h2{font-size:22px;font-weight:700}
+h3{font-size:16.5px;font-weight:650}
+p{margin:0;max-width:70ch}
+.over{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--blue)}
+.lead{font-size:17px;color:var(--muted);max-width:68ch}
+header{padding-top:52px;display:flex;flex-direction:column;gap:14px}
+.pick{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:6px;max-width:860px}
+.pick b{color:var(--green)}
+.switch{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.switch span{font-size:13px;color:var(--muted);margin-right:4px}
+.switch button{font:inherit;font-size:13.5px;font-weight:600;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.switch button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:22px}
+.opt{display:flex;flex-direction:column;gap:12px}
+.opt .top{display:flex;align-items:baseline;gap:10px}
+.rank{font-size:12px;font-weight:700;color:#fff;background:var(--ink);border-radius:999px;padding:3px 10px;font-variant-numeric:tabular-nums}
+.opt.best .rank{background:var(--green)}
+.opt .idea{font-size:14px;color:var(--muted)}
+.opt ul{margin:0;padding-left:18px;font-size:13.5px;display:flex;flex-direction:column;gap:3px}
+.opt ul.pro li::marker{color:var(--green)} .opt ul.con li::marker{color:var(--red)}
+.score{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.score b{color:var(--ink)}
+/* ===== phone (always the app's light palette) ===== */
+.phone{width:100%;max-width:300px;aspect-ratio:300/610;border-radius:40px;padding:8px;background:#0E0F12;box-shadow:0 24px 50px -22px rgba(10,20,40,.4);color-scheme:light;align-self:center}
+.scr{position:relative;width:100%;height:100%;border-radius:33px;overflow:hidden;color:#1D1F23;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  background:radial-gradient(120% 60% at 90% -10%,rgba(120,160,240,.3),transparent 60%),radial-gradient(90% 50% at -10% 30%,rgba(190,170,240,.22),transparent 60%),radial-gradient(80% 40% at 50% 110%,rgba(120,200,200,.16),transparent 60%),#F3F5F9}
+.isl{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:84px;height:24px;border-radius:14px;background:#000;z-index:5}
+.pg{position:absolute;inset:0;padding:42px 14px 0;display:flex;flex-direction:column;gap:9px}
+.nav{display:flex;align-items:center;gap:8px;min-height:34px}
+.nav .rb{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.7);border:1px solid #fff;display:grid;place-items:center;font-size:15px;box-shadow:0 2px 6px rgba(30,50,90,.08)}
+.nav .t{flex:1;text-align:center;font-size:14px;font-weight:600;margin-right:40px}
+.nav .pc{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;background:rgba(255,255,255,.7);border:1px solid #fff;border-radius:18px;padding:4px 10px 4px 4px}
+.av{width:22px;height:22px;border-radius:50%;background:#DCE6F7;color:#245BCC;font-size:9.5px;font-weight:700;display:grid;place-items:center}
+.eye{font-size:11.5px;color:#59616B;font-weight:500}
+.ins{font-size:17px;line-height:1.28;font-weight:600;letter-spacing:-.3px}
+.ins .a{color:#8B5518}
+.cd{background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.55));border:1px solid #fff;border-radius:18px;box-shadow:0 1px 0 #fff inset,0 5px 14px rgba(40,70,130,.07),0 0 0 .5px rgba(20,28,40,.06);padding:9px 11px;display:flex;flex-direction:column;gap:6px}
+.cd.f{box-shadow:0 1px 0 #fff inset,0 8px 20px rgba(36,91,204,.14),0 0 0 .5px rgba(20,28,40,.06)}
+.hud{display:flex;align-items:center;gap:8px;font-size:11.5px;color:#59616B}
+.hud b{color:#1D1F23}
+.hud .bm{margin-left:auto;background:#245BCC;color:#fff;border-radius:12px;padding:4px 9px;font-weight:600;font-size:11px}
+.chips{display:flex;gap:5px}
+.chips span{font-size:11px;font-weight:600;padding:5px 9px;border-radius:13px;background:rgba(255,255,255,.8);border:1px solid rgba(20,28,40,.07);color:#59616B}
+.chips span.on{background:#15171B;color:#fff}
+.ls{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 0 0 .5px rgba(20,28,40,.06)}
+.rw{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:12px}
+.rw + .rw{border-top:1px solid rgba(20,28,40,.06)}
+.dt{width:7px;height:7px;border-radius:50%;flex:none}
+.dt.a{background:#C78A3B} .dt.g{background:#2E9A86} .dt.r{background:#A23E3E} .dt.b{background:#245BCC}
+.rw .m{flex:1;display:flex;flex-direction:column}
+.rw .m b{font-weight:600}
+.rw .m s{text-decoration:none;font-size:10.5px;color:#8B5518}
+.rw .m s.g{color:#0F6E66}
+.tools{display:flex;gap:6px}
+.tl{flex:1;background:rgba(255,255,255,.75);border:1px solid #fff;border-radius:14px;padding:7px 6px;display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:600}
+.tl i{width:20px;height:20px;border-radius:50%;background:#E4EAF3;display:block}
+.tl small{font-size:9.5px;font-weight:500;color:#59616B}
+.need{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500}
+.need span{flex:1}
+.need em{font-style:normal;font-size:11px;font-weight:600;color:#245BCC;background:#E6EEFC;border-radius:13px;padding:5px 10px}
+.fadeband{position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(180deg,rgba(243,245,249,0),rgba(243,245,249,.92) 45%);pointer-events:none}
+.bot{position:absolute;left:10px;right:10px;bottom:16px;display:flex;flex-direction:column;gap:7px;z-index:3}
+.sug{align-self:flex-start;font-size:11.5px;font-weight:600;color:#245BCC;background:rgba(255,255,255,.95);border-radius:14px;padding:6px 10px;box-shadow:0 4px 12px rgba(36,91,204,.15)}
+.sugrow{display:flex;gap:6px;overflow:hidden}
+.sugrow .sug{flex:none}
+.dock{position:relative;height:56px;border-radius:28px;background:rgba(255,255,255,.8);border:1px solid #fff;box-shadow:0 8px 22px rgba(30,50,90,.12);display:flex;align-items:center;padding:0 7px;gap:7px}
+.orb{width:46px;height:46px;border-radius:50%;flex:none;background:radial-gradient(circle at 35% 28%,#fff 0 18%,rgba(255,255,255,0) 45%),radial-gradient(circle at 70% 78%,#8A6CF0 0,rgba(138,108,240,0) 55%),radial-gradient(circle at 25% 80%,#39B6CC 0,rgba(57,182,204,0) 55%),#5B86EC;box-shadow:0 5px 14px rgba(60,100,200,.3);display:grid;place-items:center}
+.orb svg{width:18px;height:18px;color:#1D1F23;background:rgba(255,255,255,.6);border-radius:50%;padding:3px;box-sizing:content-box}
+.rnd{width:38px;height:38px;border-radius:50%;flex:none;background:#fff;box-shadow:0 2px 8px rgba(30,50,90,.12);display:grid;place-items:center;font-size:15px;color:#1D1F23}
+.rnd svg{width:17px;height:17px}
+.sp{flex:1}
+.dock .txt{flex:1;min-width:0;font-size:12.5px;font-weight:600;color:#245BCC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock .ph{flex:1;font-size:12.5px;color:#8C939C}
+.nx{flex:1;min-width:0;display:flex;align-items:center;gap:7px;height:44px;border-radius:22px;background:#fff;box-shadow:0 0 0 .5px rgba(20,28,40,.08);padding:0 5px 0 11px}
+.nx .d{width:8px;height:8px;border-radius:50%;background:#C78A3B;flex:none}
+.nx .l{flex:1;min-width:0;display:flex;flex-direction:column}
+.nx .l small{font-size:8.5px;letter-spacing:.6px;text-transform:uppercase;font-weight:700;color:#59616B}
+.nx .l span{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nx .go{background:#15171B;color:#fff;border-radius:16px;padding:6px 11px;font-size:11px;font-weight:600}
+.field{flex:1;height:44px;border-radius:22px;background:#fff;box-shadow:0 0 0 .5px rgba(20,28,40,.08);display:flex;align-items:center;padding:0 12px;font-size:12.5px;color:#8C939C}
+.mic{width:42px;height:42px;border-radius:50%;background:#15171B;color:#fff;display:grid;place-items:center;flex:none}
+.mic svg{width:17px;height:17px}
+.tabs{height:60px;border-radius:30px;background:rgba(255,255,255,.85);border:1px solid #fff;box-shadow:0 8px 22px rgba(30,50,90,.12);display:flex;align-items:center;justify-content:space-around;padding:0 6px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:9px;font-weight:600;color:#59616B;width:46px}
+.tab svg{width:18px;height:18px}
+.tab.on{color:#1D1F23}
+.tab.on svg{color:#245BCC}
+.coach{position:absolute;left:50%;transform:translateX(-50%);bottom:84px;font-size:10.5px;background:#fff;border-radius:12px;padding:4px 9px;box-shadow:0 3px 10px rgba(30,50,90,.12);white-space:nowrap}
+.ctx-visit{display:none}
+body.visit .ctx-ward{display:none} body.visit .ctx-visit{display:flex}
+body.visit .ctx-visit.inline{display:inline}
+/* table */
+.tablebox{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
+td.n{text-align:center;font-variant-numeric:tabular-nums;width:92px}
+tr:last-child td{border-bottom:0}
+tr.best td{background:var(--greenWash)}
+.pts{display:inline-flex;gap:2px}
+.pts i{width:7px;height:7px;border-radius:2px;background:var(--line);display:inline-block}
+.pts i.on{background:var(--blue)}
+.same{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 20px}
+.same ul{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:14px;color:var(--muted)}
+.same ul b{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="over">Sona's dock · 5 options, ranked</span>
+  <h1>Keep the orb, move the suggestion into the dock</h1>
+  <p class="lead">The dock we have works, but it stacks three layers at the bottom of every page: a floating ✦ suggestion, a coach mark, and the dock itself. They overlap content, clip at large text, and on Today show visit-only tools. These five options fix that in different ways. Each phone shows the same Ward page, so only the bottom changes.</p>
+  <div class="pick"><span><b>Recommended: 1 · Suggestion in the dock.</b> It keeps the approved voice orb and hold-to-talk, puts Sona's suggestion in one fixed place one tap away, and leaves a single layer at the bottom. Borrow one idea from option 3: a suggestion can be an action ("Assign billing to Bed 2"), and it always opens a review before anything happens.</span></div>
+  <div class="switch" role="group" aria-label="Page shown in the phones"><span>Show on</span><button type="button" id="sw-ward" aria-pressed="true">Ward</button><button type="button" id="sw-visit" aria-pressed="false">Inside a visit</button></div>
+</header>
+
+<section class="grid" id="opts"></section>
+
+<section style="display:flex;flex-direction:column;gap:14px">
+  <div><span class="over">Scorecard</span><h2>How they rank</h2><p class="lead" style="margin-top:6px">Scored 1 to 5. Getting to Sona's suggestion and acting on it count double, because the goal is the fastest route from a glance to a decision.</p></div>
+  <div class="tablebox"><table><thead><tr><th>Option</th><th>Reach the suggestion ×2</th><th>Act and decide ×2</th><th>Minimal</th><th>Fits the approved direction</th><th>Voice</th><th>Large text</th><th>Build effort</th><th>Total</th></tr></thead><tbody id="tbl"></tbody></table></div>
+</section>
+
+<section class="same">
+  <h3>The same in every option</h3>
+  <ul>
+    <li><b>The orb means "talk to or ask Sona"</b>, and ✦ marks only a suggestion.</li>
+    <li><b>Review pages</b> (Discharge, guarantee letter, X-ray) keep the orb beside the decision button, because the decision owns the bottom.</li>
+    <li><b>Answers open in the page's Sona sheet</b>, with its text box at the bottom.</li>
+    <li><b>The + and the visit tools</b> show only inside a visit, on every page including Today.</li>
+    <li><b>A soft fade behind the bottom bar</b>, so content never sits under it unreadably.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+const mic='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const kb='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M8 14h8"/></svg>';
+const I={today:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/>',pts:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.5"/>',bed:'<path d="M3 18V7M3 13h18v5M21 13v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="10.5" r="1.8"/>',tasks:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5 2.5-2.5"/>'};
+const ico=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+const orb=`<span class="orb">${mic}</span>`;
+
+const page=`
+<div class="pg ctx-ward">
+  <div class="nav"><span class="rb">‹</span><span class="t">Ward</span></div>
+  <span class="eye">Now · 8 beds</span>
+  <div class="ins"><span class="a">2 discharges blocked</span> · ~8 bed-hours waiting</div>
+  <div class="cd f"><div class="hud"><span>◉</span><span><b>Huddle</b> · start with Bed 2's final GL</span><span class="bm">Brief me</span></div></div>
+  <div class="chips"><span>All 8</span><span class="on">Blocked 2</span><span>Fit to go 1</span></div>
+  <div class="ls"><div class="rw"><i class="dt a"></i><span class="m"><b>Bed 2 · Nurul</b><s>Final GL, urine culture</s></span></div><div class="rw"><i class="dt a"></i><span class="m"><b>Bed 14 · Lim</b><s>Take-home medicines, ride home</s></span></div><div class="rw"><i class="dt g"></i><span class="m"><b>Bed 8 · Priya Nair</b><s class="g">Fit to go</s></span></div></div>
+  <div class="cd"><div class="hud"><span><b>Next 24 h</b> · 5 beds free by 7 pm</span></div></div>
+</div>
+<div class="pg ctx-visit" style="flex-direction:column">
+  <div class="nav"><span class="rb">‹</span><span class="pc"><span class="av">AT</span>Amelia</span></div>
+  <div class="ins" style="font-weight:500">Amelia Tan is here for a respiratory review at 10:35.</div>
+  <div class="need"><i class="dt a"></i><span>Penicillin allergy · confirm</span><em>Confirm</em></div>
+  <div class="tools"><span class="tl"><i></i>Brief me<small>Summary</small></span><span class="tl"><i></i>Consult<small>Not started</small></span><span class="tl"><i></i>Note<small>Not started</small></span></div>
+  <div class="cd"><div class="hud"><span><b>Briefing</b> · 09:12 · 3 takeaways</span></div></div>
+</div>`;
+
+const plus='<span class="rnd ctx-visit" style="display:none">+</span>';
+const V=[
+ {rank:1,best:true,name:'Suggestion in the dock',idea:'The dock itself carries the page\'s ✦ suggestion. Tap it to see the answer, tap ⌨ to type, tap or hold the orb to talk.',
+  bot:`<div class="fadeband"></div><div class="bot"><div class="dock">${plus}<span class="rnd">${kb}</span><span class="txt ctx-ward">✦ Who can go home soonest?</span><span class="txt ctx-visit">✦ Is prednisolone safe for her?</span>${orb}</div></div>`,
+  pro:['One layer at the bottom; nothing floats over content','The suggestion is always in the same place, one tap away','Keeps the approved orb and hold-to-talk'],con:['The suggestion text truncates on narrow phones','Typing is one tap further (⌨ first)'],s:[5,5,5,5,5,4,4]},
+ {rank:2,name:'Today\'s dock, refined',idea:'Keep today\'s layout. Add a fade band behind it, pin the ✦ chip inside the band, and show the coach mark once per install.',
+  bot:`<div class="fadeband"></div><div class="bot"><span class="sug ctx-ward">✦ Who can go home soonest?</span><span class="sug ctx-visit">✦ Is prednisolone safe for her?</span><div class="dock" style="justify-content:space-between">${plus}<span class="sp ctx-ward" style="flex:0 0 38px"></span>${orb}<span class="rnd">${kb}</span></div></div>`,
+  pro:['Smallest change, about 2 hours','Fixes the overlap and the repeated coach mark','Everything already approved stays'],con:['Still two layers (chip plus dock)','The chip can wrap at large text'],s:[4,3,3,5,5,3,5]},
+ {rank:3,name:'Next action and Sona',idea:'The bottom bar shows the page\'s next best action with a Review button, and the orb sits beside it. Review pages already work this way.',
+  bot:`<div class="fadeband"></div><div class="bot"><div class="dock" style="background:transparent;border:0;box-shadow:none;padding:0">${plus}<div class="nx"><i class="d"></i><span class="l"><small>Next</small><span class="ctx-ward">Assign billing to Bed 2</span><span class="ctx-visit">Confirm the penicillin allergy</span></span><span class="go">Review</span></div>${orb}</div></div>`,
+  pro:['Fastest route from glance to decision','Matches Discharge and the guarantee letter','Every action still passes a review'],con:['Repeats the page\'s feature card at the bottom','Some pages have no single next action','About 1 to 2 days to build well'],s:[4,5,3,4,4,3,2]},
+ {rank:4,name:'Text-first composer',idea:'A full-width text field with a mic button, and the page\'s suggestions as chips above it. The layout most chat apps use.',
+  bot:`<div class="fadeband"></div><div class="bot"><div class="sugrow"><span class="sug ctx-ward">✦ Who can go home soonest?</span><span class="sug ctx-ward">✦ Why is Bed 2 blocked?</span><span class="sug ctx-visit">✦ Is prednisolone safe?</span><span class="sug ctx-visit">✦ What dose did trials use?</span></div><div class="dock">${plus}<span class="field ctx-ward">Ask about the ward…</span><span class="field ctx-visit">Ask about Amelia…</span><span class="mic">${mic}</span></div></div>`,
+  pro:['Familiar from every chat app','Two suggestions visible at once','Typing is one tap'],con:['Drops the approved voice orb and its hold-to-talk veil','Puts a second text field on Tasks again','Two layers again'],s:[4,3,3,2,3,4,3]},
+ {rank:5,name:'Tabs with Sona in the centre',idea:'A tab bar with four places and the orb in the middle, like Sona Care. Navigation and Sona in one bar.',
+  bot:`<div class="fadeband"></div><div class="bot"><span class="sug ctx-ward">✦ Who can go home soonest?</span><span class="sug ctx-visit">✦ Is prednisolone safe for her?</span><div class="tabs"><span class="tab">${ico('today')}Today</span><span class="tab">${ico('pts')}Patients</span>${orb}<span class="tab on">${ico('bed')}Ward</span><span class="tab">${ico('tasks')}Tasks</span></div></div>`,
+  pro:['One tap between the busiest pages','Matches Sona Care\'s dock'],con:['Duplicates the approved grouped sidebar','Tabs differ by role (bed manager, management)','Permanent chrome on every page; crowds at large text'],s:[3,3,2,2,4,2,2]},
+];
+const W=[2,2,1,1,1,1,1];
+const total=s=>s.reduce((t,v,i)=>t+v*W[i],0);
+document.getElementById('opts').innerHTML=V.map(v=>`<article class="opt${v.best?' best':''}">
+  <div class="top"><span class="rank">${v.rank}</span><h3>${v.name}</h3></div>
+  <div class="phone" role="img" aria-label="${v.name} on the Ward page"><div class="scr"><span class="isl"></span>${page}${v.bot}</div></div>
+  <p class="idea">${v.idea}</p>
+  <ul class="pro">${v.pro.map(x=>`<li>${x}</li>`).join('')}</ul>
+  <ul class="con">${v.con.map(x=>`<li>${x}</li>`).join('')}</ul>
+  <span class="score">Score <b>${total(v.s)}</b> of 45</span>
+</article>`).join('');
+const pts=n=>`<span class="pts" aria-label="${n} of 5">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;
+document.getElementById('tbl').innerHTML=V.map(v=>`<tr class="${v.best?'best':''}"><td><b>${v.rank} · ${v.name}</b></td>${v.s.map(x=>`<td class="n">${pts(x)}</td>`).join('')}<td class="n"><b>${total(v.s)}</b></td></tr>`).join('');
+function show(ctx){document.body.classList.toggle('visit',ctx==='visit');document.getElementById('sw-ward').setAttribute('aria-pressed',ctx!=='visit');document.getElementById('sw-visit').setAttribute('aria-pressed',ctx==='visit');
+  document.querySelectorAll('.rnd.ctx-visit').forEach(e=>e.style.display=ctx==='visit'?'grid':'none');}
+document.getElementById('sw-ward').onclick=()=>show('ward');
+document.getElementById('sw-visit').onclick=()=>show('visit');
+</script>

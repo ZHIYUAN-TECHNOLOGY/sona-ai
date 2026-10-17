@@ -1,0 +1,38 @@
+/* Patients list and patient overview. Tokens only. */
+.pt-search { max-width: 28rem; margin-bottom: var(--space-3); }
+.pt-search input { width: 100%; min-height: var(--tap); padding: 0 var(--space-3); border: 1px solid var(--line); border-radius: var(--space-2); background: var(--surface); color: var(--ink); font: inherit; }
+
+.pt-name { display: flex; align-items: center; gap: var(--space-2); }
+.pt-name small, .pt-list small, .pt-timeline small { display: block; color: var(--muted); }
+
+
+.pt-muted { color: var(--muted); margin: 0; }
+.pt-list, .pt-timeline { margin: var(--space-2) 0 0; padding: 0; list-style: none; display: grid; gap: var(--space-2); }
+
+.pt-timeline li { display: grid; grid-template-columns: 7rem 1fr; gap: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--line); }
+.pt-timeline li:last-child { border-bottom: 0; padding-bottom: 0; }
+.pt-timeline time { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+
+@container page (max-width: 600px) {
+  .pt-timeline li { grid-template-columns: 1fr; gap: 0; }
+}
+
+.pt-labs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: var(--space-3); }
+.pt-labs h3 { margin: 0 0 var(--space-1); font-size: 1rem; overflow-wrap: anywhere; }
+.pt-labs p { margin: 0; }
+
+/* Sona Care join code on the patient overview and the discharge page */
+.join-code-for { font-weight: 600; margin: 0; }
+.join-code-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin: var(--space-2) 0; }
+.join-code-row .join-code { margin: 0; }
+.join-code-qr { width: 128px; height: 128px; flex: none; }
+.join-code { display: block; font-size: 2.75rem; font-weight: 700; letter-spacing: 0.18em; font-variant-numeric: tabular-nums; line-height: 1.2; margin: var(--space-2) 0; overflow-wrap: anywhere; }
+@media print {
+  /* Print only the code card: everything else stays in the layout but is not drawn. */
+  body:has(.join-code-print) * { visibility: hidden; }
+  .join-code-print, .join-code-print * { visibility: visible; }
+  .join-code-print { position: fixed; top: 0; left: 0; padding: 20mm; color: #000; }
+  .join-code-print .join-code-action { display: none; }
+  .join-code-qr { width: 45mm; height: 45mm; }
+}

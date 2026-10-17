@@ -1,0 +1,764 @@
+[
+ {
+  "id": "cardio_041",
+  "split": "train",
+  "condition": "Atrial fibrillation on warfarin, high INR",
+  "source": "Atrial fibrillation",
+  "patient_persona": {
+   "description": "Mak Cik Fatimah binti Daud, 68, female, retired rubber estate worker from Teluk Intan, Perak; on warfarin for atrial fibrillation. Soft, worried voice, Perak Malay.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Goh Wei Siang, Malaysian Chinese man in his 30s, pharmacist-led anticoagulation clinic doctor at a Teluk Intan hospital. Calm and methodical; English-leaning, clear Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mak cik, INR hari ni 4.2. Target kita 2 to 3. Ada lebam-lebam atau berdarah?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada, doktor. Lengan ni lebam biru, padahal tak terhantuk apa pun. Gusi pun berdarah sikit masa gosok gigi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ada apa-apa berubah dua minggu ni? Ubat baru, makan lain, demam?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Minggu lepas batuk, klinik swasta bagi antibiotic, lupa nama. Lepas tu anak bagi jamu untuk sendi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh saya tengok ubat tu? Ah, clarithromycin. Ubat ni memang boleh naikkan INR, because it blocks warfarin breakdown in the liver."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Jamu tu pun kita tak tahu kandungan dia. Some herbal products ada effect pada darah."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Habis tu, mak cik kena buat apa sekarang?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Malam ni tak payah makan warfarin, skip one dose. Esok sambung dengan dos biasa, 3mg."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Jamu tu stop dulu, and next time jumpa doktor, beritahu yang mak cik makan warfarin. Tunjuk buku kuning ni."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Buku kuning ni kena tunjuk setiap kali?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, setiap kali, termasuk doktor gigi dan farmasi. Kita check INR balik hari Isnin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau berdarah banyak macam mana?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau kencing merah, berak hitam, muntah darah, atau sakit kepala teruk tiba-tiba, terus pergi emergency."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Mak cik takut juga ni."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak apa, kita dah tangkap awal. Dengan INR 4.2 tanpa pendarahan besar, cukup skip satu dos dan monitor."
+   }
+  ]
+ },
+ {
+  "id": "cardio_042",
+  "split": "train",
+  "condition": "Atrial fibrillation, new diagnosis, starting apixaban",
+  "source": "Atrial fibrillation",
+  "patient_persona": {
+   "description": "Mr. Chong Kwai Fook, 76, male, retired hardware shop owner in Kepong, Kuala Lumpur; palpitations for a month, hypertensive. Precise, slightly suspicious, Cantonese-flavoured Mandarin.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nurul Izzah binti Zakaria, Malay woman in her 40s, cardiologist at a Kuala Lumpur hospital. Clear, patient; English with Mandarin phrases she learnt in practice, patient replies in Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Chong, your ECG shows atrial fibrillation. 心跳不规则，上面的心房乱跳，not beating properly."
+   },
+   {
+    "speaker": "Patient",
+    "text": "这个危险吗？我只是觉得心跳很乱，有时候喘。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The main danger is stroke. 血在心房里面流得慢，会形成 blood clot，跑到脑就中风。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your score, CHA2DS2-VASc, is 3, because of your age and high blood pressure. 所以要吃 blood thinner."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我朋友吃 warfarin，每个月都要抽血，很麻烦。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not warfarin. I'll give you apixaban 5mg, twice a day, 早上一粒, 晚上一粒. No need for monthly INR test."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那个会不会出血很厉害？我刷牙有时候会流血。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Some bleeding risk, yes. 但是预防中风的好处比风险大很多。Gum bleeding a little is okay, but tell me if it's heavy."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我还有吃银杏，ginkgo，说对脑好。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Please stop the ginkgo. 跟 apixaban 一起吃，出血的风险会增加。Also avoid painkillers like ibuprofen."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For the palpitations, bisoprolol 2.5mg in the morning, to slow the heart rate. Heart rate now 118."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我还要做什么检查？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Echo of the heart and thyroid blood test. 甲状腺太活跃也会引起 AF."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，我明白了。Apixaban 早晚各一粒，不要漏。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Correct. 如果漏吃，六个钟头内记得就吃，超过了就等下一次，don't double."
+   }
+  ]
+ },
+ {
+  "id": "cardio_043",
+  "split": "train",
+  "condition": "Atrial fibrillation on rivaroxaban, dose review after a fall",
+  "source": "Atrial fibrillation",
+  "patient_persona": {
+   "description": "Mrs. Grace Devadason, 78, female, retired music teacher in Petaling Jaya, Malaysian Indian Christian; lives with her son. Clear, gentle voice, proper English with occasional Malay.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Amirul Hakim bin Zainuddin, Malay man in his 30s, medical officer at a PJ hospital geriatric clinic. Courteous, careful; English with a little Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mrs. Devadason, your son said you had a fall last week. Are you hurt anywhere?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Just a bruise on my hip, doctor. I slipped in the bathroom, lantai licin. I was more embarrassed than hurt."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Did you hit your head? Any headache, vomiting or confusion since then?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "No, I landed on my bottom. Tak ada headache at all."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. I've checked your blood test. Your kidney function has dropped, creatinine clearance about 40."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "So your rivaroxaban should be reduced from 20mg to 15mg, once a day with dinner."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lower dose, is that still enough to prevent stroke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, 15mg is the correct dose for your kidneys. Too high a dose increases bleeding, especially if you fall again."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Should I stop the blood thinner, since I might jatuh again? My son worries."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Most experts say no. You'd need to fall very many times a year before the bleeding risk outweighs the stroke risk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Instead, let's make falls less likely. Anti-slip mat, grab bar in the bathroom, and a night light."
+   },
+   {
+    "speaker": "Patient",
+    "text": "That's sensible. Also, the dentist wants to pull out one tooth next month."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For one tooth, usually no need to stop. Take it in the evening as usual, and the dentist can use local measures. Ask him to call us if unsure."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doctor. You've explained it very kindly."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "My pleasure. The physio will also see you today for balance exercises. Jumpa lagi in three months."
+   }
+  ]
+ },
+ {
+  "id": "cardio_044",
+  "split": "train",
+  "condition": "Atrial fibrillation, low INR and leafy vegetables",
+  "source": "Atrial fibrillation",
+  "patient_persona": {
+   "description": "Pak Cik Che Mat bin Che Hassan, 64, male, retired lorry driver from Kota Bharu, Kelantan; on warfarin for three years. Cheerful, loud, Kelantanese dialect words.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Wong Pei Shan, Malaysian Chinese woman in her 30s, medical officer at a Kota Bharu hospital anticoagulation clinic. Friendly and patient; English-leaning, good Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Pak cik, INR hari ni 1.5, rendah. Last time 2.4. Ada tertinggal warfarin?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tak, doktor. Makan tiap-tiap malam. Isteri kawal."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Makan pula macam mana? Any green leafy vegetables, ulam?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ha, ada! Bulan ni kampung banyak pucuk ubi, ulam raja. Isteri masak tiap-tiap hari. Sedap gapo."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Itulah dia. Sayur hijau ni banyak vitamin K, dan vitamin K lawan kesan warfarin. So darah jadi pekat balik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kena berhenti makan ulam la ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak payah berhenti. Yang penting consistent, sama banyak setiap hari. Jangan satu minggu banyak, minggu lain tak ada."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For now, warfarin kita naikkan sikit, dari 4mg ke 4.5mg. Check INR balik dua minggu lagi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doktor, anak saya cakap ada ubat baru tak perlu check darah. Betul ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul, DOAC macam apixaban atau dabigatran. Tak kacau dengan makanan, tak perlu INR."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh tukar? Saya penat ulang-alik hospital."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your kidney function is good, so boleh consider. Tapi di sini dia bukan ubat standard, mungkin kena beli sendiri, sekitar RM200 sebulan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Mahal tu, doktor. Pencen saya tak cukup."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Faham. Kalau macam tu, kita teruskan warfarin, dan kita cuba stabilkan dengan makanan yang konsisten."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik la. Nanti saya suruh isteri masak ulam sikit-sikit tiap hari, jangan banyak sekaligus."
+   }
+  ]
+ },
+ {
+  "id": "cardio_045",
+  "split": "train",
+  "condition": "Paroxysmal atrial fibrillation, Holter results",
+  "source": "Atrial fibrillation",
+  "patient_persona": {
+   "description": "Ms. Tiong Siew Ling, 55, female, travel agency owner in Kuching, Sarawak; episodes of racing heart, drinks coffee heavily. Fast, animated, mixes English and Mandarin constantly.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Abang Mohd Firdaus bin Abang Ahmad, Sarawakian Malay man in his 40s, cardiologist at a Kuching hospital. Friendly, clear; English-leaning, some Mandarin and Sarawak Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Ms. Tiong, your 24-hour Holter 结果出来了. It captured two episodes of atrial fibrillation, each about forty minutes."
+   },
+   {
+    "speaker": "Patient",
+    "text": "真的？那天晚上我确实觉得心跳很乱。So is it serious?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "It's paroxysmal AF, 会自己来，自己停. The good news is your heart structure on echo is normal."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那为什么会这样？I'm not even that old."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Common triggers are alcohol, too much caffeine, poor sleep, stress. 你一天喝几杯 kopi?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Honestly, 四杯 kopi-O kaw, sometimes five. Business very busy, no coffee cannot survive."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's quite a lot. Try to cut down to one or two cups. 酒呢? Any alcohol?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Weekend 会喝 wine 两三杯 with clients. Weekday 没有."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Binge drinking on weekends is a known trigger, we call it holiday heart. Better limit to one glass."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For stroke risk, your score is 1, because you are female only. 所以现在不需要吃 blood thinner."
+   },
+   {
+    "speaker": "Patient",
+    "text": "太好了！I was so scared I need to take medicine forever."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For symptoms, I'll give bisoprolol 1.25mg once a day. If palpitations come and don't stop after an hour, go to the emergency."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, noted. 那我可以继续去 gym 吗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, exercise is good for AF. Also get your sleep checked, 因为你说你打鼾很大声."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我老公每天投诉. OK doctor, I'll do a sleep study. Terima kasih!"
+   }
+  ]
+ },
+ {
+  "id": "cardio_046",
+  "split": "train",
+  "condition": "Transient ischaemic attack, urgent assessment",
+  "source": "Transient ischemic attack (TIA)",
+  "patient_persona": {
+   "description": "Encik Hashim bin Latif, 57, male, lorry dispatcher from Kajang, Selangor; left arm went weak for twenty minutes yesterday. Tense voice, worried, speaks quickly.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ng Siew Hong, Malaysian Chinese woman in her 40s, emergency physician at a Kajang hospital. Calm, focused; English with simple Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Hashim, cerita balik apa jadi semalam. Pukul berapa?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lebih kurang pukul empat petang. Tengah minum teh, tiba-tiba tangan kiri lemah, cawan jatuh. Mulut rasa senget sikit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Berapa lama lemah tu? And bercakap masa tu macam mana, pelat tak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dalam dua puluh minit, lepas tu hilang terus. Isteri kata cakap saya pelat sikit masa tu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sekarang saya check kekuatan dan muka encik semua normal. What you had is a TIA, transient ischaemic attack. Macam amaran untuk stroke."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Amaran? Maksudnya saya akan kena stroke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Risiko stroke dalam minggu pertama selepas TIA agak tinggi. That's why kita kena bertindak cepat hari ni."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tekanan darah encik 172 over 98 tadi. Encik ada darah tinggi, kencing manis?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Darah tinggi ada, tapi dah setahun tak makan ubat. Rasa sihat je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's likely the main cause. Hari ni kita buat CT brain, ECG, blood test, and carotid Doppler scan of the neck vessels."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya mulakan aspirin dan clopidogrel together for 21 days, then clopidogrel saja. Atorvastatin 40mg pun start malam ni."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh saya balik rumah lepas ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kami nak admit encik semalam dua untuk observe dan buat semua scan. Kalau lemah balik, kami boleh bertindak cepat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, doktor. Saya call isteri dulu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh. Dan mulai sekarang, ubat darah tinggi mesti makan setiap hari, even if you feel fine."
+   }
+  ]
+ },
+ {
+  "id": "cardio_047",
+  "split": "train",
+  "condition": "Stroke follow-up at three months",
+  "source": "Stroke",
+  "patient_persona": {
+   "description": "Madam Soh Kim Lan, 70, female, retired market vegetable seller in Kluang, Johor; left-sided ischaemic stroke three months ago, mild right-hand weakness. Slightly slow speech, determined.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Rajesh a/l Pillai, Malaysian Indian man in his 40s, rehabilitation physician at a Johor hospital. Encouraging, patient; English with Mandarin phrases and Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "苏婆婆，三个月了。你的右手现在怎样？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "比以前好一点。可以拿汤匙了，可是扣纽扣还是很难，写字也不行。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这是 fine motor skill，最慢恢复的。你有每天做 physiotherapy 的运动吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有啊，每天早上捏那个软球，捏一百下。我女儿监督我。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很好，continue. Occupational therapist 也会教你扣纽扣和用筷子的技巧。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的血压今天 128 over 78，很好。Amlodipine 和 perindopril 要继续。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我还在吃 clopidogrel 和 atorvastatin，要吃到什么时候？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这两种是长期的，不能停。Clopidogrel 防止血块，atorvastatin 让血管稳定。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "医生，我最近心情很不好，常常哭，觉得自己没用。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "谢谢你讲出来。中风后很多人会有 depression，大概三分之一。这是脑受伤的一部分，不是你的错。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我会介绍你见 counsellor，也可以考虑吃一点药，比如 sertraline。你愿意吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "愿意，我不想每天哭，女儿也很辛苦。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们一起来. Are you still going to the pasar? 你还有去巴刹吗?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我女儿带我去，我坐在旁边看。以前我自己卖菜几十年的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "慢慢来。Physio 做得好，六个月后很多人可以恢复更多。下次 clinic 三个月后。"
+   }
+  ]
+ },
+ {
+  "id": "cardio_048",
+  "split": "train",
+  "condition": "Amaurosis fugax and carotid stenosis",
+  "source": "Transient ischemic attack (TIA)",
+  "patient_persona": {
+   "description": "Mr. Anthony de Costa, 63, male, retired fisherman and boat repairer from the Portuguese Settlement, Melaka; Malaysian Eurasian, smoker. Warm, gravelly voice, Malaysian English with Malay words.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chitra a/p Ramachandran, Malaysian Indian woman in her 40s, neurologist at a Melaka hospital. Crisp and kind; English with some Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. de Costa, you mentioned your right eye went dark last Thursday. Tell me exactly what happened."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Morning, I was fixing my boat. Suddenly my right eye, like somebody pulled a curtain down. Gelap terus. After five minutes, came back."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Only the right eye? Any weakness, numbness, or trouble talking?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Only the eye, doctor. The rest all okay. I thought maybe just penat lah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "This is called amaurosis fugax, a type of TIA affecting the eye. It's often from the carotid artery in the neck."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your carotid Doppler shows a 75 percent narrowing on the right side. That's significant."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Seventy-five percent blocked? Wah, that's a lot. What do we do?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "With symptoms and this much narrowing, surgery to clean out the artery, carotid endarterectomy, reduces stroke risk a lot. Best done within two weeks."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Surgery on the neck ah? Saya takut, doctor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "It's a common operation. The vascular surgeon at Hospital Melaka will see you this week. I'll call them today."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Meanwhile, aspirin 100mg and atorvastatin 80mg start today. And the cigarettes, you must stop now."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Forty years I hisap rokok, doctor. But okay, this one really frighten me."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. If you get any weakness, facial droop, slurred speech, or the eye goes dark again, call 999 immediately."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Understood. My isteri will make sure. Thank you, doctor."
+   }
+  ]
+ },
+ {
+  "id": "cardio_049",
+  "split": "train",
+  "condition": "Acute stroke ward round, swallowing assessment",
+  "source": "Stroke",
+  "patient_persona": {
+   "description": "Puan Rosmah binti Harun, 66, female, retired school cook from Kangar, Perlis; day two after a right-sided ischaemic stroke with left-sided weakness. Slightly slurred, tired voice.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Yap Chee Wai, Malaysian Chinese man in his 30s, medical officer at a Kangar hospital, on the morning ward round. Gentle, patient; English with simple Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Selamat pagi, Puan Rosmah. Saya Dr. Yap. Puan dengar saya jelas?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dengar, doktor. Cakap saya pelat sikit. Tangan kiri ni berat, tak boleh angkat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak apa, cakap perlahan-lahan. Semalam speech therapist dah buat swallow test. Puan tersedak masa minum air."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya, air masuk salah jalan. Batuk teruk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That means otot menelan pun terjejas. Kalau makan minum biasa, makanan boleh masuk paru-paru, cause pneumonia."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Buat sementara, kita perlu masukkan tiub dari hidung ke perut, NG tube, untuk bagi makanan dan ubat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tiub dalam hidung? Tak nak la, doktor. Mesti sakit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Masa masuk tu memang tak selesa, tapi sekejap je. Lepas tu tak sakit. Biasanya sementara, beberapa hari atau minggu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Bila saya boleh makan macam biasa?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Speech therapist akan buat test semula setiap beberapa hari. Bila dah selamat, kita mula dengan bubur pekat dulu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Aspirin kita dah mula, 300mg, and your blood pressure 168 over 92, kita biarkan tinggi sikit dulu untuk hari-hari awal ni."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kenapa biar tinggi? Tak bahaya ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Hari-hari pertama, the brain needs enough blood flow. Lepas beberapa hari baru kita turunkan perlahan-lahan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Faham, doktor. Anak saya datang tengah hari, doktor tolong cakap dengan dia."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh. Physio pun akan datang hari ni, mula gerakkan tangan dan kaki kiri puan."
+   }
+  ]
+ },
+ {
+  "id": "cardio_050",
+  "split": "train",
+  "condition": "Stroke secondary prevention, MRI and risk factor review",
+  "source": "Stroke",
+  "patient_persona": {
+   "description": "Mr. Chan Fook Sang, 58, male, Hakka construction supplier in Kota Kinabalu, Sabah; lacunar stroke two months ago with mild left leg weakness. Brisk, businesslike, heavy English-Mandarin mixing, Sabah Malay words.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Noraini binti Salleh, Sabahan Malay woman in her 40s, neurologist at a Kota Kinabalu hospital. Direct and friendly; English with Malay and some Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Chan, your MRI 结果出来了. It shows a small lacunar infarct, deep in the brain. That explains the left leg weakness."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Small 是好消息 right? 我现在走路差不多 normal 了."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, recovery is good. But lacunar stroke is caused by small vessel disease, mostly from blood pressure, sugar and smoking."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我知道 lah, 我太太每天讲. So what's my numbers now?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your BP today 146 over 90, HbA1c 8.4, LDL 3.1. All three still above target."
+   },
+   {
+    "speaker": "Patient",
+    "text": "哇, all fail 啊. 我有吃药的, but sometimes 太忙 forget."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "忘记吃药，stroke risk 就会上去. Let me simplify. I'll combine your BP pills into one tablet, perindopril-amlodipine, once a day."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For cholesterol, atorvastatin up to 80mg. Target LDL below 1.8. For sugar, 我会 refer 你去 diabetes clinic."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK can. Smoking 我已经减到一天五支 lah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Five is still too many. Even one a day increases stroke risk. 我们目标 zero, OK?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "很难, but 我试试看. Business 应酬很多人抽烟."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The quit clinic can give varenicline, it reduces cravings. Mau cuba?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Mau, mau. 我不想再中风, 下次可能不会那么好运."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Exactly. Clopidogrel 75mg continue every day. Come back in three months with your BP diary."
+   }
+  ]
+ }
+]

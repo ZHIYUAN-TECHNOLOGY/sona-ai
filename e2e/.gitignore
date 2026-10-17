@@ -1,0 +1,3 @@
+node_modules/
+# Run output (reports, artifacts, logs, the replay cache) for every config.
+.e2e/

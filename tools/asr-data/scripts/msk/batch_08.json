@@ -1,0 +1,816 @@
+[
+  {
+    "id": "msk_071",
+    "split": "train",
+    "condition": "Benign paroxysmal positional vertigo after a fall",
+    "source": "Benign paroxysmal positional vertigo (BPPV)",
+    "patient_persona": {
+      "description": "Yong Kam Fatt, 74, male, retired electrician in Kajang; fell out of bed during a spinning spell five days ago; another clinic started prochlorperazine and diazepam; on amlodipine and tamsulosin. Referral visit. Deep, slow Cantonese-coloured Malaysian Mandarin.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Syahirah binti Abdul Latif, Malay woman in her 30s, ENT medical officer at a Kajang hospital. Efficient, kind; English-leaning, speaks simple Mandarin and English with Chinese patients.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "杨伯，你好。你是 roll 床的时候头晕，然后跌倒，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，五天前半夜转身，整个房间转，我一下子就跌下床，屁股撞到 lantai。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "头晕多久就停？一直晕，还是一下子？Constant 还是 on and off？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一下子，大概半分钟。可是每次转向右边、低头绑 shoelace，就会来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有没有耳朵听不到、耳鸣，或者讲话不清楚、手脚没力？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这些都没有。只是晕，想 muntah。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们做一个 test，叫 Dix-Hallpike。我扶着你，躺下，头转右边……眼睛看着我。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哎哟，又转了！Pusing, pusing！好晕！"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好，眼睛在跳，nystagmus，这个就是 BPPV。耳朵里面的小石头跑错位置。现在我帮你做 Epley manoeuvre，把石头移回去。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那个诊所给我的药，Stemetil 和 diazepam，还要吃吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Diazepam 要停，老人家吃了会更容易 fall，而且会让 brain 不能适应。Stemetil 只有很想吐的时候才吃，最多两三天。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我今晚就不吃 diazepam。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "做完 Epley，今天晚上用两个枕头，头高一点睡。Before standing up，先坐一分钟，再慢慢站。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会不会再来？Recurrence？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有可能再来，特别是老人家。如果再晕，回来我们再做一次 Epley，很快就好。"
+      }
+    ]
+  },
+  {
+    "id": "msk_072",
+    "split": "train",
+    "condition": "Benign paroxysmal positional vertigo, first visit",
+    "source": "Benign paroxysmal positional vertigo",
+    "patient_persona": {
+      "description": "Rozita binti Mat Noor, 55, female, canteen supervisor at a school in Kuantan, Pahang; sudden spinning when lying down for three days. First visit. Chatty, excitable Pahang Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Chee Siong, Malaysian Chinese man in his 40s, GP in Kuantan. Calm, practical; English-leaning, fluent Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, tiga hari ni bila saya baring, bilik berpusing macam naik roller coaster. Saya ingat saya nak mati dah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pusing tu lama ke sekejap, puan? Berapa minit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sekejap je, setengah minit. Tapi takut sangat. Pagi tadi bangun tidur pun pusing."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada telinga berdengung, tinnitus, pekak, atau sakit kepala teruk?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada. Cuma loya sikit, muntah sekali semalam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tekanan darah macam mana? Ada kencing manis?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Darah tinggi ada, makan amlodipine. Kencing manis tak ada."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "BP hari ni 134 over 82, OK. Saya nak buat satu ujian. Puan duduk, lepas tu saya baringkan cepat dengan kepala pusing ke kiri."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aduh, pusing! Doktor, spinning, spinning!"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tahan sekejap... OK, dah reda. Your eyes moving like that is a sign of BPPV. Batu kecil dalam telinga dalam terlepas ke tempat salah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Batu dalam telinga? Stone? Boleh keluar ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak keluar, tapi kita boleh gerakkan balik ke tempat asal. Saya buat Epley manoeuvre sekarang, four positions, thirty seconds each."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Selepas ni, dua hari tidur kepala tinggi sikit, dua bantal, dan elak dongak ke atas lama-lama, macam sidai kain tinggi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat tak perlu ke, doktor? Kawan saya makan ubat pening dua tahun, Stemetil tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Untuk BPPV, medicine doesn't fix the problem. Kalau loya teruk, saya bagi prochlorperazine 5mg untuk dua hari je."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Kalau pusing balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Datang balik, kita buat lagi. Tapi kalau ada weakness, slurred speech, atau jalan terhuyung-hayang, terus ke emergency."
+      }
+    ]
+  },
+  {
+    "id": "msk_073",
+    "split": "train",
+    "condition": "Acute continuous vertigo, posterior stroke not excluded",
+    "source": "Benign paroxysmal positional vertigo (BPPV)",
+    "patient_persona": {
+      "description": "Mr. Rajan a/l Pakirisamy, 62, male, retired telecommunications technician in Bukit Mertajam, Penang; hypertension and diabetes, smoker; continuous vertigo since this morning. First visit, brought by his son. Slurred-tired, anxious Malaysian Indian English with Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ooi Hui Ping, Malaysian Chinese woman in her 30s, GP in Bukit Mertajam. Alert, decisive; English-leaning, some Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, since this morning everything spinning nonstop, pusing je. Cannot stand properly, my son had to hold me. I think it's the vertigo my neighbour had."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Is the spinning only when you move your head, or all the time, even lying still?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "All the time, doctor. Even closing eyes, still spinning. Vomited three times."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any double vision, difficulty swallowing, numbness on the face, or weakness in the arms or legs?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Face a bit kebas on the left, like after dentist. And cakap pun a bit pelat, my son said."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Can you walk to the door for me without holding on?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Cannot, doctor. I lean to the left, macam orang mabuk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Rajan, this doesn't behave like the common ear vertigo. With your blood pressure, diabetes and smoking, plus face numbness and unsteady walking, I'm worried about a stroke in the back of the brain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Stroke? But my tangan and kaki still strong."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Strokes in the back of the brain can show mainly as dizziness and imbalance. Every minute counts, so I'm calling an ambulance to the hospital now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, okay. Should I take my aspirin, the ubat cair darah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Don't take anything now, the hospital needs to scan first. When did the symptoms start exactly?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "About seven this morning, lepas sarapan. Now eleven."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's important, I'll write it in the surat. Son, please bring his medicine list and IC to the hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, will I be okay? Saya takut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The hospital team is very good with this. You came early, cepat, and that helps a lot. The ambulance is on its way."
+      }
+    ]
+  },
+  {
+    "id": "msk_074",
+    "split": "train",
+    "condition": "Recurrent BPPV on long-term betahistine",
+    "source": "Benign paroxysmal positional vertigo (BPPV)",
+    "patient_persona": {
+      "description": "Lau Mei Hua, 48, female, Foochow tuition centre owner in Kuching, Sarawak; recurrent BPPV, on betahistine for two years from a private clinic. Follow-up. Brisk, organised Sarawakian Mandarin with English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Jason Chai Kiong Hui, Sarawakian Chinese man in his 40s, ENT specialist at a Kuching hospital. Relaxed, clear; English-leaning, speaks Mandarin fluently.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor，我的晕又来了。这是今年第三次。每次都是早上起床转向左边。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你现在吃什么药？Any medication？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Serc，就是 betahistine 16mg，一天三次，吃了两年了。一个月要一百多块。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betahistine 对 BPPV 其实没什么帮助。BPPV 是 ear crystals 的问题，药吃不走的。你可以 stop，省一点钱。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "真的？那个 doctor 叫我一直吃，说不吃会更严重。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对 Meniere's 病可能有用，但你的检查是典型的 BPPV，而且没有耳鸣和听力变差。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们刚才做了 Dix-Hallpike，是左边的 posterior canal。现在帮你做 Epley，两三次就好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "每次都要来 hospital 做，很麻烦，学生要上 tuition。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我可以教你自己在家做。躺在床上，照这个图做四个 position，每个三十秒。我给你一张 handout，也可以看 video。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，这个好！我自己可以做，就不用等 appointment。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "第一次做的时候，最好家人在旁边，因为会很晕，怕你 jatuh。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "为什么我那么容易再发？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有些人耳石比较容易掉，especially women above forty，也跟 vitamin D 低有关系。我们验一下你的 vitamin D。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我几乎都在 indoor 教书，很少晒太阳。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那很有可能。结果低的话，我们补充。如果自己做 Epley 还是一直来，就回来找我。"
+      }
+    ]
+  },
+  {
+    "id": "msk_075",
+    "split": "train",
+    "condition": "Post-traumatic BPPV after a motorcycle fall",
+    "source": "Benign paroxysmal positional vertigo",
+    "patient_persona": {
+      "description": "Muhammad Hakimi bin Salleh, 30, male, food delivery rider in Johor Bahru; fell off his motorcycle a week ago, bumped his head with helmet on; now spins when looking up or lying back. First visit. Fast, casual Johor Malay with English slang.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Premala a/p Sundram, Malaysian Indian woman in her 40s, GP in Johor Bahru. Warm, brisk; English-leaning, fluent colloquial Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, since accident minggu lepas, bila saya dongak nak tengok signboard, terus pusing. Baring pun pusing. Kerja pun tak boleh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Accident tu kepala terhentak? Pengsan tak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kepala hentak jalan, tapi pakai helmet. Tak pengsan. Hospital dah CT scan, OK semua."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada sakit kepala makin teruk, muntah banyak kali, atau mengantuk luar biasa? Any red flag?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada. Sakit kepala sikit first day je. Sekarang cuma pusing bila gerak kepala."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, that's reassuring. Saya nak buat a positional test. Baring, pandang saya, jangan tutup mata."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Weh, pusing gila! Sekejap, sekejap..."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's positive. Kepala terhentak boleh buat batu kecil dalam telinga terlepas. This is post-traumatic BPPV. Kadang-kadang dua-dua telinga kena."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh baik, doktor? Saya kena hantar food order, kalau tak, tak ada duit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh baik. Saya buat Epley sekarang. After head trauma, sometimes we need two or three rounds."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan tunggang motor sampai pusing hilang betul-betul. Kalau pusing masa tengah highway, very dangerous."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alamak. Berapa lama tu? Berminggu ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Selalunya beberapa hari je lepas Epley. I'll give you three days MC. Datang balik hari Isnin, kita test lagi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, thanks doktor. Boleh bagi surat untuk company? Diorang nak bukti."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, saya tulis. Jaga diri, bro."
+      }
+    ]
+  },
+  {
+    "id": "msk_076",
+    "split": "train",
+    "condition": "Major depressive disorder, first presentation",
+    "source": "Depression (major depressive disorder)",
+    "patient_persona": {
+      "description": "Muhammad Faris bin Othman, 34, male, civil engineer in Putrajaya, married with a six-year-old daughter; ten weeks of low mood, early waking, weight loss. First visit, came at his wife's urging. Quiet, flat, slow speech; Malay and English mixed.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Cheng Lai Kuan, Malaysian Chinese woman in her 40s, family medicine specialist in Putrajaya with mental health training. Unhurried, warm; English-leaning, fluent Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Faris, terima kasih datang. Isteri encik kata encik tak macam biasa. Boleh cerita sikit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya pun tak tahu nak mula dari mana, doktor. Dua bulan lebih ni, saya rasa kosong. Benda yang dulu saya suka, main badminton, main dengan anak, semua dah tak rasa apa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tidur macam mana? Sleep OK?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pukul empat pagi dah terjaga, tak boleh tidur balik. Berat badan turun empat kilo. Kerja pun banyak silap, boss dah tegur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada rasa bersalah, atau rasa diri tak berguna?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Selalu. Rasa macam saya beban untuk isteri dan anak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya nak tanya satu soalan penting, dan saya tanya semua patient. Ada terfikir hidup ni tak berbaloi, atau nak mati?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kadang-kadang... terfikir, kalau saya tak bangun esok pun tak apa. Tapi saya tak pernah rancang apa-apa. Saya fikir anak saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih sebab jujur dengan saya. Itu sangat penting. Ada simpan ubat banyak, atau benda yang boleh cederakan diri kat rumah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada. Saya tak akan buat, doktor. Cuma fikiran tu datang, the thoughts."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dari cerita encik dan score PHQ-9, 18, ini major depression, sederhana ke teruk. Ini penyakit, bukan lemah iman atau lemah semangat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya malu sebenarnya. Orang lelaki patut kuat, kan? Tak boleh lemah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Datang minta tolong tu satu kekuatan, it takes courage. Saya cadang mula sertraline 50mg setiap pagi, and I'll refer you to a counsellor or psychologist."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat ni ketagih tak? Addictive? Berapa lama baru rasa kesan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak ketagih. Kesan mula dalam dua hingga empat minggu. First week mungkin loya atau rasa gelisah sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau fikiran nak mati tu jadi kuat, atau encik mula rancang, terus pergi emergency department atau beritahu isteri. Can I speak to your wife for a moment later?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh, doktor. Dia kat luar. Terima kasih sebab dengar."
+      }
+    ]
+  },
+  {
+    "id": "msk_077",
+    "split": "train",
+    "condition": "Depression follow-up on fluoxetine",
+    "source": "Clinical depression",
+    "patient_persona": {
+      "description": "Lee Siew Yoke, 45, female, homemaker in Klang, two teenage children; husband works in Singapore on weekdays; six weeks into fluoxetine. Follow-up. Soft, hesitant Malaysian Mandarin with Cantonese colouring.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Muthu a/l Kandasamy, Malaysian Indian man in his 50s, family medicine specialist at a Klang health clinic. Gentle, steady; English-leaning, speaks conversational Mandarin.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "李太太，上次开始吃 fluoxetine 到现在六个礼拜了。心情怎样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好一点。以前每天都想哭，现在一个礼拜哭一两次。早上起床比较有 energy 煮早餐了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这是好进步，good progress。睡眠呢？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "睡得比较好，可以睡到六点。但是有时候晚上会 overthink，想我先生不在家。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你先生每个礼拜回来吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "礼拜五晚上回来，礼拜天就走。孩子都大了，不太跟我讲话。我常常觉得很 lonely。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "孤单是很难受的感觉。最近有没有想伤害自己，或者觉得活着没意思？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "以前有想过，现在没有了。我想到孩子，就觉得要坚强。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "谢谢你告诉我，我很高兴听到。Fluoxetine 有没有 side effect？Stomach upset、headache？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "刚开始有一点 nausea，现在没有了。只是……那方面的兴趣比较少了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个 side effect 很常见，不用 paiseh。如果 bother 你，我们可以 discuss 换药。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "暂时还好，心情比较重要。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那我们继续 fluoxetine 20mg，每天早上。Even after you feel well，还要再吃至少 six months to one year，才慢慢停。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "除了药，你有没有什么 hobby？以前喜欢什么？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "以前喜欢跳舞，跟朋友去 community hall 跳 line dance。生孩子以后就没去了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以试试回去，就算一个礼拜一次。也可以跟 counsellor 谈谈。一个月后再来看我。"
+      }
+    ]
+  },
+  {
+    "id": "msk_078",
+    "split": "train",
+    "condition": "Postpartum depression",
+    "source": "Depression, postpartum",
+    "patient_persona": {
+      "description": "Kavitha a/p Selvam, 32, female, HR executive in Seremban on maternity leave, eight weeks after her first baby; breastfeeding; husband works long hours. First visit. Tearful, quiet Malaysian Indian English with Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Siti Nur Aisyah binti Mahmud, Malay woman in her 30s, family medicine specialist at a Seremban health clinic. Soft, patient; English-leaning, some Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I don't know what's wrong with me. The baby is healthy, semua orang cakap I should be happy. But I cry every day."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thank you for telling me. How long have you been feeling like this?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Since about three weeks after delivery. I can't sleep even when the baby sleeps. Rasa macam ibu yang teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your score on the postnatal questionnaire today is 17. That, together with what you describe, fits postnatal depression. It's common, about one in eight mothers."
+      },
+      {
+        "speaker": "Patient",
+        "text": "One in eight? No one told me. My mother-in-law cakap I'm just penat, tak cukup bersyukur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's not about being ungrateful. Hormone changes, lack of sleep and big life changes all contribute. It's an illness, and it's treatable."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I need to ask some difficult questions. Have you had thoughts of harming yourself?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sometimes I think everyone would be better off without me. But I wouldn't do anything, I ada baby."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thank you for being honest. Have you had any thoughts about harming the baby, even frightening thoughts that pop up?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sometimes I get scared I'll drop her down the tangga. It's horrible, I avoid carrying her near the stairs."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Those frightening thoughts are common in postnatal depression and anxiety. Because they scare you and you avoid acting on them, that's a sign you're protecting her, not that you'll harm her."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Really? I've been so takut to tell anyone."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Really. I'd like to start sertraline 50mg daily. It's one of the safest for breastfeeding. And I'll refer you to our counsellor and the perinatal mental health team."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can my husband help somehow? He's working until ten every night."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes. Can he take one night feed with expressed milk, so you get four or five hours of sleep? Bring him next week, I'll talk to both of you."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If thoughts of ending your life get stronger, or you feel you can't keep yourself or the baby safe, go to the emergency department immediately."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, doctor. I feel a bit ringan just saying it."
+      }
+    ]
+  },
+  {
+    "id": "msk_079",
+    "split": "train",
+    "condition": "Late-life depression after bereavement",
+    "source": "Major depressive disorder",
+    "patient_persona": {
+      "description": "Pak Mat bin Awang, 72, male, retired fisherman in Marang, Terengganu; wife died eight months ago; not eating, lost weight, stays in the house. First visit, brought by his daughter. Low, quiet Terengganu Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Aizat bin Mohd Noor, Malay man in his 30s, family medicine specialist at a Marang health clinic. Respectful, patient; speaks Terengganu Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, Pak Mat. Anak pak cik kata pak cik tak berapa sihat sejak mak cik meninggal. Takziah, pak cik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Waalaikumsalam. Terima kasih. Dah lapan bulan, doktor. Rumah tu sunyi sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Makan macam mana, pak cik? Tidur? Appetite ada?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makan tak lalu. Anak masak, saya jamah sikit je. Malam terjaga, teringat arwah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Berat badan pak cik turun enam kilo sejak tahun lepas. Pak cik masih pergi surau, jumpa kawan-kawan nelayan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah lama tak pergi. Malas. Rasa tak ada guna keluar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Rindu dan sedih tu biasa lepas kehilangan. Tapi bila sampai tak makan, tak keluar, berbulan-bulan, mungkin dah jadi kemurungan, depression. Itu boleh dirawat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pak cik, ada rasa macam nak ikut arwah, atau tak nak hidup lagi?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kadang-kadang saya doa supaya Allah ambil saya cepat. Tapi saya tak akan buat apa-apa, berdosa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih pak cik cerita. Kalau perasaan tu jadi kuat, pak cik beritahu anak atau datang klinik, ya?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita buat blood test dulu, thyroid, full blood count, gula, sebab berat turun tu kena check juga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya cadang ubat mirtazapine 15mg waktu malam. It helps mood, helps sleep, dan buka selera makan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat ni buat saya tidur mati ke? Saya takut jatuh malam nak ke bilik air."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin mengantuk sikit, jadi pasang lampu malam, bangun perlahan. Dos kita kecil, low dose je."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Anak saya pun risau sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cuba pergi surau semula, walaupun sekali seminggu. Datang balik dua minggu, bawa anak sekali."
+      }
+    ]
+  },
+  {
+    "id": "msk_080",
+    "split": "test",
+    "condition": "Depression in remission, planning to stop escitalopram",
+    "source": "Depression (major depressive disorder)",
+    "patient_persona": {
+      "description": "Grace Teoh Li Wen, 29, female, software developer in Bayan Lepas, Penang; nine months on escitalopram 10mg, now well; wants to stop. Refill visit. Articulate, quick Malaysian Chinese English with Hokkien and Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Asyikin binti Zakaria, Malay woman in her 30s, GP in Bayan Lepas. Friendly, direct; English-leaning, casual Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Hi doctor, I'm here for my escitalopram refill. But actually I'm feeling good lately, nak tanya if I can stop already."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's great to hear. How long have you been feeling well?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "About six months already. Sleep okay, work okay, I started going back to rock climbing with my friends, 每个礼拜."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any low days that last more than a week? Or thoughts of harming yourself recently?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, none. Normal bad days lah, like when deploy fail, tapi cepat OK balik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your PHQ-9 today is 3, which is in the normal range. Last year it was 19. You've done really well."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you. So boleh stop terus?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Better not to stop suddenly. Some people get discontinuation symptoms, like dizziness, irritability, electric shock feelings. We taper."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How to taper? Half tablet ah? 切一半？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, 5mg daily for two to four weeks, then stop. If you feel off, we slow down further."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My mum says 吃太久 the medicine will spoil my brain. That's also partly why I want to stop."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It won't damage your brain. Stopping now is reasonable because you've been well for six months, not because the medicine is harmful."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What if the depression datang balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Watch for early signs: tidur berubah, hilang minat, menjauhkan diri from friends. If two weeks like that, come back early, don't tahan sendiri."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. My boyfriend knows the signs also, he'll kacau me if I start hiding in my room."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's a great safety net. Come back in one month after stopping, just to check in."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Will do. Thanks doctor, for everything. Terima kasih."
+      }
+    ]
+  }
+]

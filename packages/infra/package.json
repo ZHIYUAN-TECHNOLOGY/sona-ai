@@ -1,19 +1,23 @@
 {
-  "name": "@med-ai/infra",
+  "name": "@sona-ai/infra",
   "private": true,
   "type": "module",
   "scripts": {
+    "check-types": "tsc --noEmit",
     "dev": "alchemy dev",
-    "deploy": "alchemy deploy",
+    "deploy": "bun run --cwd ../../apps/web build && alchemy deploy --stage staging",
     "destroy": "alchemy destroy"
   },
   "dependencies": {
-    "dotenv": "^17.2.2",
-    "zod": "^4.1.13"
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@med-ai/config": "*",
-    "alchemy": "^0.91.2",
-    "typescript": "^6"
+    "@effect/platform-bun": "4.0.0-rc.115",
+    "@effect/platform-node": "4.0.0-rc.115",
+    "@sona-ai/config": "workspace:*",
+    "alchemy": "2.0.0-beta.79",
+    "effect": "4.0.0-rc.115",
+    "typescript": "^6.0.3",
+    "varlock": "catalog:"
   }
 }

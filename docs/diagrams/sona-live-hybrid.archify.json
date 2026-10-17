@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sona live call: MiniCPM talks, Gemma answers",
+    "output": "sona-live-hybrid.html",
+    "viewBox": [980, 560],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "hear",
+        "label": "Hear the patient",
+        "focus": ["app", "agent", "live"],
+        "note": "MiniCPM hears every second and writes the patient's words down itself."
+      },
+      {
+        "id": "route",
+        "label": "Route the question",
+        "focus": ["agent", "live", "gemma"],
+        "note": "The agent, not the model, decides: small talk stays with MiniCPM, medical questions go to Gemma."
+      },
+      {
+        "id": "speak",
+        "label": "Speak the answer",
+        "focus": ["agent", "live", "app"],
+        "note": "MiniCPM says Gemma's answer in Sona's voice."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "planned, not built yet"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Sona Care app",
+      "sublabel": "patient's phone"
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Call agent",
+      "sublabel": "Cloudflare · the router"
+    },
+    {
+      "id": "live",
+      "type": "cloud",
+      "label": "sona-live · MiniCPM-o",
+      "sublabel": "box ④ · ear, voice, small talk"
+    },
+    {
+      "id": "gemma",
+      "type": "cloud",
+      "label": "sona-brain · Gemma 26B",
+      "sublabel": "box ① · medical answers"
+    }
+  ],
+  "segments": [
+    {
+      "from": 178,
+      "to": 262,
+      "label": "Hear the patient"
+    },
+    {
+      "from": 270,
+      "to": 384,
+      "label": "Route the question"
+    },
+    {
+      "from": 392,
+      "to": 476,
+      "label": "Speak the answer"
+    }
+  ],
+  "messages": [
+    {
+      "id": "mic",
+      "from": "app",
+      "to": "agent",
+      "y": 190,
+      "label": "patient's voice",
+      "variant": "emphasis"
+    },
+    {
+      "id": "audio",
+      "from": "agent",
+      "to": "live",
+      "y": 218,
+      "label": "every second of audio",
+      "variant": "emphasis"
+    },
+    {
+      "id": "heard",
+      "from": "live",
+      "to": "agent",
+      "y": 250,
+      "label": "patient's words as text",
+      "variant": "return"
+    },
+    {
+      "id": "check",
+      "from": "live",
+      "to": "app",
+      "y": 284,
+      "label": "says \"let me check\"",
+      "variant": "dashed"
+    },
+    {
+      "id": "ask",
+      "from": "agent",
+      "to": "gemma",
+      "y": 318,
+      "label": "medical question + patient's plan",
+      "variant": "dashed"
+    },
+    {
+      "id": "answer",
+      "from": "gemma",
+      "to": "agent",
+      "y": 350,
+      "label": "answer as text",
+      "variant": "dashed"
+    },
+    {
+      "id": "say",
+      "from": "agent",
+      "to": "live",
+      "y": 404,
+      "label": "say exactly this",
+      "variant": "emphasis"
+    },
+    {
+      "id": "voice",
+      "from": "live",
+      "to": "agent",
+      "y": 436,
+      "label": "Sona's voice",
+      "variant": "return"
+    },
+    {
+      "id": "play",
+      "from": "agent",
+      "to": "app",
+      "y": 464,
+      "label": "voice + captions",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "agent",
+      "from": 185,
+      "to": 468,
+      "type": "backend"
+    },
+    {
+      "participant": "live",
+      "from": 213,
+      "to": 440,
+      "type": "cloud"
+    },
+    {
+      "participant": "gemma",
+      "from": 313,
+      "to": 355,
+      "type": "cloud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Who decides: the call agent",
+      "items": [
+        "It reads the patient's words and routes: small talk stays with MiniCPM",
+        "Medical questions go to Gemma; 999 and care-team rules run here too"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Built and tested",
+      "items": [
+        "MiniCPM hears, writes down the patient, and says a given answer",
+        "Clear in English and Mandarin; Malay drops words (to fix)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Still to build",
+      "items": [
+        "The router, the Gemma call, and \"let me check\"",
+        "Real answer starts about 2.5-3 s after the patient stops (estimate)"
+      ]
+    }
+  ]
+}

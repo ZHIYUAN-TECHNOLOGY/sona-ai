@@ -1,0 +1,49 @@
+import { expect, test } from "bun:test";
+import { detectFixture, fixtureFindings, followUpTask, onImage, withFindings } from "./model";
+
+const seen = new Date("2026-09-26T10:00:00+08:00");
+
+test("fixture mode shows Amelia's nodule and heart size with the server's rules, unvalidated", () => {
+  const [nodule, heart] = fixtureFindings(seen);
+  expect([nodule.label, nodule.riskBand, nodule.action, nodule.intervalDays, nodule.validated]).toEqual(["9 mm nodule, right upper zone", "high", "CT chest at 3 months, PET-CT or tissue sampling", 90, false]);
+  expect(nodule.dueAt).toEqual(new Date("2026-12-25T10:00:00+08:00"));
+  expect([heart.riskBand, heart.action, heart.source]).toEqual(["intermediate", "Echocardiogram", "fixture"]);
+});
+
+test("tracking in fixture mode makes the server's task: owner, a dated follow-up line", () => {
+  const [nodule] = fixtureFindings(seen);
+  expect(followUpTask(nodule)).toMatchObject({ title: "Follow up 9 mm nodule: CT chest at 3 months", owner: "Attending doctor", due: "2026-12-25" });
+  expect(followUpTask({ ...nodule, dueAt: null })).toBeUndefined();
+});
+
+test("on My Day an overdue follow-up ranks red at the top and replaces its own task row; a dismissed finding leaves", () => {
+  const [nodule, heart] = fixtureFindings(seen);
+  const tracked = { ...nodule, status: "tracked", taskId: "t-1", owner: "Attending doctor" };
+  const items = [{ id: "task-t-1", kind: "task", title: "Follow up 9 mm nodule: CT chest at 3 months", detail: "", reason: "Due 2026-12-25", tone: "routine", score: 30, open: {} },
+    { id: "visit-SYN-1042", kind: "visit", title: "Amelia", detail: "", reason: "Due now", tone: "soon", score: 80, open: {} }];
+  const ranked = withFindings(items, [tracked, { ...heart, status: "dismissed" }], new Date("2027-01-02T09:00:00+08:00"));
+  expect(ranked.map(i => [i.id, i.tone])).toEqual([["finding-finding:visit-1042:nodule", "urgent"], ["visit-SYN-1042", "soon"]]);
+  expect(ranked[0].title).toBe("Follow up 9 mm nodule: CT chest at 3 months · due 25 Dec");
+});
+
+test("marks come only from a read of the image shown: the authored ones stay on the reference film, never on the user's own image", () => {
+  const authored = fixtureFindings(seen);
+  const read = { ...authored[0], id: "finding:visit-1042:effusion", kind: "effusion", source: "medgemma-1.5-4b", imageKey: "demo/xray/visit-1042/a" };
+  const all = [...authored, read];
+  expect(onImage(all, "visit-1042", { reference: true }).map(f => f.source)).toEqual(["fixture", "fixture"]);
+  // The user's own image: only the model's read of that very upload, and nothing while it is local or unread.
+  expect(onImage(all, "visit-1042", { key: "demo/xray/visit-1042/a" })).toEqual([read]);
+  expect(onImage(all, "visit-1042", { key: "demo/xray/visit-1042/b" })).toEqual([]);
+  expect(onImage(all, "visit-1042", {})).toEqual([]);
+  expect(onImage(authored, "visit-1042", {})).toEqual([]);
+  // Another visit's findings never show.
+  expect(onImage(all, "visit-2001", { reference: true })).toEqual([]);
+});
+
+test("fixture findings appear only once the X-ray is opened, once, and only on Amelia's visit", () => {
+  expect(detectFixture([], "visit-2001", seen)).toEqual([]);
+  const read = detectFixture([], "visit-1042", seen);
+  expect(read.map(f => f.kind)).toEqual(["nodule", "cardiomegaly"]);
+  const tracked = [{ ...read[0], status: "tracked" }, read[1]];
+  expect(detectFixture(tracked, "visit-1042", seen)).toBe(tracked);
+});

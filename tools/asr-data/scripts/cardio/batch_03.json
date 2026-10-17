@@ -1,0 +1,800 @@
+[
+ {
+  "id": "cardio_021",
+  "split": "train",
+  "condition": "Dyslipidaemia on screening, statin hesitancy",
+  "source": "High cholesterol",
+  "patient_persona": {
+   "description": "Encik Khairul Anuar bin Mohd Noor, 40, male, civil servant in Putrajaya; cholesterol high on a workplace screening. Calm, articulate, mixes English at work.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Jessica Lee Siew Yin, Malaysian Chinese woman in her 30s, family physician at a Putrajaya clinic. Clear, evidence-minded; English-leaning with conversational Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Khairul, result darah hari tu: total cholesterol 7.1, LDL 4.8. HDL pula rendah, 0.9. Memang tinggi untuk umur encik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya dah agak. Ayah saya kena heart attack umur lima puluh lebih. Tapi saya tak nak makan statin, doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh saya tahu kenapa? Ada dengar apa-apa pasal statin?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Group WhatsApp keluarga kata statin rosakkan hati, and it causes diabetes. Kawan pejabat pun cakap lebih baik makan supplement."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a fair worry. Statin boleh naikkan liver enzyme sikit dalam sebilangan kecil orang, tapi kita akan check darah. Kerosakan hati yang serius sangat jarang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Risiko diabetes tu memang ada, tapi kecil. Untuk orang yang ada family history macam encik, benefit statin jauh lebih besar."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau saya cuba diet dulu, tiga bulan, boleh?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh. Your ten-year risk is moderate, so kita ada masa untuk cuba lifestyle dulu. Kurangkan santan, gorengan, dan daging berlemak."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Nasi lemak pagi-pagi tu kena buang ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak payah buang terus. Seminggu sekali, bukan setiap hari. Tukar kepada oat, roti wholemeal, atau telur rebus."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Encik bersenam tak? Berapa kali seminggu?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Jarang, doktor. Balik kerja dah penat, terus tengok TV."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Mula dengan jalan laju tiga puluh minit, lima kali seminggu. Tasik Putrajaya tu tempat yang bagus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, saya try. Kalau lepas tiga bulan still tinggi?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau LDL still above 3, kita start atorvastatin 20mg. Kita buat keputusan sama-sama nanti, bila tengok nombor."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Deal, doktor. Terima kasih sebab explain, bukan terus bagi ubat."
+   }
+  ]
+ },
+ {
+  "id": "cardio_022",
+  "split": "train",
+  "condition": "Familial hypercholesterolaemia, cascade screening",
+  "source": "Familial hypercholesterolemia",
+  "patient_persona": {
+   "description": "Ms. Khoo Li Ting, 35, female, primary school teacher in George Town, Penang; father had a heart attack at 45. Soft-spoken, thoughtful, Penang Mandarin with English.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ravindran a/l Suppiah, Malaysian Indian man in his 50s, cardiologist at a Penang hospital lipid clinic. Measured and reassuring; English with basic Mandarin phrases, patient answers in Mandarin and English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Ms. Khoo, your LDL is 6.2, very high for someone who is slim and eats healthily. 你爸爸几岁 heart attack？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "四十五岁。他那时候 cholesterol 也很高，可是那个年代没有人特别讲。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I also see these small lumps on your Achilles tendon. We call them tendon xanthoma. 这是 cholesterol 积在 tendon 里面。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我以为是运动受伤。原来跟 cholesterol 有关？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes. Together with your LDL and family history, this is most likely familial hypercholesterolaemia, a genetic condition."
+   },
+   {
+    "speaker": "Patient",
+    "text": "遗传的？那我吃得再健康也没有用吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Diet still helps, but only a little. 主要问题是你的 liver 清不掉 LDL. You need medicine."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll start rosuvastatin 20mg, once at night. After six weeks, if LDL still high, we add ezetimibe 10mg."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我还没结婚，但是以后想生小孩。吃这个药可以吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good that you ask. Statin must stop before you try to get pregnant. 计划怀孕前，一定要先告诉我。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白。那我的弟弟和妹妹呢？他们都没有验过。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "This is important. 你的兄弟姐妹，每个人有一半机会也有。They should all check their cholesterol, and later any children too."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我哥哥抽烟，还很爱吃肥猪肉。我今晚就叫他去验。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Please do. I'll write a letter so his doctor knows it's for FH screening."
+   },
+   {
+    "speaker": "Patient",
+    "text": "谢谢医生。老实说，我有点怕，可是知道原因也比较安心。"
+   }
+  ]
+ },
+ {
+  "id": "cardio_023",
+  "split": "train",
+  "condition": "Statin-associated muscle aches",
+  "source": "Hypercholesterolemia",
+  "patient_persona": {
+   "description": "Mr. Joseph Anthony a/l Arokiasamy, 62, male, retired secondary school teacher in Seremban, Malaysian Indian; on simvastatin after a TIA scare. Precise, polite, slightly formal English.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Azlina binti Ahmad, Malay woman in her 40s, family medicine specialist at a Seremban clinic. Warm, practical; English with a little Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Good morning, Mr. Joseph. You mentioned muscle pains on the phone. Tell me more."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Since about two months, both thighs ache, especially naik tangga. I stopped my evening walk, doctor. Very frustrating."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "When did you start the simvastatin, and at what dose?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "About three months ago. 40mg every night. My neighbour says it's the cholesterol pill that causes this."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "It can be. Any dark urine, like teh O colour, or weakness where you can't get up from a chair?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "No, no dark urine. Just aching, not weak. Getting up is fine."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Your CK, the muscle enzyme, is normal, and your kidneys are fine. So no muscle damage."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Then why the pain? Is it all in my head?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not at all. Some people get genuine aches without damage. Let's stop the simvastatin for four weeks and see if the pain goes."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "If it improves, we'll try a different statin, rosuvastatin 5mg, maybe every other day to start. Many tolerate that much better."
+   },
+   {
+    "speaker": "Patient",
+    "text": "But my cholesterol will go up again in the meantime, right? Is that dangerous?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "A few weeks off is safe. With your TIA history, we do want you on something long term."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Understood. Can I take coenzyme Q10? My daughter bought some from the pharmacy."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "You can, it's harmless, but the evidence is weak. Don't spend too much on it."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ha, she already spent RM150. I'll habiskan the bottle then."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's fine. Datang balik four weeks later, and we'll decide together."
+   }
+  ]
+ },
+ {
+  "id": "cardio_024",
+  "split": "train",
+  "condition": "Severe hypertriglyceridaemia",
+  "source": "High cholesterol",
+  "patient_persona": {
+   "description": "Puan Norhayati binti Yaakob, 50, female, kuih seller from Kuantan, Pahang; loves sweet drinks, diabetes recently diagnosed. Bubbly, loud, East Coast Malay.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kumaresan a/l Nadarajan, Malaysian Indian man in his 40s, medical officer at a Kuantan health clinic. Friendly, patient; English-leaning, fluent Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Norhayati, darah puan tadi nampak macam susu, keruh. Triglyceride puan 6.5. Normal bawah 1.7."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya Allah, macam susu? Patut la nurse tu tengok lain macam je tadi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Triglyceride ni lemak dalam darah. Kalau terlalu tinggi, above 10, boleh cause pancreatitis, radang pankreas, sakit perut teruk."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya ni kuat minum air manis, doktor. Sirap bandung, teh ais, sehari empat lima gelas. Kuih pun saya jual, saya rasa semua."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Itulah punca utama, gula. Your sugar also high, HbA1c 8.3. Gula yang lebih badan tukar jadi triglyceride."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Step pertama, stop air manis. Kalau nak manis sikit, guna sweetener, atau air kosong dengan limau."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Susah tu, doktor. Tapi saya cuba. Kuih macam mana?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Rasa sikit je untuk check, jangan makan satu keping penuh setiap jenis. Hehe, I know it's hard."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya start fenofibrate 145mg, sekali sehari, and metformin 500mg twice a day untuk gula."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada kesan sampingan ke ubat lemak tu?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kadang-kadang sakit perut ringan atau otot sakit. Kalau kencing warna gelap atau otot lemah sangat, stop dan datang klinik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Alcohol puan tak minum, kan? Sebab itu pun naikkan triglyceride."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tak, doktor, tak pernah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagus. Kalau tiba-tiba sakit perut atas yang teruk, tembus ke belakang, muntah, terus pergi emergency."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik. Enam minggu lagi saya datang check darah balik ya."
+   }
+  ]
+ },
+ {
+  "id": "cardio_025",
+  "split": "train",
+  "condition": "Lipid results review on atorvastatin",
+  "source": "Hypercholesterolemia",
+  "patient_persona": {
+   "description": "Mr. Chin Wei Loon, 47, male, Hakka insurance agent in Kota Kinabalu, Sabah; started atorvastatin three months ago. Talkative, sales-pitch energy, heavy English-Mandarin mixing.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nurul Ain binti Jasni, Sabahan Malay woman in her 30s, medical officer at a Kota Kinabalu clinic. Friendly, efficient; English-leaning with Malay and a little Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Chin, your repeat lipid profile 出来了. LDL from 4.4 down to 2.9. Good improvement."
+   },
+   {
+    "speaker": "Patient",
+    "text": "真的？So 我可以 stop 药了吗？I feel very healthy now."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not yet. Your target is below 2.6, because you also have diabetes. So we still need a bit more."
+   },
+   {
+    "speaker": "Patient",
+    "text": "哎，我以为已经 OK 了。Then how? 加药？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "We can increase atorvastatin from 20 to 40mg, still once at night. Your liver test ALT is normal, 28."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我的朋友介绍我吃红曲米, red yeast rice. 那个是 natural 的，可以代替吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Actually red yeast rice contains a chemical that is almost the same as a statin. 如果一起吃，等于吃两份 statin，muscle side effect 会比较多."
+   },
+   {
+    "speaker": "Patient",
+    "text": "哇，原来这样。那我不要吃那个了，还好还没买。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good decision. Also, you told me last time 你每天应酬, how is the eating?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "还是很多 dinner with clients 啦. 海鲜，猪脚，啤酒. But 我有减少 beer, one bottle only."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's already better. When ordering, choose steamed fish or soup, not the deep-fried ones. 啤酒 one bottle maximum."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, can. My wife 也一直骂我，现在你也讲，我没办法了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your wife and I agree, 哈哈. Also, how is your blood sugar? HbA1c 7.2, 比上次好."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Yes, 我有乖乖吃 metformin. 早晚都有。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Excellent. Repeat blood test in three months. 继续保持, Mr. Chin."
+   }
+  ]
+ },
+ {
+  "id": "cardio_026",
+  "split": "train",
+  "condition": "Stable angina, first presentation",
+  "source": "Angina",
+  "patient_persona": {
+   "description": "Encik Azman bin Sulaiman, 58, male, security guard living in a walk-up flat in Kampung Baru, Kuala Lumpur; smoker, diabetic. Deep voice, measured, a bit worried.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lee Chun Kit, Malaysian Chinese man in his 40s, family physician at a Kuala Lumpur clinic. Steady and thorough; English-leaning, good Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Azman, cuba cerita pasal sakit dada tu. Bila mula?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dalam sebulan ni, doktor. Bila naik tangga ke flat saya, tingkat empat, dada rasa ketat, macam ada orang duduk atas dada."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bila berhenti rehat, dia hilang tak? Berapa lama?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Hilang, doktor. Duduk atas tangga dalam dua, tiga minit, lepas tu OK. Tapi setiap kali naik mesti datang balik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ada sakit menjalar ke lengan kiri, rahang, atau berpeluh sejuk? Pernah datang masa rehat atau tidur?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kadang-kadang ke lengan kiri sikit. Masa rehat tak pernah lagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That pattern is typical of stable angina. Salur darah jantung dah sempit, so bila jantung kerja lebih, oksigen tak cukup."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Jantung saya dah tersumbat ke, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sebahagian, mungkin. ECG hari ni normal, tapi itu tak cukup untuk rule out. Saya refer untuk treadmill stress test di hospital."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya start aspirin 100mg sekali sehari lepas makan, and atorvastatin 40mg waktu malam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya juga bagi GTN spray. Bila sakit dada, duduk dulu, sembur satu kali bawah lidah. Lima minit tak hilang, sembur lagi sekali."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau dah sembur dua kali, still sakit?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau lepas dua kali sembur masih sakit, terus call 999 or pergi emergency. Jangan drive sendiri."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Rokok ni kena berhenti terus ke? Saya dah hisap tiga puluh tahun."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Rokok paling penting nak stop. Klinik ada quit smoking service, saya refer sekali hari ni."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Anak saya pun dah lama suruh berhenti."
+   }
+  ]
+ },
+ {
+  "id": "cardio_027",
+  "split": "train",
+  "condition": "Stable angina with atypical symptoms, test results",
+  "source": "Angina pectoris",
+  "patient_persona": {
+   "description": "Madam Tay Geok Choo, 66, female, retired tailor in Melaka; diabetic, came with breathlessness and jaw ache on walking. Precise, quiet voice, Melaka Mandarin with Hokkien words.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lim Shu Fen, Malaysian Chinese woman in her 40s, cardiologist at a Melaka hospital clinic. Calm, explains step by step; switches to Mandarin with English terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "郑婆婆，你上次的 treadmill test 报告出来了。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "怎样医生？我走不到五分钟就喘了，还是停了下来。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你在四分钟的时候，ECG 有变化，还有下巴酸，这个是 positive test。表示心脏的血管可能有收窄。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "可是我的胸口都不痛，只是喘和下巴酸，也是心脏病吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "是的。女性和 diabetic 病人常常没有典型的 chest pain，而是喘、疲倦、下巴或者背痛。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "原来这样，我以为是老了，体力差。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "下一步，我们要做 CT coronary angiogram，看清楚血管哪里窄、窄多少。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "要不要开刀？我很怕。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "CT 不用开刀，打显影剂，躺十五分钟就好了。你的 kidney function 正常，可以做。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "在等的时候，你开始吃 aspirin 100mg 早上饭后，还有 bisoprolol 2.5mg，让心跳慢一点，减少心脏的工作。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我已经在吃 atorvastatin 20mg，这个还要继续吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "要，而且我帮你加到 40mg。GTN spray 也给你一支，喘或者下巴酸的时候喷在舌头下面。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "喷了会怎样？邻居说会头痛。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可能有一点头痛，也会头晕，所以要坐下来才喷。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。那我还可以每天早上去公园散步吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以, 慢慢走, 不要赶. If it doesn't go away after ten minutes of rest, 马上去急诊."
+   }
+  ]
+ },
+ {
+  "id": "cardio_028",
+  "split": "train",
+  "condition": "Stable angina refill, nitrate and sildenafil interaction",
+  "source": "Angina",
+  "patient_persona": {
+   "description": "Mr. Harjit Singh a/l Gurbachan Singh, 55, male, Punjabi Sikh transport company owner in Ipoh; stable angina for two years. Booming voice, jovial, frank.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Wan Mohd Hafiz bin Wan Ali, Malay man in his 40s, family medicine specialist at an Ipoh clinic. Unflappable, discreet; English with Malay touches.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Harjit, good to see you. Here for your angina medicine refill. How often are you using the GTN spray now?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Very seldom, doctor. Maybe once a month, when I carry the heavy boxes at the depot. Otherwise okay."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Still on bisoprolol 5mg in the morning, aspirin 100mg, and atorvastatin 40mg at night?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Yes, all. My wife puts them in the pill box every Sunday. Very strict, like army."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Excellent. Your BP today is 128 over 76 and pulse 62. Nicely controlled."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doctor, one more thing ah. A bit sensitive. My kawan gave me some blue pills from Thailand. For, you know, the bedroom."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'm glad you asked first. Those are probably sildenafil, Viagra. With GTN spray, it's very dangerous."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dangerous how? My kawan takes it every week, no problem."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Both widen the blood vessels. Together, your blood pressure can drop suddenly and severely. People have collapsed and died."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Wah, serious. Saya tak tahu at all."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "If you've taken sildenafil, don't use GTN for at least 24 hours. If chest pain comes during that time, call ambulance and tell them."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "And the pills from Thailand, jangan ambil. We don't know the real dose inside."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, I'll buang them. Is there any safe option for me?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "We can discuss properly. Sometimes the bisoprolol itself contributes. Let me review your medicines, and we can consider a proper prescription with clear rules."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Thank you, doctor. Better to ask than to go hospital, right?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Exactly. Come back in three months, and we'll talk more then."
+   }
+  ]
+ },
+ {
+  "id": "cardio_029",
+  "split": "train",
+  "condition": "Stable angina, nitrate headache and GTN technique",
+  "source": "Angina pectoris",
+  "patient_persona": {
+   "description": "Mak Cik Salmah binti Yusof, 70, female, widow from Sungai Petani, Kedah; lives with her son's family. Soft, slightly shaky voice, Kedah dialect words.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Tharani a/p Letchumanan, Malaysian Indian woman in her 30s, medical officer at a Sungai Petani health clinic. Patient and cheerful; English-leaning, fluent Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mak cik, bulan lepas saya tambah ubat isosorbide mononitrate. Macam mana, OK tak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sakit dada dah kurang, doktor. Tapi kepala ni sakit, macam diketuk-ketuk, terutama pagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Headache ni common bila mula ubat nitrate. Biasanya lepas dua, tiga minggu badan dah biasa."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dah tiga minggu dah, doktor. Masih sakit jugak. Mak cik makan Panadol."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Panadol boleh, satu gram bila perlu. Saya cuba kurangkan dose dulu, from 60mg to 30mg, then slowly naik balik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Cuba tunjuk saya, macam mana mak cik guna GTN spray ni."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Macam ni, doktor. Goncang dulu, lepas tu sembur dalam mulut."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Hampir betul. Tak perlu goncang. Angkat lidah, sembur bawah lidah, lepas tu tutup mulut. Jangan telan terus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, bawah lidah. Selama ni mak cik sembur atas lidah je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak apa, sekarang dah tahu. And always sit down when you spray, sebab boleh pening."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Anak mak cik suruh simpan spray tu dalam peti ais. Betul ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak payah, simpan suhu bilik je, jauh dari cahaya matahari. Bawa dalam beg bila keluar rumah."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau sakit dada dah hilang, boleh berhenti ubat pagi tu?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Jangan berhenti sendiri. Ubat tu yang cegah sakit datang. Kalau sakit dada makin kerap, atau datang masa rehat, terus pergi hospital."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Nanti mak cik suruh cucu ingatkan."
+   }
+  ]
+ },
+ {
+  "id": "cardio_030",
+  "split": "train",
+  "condition": "Pre-angiogram counselling for stable angina",
+  "source": "Angina",
+  "patient_persona": {
+   "description": "Mr. Yeo Kok Leong, 50, male, factory production manager in Batu Pahat, Johor; positive stress test, scheduled for coronary angiogram. Businesslike, fast, mixes English freely.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chan Yew Loong, Malaysian Chinese man in his 40s, interventional cardiologist at a Johor Bahru hospital. Crisp and reassuring; English and Mandarin interchangeably.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "杨先生，下个星期二你要做 coronary angiogram。我解释一下 procedure，有什么问题随时问。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK doctor. 我比较担心的是 risk，还有要请几天假。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们会从手腕的 radial artery 进去，把一条细管子放到心脏的血管，打 contrast 看哪里窄。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "是 local anaesthetic 还是全麻？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Local anaesthetic only. 你是醒着的，可以看屏幕。大概三十分钟到一个钟头。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果看到很严重的 blockage，我们可能同一时间放 stent。这个我们会先问你。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "If 放了 stent，要吃什么药？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "放 stent 之后，aspirin 加上 clopidogrel，至少吃十二个月，不能自己 stop，不然 stent 会塞住。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白。那 procedure 前一天要注意什么？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "前一晚十二点之后不要吃东西，早上的药可以用一点水吞。你的 metformin 那天早上停一次。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Metformin 为什么要停？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "因为 contrast 会影响肾，加上 metformin，少数人会有 lactic acidosis。做完检查 48 小时，确认肾功能 OK，再重新开始。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK noted. Risk 大不大？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Serious complication 大概少过百分之一，比如 bleeding、血管受伤、或者 stroke。整体来说很安全。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "做完当天可以回家吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果只是 angiogram，通常当天下午就可以回家。有放 stent 的话，住一晚观察。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好的。我会请三天假。谢谢医生讲得这么清楚。"
+   }
+  ]
+ }
+]

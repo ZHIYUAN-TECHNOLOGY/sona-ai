@@ -1,0 +1,44 @@
+import type { MedChange, VisitFacts } from "./discharge";
+import type { Patient } from "./types";
+import { DEMO_WARD, type WardRecord } from "./ward";
+
+/**
+ * The two synthetic demo patients' records, shared by the app's fixtures and the server's seed so
+ * both show the same people. Fictional people only. The visit time is left out: the app times the
+ * demo schedule from the clock, the server from its appointments.
+ * `ward` and `takeHome` are an admitted patient's ward record and charted take-home list, seeded into
+ * `patients.record` like the rest. `visit` is sample mode's stand-in for the visit's rows (her guarantee
+ * letter); the seed leaves it out, because connected the rows themselves are read. The scripted
+ * consultation is a sample too: the seed leaves that source out, since no recording of the visit is saved.
+ */
+export type DemoPatient = Omit<Patient, "time"> & { ward?: WardRecord; takeHome?: MedChange[]; visit?: VisitFacts };
+export const DEMO_PATIENTS: DemoPatient[] = [
+  { id: "SYN-1042", encounterId: "visit-1042", name: "Amelia Tan", initials: "AT", age: 42, sex: "Female", subtitle: "Respiratory review", complaint: "Cough for five days, with fever since yesterday.", history: ["Asthma since childhood", "No previous admission documented", "Symptoms began five days ago"], family: "Mother has asthma; father has type 2 diabetes.", social: "Teacher. Does not smoke. Lives with her partner and two children.", allergies: "Penicillin — reported rash; details need confirmation", medicines: ["Salbutamol inhaler, as needed", "Cetirizine tablet 10 mg, patient-reported"], vitals: [{ label: "SpO₂", value: "97%" }, { label: "Temp", value: "38.1 °C" }, { label: "Pulse", value: "96 bpm" }], incomplete: false,
+    ward: DEMO_WARD,
+    takeHome: [
+      { name: "Azithromycin", change: "changed", detail: "IV 500 mg to oral 500 mg daily, 2 more days" },
+      { name: "Paracetamol", change: "new", detail: "1 g every 6 h as needed, max 4 g a day" },
+      { name: "Nebulised salbutamol", change: "stopped", detail: "Back to her own inhaler as needed" },
+      { name: "Cetirizine", change: "unchanged", detail: "Patient-reported, continue" },
+    ],
+    visit: { gl: { insurer: "Synthetic insurer", requestedAt: "2026-09-25T09:40:00+08:00" } },
+    sources: [
+      { id: "beta-reference", title: "DailyMed · Albuterol HFA, section 7.1", date: "Accessed 23 Sep 2026", kind: "reference", synthetic: false, url: "https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=825975b1-a4a9-78ca-e053-2a91aa0a3948", excerpt: "Label summary: beta-blockers can oppose albuterol's pulmonary effects and can cause severe bronchospasm in people with asthma. The label discusses circumstances requiring individual clinical judgement. This source supports the bounded entered-pair example and the hypothetical alert preview; applicability depends on the confirmed ingredients shown in the result." },
+      { id: "pneumonia-reference", title: "NHS · Pneumonia", date: "Reviewed 17 Jul 2026 · accessed 23 Sep 2026", kind: "reference", synthetic: false, url: "https://www.nhs.uk/conditions/pneumonia/", excerpt: "Reference summary: pneumonia can involve cough, fever and breathlessness. Chest X-rays may form part of assessment. These general facts inform an authored UI example; they do not establish the fictional patient's diagnosis." },
+      { id: "asthma-reference", title: "NHLBI · Asthma symptoms", date: "Updated 17 Apr 2024 · accessed 23 Sep 2026", kind: "reference", synthetic: false, url: "https://www.nhlbi.nih.gov/health/asthma/symptoms", excerpt: "Reference summary: asthma symptoms can include cough, wheeze, breathlessness and chest tightness. Other conditions can produce similar symptoms. This general source does not establish the cause of this fictional encounter." },
+      { id: "history", title: "Intake & patient history", date: "22 Sep 2026 · 09:24", kind: "record", synthetic: true, excerpt: "Fictional intake: Amelia Tan, 42. Cough for five days. Fever since yesterday. Childhood asthma. Mother has asthma; father has type 2 diabetes. Teacher, never smoker. Lives with partner and two children. No previous admission documented. Reported penicillin rash. Salbutamol as needed and cetirizine reported; reconciliation incomplete." },
+      { id: "vitals", title: "Observations", date: "22 Sep 2026 · 09:26", kind: "record", synthetic: true, excerpt: "Synthetic observations: oxygen saturation 97% on room air; temperature 38.1 °C; pulse 96 bpm. These are UI fixture values, not real measurements." },
+      { id: "consultation", title: "Consultation transcript", date: "22 Sep 2026 · 09:30", kind: "transcript", synthetic: true, excerpt: "Scripted patient: I have been coughing for five days. The fever started yesterday. My mother has asthma. I use my blue inhaler when needed. This is authored demonstration dialogue, not a live recording." },
+      { id: "medication", title: "Medication coverage note", date: "Fixture reference · v1", kind: "reference", synthetic: true, excerpt: "This prototype contains no validated drug-interaction database. Reported medicines can be reviewed in the interface; absence of a listed interaction does not establish safety. Real medicines are not automatically cleared or prescribed by these fixtures." },
+      { id: "simulation", title: "Synthetic prescribing protocol", date: "Training protocol · v1", kind: "reference", synthetic: true, excerpt: "Prescribing protocol for this fictional patient: check the recorded eligibility inputs and the current medication review, then record the paracetamol regimen as a receipt on the visit. The receipt holds its dose, route, frequency, duration and reference. Missing inputs, unsupported medicines or a stale review block it. Nothing is sent to a pharmacy." },
+      { id: "xray", title: "Normal PA chest radiograph · reference example", date: "Mikael Häggström · 2017 · CC0 1.0", kind: "image", synthetic: false, url: "https://commons.wikimedia.org/wiki/File:Normal_posteroanterior_(PA)_chest_radiograph_(X-ray).jpg", excerpt: "Bundled public teaching radiograph. The uploader describes a normal chest with no signs of injury. This is the source description, not model analysis or the selected fictional patient’s image. Attribution and the unmodified asset checksum are included with the application." },
+    ],
+  },
+  { id: "SYN-1086", encounterId: "visit-1086", name: "Daniel Rahman", initials: "DR", age: 57, sex: "Male", subtitle: "History to complete", complaint: "Breathlessness on exertion; onset not yet documented.", history: ["Medical history not yet reconciled"], family: "Not documented", social: "Smoking and occupational history not documented", allergies: null, medicines: ["Patient reports a tablet; ingredient unknown"], vitals: [], incomplete: true, sources: [{ id: "history", title: "Incomplete intake", date: "22 Sep 2026 · 09:45", kind: "record", synthetic: true, excerpt: "Fictional intake: Daniel Rahman, 57. Breathlessness on exertion; onset, observations, allergy details, medicines and family/social history are not yet documented. Do not interpret missing data as negative findings." }, { id: "medication", title: "Medication coverage note", date: "Fixture reference · v1", kind: "reference", synthetic: true, excerpt: "Ingredient unknown. Interaction evaluation unavailable. No validated interaction database is connected." }],
+  },
+];
+
+for (const patient of DEMO_PATIENTS) patient.sources.push({ id: "paracetamol-reference", title: "NHS · Paracetamol for adults", date: "Reviewed 24 Mar 2026 · accessed 23 Sep 2026", kind: "reference", synthetic: false, url: "https://www.nhs.uk/medicines/paracetamol-for-adults/", excerpt: "Reference summary: adult 500 mg tablets are taken one or two at a time, at least four hours apart, no more than eight in 24 hours and for no more than three days without medical advice. Lower weight, prior allergy, kidney/liver conditions, alcohol risk and other medicines require consideration. The prototype's narrower 500 mg every six hours as-needed example is an authored synthetic regimen, not an NHS recommendation for this fictional patient. Interaction lookup outcomes are simulated and do not establish clinical safety." });
+
+const interactionReference = DEMO_PATIENTS[0]!.sources.find(source => source.id === "beta-reference")!;
+for (const patient of DEMO_PATIENTS.slice(1)) patient.sources.push({ ...interactionReference });

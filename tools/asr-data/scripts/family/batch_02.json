@@ -1,0 +1,848 @@
+[
+  {
+    "id": "family_011",
+    "split": "train",
+    "condition": "Lactation mastitis",
+    "source": "Lactation mastitis",
+    "patient_persona": {
+      "description": "Fatimah binti Yusof, 27, female, three weeks after her first delivery, homemaker in Alor Setar, Kedah; in confinement at her mother's house. Tired, uncomfortable, speaks softly.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chitra Devi a/p Muthu, Malaysian Indian woman in her 40s, family medicine specialist at an Alor Setar klinik kesihatan. Gentle, clear; speaks good Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Fatimah, saya dengar payudara kanan sakit dan demam. Sejak bila?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Since semalam, doktor. Mula-mula rasa keras, lepas tu merah dan panas. Malam tadi menggigil, fever 38.5."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Baby menyusu macam mana? Dua-dua belah ke, atau lebih banyak sebelah kiri?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lebih banyak kiri, sebab kanan sakit sangat. Mak saya kata jangan bagi susu sebelah yang sakit, nanti baby sakit perut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebenarnya sebaliknya, puan. The milk is safe for the baby. Kalau tak susukan sebelah kanan, susu bertakung, lagi teruk bengkak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, macam tu ke? Saya ingat susu tu dah rosak sebab ada infection."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak rosak. Saya periksa sekejap ya. There's a red, firm area dekat bahagian atas, tapi tak ada nanah, tak ada abscess."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ini mastitis, radang payudara. Saya bagi antibiotic cloxacillin 500mg, four times a day, ten days. Makan sebelum makan nasi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Empat kali sehari? Susah nak ingat masa tengah berpantang ni, doktor. Selalu lupa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Letak alarm dalam phone, lepas setiap kali susukan pagi, tengah hari, petang dan malam. Mesti habiskan walaupun dah rasa baik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Demam dan sakit ni boleh makan ubat apa? Mak saya suruh minum jamu, herbal tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol 1 gram, empat kali sehari bila perlu. Jamu tu tunggu dulu. Warm compress before feeding, lepas tu tuam sejuk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Breast pump boleh guna tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, kalau baby tak habiskan susu sebelah kanan. Pastikan kosongkan payudara setiap kali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau dalam dua hari demam tak turun, or you feel a soft lump with pus, datang balik. Mungkin perlu ultrasound."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Nanti saya terangkan pada mak saya."
+      }
+    ]
+  },
+  {
+    "id": "family_012",
+    "split": "train",
+    "condition": "Postpartum depression",
+    "source": "Depression, postpartum",
+    "patient_persona": {
+      "description": "Yap Hui Wen, 33, female, six weeks after a caesarean for her first child, software tester in Puchong on maternity leave. Flat voice, speaks slowly, tears up midway.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Goh Siew Peng, Malaysian Chinese woman in her 40s, family physician at a Puchong clinic. Unhurried, warm; Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hui Wen，今天是六个礼拜的 postnatal check。伤口看起来很好。你自己感觉怎么样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "身体还好……就是，我不知道怎么讲。每天都很累，也不 happy。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "慢慢讲，不用急。这种不开心有多久了？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "大概三四个礼拜了吧。Baby 哭的时候，我有时候会想，我是不是一个很差的妈妈。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很多妈妈生完孩子都会有这种感觉，你不是一个人。晚上睡得着吗？宝宝睡了你也睡得着吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "睡不着。Baby 睡了我还是躺着一直 overthinking。东西也不想吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我请你填一个表，叫 Edinburgh scale，ten questions only。你的分数是十六，是偏高的。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那是什么意思？我是不是 crazy 了？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不是，你不是疯了。This is postpartum depression，产后抑郁，it can be treated。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我要问一个比较直接的问题。你有没有想过伤害自己，或者伤害宝宝？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "伤害 baby 没有……可是有时候会想，如果我不在了，大家会不会比较轻松。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "谢谢你愿意告诉我，这个很重要。你现在有没有什么计划，或者准备要做什么？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，没有 plan。只是脑子里会出现这种想法。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。我想开 sertraline 50mg，每天早上一粒。It's safe for breastfeeding。两到四个礼拜才会慢慢有效。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我也会 refer 你去 psychologist 做 counselling。你老公今天在外面吗？I'd like him to join us。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "他在外面。可以，我也想让他知道。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果那种想法变得很强，或者你觉得控制不了，马上去 emergency，或者打给我们 clinic。下个礼拜再回来看我。"
+      }
+    ]
+  },
+  {
+    "id": "family_013",
+    "split": "train",
+    "condition": "Breastfeeding difficulty, poor latch and sore nipples",
+    "source": "original",
+    "patient_persona": {
+      "description": "Deepa a/p Krishnan, 29, female, ten days after her first delivery, bank officer in Subang Jaya. Exhausted, emotional, determined to breastfeed.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nor Azlina Ramli, Malay woman in her 40s, family medicine specialist and lactation counsellor at a Subang clinic. Encouraging; English with light Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Deepa, and hello little one. Your note says breastfeeding is painful. Tell me what's happening."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, every feed my nipples are so pain, like cracked already. Sometimes berdarah. Baby also keeps crying after feeding, like tak kenyang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How many times a day is she feeding? And how many wet diapers?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Every two hours, sometimes more. Diapers around five or six a day, I think. My mother-in-law keeps saying susu tak cukup, bagi susu formula lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Her weight today is 3.1 kilo, birth weight was 3.2. That's within the normal drop. By two weeks she should be back to birth weight."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So she's not starving? I feel so guilty, doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "She's not starving. Can you latch her now so I can see? Bring her tummy to your tummy, chin touching the breast first."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Like this? Aduh, it still hurts."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "See, her mouth is only on the nipple. Break the suction with your little finger. Tunggu dia buka mulut besar, macam menguap, then bring her in quickly."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, this time much less pain. I can feel she's sucking deeper."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's the good latch. Her lower lip is turned out, and you can hear her swallowing."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What about the cracks? Can I sapu some cream?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Express a few drops of breast milk and let it air dry on the nipple. You can also use lanolin cream, no need to wipe before feeding."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My mother-in-law also says jangan makan cold things or the milk will be less. Is that true?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's a pantang belief, not proven. Makan cukup, minum bila dahaga, and rest when baby sleeps. That helps milk supply more."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Should I still give susu formula at night so I can sleep?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Try to avoid for now, it can lower your supply. Come back in one week to weigh her. If the pain is still bad, we check for tongue-tie."
+      }
+    ]
+  },
+  {
+    "id": "family_014",
+    "split": "train",
+    "condition": "Postnatal check with perineal pain and constipation",
+    "source": "original",
+    "patient_persona": {
+      "description": "Siti Khadijah binti Omar, 35, female, two weeks after a vaginal delivery of her third child with a stitched tear, rubber tapper's wife from a kampung near Muar, Johor. Shy, speaks quietly about intimate symptoms.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Rosnah Ibrahim, Malay woman in her 50s, medical officer at a Muar klinik kesihatan. Motherly, matter-of-fact; speaks Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Khadijah, macam mana lepas bersalin? Jahitan kat bawah tu masih sakit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sakit sikit lagi, doktor. Paling teruk bila nak buang air besar. Saya takut nak push."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dah berapa hari tak buang air besar?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Empat hari. Perut rasa kembung, bloated, tapi takut jahitan terbuka."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jahitan tu takkan terbuka sebab teran perlahan. Saya check dulu ya. The stitches are dry, no pus, no smell. Dia sembuh dengan baik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Tapi kenapa rasa pedih lagi? Normal ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Normal for the first two to three weeks. Duduk atas bantal lembut, dan rendam dalam air suam sepuluh minit, dua kali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mak saya suruh bertungku dengan batu panas. Boleh ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tungku atas perut boleh, asal jangan terlalu panas sampai melecur. Jangan letak dekat stitches."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Untuk sembelit, saya bagi lactulose, 15ml once a day. Minum air banyak, makan sayur dan buah macam betik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Betik boleh ke, doktor? Orang kampung kata tak elok masa berpantang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betik masak tu elok, good for bowel. Yang tak elok tu kalau makan terlalu sedikit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Darah nifas masih keluar, tapi dah jadi warna coklat. Normal ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Normal. Usually lasts four to six weeks. Kalau darah merah terang banyak, atau berbau busuk, terus datang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Faham, doktor. Painkiller saya dah habis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi paracetamol 1 gram, empat kali sehari. Safe for breastfeeding. Jumpa lagi masa enam minggu, kita bincang pasal family planning sekali."
+      }
+    ]
+  },
+  {
+    "id": "family_015",
+    "split": "train",
+    "condition": "Breast engorgement and low milk supply worries after caesarean",
+    "source": "Breast pain",
+    "patient_persona": {
+      "description": "Teo Mei Xuan, 31, female, one week after an emergency caesarean for twins, pharmacist from Kluang, Johor, staying at a confinement centre. Articulate, anxious, mixes English terms naturally.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Harith Iskandar bin Zulkifli, Malay man in his 30s, obstetric medical officer at a Johor hospital postnatal clinic. Polite, steady; English with some Mandarin and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我的胸部这两天好胀，好硬，痛到不能碰。可是 twins 喝的奶好像不够。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay, let me check. Both breasts are full and firm, no redness, no fever. This is engorgement, 奶胀."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那为什么胀成这样，baby 还是吃不饱？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "When the breast is too hard, baby cannot latch deep, so milk tak keluar well. It's a flow problem, not a supply problem."
+      },
+      {
+        "speaker": "Patient",
+        "text": "月子中心的 nurse 叫我每三个小时 pump 一次，but each time I only get 30ml。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "30ml per session in the first week is actually normal. Before feeding, massage gently and express a bit by hand to soften the areola."
+      },
+      {
+        "speaker": "Patient",
+        "text": "用手挤？我不太会，好像很 pain。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll ask the lactation nurse to show you after this. After feeding, cold compress, 冰敷 ten minutes, to reduce swelling."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我可以吃 ibuprofen 吗？我是 pharmacist，I know paracetamol is okay，可是想确定。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, ibuprofen 400mg three times a day after food is fine with breastfeeding. You can alternate with paracetamol."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我妈妈一直叫我喝很多 fish soup，说会多奶。有用吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Soup is good for fluid and protein, tak ada masalah. Tapi yang paling penting untuk tambah susu, kosongkan payudara selalu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "双胞胎一起喂，我真的 handle 不来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Many twin mothers feed both together in the football hold. The nurse can show you with two pillows."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我想 try 看。伤口这边还有一点痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The wound looks clean. Continue the pain medicine, and don't lift anything heavier than the babies for six weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白了，thank you 医生。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If you get fever, a red painful patch, or chills, come back quickly. That could be mastitis."
+      }
+    ]
+  },
+  {
+    "id": "family_016",
+    "split": "train",
+    "condition": "Contraception counselling after childbirth",
+    "source": "original",
+    "patient_persona": {
+      "description": "Nor Syafiqah binti Hassan, 30, female, eight weeks after her second child, exclusively breastfeeding, factory supervisor in Senai, Johor. Practical, direct, slightly embarrassed.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ng Pei Ling, Malaysian Chinese woman in her 30s, family medicine doctor at a Johor klinik kesihatan. Straightforward, friendly; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Syafiqah, hari ni kita bincang pasal perancang keluarga. Puan ada rancang nak anak lagi?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Nak, tapi bukan sekarang lah, doktor. Mungkin tiga empat tahun lagi. Anak kedua ni pun baru two months."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham. Puan masih menyusu badan penuh? Tak ada susu formula?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susu badan je. Tapi bulan depan saya dah mula kerja balik, nanti saya pump."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. Pil perancang biasa yang ada estrogen tu kurang sesuai masa menyusu, because it can reduce milk supply."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Habis tu, ada option apa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada beberapa. Progestogen-only pill, desogestrel 75mcg, same time every day. Atau suntikan Depo, setiap dua belas minggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Injection tu kakak saya pernah ambil. Dia kata haid jadi tak menentu, berat badan naik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul, itu kesan sampingan biasa. Satu lagi pilihan, implant kecil kat lengan, Implanon. Tahan sampai tiga tahun."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Implant tu kena bedah ke? Saya takut sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bukan bedah besar. Kita bius setempat, masukkan melalui jarum, lima minit je. Kalau nak anak, boleh keluarkan bila-bila masa."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga tahun tu sesuai dengan plan saya. Ada kesan pada susu tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak ada. Most common side effect, haid jadi tak tetap. Ada yang langsung tak datang haid, ada yang spotting sikit-sikit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau tak datang haid, macam mana saya nak tahu tak pregnant?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Implanon ni sangat berkesan, lebih 99 peratus. Tapi kalau risau, buat ujian kencing je."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, saya nak implant tu. Boleh buat hari ni?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh. Nurse akan sediakan bilik. Lepas pasang, keep the wound dry for two days, jangan angkat barang berat dengan tangan tu."
+      }
+    ]
+  },
+  {
+    "id": "family_017",
+    "split": "train",
+    "condition": "Emergency contraception request",
+    "source": "original",
+    "patient_persona": {
+      "description": "Michelle Tan Shu Ying, 22, female, final-year university student in Cyberjaya. Nervous, embarrassed, speaks quickly and quietly.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Haslinda Mohd Noor, Malay woman in her 40s, GP at a Cyberjaya clinic. Non-judgemental, calm; English with this patient.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Hi doctor. Um, I need the morning-after pill. The condom broke on Saturday night."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay Michelle, thank you for coming in quickly. Saturday night, so about how many hours ago?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Around forty hours, I think. I was too scared to come semalam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's still well within the window. When was your last period?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "It started two weeks ago, on the fourteenth. My cycle is quite regular, around twenty-eight days."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "So you're likely near ovulation, which is exactly why this is the right thing to do. Any chance you could already be pregnant from before?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, my period was normal last time. Datang on time, macam biasa je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give you levonorgestrel 1.5mg, one tablet, take it now here with water. It works best the earlier you take it."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Will it have side effects? I have exam on Thursday, final paper lagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Some people feel nausea, a bit of tummy pain or headache. If you vomit within three hours, come back and we give another dose."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Will my next period be normal ah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It may come a few days early or late. If it's more than a week late, do a urine pregnancy test."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Is this pill bad if I makan many times?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's safe, but it's less effective than regular contraception. Would you like to talk about the pill or other options today?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Maybe the pill. My kawan takes Yasmin, she says it's okay."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yasmin is a combined pill, one tablet daily. We check your blood pressure and history first. You can start it the day after taking the emergency pill, with condoms for seven days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, let's do that. Terima kasih sebab tak judge saya, doctor."
+      }
+    ]
+  },
+  {
+    "id": "family_018",
+    "split": "train",
+    "condition": "Contraception review, side effects on combined pill",
+    "source": "original",
+    "patient_persona": {
+      "description": "Liew Jia Hui, 27, female, graphic designer in Kota Kinabalu, Sabah, on a combined pill for two years. Relaxed, chatty, Sabahan Mandarin with Malay words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Vincent Chin Ka Loong, Malaysian Chinese man in his 40s, GP at a Kota Kinabalu family clinic. Easy-going; Mandarin with English and occasional Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Jia Hui，你今天是来拿避孕药，还是有什么问题？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "拿药，也想问一下。最近三个月常常 headache，有时候眼睛前面会有闪闪的光，然后才痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那个闪光大概多久？头痛是一边还是两边？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "闪光大概二十分钟，然后右边头很痛，会想 muntah。以前没有这样的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个听起来是 migraine with aura，有先兆的偏头痛。你现在吃的是 combined pill，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，Marvelon，吃两年了，都没问题。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有 aura 的偏头痛，再吃含 estrogen 的药，中风的风险会高。所以我建议停掉 Marvelon。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "中风？ Alamak，我才二十七岁而已。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "风险还是很低，but aura plus estrogen is a combination we must avoid。我们换一个比较安全的方法。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那还有什么？我不想要 injection，我怕针。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以吃 progestogen-only pill，desogestrel 75mcg，每天同一个时间吃，没有休息周。或者放 hormonal IUD，Mirena，五年。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "IUD 要放进去子宫，会不会很痛？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "会有一点像 period pain，几分钟而已。放了以后月经通常会变少。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我先吃药吧。那个 pill 迟了几个钟头可以吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Desogestrel 可以迟十二个钟头之内。If more than that，那七天要用 condom。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，明白。Headache 的话吃什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "发作的时候吃 paracetamol 1 gram 或者 naproxen 500mg。If sudden very severe headache，或者手脚无力，马上去医院。"
+      }
+    ]
+  },
+  {
+    "id": "family_019",
+    "split": "train",
+    "condition": "Request for tubal ligation, family complete",
+    "source": "original",
+    "patient_persona": {
+      "description": "Zainab binti Ali, 38, female, mother of five, runs a sundry shop in Kuala Terengganu. Firm, decisive, lively; husband waiting outside.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Aida Suraya Mahmud, Malay woman in her 40s, O&G specialist at a Terengganu hospital gynae clinic. Careful, thorough; speaks Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Zainab, dalam surat rujukan, puan nak buat ikat peranakan. Betul?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Betul, doktor. Anak dah lima, yang bongsu tiga tahun. Kami suami isteri dah discuss, cukuplah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya kena pastikan puan faham, ikat peranakan ni kekal. Kalau nak buka balik, susah dan tak semestinya berjaya."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya faham. Saya takkan ubah fikiran, confirm dah. Umur pun dah hampir empat puluh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Suami setuju? Kami galakkan suami isteri buat keputusan ni bersama."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Setuju, dia ada kat luar. Dia pun kata kesian tengok saya penat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Baik. Pembedahan ni kita buat melalui laparoscopy, keyhole surgery kat perut. You'll need general anaesthesia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lama ke duduk wad? Kedai saya takde orang jaga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Biasanya day care, pagi masuk, petang balik. Ada juga yang tidur satu malam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada risk tak, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Risiko kecil: pendarahan, infection, kecederaan usus, dan kadang-kadang tak berjaya, lebih kurang satu dalam dua ratus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau tak berjaya, boleh mengandung lagi lah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, dan ada risiko mengandung luar rahim. Jadi kalau haid lambat lepas pembedahan, datang periksa cepat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada option lain tak yang kurang risiko?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Suami boleh buat vasectomy, which is simpler and safer. Atau puan boleh guna IUD atau implant, tak kekal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Suami saya tak mahu vasectomy, doktor. Kami dah tanya dah. Saya pilih ikat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Baik. Saya bagi consent form untuk puan baca di rumah. Operation date in six weeks, dan puan kena berpuasa lapan jam sebelum."
+      }
+    ]
+  },
+  {
+    "id": "family_020",
+    "split": "test",
+    "condition": "Contraceptive injection follow-up with irregular bleeding",
+    "source": "original",
+    "patient_persona": {
+      "description": "Janet Anak Nyambong, 33, female, Iban, primary school teacher in Sibu, Sarawak, on Depo-Provera for one year. Friendly, soft laugh, English and Sarawak Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ahmad Syukri bin Hamdan, Malay man in his 30s, medical officer at a Sibu klinik kesihatan. Polite, clear; English and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Good morning, Janet. You're due for your Depo injection today. How has it been?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Morning, doctor. Okay lah, but the bleeding is so irregular. Sometimes spotting for two weeks, then takde langsung for one month."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's the most common side effect of Depo, especially in the first year. Any heavy bleeding, soaking pads?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, not heavy. Just annoying, because I never know when to bawa pad to school."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any pain during sex, or bleeding after sex?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, takde macam tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Your last Pap smear was when?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, I think three years ago, masa sebelum anak saya lahir."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then let's do one today as well. It's quick. Sometimes irregular spotting comes from the cervix, so it's good to check."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Is my weight a problem? I put on four kilo this year, baju pun dah ketat semua."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Depo can increase appetite. It's 68 kilo today. We can manage with diet, but if it bothers you, there are other options."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What options? I don't want pill, I sure lupa one."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Implanon, the rod in the arm, lasts three years. Or a copper IUD, no hormones, up to ten years."
+      },
+      {
+        "speaker": "Patient",
+        "text": "No hormones means tak naik berat?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Correct. But periods may become heavier and more painful with copper IUD."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hmm, my period already sakit last time. I think I stay with Depo first lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's fine. Injection today, next one in twelve weeks, before 20th December. If the spotting bothers you, come back, we can give a short course of pills to settle it."
+      }
+    ]
+  }
+]

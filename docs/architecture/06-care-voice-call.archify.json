@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sona Care live voice call",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1040,
+      600
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "Patient's turn"
+        },
+        "default": {
+          "label": "Model call"
+        },
+        "return": {
+          "label": "Answer back"
+        },
+        "security": {
+          "label": "Safety gate"
+        },
+        "dashed": {
+          "label": "Side effect"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "phone",
+      "type": "frontend",
+      "label": "Sona Care",
+      "sublabel": "iPhone or web"
+    },
+    {
+      "id": "agent",
+      "type": "messagebus",
+      "label": "SonaVoiceAgent",
+      "sublabel": "one per patient"
+    },
+    {
+      "id": "voice",
+      "type": "cloud",
+      "label": "sona-voice",
+      "sublabel": "ASR + TTS"
+    },
+    {
+      "id": "brain",
+      "type": "cloud",
+      "label": "sona-brain",
+      "sublabel": "Gemma 4 26B"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Postgres",
+      "sublabel": "tasks"
+    }
+  ],
+  "segments": [
+    {
+      "from": 162,
+      "to": 188,
+      "label": "Connect"
+    },
+    {
+      "from": 206,
+      "to": 292,
+      "label": "Hear a turn"
+    },
+    {
+      "from": 308,
+      "to": 514,
+      "label": "Answer and escalate"
+    }
+  ],
+  "messages": [
+    {
+      "from": "phone",
+      "to": "agent",
+      "y": 176,
+      "label": "WSS, session cookie",
+      "variant": "emphasis",
+      "note": "Worker names the agent from the session"
+    },
+    {
+      "from": "phone",
+      "to": "agent",
+      "y": 220,
+      "label": "PCM16 16 kHz frames",
+      "variant": "emphasis",
+      "note": "energy VAD: turn ends after 500 ms quiet"
+    },
+    {
+      "from": "agent",
+      "to": "voice",
+      "y": 250,
+      "label": "turn WAV, /v1/audio/transcriptions"
+    },
+    {
+      "from": "voice",
+      "to": "agent",
+      "y": 280,
+      "label": "words",
+      "variant": "return"
+    },
+    {
+      "from": "agent",
+      "to": "phone",
+      "y": 322,
+      "label": "999 line first if a red-flag word",
+      "variant": "security"
+    },
+    {
+      "from": "agent",
+      "to": "brain",
+      "y": 352,
+      "label": "chat, streamed"
+    },
+    {
+      "from": "brain",
+      "to": "agent",
+      "y": 382,
+      "label": "triage word, then sentences",
+      "variant": "return"
+    },
+    {
+      "from": "agent",
+      "to": "voice",
+      "y": 412,
+      "label": "each sentence, /v1/tts/stream"
+    },
+    {
+      "from": "voice",
+      "to": "agent",
+      "y": 442,
+      "label": "48 kHz PCM",
+      "variant": "return"
+    },
+    {
+      "from": "agent",
+      "to": "phone",
+      "y": 472,
+      "label": "audio + captions",
+      "variant": "return"
+    },
+    {
+      "from": "agent",
+      "to": "db",
+      "y": 502,
+      "label": "care-team task if worse or urgent",
+      "variant": "security",
+      "note": "then says \"I've let your care team know\""
+    }
+  ],
+  "activations": [
+    {
+      "participant": "agent",
+      "from": 170,
+      "to": 508,
+      "type": "messagebus"
+    },
+    {
+      "participant": "voice",
+      "from": 244,
+      "to": 286,
+      "type": "cloud"
+    },
+    {
+      "participant": "brain",
+      "from": 346,
+      "to": 388,
+      "type": "cloud"
+    },
+    {
+      "participant": "voice",
+      "from": 406,
+      "to": 448,
+      "type": "cloud"
+    },
+    {
+      "participant": "db",
+      "from": 496,
+      "to": 508,
+      "type": "database"
+    }
+  ]
+}

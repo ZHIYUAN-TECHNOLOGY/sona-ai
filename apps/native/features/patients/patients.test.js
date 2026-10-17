@@ -1,0 +1,139 @@
+import { expect, test } from "bun:test";
+import { GROUPS, letters, listItems, rosterRows, serverRows, syntheticCensus, withNeeds } from "./census";
+import { newEncounter, patients } from "@/features/encounter/fixtures";
+import { flaggedItems } from "@/features/check-ins/model";
+import { needsYou } from "@/features/day/counts";
+import { PENDING_RESULT, messageItems } from "@/features/day/model";
+import { needRows } from "@/features/day/needs-you-model";
+import { continueList, IDLE_MS, planPin, replacePin, whatIsLeft } from "./continue";
+
+test("connected, the rest of the list is the server's people at the server's beds: the visits opened here are left out, and each row says where the patient stands", () => {
+  const people = [
+    { id: "SYN-1042", name: "Amelia Tan", initials: "AT", complaint: "Cough for five days, with fever since yesterday." },
+    { id: "SYN-2002", name: "Nurul Huda", initials: "NH", complaint: "Day 3 of antibiotics for pyelonephritis." },
+    { id: "SYN-2007", name: "Dayang Suhaila", initials: "DS", complaint: "Day 3, asthma exacerbation." },
+    { id: "SYN-2012", name: "Siti Aminah", initials: "SA", complaint: "Day 2 of IV antibiotics for pneumonia." },
+    { id: "SYN-3001", name: "Clinic Only", initials: "CO", complaint: "Booked for review" },
+  ];
+  const beds = [
+    { bed: "Bed 6", patientId: "SYN-1042", name: "Amelia Tan", status: "fit", blockers: [{}] },
+    { bed: "Bed 2", patientId: "SYN-2002", name: "Nurul Huda", status: "fit", blockers: [{}, {}] },
+    { bed: "Bed 7", patientId: "SYN-2007", name: "Dayang Suhaila", status: "fit", blockers: [] },
+    { bed: "Bed 12", patientId: "SYN-2012", name: "Siti Aminah", status: "watch", blockers: [] },
+    { bed: "Bed 10", status: "empty", blockers: [] },
+  ];
+  const rows = serverRows(people, beds, new Set(["SYN-1042", "SYN-1086"]));
+  expect(rows.map(r => [r.id, r.where, r.reason, r.tone])).toEqual([
+    ["SYN-2002", "Bed 2", "2 blockers · Day 3 of antibiotics for pyelonephritis", "soon"],
+    ["SYN-2007", "Bed 7", "Fit to go · Day 3, asthma exacerbation", "good"],
+    ["SYN-2012", "Bed 12", "Day 2 of IV antibiotics for pneumonia", "calm"],
+    ["SYN-3001", "", "Booked for review", "calm"],
+  ]);
+  // They wait and open nothing here; only a patient in a bed counts for the ward tab, and none joins "Needs you" or "My list".
+  expect(rows.every(r => r.group === "waiting" && !r.open && !r.mine && !r.clinic)).toBe(true);
+  expect(rows.map(r => r.ward)).toEqual([true, true, true, false]);
+  // In the ward tab, the held discharge leads and Bed 2 sorts before Bed 12.
+  expect(listItems(rows, "ward", new Set()).map(i => i.row.where)).toEqual(["Bed 2", "Bed 7", "Bed 12"]);
+  // Nothing from the server yet (still reading, or it failed): no rows, never a sample.
+  expect(serverRows([], [], new Set())).toEqual([]);
+});
+
+test("the synthetic census is deterministic, unique and roughly 11% needs you, 6% next hour, a third waiting", () => {
+  const rows = syntheticCensus(108);
+  expect(rows).toHaveLength(108);
+  expect(syntheticCensus(108)).toEqual(rows);
+  expect(new Set(rows.map(r => r.name)).size).toBe(108);
+  const count = g => rows.filter(r => r.group === g).length;
+  expect([count("needs"), count("next"), count("waiting"), count("done")]).toEqual([12, 6, 41, 49]);
+  expect(rows.every(r => !r.open && r.ward !== r.clinic)).toBe(true);
+});
+
+test("Needs you groups rows by urgency: the top group shows 6 with Show more, Waiting and Done start folded", () => {
+  const rows = syntheticCensus(108);
+  const items = listItems(rows, "needs", new Set());
+  const headers = items.filter(i => i.kind === "header").map(i => [i.title, i.count]);
+  expect(headers).toEqual(GROUPS.map(g => [g.title, rows.filter(r => r.group === g.id).length]));
+  expect(items.filter(i => i.kind === "row")).toHaveLength(6 + 3);
+  expect(items.filter(i => i.kind === "more").map(i => [i.group, i.hidden])).toEqual([["needs", 6], ["next", 3], ["waiting", 41], ["done", 49]]);
+  const opened = listItems(rows, "needs", new Set(["needs"]));
+  expect(opened.filter(i => i.kind === "row" && i.row.group === "needs")).toHaveLength(12);
+  expect(new Set(items.map(i => i.key)).size).toBe(items.length);
+});
+
+test("All is A–Z with one header per letter, and the index lists only letters present", () => {
+  const rows = syntheticCensus(40);
+  const items = listItems(rows, "all", new Set());
+  const names = items.filter(i => i.kind === "row").map(i => i.row.name);
+  expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  expect(items.filter(i => i.kind === "header").map(i => i.title)).toEqual(letters(rows));
+  expect(items.filter(i => i.kind === "header").reduce((n, h) => n + h.count, 0)).toBe(40);
+});
+
+const now = Date.parse("2026-09-29T10:00:00Z");
+test("Continue: the open visit, then pins newest first, then unfinished work under 24 h; closed and idle visits leave", () => {
+  const started = [
+    { id: "a", lastAt: now - 1000, left: "Note not started" },
+    { id: "b", lastAt: now - 5000, left: "Draft note to sign" },
+    { id: "c", lastAt: now - IDLE_MS - 1, left: "Draft note to sign" },
+    { id: "d", lastAt: now - 2000, closed: true },
+    { id: "e", lastAt: now - 3000 },
+  ];
+  const list = continueList({ current: "b", pins: [{ id: "x", at: 1 }, { id: "d", at: 2 }], started, now });
+  expect(list.map(e => [e.id, e.why])).toEqual([["b", "open"], ["d", "pinned"], ["x", "pinned"], ["a", "recent"]]);
+});
+
+test("pins are capped at 5: a sixth asks to replace the oldest, and re-pinning is a no-op", () => {
+  const pins = [1, 2, 3, 4, 5].map(i => ({ id: `p${i}`, at: i }));
+  expect(planPin(pins.slice(0, 2), "new", 9)).toEqual({ pins: [...pins.slice(0, 2), { id: "new", at: 9 }] });
+  expect(planPin(pins, "p3", 9)).toEqual({ pins });
+  expect(planPin(pins, "new", 9)).toEqual({ replace: { id: "p1", at: 1 } });
+  expect(replacePin(pins, "p1", "new", 9).map(p => p.id)).toEqual(["p2", "p3", "p4", "p5", "new"]);
+});
+
+test("what is left on a visit: a paused recording, a note to sign or not started; nothing once the note is reviewed", () => {
+  expect(whatIsLeft({ answers: 2, hasNote: false, noteReviewed: false, recording: "paused" })).toBe("Recording paused");
+  expect(whatIsLeft({ answers: 2, hasNote: true, noteReviewed: false, recording: "stopped" })).toBe("Draft note to sign");
+  expect(whatIsLeft({ answers: 2, hasNote: false, noteReviewed: false, recording: "idle" })).toBe("Note not started");
+  expect(whatIsLeft({ answers: 2, hasNote: true, noteReviewed: true, recording: "stopped" })).toBeUndefined();
+});
+
+test("inside a group, red comes before amber whatever the time", () => {
+  const row = (id, tone, where) => ({ id, name: id, initials: "X", where, group: "needs", reason: "", tone, mine: true, ward: false, clinic: true, open: true });
+  const items = listItems([row("amber", "soon", "03:45"), row("red", "urgent", "04:15")], "needs", new Set());
+  expect(items.filter(i => i.kind === "row").map(i => i.row.id)).toEqual(["red", "amber"]);
+});
+
+test("the judge build's list is one row per person on the record: a visit that needs you keeps its row, the rest open from the ward's row, and no visit opens nothing", () => {
+  const row = (id, over = {}) => ({ id, name: id, initials: "X", where: "", group: "waiting", reason: "", tone: "calm", mine: false, ward: false, clinic: false, open: false, ...over });
+  const visits = [row("SYN-1042", { where: "10:15", group: "needs", reason: "Penicillin allergy · confirm", tone: "soon", mine: true, clinic: true, open: true })];
+  const ward = [row("SYN-1042", { where: "Bed 6", ward: true }), row("SYN-2007", { where: "Bed 7", reason: "Fit to go", tone: "good", ward: true }), row("SYN-3001", { reason: "Booked for review" })];
+  const rows = rosterRows(visits, ward, new Set(["SYN-1042", "SYN-2007"]));
+  expect(rows.map(r => [r.id, r.where, r.group, r.ward, r.open])).toEqual([
+    ["SYN-1042", "10:15", "needs", true, true], // ranked from her visit, and counted on the ward tab as the Ward page counts her bed
+    ["SYN-2007", "Bed 7", "waiting", true, true], // a ward patient now opens the visit the server holds
+    ["SYN-3001", "", "waiting", false, false], // no visit on the record: listed, never opened as someone else's
+  ]);
+  // Nothing read yet: no rows, never the visits alone.
+  expect(rosterRows(visits, [], new Set())).toEqual([]);
+});
+
+test("Patients' Needs you lists exactly Today's Needs you now: same patients, order and top reason, with a worse check-in, a result and an urgent message", () => {
+  const replied = new Date(2026, 9, 6, 9, 12);
+  const checkIn = { id: "check-in:enc:2", patientId: "SYN-1042", encounterId: "enc", day: 2, replies: [{ id: "r1", text: "Saya sesak nafas bila jalan", label: "worse", receivedAt: replied, task: { id: "t-worse", title: "Amelia: breathless after discharge", completed: false } }] };
+  // From someone outside the roster: Today lists them, so Patients must too.
+  const message = { patientId: "SYN-2002", name: "Nurul Huda", label: "urgent", reason: "Fever", lastText: "Demam balik", lastAt: new Date(2026, 9, 6, 9, 20), waitingSince: replied, handled: false };
+  const encounters = Object.fromEntries(patients.map(p => [p.id, newEncounter()]));
+  const needs = needsYou(patients, encounters, [PENDING_RESULT], [...flaggedItems([checkIn]), ...messageItems([message], new Date(2026, 9, 6, 9, 30))]);
+  const today = needRows(needs, [PENDING_RESULT], 600);
+  // The page's own rows before the ranking: everyone waiting, in roster order.
+  const base = patients.map(p => ({ id: p.id, name: p.name, initials: p.initials, where: "", group: "waiting", reason: p.subtitle, tone: "calm", mine: true, ward: false, clinic: false, open: true }));
+  const listed = listItems(withNeeds(base, needs), "needs", new Set()).filter(i => i.kind === "row" && i.row.group === "needs").map(i => i.row);
+  expect(listed.length).toBe(today.total);
+  expect(listed.map(r => r.id)).toEqual(today.rows.map(r => r.patientId));
+  listed.forEach((r, i) => expect(today.rows[i].reason.startsWith(r.reason)).toBe(true));
+  expect(listed.map(r => [r.id, r.reason, r.open])).toEqual([
+    ["SYN-2002", "Demam balik · Urgent message · no reply for 18 min", false], // the outsider: listed, nothing to open here
+    ["SYN-1042", "Breathless · Worse after discharge · replied 09:12", true],
+    ["SYN-1086", "Low potassium 3.1 mmol/L", true],
+  ]);
+});

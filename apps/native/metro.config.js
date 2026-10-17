@@ -1,3 +1,4 @@
+const { withVarlockMetroConfig } = require("@varlock/expo-integration/metro-config");
 // Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require("expo/metro-config");
 
@@ -9,12 +10,8 @@ const blockListPatterns = Array.isArray(blockList) ? blockList : [blockList];
 config.resolver.blockList = [
   ...blockListPatterns,
   /[/\\]packages[/\\]infra[/\\]\.alchemy(?:[/\\]|$)/,
+  // Agent worktrees carry their own node_modules; resolving from them breaks native module lookup. Not when Metro runs in one.
+  ...(/[/\\]\.claude[/\\]worktrees[/\\]/.test(__dirname) ? [] : [/[/\\]\.claude[/\\]worktrees[/\\]/]),
 ];
 
-// Bundle audio assets (spike sample consult clip) + on-device model weights as binary assets.
-// .bin = the Malaysian Whisper ggml shipped in the app (offline STT, nothing downloads/leaves).
-for (const ext of ["wav", "bin"]) {
-  if (!config.resolver.assetExts.includes(ext)) config.resolver.assetExts.push(ext);
-}
-
-module.exports = config;
+module.exports = withVarlockMetroConfig(config);

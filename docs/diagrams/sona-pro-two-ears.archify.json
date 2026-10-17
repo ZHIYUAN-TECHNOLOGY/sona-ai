@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sona Pro voice: one audio stream, two ears",
+    "output": "sona-pro-two-ears.html",
+    "viewBox": [
+      980,
+      508
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "split",
+        "label": "Audio splits two ways",
+        "focus": [
+          "pro",
+          "agent",
+          "minicpm",
+          "asr"
+        ],
+        "note": "The agent forwards every mic chunk to MiniCPM-o and to Qwen3-ASR at once."
+      },
+      {
+        "id": "card",
+        "label": "Words become a card",
+        "focus": [
+          "agent",
+          "asr",
+          "laya",
+          "models"
+        ],
+        "note": "The exact transcript, not MiniCPM-o's ear, decides which card and model run."
+      },
+      {
+        "id": "speak",
+        "label": "Sona says it",
+        "focus": [
+          "agent",
+          "minicpm",
+          "pro"
+        ],
+        "note": "Proposed: the agent hands MiniCPM-o a one-line summary to speak."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "proposed, not built"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "pro",
+      "type": "frontend",
+      "label": "Sona Pro app",
+      "sublabel": "clinician's iPhone"
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Call agent",
+      "sublabel": "Cloudflare Durable Object"
+    },
+    {
+      "id": "minicpm",
+      "type": "cloud",
+      "label": "MiniCPM-o · box ④",
+      "sublabel": "Baseten H100"
+    },
+    {
+      "id": "asr",
+      "type": "cloud",
+      "label": "Qwen3-ASR · box ②",
+      "sublabel": "Baseten L4"
+    },
+    {
+      "id": "laya",
+      "type": "cloud",
+      "label": "Laya",
+      "sublabel": "Baseten CPU"
+    },
+    {
+      "id": "models",
+      "type": "cloud",
+      "label": "Gemma / MedGemma",
+      "sublabel": "boxes ① ③ · L4"
+    }
+  ],
+  "segments": [
+    {
+      "from": 178,
+      "to": 310,
+      "label": "Audio splits two ways"
+    },
+    {
+      "from": 318,
+      "to": 370,
+      "label": "Words become a card"
+    },
+    {
+      "from": 376,
+      "to": 428,
+      "label": "Sona says it"
+    }
+  ],
+  "messages": [
+    {
+      "id": "mic",
+      "from": "pro",
+      "to": "agent",
+      "y": 188,
+      "label": "mic audio",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-minicpm",
+      "from": "agent",
+      "to": "minicpm",
+      "y": 216,
+      "label": "every chunk",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-asr",
+      "from": "agent",
+      "to": "asr",
+      "y": 244,
+      "label": "same chunks"
+    },
+    {
+      "id": "reply",
+      "from": "minicpm",
+      "to": "agent",
+      "y": 274,
+      "label": "Sona's voice",
+      "variant": "return"
+    },
+    {
+      "id": "transcript",
+      "from": "asr",
+      "to": "agent",
+      "y": 302,
+      "label": "exact words",
+      "variant": "return"
+    },
+    {
+      "id": "pick",
+      "from": "agent",
+      "to": "laya",
+      "y": 330,
+      "label": "which card?"
+    },
+    {
+      "id": "make",
+      "from": "agent",
+      "to": "models",
+      "y": 358,
+      "label": "make the card",
+      "variant": "emphasis"
+    },
+    {
+      "id": "summary",
+      "from": "agent",
+      "to": "minicpm",
+      "y": 386,
+      "label": "speak summary",
+      "variant": "dashed"
+    },
+    {
+      "id": "back",
+      "from": "agent",
+      "to": "pro",
+      "y": 414,
+      "label": "voice + card",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "agent",
+      "from": 183,
+      "to": 418,
+      "type": "backend"
+    },
+    {
+      "participant": "minicpm",
+      "from": 212,
+      "to": 390,
+      "type": "cloud"
+    },
+    {
+      "participant": "asr",
+      "from": 240,
+      "to": 306,
+      "type": "cloud"
+    },
+    {
+      "participant": "laya",
+      "from": 325,
+      "to": 336,
+      "type": "cloud"
+    },
+    {
+      "participant": "models",
+      "from": 353,
+      "to": 364,
+      "type": "cloud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Routing layer: the Cloudflare agent",
+      "items": [
+        "One Durable Object per call sends every mic chunk to both boxes",
+        "Sona Care's live call already does this (live.ts)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Two ears, one job each",
+      "items": [
+        "MiniCPM-o: conversation and Sona's voice",
+        "Qwen3-ASR: exact words; Laya and Gemma or MedGemma make the card"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+/* Sign-in and join: one calm card centred on the app's canvas. Tokens only; sizes follow the app's scope. */
+.sign-in { min-height: 100dvh; display: grid; place-items: center; padding: var(--space-4); background: var(--canvas); color: var(--ink); font-family: var(--font); font-size: var(--text-body); line-height: var(--line-body); }
+.sign-in-card { width: 100%; max-width: 420px; padding: var(--space-6) var(--space-5); border-radius: var(--radius-card); display: grid; gap: var(--space-4); }
+.sign-in-card h1 { margin: 0; font-size: var(--text-title); line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+.sign-in-card p { margin: 0; color: var(--muted); text-wrap: pretty; }
+.sign-in-brand { font-weight: 600; color: var(--blue); }
+.sign-in-card form { display: grid; gap: var(--space-2); }
+.sign-in-card label { font-weight: 600; margin-top: var(--space-2); }
+.sign-in-card input { min-height: var(--tap); width: 100%; box-sizing: border-box; padding: 0 var(--space-3); border: 1px solid var(--line-field); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
+.sign-in-card input::placeholder { color: var(--placeholder); }
+.sign-in-card button { min-height: var(--tap); padding: 0 var(--space-4); border: 0; border-radius: var(--radius-control); font: inherit; font-weight: 600; cursor: pointer; transition: opacity var(--quick) var(--ease); }
+.sign-in-primary { margin-top: var(--space-3); background: var(--ink); color: var(--surface); }
+.sign-in-quiet { background: transparent; color: var(--blue); }
+.sign-in-card button:disabled { opacity: 0.45; cursor: default; }
+.sign-in-card :is(input, button):focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.sign-in-row { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: space-between; }
+/* Amber, not red: in Care red means only "call the hospital now". */
+.sign-in-error { padding: var(--space-2) var(--space-3); border-radius: var(--radius-control); background: var(--amber-wash); color: var(--amber); }
+.sign-in-card p.sign-in-error { color: var(--amber); }
+.sign-in-card p.sign-in-demo { font-size: 13px; }
+.sign-in-confirm { padding: var(--space-3); border-radius: var(--radius-group); background: var(--blue-wash); color: var(--ink); }
+.sign-in-card p.sign-in-confirm { color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .sign-in-card button { transition: none; } }
+
+/* Sona Pro: the shell's language. Pale canvas, brand tile, pill fields and an ink pill to sign in. */
+:is(.pro, .care).sign-in { background: var(--canvas-deep); font-size: 14px; }
+:is(.pro, .care) .sign-in-card { max-width: 400px; padding: var(--space-6); border-radius: var(--radius-shell); }
+:is(.pro, .care) .sign-in-brand { display: flex; align-items: center; gap: var(--space-3); font-size: 17px; letter-spacing: var(--track-tight); color: var(--ink); }
+.sign-in-brand-tile { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-control); background: var(--blue); color: var(--surface); }
+:is(.pro, .care) .sign-in-card h1 { font-size: var(--text-page); line-height: 1.15; font-weight: 500; letter-spacing: var(--track-display); }
+:is(.pro, .care) .sign-in-card label { font-size: 13px; font-weight: 500; color: var(--muted); }
+:is(.pro, .care) .sign-in-card input { min-height: 44px; padding: 0 var(--space-4); border-color: var(--line); border-radius: var(--radius-pill); transition: border-color var(--quick) var(--ease), box-shadow var(--quick) var(--ease); }
+:is(.pro, .care) .sign-in-card input:hover { border-color: var(--muted); }
+:is(.pro, .care) .sign-in-card button { min-height: 44px; border-radius: var(--radius-pill); transition: opacity var(--quick) var(--ease), transform var(--quick) var(--ease); }
+:is(.pro, .care) .sign-in-card button:active:not(:disabled) { transform: scale(var(--press)); }
+:is(.pro, .care) .sign-in-card :is(input, button):focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+:is(.pro, .care) .sign-in-error { font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { :is(.pro, .care) .sign-in-card input, :is(.pro, .care) .sign-in-card button { transition: none; } :is(.pro, .care) .sign-in-card button:active:not(:disabled) { transform: none; } }
+/* Sona Care: the same card at patient sizes, with a blue pill to go on. */
+.care.sign-in { font-size: var(--text-body); }
+.care .sign-in-card { max-width: 460px; gap: var(--space-5); }
+.care .sign-in-brand { font-size: 1.1875rem; }
+.care .sign-in-card label { font-size: 1.0625rem; color: var(--ink); }
+.care .sign-in-card input { min-height: 56px; font-size: 1.1875rem; }
+.care .sign-in-card button { min-height: 52px; }
+.care .sign-in-primary { background: var(--blue); }
+.care .sign-in-error { font-size: 1.0625rem; }
+/* A 320px phone: the card's side padding gives the fields their width back. */
+@media (max-width: 360px) { :is(.pro, .care) .sign-in-card { padding-inline: var(--space-4); } }

@@ -1,0 +1,46 @@
+/* Sona Care · Visit summaries. Nothing here is an alarm, so no red and no amber. */
+.vs-page { display: grid; gap: var(--space-5); font-size: max(17px, var(--text-md, 17px)); }
+
+/* The document reads first; the rail holds the list of visits, the Sona panel and quick help. No panel: the document takes the width. */
+.vs-split { display: grid; gap: var(--space-4); align-items: start; }
+.vs-rail { display: grid; gap: var(--space-4); min-width: 0; }
+
+/* A change is a sentence to read, not a label: rows wrap instead of cutting off. */
+.vs-page .list-title, .vs-page .list-caption { white-space: normal; overflow: visible; }
+.vs-page .list-title { font-weight: 500; line-height: 1.4; }
+.vs-page .list-caption { font-size: max(15px, var(--text-small)); line-height: 1.4; }
+.vs-page .list-row { padding-block: var(--space-3); }
+
+.vs-full { min-width: 0; }
+.vs-full section { display: grid; gap: var(--space-1); }
+/* 52ch of this face is about 72 letters a line. */
+.vs-full p { margin: 0; line-height: 1.65; max-width: 52ch; font-size: max(19px, 1.1em); overflow-wrap: anywhere; }
+.vs-full .vs-overline { margin: 0; font-size: max(15px, var(--text-small)); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.vs-full .vs-approved { color: var(--muted); font-size: max(15px, 0.9em); }
+
+.vs-help p { margin: 0; line-height: 1.5; }
+.vs-help-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.vs-help-acts .btn { min-height: 48px; }
+
+.vs-blank { min-height: min(52vh, 26rem); justify-content: center; }
+.vs-blank .empty { max-width: 34rem; margin-inline: auto; font-size: max(17px, 1em); line-height: 1.5; }
+
+@container page (min-width: 780px) {
+  .vs-split[data-panel] { grid-template-columns: minmax(0, 44rem) minmax(20rem, 1fr); }
+  .vs-split:not([data-panel]) .vs-rail { max-width: 44rem; }
+}
+/* Very wide: the rail has room for the panel and the help card side by side, so nothing stretches. */
+@container page (min-width: 1380px) { .vs-split[data-panel] .vs-rail { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; } }
+/* "Download PDF" is the browser's print: only the summary, black on white. */
+@media print {
+  .frame-side, .frame-bar, .sona-bar, .vs-page > :not(.vs-split), .vs-split > :not(.vs-full) { display: none !important; }
+  .frame-main, .frame-scroll, .frame-page { overflow: visible !important; height: auto !important; }
+  .vs-page, .vs-split { display: block; max-width: none; }
+  .vs-full, .vs-full * { border: 0; box-shadow: none; padding-inline: 0; background: white !important; color: black !important; }
+}
+
+/* Evidence rows here are whole sentences that wrap: give each line room. */
+.vs-rail .insight-evidence li { padding-block: var(--space-3); line-height: 1.45; align-items: start; }
+.vs-rail .insight-evidence svg { margin-top: 3px; }
+.vs-rail .insight-overline { font-size: var(--text-small); }
+.vs-more { display: grid; gap: var(--space-2); margin: var(--space-2) 0 0; padding-left: var(--space-5); line-height: 1.45; }

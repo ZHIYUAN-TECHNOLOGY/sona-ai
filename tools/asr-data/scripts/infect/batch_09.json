@@ -1,0 +1,820 @@
+[
+  {
+    "id": "infect_081",
+    "split": "train",
+    "condition": "Puncture wound from a rusty nail, tetanus prophylaxis",
+    "source": "Tetanus",
+    "patient_persona": {
+      "description": "Encik Razak bin Othman, 45, male, construction site supervisor in Nilai, Negeri Sembilan; stepped on a nail through his boot. Gruff, impatient, Negeri Sembilan Malay with English work words.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Yong Siew Mei, Malaysian Chinese woman in her 30s, GP at a Nilai clinic. Brisk, no-nonsense; Malay and English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, pagi tadi saya pijak paku kat site. Tembus but, masuk tapak kaki. Paku berkarat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Buka stoking, saya tengok. Luka kecil, tapi dalam. Keliling tak merah lagi. Dah cuci?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Cuci dengan air paip je kat site, lepas tu sapu minyak gamat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Minyak gamat tak payah dulu. Nurse akan cuci dengan normal saline, dan saya check kalau ada serpihan kat dalam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena suntik tetanus ke? Last saya suntik, masa sekolah kot."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tu dah lebih dua puluh tahun. Luka paku berkarat, dalam, tanah, memang risiko tetanus. Hari ni kena booster, ATT, satu suntikan kat lengan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Satu je? Senang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebab encik dulu dah lengkap dos masa kecil, satu booster cukup. Kalau tak pernah langsung, kena tambah immunoglobulin dan tiga dos."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat makan ada?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Luka tapak kaki tembus kasut, kadang kuman Pseudomonas masuk. Saya bagi ciprofloxacin 500mg dua kali sehari, lima hari, sebab luka ni kotor."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh kerja esok? Projek nak siap."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dua hari MC, kurangkan berdiri. Esok datang dressing kat sini. Pakai selipar, jangan kasut ketat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau jadi teruk, macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau bengkak, merah merebak, bernanah, atau demam, datang balik. Kalau rahang rasa kejang, susah buka mulut, terus pergi hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Rahang kejang? Itu tetanus ya?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, tanda awal. Tapi dengan booster hari ni, risiko sangat rendah. Dan suruh pekerja lain check rekod suntikan dorang juga."
+      }
+    ]
+  },
+  {
+    "id": "infect_082",
+    "split": "train",
+    "condition": "Diabetic foot ulcer, wound dressing follow-up",
+    "source": "Tetanus",
+    "patient_persona": {
+      "description": "Madam Chin Ah Lan, 64, female, retired market vegetable seller in Ipoh; type 2 diabetes for 15 years with numb feet. Slow, soft, Cantonese-accented Malaysian Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tham Kah Wai, Malaysian Chinese man in his 40s, family medicine specialist at an Ipoh health clinic wound care unit. Patient, encouraging; Mandarin with English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "安娣，今天第三个礼拜 dressing 了。伤口我看一下。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "医生，我看起来好像小了一点，没那么臭了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，ulcer 从三公分变两公分，底下是红色的 granulation tissue，这个是好现象。没有脓。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那就好。我女儿每天都帮我换药，用你们给的 saline 洗。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很好。你有没有穿我们给的那双 offloading 鞋？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "出门有穿。在家里……有时候光脚走来走去，比较舒服。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "安娣，这个不行。你的脚没有感觉，踩到东西不知道。伤口要好，一定不能再压到。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好啦好啦，我在家也穿。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 sugar 这个月怎样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "早上大概 8、9。HbA1c 上次是多少我忘记了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "今天的 HbA1c 是 8.4，比上次 9.6 好。Sugar 控制好，伤口好得比较快。继续 insulin 和 metformin。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那个 tetanus 针，上次你说要打，打了吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "第一个礼拜已经打了 ATT booster。Record 上有。不用再打。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "什么时候可以不用来 dressing？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "照这个速度，可能再三四个礼拜。之后你每天要检查自己的脚，用镜子看脚底。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白。谢谢你，医生，真的很怕要锯脚。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你们做得很好，没到那个地步。有发烧、红肿扩散，或者伤口变黑，就马上来，不用等 appointment。"
+      }
+    ]
+  },
+  {
+    "id": "infect_083",
+    "split": "train",
+    "condition": "Generalised tetanus, ward round",
+    "source": "Tetanus",
+    "patient_persona": {
+      "description": "Pak Cik Ismail bin Hamzah, 70, male, paddy farmer from near Alor Setar, Kedah; never had a tetanus vaccine; injured his foot in the paddy field. Slurred, slow speech from jaw stiffness, Kedah Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Jia Wen, Malaysian Chinese woman in her 30s, medical registrar on the high dependency ward round at Hospital Sultanah Bahiyah. Soft-spoken, patient; fluent Kedah-friendly Malay with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, pak cik. Saya Dr. Lim. Hari ni rahang pak cik macam mana? Boleh buka mulut sikit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sikit je, doktor... Tak boleh luas. Makan bubur je boleh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa. Semalam boleh buka satu jari, hari ni hampir dua jari. Ada improvement."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Badan saya kejang lagi malam tadi, dua kali. Sakit sangat, macam ditarik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nurse ada report. Kita dah naikkan diazepam, dan tambah magnesium drip untuk kurangkan kejang. Bilik ni kita buat gelap dan senyap, sebab bunyi boleh trigger."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Luka kat kaki saya tu, dari sawah. Kena kaca masa tanam anak padi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, luka tu dah kita cuci dan buang tisu mati. Kuman tetanus hidup dalam tanah, masuk ikut luka. Pak cik tak pernah dapat suntikan tetanus?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak pernah, doktor. Zaman saya kecik mana ada suntik-suntik ni."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hari pertama kita dah bagi tetanus immunoglobulin, dan metronidazole drip, tujuh sampai sepuluh hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berapa lama lagi saya kena duduk sini?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tetanus ni lambat baik, pak cik. Biasanya tiga sampai empat minggu. Kejang akan kurang sikit-sikit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lepas baik, boleh kena lagi ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, sebab penyakit ni tak bagi imun. Jadi sebelum balik, kita mula vaksin tetanus, tiga dos. Hari ni dos pertama."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Anak-anak saya pun turun sawah. Dia orang kena suntik juga?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau dia orang lahir lepas tahun 80-an, mungkin dah dapat masa sekolah. Tapi suruh check kat klinik, booster setiap sepuluh tahun."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Terima kasih jaga saya."
+      }
+    ]
+  },
+  {
+    "id": "infect_084",
+    "split": "train",
+    "condition": "Road-rash abrasions after a motorcycle fall, dressing and tetanus booster",
+    "source": "Tetanus",
+    "patient_persona": {
+      "description": "Mr. Dinesh a/l Suresh, 19, male, diploma student in Kuala Lumpur who skidded on his motorbike in the rain. Cheeky, fast-talking, Malaysian Indian English with Malay slang.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nadiah binti Osman, Malay woman in her 30s, medical officer in the emergency department of Hospital Kuala Lumpur. Firm, mildly amused; English and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I skid on the motor last night near Jalan Pahang. Rain very heavy. My elbow and knee all kopak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Helmet on? Hit your head, pengsan, vomit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Helmet on. Head OK, no pengsan. Just the arm and leg, sakit gila."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Large abrasions on the right elbow and knee, got small stones and sand inside. Can bend fully?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can, but sakit. My friend says just put iodine and plaster, can already."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not enough. The gravel must come out, or it gets infected and leaves a tattoo mark in the skin. We'll numb it and scrub it clean."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Scrub? Aiyo, that one sakit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "With lignocaine, much less. Then a non-stick dressing. You come back to klinik kesihatan every two days to change."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tetanus injection needed or not? My mak suruh I tanya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your mum is right. Road dirt is a tetanus risk. Your last booster was in Form 1? That's about six years."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I think so, yang sekolah punya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For a dirty wound, if more than five years, we give a booster. So yes, ATT today."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Antibiotic perlu tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not needed if cleaned properly. If it becomes red, swollen, pus, or fever, come back, then we start. Paracetamol for pain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh mandi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, but cover the dressing with plastic. And next time rain heavy, slow down lah. Knee pad also, for riding."
+      }
+    ]
+  },
+  {
+    "id": "infect_085",
+    "split": "train",
+    "condition": "Parang laceration in an unvaccinated adult",
+    "source": "Tetanus",
+    "patient_persona": {
+      "description": "Encik Gindol bin Masidi, 52, male, Dusun hill-rice and vegetable farmer near Ranau, Sabah; cut his shin with a parang while clearing brush. Calm, stoic, Sabahan Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chua Kai Lun, Sabahan Chinese man in his 30s, medical officer in the emergency department of Hospital Ranau. Steady, practical; Sabahan Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik, luka ni kena parang ya? Bila jadi?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pagi tadi, doktor, masa tebas semak kat kebun. Parang terlepas, kena kaki. Saya balut dengan kain terus datang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Luka panjang enam cm, dalam, ada tanah dan daun kering. Tulang tak nampak, jari kaki boleh gerak, rasa pun ada. Bagus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena jahit ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya. Tapi kita cuci betul-betul dulu, buang semua kotoran, lepas tu jahit. Saya bagi ubat bius kat keliling luka."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Saya tahan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Encik pernah ambil suntikan tetanus? Masa sekolah ke, masa kerja?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tidak pernah, bah. Saya tak habis sekolah. Isteri saya ada kena masa mengandung, saya tidak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jadi encik tak ada perlindungan. Luka kotor macam ni, kena dua benda. Tetanus immunoglobulin hari ni, dan vaksin tetanus tiga dos."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga kali datang? Rumah saya jauh, sejam naik lori."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dos kedua lepas empat minggu, dos ketiga enam bulan lepas tu. Boleh buat kat klinik kesihatan dekat kampung, tak payah datang sini."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, itu senang sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Antibiotic, cloxacillin 500mg empat kali sehari, lima hari. Luka kena tengok dan tukar dressing setiap dua hari. Jahitan buka lepas sepuluh hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh pergi kebun?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Seminggu ni rehat dulu, luka kena kering. Kalau luka bengkak, bernanah, demam, atau rahang kejang, datang hospital terus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Terima kasih banyak-banyak."
+      }
+    ]
+  },
+  {
+    "id": "infect_086",
+    "split": "train",
+    "condition": "Non-bullous impetigo in a child",
+    "source": "Impetigo",
+    "patient_persona": {
+      "description": "Puan Hasnah binti Idris, 32, female, part-time cleaner living in a PPR flat in Kuala Lumpur, speaking for her son Haziq, 5. Friendly, a little rushed, KL Malay with English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Arun a/l Balakrishnan, Malaysian Indian man in his 30s, medical officer at a KL health clinic. Cheerful, great with kids; Malay and English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, bawah hidung Haziq ada luka, mula kecil je, sekarang ada kerak kuning macam madu. Dah merebak ke dagu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Haziq, doktor nak tengok sikit ya. Hmm, kerak kuning keemasan kat bawah hidung, tepi mulut dan dagu. Ni impetigo, jangkitan kuman kulit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Impetigo? Saya ingat kudis biasa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Orang panggil kudis juga. Selalunya kuman Staph atau Strep masuk ikut luka kecil, macam dia korek hidung atau garu gigitan nyamuk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Memang dia suka korek hidung. Dah pesan banyak kali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Biasa budak-budak. Ada demam? Dia masih aktif?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada demam. Aktif, main macam biasa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. Sebab kawasan kecil, cukup dengan fusidic acid cream. Cuci dengan air sabun, lap kering, sapu nipis tiga kali sehari, tujuh hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kerak tu kena tanggal ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Rendam dengan air suam, kerak tu lembut, lap perlahan-lahan. Jangan paksa sampai berdarah. Lepas tu baru sapu cream."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dia boleh pergi tadika?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tunggu sampai kerak kering semua, atau 48 jam lepas mula ubat. Impetigo ni senang berjangkit kat kawan-kawan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Adik dia pun ada bintik satu kat tangan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bawa dia sekali lain kali. Dan tuala, bantal, jangan kongsi. Potong kuku Haziq pendek, cuci tangan selalu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau tak baik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau lepas lima hari masih merebak, atau demam, datang balik, mungkin kena ubat makan. Tapi saya rasa cream ni cukup."
+      }
+    ]
+  },
+  {
+    "id": "infect_087",
+    "split": "train",
+    "condition": "Bullous impetigo in a toddler",
+    "source": "Impetigo",
+    "patient_persona": {
+      "description": "Tiong Ai Ling, 30, female, Foochow bakery assistant in Sibu, Sarawak, speaking for her daughter Emily, 3. Worried, gentle, Sarawak Mandarin with English and Malay.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ngu Hock Seng, Foochow man in his 50s, GP at a Sibu clinic for 25 years. Grandfatherly, calm; Mandarin with English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我女儿的肚子和大腿出了几个大水泡，里面黄黄的水，破了以后变成红红的一片。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看看。嗯，肚子、屁股、大腿都有，有些水泡破了，边缘有一圈皮。多久了？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "三天。一开始只有一个，以为是蚊子咬，后来越来越多。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个叫 bullous impetigo，是 Staph 细菌做出的 toxin，让皮肤起水泡。有发烧吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "昨天晚上 37.8，今天没有了。吃东西还可以。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。因为她的水泡分布比较多，擦 cream 不够，要吃 antibiotic。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "吃什么？她很难吃药。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cephalexin syrup，她 14 公斤，一天三次，每次 5ml，吃七天。味道还可以，有草莓味。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "水泡要不要弄破？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不要自己弄。破了的，用 saline 或者清水洗干净，擦 fusidic acid cream，盖一块干净的 gauze。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "她在 nursery，要请假吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "吃药 48 小时后，没有新的水泡，就可以回去。之前不要去，会传染给其他小朋友。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "家里的毛巾和衣服呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "她的毛巾、衣服、床单分开洗，用热水。你帮她擦药以后要洗手。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会不会留下疤痕？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Impetigo 很浅，一般不会留疤，可能暂时有颜色深浅，几个月就退。三天后带她回来 review。"
+      }
+    ]
+  },
+  {
+    "id": "infect_088",
+    "split": "train",
+    "condition": "Impetigo in an adult martial artist",
+    "source": "Impetigo",
+    "patient_persona": {
+      "description": "Mr. Hareesh a/l Ramesh, 30, male, fitness trainer and Brazilian jiu-jitsu hobbyist in Cheras, Kuala Lumpur. Energetic, chatty, Malaysian Indian English with Malay slang.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tengku Nur Aina, Malay woman in her 30s, GP at a Cheras clinic. Upbeat, practical; English and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, got these crusty yellow things on my forearm and neck. Started as small pimple, now spreading. My coach said jangan masuk mat until check."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Smart coach. Let me look. Honey-coloured crusts on red base, forearm, side of the neck. Classic impetigo. Anyone else at the gym got it?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Actually yes, two guys last week also got, same thing. We roll together setiap malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Skin-to-skin contact sports, very common. The bacteria spread on the mats too if not cleaned."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Wah, OK. Is it serious? Boleh train or not?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not serious, but very contagious. No training until the crusts dry and at least 48 hours on treatment. Cover it even after."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK lah. Ubat apa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Only a few patches, so mupirocin cream three times a day, seven days. Soak off the crusts with warm water first."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can take something oral so cepat sikit? Got competition in three weeks."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If it spreads more, we add cephalexin. For now, cream is enough. Don't want to give antibiotics we don't need."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Fair enough. What about the gym? Kena bagitahu the owner?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes. Mats disinfected daily, everyone shower right after class, no sharing towels. Anyone with a rash, sit out and see a doctor."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My gi also kena basuh special?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hot wash after every session, fully dry. Don't leave it wet in your bag. Same with your rash guard."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, I always tinggal in the car. OK, will change. Thanks, doctor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Come back in five days, or earlier if you get boils, painful lumps, or fever. Those could be MRSA, need a swab."
+      }
+    ]
+  },
+  {
+    "id": "infect_089",
+    "split": "train",
+    "condition": "Recurrent impetigo with nasal carriage",
+    "source": "Impetigo",
+    "patient_persona": {
+      "description": "Puan Zaharah binti Mat Nor, 39, female, nasi kerabu seller in Kuala Terengganu, speaking for her daughter Aina, 8, with a third episode of impetigo this year. Tired, frank, Terengganu Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lau Yee Wen, Malaysian Chinese woman in her 30s, family medicine specialist at a Kuala Terengganu health clinic. Methodical, kind; fluent Malay with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, Aina kena kudis kuning ni lagi. Ni kali ketiga tahun ni. Saya dah penat sapu ubat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya tengok rekod. Mac, Jun, dan sekarang September. Setiap kali kat muka, dekat hidung. Kita dah buat swab dua minggu lepas, kan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, doktor ambil swab dari hidung dan luka."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Result dah keluar. Staphylococcus aureus dalam luka, dan dalam hidung pun ada. Sensitif kepada cloxacillin, bukan MRSA."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dalam hidung ada kuman? Macam mana boleh?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ramai orang bawa kuman ni dalam hidung tanpa sakit, kita panggil carrier. Tapi bila ada luka, kuman dari hidung tu masuk, jadi impetigo balik-balik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Jadi kena buang kuman dalam hidung?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya. Mupirocin nasal ointment, sapu sikit dalam lubang hidung, dua kali sehari, lima hari. Lepas sapu, picit hidung perlahan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Luka yang ada sekarang?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebab dah kali ketiga dan agak banyak, saya bagi cloxacillin, 250mg empat kali sehari, tujuh hari. Sebelum makan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Orang lain dalam rumah pun kena ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau ada orang lain pun selalu kena bisul atau kudis, ya, semua sapu ubat hidung sekali. Ada tak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Abang dia selalu kena bisul kat kaki."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jadi abang pun ikut sapu. Mandi dengan chlorhexidine wash seminggu, dan tukar sarung bantal selalu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lepas ni tak datang lagi kan, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Harap-harap. Kalau masih berulang lepas ni, kita check kulit dia untuk eczema atau masalah lain yang buat senang luka."
+      }
+    ]
+  },
+  {
+    "id": "infect_090",
+    "split": "test",
+    "condition": "Widespread impetigo in a childcare worker",
+    "source": "Impetigo",
+    "patient_persona": {
+      "description": "Lee Xin Hui, 27, female, assistant teacher in a toddler class at a Johor Bahru childcare centre with an impetigo outbreak. Worried about work, polite, Malaysian Mandarin with English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Muhammad Irfan bin Hashim, Malay man in his 30s, GP at a JB clinic. Calm, clear; English-leaning, speaks decent Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我的脸和手臂有很多黄黄的痂，六天了，越来越多。我的 centre 有几个小朋友也有。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看一下。脸颊、下巴、两边手臂，大概有十几个 lesion。这个是 impetigo，从小朋友那边传染的。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我有擦 fusidic acid cream，是 centre 的 nurse 给的，可是没什么效。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lesion 太多，cream 不够。而且有些 bacteria 对 fusidic acid 已经 resistant。你要吃 antibiotic。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我对 penicillin 没有过敏。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。Cephalexin 500mg，一天四次，吃七天。我也拿 swab 去做 culture，看是 Staph 还是 Strep，有没有 MRSA。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我什么时候可以回去上班？主任叫我先问医生。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "吃药满 48 小时，没有新的 lesion，痂开始干，就可以回去。我给你三天 MC。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那回去以后要注意什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "伤口要盖着，常常洗手，尤其换 diaper 以后。玩具和桌子每天用 disinfectant 擦。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "小朋友的家长会不会怪我？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "在 childcare 很常见，不是谁的错。重要的是一起处理。Centre 应该通知家长，有症状的小孩都要看医生。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要不要报告给 health office？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "多个 case 一起，最好通知 pejabat kesihatan daerah，他们可以帮忙 control outbreak。我写一张 letter 给你的主任。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。还有，会不会变更严重？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很少。如果发烧、红肿扩散、尿变成茶色或者脸和脚肿，要马上回来，那可能是 kidney 的 complication。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白了，谢谢医生。"
+      }
+    ]
+  }
+]

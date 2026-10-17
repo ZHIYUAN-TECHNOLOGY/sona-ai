@@ -1,19 +1,16 @@
-// Better-T-Stack
+// Better-T-Stack project metadata
 //
-// Website: https://www.better-t-stack.dev/
-// Stack Builder: https://www.better-t-stack.dev/new
-// Analytics: https://www.better-t-stack.dev/analytics
-// Showcase: https://www.better-t-stack.dev/showcase
-// Sponsor: https://github.com/sponsors/AmanVarshney01
+// Keep this file to use the `add` command.
+// Add addons: bunx create-better-t-stack@latest add
 //
-// Add new addons with: npx create-better-t-stack add
-// This file is safe to delete
+// Docs: https://better-t-stack.dev/docs
+// Stack Builder: https://better-t-stack.dev/new
 
 {
   "$schema": "https://r2.better-t-stack.dev/schema.json",
-  "version": "3.33.1",
-  "createdAt": "2026-06-16T14:23:39.821Z",
-  "reproducibleCommand": "npx create-better-t-stack@latest . --frontend native-bare tanstack-router --backend hono --runtime workers --database postgres --orm drizzle --api orpc --auth none --payments none --addons vite-plus --examples none --db-setup neon --manual-db --web-deploy cloudflare --server-deploy cloudflare --no-git --package-manager npm --no-install",
+  "version": "3.44.1",
+  "createdAt": "2026-09-22T12:56:29.398Z",
+  "reproducibleCommand": "bun create better-t-stack@latest sona-ai --frontend native-bare --backend hono --runtime workers --database postgres --orm drizzle --api orpc --auth better-auth --payments none --addons turborepo --examples none --db-setup neon --manual-db --web-deploy none --server-deploy cloudflare --git --package-manager bun --install",
   "dbSetupOptions": {
     "mode": "manual",
   },
@@ -21,14 +18,14 @@
   "orm": "drizzle",
   "backend": "hono",
   "runtime": "workers",
-  "frontend": ["native-bare", "tanstack-router"],
-  "addons": ["vite-plus"],
+  "frontend": ["native-bare"],
+  "addons": ["turborepo"],
   "examples": [],
-  "auth": "none",
+  "auth": "better-auth",
   "payments": "none",
-  "packageManager": "npm",
+  "packageManager": "bun",
   "dbSetup": "neon",
   "api": "orpc",
-  "webDeploy": "cloudflare",
+  "webDeploy": "none",
   "serverDeploy": "cloudflare",
 }

@@ -1,0 +1,67 @@
+/* Sona beside every page (components/sona-panel.tsx): a docked glass panel on the right and its full screen; the orb
+   when closed is styles/sona-orb.css. Tokens only. Motion: the panel slides in from the right (translate and opacity,
+   240 ms, a strong ease-out); nothing moves at rest. The frame's grid makes room
+   (frame.css). */
+:is(.pro, .care) { --sona-width: clamp(340px, 28vw, 420px); --sona-ease: cubic-bezier(0.23, 1, 0.32, 1); }
+
+.sona-panel {
+  position: relative; grid-column: 3; grid-row: 1; display: flex; flex-direction: column; min-width: 0; height: 100dvh;
+  background: var(--glass-float, var(--surface)); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: inset 1px 0 var(--hairline);
+  transition: translate 240ms var(--sona-ease), opacity 240ms var(--sona-ease);
+}
+@starting-style { .sona-panel { translate: 32px 0; opacity: 0; } }
+
+.sona-panel-head { flex: none; display: flex; align-items: center; gap: var(--space-2); min-height: 56px; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); border-bottom: 1px solid var(--hairline); }
+.sona-panel-head h2 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: var(--track-tight); }
+/* What the page is about: a quiet chip that keeps one line. */
+.sona-panel-context { flex: 0 1 auto; min-width: 0; margin-right: auto; padding: 2px 8px; overflow: hidden; border-radius: var(--radius-pill); background: var(--fill-selected); color: var(--muted); font-size: 12px; font-weight: 500; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
+
+.sona-panel-log { flex: 1; min-height: 0; }
+.sona-panel-log .ai-conversation-scroll { mask-image: linear-gradient(to bottom, transparent, #000 var(--space-4)); }
+.sona-panel .ev-film { max-width: 22rem; }
+/* Before the first question: one line, the page's questions stacked, resting on the composer. */
+.sona-panel-start { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--space-3); padding: var(--space-4); overflow-y: auto; }
+.sona-panel-start p { margin: 0; color: var(--muted); line-height: var(--line-body); text-wrap: pretty; }
+.sona-panel-start .ai-suggestions { flex-direction: column; align-items: flex-start; overflow: visible; }
+.sona-panel-foot { flex: none; padding: var(--space-2) var(--space-3) var(--space-3); }
+
+/* Full screen: the panel takes the page's place beside the sidebar (the page stays mounted under it, hidden), at the
+   Evidence page's width: a centred 760 px thread with the composer under it. */
+:is(.pro, .care).frame[data-sona="expanded"] > .frame-main > * { visibility: hidden; }
+:is(.pro, .care).frame[data-sona="expanded"] > .sona-panel { grid-column: 2; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
+.sona-panel[data-mode="expanded"] .sona-panel-head { border-bottom-color: transparent; padding-inline: var(--space-5) var(--space-3); }
+.sona-panel[data-mode="expanded"] :is(.ai-conversation-content, .sona-panel-start, .sona-panel-foot) { width: 100%; max-width: 760px; margin-inline: auto; }
+.sona-panel[data-mode="expanded"] .sona-panel-start { justify-content: center; align-items: center; text-align: center; }
+.sona-panel[data-mode="expanded"] .sona-panel-start .ai-suggestions { align-items: center; }
+.sona-panel[data-mode="expanded"] .sona-panel-foot { padding: var(--space-2) var(--space-4) var(--space-4); }
+
+/* Under 860 px the panel is a full-height sheet over the page; there is no room for a bigger one. */
+@media (max-width: 860px) {
+  .sona-panel { position: fixed; inset: 0; z-index: 25; height: auto; background: var(--canvas); }
+  :is(.pro, .care).frame[data-sona="expanded"] > .sona-panel { background: var(--canvas); }
+  .sona-panel-expand { display: none; }
+  .sona-panel-head { padding-top: max(var(--space-2), env(safe-area-inset-top)); }
+  .sona-panel-foot { padding-bottom: max(var(--space-3), env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) { .sona-panel { transition: none; } }
+@media (prefers-reduced-transparency: reduce) { .sona-panel { background: var(--canvas); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+@media print { .sona-panel, .ai-composer-dock { display: none !important; } }
+
+/* Sona Care's Ask page: the thread in the page, each turn a card. */
+.sona-thread { display: flex; flex-direction: column; gap: var(--space-3); }
+.sona-thread:empty { display: none; }
+.sona-turn { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius-card); padding: var(--space-4); }
+.sona-turn-q { margin: 0 0 var(--space-2); font-size: var(--text-small); line-height: 1.4; font-weight: 600; color: var(--muted); }
+/* Spacing for the answer's own parts only: its cards and their lists keep their own (styles/ai.css). */
+.sona-turn-a p, .sona-turn-a ul { margin: 0; }
+.sona-turn-a > * + * { margin-top: var(--space-2); }
+.sona-turn-a > ul { padding-left: var(--space-5); }
+.sona-turn-note { font-size: var(--text-small); color: var(--muted); }
+.sona-turn[data-state="error"] .sona-turn-a { color: var(--amber); }
+
+/* A plain answer in the panel. */
+.sona-text, .sona-general { display: flex; flex-direction: column; gap: var(--space-2); }
+:is(.sona-text, .sona-general) p { margin: 0; overflow-wrap: anywhere; text-wrap: pretty; }
+.sona-note { font-size: var(--text-small); color: var(--muted); }

@@ -1,41 +1,11 @@
 import { Stack, router } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { Action, Insight, Screen } from "@/components/sona/ui";
 
-import { colors, font } from "@/lib/theme";
-
+/** A link to a page that doesn't exist: say so plainly and offer the way back. */
 export default function NotFoundScreen() {
-  return (
-    <>
-      <Stack.Screen options={{ title: "Not found" }} />
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.bg,
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 24,
-          gap: 12,
-        }}
-      >
-        <Text style={{ fontSize: 44 }}>🤔</Text>
-        <Text style={[font.h2, { color: colors.ink, textAlign: "center" }]}>Page not found</Text>
-        <Text style={[font.body, { color: colors.ink3, textAlign: "center" }]}>
-          That screen doesn&apos;t exist.
-        </Text>
-        <Pressable
-          onPress={() => router.replace("/")}
-          style={{
-            marginTop: 8,
-            backgroundColor: colors.green,
-            paddingVertical: 13,
-            paddingHorizontal: 22,
-            borderRadius: 16,
-            borderCurve: "continuous",
-          }}
-        >
-          <Text style={{ color: colors.white, fontSize: 15, fontWeight: "600" }}>Go home</Text>
-        </Pressable>
-      </View>
-    </>
-  );
+  return <Screen>
+    <Stack.Screen options={{ title: "Page not found" }} />
+    <Insight eyebrow="Nothing at this link">This page isn’t here</Insight>
+    <Action label="Back to Today" icon="arrow.left" onPress={() => router.dismissTo("/")} />
+  </Screen>;
 }

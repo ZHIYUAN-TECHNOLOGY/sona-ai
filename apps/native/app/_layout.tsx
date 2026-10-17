@@ -1,110 +1,74 @@
-import {
-  Fraunces_400Regular,
-  Fraunces_500Medium,
-  Fraunces_600SemiBold,
-  useFonts,
-} from "@expo-google-fonts/fraunces";
-import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
-import { DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
-import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { StyleSheet } from "react-native";
+import { AppState, Keyboard } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { initExecutorch } from "react-native-executorch";
-import { ExpoResourceFetcher } from "react-native-executorch-expo-resource-fetcher";
+import { KeyboardProvider } from "react-native-keyboard-controller";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { poke, slide } from "@/components/sona/idle";
+import { palette } from "@/components/sona/theme";
+import { BackButton, CloseButton } from "@/components/sona/ui";
+import { CriticalAlert } from "@/features/critical";
+import { LiveUpdates } from "@/features/live/channel";
+import { StaffPush } from "@/features/notifications";
+import { underVisit } from "@/features/encounter/navigation";
+import { EncounterProvider } from "@/features/encounter/store";
+import { ScribePlayback } from "@/features/scribe";
 
-// Register the Expo resource fetcher once, before any useLLM/useSpeechToText hook
-// runs. Without this, react-native-executorch cannot download models on-device in
-// an Expo app and the spike hooks never become ready. (Required as of RN-ExecuTorch 0.9.)
-initExecutorch({ resourceFetcher: ExpoResourceFetcher });
+export const unstable_settings = { initialRouteName: "index" };
+// One rule: pushed pages get the back chevron (screenOptions); modals and sheets get one close control on the right.
+const closable = { headerLeft: () => null, headerRight: () => <CloseButton /> };
 
-import { initSpeakerModel } from "@/lib/diarize";
-import { colors } from "@/lib/theme";
-import { queryClient } from "@/utils/orpc";
+const touched = () => { poke(); return false; };
+/** Stops re-rendering while a visit covers it (`underVisit`). */
+const rests = ({ navigation, route }: { navigation: { getState: () => { routes: readonly { key: string; name: string }[] } }; route: { key: string } }) => ({ freezeOnBlur: underVisit(navigation.getState().routes, route.key) });
+/** Placed under a closing sheet without a slide of its own (openSessionFromSheet); cleared once it has arrived, so back slides. */
+const quiet = (route: { params?: object }) => Boolean((route.params as { quiet?: string } | undefined)?.quiet);
 
-// Keep the splash up until Fraunces (the serif display face) is ready, so screen
-// titles never flash in the fallback system serif.
-void SplashScreen.preventAutoHideAsync();
-
-// Nav theme derived from the green design tokens (single source — the old blue
-// Better-T-Stack NAV_THEME is deleted). Sona is LIGHT-THEME ONLY, on projectors
-// and in bright clinics, regardless of the device appearance.
-const LIGHT_THEME = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: colors.green,
-    background: colors.bg,
-    card: colors.card,
-    text: colors.ink,
-    border: colors.line,
-    notification: colors.red,
-  },
-};
-
-export const unstable_settings = {
-  initialRouteName: "(tabs)",
-};
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-});
+/** The keyboard opening or closing, and the app coming back to the front, are activity too. */
+function ActivityWatch() {
+  useEffect(() => {
+    const subs = [Keyboard.addListener("keyboardWillShow", poke), Keyboard.addListener("keyboardWillHide", poke),
+      AppState.addEventListener("change", s => { if (s === "active") poke(); })];
+    return () => subs.forEach(sub => sub.remove());
+  }, []);
+  return null;
+}
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    Fraunces_400Regular,
-    Fraunces_500Medium,
-    Fraunces_600SemiBold,
-  });
-
-  useEffect(() => {
-    if (fontsLoaded) void SplashScreen.hideAsync();
-  }, [fontsLoaded]);
-
-  // Load the real on-device speaker model if one is configured (speakerModel.ts). No-op /
-  // instant when none is set — diarization stays on the mock embedder. Never throws.
-  useEffect(() => {
-    void initSpeakerModel();
-  }, []);
-
-  // NOTE: the dev STT self-test used to auto-run here on launch. REMOVED from the launch path:
-  // its run5 "audio session dance" deactivates the audio session, and when a user started
-  // recording before the ~60s test finished it killed the live mic (0.0s captures). The module
-  // (lib/pipeline/sttSelfTest) remains for manual/dev invocation only.
-
-  if (!fontsLoaded) return null;
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={LIGHT_THEME}>
-        <StatusBar style="dark" />
-        <GestureHandlerRootView style={styles.container}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="(consult)" options={{ headerShown: false }} />
-            <Stack.Screen name="consult/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="search" options={{ headerShown: false }} />
-            <Stack.Screen name="bench" options={{ headerShown: true }} />
-            <Stack.Screen name="enroll" options={{ headerShown: true }} />
-            <Stack.Screen name="diarize-lab" options={{ headerShown: true }} />
-            <Stack.Screen name="ocr-lab" options={{ headerShown: true }} />
-            <Stack.Screen name="stt-lab" options={{ headerShown: false }} />
-            <Stack.Screen name="ai-models" options={{ headerShown: false }} />
-            <Stack.Screen name="on-device" options={{ headerShown: true }} />
-            {/* Knowledge moved out of the tab capsule (Smart Scan took the slot) —
-                minimal transparent header = just the back chevron; the screen's own
-                serif title is the real title. */}
-            <Stack.Screen
-              name="knowledge"
-              options={{ headerShown: true, title: "", headerTransparent: true }}
-            />
-            <Stack.Screen name="scan-review" options={{ headerShown: false }} />
-            <Stack.Screen name="scan-attach" options={{ headerShown: false }} />
-          </Stack>
-        </GestureHandlerRootView>
-      </ThemeProvider>
-    </QueryClientProvider>
-  );
+  // Every touch start is activity (./components/sona/idle): seen on the way down, never claimed, so the touch goes on as before.
+  // Every screen's and sheet's transition is reported too (`slide`): ambient motion holds its frame while one slides.
+  return <GestureHandlerRootView style={{ flex: 1 }} onStartShouldSetResponderCapture={touched}><ActivityWatch /><KeyboardProvider><SafeAreaProvider><EncounterProvider><ScribePlayback /><StatusBar style="dark" /><Stack screenListeners={({ navigation, route }) => ({ transitionStart: e => { if (e.target) slide(e.target, true); }, transitionEnd: e => { if (e.target) slide(e.target, false); if (quiet(route)) navigation.setParams({ quiet: undefined }); } })} screenOptions={({ route }) => ({ animation: quiet(route) ? "none" : "default", headerLeft: () => <BackButton />, headerTransparent: true, headerStyle: { backgroundColor: "transparent" }, headerBlurEffect: "none", headerTintColor: palette.ink, headerShadowVisible: false, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: palette.canvas } })}>
+    {/* Today, a visit, Patients and a patient's card stop re-rendering while a visit covers them (`rests`); `quiet` (screenOptions): a page placed under a closing sheet, whose slide down is then the one transition (both ./features/encounter/navigation). */}
+    <Stack.Screen name="index" options={p => ({ headerShown: false, ...rests(p) })} />
+    <Stack.Screen name="session/[patientId]" options={p => ({ headerShown: false, ...rests(p) })} />
+    {/* Patients and a patient's card are pages (owner's decision, 6 Oct): back goes card, list, Today, and a visit opened from the card returns to it. */}
+    <Stack.Screen name="patients/index" options={p => ({ title: "Patients", ...rests(p) })} />
+    <Stack.Screen name="patients/[id]" options={p => ({ title: "", ...rests(p) })} />
+    <Stack.Screen name="source" options={{ ...closable, title: "Source detail", presentation: "formSheet", sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true }} />
+    <Stack.Screen name="visits" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
+    <Stack.Screen name="sources" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
+    <Stack.Screen name="about-data" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
+    <Stack.Screen name="recording" options={{ title: "Consultation" }} />
+    <Stack.Screen name="note" options={{ title: "Consultation note" }} />
+    <Stack.Screen name="xray" options={{ title: "Chest X-ray" }} />
+    <Stack.Screen name="scan" options={{ title: "Scan a note" }} />
+    <Stack.Screen name="tasks" options={{ title: "Follow-up tasks" }} />
+    <Stack.Screen name="view/[id]" options={{ title: "" }} />
+    <Stack.Screen name="inbox/index" options={{ title: "Messages" }} />
+    <Stack.Screen name="inbox/[patientId]" options={{ title: "" }} />
+    <Stack.Screen name="handover" options={{ title: "Shift handover" }} />
+    <Stack.Screen name="ward" options={{ title: "Ward" }} />
+    <Stack.Screen name="results" options={{ title: "Results" }} />
+    <Stack.Screen name="health-summary" options={{ title: "Health summary" }} />
+    <Stack.Screen name="audit" options={{ title: "Coding audit" }} />
+    <Stack.Screen name="training" options={{ title: "Training data" }} />
+    <Stack.Screen name="discharge" options={{ title: "Discharge" }} />
+    <Stack.Screen name="claim" options={{ title: "Guarantee letter" }} />
+    <Stack.Screen name="history" options={{ title: "Settings" }} />
+    <Stack.Screen name="library-scan" options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade" }} />
+    <Stack.Screen name="library-ocr" options={{ title: "Read with OCR" }} />
+    <Stack.Screen name="library-scanned" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
+    <Stack.Screen name="library-add" options={{ title: "Add a source" }} />
+  </Stack><LiveUpdates /><StaffPush /><CriticalAlert /></EncounterProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
 }

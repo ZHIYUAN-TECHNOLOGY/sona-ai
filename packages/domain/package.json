@@ -1,0 +1,19 @@
+{
+  "name": "@sona-ai/domain",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "check-types": "tsc -b",
+    "test": "bun test src"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@sona-ai/config": "workspace:*",
+    "typescript": "^6.0.3"
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "expo": {
+    "name": "Sona Care",
+    "slug": "sona-care",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "sona-care",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ai.zhiyuantech.sona.care",
+      "appleTeamId": "LTF2YZMF2D",
+      "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:sona-ai-server-staging-uxfqzyce5rxhzsju.zhiyuantech.workers.dev"
+      ],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "ai.zhiyuantech.sona.care",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-canvas.png",
+          "imageWidth": 1,
+          "resizeMode": "contain",
+          "backgroundColor": "#FAFAFA",
+          "dark": {
+            "backgroundColor": "#FAFAFA"
+          }
+        }
+      ],
+      "expo-image",
+      "expo-asset",
+      "./plugins/with-scene-lifecycle",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Sona Care uses the camera to scan the QR code on your discharge paper and to photograph a medicine for your care team."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Sona Care opens your photos so you can send a picture of a medicine or letter to your care team.",
+          "cameraPermission": "Sona Care uses the camera to scan the QR code on your discharge paper and to photograph a medicine for your care team."
+        }
+      ],
+      "expo-notifications",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Sona Care uses the microphone so you can talk with Sona, or speak your question or check-in reply instead of typing."
+        }
+      ],
+      [
+        "react-native-audio-api",
+        {
+          "iosBackgroundMode": false,
+          "iosMicrophonePermission": "Sona Care uses the microphone so you can talk with Sona, or speak your question or check-in reply instead of typing."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "owner": "zhiyuan-technology",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "39372b76-7e5b-47f4-9e2d-818874f18615"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/39372b76-7e5b-47f4-9e2d-818874f18615"
+    }
+  }
+}

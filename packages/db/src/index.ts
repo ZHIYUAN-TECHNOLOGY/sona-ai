@@ -1,10 +1,12 @@
-import { env } from "@med-ai/env/server";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 
-import * as schema from "./schema";
+import type { DatabaseConfig } from "./config";
+import { relations } from "./relations";
 
-export function createDb() {
+export function createDb(env: DatabaseConfig) {
   const sql = neon(env.DATABASE_URL || "");
-  return drizzle(sql, { schema });
+  return drizzle({ client: sql, relations });
 }
+
+export type Database = ReturnType<typeof createDb>;

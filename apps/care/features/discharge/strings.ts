@@ -1,0 +1,51 @@
+import { addStrings } from "@/lib/i18n";
+import "@/lib/strings";
+
+/** The discharge plan (My plan), the medicine schedule lines and what the stay did to each medicine. */
+addStrings({
+  en: {
+    "dis.am": "AM", "dis.pm": "PM",
+    "dis.sched1": "Once a day, {times}", "dis.sched2": "Twice a day, {times}", "dis.schedN": "{n} times a day, {times}", "dis.whenNeeded": "When you need it", "dis.finished": "Finished {day}",
+    "dis.when1": "once a day at {times}", "dis.when2": "twice a day at {times}", "dis.whenN": "{n} times a day at {times}",
+    "dis.takeIt": "Take it ", "dis.youTake": "You have to take ", "dis.comma": ", ", "dis.end": ".",
+    "dis.change.new": "Started in hospital", "dis.change.changed": "Changed in hospital", "dis.change.continue": "Same as before your stay", "dis.change.stopped": "Stopped in hospital",
+    "dis.tag.new": "New", "dis.tag.changed": "Changed", "dis.tag.stopped": "Stopped", "dis.tag.continue": "Same as before",
+    "dis.homeToday": "Home since today", "dis.homeYesterday": "Home since yesterday", "dis.homeDays": "Home for {n} days",
+    "dis.toTake": "{n} to take", "dis.nothingToTake": "Nothing to take", "dis.new": "{n} new", "dis.changed": "{n} changed",
+    "dis.titleLight": "My", "dis.titleBold": "Plan",
+    "dis.inHospital": "You're still in hospital", "dis.inHospitalLine": "Your medicines, leaflet and warning signs show here once you go home.",
+    "dis.medsLight": "Your", "dis.medsBold": "medicines", "dis.leafletLight": "Your", "dis.leafletBold": "leaflet", "dis.leafletBy": "Drafted by Sona, approved by {name}", "dis.leafletGeneral": "This is the hospital's general leaflet. It was not written for you personally.",
+    "dis.helpLight": "When to", "dis.helpBold": "get help", "dis.call999": "Call 999 or go to the emergency department if",
+    "dis.nextLight": "What's", "dis.nextBold": "next", "dis.checkIns": "Check-ins", "dis.weMessage": "We'll message you {dates}",
+  },
+  ms: {
+    "dis.am": "PG", "dis.pm": "PTG",
+    "dis.sched1": "Sekali sehari, {times}", "dis.sched2": "Dua kali sehari, {times}", "dis.schedN": "{n} kali sehari, {times}", "dis.whenNeeded": "Bila perlu", "dis.finished": "Selesai {day}",
+    "dis.when1": "sekali sehari pada {times}", "dis.when2": "dua kali sehari pada {times}", "dis.whenN": "{n} kali sehari pada {times}",
+    "dis.takeIt": "Ambil ", "dis.youTake": "Anda perlu ambil ", "dis.comma": ", ", "dis.end": ".",
+    "dis.change.new": "Dimulakan di hospital", "dis.change.changed": "Diubah di hospital", "dis.change.continue": "Sama seperti sebelum masuk hospital", "dis.change.stopped": "Dihentikan di hospital",
+    "dis.tag.new": "Baharu", "dis.tag.changed": "Diubah", "dis.tag.stopped": "Dihentikan", "dis.tag.continue": "Sama seperti dulu",
+    "dis.homeToday": "Pulang hari ini", "dis.homeYesterday": "Pulang semalam", "dis.homeDays": "Di rumah {n} hari",
+    "dis.toTake": "{n} ubat", "dis.nothingToTake": "Tiada ubat", "dis.new": "{n} baharu", "dis.changed": "{n} diubah",
+    "dis.titleLight": "Pelan", "dis.titleBold": "Saya",
+    "dis.inHospital": "Anda masih di hospital", "dis.inHospitalLine": "Ubat, risalah dan tanda amaran anda akan ditunjukkan di sini selepas anda pulang.",
+    "dis.medsLight": "Ubat", "dis.medsBold": "anda", "dis.leafletLight": "Risalah", "dis.leafletBold": "anda", "dis.leafletBy": "Dideraf oleh Sona, diluluskan oleh {name}", "dis.leafletGeneral": "Ini risalah umum hospital. Ia tidak ditulis khusus untuk anda.",
+    "dis.helpLight": "Bila perlu", "dis.helpBold": "dapatkan bantuan", "dis.call999": "Hubungi 999 atau pergi ke jabatan kecemasan jika",
+    "dis.nextLight": "Langkah", "dis.nextBold": "seterusnya", "dis.checkIns": "Semakan kesihatan", "dis.weMessage": "Kami akan mesej anda pada {dates}",
+  },
+  zh: {
+    "dis.am": "上午", "dis.pm": "下午",
+    "dis.sched1": "每天1次，{times}", "dis.sched2": "每天2次，{times}", "dis.schedN": "每天{n}次，{times}", "dis.whenNeeded": "需要时服用", "dis.finished": "已服完 · {day}",
+    "dis.when1": "每天1次，{times}", "dis.when2": "每天2次，{times}", "dis.whenN": "每天{n}次，{times}",
+    "dis.takeIt": "服用：", "dis.youTake": "您需要服用 ", "dis.comma": "，", "dis.end": "。",
+    "dis.change.new": "住院时开始服用", "dis.change.changed": "住院时有调整", "dis.change.continue": "和住院前一样", "dis.change.stopped": "住院时已停用",
+    "dis.tag.new": "新药", "dis.tag.changed": "有调整", "dis.tag.stopped": "已停用", "dis.tag.continue": "和以前一样",
+    "dis.homeToday": "今天出院回家", "dis.homeYesterday": "昨天出院回家", "dis.homeDays": "回家第{n}天",
+    "dis.toTake": "要吃{n}种药", "dis.nothingToTake": "没有要吃的药", "dis.new": "{n}种新药", "dis.changed": "{n}种有调整",
+    "dis.titleLight": "我的", "dis.titleBold": "出院计划",
+    "dis.inHospital": "您还在住院", "dis.inHospitalLine": "回家后，您的药物、说明单和警示症状会显示在这里。",
+    "dis.medsLight": "您的", "dis.medsBold": "药物", "dis.leafletLight": "您的", "dis.leafletBold": "说明单", "dis.leafletBy": "由 Sona 起草，经 {name} 审核批准", "dis.leafletGeneral": "这是医院的通用说明单，不是专门为您写的。",
+    "dis.helpLight": "什么时候", "dis.helpBold": "需要求助", "dis.call999": "出现以下情况，请拨打 999 或去急诊室",
+    "dis.nextLight": "接下来", "dis.nextBold": "要做的", "dis.checkIns": "回访", "dis.weMessage": "我们会在{dates}联系您",
+  },
+});

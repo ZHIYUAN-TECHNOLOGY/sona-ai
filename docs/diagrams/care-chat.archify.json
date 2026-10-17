@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Care chat infrastructure",
+    "quality_profile": "showcase",
+    "viewBox": [1200, 580],
+    "legend": {
+      "entries": {
+        "frontend": { "label": "Phone app" },
+        "backend": { "label": "Server" },
+        "database": { "label": "Storage" },
+        "messagebus": { "label": "Live channel" },
+        "cloud": { "label": "Model (planned)" },
+        "security": { "label": "Privacy step" }
+      }
+    }
+  },
+  "components": [
+    { "id": "care", "type": "frontend", "label": "Sona Care", "sublabel": "patient writes", "pos": [40, 190], "size": [160, 64] },
+    { "id": "clinician", "type": "frontend", "label": "Care inbox", "sublabel": "nurse / doctor", "pos": [40, 340], "size": [160, 64] },
+    { "id": "worker", "type": "backend", "label": "Sona server", "sublabel": "Worker · messages routes", "tag": "auth, roles, access log", "pos": [380, 260], "size": [180, 72] },
+    { "id": "live", "type": "messagebus", "label": "Durable Objects", "sublabel": "patient + hospital channels", "pos": [250, 60], "size": [170, 64] },
+    { "id": "push", "type": "external", "label": "Expo Push", "sublabel": "reply alert", "pos": [470, 60], "size": [150, 64] },
+    { "id": "db", "type": "database", "label": "Neon Postgres", "sublabel": "care_messages + tasks", "pos": [380, 440], "size": [180, 64] },
+    { "id": "deid", "type": "security", "label": "De-identify", "sublabel": "rules now · OpenMed", "pos": [700, 260], "size": [160, 64] },
+    { "id": "brain", "type": "cloud", "label": "Gemma on Baseten", "sublabel": "triage + draft reply", "pos": [980, 260], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Cloudflare", "wraps": ["worker", "live", "push"] },
+    { "kind": "region", "label": "Model seam · rules today", "wraps": ["deid", "brain"] }
+  ],
+  "connections": [
+    { "id": "care-send", "from": "care", "to": "worker", "label": "send", "variant": "emphasis" },
+    { "id": "inbox-read", "from": "clinician", "to": "worker", "label": "inbox, draft, reply", "variant": "emphasis" },
+    { "id": "worker-db", "from": "worker", "to": "db", "label": "save + task", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "worker-live", "from": "worker", "to": "live", "label": "announce", "fromSide": "top", "toSide": "bottom" },
+    { "id": "worker-push", "from": "worker", "to": "push", "label": "notify", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "worker-deid", "from": "worker", "to": "deid", "label": "text", "variant": "security" },
+    { "id": "deid-brain", "from": "deid", "to": "brain", "label": "no identity", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Patient sends", "items": ["Saved with its task in Neon", "Triaged: urgent, clinical or admin", "Inbox updates within a second"] },
+    { "dot": "emerald", "title": "Care team replies", "items": ["Opening the thread marks it seen", "Sona drafts; a person edits and sends", "Reply closes the task, alerts the phone"] },
+    { "dot": "rose", "title": "Privacy", "items": ["Only the patient and their care team read it", "Every read goes to the access log", "Identity removed before any model"] }
+  ]
+}

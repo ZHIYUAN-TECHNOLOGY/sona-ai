@@ -1,0 +1,812 @@
+[
+  {
+    "id": "infect_061",
+    "split": "train",
+    "condition": "Herpes zoster (shingles), thoracic",
+    "source": "Shingles",
+    "patient_persona": {
+      "description": "Mak Cik Rohani binti Said, 62, female, retired kuih seller in Melaka; hypertension. Chatty, dramatic, Melaka Malay with some English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Soh Wei Liang, Malaysian Chinese man in his 30s, GP at a Melaka clinic. Friendly, patient; fluent Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, dua hari lepas pinggang kanan saya rasa pedih, macam kena bakar. Pagi ni keluar lenting air, satu jalur je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh saya tengok? Hmm, lenting berkumpul, ikut satu line dari belakang ke depan, sebelah kanan je. Ni kayap, shingles."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kayap? Orang kampung kata kalau kayap tu bersambung keliling pinggang, boleh mati."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu cerita orang tua je, mak cik. Kayap selalunya sebelah badan je, ikut saraf. Dia tak bersambung, dan tak bawa maut macam tu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Tapi kenapa saya kena? Saya dah lama kena cacar air, masa budak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Virus cacar air tu tidur dalam saraf bertahun-tahun. Bila umur meningkat atau badan penat, stress, dia bangun balik jadi kayap."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Memang minggu lepas saya penat jaga cucu demam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mak cik datang awal, dalam 72 jam. Bagus. Saya bagi acyclovir 800mg, lima kali sehari, tujuh hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lima kali sehari? Banyaknya. Macam mana saya nak ingat?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pukul tujuh pagi, sebelas, tiga petang, tujuh malam, sebelas malam. Minta anak set alarm kat phone."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sakit dia ni, doktor, sampai tak boleh tidur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol 1 gram, empat kali sehari. Kalau tak cukup, saya tambah tramadol untuk malam. Kulit tu jangan pecahkan, tutup dengan kain bersih."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh berjangkit ke cucu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Air dalam lenting tu boleh bagi cacar air kepada orang yang belum pernah kena. Cucu berapa umur? Dah ambil vaksin?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dua tahun. Tak tahu ambil vaksin cacar air ke tak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jadi jangan dukung dekat sangat sampai lenting kering dan berkerak, dalam seminggu. Lepas sembuh, mak cik boleh consider vaksin Shingrix untuk elak kena lagi."
+      }
+    ]
+  },
+  {
+    "id": "infect_062",
+    "split": "train",
+    "condition": "Herpes zoster ophthalmicus",
+    "source": "Herpes zoster",
+    "patient_persona": {
+      "description": "Mr. Lim Ah Kow, 72, male, retired fisherman on Pulau Ketam who now lives with his son in Butterworth, Penang. Hard of hearing, gravelly, Hokkien-flavoured Malaysian Mandarin.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Goh Pei Ling, Penang Chinese woman in her 30s, emergency physician at a Butterworth hospital. Loud and slow for elderly patients; Mandarin with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我左边额头和眼皮起了很多水泡，很痛，好像火在烧。眼睛也红。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "阿伯，我看一下。额头、头皮、上眼皮都有 vesicle，鼻子尖这里也有一粒。这个是 shingles，生蛇，影响到眼睛的神经。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "生蛇？我以为只有腰那边才会生。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "哪里都可以。鼻子尖有水泡，表示眼睛里面也可能被影响。这个叫 herpes zoster ophthalmicus，要小心。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会不会瞎？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果早治疗，大部分人视力可以保住。现在你看我的手指，几根？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "三根。不过有一点模糊，怕光。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好，我马上 refer 你去 eye clinic，今天就看 ophthalmologist，他们会用 slit lamp 检查。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要吃什么药？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Valaciclovir 1 gram，一天三次，七天。你的 kidney function 我们刚验了，creatinine 正常，所以可以用 full dose。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "痛到晚上都睡不着。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我开 paracetamol 加 gabapentin 100mg 晚上吃，神经的痛会好一点。会有一点头晕，起身要慢慢来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "眼睛可以滴什么药吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Eye doctor 会决定，可能开 antiviral eye ointment 或者 steroid drops。你不要自己去 pharmacy 买眼药水。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我儿子在外面，他载我去。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "叫他进来，我跟他讲清楚。以后你可以打 Shingrix vaccine，预防再发。"
+      }
+    ]
+  },
+  {
+    "id": "infect_063",
+    "split": "train",
+    "condition": "Post-herpetic neuralgia, follow-up",
+    "source": "Shingles",
+    "patient_persona": {
+      "description": "Mr. Rajan a/l Velu, 68, male, retired Tenaga Nasional technician in Klang; type 2 diabetes, mild kidney impairment. Slow, tired, Malaysian Indian English with Malay words.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Norhayati binti Kamarudin, Malay woman in her 40s, family medicine specialist at a Klang health clinic. Patient, careful with doses; English and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Uncle Rajan, the rash already healed for two months, but the pain still there, right?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, doctor. Here on the right chest, like electric shock. Even the shirt touching also sakit. Night time worst."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's post-herpetic neuralgia. The nerve got damaged by the shingles virus, so it keeps sending pain signals even after the skin heals."
+      },
+      {
+        "speaker": "Patient",
+        "text": "The Panadol not helping at all. My wife says I'm so cepat marah now."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nerve pain doesn't respond well to Panadol. I'll start pregabalin. Because your kidney function is lower, eGFR 48, I'll start low, 25mg twice a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kesan sampingan got or not?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pening, mengantuk, sometimes leg swelling. Get up slowly from bed. Don't drive until you know how it affects you."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, my anak drives me anyway. Any cream I can use?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lignocaine 5% plaster. Stick on the painful area up to 12 hours, then 12 hours off. Many patients find it helps with the clothes rubbing."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How long will this pain last? Selamanya ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For most people, slowly improves over months. Some take a year. We'll adjust the ubat until it's tolerable."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My sugar also a bit high lately, 11, 12 waktu pagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pain and poor sleep can push sugar up. Your HbA1c today is 8.1. We'll increase your gliclazide to 80mg twice a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my friend said got injection for shingles. Can I take so tak kena lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, Shingrix, two doses, two to six months apart. Good for diabetics above 50. It's not free at klinik kerajaan, around a few hundred ringgit per dose at private."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I fikir dulu. Thank you, doctor."
+      }
+    ]
+  },
+  {
+    "id": "infect_064",
+    "split": "train",
+    "condition": "Shingles in a younger adult with HIV screening, results review",
+    "source": "Herpes zoster",
+    "patient_persona": {
+      "description": "Puan Mary Lenggang, 45, female, Iban school canteen worker in Kuching, Sarawak; second episode of shingles in two years. Soft-spoken, a bit nervous, Sarawak Malay mixed with English.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Hii Kah Yong, Foochow man in his 40s, physician at a Kuching health clinic. Calm, non-judgemental; English and Sarawak Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Mary, kayap dah kering semua. Sakit masih ada?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sikit-sikit je sekarang, doktor. Tak macam minggu lepas. Result darah yang doktor ambil tu dah siap ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dah. Sebab puan kena kayap dua kali dalam dua tahun, umur pun belum 50, kita check sistem imun. HIV test negatif."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Syukur. Masa doktor cakap nak check HIV, saya takut sangat, tak tidur malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya faham. Kami check sebab kayap berulang pada orang muda kadang tanda imun lemah. Bukan sebab saya fikir puan buat apa-apa salah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yang lain macam mana? Gula?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "HbA1c 6.9 percent. Tu masuk diabetes. Mungkin itu satu sebab kayap datang balik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kencing manis? Mak saya pun ada. Saya memang suka minum teh C peng manis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita mula dengan diet dan exercise dulu, dan metformin 500mg sekali sehari lepas makan malam. Kurangkan air manis, itu paling besar kesan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Teh C kosong boleh?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, tanpa gula, susu cair sikit. Nanti saya refer ke dietitian klinik untuk plan makan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kayap tu boleh datang lagi ka, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh. Kalau gula terkawal, risiko kurang. Dan vaksin Shingrix pun ada, puan boleh ambil lepas umur 50, atau lebih awal sebab diabetes."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya fikir dulu, bah. Mahal ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Agak mahal di private. Kita bincang bila gula dah stabil. Datang lagi tiga bulan, kita check HbA1c semula."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Terima kasih banyak."
+      }
+    ]
+  },
+  {
+    "id": "infect_065",
+    "split": "train",
+    "condition": "Disseminated herpes zoster during chemotherapy",
+    "source": "Shingles",
+    "patient_persona": {
+      "description": "Madam Ng Lai Kuen, 55, female, retired accountant in Cheras, Kuala Lumpur, on chemotherapy for lymphoma. Tired but sharp, Malaysian Mandarin with English and a little Cantonese flavour.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tee Chee Hong, Malaysian Chinese man in his 30s, infectious diseases registrar on the ward round at a KL teaching hospital. Thorough, gentle; Mandarin and English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "黄太太，早。我是 ID team 的 Dr. Tee。昨天你身上的水泡，除了背那一条，现在其他地方也有，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，本来只有右边背，后来手臂、大腿、脸都有几粒。医生说是 shingles 扩散？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，叫 disseminated zoster。因为你在做 chemotherapy，免疫力低，virus 就散到其他地方。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会不会去到肺，或者脑？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这就是我们担心的，所以用 IV acyclovir，10mg per kg，每八个钟头一次。今天 chest X-ray 是 clear 的，你也没有头痛或者 confusion。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我的 chemo 怎么办？下个礼拜是 cycle 4。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我已经跟你的 haematologist 讨论了，cycle 4 会 postpone 一到两个礼拜，等 infection 控制好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Postpone 会不会影响 lymphoma 的治疗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "短时间延迟，影响不大。Infection 没控制好就做 chemo，风险更高。Dr. Yong 会再跟你详细讲。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我的 kidney 怎样？护士一直叫我喝水。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Acyclovir 会在 kidney 结晶，所以要多喝水，我们也给 drip。Creatinine 今天 72，正常。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "为什么我要住这个 single room，家人来都要穿那个 gown？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Disseminated zoster 可以通过空气传染给没有 immunity 的人，所以要 airborne isolation。你的孙子还小，暂时不要来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好吧。要住多久？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "大概七天 IV，看水泡什么时候全部结痂。之后你 chemo 期间，我们会给你 prophylaxis，acyclovir tablet 每天吃，预防再发。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白了，谢谢你讲得那么清楚。"
+      }
+    ]
+  },
+  {
+    "id": "infect_066",
+    "split": "train",
+    "condition": "Category III dog bite, rabies post-exposure prophylaxis",
+    "source": "Rabies",
+    "patient_persona": {
+      "description": "Encik Awang Mahmud bin Awang Ali, 38, male, Sarawak Malay delivery driver in Kuching; bitten by a stray dog while delivering a parcel. Shaken, fast talker, Kuching Malay with English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Liaw Mei Sze, Sarawakian Hakka woman in her 30s, emergency physician at Sarawak General Hospital. Calm, systematic; English and Sarawak Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, anjing liar gigit betis saya tadi, kat taman perumahan kat Petra Jaya. Berdarah banyak. Saya takut rabies."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bila berlaku? Dah cuci luka belum?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sejam lepas. Saya cuci dengan air paip je, sekejap. Terus datang sini."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. Nurse akan cuci lagi dengan sabun dan air mengalir, lima belas minit, lepas tu povidone iodine. Itu step paling penting."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lima belas minit? Lama tu, doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, sebab sabun boleh bunuh virus rabies dalam luka. Luka ni dalam, berdarah, jadi kita kategori tiga. Sarawak masih ada rabies."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Jadi saya kena suntik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kena dua jenis. Rabies immunoglobulin, kita suntik sekeliling luka hari ni. Dan rabies vaccine, empat dos, hari 0, 3, 7 dan 14."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sakit ke suntik kat keliling luka tu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, sakit sikit. Tapi itu yang bagi perlindungan segera, sebelum vaksin sempat bekerja. Rabies kalau dah keluar simptom, hampir semua mati."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya Allah. OK doktor, buat je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Luka ni kita tak jahit, biar terbuka. Saya bagi Augmentin 625mg, dua kali sehari, lima hari, dan ATT injection untuk tetanus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Anjing tu macam mana? Dia lari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita report kepada Jabatan Perkhidmatan Veterinar. Kalau jumpa anjing tu, dia orang akan observe sepuluh hari. Tapi jangan tunggu, vaksin tetap jalan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dos seterusnya kat mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Klinik kesihatan dekat rumah, ikut kad ni. Jangan miss satu pun. Kalau demam atau luka bengkak bernanah, datang balik."
+      }
+    ]
+  },
+  {
+    "id": "infect_067",
+    "split": "train",
+    "condition": "Puppy bite, rabies vaccine day 3 follow-up",
+    "source": "Rabies",
+    "patient_persona": {
+      "description": "Sim Hui Ying, 28, female, Sarawakian Chinese kindergarten teacher in Sibu; nipped by a neighbour's new puppy which has since fallen ill. Worried, quick, Sarawak Mandarin with English and Malay.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wong Siong Kiong, Foochow man in his 40s, family medicine specialist at a Sibu health clinic. Steady, reassuring; Mandarin with English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，今天是 day 3，我来打第二针 rabies vaccine。可是邻居说那只小狗昨天死了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "死了？有没有通知 Jabatan Veterinar？他们会拿 dog 的脑去 test。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有，我邻居今天早上打电话给他们了。他们说会来拿。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。你第一天来的时候，伤口只是手指一点点破皮，没有流血，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，只是 scratch，有一点点红。可是现在狗死了，我好怕。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我明白。按照 guideline，破皮没流血算 category II，只打 vaccine 就够。可是狗死了，risk 就变高。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我要打那个 immunoglobulin 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Immunoglobulin 只在 day 7 之前有用，今天还来得及。你的情况，我建议加打，以防万一。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，打吧。我不想冒险。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "伤口很小，所以大部分打在伤口旁边，剩下的打在大腿。今天也继续打第二针 vaccine。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我在 kindergarten 教书，会不会传给小朋友？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你现在没有 symptom，不会传染。人传人非常非常罕见。你可以照常上班。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "还要来几次？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Day 7 和 day 14，一共四针。Veterinar 的结果出来，如果 negative，我们会告诉你，不过 vaccine 还是要打完。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果我有什么不舒服，要注意什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "打针的地方酸痛是正常。可是如果伤口那里刺痛、麻，或者发烧、怕水，马上回来。你做得很对，一被咬就来了。"
+      }
+    ]
+  },
+  {
+    "id": "infect_068",
+    "split": "train",
+    "condition": "Cat bite to the hand",
+    "source": "Rabies",
+    "patient_persona": {
+      "description": "Ms. Farah Diana binti Hisham, 33, female, lawyer in Bangsar, Kuala Lumpur; bitten by a stray cat she was trying to rescue. Articulate, brisk, English-dominant with Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Benjamin Lau, Malaysian Chinese man in his 30s, GP at a Bangsar clinic. Friendly, informative; English with some Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, a stray cat bit my hand last night. I was trying to put it in a carrier to bring to the vet. Now bengkak and throbbing."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Two puncture wounds on the back of the hand, near the knuckle. Red, swollen, warm. Can you make a fist?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can, but sakit. And the redness is spreading up a bit since this morning."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cat bites look small but go deep. Their teeth are like needles, so bacteria like Pasteurella get injected inside. Infection can start within 24 hours."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I washed it with soap last night and sapu Dettol."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good, that helps. I'll start Augmentin 625mg, three times a day, for five days. Hand bites need antibiotics early."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What about rabies? I read Sarawak ada kes."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Peninsular Malaysia, including KL, is currently considered free of rabies in animals. So in this situation we don't routinely give rabies vaccine here."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, lega. Tetanus?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "When was your last tetanus jab?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Honestly, I think masa sekolah, form three? So more than 15 years."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then we'll give a tetanus booster today. And keep the hand raised, like in a sling, for the next day or two."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh I still type? I have a hearing tomorrow."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Light use is fine. But if the swelling spreads, you can't move the finger, or fever, you need to go to hospital. Hand infections can involve the tendon."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Got it. I'll come back if it's makin teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Come back in 48 hours anyway, I want to check. And next time, use thick gloves or call a rescue group, OK?"
+      }
+    ]
+  },
+  {
+    "id": "infect_069",
+    "split": "train",
+    "condition": "Macaque bite in a child",
+    "source": "Rabies",
+    "patient_persona": {
+      "description": "Encik Shahrul bin Anuar, 41, male, government engineer in Penang, speaking for his son Aqil, 10, bitten by a long-tailed macaque at a hill park. Worried, articulate, Malay with English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Yeoh Chin Hooi, Penang Chinese woman in her 40s, emergency physician at Hospital Pulau Pinang. Practical, measured; English and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, anak saya kena gigit monyet kat Taman Botani tadi. Dia pegang plastik makanan, monyet tu rampas, terus gigit lengan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Aqil, boleh tunjuk? Ada dua luka tusuk kecil, berdarah sikit. Dah cuci?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya cuci dengan air mineral je, dalam kereta. Lepas tu terus datang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nurse akan cuci betul-betul dengan sabun dan air, lima belas minit. Cuci ni paling penting untuk semua jenis gigitan haiwan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Monyet ni bawa rabies ke, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Rabies pada monyet memang jarang. Penang pun dah lama tak ada kes rabies. Tapi kita ikut guideline negeri, dan saya akan bincang dengan pegawai kesihatan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau ragu-ragu, lebih baik suntik je, doktor. Saya tak kisah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya faham. Kalau pegawai kesihatan setuju, kita mula rabies vaccine hari ni. Yang penting sekarang, luka ni kita tak jahit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak jahit? Nanti berparut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Luka gigitan kalau jahit, kuman terperangkap, senang jadi nanah. Lagipun luka ni kecil, parut tak besar."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat antibiotic ada?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada. Augmentin syrup, sebab mulut monyet banyak kuman. Aqil 32 kilo, jadi 10ml dua kali sehari, lima hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Suntikan tetanus dia dah cukup ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ikut buku rekod, dia dapat booster masa darjah satu. Jadi masih cover. Tak perlu hari ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Lain kali saya tak bagi dia bawa makanan kat taman tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul. Jangan bagi makan monyet dan jangan pandang mata dia lama. Kalau luka bengkak, merah merebak atau Aqil demam, datang balik."
+      }
+    ]
+  },
+  {
+    "id": "infect_070",
+    "split": "train",
+    "condition": "Dog bite in a child in a rabies-affected area",
+    "source": "Rabies",
+    "patient_persona": {
+      "description": "Puan Linda anak Jawing, 36, female, Iban oil palm estate clerk in Sri Aman, Sarawak, speaking for her daughter Grace, 8, bitten by a village dog. Anxious, fast, Sarawak Malay with a few English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Fadzli bin Morshidi, Sarawak Malay man in his 30s, medical officer at Hospital Sri Aman. Kind, steady; Sarawak Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, anak saya kena gigit anjing kampung, kat muka dan tangan. Anjing tu memang garang, dah lama tak ada tuan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Grace, sini sayang. Ada luka dekat pipi dan tangan kanan, dalam, berdarah. Bila kejadian?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pukul tiga petang, masa dia main dekat luar rumah panjang. Kami datang terus naik kereta, sejam lebih."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Luka kat muka, dekat dengan otak, dan dalam. Kawasan Sri Aman ada rabies. Jadi ni kategori tiga, paling serius."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya Tuhan. Anak saya boleh selamat kan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, sebab puan bawa dia cepat. Kita cuci luka betul-betul, bagi rabies immunoglobulin sekeliling luka, dan mula vaksin hari ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Suntik kat muka dia? Dia takut jarum."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita bagi ubat bius sikit dulu, and nurse akan pujuk. Immunoglobulin tu kena masuk sekeliling luka supaya virus tak sempat naik ke saraf."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Vaksin berapa kali?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Empat kali. Hari ni, hari ke-3, ke-7 dan ke-14. Kad ni simpan baik-baik. Klinik Kesihatan dekat rumah pun boleh bagi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Luka muka tu nanti berparut besar ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Luka muka, kita boleh jahit longgar sikit sebab bekalan darah bagus. Doktor pakar plastic surgery akan tengok esok."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Anjing tu orang kampung dah tangkap. Nak bunuh ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan bunuh dulu. Bagitahu pejabat veterinar, dia orang akan kurung dan observe sepuluh hari. Kalau dia mati, dia orang boleh test otak dia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, saya call ketua kampung sekarang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Grace akan masuk wad malam ni untuk antibiotic IV dan tengok luka. Puan boleh teman dia."
+      }
+    ]
+  }
+]

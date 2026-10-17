@@ -1,0 +1,81 @@
+/* Shared components. Tokens only; colour carries meaning only (see tokens.css). */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* Tone: one meaning, two variables. */
+[data-tone="info"] { --tone: var(--blue); --tone-wash: var(--blue-wash); }
+[data-tone="urgent"] { --tone: var(--red); --tone-wash: var(--red-wash); }
+[data-tone="soon"] { --tone: var(--amber); --tone-wash: var(--amber-wash); }
+[data-tone="done"] { --tone: var(--green); --tone-wash: var(--green-wash); }
+[data-tone="neutral"] { --tone: var(--muted); --tone-wash: var(--canvas); }
+
+/* Card */
+.card { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-5); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); }
+.card-title { margin: 0; font-size: var(--text-heading); line-height: 1.3; font-weight: 600; }
+
+/* Button */
+.btn { display: inline-flex; align-items: center; justify-content: center; align-self: flex-start; min-height: var(--tap); padding: 0 var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); font-weight: 600; text-decoration: none; cursor: pointer; transition: opacity var(--quick) var(--ease), transform var(--quick) var(--ease); }
+.btn:hover { opacity: 0.88; }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn[aria-busy="true"] { cursor: progress; }
+.btn-primary { background: var(--blue); border-color: var(--blue); color: var(--surface); }
+.btn-danger { background: var(--red); border-color: var(--red); color: var(--surface); }
+
+/* Chip */
+.chip { display: inline-flex; align-items: center; padding: 2px var(--space-2); border-radius: var(--radius-control); background: var(--tone-wash); color: var(--tone); font-size: var(--text-small); line-height: 18px; font-weight: 600; }
+.chip[data-tone="neutral"] { border: 1px solid var(--line); }
+
+/* Avatar */
+.avatar { display: inline-flex; align-items: center; justify-content: center; flex: none; width: var(--tap); height: var(--tap); border-radius: 50%; background: var(--canvas); border: 1px solid var(--line); color: var(--muted); font-size: var(--text-small); font-weight: 600; }
+
+/* Field */
+.field { display: flex; flex-direction: column; gap: var(--space-1); }
+.field label { font-size: var(--text-small); font-weight: 600; }
+.field input, .field textarea, .field select { min-height: var(--tap); padding: var(--space-2) var(--space-3); border: 1px solid var(--line-field); border-radius: var(--radius-control); background: var(--surface); }
+.field ::placeholder { color: var(--placeholder); }
+.field [aria-invalid="true"] { border-color: var(--red); }
+.field-hint, .field-error { margin: 0; font-size: var(--text-small); color: var(--muted); }
+.field-error { color: var(--red); }
+
+/* Insight card: the one feature surface. Glass, and the only place halftone appears. */
+.insight { overflow-wrap: anywhere; display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; padding: var(--space-5); border-radius: var(--radius-card); }
+.insight-lead { margin: 0; font-size: var(--text-heading); line-height: 1.35; font-weight: 600; }
+.insight-lead::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: var(--space-2); border-radius: 50%; background: var(--tone); vertical-align: middle; }
+.insight-detail { color: var(--muted); }
+.insight-detail summary { display: inline-flex; align-items: center; min-height: var(--tap); cursor: pointer; font-size: var(--text-small); font-weight: 600; border-radius: var(--radius-control); }
+.insight-foot { margin-top: auto; font-size: var(--text-small); color: var(--muted); }
+.insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4); }
+/* Halftone stays rare: in a row only the first card carries it. */
+.insight-row .insight:not(:first-child)::after { display: none; }
+/* Data table */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-group); }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: var(--space-2) var(--space-4); text-align: left; border-bottom: 1px solid var(--line); height: calc(var(--tap) + var(--space-2)); }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table th { font-size: var(--text-small); font-weight: 600; color: var(--muted); white-space: nowrap; }
+.table-sort { min-height: var(--tap); padding: 0; border: 0; background: none; font-weight: inherit; color: inherit; cursor: pointer; border-radius: var(--space-1); }
+.table th[aria-sort="ascending"], .table th[aria-sort="descending"] { color: var(--ink); }
+.table-row-open { cursor: pointer; transition: background var(--quick) var(--ease); }
+.table-row-open:hover { background: var(--canvas); }
+.table-row-open:focus-visible { outline-offset: -2px; }
+.table-action { text-align: right; white-space: nowrap; cursor: default; }
+.table td.table-empty { padding: var(--space-6); text-align: center; color: var(--muted); }
+
+/* Charts */
+.chart { margin: 0; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-size: calc(12px * var(--chart-k, 1)); fill: var(--muted); font-variant-numeric: tabular-nums; }
+.chart-grid { stroke: var(--line); stroke-width: 1; }
+.chart-band { fill: var(--green-wash); }
+.chart-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-dot { fill: var(--ink); }
+.chart-dot[data-out] { fill: var(--amber); }
+.chart-bar { fill: var(--muted); }
+.chart-empty { margin: 0; padding: var(--space-6); border: 1px dashed var(--line); border-radius: var(--radius-group); color: var(--muted); text-align: center; }
+
+/* Main column + right rail */
+
+/* Letter avatar (components/avatar.tsx). */
+.avatar { flex: none; display: inline-grid; place-items: center; width: var(--avatar-md); height: var(--avatar-md); border-radius: 50%; background: hsl(var(--avatar-hue) 55% 90%); color: hsl(var(--avatar-hue) 45% 28%); font-size: 14px; font-weight: 600; line-height: 1; user-select: none; }
+.avatar[data-size="sm"] { width: var(--avatar-sm); height: var(--avatar-sm); font-size: 11px; }
+.avatar[data-size="lg"] { width: var(--avatar-lg); height: var(--avatar-lg); font-size: 19px; }

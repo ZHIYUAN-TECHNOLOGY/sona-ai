@@ -1,0 +1,36 @@
+# Laya v2 card picker (packages/api/src/laya.ts, tools/laya-eval) over laya-serve's /v1/systemone.
+# On a small CPU box rather than inside box ①: one server per container, and a 650 MB classifier does not need a GPU.
+# ponytail: CPU latency unmeasured (41 ms was on a Mac); move beside Gemma behind a proxy if it misses the budget.
+model_name: sona-laya
+base_image:
+  image: python:3.11-slim
+build_commands:
+  - pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+  # fastapi 0.142 (29 Sep 2026) refuses to start without an OpenTelemetry extra; 0.141.1 is what Laya shipped against.
+  - pip install --no-cache-dir "laya[serve]==0.3.21" "fastapi==0.141.1"
+weights:
+  - source: "hf://zhiyuantechnology/sona-laya@c75de435cb825110cce8d51ec06a8314d902584d"
+    mount_location: /app/models/laya
+    auth:
+      auth_method: CUSTOM_SECRET
+      auth_secret_name: hf_access_token
+docker_server:
+  # Same as tools/laya-eval/serve.py; requests must send "model": "multilingual".
+  start_command: >-
+    python -c "import uvicorn; from laya.router import Router; from laya.serve import create_app;
+    r = Router(device='cpu'); r.models['multilingual'] = '/app/models/laya'; r.preload(['multilingual']);
+    uvicorn.run(create_app(r), host='0.0.0.0', port=8000)"
+  readiness_endpoint: /health
+  liveness_endpoint: /health
+  predict_endpoint: /v1/systemone
+  server_port: 8000
+environment_variables:
+  # torch otherwise sizes its thread pool to the host's cores, not the box's 2 vCPUs, and one inference crawls.
+  OMP_NUM_THREADS: "2"
+  MKL_NUM_THREADS: "2"
+secrets:
+  hf_access_token: null
+resources:
+  instance_type: "2x8"
+runtime:
+  predict_concurrency: 8

@@ -1,0 +1,16 @@
+# Builds the image into ECR and copies the pinned weights from Hugging Face to S3 (no Docker on the laptop).
+version: 0.2
+env:
+  variables:
+    HF_REPO: cyankiwi/gemma-4-26B-A4B-it-qat-AWQ-INT4
+    HF_REV: 18a3c7285c33ee39d3e5e16ee6fb2c18f4955ef9
+phases:
+  build:
+    commands:
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR
+      - docker build -t $ECR/sona/brain:v0.29.0 .
+      - docker push $ECR/sona/brain:v0.29.0
+      - pip install -q huggingface_hub
+      - python -c "from huggingface_hub import snapshot_download as d; d('$HF_REPO', revision='$HF_REV', local_dir='/tmp/w', ignore_patterns=['.*'])"
+      - du -sh /tmp/w
+      - aws s3 sync /tmp/w s3://$BUCKET/brain/$HF_REV/ --only-show-errors

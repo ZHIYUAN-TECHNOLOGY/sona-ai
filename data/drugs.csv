@@ -1,0 +1,28 @@
+# SYNTHETIC drug table for the Sona demo: about 20 medicines the demo scenarios touch.
+# Doses are typical adult doses written by hand for the demo, NOT yet checked against a label.
+# Each source_id is openFDA-style (openfda-label:<id>) and marked "synthetic" until the real table
+# is built from openFDA drug labels (https://open.fda.gov/apis/drug/label/, public domain) with
+# RxNorm identifiers and formulary status entered by hand from FUKKM (docs/delivery-plan.md).
+# ingredient uses the US/openFDA generic name so either spelling finds the drug.
+id,name,ingredient,formulation,dose,source_id
+paracetamol,Paracetamol,acetaminophen,500 mg tablet,"500 mg to 1 g orally every 4 to 6 hours; maximum 4 g in 24 hours",openfda-label:synthetic-paracetamol
+azithromycin,Azithromycin,azithromycin,500 mg tablet,"500 mg orally once daily for 3 days",openfda-label:synthetic-azithromycin
+clarithromycin,Clarithromycin,clarithromycin,500 mg tablet,"500 mg orally twice daily",openfda-label:synthetic-clarithromycin
+doxycycline,Doxycycline,doxycycline,100 mg capsule,"200 mg orally on day 1, then 100 mg once daily",openfda-label:synthetic-doxycycline
+amoxicillin,Amoxicillin,amoxicillin,500 mg capsule,"500 mg to 1 g orally three times daily",openfda-label:synthetic-amoxicillin
+co-amoxiclav,Co-amoxiclav,amoxicillin and clavulanate potassium,625 mg tablet; 1.2 g injection,"625 mg orally three times daily, or 1.2 g IV every 8 hours",openfda-label:synthetic-co-amoxiclav
+ceftriaxone,Ceftriaxone,ceftriaxone,1 g injection,"1 to 2 g IV once daily",openfda-label:synthetic-ceftriaxone
+salbutamol,Salbutamol,albuterol,100 microgram metered-dose inhaler,"100 to 200 micrograms (1 to 2 puffs) inhaled as needed, up to 4 times daily",openfda-label:synthetic-salbutamol
+ipratropium,Ipratropium,ipratropium bromide,250 micrograms/mL nebuliser solution,"500 micrograms nebulised every 4 to 6 hours as needed",openfda-label:synthetic-ipratropium
+cetirizine,Cetirizine,cetirizine,10 mg tablet,"10 mg orally once daily",openfda-label:synthetic-cetirizine
+prednisolone,Prednisolone,prednisolone,5 mg tablet,"40 to 50 mg orally once daily for 5 days",openfda-label:synthetic-prednisolone
+hydrocortisone,Hydrocortisone,hydrocortisone sodium succinate,100 mg injection,"100 mg IV every 6 hours",openfda-label:synthetic-hydrocortisone
+magnesium-sulphate,Magnesium sulphate,magnesium sulfate,50% injection,"1.2 to 2 g IV over 20 minutes as a single dose",openfda-label:synthetic-magnesium-sulphate
+furosemide,Furosemide,furosemide,40 mg tablet; 10 mg/mL injection,"20 to 40 mg orally or IV once daily, adjusted to response",openfda-label:synthetic-furosemide
+metformin,Metformin,metformin hydrochloride,500 mg tablet,"500 mg orally twice daily with meals, increased gradually to a maximum of 2 g daily",openfda-label:synthetic-metformin
+insulin,Insulin,insulin human,100 units/mL soluble injection,"Dose individualised to capillary blood glucose",openfda-label:synthetic-insulin
+potassium-chloride,Potassium chloride,potassium chloride,600 mg (8 mmol) modified-release tablet,"24 to 48 mmol orally daily in divided doses, guided by serum potassium",openfda-label:synthetic-potassium-chloride
+ondansetron,Ondansetron,ondansetron,4 mg tablet; 2 mg/mL injection,"4 mg orally or IV every 8 hours as needed",openfda-label:synthetic-ondansetron
+omeprazole,Omeprazole,omeprazole,20 mg capsule,"20 mg orally once daily",openfda-label:synthetic-omeprazole
+enoxaparin,Enoxaparin,enoxaparin sodium,40 mg/0.4 mL prefilled syringe,"40 mg subcutaneously once daily for VTE prophylaxis",openfda-label:synthetic-enoxaparin
+amlodipine,Amlodipine,amlodipine besylate,5 mg tablet,"5 to 10 mg orally once daily",openfda-label:synthetic-amlodipine

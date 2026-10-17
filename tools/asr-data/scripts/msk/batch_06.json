@@ -1,0 +1,760 @@
+[
+  {
+    "id": "msk_051",
+    "split": "train",
+    "condition": "New-onset focal epilepsy after a first convulsion",
+    "source": "Epilepsy",
+    "patient_persona": {
+      "description": "Nurul Hidayah binti Rosli, 27, female, bank clerk in Alor Setar, Kedah; had a witnessed convulsion at work two weeks ago; a year of deja vu spells; febrile seizure as a toddler. First neurology visit. Quiet, careful northern Malay with English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Wei Sheng, Malaysian Chinese man in his 40s, neurologist at an Alor Setar hospital. Calm, structured; English-leaning, speaks Malay with patients.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Cik Hidayah, saya dah baca emergency report. You had a seizure kat bank dua minggu lepas. Sebelum tu, pernah ada rasa pelik?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, doktor. Dah setahun, kadang-kadang tiba-tiba rasa macam deja vu, pernah alami benda yang sama. Perut rasa naik ke dada."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lepas rasa tu, kawan ada cakap awak termenung, blank, atau gerak mulut macam mengunyah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kawan sekerja kata saya pernah pandang kosong, tangan main-main butang baju. Saya sendiri tak ingat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masa kecil, pernah sawan demam? Febrile fit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mak kata masa umur setahun lebih, sawan demam lama, masuk hospital."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "MRI awak tunjuk sedikit parut kat bahagian temporal kiri, dan EEG pun ada gelombang abnormal kat situ. Ini focal epilepsy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Epilepsi? Maksudnya saya kena makan ubat for life ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak semestinya seumur hidup, tapi untuk sekarang perlu. Saya mulakan levetiracetam 250mg dua kali sehari, naik ke 500mg selepas dua minggu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat ni kadang-kadang buat mood cepat marah atau sedih. Kalau rasa macam tu, inform saya, jangan stop sendiri."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya ada rancang nak kahwin tahun depan. Ubat ni selamat untuk mengandung ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Levetiracetam antara yang paling selamat. Sebelum mengandung, jumpa saya dulu, dan mula folic acid 5mg sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kereta saya macam mana? Saya drive pergi kerja setiap hari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Buat masa ni tak boleh memandu. You need to be seizure-free for at least one year, dan saya perlu sahkan sebelum boleh drive semula."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susahlah... tapi saya faham. Nanti tumpang abang saya, dia kerja kawasan sama."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Elakkan juga berenang seorang, dan tidur cukup. Kurang tidur boleh cetuskan sawan. Jumpa lagi dua bulan."
+      }
+    ]
+  },
+  {
+    "id": "msk_052",
+    "split": "train",
+    "condition": "Juvenile myoclonic epilepsy, breakthrough seizure",
+    "source": "Epilepsy",
+    "patient_persona": {
+      "description": "Chan Wei Jie, 22, male, final-year engineering student in Kampar, Perak; juvenile myoclonic epilepsy on sodium valproate; seizure after an all-nighter and drinking. Follow-up. Casual, slightly sheepish Malaysian Mandarin with English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Anita a/p Sivakumar, Malaysian Indian woman in her 40s, neurologist in Ipoh. Frank, warm; English-leaning, a few Mandarin words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Wei Jie, I heard you had a seizure last month. 发生什么事？Tell me."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那天是朋友 birthday，我们去 pub，我喝了四五杯 beer。然后回去赶 assignment 到早上五点。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "And then? 然后呢？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "七点起来，手先抖几下，然后我就不知道了。Housemate 说我全身抽筋，大概两分钟。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thank you for being honest. 你最大的两个 trigger 就是 alcohol 和 lack of sleep. Together, very risky for JME."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我知道……之前一年多都没有 seizure，我以为已经好了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your EEG is still active. Sodium valproate 你每天都有吃吗？500mg twice a day?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "大部分时间有……晚上那粒有时候会忘记，在 library 温书。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Missing doses is also a trigger. 手机 set 一个 alarm。Keep a spare strip in your bag."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK，我会 set alarm。那我可以喝酒吗？一点点也不行？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Small amounts occasionally, maybe one drink, with food, and never when you're sleep-deprived. 最安全是不要喝。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我毕业以后要去 Singapore 工作，要开车吗……"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Driving needs at least one year seizure-free from this episode. 我们先 focus 在这个 goal。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your weight went up four kilos, and valproate can do that. 手会不会抖？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "手有一点抖，写字的时候，especially exam。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mild tremor is common with valproate. We'll check your valproate level and liver today. Come back in three months, and sleep before exams, okay?"
+      }
+    ]
+  },
+  {
+    "id": "msk_053",
+    "split": "train",
+    "condition": "Childhood absence epilepsy, EEG results",
+    "source": "Epilepsy",
+    "patient_persona": {
+      "description": "Puan Siti Khadijah binti Omar, 36, female, primary school canteen operator in Kuala Terengganu, speaking for her 7-year-old daughter Aisyah, whose teacher noticed staring spells. Results review. Soft-spoken, anxious Terengganu Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Hui Ling, Malaysian Chinese woman in her 40s, paediatric neurologist at a Kuala Terengganu hospital. Patient, warm; English-leaning, fluent Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan, result EEG Aisyah dah keluar. Masa dia bernafas laju-laju dalam test tu, EEG tunjuk corak yang kita jangka."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Corak apa tu, doktor? Cikgu dia kata dia selalu termenung dalam kelas, dipanggil pun tak respond."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ini childhood absence epilepsy. Termenung tu sebenarnya sawan kecil, lima sampai sepuluh saat. Mungkin berpuluh kali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya Allah, sehari berpuluh kali? Saya ingat dia malas, saya selalu marah dia tak focus."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan salahkan diri, puan. Sawan jenis ni memang susah nak nampak. Ramai ibu bapa tak perasan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Otak dia rosak ke, doktor? Brain damage? Dia pandai sebenarnya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak, absence epilepsy biasanya tak rosakkan otak. Ramai budak baik sendiri bila dah remaja."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita mulakan ubat sodium valproate, syrup. Dia 22 kilo, jadi start with 5ml twice a day, lepas makan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada side effect tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kadang-kadang loya, selera makan naik, rambut gugur sikit. Kita check darah dan hati dia selepas sebulan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dia suka berenang dengan sepupu dia, every Saturday."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh berenang, tapi mesti ada adult supervision all the time. Mandi pun jangan dalam tab, guna shower."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya perlu beritahu cikgu dia?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, saya bagi surat. Cikgu boleh catat bila dia termenung, supaya kita tahu ubat effective atau tak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Lega saya dapat tahu sebabnya."
+      }
+    ]
+  },
+  {
+    "id": "msk_054",
+    "split": "train",
+    "condition": "Epilepsy on valproate, pregnancy planning refill",
+    "source": "Epilepsy",
+    "patient_persona": {
+      "description": "Deepa a/p Muniandy, 30, female, pharmacy assistant in Shah Alam; generalised epilepsy on sodium valproate since age 15, seizure-free for four years; planning pregnancy. Refill visit. Bright, organised Malaysian Indian English with Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Adrian Koh Jun Wei, Malaysian Chinese man in his 30s, neurologist in Shah Alam. Clear, supportive; English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I came for my valproate refill. But also, my husband and I nak cuba dapat baby this year."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm really glad you told me before getting pregnant. Valproate carries the highest risk of birth defects and developmental problems among the epilepsy medicines."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I read about it masa kerja kat farmasi, that's why I'm scared. But if I stop, sawan will come back?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Please don't stop on your own. We'll switch slowly, over two to three months, to a safer medicine."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The options are lamotrigine or levetiracetam. For your type of epilepsy, levetiracetam is a good choice."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How does the switching work? Tukar terus ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We start levetiracetam 250mg twice a day, increase it every two weeks, then slowly reduce valproate. You'll be on both for a while."
+      },
+      {
+        "speaker": "Patient",
+        "text": "During that time boleh mengandung ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Better to wait until you're fully off valproate and stable for a few months. Continue your contraception until then."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Start folic acid 5mg every day now, and continue it through the first trimester."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, noted. Will the baby get epilepsy also?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The risk is slightly higher than average, but most children of mothers with epilepsy don't have it."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My mother keeps saying tak payah ubat masa mengandung, nanti baby rosak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "A seizure in pregnancy is more dangerous for the baby than the right medicine. You can bring your mother next time, I'll explain to her."
+      },
+      {
+        "speaker": "Patient",
+        "text": "That would help, dia memang degil sikit. Thank you, doctor."
+      }
+    ]
+  },
+  {
+    "id": "msk_055",
+    "split": "train",
+    "condition": "Seizure cluster after running out of medicine, ward round",
+    "source": "Epilepsy",
+    "patient_persona": {
+      "description": "Jimmy anak Nyandang, 40, male, Iban oil palm plantation worker living in a longhouse two hours from Miri, Sarawak; epilepsy on phenytoin; ran out of tablets for two weeks. Ward round, day two. Quiet, tired voice, Sarawak Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Rachel Yong Siew Ling, Sarawakian Chinese woman in her 30s, medical officer in the medical ward at a Miri hospital. Practical, kind; English-leaning, speaks Sarawak Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Selamat pagi, Encik Jimmy. Macam mana hari ni? Masih ada fits malam tadi?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada dah, doktor. Kepala berat sikit, badan sakit-sakit, very tired."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Biasa lepas sawan banyak kali. Kelmarin encik ada empat kali sawan sebelum sampai hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kamek minta maaf. Ubat habis dua minggu. Klinik jauh, bot pun tak ada masa tu, air sungai surut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa, bukan salah encik sorang. Kita kena cari jalan supaya ubat tak putus lagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paras phenytoin dalam darah encik sangat rendah semalam. Sekarang kita dah bagi dos penuh dalam drip."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat ni kena makan sampai bila, doktor? Lifelong ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lama, encik. Tapi saya nak tukar ke sodium valproate, sebab phenytoin causes gum swelling, dan paras dia susah nak control."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Gusi memang bengkak, berdarah bila gosok gigi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu kesan phenytoin. Ubat baru tak buat macam tu. Kita tukar perlahan-lahan dalam wad ni."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masa discharge nanti, saya bagi supply tiga bulan, bukan sebulan. Dan saya tulis surat ke klinik dekat rumah untuk ambil ubat seterusnya."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Tiga bulan senang sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau ubat tinggal dua minggu, terus pergi klinik, jangan tunggu habis. Hari ni physio datang, cuba jalan dulu."
+      }
+    ]
+  },
+  {
+    "id": "msk_056",
+    "split": "train",
+    "condition": "Parkinson's disease with wearing-off and impulse control problem",
+    "source": "Parkinson's disease",
+    "patient_persona": {
+      "description": "Lee Kok Wah, 68, male, retired aircraft maintenance technician in Kepong, Kuala Lumpur; Parkinson's for six years on levodopa-carbidopa and pramipexole. Follow-up; recently buying many 4D lottery tickets. Soft, monotone Malaysian Mandarin with English technical words.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurhaliza binti Samsudin, Malay woman in her 40s, neurologist in Kuala Lumpur. Tactful, patient; English-leaning, speaks Mandarin phrases and English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "李先生，最近手的 tremor 怎样？药效可以维持多久？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "吃了药，大概两个半钟头很好。然后下一粒之前，手开始 shake，脚好像黏在地上。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "This is called wearing-off. 药效没有那么长了。你现在 Sinemet 25/250 半粒，一天三次，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对。Pramipexole 1mg 也是一天三次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们可以把 Sinemet 改成一天四次，时间比较密，你就不会有那么长的 off time。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。Doctor……我太太叫我告诉你一件事。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "请说，没关系。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这半年，我每天买 4D，以前一个礼拜买一次而已。上个月花了三千多块 ringgit。我自己也 stop 不了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "谢谢你讲出来，这需要勇气。这很可能是 pramipexole 的 side effect，叫 impulse control disorder。不是你的性格问题。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "真的吗？我还以为我变坏了。我太太很生气。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很多病人都会这样，特别是这种药。我们要慢慢减 pramipexole，不可以突然停。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "从 1mg 一天三次，减到 0.5mg 一天三次，two weeks later 再减。同时加 Sinemet 帮忙 control tremor。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我的钱……我可以叫我太太管 ATM card 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这是很好的办法。这段时间让她帮你管钱。一个月后再来，也请你太太一起来。"
+      }
+    ]
+  },
+  {
+    "id": "msk_057",
+    "split": "train",
+    "condition": "Parkinson's disease, new diagnosis",
+    "source": "Parkinson's disease",
+    "patient_persona": {
+      "description": "Ismail bin Mahmud, 62, male, retired secondary school religious teacher in Pasir Mas, Kelantan; right-hand tremor for a year, slower walking. First neurology visit with his wife. Soft, slow Kelantanese Malay with a quiet voice.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kho Siew Chin, Malaysian Chinese woman in her 50s, neurologist at a Kota Bharu hospital. Unhurried, respectful; speaks fluent Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Ustaz Ismail, tangan kanan menggeletar tu, bila paling ketara? Masa rehat, atau masa buat kerja? The tremor, bila?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Masa rehat, doktor. Duduk dengar ceramah, tangan kanan goyang sendiri. Bila pegang cawan, kurang pula."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Isteri ada perasan perubahan lain? Jalan, suara, handwriting?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Isteri kata saya jalan perlahan, langkah pendek-pendek. Tulisan pun makin kecil, susah nak tulis nota kuliah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Deria bau macam mana? Sense of smell masih OK?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah lama tak bau apa, doktor. Ingat sebab selesema."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dari pemeriksaan, tangan kanan keras sikit, pergerakan lambat, dan resting tremor. This is Parkinson's disease, penyakit Parkinson."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Parkinson... Macam arwah pak cik saya dulu tu? Saya akan jadi lumpuh ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Setiap orang lain-lain, ustaz. Penyakit ni perlahan, bertahun-tahun, progressive. Dengan ubat dan exercise, ramai boleh hidup aktif lama."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya mulakan Madopar 125mg, setengah biji tiga kali sehari. Take it half an hour before meals, sebab protein dalam makanan boleh halang ubat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat ni ada side effect?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin loya dan pening bila bangun. Kalau dizzy, bangun perlahan-lahan. Ada juga kadang-kadang vivid dreams, mimpi yang pelik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Solat berdiri macam mana, doktor? Kadang-kadang rasa nak jatuh masa sujud bangun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau rasa tak stabil, solat duduk dulu tak apa. Physio will teach balance exercises. Jumpa lagi dua bulan."
+      }
+    ]
+  },
+  {
+    "id": "msk_058",
+    "split": "train",
+    "condition": "Parkinson's disease with falls and constipation",
+    "source": "Parkinson's disease",
+    "patient_persona": {
+      "description": "Mrs. Mary Fernandez, 70, female, retired Eurasian nursing tutor in Ipoh; Parkinson's for five years on levodopa; two falls this month, dizzy on standing, constipated. Follow-up. Crisp, precise English with a little Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Shahrul bin Ismail, Malay man in his 40s, geriatrician at an Ipoh hospital. Gentle, methodical; English-leaning.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mrs. Fernandez, the nurse said you had two falls this month. Can you tell me about them?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Both times getting up from bed at night to go to the loo. Everything went gelap for a moment, then I was on the floor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Did you hurt yourself? Any head injury?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "A bruise on the hip, lebam je, nothing broken, thank goodness. My neighbour's maid found me the second time."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your blood pressure lying down is 132 over 80, and standing it drops to 98 over 60. That's orthostatic hypotension, common in Parkinson's."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ah, so it's the Parkinson's causing it, bukan sebab tua."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Partly the Parkinson's, partly the medicines. You're also taking tamsulosin for the bladder, right? That lowers BP further."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, the urologist started it last year for kencing malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll write to him about changing it. Meanwhile, drink two to two and a half litres a day, and add a little extra salt, unless your heart doctor says no."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I've been drinking less air on purpose, so I won't need the loo at night."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That makes the dizziness worse. Drink more in the morning and afternoon, less after six. Sit on the edge of the bed for a minute before standing."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And the constipation, doctor? Sembelit, four days sometimes, very uncomfortable."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Very common in Parkinson's. Take lactulose 15ml at night, more fruit and fibre, and walk daily if you can."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I still jalan in the taman every morning with my tongkat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Wonderful, keep that up. I'll also ask the occupational therapist to put a bedside commode and night lights at home."
+      }
+    ]
+  },
+  {
+    "id": "msk_059",
+    "split": "train",
+    "condition": "Parkinson's disease, levodopa timing with meals",
+    "source": "Parkinson's disease",
+    "patient_persona": {
+      "description": "Mariam binti Hassan, 66, female, retired kuih seller in Batu Pahat, Johor; Parkinson's for four years; medicine seems weaker after meals. Refill visit. Warm, slow Johor Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lee Chun Wai, Malaysian Chinese man in his 30s, family medicine specialist at a Batu Pahat health clinic. Patient, encouraging; English-leaning, speaks colloquial Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mak cik Mariam, datang ambil ubat Madopar, ya? Macam mana sekarang?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, doktor. Tapi kadang-kadang ubat macam tak jalan, not working. Lepas makan tengah hari, badan keras, nak jalan pun susah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mak cik makan Madopar tu sebelum makan, atau sama-sama dengan nasi?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sama-sama, doktor. Anak kata makan ubat mesti after food, nanti perut pedih."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Untuk ubat ni lain sikit. Protein dalam ikan, ayam, susu tu berebut dengan ubat nak masuk otak. Jadi ubat kurang berkesan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, macam tu. Tengah hari saya memang makan ikan dengan nasi banyak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cuba makan Madopar setengah jam before meals. Kalau loya, you can take it with a plain biscuit, biskut kering."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pagi saya minum susu dengan ubat sekali. Milk pun tak boleh juga?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Susu pun protein. Minum ubat dengan air kosong, susu minum lambat sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Satu lagi, cuba agihkan protein. Makan protein lebih banyak waktu malam, bukan tengah hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Nanti saya cakap dengan menantu yang masak. Ubat dos sama ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dos sama dulu, Madopar 125mg tiga kali sehari. Try this new meal timing for two weeks, tengok ada beza tak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau badan masih keras macam tu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita tambah dos atau jarakkan waktu. Tulis dalam buku kecil bila badan keras, bila OK, like a diary, bawa masa datang nanti."
+      }
+    ]
+  },
+  {
+    "id": "msk_060",
+    "split": "test",
+    "condition": "Parkinson's disease, missed doses on the ward",
+    "source": "Parkinson's disease",
+    "patient_persona": {
+      "description": "Goh Teck Chye, 72, male, retired printing shop owner in Butterworth, Penang; Parkinson's for eight years; admitted with pneumonia, missed levodopa doses overnight. Ward round. Weak, soft Penang Mandarin with Hokkien and some Malay.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lingam a/l Rajoo, Malaysian Indian man in his 30s, medical registrar at a Butterworth hospital. Brisk, respectful; English-leaning, speaks simple Mandarin and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Goh uncle，早。今天呼吸怎样？还喘吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "喘好一点了……但是全身好 stiff，手脚不能动，讲话也很累。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Uncle 的 Sinemet，昨晚几点吃的？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我不知道……护士说我 nil by mouth，因为要照 scan，所以没给我吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay, that explains the stiffness. Parkinson's ubat tak boleh skip, even one or two doses can make you very stiff."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我自己也跟护士讲了，but 她说要等 doctor order。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对不起，uncle，这是我们的错。我现在马上 order，Sinemet 立刻给，以后照 schedule，六点、十点、两点、六点。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果以后要 nil by mouth，我们会用 NG tube 给药，或者用 patch。不可以没有药。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好……吞东西有时候会 choke，喝 air 会咳。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个很重要，可能就是 pneumonia 的原因，aspiration。Speech therapist 今天会来 assess 你的 swallowing。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我还可以吃粥吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，粥比较安全。Air 可能要加一点 thickener，护士会教你。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Antibiotic 继续，co-amoxiclav。你的 oxygen 已经 95 percent，比昨天好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我太太每天来，她可以帮我 suap 饭吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，最好。叫她喂的时候，uncle 要坐直，一口一口慢慢来。下午我再来看你。"
+      }
+    ]
+  }
+]

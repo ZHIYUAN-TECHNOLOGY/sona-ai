@@ -1,0 +1,26 @@
+/* Training data: sample review. Tokens only. */
+.td-muted { color: var(--muted); }
+.td-clip { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-width: 26rem; min-width: 9rem; overflow-wrap: anywhere; }
+/* A long model name wraps in its column; the status chip never does, so it stays readable beside them. */
+.td-deid { display: block; max-width: 8rem; overflow-wrap: anywhere; }
+.td-status { display: inline-block; min-width: max-content; }
+.td-status .chip { white-space: nowrap; }
+.td-actions { display: inline-flex; gap: var(--space-2); white-space: nowrap; }
+.td-switch { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: 500; cursor: pointer; }
+/* A switch drawn on the native checkbox; green only while samples are being taken. */
+.td-switch:not([data-on]) { color: var(--muted); }
+.td-switch input { appearance: none; flex: none; position: relative; width: 36px; height: 20px; margin: 0; border-radius: var(--radius-pill); background: var(--line); cursor: pointer; transition: background var(--quick) var(--ease); }
+.td-switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: var(--radius-pill); background: var(--surface); transition: transform var(--quick) var(--ease); }
+.td-switch input:checked { background: var(--green); }
+.td-switch input:checked::after { transform: translateX(16px); }
+.td-switch input:disabled { opacity: 0.6; cursor: progress; }
+.td-switch input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.td-detail { display: grid; gap: var(--space-1); margin: 0 0 var(--space-4); }
+.td-detail dt { color: var(--muted); font-size: var(--text-small); margin-top: var(--space-3); }
+.td-detail dt:first-child { margin-top: 0; }
+.td-detail dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* A long sample scrolls inside its own box, so the decision under it stays in view. */
+.td-detail dd.td-long { max-height: 11rem; overflow-y: auto; }
+.td-detail + p { margin: 0 0 var(--space-3); }
+.td-actions + p { margin: var(--space-3) 0 0; }
+@container page (max-width: 720px) { .td-clip { min-width: 8rem; } }

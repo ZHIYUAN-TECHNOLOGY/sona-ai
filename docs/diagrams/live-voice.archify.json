@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sona Care live voice with MiniCPM-o",
+    "locale": "en",
+    "output": "live-voice.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1240,
+      630
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Phone app"
+        },
+        "backend": {
+          "label": "Cloudflare"
+        },
+        "security": {
+          "label": "Emergency check"
+        },
+        "database": {
+          "label": "Storage"
+        },
+        "cloud": {
+          "label": "Baseten model box"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "live-loop",
+        "label": "Live loop",
+        "focus": [
+          "mic",
+          "agent",
+          "live",
+          "gate",
+          "speaker"
+        ],
+        "note": "Audio streams up in 1-second units; each reply sentence streams back once it passes the check."
+      },
+      {
+        "id": "malay-voice",
+        "label": "Malay voice",
+        "focus": [
+          "agent",
+          "gate",
+          "voice",
+          "speaker"
+        ],
+        "note": "Malay sentences are spoken by VoxCPM2 on box 2; the same box writes the patient's transcript."
+      },
+      {
+        "id": "doctor-side",
+        "label": "Doctor side",
+        "focus": [
+          "agent",
+          "worker",
+          "db",
+          "clinician"
+        ],
+        "note": "Transcripts and care-team tasks reach the doctor's My Day."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "clinician",
+      "type": "frontend",
+      "label": "Sona AI Assistant",
+      "sublabel": "doctor's My Day",
+      "pos": [
+        40,
+        30
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Sona server",
+      "sublabel": "Worker · tasks, transcripts",
+      "pos": [
+        380,
+        30
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Neon Postgres",
+      "sublabel": "Singapore",
+      "pos": [
+        660,
+        30
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "mic",
+      "type": "frontend",
+      "label": "Sona Care · mic",
+      "sublabel": "patient's iPhone",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        180,
+        76
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "SonaLiveAgent",
+      "sublabel": "Agents SDK · Durable Object",
+      "tag": "new",
+      "pos": [
+        380,
+        170
+      ],
+      "size": [
+        200,
+        76
+      ]
+    },
+    {
+      "id": "training",
+      "type": "cloud",
+      "label": "Training Job",
+      "sublabel": "LLaMA-Factory LoRA",
+      "tag": "1×H100",
+      "pos": [
+        960,
+        170
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "voice",
+      "type": "cloud",
+      "label": "② Voice box",
+      "sublabel": "Qwen3-ASR + VoxCPM2",
+      "tag": "L4",
+      "pos": [
+        660,
+        310
+      ],
+      "size": [
+        200,
+        76
+      ]
+    },
+    {
+      "id": "live",
+      "type": "cloud",
+      "label": "④ Live box",
+      "sublabel": "MiniCPM-o 4.5 + LoRA",
+      "tag": "1×H100 · new",
+      "pos": [
+        960,
+        310
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "speaker",
+      "type": "frontend",
+      "label": "Sona Care · speaker",
+      "sublabel": "plays each sentence",
+      "pos": [
+        40,
+        450
+      ],
+      "size": [
+        180,
+        76
+      ]
+    },
+    {
+      "id": "gate",
+      "type": "security",
+      "label": "Emergency check",
+      "sublabel": "999 line, care-team task",
+      "pos": [
+        380,
+        450
+      ],
+      "size": [
+        200,
+        76
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Patient's phone",
+      "wraps": [
+        "mic",
+        "speaker"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cloudflare",
+      "wraps": [
+        "worker",
+        "agent",
+        "gate"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Baseten US · synthetic data only",
+      "wraps": [
+        "training",
+        "voice",
+        "live"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "mic-up",
+      "from": "mic",
+      "to": "agent",
+      "label": "mic audio, streamed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "units-up",
+      "from": "agent",
+      "to": "live",
+      "label": "1 s audio units · WSS",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "reply-down",
+      "from": "live",
+      "to": "gate",
+      "label": "sentence text + audio",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "play-down",
+      "from": "gate",
+      "to": "speaker",
+      "label": "MP3 per sentence",
+      "variant": "emphasis"
+    },
+    {
+      "id": "asr",
+      "from": "agent",
+      "to": "voice",
+      "label": "ASR transcript",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "malay",
+      "from": "gate",
+      "to": "voice",
+      "label": "Malay text to MP3",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDx": -80
+    },
+    {
+      "id": "tasks",
+      "from": "agent",
+      "to": "worker",
+      "label": "tasks, transcript",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "my-day",
+      "from": "worker",
+      "to": "clinician",
+      "label": "My Day"
+    },
+    {
+      "id": "sql",
+      "from": "worker",
+      "to": "db",
+      "label": "SQL"
+    },
+    {
+      "id": "weights",
+      "from": "training",
+      "to": "live",
+      "label": "LoRA weights",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Streams both ways",
+      "items": [
+        "Up: the mic streams non-stop, heard in 1 s units",
+        "Down: each sentence plays as soon as it is written",
+        "No limit on what Sona says; the 999 line leads on an emergency"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Safety",
+      "items": [
+        "Emergency signs get the 999 line first",
+        "Box 2 transcribes the patient for the 999 rule and the doctor"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Limits",
+      "items": [
+        "One live call holds one H100 ($6.50/h)",
+        "Baseten US: synthetic data only",
+        "Malay is spoken by VoxCPM2"
+      ]
+    }
+  ]
+}

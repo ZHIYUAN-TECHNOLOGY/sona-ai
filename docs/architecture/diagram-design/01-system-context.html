@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sona system context</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f6f8;
+      --color-paper-2: #e8eaee;
+      --color-ink:     #1d1f23;
+      --color-muted:   #59616b;
+      --color-soft:    #8a929e;
+      --color-rule:    rgba(29,31,35,0.12);
+      --color-accent:  #245bcc;
+      --color-link:    #0f6e66;
+      --font-sans:     'Inter', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1200px; width: 100%; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .eyebrow .hash { text-transform: none; }
+
+    .subtitle {
+      font-size: 0.875rem;
+      line-height: 1.55;
+      color: var(--color-muted);
+      max-width: 72ch;
+      margin-bottom: 1.5rem;
+    }
+
+    .diagram { overflow-x: auto; }
+    svg { width: 100%; min-width: 900px; display: block; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+    .card {
+      background: #ffffff;
+      border-radius: 6px;
+      border: 1px solid var(--color-rule);
+      padding: 1.25rem;
+    }
+    .card-header {
+      display: flex; align-items: center; gap: 0.6rem;
+      margin-bottom: 0.875rem; padding-bottom: 0.875rem;
+      border-bottom: 1px solid rgba(29,31,35,0.08);
+    }
+    .card-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .card-dot.ink    { background: var(--color-ink); }
+    .card-dot.muted  { background: var(--color-muted); }
+    .card-dot.accent { background: var(--color-accent); }
+    .card-dot.link   { background: var(--color-link); }
+    .card-dot.soft   { background: var(--color-soft); }
+    .card h3 { font-size: 0.875rem; font-weight: 600; color: var(--color-ink); letter-spacing: -0.005em; }
+    .card ul { list-style: none; color: var(--color-muted); font-size: 0.8125rem; line-height: 1.55; }
+    .card li { margin-bottom: 0.3rem; padding-left: 0.875rem; position: relative; }
+    .card li::before { content: '\2014'; position: absolute; left: 0; color: rgba(29,31,35,0.25); font-size: 0.75rem; }
+    code { font-family: var(--font-mono); font-size: 0.75rem; }
+
+    .footer {
+      margin-top: 2rem; padding-top: 1.25rem;
+      border-top: 1px solid var(--color-rule);
+      font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em;
+      color: var(--color-soft);
+      display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Sona · Staging · Checked 8 Oct 2026 @ <span class="hash">cd76571b</span></p>
+    <h1>Sona system context</h1>
+    <p class="subtitle">Who uses Sona, through which app, and which outside systems the one server talks to. Staging only, with synthetic patients; no real hospital, lab or insurer is connected.</p>
+
+    <div class="diagram">
+    <svg viewBox="0 0 1080 656" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="system-context-title system-context-desc">
+      <title id="system-context-title">Sona system context</title>
+      <desc id="system-context-desc">Architecture diagram showing hospital staff on Sona Pro, patients on Sona Care and insurers on a one-time link all reaching one Cloudflare Worker, which calls Sona models in AWS Malaysia, Neon Postgres in Singapore, PubMed and notification services, and receives lab results.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#59616b"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#245bcc"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f6e66"/></marker>
+        <marker id="arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1d1f23"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#f5f6f8"/>
+<!-- background: lanes, lifelines, frames -->
+<!-- connectors (drawn before boxes) -->
+<path d="M 280 116 L 492 116 A 8 8 0 0 1 500 124 L 500 200" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 280 260 L 400 260" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 280 516 L 576 516 A 8 8 0 0 0 584 508 L 584 320" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 448 320 L 448 380 A 8 8 0 0 1 440 388 L 280 388" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 160 352 L 160 304" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 160 424 L 160 472" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 640 224 L 704 224 A 8 8 0 0 0 712 216 L 712 156 A 8 8 0 0 1 720 148 L 800 148" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 640 248 L 800 248" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 640 272 L 712 272 A 8 8 0 0 1 720 280 L 720 340 A 8 8 0 0 0 728 348 L 800 348" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 800 452 L 704 452 A 8 8 0 0 1 696 444 L 696 304 A 8 8 0 0 0 688 296 L 640 296" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<!-- connector labels -->
+<rect x="352" y="96" width="72" height="12" rx="2" fill="#f5f6f8"/>
+<text x="388" y="105" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RPC + /LIVE</text>
+<rect x="304" y="240" width="72" height="12" rx="2" fill="#f5f6f8"/>
+<text x="340" y="249" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RPC + VOICE</text>
+<rect x="400" y="496" width="64" height="12" rx="2" fill="#f5f6f8"/>
+<text x="432" y="505" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">OPENS LINK</text>
+<rect x="320" y="368" width="76" height="12" rx="2" fill="#f5f6f8"/>
+<text x="358" y="377" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">PUSH + EMAIL</text>
+<rect x="168" y="320" width="80" height="12" rx="2" fill="#f5f6f8"/>
+<text x="208" y="329" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CHECK-IN PUSH</text>
+<rect x="168" y="440" width="76" height="12" rx="2" fill="#f5f6f8"/>
+<text x="206" y="449" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">EMAILED LINK</text>
+<rect x="740" y="128" width="40" height="12" rx="2" fill="#f5f6f8"/>
+<text x="760" y="137" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SIGV4</text>
+<rect x="724" y="228" width="72" height="12" rx="2" fill="#f5f6f8"/>
+<text x="760" y="237" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SQL / HTTPS</text>
+<rect x="744" y="328" width="44" height="12" rx="2" fill="#f5f6f8"/>
+<text x="766" y="337" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SEARCH</text>
+<rect x="728" y="432" width="48" height="12" rx="2" fill="#f5f6f8"/>
+<text x="752" y="441" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RESULTS</text>
+<!-- nodes -->
+<rect x="40" y="72" width="240" height="88" rx="6" fill="#f5f6f8"/>
+<rect x="40" y="72" width="240" height="88" rx="6" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<rect x="48" y="80" width="36" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="66" y="89" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STAFF</text>
+<text x="160" y="108" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Sona Pro</text>
+<text x="160" y="124" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">doctor, nurse, bed-manager, management</text>
+<text x="160" y="136" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">iPhone app + web /pro</text>
+<text x="160" y="148" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">email + password</text>
+<rect x="40" y="216" width="240" height="88" rx="6" fill="#f5f6f8"/>
+<rect x="40" y="216" width="240" height="88" rx="6" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<rect x="48" y="224" width="52" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="74" y="233" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">PATIENTS</text>
+<text x="160" y="252" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Sona Care</text>
+<text x="160" y="268" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">after discharge, linked by care_links</text>
+<text x="160" y="280" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">iPhone app + web /care (polls)</text>
+<text x="160" y="292" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">phone OTP, Apple or Google</text>
+<rect x="40" y="352" width="240" height="72" rx="6" fill="#f5f6f8"/>
+<rect x="40" y="352" width="240" height="72" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<rect x="48" y="360" width="44" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="70" y="369" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">OUTSIDE</text>
+<text x="160" y="388" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Notifications</text>
+<text x="160" y="404" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Expo push (exp.host) to patients</text>
+<text x="160" y="416" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Cloudflare Email to INSURER_EMAIL</text>
+<rect x="40" y="472" width="240" height="88" rx="6" fill="#f5f6f8"/>
+<rect x="40" y="472" width="240" height="88" rx="6" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<rect x="48" y="480" width="44" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="70" y="489" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">INSURER</text>
+<text x="160" y="508" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Insurer</text>
+<text x="160" y="524" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">no login: /insurer/&lt;token&gt;</text>
+<text x="160" y="536" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">24-byte link, valid 7 days</text>
+<text x="160" y="548" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">good for one decision</text>
+<rect x="400" y="200" width="240" height="120" rx="6" fill="#f5f6f8"/>
+<rect x="400" y="200" width="240" height="120" rx="6" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<rect x="408" y="208" width="40" height="12" rx="2" fill="transparent" stroke="rgba(36,91,204,0.5)" stroke-width="0.8"/>
+<text x="428" y="217" fill="#245bcc" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">WORKER</text>
+<text x="520" y="244" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Sona server</text>
+<text x="520" y="260" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Cloudflare Worker · Hono · oRPC /rpc</text>
+<text x="520" y="272" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Better Auth · /live · voice agent</text>
+<text x="520" y="284" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">serves /pro, /care, /insurer pages</text>
+<text x="520" y="296" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">PDPA access log per patient call</text>
+<rect x="800" y="112" width="240" height="72" rx="6" fill="#f5f6f8"/>
+<rect x="800" y="112" width="240" height="72" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<rect x="808" y="120" width="28" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="822" y="129" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+<text x="920" y="148" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Sona models</text>
+<text x="920" y="164" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">ap-southeast-5, Malaysia</text>
+<text x="920" y="176" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Med · Vision · Speech · Voice · Privacy</text>
+<rect x="800" y="216" width="240" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="800" y="216" width="240" height="64" rx="6" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="1"/>
+<rect x="808" y="224" width="20" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="818" y="233" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DB</text>
+<text x="920" y="252" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Neon Postgres</text>
+<text x="920" y="268" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Singapore · pgvector</text>
+<rect x="800" y="316" width="240" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="800" y="316" width="240" height="64" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<rect x="808" y="324" width="44" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="830" y="333" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">OUTSIDE</text>
+<text x="920" y="352" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">PubMed E-utilities</text>
+<text x="920" y="368" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">eutils.ncbi.nlm.nih.gov</text>
+<rect x="800" y="416" width="240" height="72" rx="6" fill="#f5f6f8"/>
+<rect x="800" y="416" width="240" height="72" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<rect x="808" y="424" width="44" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="830" y="433" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">OUTSIDE</text>
+<text x="920" y="452" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Lab feed</text>
+<text x="920" y="468" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">POST /lab/results</text>
+<text x="920" y="480" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">LAB_FEED_SECRET · no real lab yet</text>
+<!-- legend -->
+<line x1="40" y1="592" x2="1040" y2="592" stroke="rgba(29,31,35,0.12)" stroke-width="0.8"/>
+<text x="40" y="612" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="623" width="16" height="12" rx="2" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<text x="64" y="632" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Sona server</text>
+<rect x="140" y="623" width="16" height="12" rx="2" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="164" y="632" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Person + their app</text>
+<rect x="276" y="623" width="16" height="12" rx="2" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="300" y="632" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Sona models</text>
+<rect x="376" y="623" width="16" height="12" rx="2" fill="rgba(29,31,35,0.05)" stroke="#59616b" stroke-width="1"/>
+<text x="400" y="632" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Storage</text>
+<rect x="456" y="623" width="16" height="12" rx="2" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<text x="480" y="632" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Outside system</text>
+<line x1="572" y1="629" x2="600" y2="629" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="612" y="632" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Into Sona</text>
+<line x1="680" y1="629" x2="708" y2="629" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<text x="720" y="632" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Outside-system call</text>
+<text x="1040" y="632" fill="#8a929e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.12em">STAGING · SYNTHETIC PATIENTS</text>
+    </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header"><span class="card-dot accent"></span><h3>Who uses what</h3></div>
+        <ul>
+          <li>Staff roles: <code>doctor</code>, <code>nurse</code>, <code>bed-manager</code>, <code>management</code>; email + password</li>
+          <li>Patients sign in by phone OTP, Apple or Google and are linked to a record through <code>care_links</code></li>
+          <li>Insurers get no account: <code>claim.send</code> makes a bearer link, 7 days, one decision; the Worker serves the review page</li>
+          <li>One Worker serves the API and both web portals, so the web shares the API's origin and cookies</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-dot muted"></span><h3>Staging only</h3></div>
+        <ul>
+          <li>Synthetic patients: Demo General Hospital (synthetic), <code>SYN-</code> record numbers</li>
+          <li>No real lab, hospital system or insurer is connected</li>
+          <li>Patient OTP codes are only logged (no SMS provider)</li>
+          <li>Sona Care web has no <code>/live</code> socket; its screens poll</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer"><span>Source: docs/architecture/01-system-context.md</span><span>diagram-design · architecture</span></div>
+  </div>
+</body>
+</html>

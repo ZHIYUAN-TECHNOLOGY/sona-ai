@@ -1,0 +1,816 @@
+[
+ {
+  "id": "resp_031",
+  "split": "train",
+  "condition": "COPD exacerbation",
+  "source": "Chronic obstructive pulmonary disease",
+  "patient_persona": {
+   "description": "Tok Hashim bin Daud, 74, male, retired rubber tapper from Kuala Kangsar, Perak; smoked rokok daun for 50 years, day 3 in the medical ward. Breathless, slow, deep Perak Malay.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Pavithra Raman, Malaysian Indian woman in her 30s, medical officer at Hospital Kuala Kangsar, ward round. Soft-spoken, patient; Malay with English ward terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Assalamualaikum, tok. Hari ni breathing macam mana? Masih sesak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kurang sikit dah, doktor. Semalam nak pergi toilet pun tak larat. Hari ni boleh jalan sikit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Alhamdulillah. Oxygen tok sekarang 92 percent dengan dua liter. Untuk tok, target 88 hingga 92, so ini okay."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kenapa tak boleh tinggi macam orang lain, doktor? Seratus percent?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Paru-paru tok dah ada COPD. Kalau oxygen terlalu tinggi, badan tok simpan carbon dioxide, nanti mengantuk dan keliru."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, macam tu. Ubat drip tu bila nak habis?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "IV antibiotic kita tukar ke ubat makan hari ni. Prednisolone 30mg, hari ketiga dah, total lima hari."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Nebuliser salbutamol dengan ipratropium kita kurangkan ke empat kali sehari, then esok try tukar ke inhaler."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Inhaler tu susah nak guna, doktor. Tangan saya menggeletar."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak apa, kita bagi spacer, lebih senang. Physio dan pharmacist akan ajar tok sebelum balik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Rokok daun tu, kena berhenti betul-betul ke? Saya dah hisap sejak umur dua puluh."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, tok. Itu satu-satunya cara nak slowkan kerosakan paru-paru. Kami ada ubat, nicotine patch, boleh bantu berhenti."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Susah, tapi saya cuba lah. Cucu saya pun marah, dia kata smoking bahaya."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagus. Kalau semua okay, lusa boleh discharge, and kita refer ke pulmonary rehab di klinik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor. Jaga tok baik-baik."
+   }
+  ]
+ },
+ {
+  "id": "resp_032",
+  "split": "train",
+  "condition": "COPD, inhaler refill, still smoking",
+  "source": "Chronic obstructive pulmonary disease",
+  "patient_persona": {
+   "description": "Mr. Tan Ah Seng, 68, male, retired taxi driver in Bukit Baru, Melaka; COPD on tiotropium, still smokes ten a day. Gruff, raspy voice, Melaka Mandarin with Hokkien words and Malay.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Mohd Rizal Harun, Malay man in his 40s, family medicine specialist at a Melaka health clinic who speaks conversational Mandarin. Honest, a bit humorous; Mandarin with English and Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Tan 伯，拿药是吗？三个月过得怎样？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "差不多啦，爬楼梯还是喘，走去 kedai kopi 要停两次。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的 Spiriva 每天早上有喷吗？这个 Respimat 要 press 两下哦。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有啊，每天早上。以前按一下而已，nurse 教我才知道要两下。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "好。那烟呢？上次你说要减少。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "减少了啦，一天十支而已。以前一包的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "减少是好开始，但是 COPD 的人 smoking 就算一天五支，肺还是一直坏下去。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我也知道，但是一坐下来喝 kopi，就想 sebatang。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我明白。我们可以试 nicotine patch，21mg，每天贴一片，再加 gum，想抽的时候咬。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Patch 贴在哪里？洗澡可以吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "贴在 lengan 或者胸口，每天换位置。洗澡没问题。晚上 dream 很多的话，可以睡前撕掉。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，试看。医生，最近早上的痰比较多，黄黄的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "有发烧吗？喘有比平时严重吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "没有烧，喘就差不多。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那我开一个 rescue pack 给你：prednisolone 30mg 五天，还有 doxycycline 100mg。如果痰变绿、喘更严重，就开始吃，然后打电话给 klinik。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，我会记得。谢谢医生，下次我烟一定少过五支。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "最好是零支，Tan 伯。我们下个月见，看 patch 有没有 work。"
+   }
+  ]
+ },
+ {
+  "id": "resp_033",
+  "split": "train",
+  "condition": "COPD, new diagnosis on spirometry",
+  "source": "Chronic obstructive pulmonary disease",
+  "patient_persona": {
+   "description": "Mr. Selvaraj a/l Arumugam, 62, male, retired estate supervisor in Sungai Petani, Kedah; smoker for 40 years, breathless for a year. Soft, measured Malaysian Indian English with Malay words.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Fatimah Azzahra Ismail, Malay woman in her 40s, family medicine specialist at a Sungai Petani health clinic. Clear, empathetic; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Uncle Selvaraj, the spirometry results are back. Let me explain what the numbers mean."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Please, doctor. My son says must faham properly, don't just makan ubat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your FEV1 is 58 percent of expected, and the ratio is 0.55. Even lepas Ventolin, tak banyak improve. This confirms COPD."
+   },
+   {
+    "speaker": "Patient",
+    "text": "COPD. Is that like asthma? My jiran has asthma, dia guna pam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Similar symptoms, but different. In COPD, the damage is mostly permanent, usually from smoking. Tapi we can slow it down and help you breathe better."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Forty years I smoked. Estate life, everybody smoke, no one tell us bahaya."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The most important treatment now is berhenti merokok. Everything else is second."
+   },
+   {
+    "speaker": "Patient",
+    "text": "I already reduce to five sticks, doctor. Stop totally quite susah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll refer you to our quit clinic. We can use varenicline, satu biji twice a day, it cuts the craving a lot."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For your breathing, I'll start tiotropium, Spiriva, two puffs once a day. Ventolin two puffs bila sesak."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Anything else I should do, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Walk every day, even ten minutes around the taman. Influenza vaccine yearly, and pneumococcal vaccine once."
+   },
+   {
+    "speaker": "Patient",
+    "text": "How long can I hidup with this, doctor? Frankly."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Many people live for years with moderate COPD, especially kalau berhenti merokok. Your future is quite dalam tangan you sendiri."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright, doctor. I'll try my best for my cucu-cucu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Jumpa lagi in one month, and bawa the quit clinic card."
+   }
+  ]
+ },
+ {
+  "id": "resp_034",
+  "split": "train",
+  "condition": "COPD, pulmonary rehabilitation review",
+  "source": "Chronic obstructive pulmonary disease",
+  "patient_persona": {
+   "description": "Mdm. Chin Siew Lan, 74, female, retired Hakka farmer in Sandakan, Sabah; never smoked but cooked over a wood fire for decades. Quiet, slow voice, Mandarin with Hakka-flavoured words and Sabah Malay.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chiew Mei Ying, Malaysian Chinese woman in her 30s, medical officer at the Duchess of Kent Hospital respiratory clinic, Sandakan. Gentle and encouraging; Mandarin with English and Malay terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "陈阿婆，你去 pulmonary rehab 两个月了，感觉怎样？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有好一点。以前走到 dapur 就喘，现在可以在花园走一圈，no need rest。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很好！我们上次的 six-minute walk 是 220 米，今天是 290 米，进步很多。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "真的吗？我自己也觉得脚比较有力了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的 inhaler 是 Trelegy，每天一次，一下，有记得吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有，我女儿每天早上提醒我。喷完就漱口。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "做得很好。你没有 smoking，但是以前烧柴煮饭很多年，那个 smoke 也会伤肺。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "以前在乡下没有煤气嘛，每天都烧柴，烟很大。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "现在家里还有烧东西吗？比如拜神烧香？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "初一十五会烧香，在前面 anjung 那边。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "烧香的时候你站远一点，或者让孙子去烧。Buka tingkap，不要吸那个烟。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好的。那个 oxygen 机，我需要吗？邻居有一台。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你今天休息的时候 oxygen 94，走路最低 90，暂时不需要 home oxygen。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那就好，那个机器很吵。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "继续做运动，每天走两次，每次十五分钟。三个月后回来，我们再做一次 lung function test。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生，terima kasih banyak。"
+   }
+  ]
+ },
+ {
+  "id": "resp_035",
+  "split": "train",
+  "condition": "COPD exacerbation, emergency discharge",
+  "source": "Chronic obstructive pulmonary disease",
+  "patient_persona": {
+   "description": "Pak Mat Zin bin Awang, 63, male, fisherman in Chendering, Kuala Terengganu; smoker, COPD diagnosed last year. Loud, rough voice, heavy Terengganu Malay, few English words.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kevin Lim Wei Ming, Malaysian Chinese man in his 30s, emergency physician at Hospital Sultanah Nur Zahirah. Calm, simple language; Malay with English terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Pak Mat, dah rasa lega sikit lepas nebuliser?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lega dah, doktor. Tadi rasa macam lemas atas bot."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sesak dah berapa hari? Kahak warna apa? Ada fever?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tiga hari. Kahak kuning pekat, banyak. Tak demam, doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Oxygen sekarang 93 percent. Chest X-ray takda pneumonia. Ini COPD flare-up, paru-paru radang sebab jangkitan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kena admit ke, doktor? Esok nak turun laut, ikan tengah banyak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Pak Mat boleh balik, tapi tak boleh turun laut minggu ni. Saya bagi MC seminggu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Prednisolone 30mg, sekali sehari pagi lepas makan, five days. Doxycycline 100mg, twice a day, lima hari, with plenty of water."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat inhaler yang klinik bagi dulu tu, saya tak guna sangat. Lupa."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yang mana satu? Warna apa?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Yang kelabu tu, Spiriva kot. Saya simpan dalam laci, doktor, jarang guna."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Itu ubat harian, kena guna setiap pagi, dua puff. Kalau tak guna, senang kena serangan macam hari ni."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, saya ingat bila sesak je guna. Silap lah saya, no wonder attack datang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak apa, sekarang dah tahu. Ventolin untuk bila sesak, Spiriva setiap pagi walaupun rasa sihat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Faham, doktor. Rokok pun kena stop ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, Pak Mat. Rokok tu yang paling bahaya. Pergi klinik kesihatan minggu depan, dia orang ada quit smoking service."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Saya cuba. Terima kasih."
+   }
+  ]
+ },
+ {
+  "id": "resp_036",
+  "split": "train",
+  "condition": "Pulmonary tuberculosis, new diagnosis",
+  "source": "Tuberculosis",
+  "patient_persona": {
+   "description": "Mohd Ridzuan bin Lajim, 30, male, Bajau security guard in Kota Kinabalu, Sabah; six weeks of cough, night sweats and weight loss. Quiet, worried, Sabah Malay with some English.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Evelyn Chong Siew Yin, Malaysian Chinese woman in her 30s, medical officer at a Kota Kinabalu health clinic TB unit. Warm, non-judgemental; Malay with English terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Ridzuan, keputusan sputum dah keluar. Positive for TB, tuberculosis. Chest X-ray pun ada shadow kat paru-paru kanan atas."
+   },
+   {
+    "speaker": "Patient",
+    "text": "TB? Alamak. Saya ingat batuk biasa je bah. Macam mana saya boleh dapat infection ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "TB merebak melalui udara, bila orang yang ada TB batuk. Kadang-kadang kita tak tahu siapa source dia."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh sembuh ke, doktor? Saya takut, honestly."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh sembuh sepenuhnya, asalkan makan ubat cukup enam bulan, setiap hari, tanpa miss."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dua bulan pertama, empat jenis ubat dalam satu tablet, nama dia Akurit-4. Berat encik 52kg, jadi tiga biji sekali sehari, pagi sebelum makan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tiga biji sehari, six months? Lama juga bah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Lama, tapi penting. Kita buat DOTS, directly observed therapy, maksudnya encik datang klinik every day, nurse tengok encik telan ubat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya kerja shift malam. Susah nak datang pagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita boleh atur. Mungkin encik datang lepas habis shift, pukul lapan pagi, atau video DOTS guna phone."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Family saya macam mana? Isteri dengan anak dua orang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Semua kena buat saringan, X-ray dan test. Anak-anak bawah lima tahun mungkin perlu ubat pencegahan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kencing jadi warna oren, itu normal, side effect rifampicin. Tapi kalau mata kuning, vomiting, atau rash, bagitahu terus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Faham, doktor. Kerja saya macam mana? Boleh masuk shift?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dua minggu pertama rehat di rumah, pakai mask. Lepas tu biasanya dah tak berjangkit, boleh kerja semula."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor. Saya akan makan ubat betul-betul."
+   }
+  ]
+ },
+ {
+  "id": "resp_037",
+  "split": "train",
+  "condition": "Tuberculosis, two-month review",
+  "source": "Tuberculosis",
+  "patient_persona": {
+   "description": "Mdm. Leong Mei Chu, 55, female, noodle stall owner in Kepong, Kuala Lumpur; type 2 diabetes; two months into TB treatment. Talkative, Cantonese-accented Mandarin with English and Malay words.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Mohd Hafizuddin Rahim, Malay man in his 30s, chest physician at a KL hospital TB clinic who speaks some Mandarin. Kind, systematic; Mandarin with English, switches to Malay words when stuck.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "梁女士，两个月的 intensive phase 已经完成了。你的 sputum 今天是 negative，很好。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "真的吗？太好了！咳嗽差不多没有了，weight 也回来了两公斤。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那我们现在换去 maintenance phase，四个月，只剩下两种药，isoniazid 和 rifampicin。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那药比较少了，好。医生，我的 sugar 最近比较高，是不是药的关系？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "有可能。Rifampicin 会让一些 diabetes 药效果变差。你现在吃什么？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Gliclazide 80mg 早晚一粒，metformin 也是。早上验血，平常八点几，现在十一。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我请 diabetes nurse 帮你调药，gliclazide 可能要加。TB 期间血糖控制好，药会比较 work。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。另外，我的脚底最近麻麻的，像蚂蚁在爬。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个可能是 isoniazid 的副作用，diabetes 的人更容易。你有吃 pyridoxine 吗？黄色小粒的。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "啊，那个我以为是 vitamin，不重要，所以有时候没吃。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很重要哦，那个就是保护 nerve 的。每天 10mg，跟 TB 药一起吃。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "原来是这样，那我以后每天都吃。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的 liver function test 也正常。还有，档口可以做了吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我两个礼拜前已经回去开档，戴口罩。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sputum 已经 negative，不会传染了，可以放心做。一个月后回来 review，记得带 glucose 记录。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生，terima kasih ya。"
+   }
+  ]
+ },
+ {
+  "id": "resp_038",
+  "split": "train",
+  "condition": "Tuberculosis with isoniazid neuropathy",
+  "source": "Tuberculosis",
+  "patient_persona": {
+   "description": "Mr. Mahendran a/l Govindasamy, 40, male, lorry driver in Prai, Penang; four months into TB treatment; drinks beer on weekends. Easy-going, fast Malaysian Indian English with lots of Malay.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nor Hidayah Ismail, Malay woman in her 30s, medical officer at a Seberang Perai health clinic. Firm but friendly; English mixed with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Mahendran, how's everything? Your DOTS nurse says you've been very consistent, tak pernah miss. Good job."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Thank you, doc. Every day I come before my trip. Tapi lately kaki saya rasa kebas, both feet, macam semut gigit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "How long already? Ada problem walking or tekan brek?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "About two weeks. Driving okay, but night time it's quite teruk, can't sleep properly."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's likely from the isoniazid. Are you still makan the pyridoxine, the vitamin B6?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "The small one? The pharmacy say out of stock last month, then I terlupa."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That explains it. Isoniazid can damage saraf if we don't give B6. I'm increasing pyridoxine to 50mg daily for now."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Will it go back to normal? Boleh baik balik?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Usually improves over weeks if we catch it early. Soalan lain, how much are you drinking?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Weekend only lah, doc. Saturday maybe four, five cans with kawan-kawan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Alcohol and isoniazid together can rosakkan hati, and also makes the nerve problem worse. Please stop sampai treatment habis."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Two more months only, right? Okay lah, I'll tell my kawan I'm on medicine."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, two more months. Your liver test hari ni, we'll check. Kalau mata kuning or perut sakit, call immediately."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay doc. And driving is safe with the kebas?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For now yes, since your strength is normal. Tapi kalau tak rasa pedal properly, stop driving and see me."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Understood. Thanks, doc."
+   }
+  ]
+ },
+ {
+  "id": "resp_039",
+  "split": "train",
+  "condition": "Tuberculosis contact screening in a child",
+  "source": "Tuberculosis",
+  "patient_persona": {
+   "description": "Puan Siti Khadijah binti Omar, 33, female, housewife in Tumpat, Kelantan, bringing her son Irfan, 4, whose grandfather was diagnosed with TB last month. Anxious, Kelantan Malay.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nik Azhar Nik Mahmud, Malay man in his 40s, family medicine specialist at a Tumpat health clinic. Calm, reassuring; Kelantan-flavoured Malay with English terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Khadijah, Irfan ni cucu Pak Deraman yang kena TB tu kan? The contact case?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya, doktor. Ayah saya duduk serumah dengan kami. Irfan selalu tidur dengan tok ayah dia, rapat sangat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Irfan ada batuk, demam, atau weight loss sejak sebulan ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Takdok, doktor. Dia sihat, makan banyak, main macam biasa."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Baik. Kita dah buat Mantoux test hari Isnin. Today we read the result. Bengkak dia 12mm, so positive."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Positif? Maksudnya dia dah kena TB lah, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Maksudnya kuman TB dah masuk badan dia, but not active disease yet. Kita panggil latent TB. X-ray dia pun normal."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah. Habis tu kena buat apa?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Budak bawah lima tahun senang jadi TB teruk. So kita bagi preventive therapy, isoniazid, enam bulan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Berat Irfan 16kg. Isoniazid 160mg once a day, dengan pyridoxine. Crush the tablet, campur dengan sikit air atau bubur."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Enam bulan tu lama. Ada side effect tak?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Budak-budak biasanya tahan ubat ni dengan baik. Kalau dia vomit banyak, mata kuning, atau lemah, bawa datang terus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Adik dia baru enam bulan, still baby. Dia pun kena ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, bawa baby sekali minggu ni untuk screening. Babies also need preventive treatment."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Esok saya bawa adik dia."
+   }
+  ]
+ },
+ {
+  "id": "resp_040",
+  "split": "test",
+  "condition": "Suspected pulmonary tuberculosis",
+  "source": "Tuberculosis",
+  "patient_persona": {
+   "description": "Mr. Fung Kok Chai, 60, male, Hakka durian orchard owner in Tawau, Sabah; smoker, two months of cough with blood-streaked sputum. Gruff, worried, Mandarin with Hakka-flavoured words and Sabah Malay.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nurul Ain Abdullah, Malay woman in her 30s, medical officer at Hospital Tawau medical clinic, fluent in Mandarin from Chinese school. Calm, careful; Mandarin with English and Malay terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我咳了两个月，最近痰里面有血丝，我老婆很紧张，叫我来 hospital。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "谢谢你来。除了咳嗽，晚上有没有流汗？体重有没有掉？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "晚上流很多汗，床单都湿。Seluar 也松了，可能掉了五六公斤。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你有抽烟对吗？一天多少？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "一天一包，抽了四十年。园里的工人也都抽。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的 X-ray 右边上面有一个 cavity，就是一个洞。可能是 TB，也可能是别的，比如 lung cancer，所以要验清楚。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "啊？cancer？医生，你不要吓我。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我只是要讲清楚。TB 比较有可能，因为有流汗和掉体重。我们先验三次 sputum，看 TB 细菌，还有 GeneXpert test。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那个要多久才知道？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "GeneXpert 一两天就有结果。等结果的时候，你先住 isolation room，戴 mask。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "要住院哦？我的园现在是 musim durian，很忙。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我明白，但是如果是 TB，你会传染给家人和 pekerja。先 confirm，大概两三天而已。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好啦，好啦。我孙子常常来我家玩，他会不会有事？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果证实是 TB，家里每个人都要做 screening，小孩子特别要检查。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那烟呢？我要戒吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "一定要戒。不管是 TB 还是别的，烟都会让肺更差。住院的时候我们可以开始 nicotine patch。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生，我打电话叫老婆拿衣服来。"
+   }
+  ]
+ }
+]

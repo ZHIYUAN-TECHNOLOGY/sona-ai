@@ -1,0 +1,36 @@
+/* Sona Care: discharge plan and check-ins. Tokens only. Red is only for "call the hospital now". */
+.care-plan { display: grid; gap: var(--space-5); max-width: 46rem; font-size: max(17px, var(--text-body, 17px)); line-height: 1.5; }
+.care-plan h2 { margin: 0; font-size: 1.3em; }
+.care-plan h3 { margin: var(--space-4) 0 var(--space-2); font-size: 1em; color: var(--muted); }
+.care-plan p { margin: 0; }
+.care-plan .btn, .care-plan textarea { min-height: max(48px, var(--tap, 48px)); font-size: inherit; }
+
+.plan-lead, .plan-section { display: grid; gap: var(--space-3); padding: var(--space-5); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg, 16px); }
+.plan-lead { border-left-width: 6px; justify-items: start; }
+.plan-lead-info { border-left-color: var(--blue); }
+.plan-lead-soon { border-left-color: var(--amber); background: var(--amber-wash); }
+.plan-lead-done { border-left-color: var(--green); background: var(--green-wash); }
+.plan-lead-urgent, .plan-warning { border-left: 6px solid var(--red); background: var(--red-wash); }
+.plan-lead-urgent h2, .plan-warning h2 { color: var(--red); }
+.plan-kicker { font-weight: 600; color: var(--muted); }
+.plan-muted { color: var(--muted); }
+.plan-leaflet { white-space: pre-line; }
+
+.plan-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.plan-list li { display: grid; gap: var(--space-1); padding: var(--space-3) 0; border-top: 1px solid var(--line); }
+.plan-list li:first-child { border-top: 0; }
+.plan-warning ul { margin: 0; padding-left: 1.2em; display: grid; gap: var(--space-2); }
+
+.reply { display: grid; gap: var(--space-3); width: 100%; }
+.reply textarea { width: 100%; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-md, 12px); background: var(--surface); color: var(--ink); font-family: inherit; resize: vertical; }
+.reply-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.reply-actions .btn { touch-action: none; user-select: none; }
+.reply-recording { outline: 3px solid var(--amber); }
+
+/* "Download PDF": the plan alone, no frame. */
+@media print {
+  .frame-side, .frame-bar, .no-print { display: none !important; }
+  body { background: none; }
+  .care-plan { max-width: none; gap: var(--space-3); }
+  .plan-lead, .plan-section { background: none; break-inside: avoid; padding: var(--space-3); }
+}

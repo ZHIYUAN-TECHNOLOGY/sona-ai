@@ -1,0 +1,776 @@
+[
+  {
+    "id": "msk_031",
+    "split": "train",
+    "condition": "Rheumatoid arthritis, new diagnosis",
+    "source": "Rheumatoid arthritis",
+    "patient_persona": {
+      "description": "Zainal Abidin bin Mat Ali, 58, male, electrical maintenance foreman in Kuala Terengganu; hypertension on amlodipine, ex-smoker. First rheumatology visit. Deep, blunt Terengganu Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lee Wen Hui, Malaysian Chinese woman in her 40s, rheumatologist at a Kuala Terengganu hospital. Clear, patient; English-leaning, speaks Malay with English medical terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Zainal, dah empat bulan jari dengan pergelangan tangan bengkak, betul? Both hands?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Betul, doktor. Dua-dua belah tangan, kaki pun. Pagi bangun, tangan keras macam kayu, sejam lebih baru boleh genggam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kerja macam mana? Boleh pegang spanar lagi, buat wiring semua?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susah. Butang baju pun isteri tolong pasang. Budak-budak kat site dah perasan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Result darah encik, rheumatoid factor dan anti-CCP positive, ESR pun tinggi. Dengan bengkak sendi macam ni, ini rheumatoid arthritis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Arthritis? Orang tua je kena, kan? Saya ingat sakit sendi biasa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak, RA ni lain. Sistem imun badan serang sendi sendiri. Kalau tak rawat awal, sendi boleh rosak kekal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat dia kena makan seumur hidup ke? For life?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Selalunya lama, ya. The main medicine is methotrexate, seminggu sekali je, bukan setiap hari. Start with 10mg setiap hari Jumaat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tambah folic acid 5mg, seminggu sekali, hari lain, contoh Isnin. Ia kurangkan kesan sampingan macam ulser mulut."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Seminggu sekali? Confirm nanti saya lupa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pilih satu hari, tulis kat kalendar. Never take it every day, bahaya. Before we start, kita check liver, full blood count, hepatitis dan chest X-ray."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sakit sekarang ni macam mana? Tak tahan sangat, doktor, especially pagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi prednisolone 10mg sehari, sebulan, sementara tunggu methotrexate jalan. Kita akan turunkan perlahan-lahan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Saya dah berhenti rokok lapan tahun, ada kaitan ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Smoking is a known risk factor for RA. Bagus encik dah berhenti. Datang balik empat minggu, bawa result darah."
+      }
+    ]
+  },
+  {
+    "id": "msk_032",
+    "split": "train",
+    "condition": "Rheumatoid arthritis on methotrexate, pregnancy planning",
+    "source": "Rheumatoid arthritis",
+    "patient_persona": {
+      "description": "Yap Hui Min, 34, female, graphic designer in Cheras, Kuala Lumpur; RA for three years, well controlled on methotrexate 15mg weekly; newly married and wants a baby. Follow-up. Gentle, earnest Malaysian Mandarin with English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Shanti a/p Ramalingam, Malaysian Indian woman in her 40s, rheumatologist at a Cheras hospital. Warm, careful; English-leaning, some Mandarin words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hui Min, your joints look very quiet today. 一点都没有肿。How have you been?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "很好，doctor。只是……我和我先生想要生孩子了。我想问 methotrexate 可以继续吃吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thank you for asking before trying, 这个很重要。Methotrexate is not safe in pregnancy, 会伤害 baby。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我要马上停吗？我怕停了关节又痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We stop it and wait at least three months before trying. 这段时间，我们换成 pregnancy 比较 safe 的药。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hydroxychloroquine 200mg twice a day, and sulfasalazine, starting 500mg and slowly going up. Both can be used while pregnant."
+      },
+      {
+        "speaker": "Patient",
+        "text": "这两个药有什么 side effect？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hydroxychloroquine needs a yearly eye check. Sulfasalazine 可能会让胃不舒服，urine 会变橙色，don't be shocked."
+      },
+      {
+        "speaker": "Patient",
+        "text": "橙色的小便？好，我记住了。那 folic acid 呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Folic acid 继续吃, but change to 5mg every day now, 对 baby 也好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果停药的时候 RA 发作怎么办？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Call the clinic, don't wait. We can give a short course of low-dose prednisolone, which is acceptable in pregnancy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我先生需要 check 吗？他没有吃什么药。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not for this. Just keep yourselves healthy. Let's also refer you to our obstetric medicine clinic before you conceive."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，谢谢你，doctor。我其实很怕 RA 会让我不能当妈妈。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Many women with RA have healthy babies. 像你这样 plan 好，is exactly the right way. See you in six weeks."
+      }
+    ]
+  },
+  {
+    "id": "msk_033",
+    "split": "train",
+    "condition": "Rheumatoid arthritis, test results review",
+    "source": "Rheumatoid arthritis",
+    "patient_persona": {
+      "description": "Priya a/p Nadarajan, 39, female, bank relationship manager in Petaling Jaya; six months of hand pain and fatigue. Results review. Articulate, anxious Malaysian Indian English with some Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Rizal bin Hamdan, Malay man in his 40s, rheumatologist in Petaling Jaya. Calm, thorough; English-leaning.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Priya, your results are back. Rheumatoid factor and anti-CCP are both positive, and the hand X-ray shows two small erosions."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Erosions? Means the bone dah rosak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Early damage, yes, at two knuckles. It tells us the RA is active, so we should treat it firmly now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I knew something was wrong. Every morning I take thirty minutes just to open my hands. Handbag pun tak boleh angkat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How's your energy? Many people with RA feel very tired."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Exhausted, doctor. After work I just baring on the sofa, tak larat buat apa. My husband thinks I'm malas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The fatigue is part of the disease, not laziness. It should improve once the inflammation settles."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'd like to start methotrexate 15mg once a week, with folic acid 5mg weekly on a different day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I read online methotrexate is a chemo drug. Rambut I akan gugur ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's used in cancer at much higher doses. At RA doses, hair thinning happens in a few people, usually mild. Folic acid reduces most side effects."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can I still drink a glass of wine at dinners with clients?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Better to keep alcohol very minimal, maybe one glass once in a while. Methotrexate and alcohol together strain the liver."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, noted. Ada apa-apa lagi I need to do?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Blood tests every month at first, for liver and blood counts. And get the flu vaccine, sebab immune system will be slightly lower."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright. At least now I know what it is. Lega sikit rasa."
+      }
+    ]
+  },
+  {
+    "id": "msk_034",
+    "split": "train",
+    "condition": "Rheumatoid arthritis flare after stopping methotrexate",
+    "source": "Rheumatoid arthritis",
+    "patient_persona": {
+      "description": "Rohani binti Che Mat, 52, female, sells kain batik at a market in Kota Bharu, Kelantan; stopped methotrexate two months ago after hair shedding and switched to herbal jamu. Unscheduled flare visit. Expressive, emotional Kelantanese Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Azlina binti Ibrahim, Malay woman in her 40s, rheumatologist at a Kota Bharu hospital. Kind, non-judgemental; speaks Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, sendi-sendi saya bengkak semua balik. Lutut, jari, pergelangan. Dah seminggu tak boleh buka kedai."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kak Rohani, methotrexate masih makan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sebenarnya saya dah stop dua bulan. Rambut gugur banyak, saya takut botak. Saya makan jamu akar kayu yang kawan jual."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih akak berterus terang. Saya faham, rambut gugur memang menakutkan bagi perempuan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya malu nak bagi tahu doktor. Ingat doktor marah, scold saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak marah langsung. Tapi RA ni, bila ubat berhenti, dia datang balik lagi teruk. Hari ni ada lima sendi bengkak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jamu tu ada nama? Ada tulis kandungan? Sesetengah jamu campur steroid tanpa label."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada label, bungkus plastik je. Tapi memang cepat hilang sakit masa mula-mula."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itulah yang saya risau. Kalau ada steroid, berhenti mengejut pun bahaya. We'll check your sugar and blood pressure today."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Untuk rambut gugur, kita boleh naikkan folic acid, dan tukar methotrexate ke suntikan, kadang-kadang kesan lebih kurang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Suntik? Injection? Boleh buat sendiri kat rumah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, nurse akan ajar. Sekali seminggu je, kat perut. For this flare, saya bagi prednisolone 15mg daily, two weeks, then we taper down."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Rambut saya akan tumbuh balik ke, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Biasanya tumbuh balik. Kalau masih gugur banyak, kita ada ubat lain, other options. Janji dengan saya, jangan stop sendiri lagi, ya?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Janji, doktor. Jamu tu saya buang."
+      }
+    ]
+  },
+  {
+    "id": "msk_035",
+    "split": "train",
+    "condition": "Rheumatoid arthritis, methotrexate dosing error",
+    "source": "Rheumatoid arthritis",
+    "patient_persona": {
+      "description": "Ting Sing Hwa, 66, male, retired Foochow coffee shop owner in Sibu, Sarawak; RA on methotrexate 15mg weekly; recently mistook it for a daily pill. Refill visit. Slow, gravelly Sarawakian Mandarin with some Malay.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wong Siaw Ling, Sarawakian Chinese woman in her 40s, family medicine specialist at a Sibu clinic. Precise, calm under pressure; English-leaning, fluent Mandarin.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "陈伯，你来拿 methotrexate refill。这个药你怎么吃？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一个礼拜吃一次……不过上个礼拜，我孙子帮我放 ubat 盒，放在每天那一格，我吃了三天才发现。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "三天都吃了？每次几粒？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "每次六粒，就是 15mg。第四天我看药盒不对，就停了。现在嘴巴有好几个 ulcer，吃东西很痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "谢谢你讲出来，这个很重要。Methotrexate overdose 会伤 bone marrow，mouth ulcer 就是一个 warning sign。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那很严重吗？我要 masuk wad 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们现在马上验血，看白血球和 platelet。有没有发烧、喉咙痛，或者身上有乱乱的紫点？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有 fever，紫点……手臂这里有两块，以为是撞到。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我先打电话给医院的 rheumatology team。今天可能需要打一种 antidote，叫 folinic acid。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好好好，我听你的。我女儿在外面，可以叫她进来吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，叫她进来一起听。以后药盒不要每天那种，我们用一个 weekly 的，只有礼拜五一格。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我太老了，常常搞乱，真 paiseh。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不是你的错，这个药很容易搞错。以后 methotrexate 的盒子，我会贴大字：一个礼拜一次，once a week only。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "血的报告出来之前，methotrexate 和其他药先停。等一下护士带你去验血，结果出来我们马上决定。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "谢谢医生。我女儿会陪着我。"
+      }
+    ]
+  },
+  {
+    "id": "msk_036",
+    "split": "train",
+    "condition": "Carpal tunnel syndrome in a factory worker",
+    "source": "Carpal tunnel syndrome",
+    "patient_persona": {
+      "description": "Suraya binti Hamid, 45, female, production operator at an electronics factory in Bayan Lepas, Penang, doing repetitive hand work; type 2 diabetes. First visit. Soft, polite northern Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Cheah Wei Ming, Malaysian Chinese man in his 30s, GP in Bayan Lepas. Friendly, methodical; English-leaning, speaks Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, tangan kanan saya kebas-kebas, terutama waktu malam. Tidur terjaga, kena goyang-goyang tangan baru hilang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jari mana yang kebas? Semua jari, atau certain fingers je?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ibu jari, jari telunjuk, jari tengah. Jari kelingking OK je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kerja puan guna tangan macam mana? Repetitive movement ke?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pasang komponen kecil, pegang screwdriver kecil, lapan jam sehari. Kadang-kadang barang terjatuh dari tangan, supervisor pun dah tegur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya ketuk kat pergelangan tangan ni... rasa macam kena karan ke jari?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, macam kena karan! Electric shock sampai jari tengah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ini carpal tunnel syndrome. Saraf kat pergelangan tangan tersepit. Kerja berulang dan kencing manis dua-dua boleh sebabkan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh baik ke, doktor? Saya takut kena berhenti kerja, kilang tu je income saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Selalunya boleh. First step, pakai wrist splint waktu malam, supaya tangan tak bengkok masa tidur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita juga check gula puan. Kalau HbA1c tinggi, saraf lagi mudah rosak. Last time 8.6, kan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, saya susah nak jaga makan. Kerja shift, makan ikut sempat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham. Saya boleh tulis surat ke klinik kilang, minta rotate kerja atau rehat tangan setiap jam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau pendakap tu tak jalan macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita boleh suntik steroid, atau buat nerve conduction study. Kalau teruk, ada pembedahan kecil. Datang balik enam minggu."
+      }
+    ]
+  },
+  {
+    "id": "msk_037",
+    "split": "train",
+    "condition": "Carpal tunnel syndrome in pregnancy",
+    "source": "Carpal tunnel syndrome",
+    "patient_persona": {
+      "description": "Teo Jia Xuan, 31, female, primary school teacher in Johor Bahru, 30 weeks pregnant with her first child; both hands numb at night. First visit. Soft, worried Malaysian Mandarin with some English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nor Aini binti Salleh, Malay woman in her 40s, GP in Johor Bahru. Gentle, reassuring; English-leaning, speaks simple Mandarin phrases with Mandarin speakers.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor，我两只手晚上都麻，麻到醒过来。我 pregnant 三十个礼拜，是不是 baby 有问题？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Don't worry, baby 没事。This is very common in pregnancy. 哪几只手指麻？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "大拇指、食指、中指。早上起来手很 stiff，拿杯子要很小心。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's carpal tunnel syndrome. 怀孕的时候，身体 keeps more water, so the wrist swells and presses on the nerve."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那生了以后会好吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Most of the time, ya, it goes away within a few weeks after delivery."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我可以吃什么药吗？我不敢乱吃，怕影响 baby。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good that you didn't take anything. Ibuprofen 现在不可以，especially third trimester. Paracetamol is okay if needed."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The main treatment is a wrist splint at night, keeping the wrist straight. You can buy at the pharmacy, or I give you one here."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我要一个。写白板的时候也很辛苦，需要戴吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "During the day, if it helps, yes. 也要常常 rest，shake out your hands, and don't sleep on your hands."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我的脚也有一点肿，这个有关系吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me check your blood pressure too, 怀孕脚肿要 rule out pre-eclampsia... 118 over 76, good. Urine also no protein."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那就好。我太紧张了，什么都怕。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's normal to worry. If the weakness gets worse, or it doesn't go away after delivery, come back and we'll do a nerve test."
+      }
+    ]
+  },
+  {
+    "id": "msk_038",
+    "split": "train",
+    "condition": "Carpal tunnel syndrome, nerve conduction results",
+    "source": "Carpal tunnel syndrome",
+    "patient_persona": {
+      "description": "Helen Tan Mei Kuan, 54, female, senior dental hygienist in Petaling Jaya, right-handed, dropping instruments at work; has been taking her husband's leftover paracetamol-codeine at night. Results review. Precise, slightly defensive Malaysian Chinese English.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Harjit Singh, Malaysian Punjabi man in his 50s, orthopaedic hand surgeon in Petaling Jaya. Calm, candid; English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Helen, your nerve conduction study shows moderate to severe carpal tunnel on the right, mild on the left."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Severe? I've been wearing the splint every night, macam you suruh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I know, and that helps the symptoms. But the test shows the nerve is slowing a lot, and there's a bit of muscle wasting at the thumb base."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I noticed that. The thumb muscle looks flat, kempis. And last week I dropped a scaler during a scaling."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's the concern. If we wait too long, the muscle weakness may not fully recover. I'd recommend surgery, a carpal tunnel release."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How long off work? My clinic very short-handed, tak cukup orang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually two to four weeks for light work. For fine instrument work like yours, maybe four to six weeks."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Before we plan, I need to ask what you're taking for the night pain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Just Panadol... okay, honestly, my husband had Panadeine from his knee surgery. I take two, hampir every night."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thanks for telling me. Panadeine has codeine, it can cause constipation, drowsiness and dependence if taken nightly. Plus the paracetamol adds up with your Panadol."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I didn't think of it that way. I was just desperate to sleep, 真的很辛苦."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Understandable. After surgery, the night numbness usually settles within days. Until then, stop the Panadeine, use plain paracetamol, maximum four grams a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Is it general anaesthesia? Kena tidur ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No, just local anaesthetic, you can go home the same day. I'll book you for next month."
+      }
+    ]
+  },
+  {
+    "id": "msk_039",
+    "split": "train",
+    "condition": "Carpal tunnel release, post-operative follow-up",
+    "source": "Carpal tunnel syndrome",
+    "patient_persona": {
+      "description": "Hashim bin Yaakob, 60, male, retired motor mechanic and rubber smallholder in Sungai Petani, Kedah; type 2 diabetes. Two weeks after right carpal tunnel release. Friendly, rough northern Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Kok Heng, Malaysian Chinese man in his 50s, orthopaedic surgeon in Sungai Petani. Easy-going, practical; English-leaning, fluent northern Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Pak Hashim, apa khabar? Tangan kanan macam mana lepas operation?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah, doktor. Malam dah tak kebas, boleh tidur sampai subuh. Dah lama tak rasa macam ni, really."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Saya buka balutan... luka kering, tak merah, no pus. Stitches boleh buang hari ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tapi tapak tangan ni masih sakit bila tekan, terutama bila pegang kuat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu biasa, pak cik. We call it pillar pain. It can take two to three months untuk hilang sepenuhnya."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ibu jari ni masih lemah sikit. Nak buka botol pun susah, grip tak kuat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Otot ibu jari tu dah lemah lama sebelum operation. The nerve is free now, tapi muscle ambil masa berbulan untuk kuat balik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila saya boleh mula menoreh balik? Pokok getah tu dah lama tak ditoreh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tunggu sekurang-kurangnya enam minggu. Pisau toreh tu kena genggam kuat, luka dalam belum kuat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Gula pak cik macam mana? Diabetic wound memang lambat baik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pagi tadi saya check, 7.8. Minggu lepas ada 11, masa kenduri kahwin anak saudara."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa, overall OK. Kat rumah, massage the scar with cream after the stitches are out, dua kali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tangan kiri pun kebas juga, doktor. Nak buat operation sekali?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tangan kiri masih ringan. Kita cuba splint dulu. Kalau makin teruk, baru kita fikir."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Terima kasih banyak-banyak."
+      }
+    ]
+  },
+  {
+    "id": "msk_040",
+    "split": "test",
+    "condition": "Carpal tunnel syndrome, steroid injection visit",
+    "source": "Carpal tunnel syndrome",
+    "patient_persona": {
+      "description": "Chin Mui Lan, 50, female, Hakka tailor who runs a small alteration shop in Sandakan, Sabah; hypothyroidism on thyroxine. Follow-up for injection. Brisk, cheerful Malaysian Mandarin mixed with Sabah Malay and English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kelvin Liew Kah Fui, Sabahan Chinese man in his 30s, GP in Sandakan. Relaxed, humorous; English-leaning, switches between Mandarin, Malay and English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "陈太，上次开的护腕有没有戴？手还麻吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有戴啦，晚上有好一点。但是白天车衣服，手还是麻 bah，针都拿不好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nerve test 说是 moderate。你的 thyroid 最近有验吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "上个月验了，doctor 说 normal，thyroxine 还是 100 microgram。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK，那 thyroid 应该不是问题。我们今天可以打 steroid injection 在手腕，大部分人会好几个月。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会不会很痛？我很怕打针的 lah。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有一点刺，因为针要打进那个 tunnel 里面。我会先 spray 一点 cold spray, sikit sejuk je, tak sakit sangat。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，那打吧。打完可以马上 jahit baju 吗？客人等着拿。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "今天不要，两天之后可以，先做轻的。Hand 会胀一两天，冰敷就好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果打了还是 kebas 呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那就要考虑 surgery，小手术，local anaesthetic，一样可以回家。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我姐姐在 KK 做过 operation，她说很快就好了 bah。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，results 通常很好。但先看这一针的 effect，六个礼拜后回来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，那 thyroxine 继续吃？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "继续，每天早上空肚子吃。有什么不舒服，发烧或者手腕红肿，马上回来，jangan tunggu。"
+      }
+    ]
+  }
+]

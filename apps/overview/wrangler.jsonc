@@ -1,0 +1,9 @@
+// Judges' overview page: static files, with clips, posters and diagrams served from R2 by worker.js.
+// Build media with `bash media.sh` into ./media (gitignored), upload with `bash media.sh --upload`, then `bunx wrangler deploy`.
+{
+  "name": "sona-overview",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./public", "binding": "ASSETS" },
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "sona-overview-media" }]
+}

@@ -5,5 +5,8 @@ export default defineConfig({
   format: "esm",
   outDir: "./dist",
   clean: true,
-  noExternal: [/@med-ai\/.*/],
+  deps: {
+    alwaysBundle: [/@sona-ai\/.*/],
+    neverBundle: ["cloudflare:workers"],
+  },
 });

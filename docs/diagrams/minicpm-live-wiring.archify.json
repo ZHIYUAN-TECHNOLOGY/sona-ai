@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sona Care live call on MiniCPM-o",
+    "output": "minicpm-live-wiring.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      900,
+      400
+    ],
+    "repository": {
+      "url": "https://github.com/zyt-ngchwanlii/sona-ai",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "669b86d00fff705acc3b7cb3cf31de4000ae01bc"
+    },
+    "views": [
+      {
+        "id": "minicpm-call",
+        "label": "MiniCPM-o call",
+        "focus": [
+          "app",
+          "route",
+          "live",
+          "db",
+          "ear",
+          "brain",
+          "talker"
+        ],
+        "note": "One model hears, answers and speaks the call a second at a time on box ④."
+      },
+      {
+        "id": "safety",
+        "label": "Safety kept",
+        "focus": [
+          "live",
+          "safety",
+          "care"
+        ],
+        "note": "The agent still says the 999 line and tells the care team, whatever the model says."
+      },
+      {
+        "id": "fallback",
+        "label": "Today's call",
+        "focus": [
+          "route",
+          "voice",
+          "today"
+        ],
+        "note": "With SONA_LIVE_URL empty, the same route keeps today's three-model call."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "today",
+      "type": "cloud",
+      "label": "Boxes ① ② · L4",
+      "sublabel": "ASR, Gemma, VoxCPM2",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "voice",
+      "type": "backend",
+      "label": "SonaVoiceAgent",
+      "sublabel": "three-model call",
+      "pos": [
+        250,
+        40
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "apps/server/src/agents/voice.ts",
+          "line": 34,
+          "label": "SonaVoiceAgent"
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Neon Postgres",
+      "sublabel": "discharge plan",
+      "pos": [
+        460,
+        40
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Sona Care app",
+      "sublabel": "mic + speaker",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "apps/care/lib/live-voice/session.ts",
+          "label": "live voice session"
+        }
+      ]
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "voiceRoute",
+      "sublabel": "Cloudflare Worker",
+      "tag": "SONA_LIVE_URL?",
+      "pos": [
+        250,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "apps/server/src/agents/voice.ts",
+          "line": 137,
+          "label": "voiceRoute"
+        }
+      ]
+    },
+    {
+      "id": "live",
+      "type": "backend",
+      "label": "SonaLiveAgent",
+      "sublabel": "one per patient",
+      "pos": [
+        460,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "apps/server/src/agents/live.ts",
+          "line": 58,
+          "label": "SonaLiveAgent"
+        },
+        {
+          "path": "packages/api/src/voice-agent/live.ts",
+          "line": 18,
+          "label": "liveBrief"
+        }
+      ]
+    },
+    {
+      "id": "ear",
+      "type": "cloud",
+      "label": "Ear",
+      "sublabel": "hears 1 s units",
+      "pos": [
+        700,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "packages/infra/baseten/live/data/live.py",
+          "line": 92,
+          "label": "one second a step"
+        }
+      ]
+    },
+    {
+      "id": "brain",
+      "type": "cloud",
+      "label": "Brain · live3",
+      "sublabel": "listen or speak",
+      "tag": "numbers as words",
+      "pos": [
+        700,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "talker",
+      "type": "cloud",
+      "label": "Talker · voice-v3",
+      "sublabel": "Sona's voice",
+      "pos": [
+        700,
+        280
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "care",
+      "type": "external",
+      "label": "Care team",
+      "sublabel": "task in Sona Pro",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "safety",
+      "type": "security",
+      "label": "Safety rails",
+      "sublabel": "999 line · worse",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "apps/server/src/agents/live.ts",
+          "line": 20,
+          "label": "999 after 6 s"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Box ④ · Baseten · 1×H100",
+      "wraps": [
+        "ear",
+        "brain",
+        "talker"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-route",
+      "from": "app",
+      "to": "route",
+      "label": "WebSocket",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route-live",
+      "from": "route",
+      "to": "live",
+      "label": "URL set",
+      "variant": "emphasis"
+    },
+    {
+      "id": "plan",
+      "from": "db",
+      "to": "live",
+      "label": "plan → brief",
+      "labelDy": 24
+    },
+    {
+      "id": "live-ear",
+      "from": "live",
+      "to": "ear",
+      "label": "1 s audio",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ear-brain",
+      "from": "ear",
+      "to": "brain"
+    },
+    {
+      "id": "brain-talker",
+      "from": "brain",
+      "to": "talker",
+      "label": "words",
+      "labelDy": 24
+    },
+    {
+      "id": "talker-live",
+      "from": "talker",
+      "to": "live",
+      "label": "text + PCM",
+      "variant": "emphasis"
+    },
+    {
+      "id": "live-safety",
+      "from": "live",
+      "to": "safety",
+      "label": "every turn",
+      "labelDy": 24
+    },
+    {
+      "id": "safety-care",
+      "from": "safety",
+      "to": "care",
+      "label": "flagged task",
+      "variant": "security"
+    },
+    {
+      "id": "route-voice",
+      "from": "route",
+      "to": "voice",
+      "label": "URL empty",
+      "variant": "dashed"
+    },
+    {
+      "id": "voice-today",
+      "from": "voice",
+      "to": "today",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "One model, one box",
+      "items": [
+        "Ear, brain and talker on one H100, a second at a time",
+        "First words 0.9-1.7 s after the patient stops (box ④ test, 2 Oct)",
+        "Box ④ runs live1 + voice-v1 today; live3 + voice-v3 after the listening test"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Switch and fallback",
+      "items": [
+        "voiceRoute picks SonaLiveAgent only when SONA_LIVE_URL is set",
+        "Same app route and protocol; empty keeps today's call",
+        "Not on staging yet: SONA_LIVE_URL is empty"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Safety kept",
+      "items": [
+        "The agent says the 999 line if Sona has not within 6 s",
+        "A patient feeling worse becomes a flagged care-team task"
+      ]
+    }
+  ]
+}

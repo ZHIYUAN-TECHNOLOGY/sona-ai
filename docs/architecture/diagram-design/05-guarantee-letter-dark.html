@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guarantee letter to discharge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:       #1d1f23;
+      --color-paper-2:     #2a2d33;
+      --color-ink:         #f5f6f8;
+      --color-muted:       #b4bac4;
+      --color-soft:        #8a929e;
+      --color-rule:        rgba(245,246,248,0.12);
+      --color-accent:      #5b8def;
+      --color-link:        #3fb3a6;
+      --color-card:        #25282d;
+      --font-sans:  'Inter', system-ui, sans-serif;
+      --font-serif: 'Instrument Serif', serif;
+      --font-mono:  'Geist Mono', ui-monospace, monospace;
+    }
+    body { font-family: var(--font-sans); background: var(--color-paper); color: var(--color-ink); min-height: 100vh; display: flex; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; color: var(--color-ink); margin-bottom: 0.5rem; }
+    .subtitle { font-size: 0.9375rem; line-height: 1.55; color: var(--color-muted); max-width: 72ch; margin-bottom: 1.5rem; }
+    .subtitle strong { color: var(--color-ink); font-weight: 600; }
+    .diagram { overflow-x: auto; }
+    svg { width: 100%; min-width: 900px; display: block; }
+    .cards { display: grid; grid-template-columns: 1.2fr 1fr 0.85fr; gap: 1rem; margin-top: 1.5rem; }
+    @media (max-width: 820px) { .cards { grid-template-columns: 1fr; } }
+    .card { background: var(--color-card); border: 1px solid var(--color-rule); border-radius: 6px; padding: 1.25rem; }
+    .card-eyebrow { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-soft); margin-bottom: 0.5rem; }
+    .card-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-rule); }
+    .card-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .card-dot.ink { background: var(--color-ink); } .card-dot.muted { background: var(--color-muted); }
+    .card-dot.accent { background: var(--color-accent); } .card-dot.link { background: var(--color-link); } .card-dot.soft { background: var(--color-soft); }
+    .card h3 { font-size: 0.875rem; font-weight: 600; color: var(--color-ink); }
+    .card ul { list-style: none; color: var(--color-muted); font-size: 0.8125rem; line-height: 1.55; }
+    .card li { margin-bottom: 0.35rem; padding-left: 0.875rem; position: relative; }
+    .card li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 4px; height: 4px; border-radius: 50%; background: var(--color-soft); }
+    code { font-family: var(--font-mono); font-size: 0.92em; color: var(--color-ink); }
+    .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--color-rule); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--color-soft); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Sona · Staging · Checked 8 Oct 2026 @ <span style="text-transform:none">cd76571b</span></p>
+    <h1>Guarantee letter to discharge</h1>
+    <p class="subtitle">The states a claim moves through (<code>claims.status</code>), who moves it, and what blocks sending and discharge. <strong>Staging, synthetic insurer: no real payer integration.</strong></p>
+    <div class="diagram">
+<svg viewBox="0 0 1040 436" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="guarantee-letter-dark-title guarantee-letter-dark-desc">
+<title id="guarantee-letter-dark-title">Guarantee letter to discharge</title>
+<desc id="guarantee-letter-dark-desc">State machine of a guarantee-letter claim: an unstored draft is sent by a doctor, the insurer approves, queries or denies it on the link page, a query or denial can be resent, a denial can be appealed with a new link, and an approved letter lets the doctor discharge the patient.</desc>
+<defs>
+<marker id="guarantee-letter-dark-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#b4bac4"/></marker>
+<marker id="guarantee-letter-dark-arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f5f6f8"/></marker>
+<marker id="guarantee-letter-dark-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5b8def"/></marker>
+<marker id="guarantee-letter-dark-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#3fb3a6"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#1d1f23"/>
+<!-- zones -->
+<rect x="288" y="48" width="488" height="160" rx="8" fill="rgba(245,246,248,0.03)" stroke="rgba(245,246,248,0.18)" stroke-width="0.8" stroke-dasharray="4,4"/>
+<rect x="300" y="42" width="232" height="12" rx="2" fill="#1d1f23"/>
+<text x="416" y="51" fill="#b4bac4" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">INSURER LINK PAGE · ONE DECISION PER LINK</text>
+<!-- connectors (drawn before nodes) -->
+<path d="M48,136 L72,136" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#guarantee-letter-dark-arrow)"/>
+<path d="M232,136 L320,136" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#guarantee-letter-dark-arrow)"/>
+<path d="M776,136 L840,136" fill="none" stroke="#5b8def" stroke-width="1.4" marker-end="url(#guarantee-letter-dark-arrow-accent)"/>
+<path d="M352,208 L352,276" fill="none" stroke="#3fb3a6" stroke-width="1.2" marker-end="url(#guarantee-letter-dark-arrow-link)"/>
+<path d="M448,276 L448,176" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#guarantee-letter-dark-arrow)"/>
+<path d="M624,208 L624,276" fill="none" stroke="#3fb3a6" stroke-width="1.2" marker-end="url(#guarantee-letter-dark-arrow-link)"/>
+<path d="M720,276 L720,176" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#guarantee-letter-dark-arrow)"/>
+<path d="M592,316 L544,316 Q536,316 536,308 L536,144 Q536,136 528,136 L480,136" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#guarantee-letter-dark-arrow)"/>
+<path d="M920,176 L920,276" fill="none" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#guarantee-letter-dark-arrow)"/>
+<!-- connector labels -->
+<rect x="236" y="116" width="80" height="12" rx="2" fill="#1d1f23"/>
+<text x="276" y="125" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SEND · DOCTOR</text>
+<rect x="784" y="116" width="48" height="12" rx="2" fill="#1d1f23"/>
+<text x="808" y="125" fill="#5b8def" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">APPROVE</text>
+<rect x="360" y="234" width="40" height="12" rx="2" fill="#1d1f23"/>
+<text x="380" y="243" fill="#3fb3a6" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">QUERY</text>
+<rect x="456" y="234" width="48" height="12" rx="2" fill="#1d1f23"/>
+<text x="480" y="243" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RESEND</text>
+<rect x="632" y="234" width="32" height="12" rx="2" fill="#1d1f23"/>
+<text x="648" y="243" fill="#3fb3a6" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">DENY</text>
+<rect x="728" y="234" width="48" height="12" rx="2" fill="#1d1f23"/>
+<text x="752" y="243" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">APPEAL</text>
+<rect x="544" y="250" width="48" height="12" rx="2" fill="#1d1f23"/>
+<text x="568" y="259" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RESEND</text>
+<rect x="928" y="218" width="64" height="12" rx="2" fill="#1d1f23"/>
+<text x="960" y="227" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">DISCHARGE</text>
+<!-- nodes -->
+<circle cx="40" cy="136" r="6" fill="#f5f6f8"/>
+<g id="guarantee-letter-dark-n-draft">
+<rect x="72" y="96" width="160" height="80" rx="6" fill="#1d1f23"/>
+<rect x="72" y="96" width="160" height="80" rx="6" fill="rgba(245,246,248,0.02)" stroke="rgba(245,246,248,0.35)" stroke-width="1" stroke-dasharray="4,3"/>
+<rect x="80" y="104" width="56" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.25)" stroke-width="0.8"/>
+<text x="108" y="113" fill="#b4bac4" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">NOT STORED</text>
+<text x="152" y="136" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">draft</text>
+<text x="152" y="152" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">claim.status returns it</text>
+<text x="152" y="164" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">when no row exists</text>
+</g>
+<g id="guarantee-letter-dark-n-sent">
+<rect x="320" y="96" width="160" height="80" rx="6" fill="#1d1f23"/>
+<rect x="320" y="96" width="160" height="80" rx="6" fill="#2a2d33" stroke="#f5f6f8" stroke-width="1"/>
+<rect x="328" y="104" width="40" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.4)" stroke-width="0.8"/>
+<text x="348" y="113" fill="#f5f6f8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATUS</text>
+<text x="400" y="136" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">sent</text>
+<text x="400" y="152" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">new 7-day link each send</text>
+</g>
+<g id="guarantee-letter-dark-n-appealed">
+<rect x="592" y="96" width="160" height="80" rx="6" fill="#1d1f23"/>
+<rect x="592" y="96" width="160" height="80" rx="6" fill="#2a2d33" stroke="#f5f6f8" stroke-width="1"/>
+<rect x="600" y="104" width="40" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.4)" stroke-width="0.8"/>
+<text x="620" y="113" fill="#f5f6f8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATUS</text>
+<text x="672" y="136" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">appealed</text>
+<text x="672" y="152" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">points cite note sentences</text>
+<text x="672" y="164" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">new link to the insurer</text>
+</g>
+<g id="guarantee-letter-dark-n-approved">
+<rect x="840" y="96" width="160" height="80" rx="6" fill="#1d1f23"/>
+<rect x="840" y="96" width="160" height="80" rx="6" fill="rgba(91,141,239,0.12)" stroke="#5b8def" stroke-width="1"/>
+<rect x="848" y="104" width="40" height="12" rx="2" fill="none" stroke="rgba(91,141,239,0.5)" stroke-width="0.8"/>
+<text x="868" y="113" fill="#5b8def" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATUS</text>
+<text x="920" y="136" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">approved</text>
+<text x="920" y="152" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">GL row marked received</text>
+</g>
+<g id="guarantee-letter-dark-n-queried">
+<rect x="320" y="276" width="160" height="80" rx="6" fill="#1d1f23"/>
+<rect x="320" y="276" width="160" height="80" rx="6" fill="#2a2d33" stroke="#f5f6f8" stroke-width="1"/>
+<rect x="328" y="284" width="40" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.4)" stroke-width="0.8"/>
+<text x="348" y="293" fill="#f5f6f8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATUS</text>
+<text x="400" y="316" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">queried</text>
+<text x="400" y="332" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">insurer&#x27;s question text</text>
+</g>
+<g id="guarantee-letter-dark-n-denied">
+<rect x="592" y="276" width="160" height="80" rx="6" fill="#1d1f23"/>
+<rect x="592" y="276" width="160" height="80" rx="6" fill="#2a2d33" stroke="#f5f6f8" stroke-width="1"/>
+<rect x="600" y="284" width="40" height="12" rx="2" fill="none" stroke="rgba(245,246,248,0.4)" stroke-width="0.8"/>
+<text x="620" y="293" fill="#f5f6f8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATUS</text>
+<text x="672" y="316" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">denied</text>
+<text x="672" y="332" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">reason: PEC, MED, DOC, COV</text>
+</g>
+<g id="guarantee-letter-dark-n-discharged">
+<rect x="840" y="276" width="160" height="80" rx="6" fill="#1d1f23"/>
+<rect x="840" y="276" width="160" height="80" rx="6" fill="rgba(180,186,196,0.1)" stroke="#8a929e" stroke-width="1"/>
+<rect x="848" y="284" width="28" height="12" rx="2" fill="none" stroke="rgba(180,186,196,0.45)" stroke-width="0.8"/>
+<text x="862" y="293" fill="#b4bac4" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STAY</text>
+<text x="920" y="316" fill="#f5f6f8" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Discharged</text>
+<text x="920" y="332" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">dischargedAt set</text>
+<text x="920" y="344" fill="#b4bac4" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">check-ins at 10:00 MYT</text>
+</g>
+<!-- legend -->
+<line x1="40" y1="388" x2="1000" y2="388" stroke="rgba(245,246,248,0.12)" stroke-width="0.8"/>
+<text x="40" y="408" fill="#b4bac4" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="112" y="400" width="16" height="12" rx="2" fill="rgba(245,246,248,0.02)" stroke="rgba(245,246,248,0.35)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="136" y="410" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Not stored</text>
+<rect x="204" y="400" width="16" height="12" rx="2" fill="#2a2d33" stroke="#f5f6f8" stroke-width="1"/>
+<text x="228" y="410" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">claims.status</text>
+<rect x="308" y="400" width="16" height="12" rx="2" fill="rgba(91,141,239,0.12)" stroke="#5b8def" stroke-width="1"/>
+<text x="332" y="410" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Focal state</text>
+<rect x="404" y="400" width="16" height="12" rx="2" fill="rgba(180,186,196,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="428" y="410" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Stay</text>
+<rect x="468" y="400" width="16" height="12" rx="2" fill="rgba(245,246,248,0.02)" stroke="rgba(245,246,248,0.18)" stroke-width="0.8" stroke-dasharray="3,2"/>
+<text x="492" y="410" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Insurer page</text>
+<line x1="568" y1="406" x2="592" y2="406" stroke="#b4bac4" stroke-width="1.2" marker-end="url(#guarantee-letter-dark-arrow)"/>
+<text x="604" y="410" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Doctor (mgmt may also appeal)</text>
+<line x1="760" y1="406" x2="784" y2="406" stroke="#3fb3a6" stroke-width="1.2" marker-end="url(#guarantee-letter-dark-arrow-link)"/>
+<text x="796" y="410" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Insurer</text>
+<line x1="848" y1="406" x2="872" y2="406" stroke="#5b8def" stroke-width="1.4" marker-end="url(#guarantee-letter-dark-arrow-accent)"/>
+<text x="884" y="410" fill="#b4bac4" font-size="9" font-family="'Inter', system-ui, sans-serif">Insurer approves</text>
+</svg>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <p class="card-eyebrow">Send checklist</p>
+        <div class="card-header"><span class="card-dot ink"></span><h3>Send is refused until</h3></div>
+        <ul><li>A severity score is documented (CURB-65, CRB-65, qSOFA, NEWS).</li><li>An imaging <em>result</em> is attached; an order such as “X-ray to check for pneumonia” does not count.</li><li>Pneumonia: the diagnosis is confirmed (“possible” or “to rule out” does not count, and the doctor can confirm it only once the visit's X-ray is read) and the organism is documented.</li><li>A reason for IV antibiotics is given when IV is mentioned.</li><li>A doctor approves. Criteria are read on the server against the saved note, the X-ray as Sona Vision read it and the chart's CURB-65.</li></ul>
+      </div>
+      <div class="card">
+        <p class="card-eyebrow">Discharge readiness</p>
+        <div class="card-header"><span class="card-dot accent"></span><h3>Discharge is refused until</h3></div>
+        <ul><li>Vitals within limits: temp ≤ 37.8, pulse ≤ 100, resp ≤ 24, systolic ≥ 90, SpO₂ ≥ 90.</li><li>GL received (stays with a GL), medicines confirmed, follow-up chosen.</li><li>No open finding, no pending lab or transport wait. A check appears only when the record can answer it.</li><li><code>discharge.request</code> (doctor only) then creates tasks, schedules check-ins, sets <code>dischargedAt</code>, approves the leaflet and starts the check-in agent.</li></ul>
+      </div>
+      <div class="card">
+        <p class="card-eyebrow">Link page and limits</p>
+        <div class="card-header"><span class="card-dot link"></span><h3>One decision per link</h3></div>
+        <ul><li>Any other transition gets “Already decided”; an expired link is refused.</li><li>The insurer's POST announces <code>claim</code> on <code>HospitalChannel</code>; the letter page updates within a second.</li><li>No amount is sent (<code>estimateCents = 0</code>). A self-pay stay has no GL row and no GL check.</li><li>Link expiry uses real time while <code>sentAt</code> uses the demo clock.</li></ul>
+      </div>
+    </div>
+    <div class="footer"><span>Facts: docs/architecture/05-guarantee-letter.md</span><span>Checked against code at cd76571b · 8 Oct 2026</span></div>
+  </div>
+</body>
+</html>

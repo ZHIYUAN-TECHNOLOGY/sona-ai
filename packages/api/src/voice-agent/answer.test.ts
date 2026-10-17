@@ -1,0 +1,352 @@
+import { beforeEach, expect, test } from "bun:test";
+
+import { boxState } from "../baseten-models";
+import { deltas } from "../sse";
+import { LINES, answerTurn, basetenChat, closingAt, flagsOf, keepingSaid, messagesFor, sentencesOf, type AnswerTurn, type ChatStream, type Part, type TurnSummary } from "./answer";
+
+/** Amelia's plan as Gemma reads it (planText, discharged in Malay). */
+const PLAN = `Discharged: 2026-09-28T02:05:00.000Z
+Medicines:
+- Paracetamol (new): For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day
+- Azithromycin (changed): Now a tablet once a day, for 2 more days; 1 tablet, with or without food
+- Salbutamol nebuliser (stopped): Use your own inhaler instead, when you need it
+- Cetirizine (continue): Keep taking it as before; 1 tablet at night
+Come back or call if:
+- Breathing gets harder
+- Your lips or fingertips turn blue
+- The fever comes back
+- Chest pain, or you feel faint
+Follow-up: Clinic review on Mon Oct 12 2026
+Check-ins: day 2 and 7 after discharge
+Leaflet (BM):
+Anda dirawat kerana jangkitan paru-paru. Makan azithromycin sekali sehari selama 2 hari lagi. Datang semula segera jika sukar bernafas, bibir menjadi biru, atau demam kembali.`;
+
+/** A Gemma that writes `chunks` in turn, noting how far it was read and whether the reader hung up. */
+function gemma(chunks: string[]) {
+  const log = { pulled: 0, closed: false, messages: [] as { role: string; content: string }[] };
+  const chat: ChatStream = async messages => {
+    log.messages = messages;
+    return { model: "gemma-test", text: (async function* () { try { for (const c of chunks) { log.pulled++; yield c; } } finally { log.closed = true; } })() };
+  };
+  return { chat, log };
+}
+function turnOf(over: Partial<AnswerTurn> & Pick<AnswerTurn, "question">) {
+  const summaries: TurnSummary[] = [], escalated: string[] = [];
+  const turn: AnswerTurn = { history: [], plan: PLAN, language: "en", signal: new AbortController().signal, escalate: async label => { escalated.push(label); return false; }, done: s => summaries.push(s), ...over };
+  return { turn, summaries, escalated };
+}
+/** The sentences spoken, checking each is handed on as one part and then an end (so the SDK speaks it at once). */
+async function spoken(turn: AnswerTurn) {
+  const parts: Part[] = [];
+  for await (const part of answerTurn(turn)) parts.push(part);
+  parts.forEach((p, i) => expect(p.type).toBe(i % 2 ? "text-end" : "text-delta"));
+  return parts.flatMap(p => (p.type === "text-delta" ? [p.text] : []));
+}
+
+beforeEach(() => boxState.clear());
+
+test("each sentence is handed on as soon as Gemma finishes it, after the flags line, with the plan and history in the chat", async () => {
+  const { chat, log } = gemma(['{"triage":"fine",', '"inPlan":true}\nYour plan says take 1 tablet of azith', "romycin once a day. It is for 2 more", " days."]);
+  const { turn, summaries } = turnOf({ question: "After breakfast or dinner?", chat, history: [{ role: "user", content: "When do I take azithromycin?" }, { role: "assistant", content: "Once a day." }] });
+  const parts = answerTurn(turn);
+  expect((await parts.next()).value).toEqual({ type: "text-delta", text: "Your plan says take 1 tablet of azithromycin once a day." });
+  expect(log.pulled).toBe(3); // the last chunk is not needed yet
+  const rest: string[] = [];
+  for await (const p of parts) if (p.type === "text-delta") rest.push(p.text);
+  expect(rest).toEqual(["It is for 2 more days."]);
+  expect(summaries).toEqual([{ grounded: true, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test" }]);
+  // A spoken question names its ear beside Gemma; a typed one (above) names none.
+  const heard = turnOf({ question: "After breakfast or dinner?", chat: gemma(["Hello there, Amelia."]).chat, heard: { source: "model", model: "asr-test" } });
+  await spoken(heard.turn);
+  expect(heard.summaries).toEqual([{ grounded: false, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test", ear: { source: "model", model: "asr-test" } }]);
+  expect(log.messages.map(m => m.role)).toEqual(["system", "user", "assistant", "user"]);
+  expect(log.messages[0]!.content).toContain("Azithromycin (changed): Now a tablet once a day");
+  expect(log.messages.at(-1)!.content).toBe("After breakfast or dinner?");
+});
+
+test("every sentence Gemma writes is said as written: no limit on numbers, doses or conditions (user, 1 Oct)", async () => {
+  const { chat, log } = gemma(['{"triage":"fine","inPlan":false}\n', "Adults usually take at most 4 g of paracetamol a day. ",
+    "High blood pressure means the pressure stays above 140 over 90. Diabetes means your blood sugar runs high."]);
+  expect(await spoken(turnOf({ question: "What is the most paracetamol I can take, and what is diabetes?", chat }).turn))
+    .toEqual(["Adults usually take at most 4 g of paracetamol a day.", "High blood pressure means the pressure stays above 140 over 90.", "Diabetes means your blood sugar runs high."]);
+  expect(log.messages[0]!.content).toContain("Answer whatever they ask");
+});
+
+test("an emergency sign: the 999 line first, before Gemma is even heard, Gemma's own 999 line not repeated, then the care team told", async () => {
+  const { chat, log } = gemma(['{"triage":"urgent","inPlan":true}\nSila hubungi 999 sekarang. ', "Pelan anda menyatakan datang semula jika sakit dada."]);
+  const { turn, escalated, summaries } = turnOf({ question: "Saya sakit dada sekarang", language: "ms", chat, escalate: async label => { escalated.push(label); return true; } });
+  const parts = answerTurn(turn);
+  expect((await parts.next()).value).toEqual({ type: "text-delta", text: LINES.ms.call999 });
+  expect(log.pulled).toBe(0);
+  const rest: string[] = [];
+  for await (const p of parts) if (p.type === "text-delta") rest.push(p.text);
+  expect(rest).toEqual(["Pelan anda menyatakan datang semula jika sakit dada.", LINES.ms.told]);
+  expect([escalated, summaries[0]!.urgent]).toEqual([["urgent"], true]);
+});
+
+test("Gemma's urgent flag also puts the 999 line first; a patient feeling worse is passed on, and told so only once a task exists", async () => {
+  const urgent = turnOf({ question: "I feel confused and dizzy", chat: gemma(['{"triage":"urgent","inPlan":true}\nYour plan says to come back if you feel faint.']).chat });
+  expect(await spoken(urgent.turn)).toEqual([LINES.en.call999, "Your plan says to come back if you feel faint."]);
+  expect(urgent.escalated).toEqual(["urgent"]);
+
+  const worse = (made: boolean) => turnOf({
+    question: "My fever came back last night", escalate: async () => { await Bun.sleep(20); return made; },
+    chat: gemma(['{"triage":"worse","inPlan":true}\nYour plan says to come back if the fever comes back.']).chat,
+  });
+  expect(await spoken(worse(true).turn)).toEqual(["Your plan says to come back if the fever comes back.", LINES.en.told]);
+  expect(await spoken(worse(false).turn)).toEqual(["Your plan says to come back if the fever comes back."]);
+  // A plain question is not a report: nobody is told.
+  const fine = turnOf({ question: "When is my review?", chat: gemma(['{"triage":"fine","inPlan":true}\nYour review is on 12 October.']).chat });
+  await spoken(fine.turn);
+  expect(fine.escalated).toEqual([]);
+});
+
+test("'I've let your care team know' is said once, by Sona when a task exists: Gemma echoing it from an earlier answer is not heard, nor sent back to it", async () => {
+  // Staging, 1 Oct: the second call's answer said it twice, Gemma copying the first call's last line.
+  for (const language of ["ms", "en", "zh"] as const) {
+    const told = LINES[language].told;
+    const { chat, log } = gemma([`{"triage":"worse","inPlan":true}\nYour plan says to come back if the fever comes back. ${told}`]);
+    const history = [{ role: "user" as const, content: "Saya demam." }, { role: "assistant" as const, content: `Your plan says to come back if the fever comes back. ${told}` }];
+    const { turn } = turnOf({ question: "Saya batuk, still demam.", language, chat, history, escalate: async () => true });
+    expect(await spoken(turn)).toEqual(["Your plan says to come back if the fever comes back.", told]);
+    expect(log.messages[2]).toEqual({ role: "assistant", content: "Your plan says to come back if the fever comes back." });
+    // Gemma claiming it with no task made is not heard either.
+    expect(await spoken(turnOf({ question: "Saya batuk.", language, chat: gemma([`{"triage":"worse","inPlan":true}\n${told}`]).chat }).turn)).toEqual([LINES[language].unavailable]);
+  }
+});
+
+test("honest when there is no answer: Gemma starting (with its minutes), a reply with no words; a patient still in hospital is answered too; a reply without flags is still said, but not taken to be from her record", async () => {
+  const starting = turnOf({ question: "Bila saya makan ubat?", language: "ms", chat: async () => ({ waking: 12 }) });
+  expect(await spoken(starting.turn)).toEqual([LINES.ms.starting(12)]);
+  expect(starting.summaries).toEqual([{ grounded: false, urgent: false, sources: [], withheld: 0, source: "fixture", waking: 12 }]);
+  const notSaid = turnOf({ question: "Can I fly next week?", chat: gemma(['{"triage":"fine","inPlan":false}']).chat });
+  expect(await spoken(notSaid.turn)).toEqual([LINES.en.unavailable]);
+  expect(notSaid.summaries[0]!.grounded).toBe(false);
+  let asked = false;
+  expect(await spoken(turnOf({ question: "When can I go home?", plan: undefined, chat: async messages => { asked = messages[0]!.content.includes("Patient's record:\nNone could be read."); return { waking: 1 }; } }).turn)).toEqual([LINES.en.starting(1)]);
+  expect(asked).toBe(true);
+  const bare = turnOf({ question: "Can I rest?", chat: gemma(["Your plan says rest ", "at home."]).chat });
+  expect(await spoken(bare.turn)).toEqual(["Your plan says rest at home."]);
+  expect(bare.summaries[0]!.grounded).toBe(false);
+  // The flags only after the words (the triage word first) still say where the answer came from.
+  const late = turnOf({ question: "Can I rest?", chat: gemma(["fine\nYour plan says rest at home.", '\n{"inPlan": true, "cites": []}']).chat });
+  await spoken(late.turn);
+  expect(late.summaries[0]!.grounded).toBe(true);
+  const broken = turnOf({ question: "Can I rest?", chat: async () => ({ model: "gemma-test", text: (async function* () { throw new Error("connection reset"); })() }) });
+  expect(await spoken(broken.turn)).toEqual([LINES.en.unavailable]);
+});
+
+/** Box ① behind a fake network: streamed SSE, an abort errors the body (as fetch does), and a cancel is noted. */
+function brain(chunks: string[], hold: number) {
+  const log = { cancelled: false, signal: undefined as AbortSignal | undefined, body: undefined as Record<string, unknown> | undefined };
+  const fetcher = (async (url: string, init?: RequestInit) => {
+    if (url.endsWith("/sync/health")) return new Response("ok");
+    log.signal = init!.signal!;
+    log.body = JSON.parse(String(init!.body));
+    let sent = 0;
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) { init!.signal!.addEventListener("abort", () => controller.error(new DOMException("The operation was aborted.", "AbortError"))); },
+      pull(controller) {
+        if (sent >= chunks.length) return controller.close();
+        if (sent >= hold) return new Promise<void>(() => {}); // Gemma still writing
+        controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: chunks[sent++] } }] })}\n\n`));
+      },
+      cancel() { log.cancelled = true; },
+    });
+    return new Response(body, { headers: { "content-type": "text/event-stream" } });
+  }) as unknown as typeof fetch;
+  return { chat: basetenChat({ apiKey: "test", fetcher }), log };
+}
+
+test("an interruption cancels the in-flight Gemma stream: the patient barging in aborts the request, and nothing more is said", async () => {
+  const { chat, log } = brain(['{"triage":"fine","inPlan":true}\n', "Your plan says rest at home. ", "Drink plenty of water."], 2);
+  const interrupt = new AbortController();
+  const { turn, summaries } = turnOf({ question: "Can I rest?", chat, signal: interrupt.signal });
+  const parts = answerTurn(turn);
+  expect((await parts.next()).value).toEqual({ type: "text-delta", text: "Your plan says rest at home." });
+  expect((await parts.next()).value).toEqual({ type: "text-end" });
+  expect(log.body).toMatchObject({ model: "gemma-4-26b-a4b", stream: true });
+  const next = parts.next(); // waiting on Gemma's next words
+  interrupt.abort();
+  expect(await next).toEqual({ done: true, value: undefined });
+  expect([log.signal!.aborted, summaries]).toEqual([true, []]);
+});
+
+test("the SDK hanging up mid-answer cancels the stream too, so vLLM stops writing", async () => {
+  const { chat, log } = brain(['{"triage":"fine","inPlan":true}\n', "Your plan says rest at home. ", "Drink plenty of water. "], 2);
+  const parts = answerTurn(turnOf({ question: "Can I rest?", chat }).turn);
+  await parts.next();
+  await parts.return(undefined);
+  expect(log.cancelled).toBe(true);
+});
+
+test("server-sent events: text split anywhere (a character's bytes too) comes back whole; reasoning and [DONE] are skipped", async () => {
+  const frames = [`data: ${JSON.stringify({ choices: [{ delta: { reasoning_content: "hmm" } }] })}\n\n`, `data: ${JSON.stringify({ choices: [{ delta: { content: "您的计划" } }] })}\n\ndata: ${JSON.stringify({ choices: [{ delta: { content: "写着。" }, finish_reason: null }] })}\n\n`,
+    `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: "length" }] })}\n\n`, "data: [DONE]\n\n"];
+  const bytes = new TextEncoder().encode(frames.join(""));
+  const body = new ReadableStream<Uint8Array>({ start(c) { for (let i = 0; i < bytes.length; i += 7) c.enqueue(bytes.slice(i, i + 7)); c.close(); } });
+  let finished: string | undefined;
+  const out: string[] = [];
+  for await (const text of deltas(body, reason => { finished = `ended: ${reason}`; })) out.push(text);
+  // The stream's finish reason reaches `finished`, so a reply cut at the token limit is known as one.
+  expect([out, finished]).toEqual([["您的计划", "写着。"], "ended: length"]);
+});
+
+test("the chat alternates turns, as chat templates require; flags may be fenced or missing; sentences split as spoken", () => {
+  const chat = messagesFor({ question: "after food?", plan: PLAN, language: "ms", history: [{ role: "assistant", content: "Hello." }, { role: "user", content: "When do I take it" }, { role: "user", content: "the antibiotic" }] });
+  expect(chat.map(m => [m.role, m.role === "system" ? "" : m.content])).toEqual([["system", ""], ["user", "When do I take it\nthe antibiotic\nafter food?"]]);
+  expect(chat[0]!.content).toContain("Say the words in Malay, whatever language their record or the leaflets are in");
+
+  expect(flagsOf('```json\n{"triage": "worse", "inPlan": true}\n```\nYour plan says')).toEqual([{ triage: "worse", inPlan: true }, "\nYour plan says"]);
+  expect(flagsOf('{"triage": "wor')).toBeUndefined();
+  expect(flagsOf("Your plan says rest.")).toEqual([null, "Your plan says rest."]);
+
+  expect(sentencesOf("See Dr. Lim on 12 October. Take 2.5 mg tonight! 请您每天早上吃一片药，饭后吃。然后多休息，多喝")).toEqual([["See Dr. Lim on 12 October.", "Take 2.5 mg tonight!", "请您每天早上吃一片药，饭后吃。"], "然后多休息，多喝"]);
+  // As the SDK's chunker and Sona Care's karaoke count: under 10 characters joins the next; every sentence ends with a mark.
+  expect(sentencesOf("Ya. Your plan says rest.\n- Drink water", true)).toEqual([["Ya. Your plan says rest.", "Drink water."], ""]);
+  expect(sentencesOf("**请多休息** 多喝水", true)).toEqual([["请多休息 多喝水。"], ""]);
+});
+
+test("every sentence is spoken whole (founder, 9 Oct): a fact her record does not hold is not withheld, and no not-found line is added", async () => {
+  const { chat, log } = gemma(['{"triage":"fine","inPlan":true}\nYour azithromycin is 1 tablet once a day. Your potassium was 3.1 mmol/L. Rest and drink plenty of water.']);
+  const { turn, summaries } = turnOf({ question: "What are my results?", chat });
+  expect(await spoken(turn)).toEqual(["Your azithromycin is 1 tablet once a day.", "Your potassium was 3.1 mmol/L.", "Rest and drink plenty of water."]);
+  expect(summaries[0]).toMatchObject({ grounded: true, withheld: 0 });
+  // No "ask your care team" default: Gemma is told to answer from general knowledge when her record lacks it.
+  expect(log.messages[0]!.content).toContain('never answer or end with "ask your doctor or care team" instead of the answer itself');
+});
+
+test("the demo's day-2 scene stands: Amelia breathless in Malay hears the 999 line in Malay before Gemma is read, Gemma answers in Malay, and her care team gets a task", async () => {
+  const question = "Hello, Sona. Saya masih demam sikit, dan malam tadi saya rasa sesak nafas, inhaler pun tak berapa tolong.";
+  for (const triage of ["urgent", "worse"] as const) {
+    const { chat, log } = gemma([`${triage}\nSila hubungi 999 sekarang. `, "Sesak nafas yang tidak lega dengan inhaler perlu dirawat segera.", '\n{"inPlan": false, "cites": []}']);
+    const { turn, escalated, summaries } = turnOf({ question, language: "ms", chat, escalate: async label => { escalated.push(label); return true; } });
+    const parts = answerTurn(turn);
+    // The keyword floor (sesak nafas): the 999 line waits for no model.
+    expect((await parts.next()).value).toEqual({ type: "text-delta", text: LINES.ms.call999 });
+    expect(log.pulled).toBe(0);
+    const rest: string[] = [];
+    for await (const p of parts) if (p.type === "text-delta") rest.push(p.text);
+    // Gemma's own 999 line is not repeated; the care team's task is said once it exists.
+    expect(rest).toEqual(["Sesak nafas yang tidak lega dengan inhaler perlu dirawat segera.", LINES.ms.told]);
+    expect([escalated, summaries[0]!.urgent]).toEqual([[triage], true]);
+    // Gemma is still asked for the triage word that reaches the care team.
+    expect(log.messages[0]!.content).toContain('"urgent" when they say they have an emergency sign now (chest pain, severe breathlessness');
+  }
+});
+
+test("the triage word heads the reply and the rest of the flags close it: the words start at once, and the closing JSON is never spoken", async () => {
+  // The word may come in pieces; the first sentence is handed on before the closing line is written.
+  const { chat, log } = gemma(["fi", "ne\nYou are allergic to penicillin. ", "Your record says it causes a rash.", '\n{"inPlan": true,', ' "cites": []}']);
+  const { turn, summaries } = turnOf({ question: "Am I allergic to any medicine?", chat });
+  const parts = answerTurn(turn);
+  expect((await parts.next()).value).toEqual({ type: "text-delta", text: "You are allergic to penicillin." });
+  expect(log.pulled).toBe(2);
+  const rest: string[] = [];
+  for await (const p of parts) if (p.type === "text-delta") rest.push(p.text);
+  expect(rest).toEqual(["Your record says it causes a rash."]);
+  expect(summaries).toEqual([{ grounded: true, urgent: false, sources: [], withheld: 0, source: "model", model: "gemma-test" }]);
+
+  // General advice says so in the closing line (fenced or not); a reply with no closing line counts as from the record, as one with no flags did.
+  const general = turnOf({ question: "How long should an adult sleep?", chat: gemma(["fine\nMost adults need seven to nine hours.\n```json\n", '{"inPlan": false, "cites": []}\n```']).chat });
+  expect(await spoken(general.turn)).toEqual(["Most adults need seven to nine hours."]);
+  expect(general.summaries[0]!.grounded).toBe(false);
+  const bare = turnOf({ question: "When is my review?", chat: gemma(["fine\nYour review is on 12 October."]).chat });
+  expect(await spoken(bare.turn)).toEqual(["Your review is on 12 October."]);
+  expect(bare.summaries[0]!.grounded).toBe(false);
+  // The flags only after the words (the triage word first) still say where the answer came from.
+  const late = turnOf({ question: "Can I rest?", chat: gemma(["fine\nYour plan says rest at home.", '\n{"inPlan": true, "cites": []}']).chat });
+  await spoken(late.turn);
+  expect(late.summaries[0]!.grounded).toBe(true);
+
+  // "urgent" still puts the 999 line before Gemma's words, and "worse" still reaches the care team.
+  const urgent = turnOf({ question: "I feel confused and dizzy", chat: gemma(['urgent\nYour plan says to come back if you feel faint.\n{"inPlan": true, "cites": []}']).chat });
+  expect(await spoken(urgent.turn)).toEqual([LINES.en.call999, "Your plan says to come back if you feel faint."]);
+  expect([urgent.escalated, urgent.summaries[0]!.urgent]).toEqual([["urgent"], true]);
+  const worse = turnOf({ question: "Demam saya datang balik.", language: "ms", chat: gemma(['worse\nPelan anda menyatakan datang semula jika demam kembali.\n{"inPlan": true, "cites": []}']).chat });
+  expect(await spoken(worse.turn)).toEqual(["Pelan anda menyatakan datang semula jika demam kembali."]);
+  expect(worse.escalated).toEqual(["worse"]);
+
+  expect(flagsOf("fine\nYou are")).toEqual([{ triage: "fine" }, "You are"]);
+  expect(flagsOf("Urgent \nCall")).toEqual([{ triage: "urgent" }, "Call"]);
+  expect(flagsOf("wor")).toBeUndefined(); // still coming
+  expect(flagsOf("fine")).toBeUndefined(); // the line has not ended
+  // However Gemma sets the word off, it is the triage word and never spoken: its own line, the words' line, a full stop.
+  expect(flagsOf("fine You are allergic")).toEqual([{ triage: "fine" }, "You are allergic"]);
+  expect(flagsOf("Fine.\n\nYou are")).toEqual([{ triage: "fine" }, "You are"]);
+  expect(flagsOf("fine\n")).toBeUndefined(); // the words have not started
+  expect(flagsOf("Finely chopped garlic helps.")).toEqual([null, "Finely chopped garlic helps."]);
+  expect(flagsOf("worse", true)).toEqual([{ triage: "worse" }, ""]);
+  const sameLine = turnOf({ question: "Am I allergic to any medicine?", chat: gemma(["fine You are allergic to penicillin. ", 'Your record says it causes a rash. {"inPlan": true, "cites": []}']).chat });
+  expect(await spoken(sameLine.turn)).toEqual(["You are allergic to penicillin.", "Your record says it causes a rash."]);
+  // A triage word that reached an earlier answer is not shown back to Gemma.
+  expect(messagesFor({ question: "And my next visit?", plan: PLAN, language: "en", history: [{ role: "user", content: "Am I allergic?" }, { role: "assistant", content: "fine You are allergic to penicillin." }] })[2]!.content).toBe("You are allergic to penicillin.");
+  expect(closingAt('Rest well.\n{"inPlan"')).toBe(10);
+  expect(closingAt("Rest well. Drink water.")).toBe(-1);
+});
+
+test("a cut-off answer is kept as far as it was said, so the next question is answered and not the one before it", async () => {
+  // As withVoice keeps the conversation: an answer is saved only once it finishes, a patient line when it is heard.
+  const stored: { role: "user" | "assistant"; content: string }[] = [];
+  const ask = async (question: string, chunks: string[], cutAfter?: number) => {
+    const history = [...stored], abort = new AbortController(), { chat, log } = gemma(chunks);
+    stored.push({ role: "user", content: question });
+    const { turn } = turnOf({ question, history, chat, signal: abort.signal });
+    let said = 0, whole = "";
+    for await (const part of keepingSaid(answerTurn(turn), abort.signal, text => stored.push({ role: "assistant", content: text }))) {
+      if (part.type !== "text-delta") continue;
+      whole += part.text;
+      if (++said === cutAfter) { abort.abort(); break; }
+    }
+    if (!abort.signal.aborted) stored.push({ role: "assistant", content: whole });
+    return log.messages;
+  };
+  await ask("Can I drink hot soup?", ["fine\n", "Yes, warm soup is fine to drink. ", "Let it cool a little first. ", "Clear soups are best.\n{\"inPlan\": false, \"cites\": []}"], 1);
+  const asked = await ask("My throat is painful, any advice?", ["fine\n", "Warm salt water gargles help. ", "Paracetamol eases the pain.\n{\"inPlan\": false, \"cites\": []}"]);
+  // Before the fix Gemma read one patient line, "Can I drink hot soup?\nMy throat is painful...", and answered the soup again.
+  expect(asked.slice(1)).toEqual([
+    { role: "user", content: "Can I drink hot soup?" },
+    { role: "assistant", content: "Yes, warm soup is fine to drink." },
+    { role: "user", content: "My throat is painful, any advice?" },
+  ]);
+});
+
+test("a cut before any sentence keeps nothing, so a patient cut off mid-pause still reaches Gemma as one line", async () => {
+  const abort = new AbortController(), saved: string[] = [];
+  const parts = (async function* (): AsyncGenerator<Part> { abort.abort(); yield { type: "text-delta", text: "Too late." }; })();
+  for await (const _ of keepingSaid(parts, abort.signal, text => saved.push(text))) break;
+  expect(saved).toEqual([]);
+});
+
+test("Clef's emergency read, never waited for, puts the 999 line before Gemma's next sentence and tells the care team, raised to urgent", async () => {
+  const raised: (boolean | undefined)[] = [];
+  const { turn, summaries } = turnOf({
+    question: "ayah saya tiba-tiba keliru tak kenal orang cakap merepek", language: "ms", emergency: Promise.resolve(true),
+    chat: gemma(["fine\nBawa ayah anda ke hospital. ", "Keliru secara tiba-tiba perlu diperiksa."]).chat,
+    escalate: async (_label, clef) => { raised.push(clef); return true; },
+  });
+  expect(await spoken(turn)).toEqual([LINES.ms.call999, "Bawa ayah anda ke hospital.", "Keliru secara tiba-tiba perlu diperiksa.", LINES.ms.told]);
+  expect(raised).toEqual([true]);
+  expect(summaries[0]!.urgent).toBe(true);
+  // Clef slow or saying no: the turn goes on as before, waiting for nothing and telling nobody.
+  for (const emergency of [new Promise<boolean>(() => {}), Promise.resolve(false)]) {
+    const calm = turnOf({ question: "When is my review?", emergency, chat: gemma(["fine\nYour review is on 12 October."]).chat });
+    expect(await spoken(calm.turn)).toEqual(["Your review is on 12 October."]);
+    expect([calm.escalated, calm.summaries[0]!.urgent]).toEqual([[], false]);
+  }
+});
+
+test("Clef's raise still makes the task when Gemma's \"worse\" came first and was read as fine; when that made one, there is no second", async () => {
+  for (const made of [false, true]) {
+    let clef!: (yes: boolean) => void;
+    const calls: [string, boolean | undefined][] = [];
+    const { turn } = turnOf({
+      question: "ayah saya tiba-tiba keliru tak kenal orang cakap merepek", emergency: new Promise<boolean>(resolve => { clef = resolve; }),
+      chat: gemma(['{"triage":"worse","inPlan":false}\nBawa ayah anda ke hospital.']).chat,
+      // Clef answers once Gemma's "worse" is in: its task is made, or read as fine (none).
+      escalate: async (label, raised) => { calls.push([label, raised]); if (label === "worse") { clef(true); return made; } return true; },
+    });
+    expect((await spoken(turn)).at(-1)).toBe(LINES.en.told);
+    expect(calls).toEqual(made ? [["worse", undefined]] : [["worse", undefined], ["urgent", true]]);
+  }
+});

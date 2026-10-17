@@ -1,0 +1,780 @@
+[
+  {
+    "id": "gi_001",
+    "split": "train",
+    "condition": "Acute gastroenteritis",
+    "source": "Viral gastroenteritis (stomach flu)",
+    "patient_persona": {
+      "description": "Puan Rohaya binti Che Mat, 29, female, mother speaking for her 3-year-old son Aiman; housewife from Kota Bharu, Kelantan. Anxious, quick, soft Kelantan accent.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Faizal Hakim, Malay man in his 30s, medical officer at a Kota Bharu klinik kesihatan. Gentle, patient; switches fully to Malay with Malay parents.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, anak saya ni muntah dari semalam petang. Pagi tadi mula cirit-birit pulak, dah enam kali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kesian dia. Muntah tu berapa kali, puan? Ada darah atau mucus dalam najis?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Muntah dalam lima kali. Najis macam air, warna kuning, tak ada darah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dia masih kencing macam biasa? Lampin basah tak pagi ni? Urine output tu penting."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lampin pagi tadi basah sikit je. Dia tak nak makan, minum air pun sikit-sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Suhu dia 37.9, low grade fever. Mata tak cengkung, mulut masih basah. So dehydration dia still mild."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Semalam saya ada bagi dia Uphamol syrup, 5ml. Betul ke dos tu, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Berat dia 14 kilo, jadi Uphamol 7ml, setiap enam jam kalau demam. Tak lebih empat kali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kakak dia pun sakit perut minggu lepas. Budak tadika ramai kena jugak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ni jangkitan virus, biasanya rotavirus atau norovirus. Tak perlu antibiotic, dia akan baik sendiri dalam tiga hingga lima hari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yang paling penting, fluids. Saya bagi ORS, one sachet campur 200ml air masak. Bagi dia 5ml every five minutes, guna sudu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susu dia boleh bagi tak? Nasi pun dia tak nak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh teruskan susu. Bubur nasi, biskut kering pun OK. Avoid air manis, soft drink, juice semua tu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik doktor. Kalau dia makin teruk, saya kena buat apa? Bawa pergi emergency terus ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau dia lembik, tak kencing lebih lapan jam, atau muntah semua air, terus bawa ke emergency Hospital Kota Bharu."
+      }
+    ]
+  },
+  {
+    "id": "gi_002",
+    "split": "train",
+    "condition": "Acute gastroenteritis",
+    "source": "Viral gastroenteritis (stomach flu)",
+    "patient_persona": {
+      "description": "Lim Ah Keat, 47, male, char kuey teow hawker in George Town, Penang. Hoarse, tired, Penang-accented Mandarin with some Hokkien-flavoured phrasing.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ooi Mei Fong, Malaysian Chinese woman in her 30s, emergency physician at a Penang private hospital. Brisk but kind; English-leaning, fluent Mandarin.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Lim 先生，你好。你是从什么时候开始拉肚子的？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "昨天晚上十点开始，拉了差不多十几次，全部是水。今天早上还吐了三次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有没有 fever？肚子是怎样痛的？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有一点烧，肚子一阵一阵绞痛。刚才站起来头很晕，差点跌倒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 blood pressure 躺着是 118/76，站起来掉到 96/60，心跳 112。这是 dehydration，身体缺水很严重。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我今天还要开档的，下午可以 discharge 回去吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "今天不行。我们先给你打 drip，一公升 normal saline，然后验血看 kidney 和 potassium。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好吧。我昨天自己吃了 Imodium，吃了四粒，都没有停。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "四粒是 8mg，还没 exceed maximum dose。不过你有 fever，Imodium 先 stop，让身体把 bacteria 排出来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我前天在 pasar malam 吃了 lala，会不会是那个？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有可能，贝壳类常常有 norovirus。你家里有没有其他人也这样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我老婆也有吃，不过她没事。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK。Blood test 出来了，potassium 3.2，有一点低，kidney 还好。我们在 drip 里面加 potassium。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "吐的话给你 metoclopramide 10mg，一天三次，饭前吃。回家每次拉完就喝一杯 ORS。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要休息几天啊医生？我是卖吃的，没开档就没 income 啊。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你是 food handler，diarrhoea stop 了以后还要等 forty-eight hours 才可以开档。我给你 MC 三天。"
+      }
+    ]
+  },
+  {
+    "id": "gi_003",
+    "split": "train",
+    "condition": "Acute gastroenteritis",
+    "source": "Viral gastroenteritis (stomach flu)",
+    "patient_persona": {
+      "description": "Priya a/p Ramasamy, 28, female, primary school teacher in Seremban, Negeri Sembilan. Clear, fast Malaysian Indian English, occasional Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Izzati Azman, Malay woman in her 30s, GP at a Seremban clinic. Friendly and concise; mostly English with this patient.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Good morning doctor. Since yesterday afternoon I got cirit-birit, maybe eight times already. And I vomited twice last night."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Oh dear. Ada darah dalam stool, or very high fever?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No blood. Demam sikit only, I checked 37.8 this morning."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Anybody else sick around you? At school or at home?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Actually yes, three kids in my class were absent this week, all got muntah-muntah also."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That fits a viral gastroenteritis going around the school. Nadi 96, blood pressure 110/70, lidah a bit dry but still okay."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can I take something to stop the diarrhoea? Esok I kena jaga exam hall."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "You can take loperamide 2mg after each loose stool, maximum 8mg a day. Stop it if you get fever above 38.5 or see blood."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. And the vomiting? I cannot keep even water down sometimes."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give you domperidone 10mg, sehari tiga kali sebelum makan. Take small sips of ORS, jangan minum satu gelas sekali gus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Should I take antibiotic just in case? My mother always says kena makan antibiotic."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No need. It's a virus, antibiotics won't help and may make the diarrhoea worse. Also eat plain food, bubur or toast, for a couple of days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can I get MC for tomorrow? I really cannot berdiri in the hall for three hours."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give you two days MC. Cuci tangan dengan sabun, and don't prepare food for the family until you're better."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you doctor. If still not better?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If more than three days, or you rasa nak pitam, come back straight away."
+      }
+    ]
+  },
+  {
+    "id": "gi_004",
+    "split": "train",
+    "condition": "Acute gastroenteritis",
+    "source": "Viral gastroenteritis (stomach flu)",
+    "patient_persona": {
+      "description": "Jeffrey Majinbon, 22, male, Kadazan university student in Kota Kinabalu, Sabah. Relaxed, soft-spoken, Sabah Malay with some English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chong Wei Jie, Sabahan Chinese man in his 30s, medical officer at a Kota Kinabalu health clinic. Easygoing; mixes English and Sabah-style Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Jeffrey, macam mana sekarang? Semalam you dapat drip dekat sini kan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya doktor, sudah lebih bagus. Muntah sudah berhenti, tapi cirit-birit masih ada, tiga kali pagi tadi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tiga kali, OK lah, much better than semalam. Masih cair macam air?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sudah tidak terlalu cair. Perut pun tidak memulas macam kelmarin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Hari ini temperature 36.9, blood pressure 120/78. Pulse pun sudah normal, no more dehydration."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, housemate saya pun sakit sama. Kami makan nasi bungkus sama-sama hari Sabtu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin sebab makanan, atau virus berjangkit dalam rumah. Kamu kongsi tandas, jadi cuci tangan dengan sabun selalu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "ORS tu rasa dia tidak sedap bah. Boleh minum 100 Plus saja kah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "100 Plus terlalu banyak gula, boleh buat cirit-birit lebih teruk. ORS paling bagus. Kalau mau, sejukkan dulu dalam fridge, lebih senang minum."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doktor. Boleh makan sudah kah? Saya lapar sekarang, since yesterday only minum ORS."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, start with bubur, roti, pisang. Avoid dulu spicy food, susu, dan alcohol."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Minggu depan saya ada final exam. Saya perlu datang lagi kah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak payah kalau makin baik. Tapi kalau ada darah dalam najis atau demam balik, datang terus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih doktor. Boleh saya dapat surat untuk lecturer?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, saya tulis MC hari ini dan esok. Rest betul-betul, good luck untuk exam."
+      }
+    ]
+  },
+  {
+    "id": "gi_005",
+    "split": "train",
+    "condition": "Acute gastroenteritis",
+    "source": "Viral gastroenteritis (stomach flu)",
+    "patient_persona": {
+      "description": "Madam Goh Siew Lan, 74, female, retired seamstress in Johor Bahru with type 2 diabetes and hypertension; admitted to the medical ward. Slow, frail, Johor Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Harith Iskandar, Malay man in his 40s, physician at a Johor Bahru hospital, doing a morning ward round. Measured; English-leaning, decent Mandarin learned in Johor.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "安娣，早安。昨天晚上还有 diarrhoea 吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "医生早。晚上拉了两次，比较少了。可是没有胃口，只吃了一点粥。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有没有 vomit？肚子还痛不痛？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有吐了，肚子不怎么痛。就是整个人没有力。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你 admit 的时候，creatinine 是 168，今天 back to 110。Kidney function 好很多了，因为 drip 补了水。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我的 sugar 药呢？这几天都没有吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Metformin 我们先停，等你吃东西正常了才吃回。今天早上 sugar 是 7.8，还可以。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "血压药要不要吃？我吃 perindopril 的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Perindopril 也先 hold 两天。你的 blood pressure 今天 118/70，不高。等 kidney 完全 recover 了才 restart。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我住在这里，孙子可以来 visit 我吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，但是小孩子进来前后都要用肥皂洗手，不要只用 sanitiser。这个 virus 很容易传染。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我几时可以回家啊？家里没人喂猫。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果今天可以吃饭，不用 drip，tomorrow morning 就可以 discharge。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，谢谢医生。回家要注意什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "多喝水，吃软的东西。一个星期后去 klinik 验血，看 kidney 和 sugar，再决定几时吃回 metformin。"
+      }
+    ]
+  },
+  {
+    "id": "gi_006",
+    "split": "train",
+    "condition": "Food poisoning",
+    "source": "Food poisoning",
+    "patient_persona": {
+      "description": "Cikgu Norhayati binti Samad, 38, female, secondary school teacher in Shah Alam, Selangor. Articulate, slightly breathless, standard Malay with some English.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Gan Kok Leong, Malaysian Chinese man in his 50s, GP at a Shah Alam clinic. Methodical, warm; fluent Malay, English-leaning.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya pergi kenduri kahwin semalam tengah hari. Malam tu terus muntah, cirit-birit, perut memulas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pukul berapa mula sakit? Puan makan apa dekat kenduri tu? Cuba ingat the whole menu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dalam pukul lapan malam. Makan nasi minyak, ayam masak merah, dengan puding roti."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Six hours after makan. Ada tetamu lain yang sakit juga?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, dalam group WhatsApp keluarga, dah sepuluh orang lebih mengadu. Sepupu saya masuk hospital."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ni keracunan makanan, food poisoning. Masa pendek macam ni biasanya toxin dari bakteria, contohnya Staph atau Bacillus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya ada demam tak, doktor? Badan rasa sejuk-sejuk, macam nak fever."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Suhu 37.6, tak tinggi. Blood pressure 108/70, masih OK. Perut lembut, tak ada tanda appendix."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Perlu makan antibiotik tak? Saya ada simpan amoxicillin dari dulu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan makan antibiotik lama tu. Food poisoning jenis toxin ni no need antibiotic, biasanya baik dalam 24 to 48 hours."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi ORS, minum sikit-sikit every time lepas buang air. For the vomiting, metoclopramide 10mg, three times a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh saya pergi sekolah esok? Budak-budak ada exam, saya kena invigilate."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi MC dua hari. Satu lagi, sebab ramai yang sakit, klinik kena buat notifikasi kepada pejabat kesihatan daerah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, nanti ada orang telefon saya ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin ada pegawai kesihatan tanya apa yang puan makan. Bagi tahu je menu tu, supaya mereka boleh siasat katerer."
+      }
+    ]
+  },
+  {
+    "id": "gi_007",
+    "split": "train",
+    "condition": "Food poisoning",
+    "source": "Food poisoning",
+    "patient_persona": {
+      "description": "Marcus Yeoh Jun Hao, 31, male, software engineer in Cheras, Kuala Lumpur. English-dominant Malaysian Chinese, fast and matter-of-fact, some Malay and Cantonese-flavoured particles.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Siti Mariam Yusof, Malay woman in her 40s, family medicine specialist in Cheras. Precise, calm; mostly English with this patient.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, three days already I got cirit-birit. Last night I saw some blood in it, so I got scared lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay, good that you came. When did it start, and what did you eat before that?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saturday night I ate chicken satay at a pasar malam. Sunday night the cramps started, then fever."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How many times a day are you going? And demam tu how high?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Around eight, nine times sehari. Fever last night 38.7, I makan two Panadol."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Today your temperature is 38.2, nadi 100. Perut tender at the lower part but no guarding."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Fever, blood, and undercooked chicken. This could be Campylobacter or Salmonella. I'll send a stool culture."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So this time kena antibiotic or not?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, sebab ada darah dan demam, I'll start azithromycin 500mg, sekali sehari untuk tiga hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I took loperamide yesterday also, two tablets. Can continue?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Please stop. Kalau cirit-birit berdarah, loperamide can trap the bacteria inside and make things worse."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, stop already. Any food I should avoid?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Avoid susu, makanan pedas dan alcohol for a few days. Drink ORS, at least two to three litres a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My girlfriend also makan the same satay but she is fine. Pelik ah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It depends which stick was undercooked. Come back in two days for the culture result, or earlier if you get dizzy or the blood increases."
+      }
+    ]
+  },
+  {
+    "id": "gi_008",
+    "split": "train",
+    "condition": "Food poisoning",
+    "source": "Food poisoning",
+    "patient_persona": {
+      "description": "Chan Yoke Mei, 52, female, kopitiam owner in Ipoh, Perak. Loud, frank, Ipoh Mandarin with Cantonese habits and English food words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Leong Kar Wai, Malaysian Chinese man in his 40s, GP in Ipoh old town. Dry humour; Mandarin and Cantonese-influenced, English medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我今天早上吃了昨晚剩下的炒饭，一个钟头以后就开始吐，吐到没有力。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "炒饭放在哪里？Fridge 还是外面？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "放在厨房外面，盖着，整个晚上。以前也是这样吃，都没事的啊。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "饭放在室温太久，会长一种细菌叫 Bacillus cereus。它的毒素一两个小时就会让人吐。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我是不是要吃 antibiotic？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不用。这个是 toxin，不是细菌在肚子里面生长。一般十二到二十四小时就会好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我现在还有一点拉肚子，可是 vomit 比较少了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 blood pressure 126/80，no fever，dehydration 不严重。我给你 ORS，还有 domperidone 10mg，一天三次，饭前吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我有高血压，吃 amlodipine 5mg，今天可以吃吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果吐完了吃得下，就照常吃。如果站起来头晕，就先停一天，打电话问 klinik。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我是开 kopitiam 的，客人会不会被我传染？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个不会 spread，不会人传人。但是你店里的饭也要注意，cook 好了 two hours 内要放 fridge。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哎呀，我们的 nasi lemak 也是一大早煮好放着卖的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "早上煮，中午卖完，that one still OK。最怕的是 overnight rice，第二天再炒 fried rice。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好啦好啦，以后不省这个钱了。Thank you 医生。"
+      }
+    ]
+  },
+  {
+    "id": "gi_009",
+    "split": "train",
+    "condition": "Food poisoning",
+    "source": "Food poisoning",
+    "patient_persona": {
+      "description": "Mr. Rajendran a/l Subramaniam, 61, male, retired estate supervisor in Sungai Petani, Kedah; type 2 diabetes on metformin and gliclazide. Slow, polite Malaysian Indian English with Malay and a few Tamil-English habits.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lee Hui Min, Malaysian Chinese woman in her 30s, medical officer at a Sungai Petani clinic, reviewing results. Clear and courteous; English with some Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Good morning, uncle. Apa khabar? How are you feeling since last week?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Better, doctor. Cirit-birit stopped two days ago. Still a bit lemah, but can walk to the temple already."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Your stool culture came back. It grew Salmonella, the kind that often comes from eggs or chicken."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Must be the kenduri dinner. They served telur sambal, half cooked. My wife tak makan that one."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Likely. Because you have diabetes and you're above sixty, we gave you ciprofloxacin. Did you finish all five days?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Habis, doctor. 500mg twice a day. Only perut rasa a bit funny."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's common. Any pain in your heels or ankles while taking it?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, tak sakit. Why ah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cipro can rarely affect tendons in older people. Since you're fine, no worries. What were your sugar readings during the illness?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "When I was vomiting, one pagi it was 3.9, I felt shaky. So I stopped the gliclazide dua hari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That was the right thing to do. When you can't eat, gliclazide can make the sugar drop too low."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Now can I start back the usual? Metformin 500mg twice and gliclazide 80mg in the morning."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, sekarang dah makan macam biasa, so restart both. Today your fasting sugar is 6.8 and buah pinggang normal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih doctor. Anything else I should jaga?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Make sure eggs are cooked properly, telur separuh masak tu elakkan dulu. See you in three months for your diabetes review."
+      }
+    ]
+  },
+  {
+    "id": "gi_010",
+    "split": "train",
+    "condition": "Food poisoning",
+    "source": "Food poisoning",
+    "patient_persona": {
+      "description": "Encik Awang anak Jelani, 41, male, Iban boat mechanic from Kuching, Sarawak. Easy-going, Sarawak Malay dialect with some English, uses 'kamek' and 'sik'.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tiong Ling Ling, Sarawakian Chinese woman in her 30s, emergency medical officer in Kuching. Practical; Malay and English, adapts to Sarawak phrasing.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, kamek sakit perut teruk. Dari pagi tadi berak air, dah lapan kali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Encik makan apa semalam? Ada makan seafood?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada. Semalam kamek makan udang dengan kerang, bakar sikit je, masih mentah dalam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kerang separuh masak memang high risk. Ada demam, muntah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Muntah dua kali. Demam sikit, badan seram sejuk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Suhu 38.0, nadi 104, blood pressure 104/68. Perut encik lembut tapi bunyi usus aktif."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin bakteria Vibrio dari seafood mentah. Kita pasang drip dulu, satu liter, sebab encik agak kering."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aok, boleh. Kamek sik boleh minum air, muntah balik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi ubat muntah melalui drip, metoclopramide 10mg. Lepas tu cuba minum ORS sikit-sikit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kawan kamek pun makan sama, tapi dia OK. Dia minum tuak banyak, katanya kill the germs."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tuak tak bunuh kuman dalam perut, encik. Masa sakit ni jangan minum alcohol langsung."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Perlu makan antibiotic ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kebanyakan kes baik sendiri. Kalau demam naik atau ada darah, kita bagi doxycycline. Saya hantar stool sample dulu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila kamek boleh balik? Esok ada kerja kat workshop."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lepas drip habis dan encik boleh minum tanpa muntah, boleh discharge. Come back lusa to check the stool result."
+      }
+    ]
+  }
+]

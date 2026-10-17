@@ -1,0 +1,194 @@
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+
+import { DataTable, type Column, PersonCell, RowAction, TableToolbar, TextCell } from "@/components/data-table";
+import type { IconName } from "@/components/icon";
+import { InsightCard } from "@/components/insight-card";
+import { EmptyState, PageHeader } from "@/components/page";
+import { Card, Chip, Pager, pageRange, SearchField, Signal, Skeleton, StatCard, StatRow, Status, Tabs } from "@/components/primitives";
+import { RightRail, WithRail } from "@/components/rail";
+import { countOf, formatNumber } from "@/lib/format";
+import { type client, orpc } from "@/lib/orpc";
+
+import { filterPatients, rankPatients } from "./search";
+
+export type PatientRow = Awaited<ReturnType<typeof client.patients.list>>[number];
+
+/** The ward's own word for the bed when admitted; otherwise whether the record is complete. */
+export function StatusChip({ patient }: { patient: PatientRow }) {
+  const status = patient.ward?.status;
+  if (status === "fit") return <Chip tone="done">Medically fit</Chip>;
+  if (status === "watch") return <Chip tone="soon">Watch</Chip>;
+  if (status === "stable") return <Chip>Stable</Chip>;
+  if (patient.incomplete) return <Chip tone="soon">Record incomplete</Chip>;
+  return <Chip>Not on a ward</Chip>;
+}
+
+/** "F, 67 · SYN-1001": a part the record does not have (no sex, age 0 from an incomplete intake) is left out, never ", 0". */
+export const patientMeta = (p: { sex: string; age: number; id: string }) =>
+  [[p.sex.charAt(0).toUpperCase(), p.age > 0 ? p.age : ""].filter(Boolean).join(", "), p.id].filter(Boolean).join(" · ");
+
+/** The allergy as a chip: the first allergen, then how many more ("Penicillin +5"). The full text goes in the chip's `title`. */
+export function allergyChip(text: string) {
+  const [first = "", ...others] = text.split(";").map((part) => part.trim()).filter(Boolean);
+  return `${first.split(/[—(]/)[0]!.trim() || first}${others.length ? ` +${others.length}` : ""}`;
+}
+
+export const PATIENT_TABS = ["all", "ward", "watch", "fit", "incomplete"] as const;
+export type PatientTab = (typeof PATIENT_TABS)[number];
+
+const inTab: Record<PatientTab, (p: PatientRow) => boolean> = {
+  all: () => true,
+  ward: (p) => !!p.ward,
+  watch: (p) => p.ward?.status === "watch",
+  fit: (p) => p.ward?.status === "fit",
+  incomplete: (p) => !!p.incomplete,
+};
+const TAB_LABEL: Record<PatientTab, string> = { all: "All", ward: "On a ward", watch: "Watch", fit: "Medically fit", incomplete: "Incomplete" };
+
+/** In the list a chip means "look here"; calm states are quiet text. A patient fit to go also shows how long they have waited. */
+function ListStatus({ patient }: { patient: PatientRow }) {
+  const status = patient.ward?.status;
+  const hours = status === "fit" ? patient.ward?.waitingHours : undefined;
+  if (hours) return <span className="ptl-status"><StatusChip patient={patient} /><span className="ptl-calm">{countOf(hours, "hour")} waiting</span></span>;
+  if (status === "watch" || status === "fit" || (!status && patient.incomplete)) return <StatusChip patient={patient} />;
+  return status === "stable" ? <Status tone="done">Stable</Status> : <Status>Not on a ward</Status>;
+}
+
+const statusRank = (p: PatientRow) => ["watch", "fit", "stable"].indexOf(p.ward?.status ?? "") + (p.ward ? 0 : p.incomplete ? 3 : 5);
+const PAGE_SIZE = 10;
+
+const columns: Column<PatientRow>[] = [
+  { key: "name", header: "Patient", cell: (p) => <PersonCell name={p.name} detail={patientMeta(p)} />, sort: (a, b) => a.name.localeCompare(b.name) },
+  { key: "reason", header: "Reason", cell: (p) => <span className="ptl-reason">{p.subtitle ? <strong>{p.subtitle}</strong> : null}<TextCell>{p.complaint}</TextCell></span>, sort: (a, b) => (a.subtitle ?? a.complaint ?? "").localeCompare(b.subtitle ?? b.complaint ?? "") },
+  { key: "status", header: "Status", cell: (p) => <ListStatus patient={p} />, sort: (a, b) => statusRank(a) - statusRank(b) },
+];
+
+type Fact = { icon: IconName; text: string };
+
+/** The one patient to look at first, from facts already in the list: on watch, else fit and waiting longest, else an incomplete record. */
+export function firstToSee(rows: PatientRow[]) {
+  const watch = rows.filter(inTab.watch);
+  const fit = rows.filter(inTab.fit).sort((a, b) => (b.ward?.waitingHours ?? 0) - (a.ward?.waitingHours ?? 0));
+  const incomplete = rows.filter(inTab.incomplete);
+  const patient = watch[0] ?? fit[0] ?? incomplete[0];
+  if (!patient) return undefined;
+  const sbar = patient.ward?.sbar;
+  const place: Fact[] = patient.subtitle ? [{ icon: "clipboard", text: patient.subtitle }] : [];
+  const others = (n: number, text: string): Fact[] => (n > 1 ? [{ icon: "users", text: `${countOf(n - 1, "other patient")} ${text}` }] : []);
+  if (watch.length) {
+    return {
+      patient, tone: "soon" as const, label: "On watch", title: `See ${patient.name} first`,
+      lead: sbar?.a || patient.complaint || "Marked watch by the ward.",
+      evidence: [...place, ...(sbar?.s ? [{ icon: "activity", text: sbar.s } as Fact] : []), ...others(watch.length, "on watch")],
+      step: sbar?.r || "Review the overview",
+    };
+  }
+  if (fit.length) {
+    const hours = patient.ward?.waitingHours;
+    return {
+      patient, tone: "info" as const, label: "Medically fit", title: `${patient.name} is medically fit`,
+      lead: sbar?.a || patient.complaint || "The ward marks this patient fit for discharge.",
+      evidence: [...place, ...(hours ? [{ icon: "clock", text: `Waiting ${countOf(hours, "hour")}` } as Fact] : []), ...others(fit.length, "medically fit")],
+      step: sbar?.r || "Review before discharge",
+    };
+  }
+  return {
+    patient, tone: "soon" as const, label: "Record", title: `${patient.name}'s record is incomplete`,
+    lead: "Details are missing from this record.",
+    evidence: [...place, ...others(incomplete.length, "with an incomplete record")],
+    step: "Complete the record",
+  };
+}
+
+export function PatientList({ tab, onTab }: { tab: PatientTab; onTab: (tab: PatientTab) => void }) {
+  const { data, isPending, error } = useQuery(orpc.patients.list.queryOptions());
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const navigate = useNavigate();
+  const open = (p: PatientRow) => navigate({ to: "/pro/patients/$patientId", params: { patientId: p.id } });
+
+  if (error) {
+    return (
+      <>
+        <PageHeader title="Patients" lead="Everyone registered at this hospital." />
+        <Card><EmptyState icon="alert" title="The patient list could not be loaded">{error.message}</EmptyState></Card>
+      </>
+    );
+  }
+
+  // Ranked once here, so the table opens with who needs the doctor first and the insight names the top row.
+  const all = rankPatients(data ?? []);
+  const count = (t: PatientTab) => all.filter(inTab[t]).length;
+  const stat = (t: PatientTab) => (isPending ? <Skeleton width={56} height={40} /> : count(t));
+  const rows = filterPatients(all.filter(inTab[tab]), query);
+  const current = Math.min(page, Math.max(1, Math.ceil(rows.length / PAGE_SIZE)));
+  const [from, to] = pageRange(current, PAGE_SIZE, rows.length);
+  const insight = firstToSee(all);
+  const pick = (next: PatientTab) => { setPage(1); onTab(next); };
+  // A stat filters the table in place; pressing the one in use shows everyone again. "All" is the resting state, so it is not marked.
+  const filter = (t: PatientTab) => ({ onSelect: () => pick(tab === t ? "all" : t), selected: t !== "all" && tab === t });
+  const lead = isPending ? "Everyone registered at this hospital." : (
+    <>
+      {count("watch") ? <Signal tone="soon">{formatNumber(count("watch"))} on watch</Signal> : "No one on watch"} · {formatNumber(count("fit"))} medically fit · {formatNumber(count("ward"))} of {countOf(all.length, "patient")} on a ward
+    </>
+  );
+
+  const table = (
+    <Card className="ptl-card">
+      <DataTable
+        columns={columns}
+        rows={rows.slice(from - 1, to)}
+        rowKey={(p) => p.id}
+        loading={isPending && PAGE_SIZE}
+        onRowOpen={open}
+        rowAction={(p) => <RowAction onClick={() => open(p)}>Open</RowAction>}
+        empty={
+          all.length ? (
+            <EmptyState icon="search" title="No patient matches">
+              {query ? `Nothing matches "${query}" in ${TAB_LABEL[tab]}.` : `No patient is in ${TAB_LABEL[tab]} right now.`}
+            </EmptyState>
+          ) : (
+            <EmptyState icon="users" title="No patients yet">No patients are registered at this hospital yet.</EmptyState>
+          )
+        }
+        toolbar={
+          <TableToolbar end={<SearchField label="Search patients" placeholder="Name or ID" value={query} onChange={(e) => { setPage(1); setQuery(e.target.value); }} />}>
+            <Tabs
+              label="Filter patients"
+              tabs={PATIENT_TABS.map((id) => ({ id, label: TAB_LABEL[id], count: isPending ? undefined : count(id) }))}
+              value={tab}
+              onChange={pick}
+            />
+          </TableToolbar>
+        }
+        footer={<Pager page={current} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} noun={["patient", "patients"]} />}
+      />
+    </Card>
+  );
+
+  return (
+    <>
+      <PageHeader title="Patients" lead={lead} />
+      <StatRow>
+        <StatCard title="Patients" value={stat("all")} caption="Registered at this hospital" {...filter("all")} />
+        <StatCard title="On a ward" value={stat("ward")} caption={`${formatNumber(count("fit"))} medically fit`} {...filter("ward")} />
+        <StatCard title="On watch" value={stat("watch")} tone="soon" caption="Marked watch by the ward" {...filter("watch")} />
+        <StatCard title="Record incomplete" value={stat("incomplete")} tone="soon" caption="Details missing" {...filter("incomplete")} />
+      </StatRow>
+      {insight ? (
+        <WithRail first
+          rail={
+            <RightRail label="Who to see first">
+              <InsightCard label={insight.label} title={insight.title} lead={insight.lead} tone={insight.tone} evidence={insight.evidence}
+                next={{ label: "Open", step: insight.step, onAct: () => open(insight.patient) }} />
+            </RightRail>
+          }
+        >
+          {table}
+        </WithRail>
+      ) : table}
+    </>
+  );
+}

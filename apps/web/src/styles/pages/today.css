@@ -1,0 +1,49 @@
+/* Today and Schedule (Sona Pro). Tokens only. */
+
+.today-time { font-variant-numeric: tabular-nums; font-weight: 600; }
+.today-quiet { color: var(--muted); font-size: var(--text-small); }
+.today-error { color: var(--red); font-size: var(--text-small); }
+
+.today-requests { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.today-request { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3) 0; border-top: 1px solid var(--line); }
+.today-request p { margin: 0; }
+.today-request-who { font-weight: 600; }
+.today-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+/* A patient's reason keeps the line breaks they typed. */
+.today-reason { white-space: pre-line; overflow-wrap: anywhere; }
+.today-decline label { display: flex; flex-direction: column; gap: var(--space-1); margin-top: var(--space-2); color: var(--muted); font-size: var(--text-small); }
+.today-decline textarea { font: inherit; color: var(--ink); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); resize: vertical; }
+
+.today-pad { margin: 0; padding: var(--space-3) 0; }
+
+/* Week calendar: a time gutter and seven day columns; blocks sit at their start time.
+   `day.list` has no end time, so every block is one fixed height (half an hour), one line: name, then time.
+   The hour is short enough that a working day fits a laptop screen without scrolling. */
+.week { --week-hour: 3.25rem; --week-gutter: 3.25rem; min-width: 0; overflow-x: auto; }
+/* Seven readable days need ~36rem; a phone or 200% text scrolls the week sideways instead of crushing it. */
+.week-head, .week-body { display: grid; grid-template-columns: var(--week-gutter) repeat(7, minmax(0, 1fr)); min-width: 36rem; }
+.week-day { padding: var(--space-2) 0; text-align: center; font-size: var(--text-overline); font-weight: 600; text-transform: uppercase; letter-spacing: var(--track-overline); color: var(--muted); border-radius: var(--radius-control); white-space: nowrap; }
+.week-day[aria-current] { color: var(--surface); background: var(--ink); }
+.week-body { position: relative; margin-top: var(--space-3); }
+.week-gutter { position: relative; }
+.week-gutter span { position: absolute; right: var(--space-2); transform: translateY(-50%); font-size: var(--text-overline); color: var(--muted); font-variant-numeric: tabular-nums; }
+.week-col { position: relative; min-width: 0; border-left: 1px solid var(--hairline); background: repeating-linear-gradient(to bottom, var(--hairline) 0 1px, transparent 1px var(--week-hour)); }
+.week-col[data-today] { background-color: var(--blue-wash); }
+.week-block { position: absolute; height: calc(var(--week-hour) / 2 - 2px); padding: 0 var(--space-2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: left; font: inherit; font-size: var(--text-overline); line-height: calc(var(--week-hour) / 2 - 4px); color: var(--ink); background: var(--blue-wash); border: 1px solid transparent; border-left: 3px solid var(--blue); border-radius: var(--space-2); cursor: pointer; transition: border-color var(--quick) var(--ease); }
+.week-col[data-today] .week-block:not(.week-open, [data-attention]) { background: var(--surface); }
+.week-block small { display: none; }
+.week-block b { font-variant-numeric: tabular-nums; }
+.week-block[data-attention] { background: var(--amber-wash); border-left-color: var(--amber); }
+.week-block.week-open { background: transparent; border: 1px dashed var(--green); color: var(--green); }
+.week-block:hover, .week-block[aria-pressed="true"] { border-color: var(--ink); border-style: solid; }
+.week-now { position: absolute; left: 0; right: 0; height: 2px; background: var(--red); pointer-events: none; }
+.week-now::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--red); }
+.week-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-4) 0 0; color: var(--muted); font-size: var(--text-small); }
+.week-key { width: 14px; height: 14px; border-radius: var(--space-1); background: var(--blue-wash); border-left: 3px solid var(--blue); }
+.week-key:not(:first-child) { margin-left: var(--space-3); }
+.week-key[data-attention] { background: var(--amber-wash); border-left-color: var(--amber); }
+.week-key.week-open { background: transparent; border: 1px dashed var(--green); }
+.week-detail { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.week-detail span { color: var(--muted); font-size: var(--text-small); }
+/* Inside a ListCard the list runs 12px past the card edge for its row hover; a request lines up with the title instead. */
+.list .today-request { padding-inline: var(--space-3); }

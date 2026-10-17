@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1224 536" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="model-layer-title model-layer-desc">
+      <title id="model-layer-title">Model seam and fallbacks</title>
+      <desc id="model-layer-desc">Architecture diagram showing routes calling the Models interface, which answers from stubModels without a Baseten key or goes through basetenModels and sagemakerFetcher to four Malaysian endpoints, with Baseten for unlisted boxes and the stub for failed calls.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#59616b"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#245bcc"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f6e66"/></marker>
+        <marker id="arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1d1f23"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#f5f6f8"/>
+<!-- background: lanes, lifelines, frames -->
+<rect x="984" y="44" width="212" height="384" rx="8" fill="rgba(29,31,35,0.02)" stroke="rgba(29,31,35,0.2)" stroke-width="0.8" stroke-dasharray="4,4"/>
+<rect x="1000" y="48" width="164" height="12" rx="2" fill="#f5f6f8"/>
+<text x="1082" y="57" fill="rgba(29,31,35,0.5)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">AWS AP-SOUTHEAST-5 · MALAYSIA</text>
+<!-- connectors (drawn before boxes) -->
+<path d="M 40 240 L 144 240" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 344 240 L 432 240" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 632 240 L 720 240" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 304 280 L 304 376" fill="none" stroke="#59616b" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<path d="M 472 280 L 472 376" fill="none" stroke="#59616b" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<path d="M 820 280 L 820 376" fill="none" stroke="#59616b" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<path d="M 920 216 L 928 216 A 8 8 0 0 0 936 208 L 936 116 A 8 8 0 0 1 944 108 L 1000 108" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 920 232 L 968 232 A 8 8 0 0 0 976 224 L 976 204 A 8 8 0 0 1 984 196 L 1000 196" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 920 248 L 952 248 A 8 8 0 0 1 960 256 L 960 276 A 8 8 0 0 0 968 284 L 1000 284" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 920 264 L 936 264 A 8 8 0 0 1 944 272 L 944 364 A 8 8 0 0 0 952 372 L 1000 372" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<!-- connector labels -->
+<rect x="48" y="220" width="84" height="12" rx="2" fill="#f5f6f8"/>
+<text x="90" y="229" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">ROUTES, AGENTS</text>
+<rect x="364" y="220" width="48" height="12" rx="2" fill="#f5f6f8"/>
+<text x="388" y="229" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">KEY SET</text>
+<rect x="656" y="220" width="40" height="12" rx="2" fill="#f5f6f8"/>
+<text x="676" y="229" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">FETCH</text>
+<rect x="312" y="320" width="44" height="12" rx="2" fill="#f5f6f8"/>
+<text x="334" y="329" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">NO KEY</text>
+<rect x="480" y="320" width="72" height="12" rx="2" fill="#f5f6f8"/>
+<text x="516" y="329" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CALL FAILED</text>
+<rect x="828" y="320" width="64" height="12" rx="2" fill="#f5f6f8"/>
+<text x="860" y="329" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">NOT LISTED</text>
+<!-- nodes -->
+<rect x="144" y="200" width="200" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="144" y="200" width="200" height="80" rx="6" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<rect x="152" y="208" width="32" height="12" rx="2" fill="transparent" stroke="rgba(36,91,204,0.5)" stroke-width="0.8"/>
+<text x="168" y="217" fill="#245bcc" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SEAM</text>
+<text x="244" y="236" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Models interface</text>
+<text x="244" y="252" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">context.models ?? stubModels</text>
+<text x="244" y="264" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">23 methods · models.ts</text>
+<rect x="432" y="200" width="200" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="432" y="200" width="200" height="80" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<rect x="440" y="208" width="44" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="462" y="217" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ADAPTER</text>
+<text x="532" y="236" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">basetenModels</text>
+<text x="532" y="252" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">BASETEN_API_KEY set</text>
+<text x="532" y="264" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">methods → boxes, timeouts</text>
+<rect x="720" y="200" width="200" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="720" y="200" width="200" height="80" rx="6" fill="rgba(36,91,204,0.05)" stroke="rgba(36,91,204,0.5)" stroke-width="1" stroke-dasharray="4,4"/>
+<rect x="728" y="208" width="36" height="12" rx="2" fill="transparent" stroke="rgba(36,91,204,0.5)" stroke-width="0.8"/>
+<text x="746" y="217" fill="#245bcc" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SIGV4</text>
+<text x="820" y="236" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">sagemakerFetcher</text>
+<text x="820" y="252" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">fetch wrapper · sagemaker.ts</text>
+<text x="820" y="264" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">lambda: entries → Invoke</text>
+<rect x="288" y="376" width="200" height="72" rx="6" fill="#f5f6f8"/>
+<rect x="288" y="376" width="200" height="72" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<rect x="296" y="384" width="52" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="322" y="393" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">FALLBACK</text>
+<text x="388" y="412" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">stubModels</text>
+<text x="388" y="428" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">rules + authored text</text>
+<text x="388" y="440" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">answers source: &quot;fixture&quot;</text>
+<rect x="720" y="376" width="200" height="72" rx="6" fill="#f5f6f8"/>
+<rect x="720" y="376" width="200" height="72" rx="6" fill="rgba(29,31,35,0.02)" stroke="rgba(29,31,35,0.2)" stroke-width="1" stroke-dasharray="4,3"/>
+<rect x="728" y="384" width="52" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="754" y="393" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">FALLBACK</text>
+<text x="820" y="412" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Baseten</text>
+<text x="820" y="428" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">boxes not listed in</text>
+<text x="820" y="440" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SAGEMAKER_ENDPOINTS</text>
+<rect x="1000" y="76" width="180" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="1000" y="76" width="180" height="64" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<rect x="1008" y="84" width="56" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="1036" y="93" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SAGEMAKER</text>
+<text x="1090" y="112" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">sona-brain</text>
+<text x="1090" y="128" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Sona Med · 15 methods</text>
+<rect x="1000" y="164" width="180" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="1000" y="164" width="180" height="64" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<rect x="1008" y="172" width="56" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="1036" y="181" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SAGEMAKER</text>
+<text x="1090" y="200" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">sona-voice</text>
+<text x="1090" y="216" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Speech + Voice · 2 methods</text>
+<rect x="1000" y="252" width="180" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="1000" y="252" width="180" height="64" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<rect x="1008" y="260" width="56" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="1036" y="269" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SAGEMAKER</text>
+<text x="1090" y="288" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">sona-xray</text>
+<text x="1090" y="304" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Sona Vision · 5 methods</text>
+<rect x="1000" y="340" width="180" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="1000" y="340" width="180" height="64" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<rect x="1008" y="348" width="40" height="12" rx="2" fill="transparent" stroke="rgba(29,31,35,0.3)" stroke-width="0.8"/>
+<text x="1028" y="357" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">LAMBDA</text>
+<text x="1090" y="376" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">sona-pii</text>
+<text x="1090" y="392" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Sona Privacy · deidentify</text>
+<!-- legend -->
+<line x1="40" y1="480" x2="1184" y2="480" stroke="rgba(29,31,35,0.12)" stroke-width="0.8"/>
+<text x="40" y="500" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="511" width="16" height="12" rx="2" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<text x="64" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">The one seam</text>
+<rect x="148" y="511" width="16" height="12" rx="2" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="172" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Worker code</text>
+<rect x="248" y="511" width="16" height="12" rx="2" fill="rgba(36,91,204,0.05)" stroke="rgba(36,91,204,0.5)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="272" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Signs AWS calls</text>
+<rect x="368" y="511" width="16" height="12" rx="2" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<text x="392" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Endpoint in Malaysia</text>
+<rect x="516" y="511" width="16" height="12" rx="2" fill="rgba(29,31,35,0.02)" stroke="rgba(29,31,35,0.2)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="540" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Fallback host</text>
+<line x1="628" y1="517" x2="656" y2="517" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="668" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Call</text>
+<line x1="708" y1="517" x2="736" y2="517" stroke="#59616b" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<text x="748" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Fallback</text>
+<line x1="808" y1="517" x2="836" y2="517" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<text x="848" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">SigV4 or Invoke</text>
+<text x="1184" y="520" fill="#8a929e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.12em">STAGING · SYNTHETIC PATIENTS</text>
+    </svg>

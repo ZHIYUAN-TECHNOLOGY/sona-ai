@@ -1,0 +1,137 @@
+/* Tokens for both apps. Sona Pro's come from apps/native/components/sona/theme.ts, Sona Care's from
+   apps/care/lib/theme.ts; keep them in step. Colour carries meaning only: red must-not-miss, amber soon
+   or blocked, green done or safe, blue the next step. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { -webkit-font-smoothing: antialiased; }
+button, input, textarea, select { font: inherit; color: inherit; }
+
+.pro {
+  --canvas: #F5F6F8; --surface: #FFFFFF; --ink: #1D1F23; --muted: #59616B; --placeholder: #8A929E;
+  --blue: #245BCC; --blue-wash: #D5E5FC; --line: #D8DBE0;
+  /* A field edge, darker than --line: a 1px line of --line on white was barely there (user, 7 Oct). */
+  --line-field: #C5CAD2;
+  --green: #0F6E66; --amber: #8B5518; --red: #A23E3E;
+  --green-wash: #E3F1EF; --amber-wash: #F6EBDD; --red-wash: #F6E4E4;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --text-body: 15px; --line-body: 22px; --tap: 36px;
+}
+
+.care {
+  --canvas: #FAFAFA; --surface: #FFFFFF; --ink: #1F1F1F; --muted: #4E4E4E; --placeholder: #646462;
+  --blue: #2563EB; --blue-wash: #EFF6FF; --line: #EBEBEB;
+  --line-field: #D4D4D4;
+  --green: #15803D; --amber: #C2410C; --red: #C81E2E; /* red: only "call the hospital now" */
+  --green-wash: #F0FDF4; --amber-wash: #FFF7ED; --red-wash: #FEF2F2;
+  --font: "Plus Jakarta Sans", system-ui, sans-serif;
+  --text-body: 1.0625rem; --line-body: 1.625rem; --tap: 48px; /* 17px / 26px, in rem so 200% text scales */
+}
+
+.pro, .care {
+  --radius-control: 8px; --radius-group: 12px; --radius-card: 16px;
+  --text-display: 27px; --text-title: 22px; --text-heading: 19px; --text-small: 13px; --text-overline: 11px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  /* Liquid glass on the web: a soft gradient over a blurred backdrop. */
+  --glass: linear-gradient(180deg, rgb(255 255 255 / 0.82), rgb(255 255 255 / 0.62));
+  --glass-blur: saturate(160%) blur(20px);
+  --glass-edge: rgb(255 255 255 / 0.9);
+  --shadow: 0 1px 2px rgb(29 31 35 / 0.04), 0 8px 24px rgb(29 31 35 / 0.06);
+  --ease: cubic-bezier(0.2, 0, 0, 1); --quick: 160ms; --settle: 380ms;
+  min-height: 100%; background: var(--canvas); color: var(--ink);
+  font-family: var(--font); font-size: var(--text-body); line-height: var(--line-body);
+}
+
+.glass { background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-edge); box-shadow: var(--shadow); }
+
+/* Halftone dithering: a rare accent (about one surface in ten), never a background for text blocks. */
+.halftone { position: relative; isolation: isolate; }
+.halftone::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background-image: radial-gradient(circle at center, var(--blue) 1px, transparent 1.4px);
+  background-size: 7px 7px; opacity: 0.16;
+  mask-image: linear-gradient(120deg, transparent 35%, #000); -webkit-mask-image: linear-gradient(120deg, transparent 35%, #000);
+}
+
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+@media (prefers-reduced-transparency: reduce) { .glass { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; border-color: var(--line); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+/* Design-system tokens (restyle). Shared by both apps unless under `.pro`. */
+.pro, .care {
+  --radius-shell: 20px; --radius-pill: 8px;
+  --text-panel: 28px; --text-page: 36px; --text-stat: 64px;
+  --track-overline: 0.06em; --track-tight: -0.02em; --track-display: -0.03em;
+  --navy: #0E2A66; --ai-gradient: linear-gradient(160deg, #2E6BE0 0%, var(--blue) 35%, var(--navy) 100%); --on-ai: #FFFFFF; --on-ai-soft: #D5E5FC; --ai-row: rgb(255 255 255 / 0.1);
+  --canvas-deep: #E8EAEE; --hairline: #E9EBEF; --fill-hover: rgb(29 31 35 / 0.05); --fill-selected: #EEF0F3; --fill-field: #F0F1F4;
+  --shadow-card: 0 1px 2px rgb(29 31 35 / 0.03); --shadow-float: 0 2px 6px rgb(29 31 35 / 0.06), 0 16px 40px rgb(29 31 35 / 0.12);
+  --gap-card: 12px; --sona-bar-clearance: var(--space-6); --pad-card: 28px;
+  --pill-h: 48px; --field-h: 44px; --chip-h: 26px; --row-h: 64px;
+  --avatar-sm: 28px; --avatar-md: 40px; --avatar-lg: 56px;
+  --slow: 240ms; --press: 0.96; --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--blue);
+  --side-width: 220px; --rail-width: 68px; --page-max: 1560px;
+}
+.pro {
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --text-overline: 12px; --text-title: 21px;
+  --text-stat: 44px;
+  /* Content glass (design-direction.md, "glass first"): a white gradient the canvas tints through, a bright rim with a
+     sheen along the top, a faint blue catch along the bottom, a hairline outline and a soft blue lift. No live blur. */
+  --glass-surface: linear-gradient(180deg, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.68));
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 -1px 0 rgb(36 91 204 / 0.08), 0 0 0 1px rgb(29 31 35 / 0.04), 0 10px 28px rgb(36 91 204 / 0.07);
+  --chart-red: #CC3F4A; --chart-amber: #E0A21A; --chart-green: #0F8F7F; --chart-blue: #2F6BDE; --chart-neutral: #C3C8D0;
+  /* Halftone dots for an accent glint: one per feature surface, never behind body text. */
+  --dots: radial-gradient(circle at center, currentColor 0.9px, transparent 1.3px) 0 0 / 5px 5px;
+}
+.icon { flex: none; display: block; }
+/* Sona Care on the shared shell: patient sizes. Small text never under 15px, fields and pills at the 48px tap size. */
+.care { --radius-card: 28px; --text-small: 0.9375rem; --field-h: 48px; --chip-h: 30px; --avatar-sm: 36px; --side-width: 264px; }
+
+/* Surfaces (glance-to-decision pass). One family of corners, working-screen type sizes, and the two materials
+   every surface is made of: liquid glass (a lit rim over a translucent sheet) and halftone dither (Sona's mark,
+   kept to the page's atmosphere and the Sona insight). */
+:is(.pro, .care) {
+  --radius-shell: 24px; --radius-card: 20px; --radius-group: 14px; --radius-control: 10px;
+  --pad-card: 20px; --text-title: 16px; --text-page: 28px; --text-stat: 30px;
+  --glass-sheet: linear-gradient(180deg, rgb(255 255 255 / 0.78), rgb(255 255 255 / 0.56));
+  --glass-float: linear-gradient(180deg, rgb(255 255 255 / 0.56), rgb(255 255 255 / 0.34));
+  --ai-accent: linear-gradient(90deg, #8FBCFF, #C4A8FF);
+  --glass-rim: inset 0 1px 0 rgb(255 255 255 / 0.98), inset 0 0 0 1px rgb(255 255 255 / 0.55);
+  --edge: 0 0 0 1px rgb(29 31 35 / 0.06);
+  --shadow-card: var(--glass-rim), var(--edge), 0 1px 2px rgb(29 31 35 / 0.04);
+  --shadow-float: var(--glass-rim), var(--edge), 0 10px 32px rgb(29 31 35 / 0.1);
+  --dither: radial-gradient(circle at center, currentColor 0.9px, transparent 1.3px);
+  --dither-size: 6px 6px;
+}
+:is(.pro, .care) { --glass-blur: saturate(180%) blur(22px); --shadow-card: var(--glass-rim), var(--edge), 0 1px 2px rgb(29 31 35 / 0.04), 0 8px 24px rgb(29 31 35 / 0.05); }
+/* Sona Care keeps patient sizes after the shared pass above: overlines and chips at 15px, card titles at 19px (rem, so 200% text scales). */
+.care { --text-overline: 0.9375rem; --text-title: 1.1875rem; }
+/* Coloured words, one hue per kind in both apps (@sona-ai/domain/answer-parts MARK_HUE; docs/answer-parts.md, colour table):
+   red must not miss, amber check, blue a medicine, violet how much and when, teal what the patient has, ink a test. Sona Pro
+   draws a mark as a chip (its text on a tinted wash), Sona Care as coloured semibold text. Never colour alone: every mark is
+   semibold, "must not miss" is underlined and "check" dotted. Each text colour is 4.5:1 or more on its darkest canvas. */
+.pro {
+  --mark-warning: #8F3434; --mark-warning-wash: rgb(162 62 62 / 0.12);
+  --mark-caution: #764510; --mark-caution-wash: rgb(139 85 24 / 0.14);
+  --mark-medicine: #1E4FB8; --mark-medicine-wash: rgb(36 91 204 / 0.1);
+  --mark-dose: #5A3DB8; --mark-dose-wash: rgb(110 80 210 / 0.11);
+  --mark-teal: #0B5E57; --mark-teal-wash: rgb(15 110 102 / 0.12);
+  --mark-test: #1D1F23; --mark-test-wash: rgb(29 31 35 / 0.06);
+}
+.care { --mark-warning: #C81E2E; --mark-caution: #C2410C; --mark-medicine: #2563EB; --mark-dose: #9333EA; --mark-teal: #0F766E; --mark-test: #1F1F1F; }
+/* Dark, as the colour table gives it: both apps are light-only today, so nothing sets data-theme yet. */
+.pro[data-theme="dark"] {
+  --mark-warning: #F09A9A; --mark-warning-wash: rgb(240 154 154 / 0.16); --mark-caution: #E8B66E; --mark-caution-wash: rgb(232 182 110 / 0.16);
+  --mark-medicine: #8FB2F5; --mark-medicine-wash: rgb(143 178 245 / 0.16); --mark-dose: #BCA8F5; --mark-dose-wash: rgb(188 168 245 / 0.16);
+  --mark-teal: #6CCFC2; --mark-teal-wash: rgb(108 207 194 / 0.16); --mark-test: #ECEDEF; --mark-test-wash: rgb(236 237 239 / 0.1);
+}
+.care[data-theme="dark"] { --mark-warning: #FF8A8A; --mark-caution: #FDBA74; --mark-medicine: #93C5FD; --mark-dose: #D8B4FE; --mark-teal: #5EEAD4; --mark-test: #F5F5F5; }
+:is(.mark, .care-mark) { font-weight: 600; color: var(--mark-ink, inherit); text-decoration-thickness: 2px; text-underline-offset: 2px; }
+.mark { padding: 0 0.28em; border-radius: 0.4em; background: var(--mark-wash, transparent); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+:is(.mark, .care-mark)[data-mark="warning"] { --mark-ink: var(--mark-warning); --mark-wash: var(--mark-warning-wash); text-decoration-line: underline; }
+:is(.mark, .care-mark)[data-mark="caution"] { --mark-ink: var(--mark-caution); --mark-wash: var(--mark-caution-wash); text-decoration-line: underline; text-decoration-style: dotted; }
+:is(.mark, .care-mark)[data-mark="medicine"] { --mark-ink: var(--mark-medicine); --mark-wash: var(--mark-medicine-wash); }
+:is(.mark, .care-mark)[data-mark="dose"] { --mark-ink: var(--mark-dose); --mark-wash: var(--mark-dose-wash); }
+:is(.mark, .care-mark):is([data-mark="condition"], [data-mark="symptom"]) { --mark-ink: var(--mark-teal); --mark-wash: var(--mark-teal-wash); }
+:is(.mark, .care-mark)[data-mark="test"] { --mark-ink: var(--mark-test); --mark-wash: var(--mark-test-wash); }
+.mark-key { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--text-small); }

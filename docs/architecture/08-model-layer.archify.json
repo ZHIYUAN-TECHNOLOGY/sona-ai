@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Model seam and fallbacks",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      640
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Worker code"
+        },
+        "security": {
+          "label": "Signs AWS calls"
+        },
+        "cloud": {
+          "label": "Endpoint in Malaysia"
+        },
+        "external": {
+          "label": "Fallback host"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "routes",
+      "type": "backend",
+      "label": "Routes + agents",
+      "sublabel": "models ?? stubModels",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "models",
+      "type": "backend",
+      "label": "Models interface",
+      "sublabel": "23 methods, models.ts",
+      "pos": [
+        290,
+        280
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "stub",
+      "type": "backend",
+      "label": "stubModels",
+      "sublabel": "rules, labelled fixture",
+      "pos": [
+        290,
+        480
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "adapter",
+      "type": "backend",
+      "label": "basetenModels",
+      "sublabel": "per-box timeouts, wake",
+      "pos": [
+        540,
+        280
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "fetcher",
+      "type": "security",
+      "label": "sagemakerFetcher",
+      "sublabel": "SigV4 invoke, Lambda for pii",
+      "pos": [
+        790,
+        280
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "baseten",
+      "type": "external",
+      "label": "Baseten",
+      "sublabel": "boxes not named",
+      "pos": [
+        790,
+        480
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "brain",
+      "type": "cloud",
+      "label": "sona-brain",
+      "sublabel": "Sona Med",
+      "pos": [
+        1060,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "voice",
+      "type": "cloud",
+      "label": "sona-voice",
+      "sublabel": "Sona Speech + Voice",
+      "pos": [
+        1060,
+        200
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "xray",
+      "type": "cloud",
+      "label": "sona-xray",
+      "sublabel": "Sona Vision",
+      "pos": [
+        1060,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pii",
+      "type": "security",
+      "label": "sona-pii",
+      "sublabel": "Sona Privacy, Lambda",
+      "pos": [
+        1060,
+        440
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "routes-models",
+      "from": "routes",
+      "to": "models",
+      "label": "call",
+      "variant": "emphasis"
+    },
+    {
+      "id": "models-adapter",
+      "from": "models",
+      "to": "adapter",
+      "label": "key set",
+      "variant": "emphasis"
+    },
+    {
+      "id": "models-stub",
+      "from": "models",
+      "to": "stub",
+      "label": "no key",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 64
+    },
+    {
+      "id": "adapter-stub",
+      "from": "adapter",
+      "to": "stub",
+      "label": "call failed",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "adapter-fetcher",
+      "from": "adapter",
+      "to": "fetcher",
+      "label": "fetch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fetcher-baseten",
+      "from": "fetcher",
+      "to": "baseten",
+      "label": "not listed",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 64
+    },
+    {
+      "id": "fetcher-brain",
+      "from": "fetcher",
+      "to": "brain",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "fetcher-voice",
+      "from": "fetcher",
+      "to": "voice",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "fetcher-xray",
+      "from": "fetcher",
+      "to": "xray",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "fetcher-pii",
+      "from": "fetcher",
+      "to": "pii",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Selection (context.ts)",
+      "items": [
+        "No BASETEN_API_KEY: every method answers from stubModels",
+        "Key + SAGEMAKER_ENDPOINTS + AWS keys: listed boxes go to SageMaker",
+        "Screens name models from model-names.ts, never base ids"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Outside the seam",
+      "items": [
+        "Laya routing (ask.route) and the embedders are called directly",
+        "On SageMaker, health and wake answer 200 locally; a missing endpoint fails the call and the stub answers"
+      ]
+    }
+  ]
+}

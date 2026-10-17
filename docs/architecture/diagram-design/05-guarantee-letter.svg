@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1040 436" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="guarantee-letter-title guarantee-letter-desc">
+<title id="guarantee-letter-title">Guarantee letter to discharge</title>
+<desc id="guarantee-letter-desc">State machine of a guarantee-letter claim: an unstored draft is sent by a doctor, the insurer approves, queries or denies it on the link page, a query or denial can be resent, a denial can be appealed with a new link, and an approved letter lets the doctor discharge the patient.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="guarantee-letter-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#59616b"/></marker>
+<marker id="guarantee-letter-arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1d1f23"/></marker>
+<marker id="guarantee-letter-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#245bcc"/></marker>
+<marker id="guarantee-letter-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f6e66"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#f5f6f8"/>
+<!-- zones -->
+<rect x="288" y="48" width="488" height="160" rx="8" fill="rgba(29,31,35,0.02)" stroke="rgba(29,31,35,0.18)" stroke-width="0.8" stroke-dasharray="4,4"/>
+<rect x="300" y="42" width="232" height="12" rx="2" fill="#f5f6f8"/>
+<text x="416" y="51" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">INSURER LINK PAGE · ONE DECISION PER LINK</text>
+<!-- connectors (drawn before nodes) -->
+<path d="M48,136 L72,136" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#guarantee-letter-arrow)"/>
+<path d="M232,136 L320,136" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#guarantee-letter-arrow)"/>
+<path d="M776,136 L840,136" fill="none" stroke="#245bcc" stroke-width="1.4" marker-end="url(#guarantee-letter-arrow-accent)"/>
+<path d="M352,208 L352,276" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#guarantee-letter-arrow-link)"/>
+<path d="M448,276 L448,176" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#guarantee-letter-arrow)"/>
+<path d="M624,208 L624,276" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#guarantee-letter-arrow-link)"/>
+<path d="M720,276 L720,176" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#guarantee-letter-arrow)"/>
+<path d="M592,316 L544,316 Q536,316 536,308 L536,144 Q536,136 528,136 L480,136" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#guarantee-letter-arrow)"/>
+<path d="M920,176 L920,276" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#guarantee-letter-arrow)"/>
+<!-- connector labels -->
+<rect x="236" y="116" width="80" height="12" rx="2" fill="#f5f6f8"/>
+<text x="276" y="125" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SEND · DOCTOR</text>
+<rect x="784" y="116" width="48" height="12" rx="2" fill="#f5f6f8"/>
+<text x="808" y="125" fill="#245bcc" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">APPROVE</text>
+<rect x="360" y="234" width="40" height="12" rx="2" fill="#f5f6f8"/>
+<text x="380" y="243" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">QUERY</text>
+<rect x="456" y="234" width="48" height="12" rx="2" fill="#f5f6f8"/>
+<text x="480" y="243" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RESEND</text>
+<rect x="632" y="234" width="32" height="12" rx="2" fill="#f5f6f8"/>
+<text x="648" y="243" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">DENY</text>
+<rect x="728" y="234" width="48" height="12" rx="2" fill="#f5f6f8"/>
+<text x="752" y="243" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">APPEAL</text>
+<rect x="544" y="250" width="48" height="12" rx="2" fill="#f5f6f8"/>
+<text x="568" y="259" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RESEND</text>
+<rect x="928" y="218" width="64" height="12" rx="2" fill="#f5f6f8"/>
+<text x="960" y="227" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">DISCHARGE</text>
+<!-- nodes -->
+<circle cx="40" cy="136" r="6" fill="#1d1f23"/>
+<g id="guarantee-letter-n-draft">
+<rect x="72" y="96" width="160" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="72" y="96" width="160" height="80" rx="6" fill="rgba(29,31,35,0.02)" stroke="rgba(29,31,35,0.35)" stroke-width="1" stroke-dasharray="4,3"/>
+<rect x="80" y="104" width="56" height="12" rx="2" fill="none" stroke="rgba(29,31,35,0.25)" stroke-width="0.8"/>
+<text x="108" y="113" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">NOT STORED</text>
+<text x="152" y="136" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">draft</text>
+<text x="152" y="152" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">claim.status returns it</text>
+<text x="152" y="164" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">when no row exists</text>
+</g>
+<g id="guarantee-letter-n-sent">
+<rect x="320" y="96" width="160" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="320" y="96" width="160" height="80" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<rect x="328" y="104" width="40" height="12" rx="2" fill="none" stroke="rgba(29,31,35,0.4)" stroke-width="0.8"/>
+<text x="348" y="113" fill="#1d1f23" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATUS</text>
+<text x="400" y="136" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">sent</text>
+<text x="400" y="152" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">new 7-day link each send</text>
+</g>
+<g id="guarantee-letter-n-appealed">
+<rect x="592" y="96" width="160" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="592" y="96" width="160" height="80" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<rect x="600" y="104" width="40" height="12" rx="2" fill="none" stroke="rgba(29,31,35,0.4)" stroke-width="0.8"/>
+<text x="620" y="113" fill="#1d1f23" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATUS</text>
+<text x="672" y="136" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">appealed</text>
+<text x="672" y="152" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">points cite note sentences</text>
+<text x="672" y="164" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">new link to the insurer</text>
+</g>
+<g id="guarantee-letter-n-approved">
+<rect x="840" y="96" width="160" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="840" y="96" width="160" height="80" rx="6" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<rect x="848" y="104" width="40" height="12" rx="2" fill="none" stroke="rgba(36,91,204,0.5)" stroke-width="0.8"/>
+<text x="868" y="113" fill="#245bcc" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATUS</text>
+<text x="920" y="136" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">approved</text>
+<text x="920" y="152" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">GL row marked received</text>
+</g>
+<g id="guarantee-letter-n-queried">
+<rect x="320" y="276" width="160" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="320" y="276" width="160" height="80" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<rect x="328" y="284" width="40" height="12" rx="2" fill="none" stroke="rgba(29,31,35,0.4)" stroke-width="0.8"/>
+<text x="348" y="293" fill="#1d1f23" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATUS</text>
+<text x="400" y="316" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">queried</text>
+<text x="400" y="332" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">insurer&#x27;s question text</text>
+</g>
+<g id="guarantee-letter-n-denied">
+<rect x="592" y="276" width="160" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="592" y="276" width="160" height="80" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<rect x="600" y="284" width="40" height="12" rx="2" fill="none" stroke="rgba(29,31,35,0.4)" stroke-width="0.8"/>
+<text x="620" y="293" fill="#1d1f23" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATUS</text>
+<text x="672" y="316" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">denied</text>
+<text x="672" y="332" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">reason: PEC, MED, DOC, COV</text>
+</g>
+<g id="guarantee-letter-n-discharged">
+<rect x="840" y="276" width="160" height="80" rx="6" fill="#f5f6f8"/>
+<rect x="840" y="276" width="160" height="80" rx="6" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<rect x="848" y="284" width="28" height="12" rx="2" fill="none" stroke="rgba(89,97,107,0.45)" stroke-width="0.8"/>
+<text x="862" y="293" fill="#59616b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STAY</text>
+<text x="920" y="316" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Discharged</text>
+<text x="920" y="332" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">dischargedAt set</text>
+<text x="920" y="344" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">check-ins at 10:00 MYT</text>
+</g>
+<!-- legend -->
+<line x1="40" y1="388" x2="1000" y2="388" stroke="rgba(29,31,35,0.12)" stroke-width="0.8"/>
+<text x="40" y="408" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="112" y="400" width="16" height="12" rx="2" fill="rgba(29,31,35,0.02)" stroke="rgba(29,31,35,0.35)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="136" y="410" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Not stored</text>
+<rect x="204" y="400" width="16" height="12" rx="2" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="228" y="410" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">claims.status</text>
+<rect x="308" y="400" width="16" height="12" rx="2" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<text x="332" y="410" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Focal state</text>
+<rect x="404" y="400" width="16" height="12" rx="2" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="428" y="410" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Stay</text>
+<rect x="468" y="400" width="16" height="12" rx="2" fill="rgba(29,31,35,0.02)" stroke="rgba(29,31,35,0.18)" stroke-width="0.8" stroke-dasharray="3,2"/>
+<text x="492" y="410" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Insurer page</text>
+<line x1="568" y1="406" x2="592" y2="406" stroke="#59616b" stroke-width="1.2" marker-end="url(#guarantee-letter-arrow)"/>
+<text x="604" y="410" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Doctor (mgmt may also appeal)</text>
+<line x1="760" y1="406" x2="784" y2="406" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#guarantee-letter-arrow-link)"/>
+<text x="796" y="410" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Insurer</text>
+<line x1="848" y1="406" x2="872" y2="406" stroke="#245bcc" stroke-width="1.4" marker-end="url(#guarantee-letter-arrow-accent)"/>
+<text x="884" y="410" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Insurer approves</text>
+</svg>

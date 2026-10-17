@@ -1,0 +1,780 @@
+[
+ {
+  "id": "cardio_051",
+  "split": "train",
+  "condition": "Obesity, medical weight management",
+  "source": "Obesity",
+  "patient_persona": {
+   "description": "Cik Nur Syafiqah binti Azmi, 36, female, bank call-centre executive in Gombak, Selangor; BMI 38, has tried many diets. Friendly, self-deprecating humour, Malay with lots of office English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chong Li Wen, Malaysian Chinese woman in her 30s, family physician running a weight management clinic in Kuala Lumpur. Non-judgemental, practical; English-leaning, fluent Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Cik Syafiqah, berat hari ni 96 kilo, tinggi 1.59. BMI is 38. Apa yang buat cik datang hari ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Honestly, doktor, saya dah try semua. Keto, intermittent fasting, shake-shake tu. Turun lima kilo, lepas tu naik balik lapan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That yo-yo pattern is very common. It's not about willpower, badan kita memang lawan bila berat turun."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kerja cik macam mana? Shift, duduk lama?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Shift malam dua kali seminggu. Duduk depan screen lapan jam. Makan pun ikut apa yang ada dalam pantry, biskut, Milo."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tidur pun tak teratur, kan? That affects hunger hormones. Kita kena tengok sleep sekali, bukan makan je."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doktor, kawan saya cucuk ubat kurus tu, lepas tu turun banyak. Boleh saya try?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Maksud cik liraglutide or semaglutide? Memang effective, but it's expensive, around RM400 to RM700 sebulan, and not covered by the clinic."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Mahalnya. Ada option lain tak?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ada orlistat, lebih murah. Tapi kalau makan berminyak, you'll get oily stools, kena pakai pad sometimes."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aduh, malu la kalau jadi kat office. Hmm, let me think about it dulu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sure. Whatever you choose, kita mula dengan target lima percent, dalam lima kilo, dalam tiga bulan. Dietitian will plan meals around your shifts."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Also cuba jalan laju dua puluh minit lepas makan malam. Small steps, but consistent."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, doktor. At least ada plan. Before this saya main hentam je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a good start. Kita jumpa sebulan lagi, and bring your food diary, jangan malu."
+   }
+  ]
+ },
+ {
+  "id": "cardio_052",
+  "split": "train",
+  "condition": "Obesity with fatty liver and snoring",
+  "source": "Obesity",
+  "patient_persona": {
+   "description": "Mr. Teh Boon Keat, 42, male, restaurant owner in Bayan Lepas, Penang; BMI 33, snores, fatty liver on ultrasound. Loud, joking, heavy English-Mandarin mixing with Hokkien flavour.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Mohan a/l Sivalingam, Malaysian Indian man in his 40s, physician at a Penang hospital metabolic clinic. Direct with humour; English with a little Mandarin.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Teh, your ultrasound shows fatty liver, and your ALT is 88, about double normal."
+   },
+   {
+    "speaker": "Patient",
+    "text": "哇, 我不喝酒的咧! How can fatty liver? 我以为 fatty liver 是酒鬼的病."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "This is non-alcoholic fatty liver. Main cause is excess weight, especially around the belly. Your waist is 108 cm."
+   },
+   {
+    "speaker": "Patient",
+    "text": "开餐馆的嘛, 每天试菜, 半夜收工还吃宵夜. 没办法 lah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I understand, but fatty liver can progress to scarring, cirrhosis. The good news, it's reversible if you lose weight."
+   },
+   {
+    "speaker": "Patient",
+    "text": "要减多少? 我现在 95 kg."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Losing seven to ten percent, 大概七到九公斤, can clear most of the fat from the liver."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我朋友说 keto 很快. 不吃饭, 只吃肉, 一个月瘦十公斤."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Keto can work short term, but restaurant owners like you usually can't keep it. Better: cut the late-night supper and the sweet drinks first."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your wife said you snore very loudly and stop breathing. 你白天会不会很想睡?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "会啊, 下午在 counter 常常 tertidur. 客人叫我我都没听到."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That sounds like sleep apnoea. It worsens weight and blood pressure. I'm sending you for a sleep study."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK doctor. 那药呢? 有没有减肥药可以吃?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not yet. Let's try three months of lifestyle change first. If no progress, we discuss medicine. Repeat liver test then."
+   },
+   {
+    "speaker": "Patient",
+    "text": "三个月, 好. 我叫厨房帮我煮少油的, 哈哈."
+   }
+  ]
+ },
+ {
+  "id": "cardio_053",
+  "split": "train",
+  "condition": "Childhood obesity, parent-led consultation",
+  "source": "Obesity, childhood",
+  "patient_persona": {
+   "description": "Mrs. Deepa a/p Manikam, 39, female, mother of 11-year-old Arjun, pharmacy assistant in Shah Alam, Malaysian Indian; brought her son for weight concerns. Warm, a bit defensive, Manglish with Malay words.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Wan Nurul Aina binti Wan Hassan, Malay woman in her 30s, paediatrician at a Shah Alam hospital clinic. Warm, non-judgemental; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mrs. Deepa, Arjun's weight today is 62 kilos, height 1.45 metres. That puts him above the 97th percentile for his age."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doctor, I know he's big, but my family all big-built lah. His father also like that."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Genes do play a part. But I also see dark velvety skin at the back of his neck, acanthosis. That's a sign of insulin resistance, early pre-diabetes."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya ke? I thought that one just dirty, I always scrub it."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "No, scrubbing won't help. It improves when weight and sugar improve. We'll do a fasting sugar and HbA1c today."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "What does Arjun usually eat and drink in a day?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Morning roti canai with Milo. Recess he buys nasi lemak and air sirap from the kantin. Evening, I'm still working, so neighbour gives him snacks."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "How much screen time? Phone, games?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo, a lot. After school until dinner, maybe four hours. I also penat lah, cannot gaduh with him every day."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I understand, it's hard for working parents. Let's not aim for perfect, just a few changes as a whole family."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "First, no sweet drinks at home, only plain water and plain milk. Second, screen time maximum two hours on school days."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Two hours okay, boleh cuba. Can he join football at school? He likes football, but the kids ejek him."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a great idea. Maybe also badminton with you on weekends. Physical activity at least one hour a day."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay doctor. Do I need to put him on diet? Like kurang nasi?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "No strict diet for a growing child. Smaller rice portion, more vegetables, and stop the extra snacks. The dietitian will see you both today."
+   }
+  ]
+ },
+ {
+  "id": "cardio_054",
+  "split": "train",
+  "condition": "Severe obesity, bariatric surgery referral",
+  "source": "Obesity",
+  "patient_persona": {
+   "description": "Encik Mohd Rizal bin Abdul Karim, 45, male, fisheries officer from Dungun, Terengganu; BMI 45, type 2 diabetes and knee pain. Deep, soft voice, a little embarrassed, Terengganu accent.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ahmad Syukri bin Mat Isa, Malay man in his 40s, endocrinologist at a Kuala Terengganu hospital. Encouraging, matter-of-fact; English-leaning, Terengganu-flavoured Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Rizal, dah setahun kita cuba diet, exercise, dengan ubat. Berat turun empat kilo je, dari 136 ke 132."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya dah cuba, doktor. Tapi lutut sakit, susah nak jalan jauh. Makan kurang pun berat tak turun sangat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I know you've tried hard. Dengan BMI 45 dan diabetes, encik layak untuk bariatric surgery. Nak dengar dulu pasal ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pembedahan perut tu ke? Saya dengar ada orang mati."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Risiko kematian sangat rendah, below one percent, lebih kurang sama macam buang gallbladder. Operation paling biasa is sleeve gastrectomy."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dia buang sebahagian besar perut, jadi encik cepat kenyang. Hormone lapar pun turun."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lepas operation, diabetes saya boleh hilang?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ramai orang, diabetes improve banyak, sometimes remission. But encik kena commit to follow-up seumur hidup, vitamin every day."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kena tunggu lama ke? Hospital mana?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita refer ke surgical team Hospital Kuala Terengganu. Before that, encik akan jumpa dietitian, psychologist, and anaesthetist."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kena turun berat dulu sebelum operation?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, biasanya dalam lima hingga sepuluh percent sebelum operation, supaya liver kecil dan surgery lebih selamat. We'll help with a low-calorie plan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Isteri saya risau. Boleh dia ikut masa jumpa surgeon?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sangat digalakkan. Family support penting, especially after surgery, makanan kena ubah semua."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Saya rasa ni peluang terakhir saya. Saya nak cuba."
+   }
+  ]
+ },
+ {
+  "id": "cardio_055",
+  "split": "train",
+  "condition": "Weight regain and unregulated slimming pills",
+  "source": "Obesity",
+  "patient_persona": {
+   "description": "Ms. Kelly Tan Hui Shan, 29, female, online boutique seller in Johor Bahru; bought slimming pills online, now has palpitations. Fast, anxious, mixes English and Mandarin in almost every sentence.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Farahin binti Mohd Yusri, Malay woman in her 30s, medical officer at a Johor Bahru health clinic. Calm, non-judgemental; English with Malay and simple Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Kelly, you said your heart has been racing for a week. When did it start?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "大概一个礼拜前. 我开始吃一个 slimming pill, 在 Instagram 买的, very popular 的."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Can I see the box? Hmm, no MAL registration number. This is not approved by the Ministry of Health."
+   },
+   {
+    "speaker": "Patient",
+    "text": "可是很多 influencer 都有 promote 咧. 她们说是 herbal, 很 safe 的."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Many of these products contain sibutramine, a banned drug. It can cause palpitations, high blood pressure, even stroke."
+   },
+   {
+    "speaker": "Patient",
+    "text": "哇, 真的吗? 我吃了之后真的不饿, 可是晚上睡不着, 心跳好快."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your heart rate is 112 and BP 146 over 94 today. For a 29-year-old, that's high. Please stop the pills today."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, stop. 可是停了会不会马上胖回来? 我之前已经减了六公斤."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Some weight may come back, yes. Tapi tak ada berat badan yang berbaloi dengan stroke. We'll plan a safe way together."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我是做 online business 的, 每天坐着 live selling, 半夜才吃饭."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "So the issue is the timing and sitting all day. Try to eat dinner before eight, and stand or walk during breaks between live sessions."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll also report this product to the pharmacy enforcement division, supaya orang lain tak kena."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Good, 我的朋友也有买. 我今晚就叫她们不要吃."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Please do. Come back in one week to recheck your BP and heart rate. If you get chest pain or severe headache, go to emergency."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK doctor, terima kasih. 以后我不敢乱买了."
+   }
+  ]
+ },
+ {
+  "id": "cardio_056",
+  "split": "train",
+  "condition": "Acute gout, first attack after a kenduri",
+  "source": "Gout",
+  "patient_persona": {
+   "description": "Encik Wan Rosdi bin Wan Mat, 48, male, fishing boat owner from Kemaman, Terengganu; big toe swollen overnight after a wedding feast. Loud voice, wincing, East Coast Malay.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Jasmine Kaur a/p Balwant Singh, Malaysian Sikh woman in her 30s, medical officer at a Kemaman health clinic. Warm, brisk; English-leaning, fluent Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Rosdi, cuba tunjuk kaki tu. Wah, ibu jari merah, bengkak, panas. Bila mula?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pukul tiga pagi, doktor. Tiba-tiba sakit gila, selimut kena kaki pun tak tahan. Macam kena tikam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Semalam ada makan apa-apa istimewa? Kenduri ke?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kenduri kahwin anak saudara. Gulai kambing, perut lembu, udang galah. Makan banyak, doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ha, that's a classic trigger. Daging merah, organ, dengan seafood tinggi purine, naikkan uric acid. This looks like acute gout."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Gout tu apa, doktor? Bapa saya dulu ada sakit sendi, orang kata angin."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Gout ni bila uric acid jadi kristal dalam sendi, macam kaca halus. Badan lawan, jadi bengkak dan sakit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Untuk sekarang, colchicine 0.5mg, dua kali sehari, and naproxen 500mg twice a day selepas makan, tiga hingga lima hari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau cirit-birit macam mana? Kawan saya kata colchicine buat cirit-birit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul, kalau cirit-birit, kurangkan jadi sekali sehari. Minum air banyak, at least two litres."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Lepas bengkak surut, dua minggu lagi, kita check uric acid dan kidney function."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kena berhenti makan udang terus ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak payah terus. Kurangkan, jangan makan banyak sekaligus macam kenduri. Minuman manis dan air kotak pun kurangkan, sebab fructose naikkan uric acid."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Sakit ni memang tak mahu kena lagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Rehatkan kaki, letak ais sepuluh minit beberapa kali sehari. Jumpa dua minggu lagi."
+   }
+  ]
+ },
+ {
+  "id": "cardio_057",
+  "split": "train",
+  "condition": "Recurrent gout, starting allopurinol with HLA-B*5801 screening",
+  "source": "Arthritis, gouty",
+  "patient_persona": {
+   "description": "Mr. Kok Chee Hong, 55, male, kopitiam owner in Ipoh, Perak; four gout attacks in the past year. Friendly, talkative, Cantonese-flavoured Mandarin with English.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Syed Azhar bin Syed Hamid, Malay man in his 40s, family medicine specialist at an Ipoh clinic. Measured, explains carefully; English with some Mandarin and Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Kok, 这一年你已经 gout attack 四次了. Uric acid is 560. I think it's time to start long-term medicine."
+   },
+   {
+    "speaker": "Patient",
+    "text": "每次痛都吃 colchicine 就好了. 一定要天天吃药吗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Colchicine only treats the attack. 要预防, we need to bring uric acid below 360, so the crystals can dissolve."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The medicine is allopurinol. 可是开始之前, 我要先验一个血, 叫 HLA-B*5801."
+   },
+   {
+    "speaker": "Patient",
+    "text": "这个是什么 test? 为什么要验?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Some people, 特别是 Chinese, carry this gene. If they take allopurinol, they can get a very serious skin reaction, 皮肤脱皮, dangerous."
+   },
+   {
+    "speaker": "Patient",
+    "text": "哇, 那么恐怖. 如果我有这个 gene 呢?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Then we use another drug, febuxostat. Either way, we'll find a safe option for you."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, 验. 多少钱?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "At the government hospital it's subsidised. 如果去 private lab, maybe around RM300."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果 negative, allopurinol start from 100mg a day. 每两到四个星期加一点, until uric acid reaches target."
+   },
+   {
+    "speaker": "Patient",
+    "text": "开始吃的时候会不会又 attack?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good question. 刚开始的几个月, attack 反而会比较多. So I'll give you colchicine 0.5mg once a day for six months as cover."
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白了. 我的店卖很多 kopi 和汽水, 我自己也喝不少 soft drink."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Soft drink with high fructose raises uric acid. Kopi actually is fine, 但是不要加太多糖."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好, 我改喝 kopi-O kosong. 验血结果出来再见医生."
+   }
+  ]
+ },
+ {
+  "id": "cardio_058",
+  "split": "train",
+  "condition": "Chronic tophaceous gout on a thiazide",
+  "source": "Gout",
+  "patient_persona": {
+   "description": "Mr. Balakrishnan a/l Muniandy, 60, male, retired port crane operator in Klang, Malaysian Indian; hypertensive on hydrochlorothiazide, knobbly lumps on his fingers. Hearty, loud, Manglish.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Cheah Mun Yee, Malaysian Chinese woman in her 40s, rheumatologist at a Klang hospital. Friendly and precise; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Bala, these lumps on your fingers and elbow are tophi, deposits of uric acid crystals. They've built up over years."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo, doctor, I thought they're just old age lah. Sometimes white stuff come out also, macam kapur."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, that white chalky material is urate. Your uric acid is 610, very high. How often do you get attacks?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Almost every month, doctor. Knee, ankle, finger, macam-macam. I just take Ponstan from the kedai."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I see you're on hydrochlorothiazide for blood pressure. That medicine raises uric acid."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Really ah? The klinik gave me that one for five years already."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "We'll change it to losartan 50mg. It controls pressure and also lowers uric acid a little."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For the gout, you need allopurinol long term. Your HLA-B*5801 test is negative, so safe to start."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, but my kidney? Last time the doctor said kidney also weak sikit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your eGFR is 52. We start low, allopurinol 50mg daily, then increase slowly every few weeks while checking kidney and uric acid."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Please stop the Ponstan. It's bad for your kidneys. During an attack, use colchicine 0.5mg twice a day instead."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, no more Ponstan. Can the tophi go away or not?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "With uric acid below 300 for a year or two, they can shrink a lot. It takes patience."
+   },
+   {
+    "speaker": "Patient",
+    "text": "I'm retired, got plenty of patience. Only patience with my wife cooking mutton curry, that one susah sikit lah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ha, mutton once a week, small portion. And drink more water, at least two litres a day."
+   }
+  ]
+ },
+ {
+  "id": "cardio_059",
+  "split": "train",
+  "condition": "Gout confirmed on joint aspiration, results review",
+  "source": "Gout",
+  "patient_persona": {
+   "description": "Encik Saging anak Juing, 52, male, Iban longhouse headman and farmer from outside Sibu, Sarawak; hot swollen knee, drinks tuak at gawai. Deep, calm voice, Sarawak Malay.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Pang Siaw Ling, Sarawakian Chinese woman in her 30s, orthopaedic medical officer at a Sibu hospital. Clear, reassuring; English-leaning, Sarawak Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Saging, result cecair lutut yang kami sedut semalam dah keluar. No bacteria, tapi ada kristal uric acid."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Maksudnya apa, doktor? Bukan kuman?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bukan jangkitan kuman. It's gout. Kristal uric acid dalam sendi lutut buat bengkak dan sakit."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lega saya. Semalam doktor cakap mungkin kena operation cuci lutut."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, sebab kami takut septic arthritis, infection dalam sendi. Sekarang dah rule out, so tak perlu operation."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Encik ada minum tuak atau arak? Biasa berapa banyak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Masa gawai, minum banyak la, doktor. Hari biasa sikit-sikit, sebotol dua seminggu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tuak dan beer memang naikkan uric acid. Gawai baru habis, and this attack came right after, kan?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Betul. Lepas gawai tiga hari, lutut terus bengkak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita bagi prednisolone 30mg sekali sehari lima hari, sebab encik ada gastric, so NSAID tak sesuai."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Lepas bengkak surut, datang klinik check uric acid. If you get attacks often, kita mula ubat jangka panjang."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau gawai tahun depan macam mana, doktor? Tak minum langsung susah la, adat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Faham, adat penting. Minum sikit je, dan minum air kosong banyak. Makan babi hutan pun jangan terlalu banyak sekaligus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Saya cuba. Isteri pun marah saya minum banyak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your wife is right. Jumpa dua minggu lagi, ya."
+   }
+  ]
+ },
+ {
+  "id": "cardio_060",
+  "split": "test",
+  "condition": "Gout in a young man, stopped allopurinol during a flare",
+  "source": "Gout",
+  "patient_persona": {
+   "description": "Mr. Alvin Lee Jun Wei, 38, male, property agent in Cheras, Kuala Lumpur; gout for three years, drinks bubble tea daily. Casual, fast, heavy English-Mandarin mixing with Malay slang.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Prakash a/l Ganesan, Malaysian Indian man in his 30s, GP at a Cheras clinic. Laid-back but clear; English with Malay and a little Mandarin.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Alvin, your ankle is swollen again. Last visit I started you on allopurinol 100mg. Still taking?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "没有 lah doctor. Last week ankle 开始痛, 我想 allopurinol 是不是 make it worse, so 我 stop 了."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ah, that's a very common mistake. During a flare, never stop allopurinol. Stopping and starting 会让 uric acid 一直 naik turun, worse."
+   },
+   {
+    "speaker": "Patient",
+    "text": "真的? 我以为 attack 的时候不能吃."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Old advice said that, but now we say continue. Just add colchicine 0.5mg twice a day for the attack."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tell me honestly, how much bubble tea a day?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "一天至少一杯, sometimes two. Client meeting 都约在 bubble tea shop 啊."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Each cup has a lot of fructose. That pushes uric acid up. Can you order less sugar, 或者 change to plain tea?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Less sugar 可以 lah. Zero sugar 太难喝了."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Twenty-five percent sugar is a good start. And beer? Weekend 有喝吗?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Weekend futsal 之后会喝两三罐. Kawan-kawan semua喝."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Beer is one of the worst for gout. Try one can maximum, or switch to 100 plus, lebih selamat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Restart allopurinol today, same 100mg. 四个星期后验 uric acid, then increase the dose. Target below 360."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, 这次一定不 stop. 如果又痛呢?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Take the colchicine and call me. Jangan stop allopurinol. Deal?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Deal, doctor. 谢谢."
+   }
+  ]
+ }
+]

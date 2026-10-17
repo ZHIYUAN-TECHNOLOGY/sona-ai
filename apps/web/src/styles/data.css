@@ -1,0 +1,250 @@
+/* Data table, AI insight panel and charts. Loaded after components.css, whose older
+   table/chart/insight rules it overrides. Pro-only looks sit under :is(.pro, .care). */
+
+/* Data table */
+.table-toolbar, .table-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-3) var(--space-4); }
+.table-toolbar { border-bottom: 1px solid var(--hairline); }
+.table-foot { border-top: 1px solid var(--hairline); }
+.table-count, .cell-muted { font-size: var(--text-small); color: var(--muted); }
+/* Rows start a step below the header line. A selected or hovered row is one rounded band: no hairline cuts its corners, above or below. */
+.table tbody::before { content: ""; display: block; height: var(--space-2); }
+.table tbody tr[data-selected] > * { background: var(--fill-selected); }
+.table-row-open:hover { background: none; }
+.table-row-open:hover:not([data-selected]) > * { background: var(--fill-hover); }
+.table tbody tr:is([data-selected], .table-row-open:hover) > :first-child { border-radius: var(--radius-control) 0 0 var(--radius-control); }
+.table tbody tr:is([data-selected], .table-row-open:hover) > :last-child { border-radius: 0 var(--radius-control) var(--radius-control) 0; }
+.table tbody tr:is([data-selected], .table-row-open:hover) > *, .table tbody tr:has(+ tr:is([data-selected], .table-row-open:hover)) > * { border-bottom-color: transparent; }
+.table-row-open:focus-visible { outline: 0; box-shadow: inset var(--focus-ring); }
+.table-skel { display: block; height: 12px; max-width: 160px; border-radius: var(--radius-pill); background: var(--fill-field); animation: table-skel 1.2s var(--ease) infinite alternate; }
+@keyframes table-skel { to { opacity: 0.45; } }
+.cell-person { display: inline-flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.cell-person-text { display: grid; min-width: 0; }
+.cell-person-name { font-weight: 600; }
+/* A reading in words wraps; a number keeps its unit on the same line (ValueCell joins them with a no-break space). */
+.cell-value { font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+.cell-value .cell-muted { font-weight: 400; white-space: nowrap; }
+.row-action { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap); padding: 0 var(--space-4); border: 0; border-radius: var(--radius-pill); background: none; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; transition: background var(--quick) var(--ease), color var(--quick) var(--ease); }
+.row-action:hover { background: var(--fill-hover); }
+.row-action:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+tr[data-selected] .row-action { color: var(--ink); }
+:is(.pro, .care) .table th { height: 44px; font-size: var(--text-overline); letter-spacing: var(--track-overline); text-transform: uppercase; border-bottom-color: var(--hairline); }
+:is(.pro, .care) .table td { height: 71px; border-bottom-color: var(--hairline); }
+/* Sort buttons do not inherit type from the header cell by default. */
+.table-sort { font: inherit; letter-spacing: inherit; text-transform: inherit; }
+.row-action { text-decoration: none; white-space: nowrap; }
+/* Pro: the table sits in a borderless white card; hairlines stop short of its edge. */
+:is(.pro, .care) .table-wrap { padding: var(--space-3) var(--space-3) var(--space-2); border: 0; border-radius: var(--radius-card); }
+:is(.pro, .care) .table th, :is(.pro, .care) .table td { padding-inline: var(--space-3); }
+:is(.pro, .care) .table th { font-weight: 500; }
+:is(.pro, .care) :is(.table-toolbar, .table-foot) { padding-inline: var(--space-3); border-color: var(--hairline); }
+:is(.pro, .care) .cell-person-name + .cell-muted { line-height: 1.3; }
+
+/* Insight card: plain parts everywhere, the AI gradient panel in Pro */
+.insight-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); }
+.insight-label { flex: none; white-space: nowrap; display: inline-flex; align-items: center; height: var(--chip-h); padding: 0 var(--space-3); border-radius: var(--radius-pill); background: var(--blue-wash); color: var(--blue); font-size: var(--text-small); font-weight: 600; }
+.insight-meta, .insight-foot { font-size: var(--text-small); color: var(--muted); }
+.insight-foot { display: flex; align-items: center; gap: var(--space-2); }
+.insight-title { margin: 0; font-size: var(--text-title); line-height: 1.25; letter-spacing: var(--track-tight); }
+.insight-body { margin: 0; }
+.insight-evidence { display: grid; margin: 0; padding: 0; list-style: none; }
+.insight-evidence li { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; border-top: 1px solid var(--hairline); }
+.insight-evidence svg { flex: none; color: var(--muted); }
+.insight-next { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.insight-step { flex: 1 1 200px; margin: 0; }
+.insight-overline { display: block; font-size: var(--text-overline); font-weight: 600; letter-spacing: var(--track-overline); text-transform: uppercase; color: var(--muted); }
+/* White text on every stop of the gradient is at least 4.8:1. The translucent --ai-row is
+   used for hairlines only: as a fill behind text it would drop white below AA. */
+/* Sona's surface: white liquid glass, set apart from plain sheets by a blue-to-violet rim and corner light, never by a dark fill.
+   Reading order by weight: the heading (what stands) in ink, then what it rests on, then the suggested step in its own tinted block
+   with the one filled button on the card. The gradient belongs to Sona: label, rim, "Suggested", the button. */
+:is(.pro, .care) .insight { --on-ai: var(--ink); --on-ai-soft: var(--muted); --ai-row: var(--hairline); --ai-ink: linear-gradient(90deg, #2A62DB, #7C4BEA);
+  position: relative; isolation: isolate; overflow: hidden; padding: var(--pad-card); border: 0; border-radius: var(--radius-card); color: var(--ink);
+  background: radial-gradient(85% 120% at 100% 0%, rgb(84 122 255 / 0.16), transparent 60%), radial-gradient(70% 90% at 0% 100%, rgb(150 112 255 / 0.1), transparent 62%), linear-gradient(180deg, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.72));
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.98), 0 1px 2px rgb(29 31 35 / 0.04), 0 10px 30px rgb(92 104 240 / 0.16); }
+/* The rim: a gradient ring drawn in the padding box, so it follows the corners. */
+:is(.pro, .care) .insight::before { content: ""; display: block; position: absolute; inset: 0; z-index: -1; padding: 1.5px; border-radius: inherit; pointer-events: none; background: linear-gradient(135deg, #5B8CFF, #A77BFF 55%, rgb(167 123 255 / 0.25)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+:is(.pro, .care) .insight::after { content: ""; display: block; position: absolute; inset: 0; z-index: -1; pointer-events: none; color: #5B7CFF; background-image: var(--dither); background-size: var(--dither-size); opacity: 0.32; mask-image: radial-gradient(60% 90% at 100% 0%, #000, transparent 66%); -webkit-mask-image: radial-gradient(60% 90% at 100% 0%, #000, transparent 66%); }
+:is(.pro, .care) .insight-label { height: auto; padding: 0; background: var(--ai-ink); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 700; letter-spacing: 0; }
+:is(.pro, .care) .insight-label::before { content: "✦"; margin-right: 6px; }
+:is(.pro, .care) :is(.insight-title, .insight-lead) { color: var(--ink); font-size: var(--text-heading); line-height: 1.3; font-weight: 650; letter-spacing: var(--track-tight); }
+:is(.pro, .care) .insight-body { color: var(--ink); }
+:is(.pro, .care) .insight-lead::before { display: none; }
+:is(.pro, .care) .insight :is(.insight-meta, .insight-foot, .insight-overline, .insight-detail, .insight-detail summary) { color: var(--on-ai); }
+:is(.pro, .care) .insight .insight-act { background: var(--on-ai); color: #121419; border-color: transparent; }
+:is(.pro, .care) .insight .insight-act { border-radius: var(--radius-pill); }
+:is(.pro, .care) .insight .insight-act:is(:hover, :active) { background: var(--on-ai-soft); color: #121419; }
+:is(.pro, .care) .insight-title { font-size: var(--text-heading); font-weight: 600; }
+:is(.pro, .care) .insight-step { font-weight: 600; }
+:is(.pro, .care) .insight-overline { margin-bottom: var(--space-1); }
+:is(.pro, .care) .insight-evidence li { border-top-color: var(--ai-row); }
+:is(.pro, .care) .insight-evidence svg { color: var(--on-ai-soft); }
+:is(.pro, .care) .insight-next { padding-top: var(--space-4); border-top: 1px solid var(--ai-row); }
+:is(.pro, .care) .insight :focus-visible { outline: 2px solid var(--on-ai); outline-offset: 2px; box-shadow: none; }
+
+/* Charts */
+.chart { position: relative; }
+.chart svg:focus-visible { outline: 0; box-shadow: var(--focus-ring); border-radius: var(--radius-control); }
+.chart-grid { stroke: var(--hairline); }
+.chart-line { stroke: var(--blue); }
+.chart-dot { fill: var(--surface); stroke: var(--blue); stroke-width: 2; }
+.chart-dot[data-last] { fill: var(--blue); }
+.chart-dot[data-out] { fill: var(--surface); stroke: var(--amber); }
+.chart-halo { fill: var(--blue); opacity: 0.16; }
+.chart-active { fill: none; stroke: var(--blue); stroke-width: 2; }
+.chart-bar { fill: var(--blue-wash); }
+.chart-bar[data-last] { fill: var(--blue); }
+.chart-goal { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
+.chart .chart-value { fill: var(--ink); font-weight: 600; }
+.chart-tip { position: absolute; z-index: 1; display: grid; gap: 2px; width: max-content; max-width: 220px; padding: var(--space-2) var(--space-3); border-radius: var(--radius-control); background: var(--ink); color: var(--surface); font-size: var(--text-small); box-shadow: var(--shadow-float); pointer-events: none; transform: translate(-50%, calc(-100% - 14px)); }
+.chart-tip[data-side="end"] { transform: translate(-90%, calc(-100% - 14px)); }
+.chart-tip[data-side="start"] { transform: translate(-10%, calc(-100% - 14px)); }
+.chart-tip strong { font-size: var(--text-body); }
+.chart-tip-over { font-size: var(--text-overline); font-weight: 600; letter-spacing: var(--track-overline); text-transform: uppercase; opacity: 0.8; }
+.sparkline { display: inline-block; vertical-align: middle; overflow: visible; }
+.sparkline path { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.sparkline circle { fill: var(--muted); }
+.sparkline[data-tone="amber"] path { stroke: var(--amber); }
+.sparkline[data-tone="amber"] circle { fill: var(--amber); }
+
+@media (prefers-reduced-motion: reduce) {
+  .table-skel { animation: none; }
+  .row-action { transition: none; }
+}
+
+/* The table is never wider than its card: the body scrolls sideways inside it when it cannot fit. */
+.table-wrap { min-width: 0; max-width: 100%; overflow: hidden; }
+.table-scroll { overflow-x: auto; min-width: 0; }
+.table-scroll > .table { width: 100%; table-layout: auto; }
+.table th { white-space: nowrap; }
+/* Inside a Card the card's padding is the only frame: the toolbar starts where any card's content starts. */
+.card > .table-wrap, :is(.pro, .care) .card > .table-wrap { padding: 0; }
+.card > .table-wrap > .table-toolbar { padding: 0 0 var(--space-3); }
+.table .table-action { width: 1%; white-space: nowrap; padding-left: 0; }
+/* A chip or a row's button in a narrow column keeps its words whole. */
+.table :is(.chip, .table-action .btn) { white-space: nowrap; }
+.cell-person { display: flex; min-width: 150px; max-width: 220px; }
+.cell-person > :first-child { flex: none; }
+/* A name and its line under it keep two lines each before "…": cutting a name to one line hides what tells two patients apart. */
+.cell-person-name, .cell-person-text > .cell-muted { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.cell-clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-width: 12ch; overflow-wrap: anywhere; }
+/* Toolbar: tabs and filters left, search and icon buttons right, on one row. */
+/* Tabs keep their width; the search gives way, then drops under them, so the last tab is never cut. */
+.table-toolbar-row { display: flex; flex: 1; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); min-width: 0; }
+.table-toolbar-start { display: flex; flex: none; align-items: center; gap: var(--space-3); min-width: 0; max-width: 100%; }
+.table-toolbar-end { display: flex; flex: 1 1 9rem; align-items: center; justify-content: flex-end; gap: var(--space-2); min-width: 0; }
+.table-toolbar-end .search-field { flex: 0 1 15rem; }
+.table-toolbar > .search-field { margin-left: auto; }
+.insight-act[data-pending] { opacity: 0.6; pointer-events: none; cursor: progress; }
+/* Beside a rail on a narrow page the table has about 620px: tighter cells so every column and the row action stay in view. */
+@container page (max-width: 1212px) {
+  :is(.pro, .care) .table th, :is(.pro, .care) .table td { padding-inline: var(--space-2); }
+  .row-action { padding: 0 var(--space-3); gap: var(--space-1); }
+  .cell-person { min-width: 132px; }
+}
+
+/* Band: the insight that leads a page reads left to right, where things stand, what that rests on, what to do. */
+@container page (min-width: 833px) {
+  :is(.pro, .care) .insight[data-band] { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.25fr) minmax(13rem, 0.8fr); column-gap: var(--space-6); row-gap: var(--space-2); align-items: start; }
+  :is(.pro, .care) .insight[data-band] > * { grid-column: 1; }
+  :is(.pro, .care) .insight[data-band] > .insight-evidence { grid-column: 2; grid-row: 1 / span 5; align-self: center; }
+  :is(.pro, .care) .insight[data-band] > .insight-evidence li:first-child { border-top: 0; }
+  :is(.pro, .care) .insight[data-band] > .insight-next { grid-column: 3; grid-row: 1 / span 4; flex-direction: column; align-items: flex-start; align-self: stretch; justify-content: center; padding: 0 0 0 var(--space-5); border-top: 0; border-left: 1px solid var(--ai-row); }
+  :is(.pro, .care) .insight[data-band] > .insight-next .insight-step { flex: none; }
+  :is(.pro, .care) .insight[data-band] > .insight-foot { grid-column: 3; grid-row: 5; padding-left: var(--space-5); }
+  :is(.pro, .care) .insight[data-band] .insight-title { font-size: var(--text-heading); }
+}
+
+/* Tables: every cell has room, and a table in a card runs to the card's edges so a row reads as one line across. */
+:is(.pro, .care) .table th, :is(.pro, .care) .table td { padding: var(--space-3) var(--space-3); }
+:is(.pro, .care) .table .table-action { padding-left: 0; }
+:is(.pro, .care) .table .row-action { padding: 0 var(--space-3); }
+:is(.pro, .care) .table th { height: 40px; padding-block: var(--space-2); }
+:is(.pro, .care) .table td { height: 64px; }
+:is(.pro, .care) .table :is(th, td):first-child { padding-left: var(--pad-card); }
+:is(.pro, .care) .table :is(th, td):last-child { padding-right: var(--pad-card); }
+:is(.pro, .care) .table-wrap { padding: var(--space-2) 0; }
+:is(.pro, .care) :is(.table-toolbar, .table-foot) { padding: var(--space-3) var(--pad-card); }
+:is(.pro, .care) .card > .table-wrap { max-width: none; margin: 0 calc(var(--pad-card) * -1) calc(var(--space-3) * -1); padding: 0; background: none; box-shadow: none; }
+:is(.pro, .care) .card > .table-wrap > .table-toolbar { padding: 0 var(--pad-card) var(--space-3); }
+:is(.pro, .care) .table tbody tr[data-selected] > * { border-radius: 0; }
+
+/* Sona card on glass: quiet parts are muted, the suggested step is a tinted block, and its button is the card's one filled control. */
+:is(.pro, .care) .insight :is(.insight-meta, .insight-foot, .insight-detail, .insight-detail summary) { color: var(--muted); }
+:is(.pro, .care) .insight-evidence svg { color: var(--muted); }
+:is(.pro, .care) .insight .insight-next { padding: var(--space-3) var(--space-4); border: 0; border-radius: var(--radius-group); background: linear-gradient(90deg, rgb(84 122 255 / 0.11), rgb(150 112 255 / 0.11)); }
+:is(.pro, .care) .insight .insight-overline { width: fit-content; background: var(--ai-ink); -webkit-background-clip: text; background-clip: text; color: transparent; }
+:is(.pro, .care) .insight .insight-step { color: var(--ink); }
+:is(.pro, .care) .insight .insight-act, :is(.pro, .care) .insight .insight-act:is(:hover, :active) { background: var(--ai-ink); color: #fff; border-color: transparent; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 4px 12px rgb(92 104 240 / 0.3); }
+:is(.pro, .care) .insight .insight-act:hover { filter: brightness(1.08); }
+:is(.pro, .care) .insight :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.care .insight a:not([class]) { color: var(--blue); }
+@container page (min-width: 833px) { :is(.pro, .care) .insight[data-band] > .insight-next { padding: var(--space-4); border: 0; } :is(.pro, .care) .insight[data-band] > .insight-foot { padding-left: var(--space-1); } }
+@media (prefers-reduced-transparency: reduce) { :is(.pro, .care) .insight { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+
+/* Chips in a table are small labels beside the row's text, not headlines. */
+.pro .table .chip { min-height: 20px; padding: 0 7px; font-size: 10px; letter-spacing: 0.05em; }
+.care .table .chip { min-height: 24px; padding: 0 var(--space-2); }
+
+/* Chart fills: the status colours' chart shades (checked for colour-blind separation), each always named beside its mark. */
+[data-chart-tone="red"] { --fill: var(--chart-red); }
+[data-chart-tone="amber"] { --fill: var(--chart-amber); }
+[data-chart-tone="green"] { --fill: var(--chart-green); }
+[data-chart-tone="blue"] { --fill: var(--chart-blue); }
+[data-chart-tone="neutral"] { --fill: var(--chart-neutral); }
+.chart-line { stroke-dasharray: 1; }
+/* Segment bar: 2px of surface between fills, 4px ends; every state named and counted underneath. */
+.seg-chart { display: grid; gap: var(--space-3); }
+.seg-bar { display: flex; gap: 2px; height: 12px; }
+.seg { min-width: 4px; border-radius: 2px; background: var(--fill); }
+.seg:first-child { border-radius: 4px 2px 2px 4px; }
+.seg:last-child { border-radius: 2px 4px 4px 2px; }
+.seg:only-child { border-radius: 4px; }
+.seg-legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin: 0; }
+.seg-legend > div { display: flex; align-items: baseline; gap: var(--space-2); }
+.seg-legend dt { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-small); color: var(--muted); }
+.seg-legend dd { margin: 0; font-weight: 600; }
+.seg-legend [data-empty] dd { font-weight: 400; color: var(--muted); }
+.seg-key { flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--fill); }
+/* Bar list: name, bar to the largest, number. */
+.bar-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.bar-list li { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); }
+.bar-name { font-size: var(--text-small); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { display: block; height: 8px; border-radius: 4px; background: var(--fill-selected); }
+.bar-fill { display: block; height: 100%; min-width: 4px; border-radius: 4px; background: var(--fill); }
+.bar-value { font-weight: 600; }
+/* A row of chart cards under the stats. */
+.chart-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--gap-card); }
+.chart-row .card { gap: var(--space-3); padding-block: var(--space-5); }
+.chart-row .card-title { font-size: var(--text-body); font-weight: 500; color: var(--muted); letter-spacing: 0; }
+
+/* Compact tables (Pro): a row is one line of reading, ~44px, so a page shows twice the rows. Names and captions sit
+   on one line each at body/small size, the avatar shrinks to 28px, and actions are link-weight, not pills.
+   Sona Care keeps its 48px tap rows. */
+.pro .table th { height: 34px; padding-block: 0; }
+.pro .table td { height: 46px; padding-block: 6px; font-size: 14px; line-height: 20px; }
+.pro .table tbody::before { height: var(--space-1); }
+.pro .table .cell-person { gap: var(--space-2); }
+.pro .table .cell-person .avatar { width: var(--avatar-sm); height: var(--avatar-sm); font-size: 11px; }
+.pro .table .cell-person-name { font-size: 14px; }
+.pro .table .cell-person-text > .cell-muted, .pro .table .cell-muted { font-size: 12px; line-height: 16px; }
+.pro .table .row-action { min-height: 28px; padding: 0 var(--space-2); font-size: 13px; }
+.pro .table .chip { min-height: 18px; }
+.pro .table .table-skel { height: 10px; }
+/* Toolbar: tabs and search share one line while they fit; then the search drops to its own row, never cutting a tab.
+   The search is a compact field, not a hero input. Tabs are tighter in Pro. */
+.pro .table-toolbar-end .search-field { flex: 0 1 11rem; height: 34px; }
+.pro .table-toolbar .tab { min-height: 34px; font-size: 14px; }
+/* An empty table is one calm line in the table's place, not a card inside the card. */
+:is(.pro, .care) .table td.table-empty { padding: var(--space-5) var(--pad-card); }
+:is(.pro, .care) .table td.table-empty .empty { padding: 0; background: none; box-shadow: none; border-radius: 0; }
+/* A filled button inside a Sona card keeps white text (the card's own ink colour would make it ink on ink). */
+:is(.pro, .care) .insight .btn-primary { color: var(--surface); }
+.pro .table-toolbar .tabs { column-gap: var(--space-3); }
+.pro .table .ptl-reason { display: grid; }
+.pro .table .ptl-reason > * { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pro .table .ptl-reason strong { font-weight: 600; }
+
+/* Every row's action looks the same; the selected row is told apart by its fill alone. The action column never shrinks. */
+.pro .table .table-action { width: 1%; }
+.pro .table .row-action { flex: none; }

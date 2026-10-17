@@ -1,0 +1,370 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How Sona's apps reach the AI models",
+    "output": "sona-model-integration.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      545
+    ],
+    "repository": {
+      "url": "https://github.com/zyt-ngchwanlii/sona-ai",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "669b86d00fff705acc3b7cb3cf31de4000ae01bc"
+    },
+    "views": [
+      {
+        "id": "pro",
+        "label": "Sona Pro request",
+        "focus": [
+          "pro",
+          "worker",
+          "seam",
+          "laya",
+          "gemma",
+          "medgemma",
+          "voicebox"
+        ],
+        "note": "A clinician's spoken or typed ask: transcribed, routed to a card, answered by Gemma or MedGemma, shown as a card."
+      },
+      {
+        "id": "care",
+        "label": "Sona Care live call",
+        "focus": [
+          "care",
+          "worker",
+          "agents",
+          "minicpm",
+          "seam",
+          "voicebox"
+        ],
+        "note": "A patient's call: the agent streams it to MiniCPM-o and our ASR, and keeps the safety checks."
+      },
+      {
+        "id": "hybrid",
+        "label": "MiniCPM-o + MedGemma",
+        "focus": [
+          "agents",
+          "seam",
+          "medgemma",
+          "minicpm"
+        ],
+        "note": "Proposed: the agent asks MedGemma or Gemma for the medical answer, and MiniCPM-o speaks it."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pro",
+      "type": "frontend",
+      "label": "Sona Pro app",
+      "sublabel": "clinician · ask bar, mic",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "sources": [
+        {
+          "path": "apps/native/features/live/voice-input.ts",
+          "line": 45,
+          "label": "mic to voice.transcribe"
+        }
+      ]
+    },
+    {
+      "id": "care",
+      "type": "frontend",
+      "label": "Sona Care app",
+      "sublabel": "patient · live call",
+      "pos": [
+        40,
+        385
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Cloudflare Worker",
+      "sublabel": "oRPC /rpc · voiceRoute",
+      "pos": [
+        290,
+        245
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "sources": [
+        {
+          "path": "apps/server/src/index.ts",
+          "line": 49,
+          "label": "/rpc handler"
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Neon Postgres",
+      "sublabel": "patients, plans, tasks",
+      "pos": [
+        40,
+        258
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "seam",
+      "type": "backend",
+      "label": "Models seam",
+      "sublabel": "wake, call, fall back",
+      "pos": [
+        540,
+        130
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "sources": [
+        {
+          "path": "packages/api/src/baseten-models.ts",
+          "line": 20,
+          "label": "BOXES"
+        }
+      ]
+    },
+    {
+      "id": "agents",
+      "type": "backend",
+      "label": "Call agents",
+      "sublabel": "Durable Objects",
+      "pos": [
+        540,
+        385
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "sources": [
+        {
+          "path": "apps/server/src/agents/live.ts",
+          "line": 58,
+          "label": "SonaLiveAgent"
+        }
+      ]
+    },
+    {
+      "id": "laya",
+      "type": "cloud",
+      "label": "Laya · CPU",
+      "sublabel": "picks the card",
+      "pos": [
+        820,
+        45
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "gemma",
+      "type": "cloud",
+      "label": "Box ① Gemma 4 26B",
+      "sublabel": "text: brief, notes, answers",
+      "pos": [
+        820,
+        130
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "medgemma",
+      "type": "cloud",
+      "label": "Box ③ MedGemma 4B",
+      "sublabel": "images: X-ray, labels",
+      "pos": [
+        820,
+        215
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sources": [
+        {
+          "path": "packages/api/src/vision-models.ts",
+          "line": 226,
+          "label": "image readers"
+        }
+      ]
+    },
+    {
+      "id": "voicebox",
+      "type": "cloud",
+      "label": "Box ② voice",
+      "sublabel": "ASR, VoxCPM2, rerank",
+      "pos": [
+        820,
+        300
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "minicpm",
+      "type": "cloud",
+      "label": "Box ④ MiniCPM-o",
+      "sublabel": "ear, brain, mouth",
+      "pos": [
+        820,
+        385
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cloudflare",
+      "wraps": [
+        "worker",
+        "seam",
+        "agents"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Baseten · scale to zero",
+      "wraps": [
+        "laya",
+        "gemma",
+        "medgemma",
+        "voicebox",
+        "minicpm"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pro-worker",
+      "from": "pro",
+      "to": "worker",
+      "label": "HTTPS /rpc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "care-worker",
+      "from": "care",
+      "to": "worker",
+      "label": "WebSocket",
+      "variant": "emphasis"
+    },
+    {
+      "id": "worker-db",
+      "from": "worker",
+      "to": "db"
+    },
+    {
+      "id": "worker-seam",
+      "from": "worker",
+      "to": "seam",
+      "label": "Models.*"
+    },
+    {
+      "id": "worker-agents",
+      "from": "worker",
+      "to": "agents",
+      "label": "per patient"
+    },
+    {
+      "id": "seam-laya",
+      "from": "seam",
+      "to": "laya",
+      "label": "route",
+      "fromSide": "top"
+    },
+    {
+      "id": "seam-gemma",
+      "from": "seam",
+      "to": "gemma",
+      "label": "chat API"
+    },
+    {
+      "id": "seam-medgemma",
+      "from": "seam",
+      "to": "medgemma"
+    },
+    {
+      "id": "seam-voice",
+      "from": "seam",
+      "to": "voicebox"
+    },
+    {
+      "id": "agents-seam",
+      "from": "agents",
+      "to": "seam",
+      "label": "ASR, answers"
+    },
+    {
+      "id": "agents-minicpm",
+      "from": "agents",
+      "to": "minicpm",
+      "label": "1 s audio",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Infrastructure",
+      "items": [
+        "Each model is its own Baseten deployment on its own GPU, reached over HTTPS or WebSocket",
+        "Cloudflare runs the API and one agent per patient; Neon holds the records",
+        "Models never call each other: the Worker and agents chain them"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Sona Pro today",
+      "items": [
+        "Mic: box ② transcribes; Laya picks the card",
+        "Gemma writes briefs, notes, evidence; MedGemma reads X-rays and photos",
+        "Answers come back as cards on screen, not speech"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "MiniCPM-o + MedGemma",
+      "items": [
+        "The agent sends the patient's words to MedGemma or Gemma for the medical answer",
+        "MiniCPM-o speaks that answer and keeps hearing and turn-taking",
+        "Box ③ is MedGemma 4B for images; text answers need Gemma 26B or a MedGemma 27B box"
+      ]
+    }
+  ]
+}

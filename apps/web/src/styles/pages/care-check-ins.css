@@ -1,0 +1,38 @@
+/* Care check-ins: the waiting question as the hero, what happens next beside it, the timeline below. */
+.check-ins { display: grid; gap: var(--gap-card); }
+.ci-alone { width: min(100%, 640px); margin-inline: auto; }
+.ci-alone .empty .btn { align-self: center; margin-top: var(--space-2); }
+.ci-cols { display: grid; grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr); gap: var(--gap-card); align-items: start; }
+.ci-main, .ci-rail { display: grid; gap: var(--gap-card); min-width: 0; }
+.ci-hero { display: grid; gap: var(--space-4); }
+.ci-over { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); color: var(--muted); }
+.ci-hero .field, .ci-hero .ci-muted, .reply-note, .reply-live { max-width: 70ch; }
+.ci-question { margin: 0; max-width: 34ch; font-size: var(--text-panel); line-height: 1.25; letter-spacing: var(--track-tight); }
+.ci-muted, .reply-note { margin: 0; color: var(--muted); }
+.card.ci-urgent { display: grid; gap: var(--space-4); justify-items: start; border-color: var(--red); background: var(--red-wash); }
+.ci-urgent p { margin: var(--space-2) 0 0; max-width: 70ch; }
+.ci-urgent-title { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--text-panel); color: var(--red); }
+.reply-live { margin: 0; min-height: var(--line-body); color: var(--blue); font-weight: 600; }
+
+.reply { display: grid; gap: var(--space-3); }
+.reply textarea { width: 100%; min-height: 132px; padding: var(--space-3) var(--space-4); font: inherit; color: var(--ink); resize: vertical; }
+.reply-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.reply-actions .btn { touch-action: none; user-select: none; }
+.reply-recording { outline: 3px solid var(--blue); }
+
+.ci-row .list-row:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.ci-row .list-chevron { transition: transform var(--quick) var(--ease); }
+.ci-row [aria-expanded="true"] .list-chevron { transform: rotate(180deg); }
+.ci-detail { display: grid; gap: var(--space-2); padding: var(--space-2) var(--space-3) var(--space-4) calc(var(--space-3) * 2 + var(--avatar-md)); }
+.ci-detail p { margin: 0; }
+.ci-reply { display: grid; gap: var(--space-1); }
+.ci-detail p, .ci-question, .ci-quote { overflow-wrap: anywhere; }
+.ci-said { color: var(--muted); font-weight: 600; }
+/* Her words were just sent; the rail shows their start, not a 1,000-character wall. */
+.ci-quote { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; }
+.ci-said-urgent { color: var(--red); font-weight: 600; }
+
+@container page (max-width: 760px) { .ci-cols { grid-template-columns: 1fr; } .ci-detail { padding-left: var(--space-3); } }
+@media (prefers-reduced-motion: reduce) { .ci-row .list-chevron { transition: none; } }
+.reply-live:empty { position: absolute; }
+.check-ins .list-caption { white-space: normal; }

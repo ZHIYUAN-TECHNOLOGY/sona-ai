@@ -1,58 +1,61 @@
 {
-  "name": "med-ai",
+  "name": "sona-ai",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*",
+      "e2e"
+    ],
+    "catalog": {
+      "zod": "^4.5.4",
+      "@types/node": "^26.4.1",
+      "varlock": "1.18.0",
+      "@cloudflare/workers-types": "^5.20260906.1",
+      "@orpc/server": "^1.15.0",
+      "@orpc/openapi": "^1.15.0",
+      "@orpc/zod": "^1.15.0",
+      "better-auth": "1.7.5",
+      "@orpc/client": "^1.15.0",
+      "@better-auth/expo": "1.7.5",
+      "drizzle-orm": "1.0.0-rc.4"
+    }
+  },
   "type": "module",
   "scripts": {
-    "dev": "vp run --filter native dev",
-    "dev:all": "vp run -r dev",
-    "build": "vp run -r build",
-    "check-types": "vp run -r check-types",
-    "check": "vp check && vp run -r check-types",
-    "lint": "vp lint",
-    "format": "vp fmt",
-    "staged": "vp staged",
-    "hooks:setup": "vp config",
-    "dev:native": "vp run --filter native dev",
-    "dev:web": "vp run --filter web dev",
-    "dev:server": "vp run --filter server dev",
-    "db:push": "vp run --filter @med-ai/db db:push",
-    "db:studio": "vp run --filter @med-ai/db db:studio",
-    "db:generate": "vp run --filter @med-ai/db db:generate",
-    "db:migrate": "vp run --filter @med-ai/db db:migrate",
-    "deploy": "vp run --filter @med-ai/infra deploy",
-    "destroy": "vp run --filter @med-ai/infra destroy"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "check-types": "turbo run check-types",
+    "dev:native": "turbo run dev -F native --",
+    "dev:server": "turbo run dev:bare -F hono --",
+    "db:push": "turbo run db:push -F @sona-ai/db --",
+    "db:studio": "turbo run db:studio -F @sona-ai/db --",
+    "db:generate": "turbo run db:generate -F @sona-ai/db --",
+    "db:migrate": "turbo run db:migrate -F @sona-ai/db --",
+    "deploy": "turbo run deploy -F @sona-ai/infra --",
+    "destroy": "turbo run destroy -F @sona-ai/infra --",
+    "env:generate": "varlock codegen --path ./apps/server/ && varlock codegen --path ./apps/native/ && varlock codegen --path ./apps/care/ && varlock codegen --path ./packages/db/",
+    "postinstall": "varlock codegen --path ./apps/server/ && varlock codegen --path ./apps/native/ && varlock codegen --path ./apps/care/ && varlock codegen --path ./packages/db/",
+    "test": "turbo run test",
+    "db:seed": "turbo run db:seed -F @sona-ai/db --",
+    "dev:care": "turbo run dev -F care --"
   },
   "dependencies": {
-    "@med-ai/env": "*",
-    "dotenv": "^17.2.2",
-    "zod": "^4.1.13",
-    "expo": "~57.0.2",
-    "react": "19.2.3",
-    "react-native": "0.86.0"
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20251213.0",
-    "@med-ai/config": "*",
-    "@types/node": "^22.13.14",
-    "rolldown": "1.1.0",
-    "typescript": "^6",
-    "vite-plus": "0.1.24"
+    "@cloudflare/workers-types": "catalog:",
+    "@sona-ai/config": "workspace:*",
+    "@types/node": "catalog:",
+    "turbo": "^2.10.12",
+    "typescript": "^6.0.3",
+    "varlock": "catalog:"
   },
-  "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.24",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.24"
-  },
-  "packageManager": "npm@11.7.0",
-  "version": "1.0.0",
+  "packageManager": "bun@1.4.0",
   "patchedDependencies": {
-    "react-native-executorch@0.9.2": "patches/react-native-executorch@0.9.2.patch"
+    "expo-backdrop@0.1.1": "patches/expo-backdrop@0.1.1.patch"
   },
   "trustedDependencies": [
-    "llama.rn",
     "@shopify/react-native-skia"
   ]
 }

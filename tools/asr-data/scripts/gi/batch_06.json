@@ -1,0 +1,772 @@
+[
+  {
+    "id": "gi_051",
+    "split": "train",
+    "condition": "Hepatitis B follow-up",
+    "source": "Hepatitis B virus infection",
+    "patient_persona": {
+      "description": "Wong Kok Keong, 46, male, car workshop owner in Klang, Selangor; hepatitis B found at a blood donation twenty years ago, never followed up; mother died of liver cancer at 61. Gruff, quiet, Malaysian Mandarin with Cantonese flavour.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Loh Wai Mun, Malaysian Chinese woman in her 40s, hepatologist at a Klang Valley hospital. Precise, kind; Mandarin with English lab terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "黄先生，你的 GP 转你来看乙型肝炎。你是什么时候知道自己有 hepatitis B 的？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "二十多年前去 donate blood，他们寄信来说不能捐。那时候我没有什么不舒服，所以就没理它。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "家里有人有吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我妈妈也有，她六十一岁就是 liver cancer 走的。我哥哥也有，但是他在新加坡。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有家族肝癌的历史，这个很重要，你的风险比较高。这次的血检，HBsAg positive，HBeAg negative。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "病毒量 HBV DNA 是两万八千 IU/ml，ALT 是 72，正常是 40 以下。Fibroscan 是 9.5 kPa，表示肝有中度纤维化。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那是不是很 serious？Will I end up 跟我妈妈一样？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "还没有 cirrhosis，但是病毒在活动，肝在受伤。现在开始吃抗病毒药，可以大大减低肝硬化和肝癌的风险。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要吃什么药？吃多久？Forever 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tenofovir 300mg，一天一粒，每天差不多同一个时间吃。通常要长期吃，不可以自己停，停了病毒会反弹，很危险。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我平时有喝酒，一个礼拜几罐啤酒，还有吃一些中药补肝的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "酒最好完全戒掉。中药补肝的，有一些反而伤肝，你带来给我看，没有必要就不要吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你太太和孩子也要验血，if no antibodies 就要打 vaccine，three doses。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我叫他们来。要多久回来 follow up 一次？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "三个月后验肾功能和病毒量。每六个月做一次肝的 ultrasound 和 AFP，检查有没有肝癌。"
+      }
+    ]
+  },
+  {
+    "id": "gi_052",
+    "split": "train",
+    "condition": "Hepatitis B follow-up",
+    "source": "Hepatitis B virus infection",
+    "patient_persona": {
+      "description": "Zaleha binti Mohd Noor, 34, female, primary school teacher in Kuala Terengganu; 26 weeks pregnant with her second child, known hepatitis B carrier; antenatal follow-up. Soft, careful voice, Terengganu Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Suresh Nair, Malaysian Indian man in his 40s, physician at a Kuala Terengganu hospital combined antenatal-medical clinic. Gentle, clear; Malay-leaning with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Zaleha, keputusan darah bulan lepas dah keluar. Viral load hepatitis B puan tinggi, dua juta IU/ml."
+      },
+      {
+        "speaker": "Patient",
+        "text": "High tu maknanya apa, doktor? Masa first baby dulu, tak ada doktor cakap pasal ni."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau virus banyak macam ni, risiko berjangkit kepada baby masa bersalin lebih tinggi, walaupun baby dapat vaksin."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya Allah. Anak sulung saya sihat ke? Dia dah lima tahun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita boleh check darah dia, HBsAg dan antibodi. Kalau dia dapat vaksin masa lahir, kebanyakannya dilindungi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Untuk baby ni, saya cadang puan mula tenofovir 300mg sekali sehari, mula minggu 28 sampai dua belas minggu lepas bersalin."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat ni safe untuk baby dalam perut ke? Saya takut cacat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tenofovir dah digunakan dalam ramai ibu mengandung, dan data menunjukkan selamat. Tak ada peningkatan risiko kecacatan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lepas bersalin, boleh saya menyusu badan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, ubat sangat sikit masuk susu. Baby akan dapat suntikan vaksin hepatitis B dan immunoglobulin, HBIG, dalam dua belas jam lepas lahir."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena bersalin secara caesarean ke, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak perlu. Normal delivery boleh, keputusan tu ikut sebab obstetrik saja."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Suami saya pun kena check juga ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, dia patut check, dan ambil vaksin kalau tak ada antibodi. Dua minggu lagi datang ambil ubat, kita check fungsi buah pinggang sekali."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Terima kasih sebab terangkan dengan jelas."
+      }
+    ]
+  },
+  {
+    "id": "gi_053",
+    "split": "train",
+    "condition": "Hepatitis B follow-up",
+    "source": "Hepatitis B virus infection",
+    "patient_persona": {
+      "description": "Joseph Chai Kiat Seng, 55, male, church administrator in Kuching, Sarawak; on entecavir for eight years, routine refill and surveillance review. Polite, measured, English-dominant Sarawakian Chinese.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Dayang Norhafizah Awang, Sarawakian Malay woman in her 40s, gastroenterology specialist at a Kuching hospital. Efficient, courteous; English with this patient.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Good afternoon, Mr. Chai. Six-monthly review today. How have you been?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Quite well, doctor. No problems. Just want to top up the entecavir, I have maybe five tablets left."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your viral load is still undetectable. ALT 28, normal. Kidney function stable, creatinine 82."
+      },
+      {
+        "speaker": "Patient",
+        "text": "That's good news. And the ultrasound last week, OK tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Liver looks smooth, no nodules. AFP is 3.1, normal. So no sign of liver cancer."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Praise God. Doctor, after eight years, can I stop the medicine already?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your surface antigen, HBsAg, is still positive. Stopping now carries a risk of flare, sometimes quite severe. We usually continue."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I see. I'm only asking because the cost adds up, even at the government farmasi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Understood. At this hospital it's subsidised, so please keep collecting here. Are you taking it on an empty stomach?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, 0.5mg at 6am, sebelum sarapan. Isteri saya ingatkan hari-hari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Perfect, two hours after or before food. Any new medicines or supplements?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "My brother-in-law brought some tongkat ali from Sibu. I haven't started."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Better to skip it. Herbal products aren't regulated well and some can hurt the liver."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give you six months of entecavir. Next blood test dan ultrasound bulan Mac, macam biasa."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you, doctor. See you in March then."
+      }
+    ]
+  },
+  {
+    "id": "gi_054",
+    "split": "train",
+    "condition": "Hepatitis B follow-up",
+    "source": "Hepatitis B virus infection",
+    "patient_persona": {
+      "description": "Rudy bin Gumpil, 50, male, Murut farmer and small durian orchard owner in Keningau, Sabah; results review after screening at a company health check. Soft-spoken, slow, Sabah Malay with some English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chong Siaw Ping, Sabahan Chinese woman in her 30s, medical officer at a Keningau health clinic. Patient, plain-spoken; Sabah Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Rudy, saya sudah dapat keputusan darah. Encik ada hepatitis B, tapi jenis tak aktif."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak aktif tu macam mana, doktor? Saya takut juga bila majikan telefon."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Maksudnya virus ada dalam badan, tapi sikit sangat. Viral load kurang dua ribu, dan ALT normal, 25."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Jadi perlu makan ubat ka? Medicine for life ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Buat masa ni, tak perlu. Ubat hanya kalau virus naik atau hati mula rosak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hati saya OK kah? Saya ada minum tapai sama lihing masa festival."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ultrasound tunjuk hati normal, tiada parut. Tapi alkohol memang tak bagus untuk hepatitis B. Kurangkan, masa Kaamatan pun jangan banyak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susah juga tu, doktor. Tapi saya cuba."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Isteri dan anak-anak encik kena check darah juga. Kalau belum ada antibodi, ambil vaksin tiga dos, percuma di klinik ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Anak saya semua sudah besar. Yang bongsu masih sekolah di Tenom."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa, datang bila cuti. Satu lagi, jangan kongsi berus gigi atau pisau cukur."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya boleh kerja biasa kah? Majikan tanya, is it contagious or not?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, kerja macam biasa. Not spread by sharing food or shaking hands. Saya boleh tulis surat untuk majikan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita ulang darah setiap enam bulan, dan ultrasound setahun sekali. Kalau mata kuning atau perut bengkak, datang cepat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Saya tulis dalam kalendar."
+      }
+    ]
+  },
+  {
+    "id": "gi_055",
+    "split": "train",
+    "condition": "Hepatitis B follow-up",
+    "source": "Hepatitis B virus infection",
+    "patient_persona": {
+      "description": "Selvam a/l Arumugam, 62, male, retired estate conductor in Ipoh, Perak; stopped tenofovir four months ago because he felt fine, now tired and nauseous. Hoarse, slow, Malaysian Indian English with Malay and Tamil words.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ng Boon Hock, Malaysian Chinese man in his 50s, gastroenterologist at an Ipoh hospital. Firm but not scolding; English with Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Selvam, your ALT today is 480. Last time it was 30. Your eyes also look a bit yellow."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, doctor. Two weeks I've been very tired, no appetite, want to vomit. Urine also dark like teh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Have you been taking the tenofovir every day?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Actually, I stopped around four months ago. Rasa sihat sangat, ingat dah tak payah. Also the pharmacy queue very long."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm glad you told me. This is a hepatitis B flare. When the medicine stops, the virus comes back strongly and attacks the liver."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is it dangerous? My son said I should have dengar cakap."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It can be. Your bilirubin is 68 and INR 1.4, slightly high. That means the liver is struggling a bit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I want to admit you for a few days, to monitor closely and restart tenofovir 300mg today."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Must stay in ward ah? Isteri saya tak boleh drive, siapa nak hantar dia pergi kuil?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your son can help. If the INR goes higher, we need to act fast, and that's easier in hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay lah, doctor. Can I take my other medicines? Amlodipine and the Panadol for knee."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Continue amlodipine. Panadol, maximum 2 grams a day for now, not more. No traditional medicine or herbs."
+      },
+      {
+        "speaker": "Patient",
+        "text": "After this, I must take the tenofovir seumur hidup?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Most likely yes, long-term. If the queue is the problem, we can arrange three months supply each time, or medicine by post."
+      },
+      {
+        "speaker": "Patient",
+        "text": "By post is good. I won't stop again, doctor. Promise."
+      }
+    ]
+  },
+  {
+    "id": "gi_056",
+    "split": "train",
+    "condition": "Fatty liver disease",
+    "source": "Nonalcoholic fatty liver disease",
+    "patient_persona": {
+      "description": "Azman bin Salleh, 48, male, warehouse supervisor in Pasir Gudang, Johor; type 2 diabetes and hypertension, BMI 34; referred for raised liver enzymes. Loud, jovial, Johor Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tay Hui Wen, Malaysian Chinese woman in her 30s, physician at a Johor Bahru hospital medical clinic. Encouraging, practical; Malay-leaning with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Azman, doktor klinik refer sebab liver enzyme tinggi. Encik ada rasa apa-apa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada apa, doktor. Sihat je. Cuma perut makin buncit, seluar dah tak muat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "ALT encik 85, normal bawah 40. Ultrasound tunjuk hati berlemak. Encik minum arak tak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak, doktor. Saya tak pernah minum. Tapi teh tarik memang tiga empat gelas sehari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu banyak gula. Hati berlemak ni kita panggil MASLD, berkait dengan diabetes, berat badan dan gula dalam makanan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bahaya ke fatty liver? Saya ingat semua orang ada."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Memang ramai ada, tapi sesetengah jadi parut hati, sirosis. Fibroscan encik 7.8 kPa, ada parut sikit, belum teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau berat turun tujuh hingga sepuluh peratus, lemak dan parut boleh berkurang. Untuk encik, dalam tujuh hingga sepuluh kilo."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sepuluh kilo? Susah tu doktor. Kerja shift, makan lewat malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Start small. Teh tarik tukar kosong, atau kurang manis. Nasi separuh pinggan, tambah sayur. Brisk walking thirty minutes, five days a week."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat diabetes saya metformin je, 1 gram dua kali sehari. Gula pun masih tinggi, HbA1c 8.5."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya tambah empagliflozin 10mg sekali sehari. Dia turunkan gula, bantu berat turun sikit, dan bagus untuk jantung."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat tu ada side effect?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kencing lebih kerap, dan jaga kebersihan kawasan sulit sebab boleh dapat jangkitan kulat. Minum air cukup."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Saya cuba kurangkan teh tarik dulu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Tiga bulan lagi kita check berat, gula dan liver enzyme."
+      }
+    ]
+  },
+  {
+    "id": "gi_057",
+    "split": "train",
+    "condition": "Fatty liver disease",
+    "source": "Nonalcoholic fatty liver disease",
+    "patient_persona": {
+      "description": "Lee Mei Hua, 42, female, kopitiam owner in Air Itam, Penang; slim but high triglycerides, results review after Fibroscan. Chatty, brisk, Penang Hokkien-flavoured Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Teoh Kean Loon, Malaysian Chinese man in his 40s, gastroenterologist at a Penang private hospital. Friendly, explains with numbers; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "李小姐，你的 Fibroscan 报告出来了。Fat score 是 CAP 310，表示肝脂肪蛮多，stiffness 是 5.6，没有纤维化。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是我不胖啊，才五十二 kilo。怎么会有 fatty liver？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "瘦的人也会有，我们叫 lean fatty liver，亚洲人比较多。你的 triglyceride 是 3.8，也偏高。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我每天在店里，都是随便吃。早上喝 kopi 加炼奶，下午再一杯，晚上煮完才吃饭。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "炼奶和甜饮料是 main cause。Fructose 进去 liver 就变脂肪。有没有吃很多白饭或者面？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有啊，粿条、面，差不多每餐。有时候客人剩下的糕点我也吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好，先从饮料开始，kopi 换 kopi O kosong，或者少糖。面和饭减一半，多吃青菜和鱼。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那要不要吃药？我姐姐说吃 vitamin E 会好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Vitamin E 只有在活检证实有炎症的时候才考虑，你现在没有纤维化，不需要。改饮食最有效。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "胆固醇呢？要不要吃 statin？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 LDL 是 3.2，还可以。三个月后再验，如果 triglyceride 还是很高，再考虑药。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Exercise 我真的没有时间，店早上六点开到下午三点。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "关店以后去 Botanic Garden 走三十分钟就好，一个礼拜五次。慢慢来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我试试看。几时再来？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "三个月后验血，一年后再做 Fibroscan，看脂肪有没有减少。"
+      }
+    ]
+  },
+  {
+    "id": "gi_058",
+    "split": "train",
+    "condition": "Fatty liver disease",
+    "source": "Nonalcoholic fatty liver disease",
+    "patient_persona": {
+      "description": "Harpreet Singh a/l Gurdev Singh, 36, male, software developer in Petaling Jaya; six-month follow-up for fatty liver after starting a weight-loss plan. Energetic, fast, Malaysian English with Malay words.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nor Azlina Abu Bakar, Malay woman in her 40s, family medicine specialist at a PJ clinic. Upbeat, direct; English with this patient.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Harpreet, good to see you. Weight today is 86 kilos. Six months ago you were 95."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes doc! Nine kilos down. I stopped the late-night roti canai and the teh tarik. Badminton three times a week."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's excellent. And your ALT dropped from 110 to 42, almost normal. Liver fat is responding."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So the fatty liver dah hilang already?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Improving, not gone yet. We'll repeat the Fibroscan at one year. Keep going the same way."
+      },
+      {
+        "speaker": "Patient",
+        "text": "One thing, doc. My colleague says I should take milk thistle and some liver detox tea. Worth it?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No good evidence for those. Some detox teas even damage the liver. Save your money."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, noted. What about coffee? I drink two black coffees a day."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Black coffee without sugar is actually fine, possibly protective. Keep it kosong."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your blood pressure is 128 over 82, and fasting sugar 5.4, both better. Still no need for medication."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Nice. I was scared you'd start me on diabetes pills like my father."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "You've avoided that for now. But with family history, we'll check HbA1c every year."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And alcohol? Sometimes lepas badminton the guys pergi minum beer sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Occasional one beer is okay, but with fatty liver, less is better. Not every session."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Fair enough. See you in six months, doc."
+      }
+    ]
+  },
+  {
+    "id": "gi_059",
+    "split": "train",
+    "condition": "Fatty liver disease",
+    "source": "Nonalcoholic fatty liver disease",
+    "patient_persona": {
+      "description": "Norhayati binti Bujang, 55, female, canteen operator at a school in Kuching, Sarawak; diabetes, hypertension and fatty liver, monthly refill visit. Warm, talkative, Sarawak Malay mixed with English.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wong Siew Ling, Sarawakian Chinese woman in her 30s, medical officer at a Kuching health clinic. Friendly, efficient; Malay and English mixed.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mak cik Norhayati, datang ambil ubat ya? Macam mana gula kat rumah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Gula pagi dalam 8, doktor. Kadang-kadang 10. Saya check guna meter yang anak beli."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masih tinggi sikit. HbA1c bulan lepas 8.2. Target kita bawah 7."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susah, doktor. Kerja canteen, bau mee goreng dan kek lapis sepanjang hari. Mana tahan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham. Ubat mak cik sekarang metformin 1 gram dua kali, gliclazide 80mg pagi, dan amlodipine 5mg. Ada miss tak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Metformin malam kadang-kadang lupa. Sebab balik lambat, terus tidur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. Saya tukar metformin kepada extended release, Glucophage XR, 2 gram sekali sehari waktu makan malam. Senang ingat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hati berlemak saya macam mana, doktor? Last time ultrasound kata fatty liver."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "ALT 56, naik sikit dari 48. Bila gula tak control dan berat naik, liver fat pun bertambah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berat saya naik dua kilo sejak raya. Banyak open house."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kuih raya memang bahaya. Cuba kurangkan nasi, dan jalan kaki waktu petang dekat Waterfront, dua puluh minit pun cukup."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada ubat untuk hati tak, doktor? Kawan saya makan ubat hati dari kedai herba."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan beli herbal medicine for the liver, some can damage it. Ubat terbaik tetap kawal gula dan turunkan berat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK lah doktor, saya ikut. Tekanan darah saya hari ni berapa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "138 over 84, OK. Saya bagi ubat untuk tiga bulan. Next visit kita check HbA1c dan liver function."
+      }
+    ]
+  },
+  {
+    "id": "gi_060",
+    "split": "test",
+    "condition": "Fatty liver disease",
+    "source": "Nonalcoholic fatty liver disease",
+    "patient_persona": {
+      "description": "Teh Kah Hao, 29, male, e-commerce warehouse manager in Johor Bahru who commutes to Singapore weekly; fatty liver found on a pre-employment ultrasound. Casual, quick, Malaysian Mandarin mixed with English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Muhammad Irfan Zainal, Malay man in his 30s, GP at a Johor Bahru clinic who speaks conversational Mandarin. Relaxed, mixes English, Mandarin and some Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor，我新公司的 medical check up 说我有 fatty liver。我才二十九岁，正常吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "现在年轻人很多都有 fatty liver。你平时吃什么？有没有喝酒？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "酒很少，只是过年。可是 bubble tea 一天一杯，晚上常常 order 宵夜，炸鸡 or burger。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 BMI 是 29，腰围 98 公分。ALT 是 65，有一点高。其他 blood test 呢，sugar 和 cholesterol？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Report 这里写 fasting glucose 6.3，cholesterol 6.1。这个是什么意思？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Glucose 6.3 is prediabetes，还没有到 diabetes，但是要小心了。Cholesterol 也偏高。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我是不是要吃药了？我不想那么年轻就吃一辈子的药。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "暂时不用。你还年轻，改 lifestyle 效果最好。减五到七公斤，肝的脂肪就会下来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我每天早上五点半就要过长堤去 Singapore，晚上回到家很累，哪里有时间运动？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jam 的时间不要浪费，weekend 去 Danga Bay 跑步或者打球。平日至少走楼梯，不要坐 lift。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bubble tea 要完全戒吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "换成 zero sugar，一个礼拜两杯就好。宵夜 kalau boleh 不要吃，或者换 sandwich 那种。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK，我试试看。公司的 form 你可以帮我签吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，fatty liver 不影响你工作，我写 fit for work。三个月后回来再 check ALT、sugar 和 cholesterol。"
+      }
+    ]
+  }
+]

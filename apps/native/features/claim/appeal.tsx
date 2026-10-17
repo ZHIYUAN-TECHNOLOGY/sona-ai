@@ -1,0 +1,191 @@
+import * as WebBrowser from "expo-web-browser";
+import { useEffect, useRef, useState } from "react";
+import { AccessibilityInfo, Pressable, TextInput, View, type TextStyle } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
+import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
+import { keptByText } from "@/components/sona/sample-label";
+import { LAYOUT, riseIn } from "@/components/sona/motion";
+import { ErrorLine, PressScale } from "@/components/sona/parts";
+import { Text } from "@/components/sona/text";
+import { palette, type, radius } from "@/components/sona/theme";
+import { Action, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { haptic } from "@/features/clinical/medication-parts";
+import type { Patient } from "@/features/encounter/types";
+import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
+import { useLiveAppeal } from "@/features/live/model-sync";
+import { unanswered } from "@/features/clinical/judge-answer";
+import { wakingOf } from "@/features/live/waking";
+import { LockedAction, useRole } from "@/features/live/roles";
+import { DENIAL_REASONS, INSURER, appealByRules, noteFor, type AppealLetter, type ClaimState, type Denial, type Sentence } from "./model";
+
+/*
+ * The insurer denied the final guarantee letter: a red card says so and why, and Sona's appeal sits
+ * under it for the doctor to check, edit and send. The appeal card is the inbox's drafted-reply card
+ * (after 60fps "Wabi Chat Suggestion Swipe Cards Carousel Interaction"): it rises in above the action
+ * with a blue kicker. While the server drafts, soft bars breathe (Monogram Pulse Sweep); then the
+ * letter reveals in stages, the opening, each point, then the closing, 70 ms apart (Arrive).
+ * Reduce Motion: it simply appears. Every point carries a "From the note" pill that opens the note
+ * sentence it cites, so nothing in the letter is unsourced.
+ */
+const RED = palette.red;
+const clock = (at: string) => { const d = new Date(at); return Number.isNaN(d.getTime()) ? "Earlier" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); };
+
+/** "Denied by Synthetic insurer · <reason>", when, and the insurer's own words if they added any. */
+export function DeniedCard({ denial }: { denial: Denial }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const title = `Denied by ${INSURER} · ${denial.reason}`;
+  return <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(220)} accessible accessibilityLabel={`${title}. ${clock(denial.at)}${denial.note ? `. ${denial.note}` : ""}`}
+    style={{ flexDirection: "row", gap: 12, padding: 14, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(162,62,62,0.09)", borderWidth: 1, borderColor: "rgba(162,62,62,0.14)" }}>
+    <Icon name="xmark.octagon.fill" size={20} color={RED} />
+    <View style={{ flex: 1, gap: 3 }}>
+      <Text style={{ ...type.subhead, fontWeight: "700", color: RED }}>{title}</Text>
+      <Text style={{ ...type.caption, color: palette.muted }}>{clock(denial.at)} · the discharge waits on this letter</Text>
+      {denial.note && <Text selectable style={{ ...type.footnote, color: palette.ink }}>“{denial.note}”</Text>}
+    </View>
+  </Animated.View>;
+}
+
+// `codedBy` (live): who suggested the letter's codes the appeal argues from, which the draft's own `source` does not say.
+type Draft = { letter: AppealLetter; sentences: Sentence[]; source: "fixture" | "model"; model?: string; codedBy?: ClaimState["codedBy"] };
+
+/**
+ * Sona's appeal for a denied letter. Live mode drafts on the server (claim.appealDraft); fixture mode
+ * uses the same authored rules over the claim's note. Sending needs a doctor or management; once
+ * sent the card reads "Appeal sent · awaiting insurer" with the insurer's fresh review link.
+ */
+export function AppealCard({ patient, state, onChange, onApproved }: { patient: Patient; state: ClaimState & { denial: Denial }; onChange: (change: Partial<ClaimState>) => void; onApproved: () => void }) {
+  const { on: live, user } = useLive();
+  const role = useRole();
+  const { reducedMotion } = useAccessibleEffects();
+  const appealed = state.status === "appealed";
+  const server = useLiveAppeal(patient.encounterId, live && role.can("claim.appealDraft") && !appealed ? state.denial.at : undefined);
+  // Sample mode only: the rules' letter over the sample note. Connected, the server drafts over the visit's saved note.
+  const local: Draft | undefined = live || JUDGE ? undefined : (() => {
+    const sentences = noteFor(state);
+    const letter = appealByRules({ denialCode: state.denial.code, denialReason: state.denial.reason, sentences, patient });
+    return { letter, sentences: sentences.filter(s => letter.points.some(p => p.evidenceSentenceId === s.id)), source: "fixture" };
+  })();
+  // Judge build: only the model's letter is Sona's draft; the server's stub (the rules' letter) and a failed call are said as no draft.
+  const held = unanswered(JUDGE, server);
+  const draft: Draft | undefined = held ? undefined : live ? server.data : local;
+  const [edited, setEdited] = useState<AppealLetter>();
+  const letter = edited ?? draft?.letter;
+  const [sendId, setSendId] = useState(requestId);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+  const edit = (change: (l: AppealLetter) => AppealLetter) => { if (letter) setEdited(change(letter)); };
+  const ready = Boolean(letter && letter.opening.trim() && letter.closing.trim() && letter.points.length && letter.points.every(p => p.claim.trim()));
+  const send = () => {
+    if (!letter || !ready || busy) return;
+    haptic("select"); setBusy(true); setError(undefined);
+    const sent = (appealedAt: string, reviewUrl?: string, by?: Pick<ClaimState, "codedBy" | "appealDraftedBy">) => {
+      onChange({ status: "appealed", appealedAt, reviewUrl, ...by }); setBusy(false); haptic("success");
+      AccessibilityInfo.announceForAccessibility(`Appeal sent to ${INSURER}`);
+    };
+    if (live && user) {
+      api.claim.appeal({ encounterId: patient.encounterId, requestId: sendId, approvedBy: user.id, letter })
+        .then(async () => { const s = await api.claim.status({ encounterId: patient.encounterId }).catch(() => undefined); sent(s?.appealedAt ?? new Date().toISOString(), s?.reviewUrl, s && { codedBy: s.codedBy, appealDraftedBy: s.appealDraftedBy }); })
+        .catch(e => { setError(errorText(e)); setBusy(false); setSendId(requestId()); });
+      return;
+    }
+    // ponytail: fixture mode's insurer approves the appeal after a pause, as the GL send's mock insurer does.
+    sent(new Date().toISOString());
+    timers.current.push(setTimeout(onApproved, reducedMotion ? 0 : 2300));
+  };
+
+  const sentBy = [keptByText(state.appealDraftedBy, "drafted by"), keptByText(state.codedBy, "suggested by")].map((who, i) => who && `${i ? "Codes" : "Appeal"} as sent · ${who}`).filter(Boolean).join(" · ");
+  if (appealed) return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 10 }}>
+    <View accessible style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <Icon name="hourglass" size={16} color={palette.blue} />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Appeal sent · awaiting insurer</Text>
+        <Text style={{ ...type.caption, color: palette.muted }}>{state.appealedAt ? `${clock(state.appealedAt)} · ` : ""}{live ? `${INSURER} reviews it on a new link` : "mock insurer"}</Text>
+        {/* Who drafted the appeal that went and who suggested the codes it argues from, as each was frozen; nothing where it was not kept. */}
+        {sentBy !== "" && <Text style={{ ...type.caption, color: palette.muted }}>{sentBy}</Text>}
+      </View>
+    </View>
+    {state.reviewUrl && <Pressable accessibilityRole="link" accessibilityLabel="Open the insurer's review page" hitSlop={12} onPress={() => { void WebBrowser.openBrowserAsync(state.reviewUrl!).catch(() => {}); }}
+      style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Insurer's review page</Text>
+      <Icon name="arrow.up.right" size={10} color={palette.blue} />
+    </Pressable>}
+  </Surface>;
+
+  return <Animated.View layout={reducedMotion ? undefined : LAYOUT} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 10, duration: 360 })}>
+    <Surface feature style={{ padding: 16, gap: 12 }}>
+      <Text style={{ ...type.overline, color: palette.blue }}>Sona drafted an appeal · check before sending</Text>
+      {live && !role.can("claim.appealDraft") ? <Text style={{ ...type.footnote, color: palette.muted }}>{role.why("claim.appealDraft")}</Text>
+        : server.error || held?.reason ? <ErrorLine text={`No draft: ${server.error ?? held?.reason}`} onRetry={server.retry} />
+        : !letter || !draft ? <Drafting label="Sona is drafting the appeal…" />
+        : <>
+          <Arrive index={0}><Paragraph label="Opening paragraph" value={letter.opening} onChange={opening => edit(l => ({ ...l, opening }))} /></Arrive>
+          {letter.points.map((p, i) => {
+            const sentence = draft.sentences.find(s => s.id === p.evidenceSentenceId);
+            return <Arrive key={p.evidenceSentenceId} index={i + 1} style={{ flexDirection: "row", gap: 10 }}>
+              <Text style={{ ...type.callout, fontWeight: "700", color: palette.blue, paddingTop: 10, fontVariant: ["tabular-nums"] }}>{i + 1}</Text>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Paragraph label={`Point ${i + 1}`} value={p.claim} onChange={claim => edit(l => ({ ...l, points: l.points.map((x, j) => j === i ? { ...x, claim } : x) }))} />
+                {sentence && <FromTheNote sentence={sentence} />}
+              </View>
+            </Arrive>;
+          })}
+          <Arrive index={letter.points.length + 1}><Paragraph label="Closing paragraph" value={letter.closing} onChange={closing => edit(l => ({ ...l, closing }))} /></Arrive>
+          <Arrive index={letter.points.length + 2} style={{ gap: 10 }}>
+            <SampleLabel source={draft.source} model={draft.model} waking={wakingOf(draft)} what="appeal" />
+            {keptByText(draft.codedBy, "suggested by") && <Text style={{ ...type.caption, color: palette.muted }}>Argues from the letter's codes · {keptByText(draft.codedBy, "suggested by")}</Text>}
+            <Text style={{ ...type.footnote, color: palette.ink }}>Goes to {INSURER} with a new review link, {letter.points.length} {letter.points.length === 1 ? "point" : "points"} from the note{user?.name ? ` · approved by ${user.name}` : ""}.</Text>
+            {error && <Text style={{ ...type.footnote, color: RED }}>Not sent: {error}</Text>}
+            {live && !role.can("claim.appeal") ? <LockedAction label="Needs a doctor or management to send" path="claim.appeal" height={46} />
+              : <Action label={busy ? "Sending…" : "Send appeal"} icon="paperplane" disabled={!ready || busy} accessibilityLabel={`Send appeal to ${INSURER}`} onPress={send} />}
+          </Arrive>
+        </>}
+    </Surface>
+  </Animated.View>;
+}
+
+/**
+ * Settings' demo control: the synthetic insurer denies the demo patient's letter ("Admission not
+ * medically necessary"), for rehearsal. Live mode posts the insurer's own review form, so the denial
+ * lands exactly as the web page would make it (stored, announced); fixture mode denies in the app.
+ */
+export async function insurerDenies(live: boolean, encounterId: string, deny: (denial: Denial) => void) {
+  const { code, reason } = DENIAL_REASONS.find(d => d.code === "MED")!;
+  if (!live) { deny({ code, reason, at: new Date().toISOString() }); return; }
+  const { reviewUrl } = await api.claim.status({ encounterId });
+  if (!reviewUrl) throw new Error("Send the guarantee letter first: the insurer can only deny a letter it has.");
+  const res = await fetch(reviewUrl, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ decision: "deny", reason: code, note: "" }).toString() });
+  if (!res.ok) throw new Error(`The insurer page refused (${res.status})`);
+}
+
+/** One paragraph of the letter, edited in place: it reads as text, with a faint field behind it. The claim's IV reason is written in one too. */
+export function Paragraph({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (text: string) => void; placeholder?: string }) {
+  const [focused, setFocused] = useState(false);
+  return <TextInput value={value} onChangeText={onChange} multiline scrollEnabled={false} maxLength={1000} accessibilityLabel={label} accessibilityHint="Edit before sending" placeholder={placeholder} placeholderTextColor={palette.muted}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    style={{ ...type.callout, color: palette.ink, minHeight: 44, paddingHorizontal: 10, paddingTop: 10, paddingBottom: 10, borderRadius: radius.control, borderCurve: "continuous", borderWidth: 1,
+      borderColor: focused ? "rgba(36,91,204,0.35)" : "transparent", backgroundColor: focused ? "rgba(255,255,255,0.9)" : "rgba(20,28,40,0.035)" } as TextStyle} />;
+}
+
+/**
+ * The small source pill under a point: unfolds, right under it, the exact note sentence the point cites. In place, not
+ * the source sheet: the sheet only repeated this one sentence, over the letter and the discharge under it.
+ */
+function FromTheNote({ sentence }: { sentence: Sentence }) {
+  const [open, setOpen] = useState(false);
+  return <View style={{ gap: 6, marginLeft: 10 }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`From the note: ${sentence.text}`} accessibilityHint={open ? "Hides the note sentence" : "Shows the note sentence this point cites"} accessibilityState={{ expanded: open }} hitSlop={{ top: 8, bottom: 8, left: 4, right: 12 }}
+      onPress={() => { haptic("select"); setOpen(o => !o); }}
+      style={{ alignSelf: "flex-start" }}>{({ pressed }) => <PressScale pressed={pressed} style={{ flexDirection: "row", alignItems: "center", gap: 5, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: "#E6EEFC" }}>
+      <Icon name="doc.text" size={11} color={palette.blue} />
+      <Text style={{ ...type.caption, fontWeight: "600", color: palette.blue }}>From the note</Text>
+      <Icon name={open ? "chevron.up" : "chevron.down"} size={9} color={palette.blue} />
+    </PressScale>}</Pressable>
+    {open && <Expand style={{ paddingLeft: 10, borderLeftWidth: 2, borderColor: "rgba(36,91,204,0.25)" }}>
+      <Text selectable style={{ ...type.footnote, color: palette.ink }}>“{sentence.text}”</Text>
+      <Text style={{ ...type.caption, color: palette.muted }}>As written in the consultation note</Text>
+    </Expand>}
+  </View>;
+}

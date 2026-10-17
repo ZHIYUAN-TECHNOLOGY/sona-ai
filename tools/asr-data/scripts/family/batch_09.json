@@ -1,0 +1,844 @@
+[
+  {
+    "id": "family_081",
+    "split": "train",
+    "condition": "Lab results explanation, newly diagnosed type 2 diabetes and high cholesterol",
+    "source": "original",
+    "patient_persona": {
+      "description": "Encik Faizal bin Rahim, 44, male, government office clerk in Putrajaya, came for a company health screening. Surprised, a little defensive about his diet.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lau Pei Shan, Malaysian Chinese woman in her 30s, GP at a Putrajaya clinic. Friendly, direct; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Faizal, blood test results dah keluar. Ada beberapa benda saya nak bincang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada masalah ke, doktor? Saya rasa sihat je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "HbA1c encik 7.8 peratus. Normal bawah 5.7. Gula puasa pula 8.4. Dua-dua ni menunjukkan encik ada kencing manis, type 2 diabetes."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kencing manis? Saya tak ada simptom apa-apa pun, doktor. Feel okay je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ramai tak ada simptom awal. But if left untreated, boleh rosakkan mata, buah pinggang, saraf dan jantung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kolesterol pula, LDL 4.6 mmol per litre. Untuk pesakit diabetes, kita nak bawah 2.6. Trigliserida pun tinggi, 3.1."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya memang suka makan nasi lemak dan minum teh tarik, every morning. Tapi ayah saya dulu pun kencing manis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sejarah keluarga memang tingkatkan risiko. Buah pinggang encik normal, eGFR 95. Hati pun OK, ALT 38."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Jadi kena makan ubat seumur hidup ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We start with metformin 500mg, twice a day after meals. Atorvastatin 20mg malam untuk kolesterol."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau saya kurus dan jaga makan, boleh stop ubat nanti?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada yang boleh kurangkan ubat bila berat turun banyak. Target turun lima hingga tujuh kilo dulu. Encik sekarang 86 kilo."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Senaman apa yang sesuai? Saya kerja office, duduk je depan computer."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Brisk walking thirty minutes, lima hari seminggu. Tukar teh tarik ke teh kosong, nasi separuh pinggan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Metformin tu ada kesan sampingan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Perut tak selesa atau cirit-birit sikit, minggu pertama. Take it after food untuk kurangkan. Kita ulang blood test three months lagi."
+      }
+    ]
+  },
+  {
+    "id": "family_082",
+    "split": "train",
+    "condition": "Lab results explanation, Hashimoto hypothyroidism",
+    "source": "Hypothyroidism (underactive thyroid)",
+    "patient_persona": {
+      "description": "Chong Yee Mun, 38, female, kindergarten owner in Seremban; tiredness, weight gain, and hair loss. Chatty, somewhat relieved to have an explanation.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Rahman bin Said, Malay man in his 40s, family medicine specialist at a Seremban clinic. Methodical; English with Mandarin and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Yee Mun, your thyroid test results are back. TSH is 18.5, quite high. Free T4 is low, 7.2. 甲状腺功能低下, hypothyroidism."
+      },
+      {
+        "speaker": "Patient",
+        "text": "甲状腺？难怪我最近很累，头发一直掉，weight 也增加了五公斤。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, all those fit. 还有很怕冷, constipation, dry skin?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对对对，我在 aircon 房里一直穿 jacket，同事都笑我。大便也三天一次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The thyroid antibodies are positive. So this is Hashimoto's thyroiditis, 自身免疫的病. Common in women."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Autoimmune？会不会很严重？会变成 cancer 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not cancer, 不是癌症. It's very treatable. You take a thyroid hormone tablet, levothyroxine, to replace what your body is not making."
+      },
+      {
+        "speaker": "Patient",
+        "text": "要吃一辈子吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually yes, lifelong. 可是只是一粒小小的药, once a day, very safe when the dose is correct."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Start 50mcg every morning, 空肚子, thirty minutes before breakfast. 不要和 calcium or iron tablets 一起吃."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我早上都喝 kopi 配面包。要等半个小时？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, 等三十分钟. Coffee reduces absorption. Or you can take it at bedtime, three hours after dinner."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我的体重会不会降回来？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Some of the weight, especially fluid, will come down. 可是 diet 和 exercise 还是很重要."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我们打算明年要生第二胎，会有 problem 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good that you mention. Before pregnancy, TSH should be well controlled. 怀孕的时候 dose 通常要加, so tell us early."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我明白了。什么时候再验血？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Six weeks later we check TSH again and adjust the dose. Energy usually improves in a few weeks."
+      }
+    ]
+  },
+  {
+    "id": "family_083",
+    "split": "train",
+    "condition": "Lab results explanation, iron deficiency anaemia needing GI work-up",
+    "source": "Anemia, iron deficiency",
+    "patient_persona": {
+      "description": "Mr. Jeganathan a/l Murugiah, 61, male, retired estate supervisor in Sungai Petani, Kedah; breathless on exertion. Calm, polite, Malaysian Indian English with Malay words.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Siti Nor Aishah binti Abdullah, Malay woman in her 40s, family medicine specialist at a Kedah klinik kesihatan. Serious, careful; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Jeganathan, your blood results show anaemia, kurang darah. Your haemoglobin is 8.9. For a man, normal is above 13."
+      },
+      {
+        "speaker": "Patient",
+        "text": "That's why I'm so penat, doctor. Walking to the kedai also I need to stop and rest."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The red cells are small, and ferritin, your iron store, is very low, only 6. So this is iron deficiency anaemia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I thought maybe I eat less meat. Since my wife passed, I just makan simple food, nasi dengan sayur je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Diet can contribute. But in a man of your age, the most common reason is slow blood loss from the gut. Sometimes from an ulcer, sometimes from a growth in the bowel."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Growth? You mean cancer ah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm not saying it is cancer, but we must rule it out. Have you noticed black stools, blood in stools, or change in bowel habit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Stool sometimes dark, but I thought because of the iron tonic from the kedai ubat. No blood I can see."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any weight loss? Stomach pain?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lost maybe three kilo in six months. Stomach sometimes pedih, I take antacid."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Do you take painkillers often, like for joint pain?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, for my knee, I buy the arthritis pills from pharmacy, diclofenac I think. Almost every day."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Diclofenac can cause stomach ulcers and bleeding. Tolong stop ubat tu. I'll give paracetamol for the knee instead."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm referring you for scope, both from top, gastroscopy, and from below, colonoscopy. Urgent appointment, dalam dua minggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, doctor. Meanwhile I just makan ubat besi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, ferrous fumarate 200mg twice a day. Also omeprazole 20mg daily to protect your stomach. Kalau muntah darah or black tarry stool with pening, go to emergency."
+      }
+    ]
+  },
+  {
+    "id": "family_084",
+    "split": "train",
+    "condition": "Lab results explanation, chronic kidney disease stage 3 in a hypertensive patient",
+    "source": "original",
+    "patient_persona": {
+      "description": "Puan Habsah binti Othman, 66, female, retired kindergarten cook in Kuala Terengganu; hypertension for fifteen years. Gentle, worried about dialysis.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Eugene Teh Wei Liang, Malaysian Chinese man in his 30s, medical officer at a Terengganu hospital medical clinic. Calm, reassuring; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mak cik Habsah, keputusan darah dah ada. Buah pinggang mak cik kurang berfungsi sikit. eGFR 42."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Buah pinggang? Kena cuci darah ke, doktor? Kakak saya dulu kena dialysis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak, mak cik. eGFR 42 ni tahap tiga. Dialysis biasanya bila bawah 10 atau 15. Masih jauh, dan kita nak jaga supaya tak sampai ke situ."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Kenapa jadi macam ni?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Darah tinggi yang lama, lima belas tahun, boleh rosakkan buah pinggang perlahan-lahan. Protein dalam air kencing pun ada, ACR 45."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Macam mana nak jaga buah pinggang?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pertama, tekanan darah. Hari ni 152 atas 90, tinggi. Target bawah 130 atas 80. Saya tambah losartan 50mg sekali sehari, dia lindungi buah pinggang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makan ubat tahan sakit untuk lutut boleh lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat macam ibuprofen dan diclofenac, jangan. Dia rosakkan buah pinggang. Paracetamol lebih selamat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makanan pula, doktor? Saya suka ikan masin dengan budu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Garam kena kurangkan, sebab it raises blood pressure. Ikan masin, budu, keropok, sos, makan sikit je."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Air kena minum banyak ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Minum biasa, jangan terlalu kurang. Avoid traditional medicine or jamu yang kita tak tahu kandungan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Potassium saya OK ke? Doktor dulu cakap pasal potassium."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Potassium 4.8, masih normal. Tapi dengan losartan, kita check balik dua minggu lagi. Kalau naik, kita ubah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Saya ikut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Datang balik dua minggu untuk ujian darah, bawa bacaan tekanan darah rumah. Kita buat plan panjang dengan pakar buah pinggang kalau perlu."
+      }
+    ]
+  },
+  {
+    "id": "family_085",
+    "split": "train",
+    "condition": "Lab results explanation, abnormal liver function in fatty liver disease",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mr. Tan Wei Liang, 39, male, IT project manager in Johor Bahru; screening showed raised liver enzymes. Busy, analytical, eats out often.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kavitha a/p Rajagopal, Malaysian Indian woman in her 40s, gastroenterology medical officer at a JB hospital clinic. Precise, friendly; English with Mandarin words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Tan, your liver enzymes are raised. ALT is 112, normal below 40. The ultrasound shows fatty liver, 脂肪肝."
+      },
+      {
+        "speaker": "Patient",
+        "text": "脂肪肝……我很少喝 alcohol 啊，一个月一两次而已。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "This is non-alcoholic fatty liver, now called MASLD, 跟体重、血糖和 cholesterol 有关. Your BMI is 30, and waist 102 cm."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我知道我胖了，工作忙，每天都吃外面的，晚上还吃 supper。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your hepatitis B and C tests are negative. Good. The FibroScan shows mild stiffness, 还是早期. No cirrhosis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Cirrhosis 就是肝硬化，对吗？我会不会变成那样？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If nothing changes, some people progress over years. 可是你现在这个 stage, it's very reversible."
+      },
+      {
+        "speaker": "Patient",
+        "text": "要吃什么药？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No specific medicine needed now. The best treatment is weight loss. 减七到十 percent, around six to nine kilos, and liver fat drops a lot."
+      },
+      {
+        "speaker": "Patient",
+        "text": "九公斤……有点难，可是我试试看。要怎么开始？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cut sugary drinks first, 不要喝 bubble tea 了. Less white rice and noodles at night, no supper. Exercise 150 minutes a week."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我早上可以喝 kopi 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Actually, black coffee without sugar may help the liver. Kopi O kosong is fine."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那 supplement 呢？我同事推荐 milk thistle。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Evidence is weak, 省点钱吧. Avoid unknown herbal products, some can harm the liver."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，明白。什么时候复诊？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Six months, repeat blood test and FibroScan. Also your sugar is borderline, HbA1c 6.2, so weight loss helps both."
+      }
+    ]
+  },
+  {
+    "id": "family_086",
+    "split": "train",
+    "condition": "Referral to breast surgeon for a breast lump",
+    "source": "Suspicious breast lumps",
+    "patient_persona": {
+      "description": "Ms. Angeline Joseph, 41, female, bank relationship manager in Kota Kinabalu, Sabah; found a lump in her left breast. Composed but frightened, Sabahan English with some Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Norliza binti Ahmad Tajuddin, Malay woman in her 50s, family medicine specialist at a Kota Kinabalu klinik kesihatan. Calm, honest; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Angeline, you said you found a lump. When did you first notice it?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "About three weeks ago, in the shower. I thought maybe related to my period, but it's still there, doctor. Tak sakit pun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Has it changed in size? Any nipple discharge, skin changes, or lumps in the armpit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "I don't think bigger. No discharge. Skin looks normal."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any family history of breast or ovarian cancer?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "My aunt, my mother's sister, had breast cancer at 50. She's still alive."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll examine you now, with the nurse present, ada misi teman. There's a firm lump about two centimetres, upper outer left breast. Agak melekat, not very mobile. No armpit lumps."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is it bad? Please be honest."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I can't tell for sure just by examination. Many lumps are benign, like fibroadenoma. But because it's firm and a bit fixed, it needs proper assessment quickly."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So what's next?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm referring you to the breast surgical clinic at the hospital, urgent referral, dalam masa dua minggu. They'll do ultrasound, mammogram, and a biopsy if needed."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Two weeks. Can it be faster? I cannot sleep thinking about this, risau sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya call the clinic myself hari ni and ask. It's called triple assessment: examination, imaging, and biopsy. Results usually one week after."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Should I tell my family now or wait?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's your choice. Some people find it helps to have someone with them at the appointment. Tak perlu hadapi seorang diri."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. My sister can come with me. Terima kasih, doktor, for taking it seriously."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Of course. If the hospital hasn't called in three days, call me. Here's the referral letter."
+      }
+    ]
+  },
+  {
+    "id": "family_087",
+    "split": "train",
+    "condition": "Referral to paediatric developmental clinic for speech delay",
+    "source": "original",
+    "patient_persona": {
+      "description": "Puan Suraya binti Mokhtar, 31, female, mother of Adam Hakimi, 2 years 6 months; online seller in Kajang. Worried, defensive about screen time, speaks quickly.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chin Kok Wai, Malaysian Chinese man in his 40s, family medicine specialist at a Kajang klinik kesihatan. Gentle, observant; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Suraya, dalam buku rekod, nurse tulis Adam belum bercakap banyak. Boleh cerita?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dia cakap dua tiga perkataan je, doktor. Mama, susu, nak. Sepupu dia umur sama dah cakap full sentences."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dia faham arahan tak? Kalau puan kata \"ambil kasut\", dia buat?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kadang-kadang buat, kadang-kadang buat tak tahu. Bila panggil nama pun, dia jarang pandang, no eye contact."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dia pointing dengan jari tak, kalau nak sesuatu?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak berapa. Dia tarik tangan saya ke benda tu. Dia suka susun kereta mainan jadi barisan panjang, in one straight line."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Berapa lama dia tengok skrin sehari? Telefon, TV, tablet?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Banyak jugak lah, doktor. Saya kerja online, jadi saya bagi dia tengok YouTube. Mungkin lima enam jam sehari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Too much screen time can delay speech. Tapi selain tu, tanda-tanda lain macam jarang pandang bila dipanggil, tak tunjuk, dan susun barang, saya nak pakar nilai lebih lanjut."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pakar? Maksud doktor anak saya autism ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya tak boleh cakap sekarang. Ini saringan awal je. Saya rujuk ke klinik pembangunan kanak-kanak di hospital, dan ujian pendengaran sekali."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pendengaran? Dia boleh dengar bunyi TV dari jauh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kadang-kadang partial hearing loss pun boleh lambatkan cakap. Kita nak pastikan semua. The earlier the intervention, the better."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sementara tunggu, apa saya boleh buat?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kurangkan skrin, bawah satu jam sehari. Bercakap dengan dia sepanjang hari, main bersama, baca buku bergambar, nyanyi lagu kanak-kanak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya rasa bersalah, doktor. Saya sibuk sangat dengan business online."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Puan datang hari ni, itu langkah penting. Temujanji hospital biasanya dalam sebulan. Nurse akan bagi surat rujukan sekarang."
+      }
+    ]
+  },
+  {
+    "id": "family_088",
+    "split": "train",
+    "condition": "Referral to ophthalmology for diabetic retinopathy",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mr. Ong Chee Keong, 58, male, taxi driver in Ipoh with diabetes for twelve years; retinal photo shows changes. Worried about his driving licence, Cantonese-flavoured Mandarin.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Fatimah Az-Zahra binti Ismail, Malay woman in her 30s, family medicine doctor at an Ipoh klinik kesihatan. Clear, empathetic; English with Mandarin and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Uncle Ong, your eye photo from last month, 眼底照片, shows some changes from diabetes. It's called diabetic retinopathy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "眼睛？可是我看东西还可以啊，开 teksi 都没问题。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "In early stage, vision can still be okay. 可是照片看到 small bleeding and some swelling near the centre of the retina. That can affect vision later."
+      },
+      {
+        "speaker": "Patient",
+        "text": "会瞎吗？我还要 drive 养家。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If treated early, blindness can usually be prevented. That's why I'm referring you to the eye specialist, 眼科, at the hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "他们会做什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "They'll check more carefully, maybe a scan called OCT. 治疗可能是 injections into the eye, or laser."
+      },
+      {
+        "speaker": "Patient",
+        "text": "打针在眼睛里？天啊……sure 很痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sounds scary, but the eye is numbed first. 很多 patients 说不痛, just pressure."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your HbA1c is 9.4. 控制糖分很重要 to slow the eye damage. Also blood pressure, 148 over 90 today."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我开 teksi，常常在外面吃，又要喝 teh ais 提神。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Try teh O kosong, or plain water. We'll adjust your medicines. I'll add gliclazide MR 60mg in the morning with your metformin."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我的 licence 会不会被拿掉？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Driving depends on your vision test. For now your vision is 6/9, 开车还可以. The eye doctor will advise further."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好……那 appointment 什么时候？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I've marked it as early review, within four weeks. If vision suddenly blurred or you see a curtain, 马上去 eye emergency."
+      }
+    ]
+  },
+  {
+    "id": "family_089",
+    "split": "train",
+    "condition": "Referral to cardiology for exertional chest pain",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mr. Siva a/l Ganesan, 52, male, secondary school PE teacher in Klang; chest tightness when climbing stairs. Fit-looking, a bit in denial, Manglish.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lee Choon Wai, Malaysian Chinese man in his 40s, GP at a Klang family clinic. Direct, practical; English with Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, lately when I climb stairs to the third floor at school, my chest feels ketat. Rehat dua minit, dia hilang. I think just not fit already lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How long has this been happening?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "About one month. Before this, I can run with the students no problem, lari satu padang pun okay."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Does the tightness go to your arm, jaw or back? Any sweating or breathlessness with it?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sometimes the left arm feels heavy, berat macam batu. A bit sweaty also."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any smoking, diabetes, high blood pressure, cholesterol? Family history of heart attack?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "I stopped smoking five years ago. My father had heart attack at 55. Cholesterol I never check."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your ECG at rest is normal. But the story sounds like angina, jantung tak cukup darah bila buat kerja berat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "But I'm a PE teacher, doctor. I'm fit, macam mana boleh jadi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Fitness helps, but it doesn't cancel family history and smoking history. I'm referring you to cardiology for a stress test or CT coronary angiogram."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Urgent ah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, within two weeks. Meanwhile, start aspirin 100mg once daily and atorvastatin 40mg at night. And I'll give you GTN spray."
+      },
+      {
+        "speaker": "Patient",
+        "text": "GTN is for what?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If chest pain comes, stop, duduk, one spray under the tongue. If still pain after five minutes, spray again and call 999. Jangan drive sendiri."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can I still teach PE? Sports day coming, hari sukan sekolah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No running or heavy exertion until cardiology clears you. Boleh mengajar, tapi supervise sahaja. I'll give you a letter for your principal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay lah, doctor. My wife sure will marah me for not coming earlier."
+      }
+    ]
+  },
+  {
+    "id": "family_090",
+    "split": "test",
+    "condition": "Referral to ENT for persistent neck lump and nasal symptoms",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mr. Chan Kok Onn, 47, male, seafood restaurant owner in Sekinchan, Selangor; painless neck lump and blood-stained nasal mucus. Busy, casual, Cantonese-flavoured Mandarin.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Iman binti Harith, Malay woman in her 30s, family medicine doctor at a Kuala Selangor klinik kesihatan. Careful, gentle; English with Mandarin and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我脖子这边有一粒东西，不痛，两个月了。我太太一直叫我来 check。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thank you for coming, Mr. Chan. 我摸一下. Right side of the neck, about three centimetres, firm, not tender. Has it grown?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好像大了一点点。我以为是淋巴发炎，吃了几天 antibiotic 都没有小。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any nose symptoms? 鼻塞, blood in the mucus, ringing or blocked feeling in one ear?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有啊，早上擤鼻涕有一点 blood，右边耳朵也有点塞塞的，好像在水里。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Anyone in the family had nose cancer, nasopharyngeal cancer, 鼻咽癌?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我舅舅以前是鼻咽癌走的……医生，你是说我也是？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I cannot say yet. But the neck lump with blood-stained mucus and blocked ear, 加上家族史, must be checked properly by ENT specialist."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我会不会是 cancer……我店里还要做生意，孩子还在读书。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I know this is frightening, 很可怕. Nasopharyngeal cancer is quite common in Chinese men in Malaysia, and when found early, treatment results are good."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那要做什么检查？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "ENT will look inside the nose with a small camera, nasoendoscopy, 有需要的话 take a biopsy. Also a blood test called EBV."
+      },
+      {
+        "speaker": "Patient",
+        "text": "什么时候可以看？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm sending an urgent referral to the ENT clinic at the state hospital, 通常两个礼拜内. I'll call them today."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我会去。这段时间要注意什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If the nose bleeds a lot, or you have double vision, severe headache, go to emergency. Also, try to cut down on salted fish, 咸鱼 eat less."
+      },
+      {
+        "speaker": "Patient",
+        "text": "咸鱼……我们 restaurant 天天都有。好，我会少吃。Thank you, 医生。"
+      }
+    ]
+  }
+]

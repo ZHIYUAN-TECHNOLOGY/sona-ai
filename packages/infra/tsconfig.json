@@ -1,0 +1,4 @@
+{
+  "extends": "@sona-ai/config/tsconfig.base.json",
+  "include": ["alchemy.run.ts"]
+}

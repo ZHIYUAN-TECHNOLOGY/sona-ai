@@ -1,0 +1,17 @@
+/* Audit: the tabs and search share the table's toolbar; the rail shows one finding. */
+td:has(> .au-gap) { width: 100%; }
+/* The gap column takes the spare width, so the patient column keeps room for a full name. */
+.au-patient { display: block; min-width: 10rem; }
+/* A long doctor's name wraps in its own column, so the money at risk stays in view. */
+.au-doctor { display: block; min-width: 7rem; max-width: 10rem; overflow-wrap: anywhere; }
+.au-gap { display: grid; gap: var(--space-1); min-width: 8rem; }
+/* The gap is what the auditor reads: two lines in the row, the whole of it in the rail. */
+.pro .table .au-gap .cell-clamp { -webkit-line-clamp: 2; line-clamp: 2; }
+.au-muted { color: var(--muted); font-size: var(--text-small); }
+.au-code { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.au-facts { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0; font-size: var(--text-body); }
+.au-facts dt { color: var(--muted); }
+.au-facts dd { margin: 0; color: var(--ink); text-align: right; }
+.au-note { margin: 0; color: var(--muted); font-size: var(--text-small); }
+.au-note[role="alert"] { color: var(--red); }
+@container page (max-width: 720px) { .au-patient { min-width: 8rem; } }

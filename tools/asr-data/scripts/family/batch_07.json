@@ -1,0 +1,832 @@
+[
+  {
+    "id": "family_061",
+    "split": "train",
+    "condition": "Acute confusion from urinary tract infection in an elderly woman",
+    "source": "Urinary tract infection (UTI)",
+    "patient_persona": {
+      "description": "Puan Zaleha binti Musa, 52, female, daughter of Mak Esah, 81, who became confused over two days; school canteen operator in Kuala Selangor. Worried, speaks fast, gives careful history.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chong Kar Wai, Malaysian Chinese man in his 30s, emergency medical officer at a Selangor district hospital. Calm, methodical; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, mak saya ni tiba-tiba lain macam sejak dua hari. Dia tak kenal saya, cakap merepek, malam tak tidur, keep calling arwah ayah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebelum ni, mak macam mana? Boleh uruskan diri sendiri?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh, doktor. Mandi sendiri, masak sikit-sikit, solat pun ingat. Nyanyuk sikit je, but never like this."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jadi perubahan ni mendadak. Ada demam, batuk, muntah, atau kencing selalu?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Demam sikit semalam. Dia kerap ke tandas, kencing sikit-sikit, bau hancing kuat. Air pun dia tak mahu minum, refuse langsung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Suhu dia 38.1, nadi 104, tekanan darah 108 atas 64. Ujian air kencing, leucocytes dan nitrite positif."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ini kemungkinan besar jangkitan saluran kencing, UTI, causing delirium, keliru mendadak. In elderly patients, UTI selalu datang macam ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Keliru sebab kencing? Saya ingat dia dah kena strok atau nyanyuk teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita tetap check. Tiada lemah sebelah badan, muka tak senget. Kita buat ujian darah dan culture air kencing sekali."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena masuk wad ke, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya. Dia kurang air, dan keliru. Kita bagi drip, dan antibiotic ceftriaxone 1 gram melalui drip sekali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berapa lama dia akan keliru macam ni?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Biasanya improve dalam beberapa hari lepas jangkitan terkawal, tapi pada sesetengah orang, boleh ambil masa beberapa minggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya boleh temankan dia dalam wad? Dia takut kalau tak nampak orang kenal."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sangat digalakkan. Familiar faces, jam dan kalendar, cermin mata dan hearing aid, semua bantu kurangkan keliru."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, saya bawa cermin mata dia esok. Tadi tertinggal kat rumah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Kalau malam dia gelisah, beritahu nurse. We try to avoid sedatives kalau boleh, sebab boleh buat keliru lagi teruk."
+      }
+    ]
+  },
+  {
+    "id": "family_062",
+    "split": "train",
+    "condition": "Delirium in an elderly man after starting a new medicine",
+    "source": "Delirium",
+    "patient_persona": {
+      "description": "Mdm. Yeoh Lay Kuan, 70, female, wife of Mr. Khoo Beng Chye, 78, who became confused after a GP visit; retired seamstress in Georgetown, Penang. Soft, anxious, Hokkien-flavoured Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nor Fadzilah binti Ismail, Malay woman in her 40s, geriatric physician at a Penang hospital. Clear, gentle; English with Mandarin words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我先生这三天好像变了一个人。晚上说看到小孩子在房间里，白天又一直 sleep, 叫不醒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Auntie, before this, how was his memory? 他可以自己出门吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可以啊，每天自己骑脚车去买报纸，还会跟朋友下棋。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Did anything change in the last one week? New medicine, fall, fever? 有没有新的药？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "上个礼拜他去看 GP，因为小便不顺，医生开了新药。然后皮肤痒，他又自己吃了以前的 allergy 药。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Can I see the medicines? This is oxybutynin, for bladder. And this is chlorpheniramine, for allergy. 两种都会影响脑, strong anticholinergic effects."
+      },
+      {
+        "speaker": "Patient",
+        "text": "这是什么意思？Is it dangerous?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "They block a brain chemical important for memory and attention. In elderly people, can cause confusion and hallucinations, 看到不存在的东西."
+      },
+      {
+        "speaker": "Patient",
+        "text": "天啊，我以为他是 dementia 突然变严重了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "His urine and blood tests are normal, 没有感染. So the medicines are the most likely cause. This is delirium, acute confusion, 可以好回来的."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那现在要怎么办？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stop both medicines now. 痒的话 use moisturiser. For the urine problem, we'll check his prostate and use something safer."
+      },
+      {
+        "speaker": "Patient",
+        "text": "要住院吗？我一个人在家 handle 不来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I think one or two days in ward is safer, to monitor. 他需要多喝水, sleep at night, and daytime light."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我可以在医院陪他吗？他醒来看不到我会很害怕。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, please stay if you can. 跟他讲话, tell him the date and where he is. Bring his spectacles and hearing aid."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。他多久会 recover？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually a few days to a week after stopping the drugs, 停药以后慢慢好. We'll check his memory again after he recovers."
+      }
+    ]
+  },
+  {
+    "id": "family_063",
+    "split": "train",
+    "condition": "Recurrent UTI in an elderly woman with diabetes",
+    "source": "Urinary tract infection (UTI)",
+    "patient_persona": {
+      "description": "Mrs. Leela a/p Sinnathamby, 74, female, retired clerk in Ipoh, lives with her son's family; diabetic. Talkative, cheerful, Malaysian Indian English peppered with Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Faizal bin Hamid, Malay man in his 30s, GP at an Ipoh family clinic. Friendly, relaxed; English with Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, again the burning when I pass urine. Third time this year already. Sakit bawah perut, and the urine smell very strong, busuk sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sorry to hear that, auntie. Any fever, back pain, vomiting?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No fever, no muntah. Just tired, and must go toilet every half hour. At night also cannot sleep because of that."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your urine dipstick shows leucocytes and nitrite, and glucose three plus. Your finger-prick sugar is 14.2."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, sugar high ah? I've been eating my cucu's birthday cake this week lah, sikit je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "High sugar in urine makes it easier for bacteria to grow. Also, are you on any diabetes tablet that makes you pass sugar in urine?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, the new one from hospital, dapagliflozin, dah empat bulan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That one can increase urine infections in some people. Together with three infections this year, we may consider changing it."
+      },
+      {
+        "speaker": "Patient",
+        "text": "But the hospital doctor cakap it's good for my jantung and buah pinggang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's true, it has benefits. I'll write to your hospital doctor, so they can decide. Don't stop it yourself."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For now, nitrofurantoin 50mg four times a day for five days. Minum air banyak, at least eight glasses unless your heart doctor says limit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My son says I should drink cranberry juice. Is it useful?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Evidence is mixed, and the juice is very sweet, not good for your sugar. Unsweetened cranberry capsules are an option."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. I'll try. Apa lagi yang saya kena buat, doctor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Wipe front to back, jangan tahan kencing lama, and keep your sugar better controlled. Kurangkan kuih and cake, okay auntie?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, okay, I promise. Only on Deepavali I'll cheat a little, makan muruku sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Fair enough. We'll send urine culture today, nanti saya call kalau kena tukar antibiotic."
+      }
+    ]
+  },
+  {
+    "id": "family_064",
+    "split": "train",
+    "condition": "Elderly man with dementia and sudden agitation, found to have urinary retention",
+    "source": "Delirium",
+    "patient_persona": {
+      "description": "Encik Hisham bin Zakaria, 48, male, son of Pak Zakaria, 85, who has dementia and became agitated overnight; lorry company supervisor in Kuala Kubu Bharu. Protective, frustrated, speaks bluntly.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Pei Wen, Malaysian Chinese woman in her 30s, emergency medical officer at a Selangor district hospital. Composed, direct; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, ayah saya dari malam tadi mengamuk. Pukul orang, jerit-jerit, tarik baju. Usually he's very quiet walaupun nyanyuk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Encik Hisham, susah ni. Ayah ada mengadu sakit apa-apa? Ada tunjuk kat perut ke?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dia asyik pegang perut bawah. Dia tak boleh cakap sangat dah, dementia teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bila kali terakhir dia kencing? Encik perasan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak perasan, doktor. Dia pakai diaper. Pagi tadi lampin kering, saya ingat sebab dia kurang minum."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya rasa perut dia. Pundi kencing dia penuh, keras sampai atas pusat. Ultrasound bladder scan, 900ml air kencing tersekat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sembilan ratus? Banyak tu. Patutlah dia mengamuk, must be in so much pain."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul. Ini urinary retention. In dementia patients, pain they cannot express selalu keluar sebagai marah atau gelisah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita pasang tiub kencing, catheter, sekarang. Dia akan rasa lega cepat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kenapa air kencing tersekat, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin prostat besar. Tapi saya nampak dia makan ubat baru, quetiapine dan chlorpheniramine. Ubat ni pun boleh buat kencing tersekat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Quetiapine tu doktor klinik bagi last week sebab dia susah tidur malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita bincang dengan doktor tu. Saya juga send urine for infection check dan darah untuk buah pinggang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Nampak dia dah calm down sikit lepas pasang tiub. Terima kasih, doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dia akan duduk wad sehari dua. Kita cuba buka catheter nanti. Surgery team akan tengok prostat dia."
+      }
+    ]
+  },
+  {
+    "id": "family_065",
+    "split": "train",
+    "condition": "Acute confusion from dehydration and hyponatraemia in an elderly woman",
+    "source": "Delirium",
+    "patient_persona": {
+      "description": "Mr. Wong Kok Wai, 55, male, son of Mdm. Wong Ah Lian, 83, living with him in Seremban; hardware shop owner. Direct, stressed, Cantonese-flavoured Mandarin with English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Shahrul Nizam bin Abu Bakar, Malay man in his 40s, general physician at a Seremban hospital. Straightforward, reassuring; English with Mandarin and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我妈妈这两天很 blur，叫她都不太回答，一直想睡。以前她还会看 TVB drama 的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay. Any vomiting, diarrhoea, or not eating and drinking lately?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "上个礼拜她 diarrhoea 三天，吃不下，水也喝很少。天气又那么热。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Is she on any water pill, 利尿药, like hydrochlorothiazide or frusemide?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有，高血压吃了一种，我不知道名字……对，这个 hydrochlorothiazide，每天早上一粒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Her blood test shows sodium 118, very low. Normal is 135 to 145. 钠太低会 confused, 想睡, and even fits."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那很严重吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's serious, but treatable, 可以医的. Hydrochlorothiazide plus diarrhoea and hot weather likely caused it. We stop the water pill now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "要怎么医？打盐水吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, slow saline drip, 慢慢来. If we correct too fast, it can damage the brain. So we check sodium every four to six hours."
+      },
+      {
+        "speaker": "Patient",
+        "text": "她会完全好回来吗？还是会变成 dementia？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Most elderly patients recover their usual thinking once sodium is corrected, 一般几天就会好."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那高血压要换什么药？Still need BP medicine?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Her BP now is 110 over 70, quite low. 血压药全部先停, then restart something like amlodipine if needed."
+      },
+      {
+        "speaker": "Patient",
+        "text": "以后我在家要怎么注意？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Make sure she drinks enough, especially when sick with diarrhoea or hot weather. 如果她又变 blur，马上带来 hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我会叫我老婆也注意。Thank you doctor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "She'll be in medical ward. You can visit, 带一些她熟悉的东西, maybe her radio."
+      }
+    ]
+  },
+  {
+    "id": "family_066",
+    "split": "train",
+    "condition": "Discharge briefing after heart attack with stent",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mr. Thomas Tan Boon Chai, 56, male, sales manager in Petaling Jaya, three days after PCI with one stent for an anterior STEMI; smoker. Attentive, a little shaken; wife is present.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Farhanah binti Zulkarnain, Malay woman in her 30s, cardiology medical officer at a Klang Valley hospital. Organised, clear; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Tan, good news, you're going home today. Before that, let's go through your medicines and what to watch for. Your wife can listen too."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, please. My wife writes everything down. I'm still a bit blur lah from the whole thing, macam mimpi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The most important medicines are the two blood thinners: aspirin 100mg once a day and ticagrelor 90mg twice a day. They keep the stent open."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How long must I take both?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At least twelve months for ticagrelor, aspirin long-term. Never stop them without asking your cardiologist, even if a dentist or another doctor says so."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, tak boleh stop. What else?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Atorvastatin 80mg at night, for cholesterol. Bisoprolol 2.5mg in the morning, to slow the heart. And perindopril 4mg, untuk lindungi otot jantung."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So many. Any side effects?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ticagrelor can make you feel a bit breathless initially, usually mild. Bruising easily is common. Black stools or vomiting blood, go to emergency."
+      },
+      {
+        "speaker": "Patient",
+        "text": "About smoking. I know, I know. My wife already bising at me, marah sangat, every day cakap pasal rokok."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stopping smoking is as powerful as any of these medicines. We'll refer you to the quit smoking clinic. Patches and varenicline can help."
+      },
+      {
+        "speaker": "Patient",
+        "text": "When can I go back to work? Drive?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Driving after four weeks. Work, desk job, maybe two to four weeks, depending on how you feel. We'll enroll you in cardiac rehab."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And, you know, hubungan suami isteri?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "When you can climb two flights of stairs without chest pain, usually it's safe. Don't take Viagra-type medicines if you ever use GTN spray."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. The GTN spray is for chest pain, right?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes. One spray under the tongue, duduk dulu. If pain not better after five minutes, spray again and call 999. Follow-up clinic in six weeks."
+      }
+    ]
+  },
+  {
+    "id": "family_067",
+    "split": "train",
+    "condition": "Discharge briefing after stroke to patient and family",
+    "source": "original",
+    "patient_persona": {
+      "description": "Puan Noraini binti Hassan, 44, female, daughter of Encik Hassan bin Omar, 72, who had an ischaemic stroke with right-sided weakness; bank officer in Kota Bharu. Organised, emotional, asks practical questions.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kevin Lau Chee Meng, Malaysian Chinese man in his 30s, neurology medical officer at a Kota Bharu hospital. Patient, calm; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Noraini, Encik Hassan dah boleh discharge hari ni. Saya nak terangkan beberapa perkara penting kepada keluarga."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Saya dan adik akan jaga ayah bergilir-gilir, take turns. What's most important?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pertama, ubat. Aspirin 100mg sekali sehari, atorvastatin 40mg malam, dan amlodipine 5mg untuk darah tinggi. These are to prevent another stroke."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ayah dulu selalu tak makan ubat darah tinggi. Dia kata he feels fine, no need."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu mungkin salah satu sebab strok. Sekarang mesti makan setiap hari. Target tekanan darah bawah 130 atas 80."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kaki dan tangan kanan dia masih lemah. Boleh pulih ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Banyak pemulihan berlaku dalam tiga hingga enam bulan pertama. Physiotherapy seminggu dua kali kat hospital daerah, dah kami aturkan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kat rumah, macam mana nak bantu dia? What should we do?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Galakkan dia buat sendiri apa yang boleh, walaupun lambat. Let him use the right hand untuk pegang cawan, sikat rambut. Jangan buat semua untuk dia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makan pula? Dia tersedak sikit masa minum air, choking a bit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Speech therapist dah nilai, dia boleh makan lembut. Air kena pekatkan dengan thickener, dan duduk tegak masa makan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Apa tanda-tanda kalau dia kena strok lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ingat BE FAST. Balance hilang, mata kabur, muka senget, tangan lemah, cakap pelat. Kalau ada, terus call 999, jangan tunggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ayah pun sedih sangat, doktor. Dia tak nak cakap dengan orang, very down."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Post-stroke depression is very common. Kalau berterusan lebih dua minggu, beritahu kami, ada rawatan. Temujanji klinik neurologi dalam sebulan."
+      }
+    ]
+  },
+  {
+    "id": "family_068",
+    "split": "train",
+    "condition": "Discharge briefing after pneumonia in an elderly woman",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mdm. Liew Siew Mooi, 79, female, retired rubber tapper in Sungai Siput, Perak; admitted five days for pneumonia; granddaughter present. Soft-spoken, Hakka-flavoured Mandarin, tires easily.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Arvind a/l Selvaraj, Malaysian Indian man in his 30s, medical officer at a Perak hospital medical ward. Friendly; English with simple Mandarin and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Auntie Liew, 今天可以回家了. You're much better. Your granddaughter will help you with the medicine."
+      },
+      {
+        "speaker": "Patient",
+        "text": "谢谢医生。我好想回家，ward 晚上很吵，睡不着。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I understand. You still need antibiotic for two more days, 还要吃两天. Amoxicillin-clavulanate, 625mg, three times a day, after food."
+      },
+      {
+        "speaker": "Patient",
+        "text": "饭后吃，一天三次。那我还有没有发烧？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No fever for two days already, 没有发烧了. Oxygen 96 percent without support. Very good."
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是我还是没有力，走一下就 sesak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's normal after pneumonia, especially at your age. 体力会慢慢回来, maybe four to six weeks. 慢慢来."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At home, walk a little every day, inside the house. Sit up when eating. Deep breathing exercises, like blowing the balloon the physio taught."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那个 balloon 我有带回家。我孙女会陪我吹。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Drink enough water, 吃软的东西 like porridge, fish, eggs, for protein."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我有高血压的药，还要继续吃吗？Amlodipine 那个。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, continue amlodipine 5mg every morning. Your BP here was good."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Also, next month, please get the pneumococcal vaccine and yearly flu vaccine at klinik kesihatan. It helps prevent another pneumonia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "打针？好，我孙女会带我去 klinik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If you have high fever again, breathing difficulty, confused, or cannot eat, 马上回来急诊, 不要等."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好的，谢谢医生，谢谢 nurse 这几天照顾我。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Follow-up in medical clinic after two weeks, with a chest X-ray. 保重, auntie."
+      }
+    ]
+  },
+  {
+    "id": "family_069",
+    "split": "train",
+    "condition": "Discharge briefing after emergency caesarean section",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mrs. Vanessa Lim Hui Qi, 31, female, three days after an emergency caesarean for fetal distress; interior designer in Kota Kinabalu, Sabah. Relieved, tired, attentive; husband present.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Norhaslinda binti Jamaluddin, Malay woman in her 30s, O&G medical officer at a Kota Kinabalu hospital. Warm, efficient; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Vanessa, congratulations again. You and baby are ready to go home today. Let me go through a few things."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you, doctor. Honestly, it all happened so fast, semua cepat sangat. I didn't even know what to ask."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's normal. First, the wound. Keep it clean and dry. You can shower, just pat dry. The stitches are dissolvable, no need to remove."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What should I look out for with the luka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If it becomes red, swollen, very painful, or has pus or bad smell, come back. Also fever above 38."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Medicines: paracetamol 1 gram four times a day, and mefenamic acid 500mg three times a day after food for pain. Dua-dua selamat untuk menyusu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I'm also on some injection, right? The nurse gave me every night, cucuk kat perut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's enoxaparin, to prevent blood clots. You'll continue daily injections for seven more days. Your husband can learn to give it, or the klinik can help."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Injection at home? Okay, my husband is braver than me, dia tak takut jarum."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No lifting heavier than your baby for six weeks. No driving for about four to six weeks, until you can brake suddenly without pain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "When can we... you know, nak baby lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We recommend waiting at least eighteen months before the next pregnancy, to let the uterus heal. We'll discuss contraception at your six-week check."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Next time, can I try normal delivery?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Many women can, called VBAC. We'll discuss it early in your next pregnancy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Anything about bleeding? Darah nifas?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lochia will last four to six weeks. If you soak a pad in one hour, keluar ketulan darah besar, or feel faint, go straight to emergency."
+      }
+    ]
+  },
+  {
+    "id": "family_070",
+    "split": "train",
+    "condition": "Discharge briefing for newly started insulin in type 2 diabetes",
+    "source": "original",
+    "patient_persona": {
+      "description": "Encik Ismail bin Rahman, 58, male, taxi driver in Johor Bahru, admitted with hyperglycaemia and a foot infection; started on insulin. Worried about driving and jarum, speaks plainly.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Yap Siew Hoon, Malaysian Chinese woman in her 40s, endocrinology medical officer at a JB hospital. Methodical, encouraging; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Ismail, hari ni boleh balik. Tapi sebelum tu, saya nak pastikan encik yakin cucuk insulin sendiri."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya dah cuba dengan nurse semalam, doktor. Takut juga mula-mula, tapi tak sakit sangat rupanya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Insulin encik ada dua jenis. Insulin glargine, yang panjang, 18 unit sebelum tidur. Metformin 1 gram dua kali sehari teruskan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Satu kali je sehari cucuk? Alhamdulillah, once a day okay lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, buat masa ni. Check gula pagi sebelum sarapan setiap hari. Kalau tiga hari berturut-turut atas 7, tambah dua unit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau gula rendah macam mana? Saya bawa teksi sampai malam, sometimes until midnight."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tanda hypo: menggeletar, berpeluh, berdebar, lapar sangat, pening. Kalau rasa macam tu, berhenti kereta dulu, makan tiga biji gula-gula atau minum air kotak manis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena simpan gula-gula dalam teksi lah ya. Always keep some."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya. Sebelum memandu, check gula. Kalau bawah 5, makan dulu, jangan drive."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Insulin kena simpan dalam peti sejuk ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yang belum buka, simpan dalam peti sejuk, bukan freezer. Yang tengah guna boleh simpan suhu bilik, sampai 28 hari. Jangan tinggal dalam teksi panas."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kaki saya pula, luka ni bila nak baik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Antibiotic cloxacillin teruskan lima hari lagi. Cuci luka setiap hari kat klinik kesihatan. Setiap malam, check kaki dengan cermin, cari luka baru."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Next appointment bila?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Klinik diabetes dalam dua minggu. Bawa buku catatan gula. Kalau demam atau kaki makin merah, datang terus."
+      }
+    ]
+  }
+]

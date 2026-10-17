@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sona's voice call: who does what, and where",
+    "output": "streaming-call.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1160,
+      600
+    ],
+    "views": [
+      {
+        "id": "hear",
+        "label": "1 · Hear",
+        "focus": [
+          "app",
+          "agent",
+          "asr"
+        ],
+        "note": "The patient's voice is written down as soon as they pause."
+      },
+      {
+        "id": "think",
+        "label": "2 · Answer",
+        "focus": [
+          "agent",
+          "gemma",
+          "db"
+        ],
+        "note": "Gemma writes the answer from the patient's plan; safety rules run beside it."
+      },
+      {
+        "id": "speak",
+        "label": "3 · Speak",
+        "focus": [
+          "agent",
+          "tts",
+          "app"
+        ],
+        "note": "Sona's voice is sent to the phone while it is still being made."
+      }
+    ],
+    "repository": {
+      "url": "https://github.com/zyt-ngchwanlii/sona-ai",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "bc73ec22eed5affdd23fb8bcdda53fb37dba41c8"
+    }
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Sona Care app",
+      "sublabel": "patient's iPhone",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "apps/care/lib/live-voice/session.ts",
+          "label": "call audio"
+        }
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Call agent",
+      "sublabel": "Cloudflare · Kuala Lumpur edge",
+      "pos": [
+        330,
+        250
+      ],
+      "size": [
+        190,
+        72
+      ],
+      "sources": [
+        {
+          "path": "apps/server/src/agents/voice.ts",
+          "label": "SonaVoiceAgent"
+        }
+      ]
+    },
+    {
+      "id": "asr",
+      "type": "cloud",
+      "label": "Ear",
+      "sublabel": "Qwen3-ASR · Manglish",
+      "tag": "1 L4 GPU, shared",
+      "pos": [
+        680,
+        90
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "tts",
+      "type": "cloud",
+      "label": "Voice",
+      "sublabel": "VoxCPM2 · Sona",
+      "tag": "same GPU",
+      "pos": [
+        940,
+        90
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "packages/infra/baseten/voice/data/tts_server.py",
+          "label": "streaming route"
+        }
+      ]
+    },
+    {
+      "id": "gemma",
+      "type": "cloud",
+      "label": "Brain",
+      "sublabel": "Gemma 4 26B",
+      "tag": "1 L4 GPU",
+      "pos": [
+        810,
+        290
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Patient plan",
+      "sublabel": "Neon Postgres",
+      "pos": [
+        330,
+        470
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "pro",
+      "type": "frontend",
+      "label": "Sona Pro",
+      "sublabel": "nurse's task list",
+      "pos": [
+        40,
+        470
+      ],
+      "size": [
+        170,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS SageMaker · Malaysia · ear + voice machine",
+      "wraps": [
+        "asr",
+        "tts"
+      ],
+      "pad": 30
+    },
+    {
+      "kind": "region",
+      "label": "AWS SageMaker · Malaysia · Gemma machine",
+      "wraps": [
+        "gemma"
+      ],
+      "pad": 30
+    }
+  ],
+  "connections": [
+    {
+      "id": "mic",
+      "from": "app",
+      "to": "agent",
+      "label": "voice, both ways",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hear",
+      "from": "agent",
+      "to": "asr",
+      "label": "the turn, at each pause",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ask",
+      "from": "agent",
+      "to": "gemma",
+      "label": "words + plan"
+    },
+    {
+      "id": "say",
+      "from": "agent",
+      "to": "tts",
+      "label": "each sentence",
+      "variant": "emphasis"
+    },
+    {
+      "id": "plan",
+      "from": "agent",
+      "to": "db",
+      "label": "plan, history",
+      "labelDy": 40
+    },
+    {
+      "id": "task",
+      "from": "db",
+      "to": "pro",
+      "label": "care-team task"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Every stage streams",
+      "items": [
+        "Ear starts reading at 0.3 s of quiet",
+        "Voice plays while it is being made: first sound 0.15 s"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Measured, 4 Oct",
+      "items": [
+        "Her voice starts 1.5-2.25 s after the patient stops",
+        "All three models in Malaysia: about $3 an hour"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Safety, beside the answer",
+      "items": [
+        "Emergency words: told to call 999",
+        "Feeling worse: a task for the care team"
+      ]
+    }
+  ]
+}

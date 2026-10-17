@@ -1,0 +1,50 @@
+# Box ④ Live: Sona's MiniCPM-o 4.5 in full-duplex mode (docs/minicpm-o-plan.md#architecture), one call per replica.
+# One model, loaded from two files: ear1 (live3's brain, trained in the live format with numbers as words, and its ear
+# retrained for transcription) and the talker voice-v3 (docs/minicpm-o-finetune.md, "One ear").
+# WebSocket: wss://model-<id>.api.baseten.co/environments/production/websocket (protocol: data/live.py).
+# Push: baseten model push --dir packages/infra/baseten/live   Check: packages/infra/baseten/live/check.py
+model_name: sona-live
+base_image:
+  # The image every MiniCPM-o training and eval job ran on (tools/omni-train, tools/omni-voice-train).
+  image: pytorch/pytorch:2.6.0-cuda12.4-cudnn9-devel
+build_commands:
+  # The model code's own transformers (4.51; minicpmo-utils allows < 4.53). stepaudio2 (minicpmo-utils[tts]) is the
+  # voice decoder; librosa 0.9 imports pkg_resources, gone from setuptools 80.
+  - >-
+    pip install --no-cache-dir "minicpmo-utils[tts]==1.0.6" "transformers==4.51.3" "accelerate<1.8" "setuptools<80"
+    safetensors huggingface_hub fastapi "uvicorn[standard]" onnxruntime
+  - python -c "import stepaudio2, transformers, torch; print('live deps ok', transformers.__version__, torch.__version__)"
+weights:
+  - source: "hf://zhiyuantechnology/sona-minicpmo@f59feac269b9a42625f612bafa0e00fa4e84f40f"  # ear1: live3 with its ear retrained
+    mount_location: /app/models/live
+    auth: {auth_method: CUSTOM_SECRET, auth_secret_name: hf_access_token}
+    # Dotfiles out: the mirror dropped stage1's .complete marker and then refused the volume it had built (2 Oct:
+    # "volume view file set mismatch … missing=[.complete]", retried until stopped).
+    ignore_patterns: [".*", "lora-adapter/**", "assets/*.mp4", "assets/*.mp3", "assets/*.png", "assets/*.wav"]
+  - source: "hf://zhiyuantechnology/sona-minicpmo@1b4aba42310a4d54349c612408767237c9fd8087"  # voice-v3 (live3 states, Malaysian-accent numbers and Manglish)
+    mount_location: /app/models/voice
+    auth: {auth_method: CUSTOM_SECRET, auth_secret_name: hf_access_token}
+    allow_patterns: ["talker.safetensors"]
+  - source: "hf://zhiyuantechnology/sona-turn@1a9a125c6ef76f94e633fa56e438262461e2ac6c"  # the judge of turns (data/live.py, QUIET)
+    mount_location: /app/models/turn
+    auth: {auth_method: CUSTOM_SECRET, auth_secret_name: hf_access_token}
+    allow_patterns: ["sona-turn.onnx"]
+docker_server:
+  start_command: python /app/data/live.py
+  readiness_endpoint: /health
+  liveness_endpoint: /health
+  predict_endpoint: /v1/live
+  server_port: 8000
+secrets:
+  hf_access_token: null
+resources:
+  accelerator: H100
+  cpu: "4"
+  memory: 32Gi
+runtime:
+  transport:
+    kind: websocket
+  predict_concurrency: 1
+  health_checks:
+    startup_threshold_seconds: 1800
+    restart_threshold_seconds: 1200

@@ -1,0 +1,99 @@
+import type { EncounterEdit } from "@sona-ai/api/contracts";
+import { useCallback, useEffect, useState } from "react";
+import { useEncounterSelect } from "@/features/encounter/store";
+import type { Encounter, Patient } from "@/features/encounter/types";
+import { letterReceived } from "@/features/patients/record";
+import { api, errorText, JUDGE, useLive } from ".";
+import { useLiveChanges } from "./channel";
+import { mergeSavedNote, mergeServerState, type ServerVisitState } from "./day";
+import { useRole } from "./roles";
+
+/**
+ * In live mode, pulls the server's record of a visit into the app's encounter so every screen renders
+ * what the server holds (see `mergeServerState`): medicines, discharge and claim fixes, claim status,
+ * whether the guarantee letter has arrived (the patient's bed on the server no longer lists that blocker),
+ * and the visit's saved note (`mergeSavedNote`).
+ */
+// Reads shared across every screen showing a visit (only touched inside callbacks, never during render).
+const inflight = new Map<string, Promise<void>>();
+const lastRead = new Map<string, number>();
+const SHARED_MS = 2500;
+
+export function useServerEncounter(patient: Patient | undefined) {
+  const { on } = useLive();
+  const updateEncounter = useEncounterSelect(s => s.updateEncounter);
+  const encounterId = patient?.encounterId, patientId = patient?.id;
+  /** `force` skips the shared-read window (after a refusal the screen needs the server as it is now). */
+  const refresh = useCallback(async (force = false) => {
+    if (!on || !encounterId) return;
+    // Several screens show the same visit at once; they share one read instead of each polling the server.
+    const running = inflight.get(encounterId);
+    if (running) return running;
+    if (!force && Date.now() - (lastRead.get(encounterId) ?? 0) < SHARED_MS) return;
+    const read = (async () => {
+      // The status call settles the insurer's answer first, so the bed list read after it is current.
+      const claim = await api.claim.status({ encounterId });
+      // The note is read beside them; a note that could not be read leaves the app's own, and the rest still merges.
+      const [snapshot, beds, saved] = await Promise.all([api.encounter.get({ encounterId }), api.ward.beds(), api.note.get({ encounterId }).catch(() => undefined)]);
+      // The judge build reads the letter for this visit's own admission (its patient's bed). Sample visits keep the one
+      // demo admission, Amelia's, whichever of the two is open.
+      const bed = beds.find(b => b.blockers.some(x => x.id.startsWith("adm-1042")) || b.admissionId === "adm-1042");
+      const glReceived = JUDGE ? letterReceived(beds, patientId!) : !bed || !bed.blockers.some(x => x.kind === "gl");
+      // A read that brings nothing new keeps the visit as it was, so the store leaves every screen alone (each mount re-reads).
+      updateEncounter(value => {
+        const next = mergeSavedNote(mergeServerState(value, snapshot.state as ServerVisitState, claim, glReceived), saved?.sentences ?? []);
+        return JSON.stringify(next) === JSON.stringify(value) ? value : next;
+      }, false, patientId);
+    })().finally(() => { inflight.delete(encounterId); lastRead.set(encounterId, Date.now()); });
+    inflight.set(encounterId, read);
+    return read;
+  // Keyed on the encounter ID: the patient object is rebuilt on every render.
+  }, [on, encounterId, patientId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void refresh().catch(() => {}); }, [refresh]);
+  // Live updates: re-read as soon as the server says this visit changed (a claim decided, a discharge, an edit elsewhere).
+  useLiveChanges(["visit"], () => { void refresh(true).catch(() => {}); }, encounterId);
+  // While the claim is with the insurer, keep checking so the guarantee letter clears on whichever screen is open.
+  const status = useEncounterSelect(s => patientId ? s.encounters[patientId]?.claim?.status : undefined);
+  const waiting = on && (status === "sent" || status === "appealed");
+  useEffect(() => {
+    if (!waiting) return;
+    // Safety net only: the insurer's decision normally arrives over live updates.
+    const timer = setInterval(() => { void refresh().catch(() => {}); }, 30_000);
+    return () => clearInterval(timer);
+  }, [waiting, refresh]);
+  return { live: on, refresh };
+}
+
+type EditFields = Omit<EncounterEdit, "encounterId" | "expectedRevision">;
+/** Merges a server snapshot after an edit; the claim status and letter stay as the app last read them. */
+const mergeEdited = (value: Encounter, state: unknown) =>
+  mergeServerState(value, state as ServerVisitState, { status: value.claim?.status ?? "draft", approvedAt: value.claim?.approvedAt }, value.discharge?.glReceived ?? false);
+
+/**
+ * A history or medicine edit. In live mode it is saved to the server at its current revision first,
+ * then `apply` runs locally and the server's record is merged back; a refusal (someone else wrote
+ * first) reloads the server's record and keeps the doctor's draft, so nothing typed is lost.
+ * Fixture mode applies it at once, as before.
+ */
+export function useEncounterEdit(patient: Patient) {
+  const { on } = useLive();
+  // Only a doctor edits the visit record (encounter.edit); screens hide their edit controls otherwise.
+  const allowed = useRole().can("encounter.edit");
+  const updateEncounter = useEncounterSelect(s => s.updateEncounter);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string>();
+  const save = (fields: EditFields, apply: (value: Encounter) => Encounter, onSaved?: () => void) => {
+    if (!on) { updateEncounter(apply, true); onSaved?.(); return; }
+    const { encounterId } = patient, patientId = patient.id;
+    setSaving(true); setError(undefined);
+    api.encounter.get({ encounterId })
+      .then(({ revision }) => api.encounter.edit({ encounterId, expectedRevision: revision, ...fields }))
+      .then(snapshot => { updateEncounter(value => mergeEdited(apply(value), snapshot.state), true, patientId); onSaved?.(); }, async e => {
+        setError(errorText(e));
+        const snapshot = await api.encounter.get({ encounterId }).catch(() => undefined);
+        if (snapshot) updateEncounter(value => mergeEdited(value, snapshot.state), false, patientId);
+      })
+      .finally(() => setSaving(false));
+  };
+  return { allowed, saving, error, save };
+}

@@ -1,0 +1,56 @@
+/* /pro/visit: the note, the medicine order beside it, and today's visits when none is open. Tokens only. */
+.visit-note, .visit-orders { display: grid; gap: var(--gap-card); }
+.visit-muted { color: var(--muted); font-size: var(--text-small); }
+.visit-num { font-variant-numeric: tabular-nums; }
+.visit-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-3); }
+.visit-refused { color: var(--ink); background: var(--amber-wash); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+.visit-refused ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }
+.visit-header-slot { display: contents; }
+/* Nothing to save: a muted ink pill, clearly resting rather than broken. */
+.visit-header-slot .btn-primary:disabled, .visit-note .btn-primary:disabled { background: var(--ink); color: var(--surface); border-color: transparent; opacity: 0.38; cursor: default; }
+
+/* Today's visits: the visit kind as a sentence, with what needs the eye beside it. */
+.visit-table-title { margin: 0; font-size: var(--text-body); font-weight: 600; color: var(--ink); }
+.visit-kind { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+/* Patient strip: the allergen alone, the full text in the title. */
+.visit-allergy { display: inline-flex; max-width: 16rem; min-width: 0; }
+.visit-allergy > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: none; }
+
+/* The note is a document: overline headings, white hairline fields that grow with the text. */
+.visit-status { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin: 0 0 var(--space-4); }
+.visit-section { display: grid; gap: var(--space-2); margin-bottom: var(--space-3); }
+.visit-section label { font-size: var(--text-overline); font-weight: 600; letter-spacing: var(--track-overline); text-transform: uppercase; color: var(--muted); }
+.visit-note textarea, .visit-orders input { width: 100%; font: inherit; line-height: var(--line-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); }
+/* A dictated section grows with its text up to most of the screen, then scrolls, so the next section stays in reach. */
+.visit-note textarea { resize: none; field-sizing: content; min-height: 4.5rem; max-height: 60vh; }
+.visit-note textarea[readonly] { background: var(--canvas); }
+.visit-note textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
+.visit-proposal { display: flex; gap: var(--space-3); align-items: flex-start; justify-content: space-between; background: var(--blue-wash); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); }
+.visit-proposal p { margin: 0; white-space: pre-wrap; }
+
+/* The order: each check beside the decision, and the rarely used amendment behind one tap. */
+.visit-checks { list-style: none; margin: var(--space-3) 0 0; padding: var(--space-3) 0 0; border-top: 1px solid var(--hairline); display: grid; gap: var(--space-2); }
+.visit-checks li { display: grid; grid-template-columns: 4.5rem 1fr; gap: var(--space-2); align-items: start; font-size: var(--text-small); }
+.visit-amend summary { padding: var(--space-2) 0; cursor: pointer; font-weight: 600; }
+.visit-amend button { margin-top: var(--space-3); }
+/* Nothing to save: a muted ink pill, clearly resting rather than broken. */
+.visit-header-slot .btn-primary:disabled, .visit-note .btn-primary:disabled { background: var(--ink); color: var(--surface); border-color: transparent; opacity: 0.38; cursor: default; }
+
+.visit-table-title { margin: 0; font-size: var(--text-body); font-weight: 600; color: var(--ink); }
+.visit-flag { color: var(--muted); font-size: 13px; }
+
+/* Medicine entry in the orders rail */
+.visit-row-actions { display: inline-flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: flex-end; }
+/* In the narrow rail a medicine's name keeps its room: the chip and buttons drop under it. */
+.visit-orders .list-row { flex-wrap: wrap; }
+.visit-orders .list-text { flex: 1 1 9rem; }
+.visit-med-list .visit-row-actions { margin-left: auto; }
+/* The order to place reads in full; a listed medicine and its form take two lines before they cut. */
+.visit-orders :is(.list-title, .list-caption) { white-space: normal; overflow-wrap: anywhere; }
+.visit-med-list :is(.list-title, .list-caption) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.visit-med-more { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; }
+/* The next patient's name never makes the header's button wider than the header. */
+.visit-next-name { display: inline-block; max-width: min(16rem, 30vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.visit-med-form { display: grid; gap: var(--space-3); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--hairline); }
+.visit-check { display: flex; gap: var(--space-2); align-items: flex-start; font-size: var(--text-sm, 0.875rem); }

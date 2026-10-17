@@ -1,0 +1,804 @@
+[
+ {
+  "id": "resp_051",
+  "split": "train",
+  "condition": "Acute bacterial sinusitis",
+  "source": "Acute sinusitis",
+  "patient_persona": {
+   "description": "Mr. Yeoh Kian Meng, 36, male, sales manager in Setapak, Kuala Lumpur; cold two weeks ago that got better then worse again. Fast, confident KL Mandarin heavily mixed with English.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Anis Syafiqah Mohd Yusri, Malay woman in her 30s, GP at a Setapak clinic who speaks fluent Mandarin from Chinese school. Crisp, friendly; Mandarin and English mixed.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doctor，我两个礼拜前 flu，本来已经好了，这三天又突然变严重，脸这边很痛，especially 低头的时候。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "痛的是这边 cheek 吗？还是额头？有没有发烧？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "右边 cheek，还有牙齿上面也痛。昨晚有发烧，38.5。鼻涕是 greenish 的，有时候有 bad smell。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "本来好转了又 worse again，我们叫 double worsening。加上发烧和单边脸痛，这个比较像 bacterial sinusitis。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那终于可以吃 antibiotic 了吧？上次的 doctor 都不给我。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "上次是 viral，吃 antibiotic 没用。这次有 indication，我开 amoxicillin-clavulanate 625mg，一天两次，吃七天。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "一定要吃完七天吗？我通常好了就停。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "一定要吃完，不然细菌没有 clear 完，可能会 relapse，也会造成 resistance。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "另外 mometasone nasal spray，每边两下，一天两次，帮助 sinus 的 drainage。还有 saline rinse，早晚洗鼻子。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "洗鼻子那个我试过，水流到喉咙，很 geli 的感觉。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "刚开始会不习惯，头要向前低一点，嘴巴张开呼吸。用 sachet 泡温开水，不要用 tap water。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay，我 try。我下个礼拜要 fly 去 Bangkok 出差，可以吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以，但是起飞和降落的时候耳朵会痛，可以先喷 spray，嚼口香糖。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白。有什么要特别注意的吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果眼睛周围肿、视力模糊、或者头痛得很厉害、脖子硬，马上去 emergency，这个是 complication。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，noted。谢谢 doctor。"
+   }
+  ]
+ },
+ {
+  "id": "resp_052",
+  "split": "train",
+  "condition": "Viral rhinosinusitis",
+  "source": "Sinusitis, acute",
+  "patient_persona": {
+   "description": "Puan Norhayati binti Jaafar, 40, female, insurance agent in Batu Pahat, Johor; five days of blocked nose and facial pressure, wants antibiotics before a work trip. Assertive, fast Johor Malay with lots of English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chua Boon Keat, Malaysian Chinese man in his 40s, GP at a Batu Pahat clinic. Patient, explains clearly; Malay with English terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doktor, hidung saya tersumbat dah lima hari, muka rasa berat, especially bila tunduk. Boleh bagi antibiotic tak? Saya ada outstation Isnin ni."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya faham, puan. Let me check dulu. Ada demam tak? Sakit gigi or sakit sebelah muka je?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Demam sikit hari pertama. Sakit dua-dua belah pipi, dengan dahi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Suhu hari ni 36.9, normal. Muka ada tender sikit. Ini more likely viral sinusitis, lepas selsema."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Viral? Tapi hingus saya hijau, doktor. Isn't that a sign of bacteria?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a common myth. Warna hijau datang dari sel badan yang lawan virus, bukan semestinya bacteria."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Antibiotic biasanya considered kalau lebih ten days tak baik, high fever dengan nanah, or makin teruk after getting better."
+   },
+   {
+    "speaker": "Patient",
+    "text": "So saya just tunggu je lah?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bukan tunggu je. Saya bagi fluticasone nasal spray, dua spray each side, sekali sehari. Saline rinse pagi dan malam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For pain, paracetamol 1 gram, sehari empat kali maximum. Pseudoephedrine boleh ambil tiga hari untuk hidung tersumbat, kalau takde darah tinggi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Takde darah tinggi. Okay lah. Tapi kalau masa outstation jadi teruk?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "If lepas sepuluh hari masih tak okay, or demam tinggi balik, jumpa klinik terdekat. Or you can do teleconsult with us."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik lah, doktor. I ingat nak dapat antibiotic, hehe."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I tahu. Tapi ubat yang tak perlu, kesan sampingan je yang dapat, cirit-birit semua."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, faham. Thank you, doktor."
+   }
+  ]
+ },
+ {
+  "id": "resp_053",
+  "split": "train",
+  "condition": "Recurrent acute sinusitis in a diabetic",
+  "source": "Acute sinusitis",
+  "patient_persona": {
+   "description": "Mrs. Shanti a/p Velu, 55, female, tuition centre owner in Ipoh, Perak; type 2 diabetes; third sinus infection this year, follow-up after a course of antibiotics. Articulate, a little anxious, Malaysian Indian English with Malay.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chandran a/l Muthusamy, Malaysian Indian man in his 50s, family medicine specialist at an Ipoh health clinic. Thoughtful, unhurried; English with Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mrs. Shanti, you habiskan the antibiotics last week. How's the sakit muka now?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Better, doctor, the sakit muka dah hilang. But this is my third time tahun ni, I'm quite fed up already."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Three episodes setahun, that's worth looking into properly. Gula macam mana lately?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Not so good lah. The HbA1c last month was 9.2. Tuition season, I makan anyhow, late night."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Gula tinggi makes infections more common and lambat sembuh. That's one piece of the puzzle."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Do you have hidung tersumbat or kurang bau between the episodes, or totally clear?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Actually my smell is not so good for months. Masak kari pun tak dapat bau properly."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That suggests there may be ongoing inflammation or polyps. I'll refer you to ENT at Hospital Raja Permaisuri Bainun for a scope."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Scope? Must put camera in my nose ah?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, a thin one, with numbing spray, tak sakit. Lima minit je. They may do a CT scan of the sinuses too."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Meanwhile what should I do?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Keep using mometasone spray every day, even bila sihat. Saline rinse once a day. And let's work on your kencing manis."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll increase metformin to 1 gram twice a day, and ask the dietitian to see you. Sugar better, sinus pun better."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright, I'll try to control my makan. My students' exams finish next month."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Jumpa lagi in six weeks, bawa your sugar diary."
+   }
+  ]
+ },
+ {
+  "id": "resp_054",
+  "split": "train",
+  "condition": "Acute sinusitis in a breastfeeding mother",
+  "source": "Acute sinusitis",
+  "patient_persona": {
+   "description": "Puan Julia Anak Sagau, 28, female, Kadazan kindergarten teacher in Keningau, Sabah, breastfeeding her four-month-old; twelve days of sinus symptoms. Soft, polite Sabah Malay with some English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lee Mei Chin, Malaysian Chinese woman in her 30s, medical officer at a Keningau health clinic. Kind, reassuring; Malay mixed with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Julia, dah dua belas hari hidung tersumbat, betul?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Betul, doktor. Mula-mula selsema biasa, tapi tak baik-baik. Now gigi atas sebelah kiri pun sakit bah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ada demam? Hingus warna apa, ada bau busuk?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Demam sikit-sikit petang. Hingus kuning, kadang-kadang ada bad smell."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Lebih sepuluh hari tak baik, dengan sakit gigi atas, it's likely bacterial sinusitis. Kita boleh bagi antibiotic."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tapi saya masih menyusukan baby. Ubat tu masuk susu ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sikit je masuk susu, and amoxicillin is safe for breastfed babies. Ramai ibu guna, no problem."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Amoxicillin 500mg, tiga kali sehari, tujuh hari. Paracetamol 1 gram bila sakit, also safe for breastfeeding."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau baby cirit-birit macam mana?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kadang-kadang baby jadi najis lembik sikit, that's normal. Tapi kalau ada rash or dia tak nak menyusu, bawa jumpa kami."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, doktor. Spray hidung boleh guna juga?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh, saline spray dan mometasone spray safe semasa menyusu. Minum air banyak, rehat bila baby tidur."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Susah nak rehat, doktor. Baby bangun tiap dua jam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I know, penat sangat. Minta suami tolong jaga malam for a few days, supaya puan cepat recover."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Haha, nanti saya bagitahu dia doktor yang suruh."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh, cakap saya yang suruh. Kalau muka bengkak or mata merah bengkak, datang terus."
+   }
+  ]
+ },
+ {
+  "id": "resp_055",
+  "split": "train",
+  "condition": "Sinusitis with periorbital swelling",
+  "source": "Acute sinusitis",
+  "patient_persona": {
+   "description": "Mr. Soo Kim Hock, 66, male, retired fishmonger in Kuantan, Pahang; sinus symptoms for a week, woke up with a swollen left eye. Worried, Kuantan Mandarin with Hokkien and Malay words.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Mohd Syazwan Mat Isa, Malay man in his 30s, GP at a Kuantan clinic who speaks some Mandarin. Calm but firm; Mandarin with English and Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我鼻塞一个礼拜了，今天早上起来左边眼睛肿起来，红红的，我老婆叫我快点来。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我看一下。眼睛动的时候痛吗？看东西有没有 double，就是两个影子？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "动的时候有一点痛。看东西……好像有一点模糊。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "有没有发烧？头痛厉害吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "昨晚发烧，今天吃了 Panadol。头很痛，从来没有这样痛过。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Soo 伯，你的眼睛周围肿，眼球动的时候痛，视力也模糊，这个可能是 sinus infection 扩散到眼睛。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "啊，那很严重吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个是 emergency，要马上去 Hospital Tengku Ampuan Afzan。可能需要打 IV antibiotic，还要照 CT scan。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "可以吃药就好吗？医院要等很久。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "不行，吃药不够。如果拖太久，可能会影响视力，甚至扩散到脑。我现在写 referral letter，打电话给他们。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，好，我听你的。我自己可以开车去吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你一只眼睛看不清楚，不要开车。叫你老婆或者孩子载你，或者我们帮你叫 ambulance。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我儿子在外面等，他可以载我。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "好。这封信给 emergency 的 doctor 看。你有没有 diabetes 或者其他病？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有糖尿病，吃 metformin。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我会写在信里面。现在就去，不要回家拿东西，叫家人后面再送。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白，谢谢医生，terima kasih。"
+   }
+  ]
+ },
+ {
+  "id": "resp_056",
+  "split": "train",
+  "condition": "Streptococcal tonsillitis in a child",
+  "source": "Tonsillitis",
+  "patient_persona": {
+   "description": "Encik Zulkarnain bin Mohamad, 42, male, fisheries officer in Kuala Terengganu, bringing his son Adam, 10, with fever and sore throat for two days. Calm, Terengganu Malay with a few English words.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Tan Siew Ling, Malaysian Chinese woman in her 30s, medical officer at a Kuala Terengganu health clinic. Friendly, clear; Malay with English terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doktor, Adam demam dua hari, tekak sakit sangat, tak lalu makan. Nasi pun tak nak telan, just minum susu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dia batuk tak? Hidung berair?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Takdok batuk, hidung pun okay. Cuma demam dengan tekak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Suhu 38.9. Tonsil dia besar, merah, ada nanah putih. Kelenjar kat leher bengkak dan sakit. Tak ada batuk, so ini lebih kepada bacterial tonsillitis."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kena antibiotik lah ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya. Adam 32kg, saya bagi penicillin V 500mg, twice a day, sepuluh hari, full course."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sepuluh hari? Lamanya. Kalau lepas three days dah okay?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kena habiskan juga sepuluh hari. Strep bacteria ni kalau tak clear, boleh bagi masalah jantung atau buah pinggang later on."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, tak tahu pula macam tu. Makan before atau after food?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Penicillin V lebih baik perut kosong, sejam sebelum makan. Paracetamol 500mg bila demam, setiap enam jam."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dia boleh pergi sekolah?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Rehat dulu. Lepas 24 jam makan antibiotik dan demam turun, baru boleh pergi school."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Makan apa yang sesuai? Dia tak lalu langsung."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagi makanan lembut, bubur, air sejuk, aiskrim pun boleh. Paling penting dia minum cukup."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiskrim boleh? Adam, dengar tu. Terima kasih, doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau dia tak boleh telan air liur, suara jadi pelik, atau susah buka mulut, datang terus. That's an emergency."
+   }
+  ]
+ },
+ {
+  "id": "resp_057",
+  "split": "train",
+  "condition": "Recurrent tonsillitis, tonsillectomy discussion",
+  "source": "Tonsillitis",
+  "patient_persona": {
+   "description": "Ms. Chew Xin Yi, 19, female, accounting student at a university in Kampar, Perak; fifth tonsillitis this year, missing classes. Soft-spoken, polite, Perak Mandarin with English study words.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Jason Loh Wai Kit, Malaysian Chinese man in his 40s, GP at a Kampar clinic. Gentle, explanatory; Mandarin mixed with English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我又喉咙痛了，这是今年第五次了。每次都要请假，我的 assignment 都来不及交。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这次什么时候开始的？有发烧吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "前天开始，昨天发烧 38.7。吞口水都很痛。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的 tonsils 又肿又有白色的 exudate。颈部淋巴也肿。我们做一个 rapid strep test。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "结果是 positive。所以这次是 strep，要吃 penicillin。你对 penicillin 有没有 allergy？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "没有，以前吃过都没事。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Penicillin V 500mg，一天两次，吃十天。Paracetamol 1g，痛的时候吃，一天最多四次。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "医生，我妈叫我问，是不是可以把 tonsil 割掉？每次都这样好辛苦。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个叫 tonsillectomy。一般 guideline 是一年 seven times，或者连续两年每年五次，或者三年每年三次，才 consider。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我今年五次，去年好像四次。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那你接近了。我建议你每次发作都记下来，日期、发烧几度、有没有看医生、有没有 MC。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我可以用手机 note 记。那如果真的要割，要去哪里？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我会 refer 你去 Hospital Raja Permaisuri Bainun 的 ENT clinic 看。手术之后大概要休息两个礼拜。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "两个礼拜，那最好是 semester break 做。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "对，可以跟 ENT 讨论时间。这次先吃药，我给你 MC 两天，好好休息。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生。"
+   }
+  ]
+ },
+ {
+  "id": "resp_058",
+  "split": "train",
+  "condition": "Peritonsillar abscess",
+  "source": "Tonsillitis",
+  "patient_persona": {
+   "description": "Mr. Kishen a/l Rajan, 24, male, barista at a mall café in Klang; four days of sore throat, now can hardly open his mouth. Muffled 'hot potato' voice, Malaysian Indian English with Malay slang.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nur Amirah Zainol, Malay woman in her 30s, emergency medical officer at Hospital Tengku Ampuan Rahimah, Klang. Efficient, reassuring; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doctor, four days my throat sakit, but today very teruk. Cannot open mouth properly, cannot even swallow my saliva."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I can hear your voice sounds muffled, macam ada benda dalam mulut. Which side is more painful?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Right side, doctor. The pain go up to my ear also. Last night fever, menggigil."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Let me have a look with the torch. Buka mulut as much as you can. I can see bengkak above your right tonsil, pushing the uvula to the left."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Is that bad? I thought just tonsil only."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "This looks like a peritonsillar abscess, also called quinsy. Ada nanah terkumpul next to the tonsil."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pus? Aiyo. So what, need to cut ah?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The ENT team will likely drain it, guna jarum or a small cut, under local anaesthetic. It gives very fast relief."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sakit tak, doctor? I'm scared of needles."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "They'll bius it first. Most people say the relief after is worth it. We'll also start IV antibiotics and a drip, since you tak boleh minum."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Need to stay in hospital?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Probably one or two malam. Once you can swallow and demam turun, you can go home with oral antibiotics."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Can I call my manager? Esok I'm supposed to open the café, shift pagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sure, and I'll bagi MC. I'm calling ENT now. Kalau rasa susah bernafas while waiting, beritahu nurse immediately."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Thank you, doctor."
+   }
+  ]
+ },
+ {
+  "id": "resp_059",
+  "split": "train",
+  "condition": "Tonsillitis with penicillin allergy",
+  "source": "Tonsillitis",
+  "patient_persona": {
+   "description": "Cik Farhana binti Abdul Latif, 30, female, bank clerk in Seremban, Negeri Sembilan; sore throat and fever, allergic to penicillin. Clear, articulate Negeri Sembilan Malay with English office words.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Vincent Kok Chee Wai, Malaysian Chinese man in his 30s, GP at a Seremban clinic. Careful, friendly; Malay mixed with English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Cik Farhana, sakit tekak sejak bila?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sejak semalam, doktor. Demam 38 lebih, tekak macam kena pisau bila telan. Painkiller pun tak jalan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ada batuk, hidung berair?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Takde batuk. Just tekak dengan demam, and badan lenguh."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tonsil you merah dan bengkak, ada exudate putih. Kelenjar leher pun tender. Ini kemungkinan strep tonsillitis."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doktor, saya alergi penicillin. Last time makan amoxicillin, satu badan naik ruam and bibir bengkak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Thank you for telling me. Bibir bengkak tu serious reaction, so we avoid penicillin and amoxicillin completely."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya bagi erythromycin 500mg, sehari dua kali, sepuluh hari. Makan lepas makan, sebab dia boleh buat perut tak selesa."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Perut memang sensitif sikit, gastric. Kalau loya macam mana?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Makan dengan makanan, and minum air. Kalau muntah sampai tak boleh telan ubat, datang balik, kita tukar ubat lain."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Boleh tak doktor tulis dalam rekod pasal allergy ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dah, saya dah letak allergy alert dalam sistem. You also should wear an allergy card or bracelet."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Bagus idea tu. MC boleh bagi?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dua hari MC. For pain, paracetamol 1 gram, and kumur air garam suam."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor."
+   }
+  ]
+ },
+ {
+  "id": "resp_060",
+  "split": "test",
+  "condition": "Viral versus streptococcal tonsillitis in a child",
+  "source": "Tonsillitis",
+  "patient_persona": {
+   "description": "Mdm. Wong Siew Ping, 35, female, Foochow hairdresser in Miri, Sarawak, bringing her daughter Kai Xin, 6, with fever and sore throat. Expressive, Sarawak Mandarin mixed with Malay and English.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Rosnani binti Jamil, Malay woman in her 40s, family medicine specialist at a Miri health clinic who speaks conversational Mandarin. Warm, practical; mixes Malay, English and simple Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我女儿昨天开始发烧，喉咙痛，还有咳嗽流鼻涕，眼睛也红红的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "她几岁？六岁对吗？有没有 ruam，或者肚子痛？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "对，六岁。没有 ruam，但是昨晚说肚子有一点痛，吃了一点 bubur 而已。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tonsil dia merah, tapi takde nanah. Ada batuk, hidung berair, mata merah. 这个比较像 viral，不是细菌。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "所以不用吃 antibiotic 吗？她的班上有同学是 strep throat。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "好问题。为了确定，我们做一个 rapid strep test，swab 喉咙，十分钟就有结果。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，做吧。Kai Xin，乖，一下下而已。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Result negative. Jadi ini viral tonsillitis, antibiotic 没有用。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那她要吃什么？她不肯吃药，一吃就吐。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Paracetamol syrup 250mg per 5ml, bagi 7ml setiap enam jam kalau demam. 可以加一点 juice 一起喝。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "她 20 公斤，7ml 可以吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, betul. Bagi dia minum air sejuk, aiskrim, bubur. Tekak sakit 大概三到五天会好。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "她可以去 tadika 吗？我要上班。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "退烧之后才去，大概两三天。不然会传染给其他小朋友。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，那我请我妈妈帮忙看。If 还是很烧呢？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau demam lebih tiga hari, tak nak minum langsung, or susah bernafas, bawa balik jumpa saya."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay，terima kasih doktor，谢谢。"
+   }
+  ]
+ }
+]

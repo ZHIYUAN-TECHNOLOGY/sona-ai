@@ -1,0 +1,816 @@
+[
+  {
+    "id": "infect_021",
+    "split": "train",
+    "condition": "Measles exposure in an infant",
+    "source": "Measles",
+    "patient_persona": {
+      "description": "Puan Siti Hajar binti Mokhtar, 27, female, clerk at a government office in Kampung Baru, Kuala Lumpur, speaking for her daughter Nur Aleesya, 7 months. Soft voice, nervous, KL Malay with English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ravindran a/l Muthu, Malaysian Indian man in his 40s, family medicine specialist at a KL health clinic. Calm, methodical; English-leaning, fluent Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan, pejabat kesihatan call puan pagi tadi kan? Pasal kes campak kat klinik ni hari Isnin?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya doktor. Dia kata ada budak measles duduk sebelah kami masa tunggu vaksin. Saya risau sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hari ni hari Rabu, jadi baru dua hari. Masih dalam 72 jam. Itu penting, sebab vaksin MMR boleh bagi perlindungan kalau cepat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tapi Aleesya baru tujuh bulan. Bukan vaksin campak tu masa sembilan bulan ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul, jadual biasa sembilan bulan. Tapi bila ada exposure, kita boleh bagi awal, dari enam bulan. Dos ni kira dos tambahan je."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Maksudnya nanti sembilan bulan kena cucuk lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, masih kena ikut jadual biasa, sembilan bulan dan dua belas bulan. Dos hari ni sebab emergency je."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada side effect tak, doktor? Dia kecil lagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin demam sikit atau ruam ringan lepas seminggu. Itu normal. Bagi Uphamol kalau demam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya sendiri macam mana? Saya tak ingat pernah ambil vaksin ke tak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Puan lahir tahun 1998, kan? Masa tu vaksin campak dah ada dalam program sekolah. Buku rekod kesihatan ada simpan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Buku pink tu ada kat rumah mak saya. Nanti saya ambil."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Kalau tak jumpa, kita boleh bagi MMR untuk puan juga, selagi puan tak mengandung."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak mengandung. Apa tanda-tanda campak yang saya kena tengok kat Aleesya?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Demam tinggi, batuk, hidung berair, mata merah, lepas tu ruam mula dari muka. Biasanya lapan sampai dua belas hari lepas exposure."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau ada, terus datang sini?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Call klinik dulu, jangan terus masuk ruang menunggu, supaya kita boleh asingkan dia. Nombor dah ada dalam kad appointment."
+      }
+    ]
+  },
+  {
+    "id": "infect_022",
+    "split": "train",
+    "condition": "Measles in an adult, results review",
+    "source": "Measles",
+    "patient_persona": {
+      "description": "Chong Wai Kit, 27, male, software tester in Subang Jaya; parents were unsure about his childhood vaccines. Hoarse, tired, Malaysian Mandarin with lots of English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Leong Siew Kuan, Malaysian Chinese woman in her 40s, physician at a Subang Jaya private hospital. Clear and patient; Mandarin with English medical terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Wai Kit，你的 blood test 出来了。Measles IgM positive，所以确定是麻疹。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "真的是麻疹？我以为只有小孩子才会得，adult 也会？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "大人如果没有打够两针 MMR，也会得。你妈妈后来有找到你的 vaccine record 吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "她说我小时候在 Sibu 长大，可能只打过一针，record 不见了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay。现在你的 rash 已经第四天，从脸开始，到身体，到脚。眼睛还红吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "还有一点红，怕光。咳嗽还是很厉害，不过 fever 没那么高了，昨天 38.2。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我听你的肺，没有 crackles，oxygen 97 percent，暂时没有 pneumonia。这是好消息。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那要吃什么药？有 antiviral 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "麻疹没有特定的 antiviral。主要是 supportive，paracetamol 退烧，多喝水，多休息。我也给你 vitamin A 两天。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Vitamin A 有用吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对孩子帮助最大，大人也可以减少 complication。一天一粒 200,000 unit，吃两天就好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我什么时候可以回 office？我们下个礼拜有 product launch。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Rash 出来以后四天内都会传染。你今天第四天，所以最早后天。我给你 MC 到礼拜五。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我的 housemate 呢？他们两个都有打 vaccine 吗我不知道。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个是 notifiable disease，health office 会联络你，做 contact tracing。叫你的 housemate 检查自己的 record。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我今晚问他们。谢谢医生。"
+      }
+    ]
+  },
+  {
+    "id": "infect_023",
+    "split": "train",
+    "condition": "Measles in an unvaccinated child",
+    "source": "Measles",
+    "patient_persona": {
+      "description": "Puan Nurhaliza binti Abdul, 29, female, seaweed farmer's wife from a Bajau village near Semporna, Sabah, speaking for her son Adam, 3, who is unvaccinated. Quiet, hesitant, Sabahan Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Maslinda binti Gimbang, Sabahan Bajau woman in her 30s, medical officer at Klinik Kesihatan Semporna. Gentle, respectful; Sabahan Malay with English medical words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan, Adam demam dah berapa hari?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lima hari, doktor. Mula-mula batuk sama selesema. Lepas tu mata merah, semalam keluar bintik merah dari muka turun ke badan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya nampak dalam mulut dia ada tompok putih kecil. Ruam ni, mata merah, batuk. Ni campak, measles."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Campak? Di kampung ada dua budak kena juga minggu lepas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Adam pernah ambil suntikan masa kecil? Buku rekod ada bawa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tidak ada, doktor. Suami saya kata vaksin itu tidak perlu. Klinik pun jauh, mesti naik bot."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya faham, susah nak datang. Sekarang saya check dia dulu. Nafas dia laju sikit, 44 seminit. Oxygen 94 percent."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Itu bahaya ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nafas laju macam ni, saya risau paru-paru dah kena, pneumonia. Adam kena masuk wad Hospital Semporna hari ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Masuk wad? Adik dia di rumah, siapa mau jaga?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin nenek boleh jaga sekejap? Adam sangat perlukan oxygen dan antibiotic. Kita pun bagi vitamin A, dua hari berturut-turut."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baiklah. Saya telefon mak saya. Adiknya umur satu tahun, dia boleh kena juga?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, sangat mudah berjangkit. Hari ni juga kita bagi adik suntikan MMR, sebab dah exposed. Lagi cepat lagi baik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Suami saya mesti marah kalau cucuk tanpa tanya dia."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh saya cakap dengan suami puan melalui telefon? Saya terangkan campak ni boleh bawa maut, dan vaksin ni selamat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh, doktor. Saya call dia sekarang."
+      }
+    ]
+  },
+  {
+    "id": "infect_024",
+    "split": "train",
+    "condition": "Measles complicated by otitis media, follow-up",
+    "source": "Measles",
+    "patient_persona": {
+      "description": "Mr. Vijay a/l Krishnan, 40, male, mechanic in Ipoh, speaking for his daughter Kavya, 5, recovering from measles. Friendly, slightly gruff, Malaysian Indian English with Malay words.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ong Li Ting, Malaysian Chinese woman in her 30s, medical officer at an Ipoh health clinic. Warm, precise; English and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, the measles rash already going away, but since last night she keep crying, holding her right ear. Demam came back also."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me check. Kavya, sayang, sikit je ya. Right eardrum is red and bulging. Left is OK. This is a middle ear infection, otitis media."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Because of the campak, ah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, ear infection is one of the common complications after measles. Measles weakens the immune system for some weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo. Ubat apa, doctor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Amoxicillin syrup. She's 18 kilo, so 250mg per 5ml, 8ml three times a day, for five days. Finish the whole bottle, don't stop early."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Eight ml, sehari tiga kali. Can I still give the Panadol?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, paracetamol 250mg every six hours for pain and fever. Is she eating and drinking OK?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Eating less, but drinking OK. Susu and Milo, she wants."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Any cough getting worse, fast breathing, or diarrhoea?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Cough a bit, but not so bad. Diarrhoea, no."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Her chest sounds clear. If she breathes fast or looks very lemah, bring her back same day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my son, lapan tahun, got his injection already after that health people came?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me check the system. Yes, he got his MMR catch-up on Monday. Good that you agreed to it."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Last time we missed because of COVID, the klinik tutup. Now I know already, never skip again."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Many families missed during COVID. Kavya also needs her second dose later. We'll book it once she's fully well, in about a month."
+      }
+    ]
+  },
+  {
+    "id": "infect_025",
+    "split": "train",
+    "condition": "Measles exposure in an adult contact",
+    "source": "Measles",
+    "patient_persona": {
+      "description": "Madam Goh Siew Peng, 42, female, primary school teacher at a Chinese school in Muar, Johor; two pupils in her class have measles. Brisk, teacher's clear voice, Malaysian Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Azri bin Salleh, Malay man in his 30s, medical officer at a Muar health clinic. Polite, efficient; English-leaning, speaks workable Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我班上有两个学生得麻疹，学校叫所有老师来 check 有没有打过 vaccine。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。Madam 你小时候有打 measles vaccine 吗？有 record 吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我找到小学的 health card，上面只有一针 measles，1987 年。没有 MMR。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "一针不够。现在的 recommendation 是两针。你最后一次接触学生是几时？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "礼拜一，那个学生礼拜二才出 rash，所以礼拜一我整天跟他在一起。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "今天礼拜三，还在 72 小时里面。我建议今天就打 MMR，可以减少得病的 chance。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "打了会不会发烧？我明天还要上课，class 很多。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可能一个礼拜后有一点 fever 或者 rash，大部分人没事。你有怀孕，或者打算怀孕吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，我已经结扎了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好，那可以打。一个月后再打第二针。有没有 immune problem，或者吃 steroid？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，只有高血压，吃 amlodipine 5mg。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "没问题。接下来三个礼拜，如果你发烧、咳嗽、眼睛红，不要去学校，先打电话给 klinik。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我可以继续教书吗？学校说要不要我 work from home？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "打了 vaccine，没有症状就可以继续。不过 health office 可能会有 guideline，你跟校长确认。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白。其他老师也要来吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，没有两针 record 的，都叫他们这个礼拜来。我给你一张 letter 带回学校。"
+      }
+    ]
+  },
+  {
+    "id": "infect_026",
+    "split": "train",
+    "condition": "Scabies in an elderly care-home resident",
+    "source": "Scabies",
+    "patient_persona": {
+      "description": "Madam Khoo Guat Eng, 78, female, retired seamstress living in a Penang old folks' home for two years. Frail, slow, Penang Mandarin with Hokkien words and a few English words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Teoh Chin Aun, Penang Chinese man in his 40s, visiting GP for several care homes in Air Itam. Patient, loud and slow for the elderly; Mandarin and English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "阿嬷，你好。护士说你晚上很痒，睡不着，是吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "是啊，医生，痒到要死。晚上最痒，抓到流血，bleeding。已经一个多月了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看看你的手。手指中间，这里，有一条一条细细的线，还有小红点。手腕也有。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "肚子那边也很多，还有屁股。之前 nurse 给我擦 cream，没有用。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "她给你擦的是 hydrocortisone，那个只是止痒，不会杀虫。你这个是疥疮，scabies，是很小的 mite 钻在皮肤里。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "虫？我每天都有洗澡的啊。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "跟干不干净没关系，阿嬷。是人跟人接触传染的。这里还有两个阿嬷也在痒。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那要怎样医？要吃 medicine 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "用 permethrin 5% cream。晚上洗完澡，从脖子到脚底全部擦，手指缝、脚趾缝、指甲下面都要擦。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "擦了就可以睡觉？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，留八到十二个钟头，第二天早上才洗掉。一个礼拜后再擦一次。护士会帮你擦背后。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我的 bedsheet、衣服呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "全部用热水洗，然后太阳晒干。洗不到的东西，放在 plastic bag 里面三天，虫就会死。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "擦了以后还会 itchy 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "会，可能还痒两到四个礼拜，这是正常的，不代表药没效。晚上痒的话，我开 chlorpheniramine 给你，4mg 睡前吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，好。谢谢你，医生，终于可以睡觉了。"
+      }
+    ]
+  },
+  {
+    "id": "infect_027",
+    "split": "train",
+    "condition": "Scabies outbreak in a boarding school",
+    "source": "Scabies",
+    "patient_persona": {
+      "description": "Ustaz Kamarul Zaman bin Mat Zin, 45, male, religious teacher in Tumpat, Kelantan, speaking for his son Amirul, 14, a boarder at a tahfiz school. Soft-spoken, respectful, Kelantanese Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nik Aishah binti Nik Mahmud, Kelantanese Malay woman in her 30s, medical officer at a Tumpat health clinic. Warm, clear; Malay with English clinical terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, anak saya balik dari maahad, gatal satu badan. Kata dia, ramai kawan dalam dorm pun gatal."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Amirul, boleh tunjuk tangan? Hmm, celah jari ada bintik dan garisan halus. Ketiak, pinggang pun ada. Ni kudis buta, scabies."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kudis buta? Dia tidur sebilik dengan dua puluh orang. Tilam pun rapat-rapat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itulah sebab dia cepat merebak. Kutu kecil ni berjangkit bila kulit bersentuh lama, atau kongsi tilam dan selimut."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat apa doktor nak bagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Permethrin 5% cream. Malam, lepas mandi, sapu dari leher sampai hujung kaki, termasuk celah jari dan bawah kuku. Biar lapan jam, pagi baru mandi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sekali je cukup?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ulang lagi sekali lepas tujuh hari. Semua orang dalam rumah pun kena sapu malam yang sama, walaupun tak gatal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Semua? Kami ada tujuh orang dalam rumah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, semua. Kalau tak, dia berpindah balik-balik. Saya bagi cukup cream untuk satu keluarga."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Maahad macam mana? Nanti dia balik sana, kena lagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul. Saya akan maklumkan unit kesihatan daerah. Dia orang akan pergi maahad, rawat semua pelajar dan ustaz serentak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Baju, tilam dia macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Basuh dengan air panas, jemur bawah matahari. Tilam, jemur dan balut dalam plastik tiga hari. Kutu tu tak tahan lama tanpa kulit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila dia boleh balik maahad?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lepas sapu pertama, esok dah tak berjangkit. Tapi lebih baik tunggu sampai maahad pun dah dirawat."
+      }
+    ]
+  },
+  {
+    "id": "infect_028",
+    "split": "train",
+    "condition": "Persistent itch after scabies treatment",
+    "source": "Scabies",
+    "patient_persona": {
+      "description": "Mr. Ganesan a/l Perumal, 45, male, security guard living in a workers' hostel in Pasir Gudang, Johor. Slow, tired from night shifts, Malaysian Indian English with Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lee Hui Wen, Malaysian Chinese woman in her 30s, GP at a Pasir Gudang clinic. Practical, a little dry; English and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, two weeks ago you gave me the scabies cream. I applied already, but still gatal, especially night time."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Did you apply it twice, one week apart? From neck to toes?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "First time I applied properly. Second time, I only put on the itchy parts. The tube dah nak habis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hmm. And the other guys in your hostel room, did they apply also?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Only one, my roommate. The other three say they not itchy, so they tak nak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me look. The old spots are healing, but I see new burrows between these fingers. So you probably got reinfected from your roommates."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, so all for nothing? Sia-sia je?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not for nothing, but we need everyone to do it together. This time I'll give you two tubes of permethrin, and a letter for your supervisor."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Surat for what, doctor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Asking the company to treat everyone in the hostel on the same night. Can't do it bit by bit. Kena buat semua sekali."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. My supervisor is a good guy, dia will arrange."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For the itch now, take cetirizine 10mg at night, and a mild steroid cream on the itchy nodules, only after the permethrin course."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berapa lama more the gatal will go?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Even after the mites die, itching can continue two to four weeks. If after four weeks you still see new lines, come back."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doctor. The cadar also I wash?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, everyone wash in hot water on the same day, and dry in the sun. Blankets that cannot wash, seal in a plastic bag for three days."
+      }
+    ]
+  },
+  {
+    "id": "infect_029",
+    "split": "train",
+    "condition": "Scabies in a couple",
+    "source": "Scabies",
+    "patient_persona": {
+      "description": "Lim Jia Hui, 26, female, graphic designer in Cheras, Kuala Lumpur; boyfriend also itchy. Embarrassed, quiet at first, Malaysian Mandarin with English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Sarah Wong, Malaysian Chinese woman in her 30s, GP at a Cheras clinic. Non-judgemental, matter-of-fact; Mandarin and English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我全身很痒，两三个礼拜了，尤其晚上。我男朋友也有一点痒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "哪些地方最痒？给我看一下。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "手指中间、腰这里，还有……下面那边也有几粒，很痒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "没关系，不用不好意思。嗯，手指缝有 burrow，腰也有。下面这些小 nodule 也是 typical 的。这个是 scabies。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "是性病吗？我好担心。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Scabies 是皮肤接触传染的，不一定是 sexual，家人一起睡也会。不过因为你们是 partner，所以两个人都要一起治疗。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要怎么治疗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Permethrin 5% cream，晚上洗澡后，从脖子到脚全身擦，包括 genital area。留十个钟头，早上洗掉。七天后重复一次。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我男朋友不肯来看医生，我可以帮他拿药吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，我多开一支给他。你们两个要同一个晚上擦，不然会互相传来传去。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我们也养了一只猫，会不会是猫传给我们的？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "动物的 mite 不一样，不会在人身上生存很久。所以猫不需要一起擦 permethrin。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那床单和衣服呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "过去三天用过的，热水洗，晒干或者 dryer 烘。Sofa 可以 vacuum。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "还有，既然检查了，我可以顺便做 STD screening 吗？安心一点。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "当然可以。我们今天抽血验 HIV、syphilis、hepatitis B，再做 urine test 验 chlamydia 和 gonorrhoea。"
+      }
+    ]
+  },
+  {
+    "id": "infect_030",
+    "split": "train",
+    "condition": "Crusted scabies",
+    "source": "Scabies",
+    "patient_persona": {
+      "description": "Encik Nyalau anak Jimbun, 68, male, retired Iban rubber tapper from a longhouse near Sibu, Sarawak; on long-term prednisolone for lung disease. Weak, raspy voice, Sarawak Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kho Siaw Ling, Sarawakian Chinese woman in her 30s, dermatology registrar doing a ward consult at Hospital Sibu. Kind, thorough; English-leaning, fluent Sarawak Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Selamat pagi, apai. Saya Dr. Kho dari kulit. Doktor wad minta saya tengok kulit apai yang tebal ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pagi, doktor. Kulit tangan kaki saya jadi keras, macam kerak. Dah tiga bulan. Tapi tak berapa gatal."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh saya tengok? Tangan, siku, lutut, kulit tebal kelabu, ada retak. Bawah kuku pun tebal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Orang rumah panjang kata ini penyakit kulit orang tua."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tadi kita ambil sikit kerak, tengok bawah microscope. Banyak sangat kutu scabies. Ni jenis crusted scabies, atau Norwegian scabies."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kudis? Tapi kenapa tak gatal macam orang lain?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebab apai makan prednisolone lama, imun badan lemah. Kutu membiak sampai beribu-ribu, tapi badan tak melawan, jadi kurang gatal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Beribu-ribu? Cucu saya selalu tidur sebelah saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, jenis ni sangat mudah berjangkit. Sebab tu apai dipindahkan ke bilik isolation. Semua orang di rumah panjang yang rapat kena dirawat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubatnya apa, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dua jenis. Ivermectin tablet, ikut berat badan, hari ke-1, 2, 8, 9 dan 15. Dan permethrin cream seluruh badan, setiap hari selama seminggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kerak ni boleh hilang?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Misi akan rendam dan sapu salicylic acid ointment untuk lembutkan kerak, supaya ubat boleh masuk. Kuku pun kita potong pendek."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat prednisolone saya macam mana? Kena berhenti?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan berhenti sendiri. Saya akan bincang dengan doktor paru-paru, mungkin turunkan dos perlahan-lahan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik doktor. Terima kasih, lama saya tahan kulit macam ni."
+      }
+    ]
+  }
+]

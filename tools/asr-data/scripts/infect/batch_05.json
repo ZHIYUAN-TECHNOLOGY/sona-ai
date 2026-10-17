@@ -1,0 +1,808 @@
+[
+  {
+    "id": "infect_041",
+    "split": "train",
+    "condition": "Atopic eczema in an infant",
+    "source": "Atopic dermatitis (eczema)",
+    "patient_persona": {
+      "description": "Puan Nurul Izzati binti Hamdan, 28, female, first-time mother and online seller in Shah Alam, speaking for her son Umar, 8 months. Tired, soft-spoken, Selangor Malay with English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Priya Nair, Malaysian Indian woman in her 40s, paediatrician at a Shah Alam private hospital. Warm, reassuring; English and fluent Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, pipi Umar merah, kasar, dia gosok-gosok muka kat bantal. Lipatan siku pun sama. Dah dua bulan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Pipi kering, merah, ada sikit calar. Siku, belakang lutut pun. Ni eczema, atopic dermatitis. Dalam keluarga ada asthma, resdung, eczema?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Suami saya ada asthma masa kecil. Saya ada resdung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ha, memang selalu ikut keluarga. Kulit dia macam dinding yang bocor, air keluar, kering, senang gatal. Jadi kita kena repair dengan moisturiser."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya ada guna minyak zaitun, dengan krim bayi yang wangi tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Krim wangi tu stop dulu, boleh irritate. Guna emollient tanpa pewangi, macam emulsifying ointment atau cetaphil cream, sapu banyak, sekurang-kurangnya dua kali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mandi macam mana? Saya mandikan dia dua kali sehari dengan sabun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sekali sehari cukup, air suam, lima sampai sepuluh minit. Guna soap-free wash. Lepas mandi, tepuk kering, terus sapu moisturiser dalam tiga minit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yang merah kat pipi tu, perlu krim ubat?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya. Hydrocortisone 1% cream, sapu nipis dekat bahagian merah, dua kali sehari, lima sampai tujuh hari. Lepas tu stop, sambung moisturiser saja."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hydrocortisone tu steroid kan? Saya takut kulit dia nipis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ni steroid paling lemah. Kalau guna ikut cara, sekejap-sekejap macam ni, selamat untuk bayi. Tak guna pun lagi bahaya, sebab gatal tu buat luka."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susu dia, patut tukar ke? Kawan cakap mungkin allergy susu lembu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kebanyakan eczema bukan sebab susu. Jangan tukar sendiri. Kalau lepas treatment ni masih teruk, baru kita fikir pasal food allergy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik doktor. Bila datang balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dua minggu. Kalau kulit jadi bernanah, berkerak kuning, atau ada lenting berkumpul dan dia demam, datang cepat, itu jangkitan."
+      }
+    ]
+  },
+  {
+    "id": "infect_042",
+    "split": "train",
+    "condition": "Atopic dermatitis flare in a young adult",
+    "source": "Atopic dermatitis (eczema)",
+    "patient_persona": {
+      "description": "Yeoh Shu Ting, 24, female, final-year law student in Kepong, Kuala Lumpur; eczema since childhood, worse during exams. Articulate, frustrated, Malaysian Mandarin with English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chew Li Ann, Malaysian Chinese woman in her 30s, dermatologist at a KL private clinic. Clear, empathetic; Mandarin and English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我的 eczema 最近很严重，脖子、手肘、眼皮都红红的，很痒，晚上睡不着。下个月我有 final exam。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我明白，考试 stress 常常会 trigger flare。你现在用什么药？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我只用 moisturiser。之前 GP 给我 steroid cream，我不敢用，网上说会 thin skin，还有 topical steroid withdrawal。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很多人有这个担心。正确使用、短时间用，steroid 是安全又有效的。问题是乱用或者用太强的在脸上。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我要怎样用才正确？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "身体和手肘，用 betamethasone valerate 0.1%，一天一次，用一个 fingertip unit 擦两个手掌那么大的面积，用一到两个礼拜。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Fingertip unit 是什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "从 tube 挤出来，从手指尖到第一个关节那么长，就是一个 unit。擦薄薄一层就够。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那眼皮和脖子呢？也擦同一个吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不要。眼皮和脖子皮肤很薄，我给你 tacrolimus 0.1% ointment，这个不是 steroid。刚开始擦会有一点热热的，几天就会习惯。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。痒的时候可以吃什么吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "晚上可以吃 cetirizine 10mg，帮助睡觉。不过 eczema 的痒，antihistamine 效果有限，主要还是靠 cream。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Flare 好了以后，我就停？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好了以后，常常复发的地方，一个礼拜擦两天 tacrolimus 做 maintenance。这个叫 proactive therapy，可以减少 flare。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果考试的时候又爆发怎么办？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "马上开始擦，不要等到很严重。Moisturiser 每天至少两次，不能停。一个月后回来 follow-up。"
+      }
+    ]
+  },
+  {
+    "id": "infect_043",
+    "split": "train",
+    "condition": "Infected atopic eczema in a child",
+    "source": "Eczema",
+    "patient_persona": {
+      "description": "Mrs. Revathi a/p Ramasamy, 34, female, bank teller in Ipoh, speaking for her son Kishen, 4, who has eczema. Worried, quick, Malaysian Indian English with Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Chee Keong, Malaysian Chinese man in his 50s, GP at an Ipoh clinic. Gentle, unhurried; English with some Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, Kishen's eczema suddenly teruk. Behind the knees got yellow crust, wet, smells a bit. He keeps scratching."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me look. Yes, honey-coloured crusts, weeping. This eczema is infected with bacteria, usually Staph. Any fever?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Little bit last night, 37.8. Today no. He's still playing, makan pun OK."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Any blisters that look punched out, grouped together? Or very painful?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, just the crust and wet. Pain, he says a bit sakit when I apply cream."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, that sounds like bacterial, not the herpes type. He needs an oral antibiotic because it's quite widespread. Cephalexin syrup, 250mg four times a day, seven days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Four times, OK. Should I stop his steroid cream now since dah infected?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No, continue. The steroid treats the eczema, the antibiotic treats the infection. Stopping the cream will make it worse."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh. I stopped already since hari Ahad, I thought it's the cream causing."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's why it flared more. Restart the mometasone once a day on the eczema patches. Moisturiser too, but use a new tub."
+      },
+      {
+        "speaker": "Patient",
+        "text": "New tub? Kenapa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "When fingers go in and out of the old tub, bacteria can grow inside. Throw that one. Use a clean spoon to scoop from the new one."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Wah, didn't think of that. Ada lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cut his nails short. Some doctors suggest a dilute bleach bath twice a week, but let's first see how he responds."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doctor. Bila should I come back?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "In three days. Sooner if he gets high fever, painful clustered blisters, or looks lemah. That could be eczema herpeticum, which is an emergency."
+      }
+    ]
+  },
+  {
+    "id": "infect_044",
+    "split": "train",
+    "condition": "Severe atopic eczema in a teenager, follow-up",
+    "source": "Atopic dermatitis (eczema)",
+    "patient_persona": {
+      "description": "Muhammad Danish bin Rizal, 15, male, secondary school student in Kuching, Sarawak; severe eczema since childhood, teased at school. Quiet, self-conscious, Sarawak Malay mixed with English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lucy Wong, Sarawakian Chinese woman in her 40s, consultant dermatologist at Sarawak General Hospital. Encouraging, speaks to teens directly; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Danish, last time kita mula wet wrap dan phototherapy. Dah enam minggu. Macam mana rasa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Better sikit, doktor. Gatal malam dah kurang. Tapi tangan still merah, especially lepas main bola."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Badan dan kaki banyak improve. SCORAD dulu 62, sekarang 38. Tangan dan leher masih aktif."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Phototherapy tu kena datang tiga kali seminggu, susah. Ayah kena ambil cuti."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I faham. Ada option lain. Kita boleh cuba ubat makan, ciclosporin, untuk kawal cepat. Tapi kena check darah dan blood pressure selalu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat makan tu kuat ke? Kawan saya kata ubat steroid buat gemuk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ciclosporin bukan steroid. Tak buat gemuk. Tapi dia boleh kena buah pinggang, sebab tu kena monitor. Biasanya guna beberapa bulan je."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada injection yang orang sebut dupilumab tu? Saya tengok kat TikTok."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Haha, you did your research. Dupilumab memang berkesan, tapi mahal, dan di hospital kerajaan belum senang dapat. Kita boleh apply, tapi ambil masa."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. Saya try ciclosporin dulu lah, kalau boleh tak payah datang selalu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Kita check darah hari ni, creatinine, liver, dan BP. Kalau OK, mula 100mg dua kali sehari. Dua minggu lagi datang check semula."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Cream semua still kena sapu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya. Moisturiser tetap, setiap hari. Steroid cream bila flare. Ubat makan ni tambahan, bukan ganti."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, kawan-kawan kat sekolah suka ejek, kata berjangkit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Eczema tak berjangkit, langsung. Kalau you nak, saya tulis surat untuk cikgu kelas, terangkan. Dan kalau rasa sedih sangat, cakap dengan saya, OK?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Terima kasih."
+      }
+    ]
+  },
+  {
+    "id": "infect_045",
+    "split": "train",
+    "condition": "Hand eczema in a kitchen worker",
+    "source": "Eczema",
+    "patient_persona": {
+      "description": "Madam Chua Bee Lian, 45, female, dishwasher and cook at a family kopitiam in Batu Pahat, Johor. Rough-voiced, busy, Johor Mandarin with Hokkien words and a little Malay.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Anuar bin Ismail, Malay man in his 50s, GP at a Batu Pahat clinic for many years. Practical, speaks decent Mandarin with English and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我的手很干、裂开，手指这边会流血，洗碗的时候很痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看看。手掌和手指都很干，有 crack，还有小小的水泡。多久了？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "三四个月了。在 kopitiam 洗碗，一天洗几百个，用那个 sabun 很强的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个是 hand eczema，手部湿疹。一直碰水和 detergent，皮肤的保护层坏掉了。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我有戴手套，可是手套里面都是汗。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以里面戴一双 cotton glove，外面才戴 rubber glove，就不会太湿。手套破了要马上换。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那药呢？我有买 Betnovate 擦，好一点点。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "手掌皮比较厚，需要强一点的 steroid。我开 mometasone ointment，晚上擦，一天一次，两个礼拜。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ointment 很油，我怎样工作？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "晚上睡觉前擦，然后戴 cotton glove 睡。白天就用 moisturiser，每次洗手以后都要擦。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "每次洗手都擦？一天几十次，哪有时间。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我明白。至少休息的时候、下班的时候擦。在 sink 旁边放一罐，方便一点。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "裂开的那些，会不会 infection？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "现在没有 infection 的样子。如果变黄、流脓、红肿，就要回来。两个礼拜后再 review。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。可以给我 MC 吗？休息几天手可能会好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我给你两天 MC。不过长远来说，最重要是保护手，不然一回去工作又会复发。"
+      }
+    ]
+  },
+  {
+    "id": "infect_046",
+    "split": "train",
+    "condition": "Plaque psoriasis, new diagnosis",
+    "source": "Psoriasis",
+    "patient_persona": {
+      "description": "Mr. Loke Kin Wah, 50, male, hardware shop owner in Ipoh; smokes and drinks beer most nights. Loud, sceptical, Cantonese-accented Malaysian Mandarin with English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chin Yen Ping, Malaysian Chinese woman in her 40s, dermatologist at an Ipoh private hospital. Frank, patient; Mandarin and English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我手肘、膝盖有很厚的白色皮，一直掉，好像头皮屑。GP 说是 fungus，擦了两个月都没好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看看。手肘、膝盖、腰后面，还有头皮 hairline 这里。红色的 plaque，上面有银白色的 scale。这个是 psoriasis，银屑病。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "银屑病？会传染吗？我的店员都不敢靠近我。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "完全不会传染。这是免疫系统的问题，皮肤细胞长得太快，一层一层堆起来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那可以根治吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Psoriasis 是 chronic 的，会好会坏，不能根治，但是可以控制得很好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要吃什么药？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的面积大概百分之五，先用 cream。Calcipotriol 加 betamethasone 的 gel，一天一次，擦在 plaque 上，四个礼拜。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "头皮也可以擦吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，这个 gel 头皮也能用。另外用 coal tar shampoo，一个礼拜洗两三次，留五分钟再冲。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有没有什么东西不能吃？海鲜、鸡蛋这些？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "食物没有直接关系。可是抽烟和喝酒会让 psoriasis 更严重，也影响心脏。你一天抽多少？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一包左右。晚上跟朋友喝三四罐啤酒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Psoriasis 的人比较容易有 high blood pressure、diabetes、cholesterol。今天我们也验血，check 一下。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好吧，验就验。烟我试试看减少。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。一个月后 follow-up。如果关节开始痛、肿，早上很硬，要马上告诉我，那可能是 psoriatic arthritis。"
+      }
+    ]
+  },
+  {
+    "id": "infect_047",
+    "split": "train",
+    "condition": "Psoriasis on methotrexate, results review",
+    "source": "Psoriasis",
+    "patient_persona": {
+      "description": "Puan Rozita binti Hashim, 38, female, secondary school teacher in Alor Setar, Kedah; psoriasis for 12 years, on methotrexate for six months, hoping for a third child. Cheerful, steady, Kedah Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Zulkifli bin Hamid, Malay man in his 40s, dermatologist at Hospital Sultanah Bahiyah, Alor Setar. Friendly, thorough; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Rozita, kulit nampak cantik hari ni. PASI dulu 18, sekarang 4. Methotrexate memang menjadi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah, doktor. Dah lama saya tak pakai baju lengan pendek. Sekarang dah berani."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Result darah hari ni pun saya dah tengok. Full blood count normal. Liver enzyme ALT 34, normal. Creatinine pun OK."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lega. Saya ambil 15mg seminggu sekali, hari Ahad, macam doktor suruh. Folic acid pun ambil."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Folic acid 5mg tu, hari apa puan ambil?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hari Rabu, sekali seminggu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus, betul. Ada ulser mulut, loya, atau batuk lama?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Loya sikit hari Isnin, lepas makan ubat. Tapi tahan lagi. Doktor, sebenarnya saya dan suami nak cuba anak ketiga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih bagitahu. Ni penting. Methotrexate boleh sebabkan kecacatan bayi dan keguguran. Kena stop sekurang-kurangnya tiga bulan sebelum cuba mengandung."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga bulan? Nanti psoriasis saya datang balik teruk?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin naik sikit. Tapi ada rawatan lebih selamat masa mengandung, macam phototherapy narrowband UVB, dan krim steroid."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Phototherapy tu kena datang hospital?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, dua tiga kali seminggu. Dan kalau teruk sangat, ada ubat lain yang boleh guna dalam pregnancy, kita bincang dengan pakar O&G."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. Jadi mulai minggu ni saya stop methotrexate?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, stop mulai Ahad ni. Folic acid teruskan, tukar ke setiap hari, 5mg. Sementara tu guna contraception tiga bulan dulu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Faham, doktor. Nanti saya bincang dengan suami."
+      }
+    ]
+  },
+  {
+    "id": "infect_048",
+    "split": "train",
+    "condition": "Psoriasis with suspected psoriatic arthritis",
+    "source": "Psoriasis",
+    "patient_persona": {
+      "description": "Mr. Arvind a/l Sivalingam, 42, male, IT project manager in Petaling Jaya; scalp and nail psoriasis for years. Precise, a bit anxious, Malaysian Indian English with a few Malay words.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nabilah binti Zainal, Malay woman in her 30s, dermatologist at a PJ private hospital. Crisp, friendly; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my scalp is quite controlled with the shampoo. But these few months my fingers are swollen and painful, especially morning."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Show me your hands. The middle finger is swollen like a sausage, and the nails got pits and are lifting. How long is the morning stiffness?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "About one hour. After a hot shower then can move properly. Sometimes my heel also sakit when I step down."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Heel pain, sausage finger, nail changes. With your psoriasis, I'm quite concerned this is psoriatic arthritis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Arthritis? I'm only 42. I thought that's penyakit orang tua."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Psoriatic arthritis often starts between 30 and 50. It's inflammation, not wear and tear. If untreated, the joints can get damaged permanently."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So macam mana now? I've been taking Arcoxia from the pharmacy sometimes."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Etoricoxib helps pain, but doesn't stop the damage. I'll order X-rays of the hands and feet, blood tests for ESR, CRP, rheumatoid factor, and refer you to rheumatology."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What treatment usually?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Often methotrexate first. If not enough, biologics like adalimumab or secukinumab, which treat both skin and joints."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Biologics, those injections? Mahal, right?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "They can be. Some insurance covers it, and adalimumab biosimilars are cheaper now. Let the rheumatologist assess first, then we plan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. My insurance got outpatient specialist coverage, nanti I check."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Meanwhile, keep the etoricoxib 90mg once a day after food for two weeks max. And your BP, last reading was 142 over 90, please monitor."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Noted. My father got high BP also. OK, doctor, I'll book the X-ray downstairs."
+      }
+    ]
+  },
+  {
+    "id": "infect_049",
+    "split": "train",
+    "condition": "Guttate psoriasis after a sore throat",
+    "source": "Psoriasis",
+    "patient_persona": {
+      "description": "Cheryl Gontusan, 29, female, Kadazan kindergarten teacher in Penampang, Sabah. Cheerful, expressive, Sabahan English with Malay and 'bah'.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Azman bin Latip, Sabahan Malay man in his 40s, GP at a Penampang clinic. Easy-going, clear; English and Sabahan Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, suddenly I got so many small red spots on my body and legs. Macam titik hujan. Since last week."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any illness before this? Sakit tekak, fever?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes! About three weeks ago I had very bad sore throat. The klinik gave me antibiotic, then OK already."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Small, drop-shaped, scaly spots, all over the trunk and thighs. This looks like guttate psoriasis. It's often triggered by a strep throat infection."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Psoriasis? My uncle got psoriasis, very tebal on his legs. Is it the same?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Same family of disease, different pattern. Guttate type in young people often clears in a few months. Some later develop plaque type, like your uncle."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo. Can it go away completely bah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Many do, especially after the first episode. We'll help it along. Sunlight actually helps, so short exposure, 15 minutes a day, don't get burnt."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Easy, Sabah got plenty of sun. Ada cream?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Because the spots are many, cream everywhere is leceh. I'll give a moderate steroid cream for the itchy ones, and moisturiser for the rest."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is my throat still infected? I'm teaching budak kecil, don't want to pass them anything."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your throat looks clear now. I'll do a throat swab to be sure. If positive, another course of antibiotic."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And if it tak hilang?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If not better in six to eight weeks, I refer you to dermatology at Hospital Queen Elizabeth. They can do phototherapy, which works very well for this type."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doctor. Thank you, I was so scared it's penyakit serius."
+      }
+    ]
+  },
+  {
+    "id": "infect_050",
+    "split": "train",
+    "condition": "Erythrodermic psoriasis after stopping unlabelled traditional medicine",
+    "source": "Psoriasis",
+    "patient_persona": {
+      "description": "Mr. Siow Kim Chuan, 70, male, retired contractor in Kepong, Kuala Lumpur; took an unlabelled herbal powder from a traditional seller for his psoriasis. Weak, shivering, slow Malaysian Mandarin.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lai Wen Hui, Malaysian Chinese woman in her 30s, dermatology registrar on the ward round at Hospital Kuala Lumpur. Firm but kind; Mandarin with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Uncle，早安。今天还有发冷吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "还是冷，医生，全身皮都红红的，一直掉皮，床上都是。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的皮肤百分之九十都红了，这个叫 erythrodermic psoriasis。皮肤没办法保暖，也会流失很多水分和 protein。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "以前我吃那个药粉，皮肤很好。停了一个月，就变成这样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那个药粉我们送去 lab 检验，里面有 dexamethasone，是 steroid。突然停，psoriasis 就反弹，变更严重。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那个人说是纯草药，没有西药。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很多没有 label 的产品都偷偷加 steroid。长期吃会伤骨头、血糖高、伤 adrenal gland。我们会通知 KKM pharmacy enforcement。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "唉，我真的不知道。那现在怎样？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们给你很小剂量的 hydrocortisone，因为你的身体可能自己不够 steroid，突然停会有危险。然后慢慢减。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "皮肤要擦什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "护士一天几次帮你擦 emollient，还有 wet wrap。我们也开始 ciclosporin，控制 psoriasis，今天是第二天。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我的 blood test 怎样？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Albumin 有一点低，28。Kidney OK。血糖 11，有一点高，所以我们每天验几次 sugar。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要住多久？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "大概一到两个礼拜，要看皮肤退红多少，体温稳不稳定。家里还有那个药粉吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "还有两包。我叫我儿子丢掉。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "先不要丢，拿来给我们，可以帮助调查。以后吃任何药，先问医生或者 pharmacist，OK？"
+      }
+    ]
+  }
+]

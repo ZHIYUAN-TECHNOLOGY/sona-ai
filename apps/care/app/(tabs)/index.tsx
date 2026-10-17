@@ -1,0 +1,182 @@
+import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { Pressable, ScrollView, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
+import { Text } from "@/lib/text";
+import Animated, { FadeIn, FadeOut, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import { KeyboardAwareScrollView, type KeyboardAwareScrollViewRef } from "react-native-keyboard-controller";
+import { todayOf } from "@/features/check-ins/model";
+import { TodayCard, useCheckIns } from "@/features/check-ins/today";
+import { rise, useNextDose, useNow } from "@/features/doses";
+import { clock, dueNow } from "@/features/doses/model";
+import { away, needing } from "@/features/follow-ups/lines";
+import { useFollowUps } from "@/features/follow-ups/row";
+import { daysHome, headerDate, needsLine, type Need } from "@/features/home";
+import { LanguageRow } from "@/features/language/picker";
+import { SignOutRow } from "@/features/home/sign-out";
+import { tFor, useLang } from "@/lib/i18n";
+import { ConsistencyTile, LatestTile, MedicinesTile, SummaryTile, VisitTile } from "@/features/home/bento";
+import { useMe } from "@/features/me";
+import { useMessageNeeds, useThread } from "@/features/messages/row";
+import { useDischarge } from "@/features/discharge/row";
+import { NudgeCard } from "@/features/notifications";
+import { Opening } from "@/features/opening";
+import { Welcome } from "@/features/sign-in/welcome";
+import { DOCK_SPACE } from "@/lib/dock";
+import { motion, palette, space, type } from "@/lib/theme";
+import { Button, Card, Chip, CircleButton, DataPill, Section, Title, useBelowStatusBar } from "@/lib/ui";
+import { orpc } from "@/utils/orpc";
+
+/** Every open thing on home, most urgent first; each chip jumps to or opens its thing. */
+function useNeeds(): (Need & { dot: string })[] {
+  const now = useNow();
+  const lang = useLang(), t = tFor(lang);
+  const { dose } = useNextDose(now);
+  const checkIns = useCheckIns();
+  const ask = checkIns.data && todayOf(checkIns.data, now).ask;
+  const reply = useMessageNeeds();
+  const visits = needing(useFollowUps().data, now);
+  return [
+    ...(dose && dueNow(dose.dueAt, now) ? [{ kind: "dose" as const, name: dose.name, label: t("home.chip", { what: dose.name, when: clock(dose.dueAt, lang) }), dot: palette.warning }] : []),
+    ...(ask ? [{ kind: "check-in" as const, label: t("checkin.title", { day: ask.day }), dot: palette.warning }] : []),
+    ...(reply ? [{ kind: "reply" as const, label: t("home.teamReplied"), dot: palette.info }] : []),
+    ...visits.map(f => ({ kind: "visit" as const, inDays: f.inDays, overdue: f.status === "missed", label: t("home.chip", { what: f.short, when: f.status === "missed" ? t("home.visitOverdue") : away(f.inDays, lang) }), dot: f.status === "missed" ? palette.error : palette.warning })),
+  ];
+}
+
+/** The bell's count on the confirm spring: from 0.6, never from nothing. */
+const pop = () => {
+  "worklet";
+  return { initialValues: { opacity: 0, transform: [{ scale: 0.6 }] }, animations: { opacity: withTiming(1, { duration: 160 }), transform: [{ scale: withSpring(1, { duration: 380, dampingRatio: 0.72 }) }] } };
+};
+
+/**
+ * The initials opening settings: a soft press (in to 0.94 without bounce, back on the confirm spring's
+ * slight overshoot). Under Reduce Motion Reanimated snaps each spring, so the press stays but doesn't move.
+ */
+function Initials({ name, label, onPress }: { name: string; label: string; onPress: () => void }) {
+  const scale = useSharedValue(1);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
+    onPressIn={() => { scale.value = withSpring(0.94, { duration: 160, dampingRatio: 1 }); }} onPressOut={() => { scale.value = withSpring(1, motion.pop); }}>
+    <Animated.View style={[{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.white }, style]}>
+      <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 16, fontWeight: "600", color: palette.blue }}>{name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}</Text>
+    </Animated.View>
+  </Pressable>;
+}
+
+/** The bento rises only the first time home appears in a session, not on every return to it. */
+let seen = false;
+
+/**
+ * Sona Care's home (the kit's "Child Home", the patient watching their own recovery): initials (opening
+ * settings), "Hello! Amelia" over the date, and the bell with its count; then "Today's / Latest updates",
+ * one insight line (day at home, what needs you and how long)
+ * and a chip per open thing but the dose (its hold is on the medicines tile); a two-column bento (today's
+ * medicines with a hold to take the due dose in place, consistency once two days count, the latest update
+ * when there is one, the next visit; hidden tiles let the rest reflow); and the one feature card, today's
+ * check-in. At large Dynamic Type the bento stacks to one column.
+ */
+/**
+ * The first screen: Sona's opening while the session and the record load, then the welcome or home through its
+ * dissolve. Home's own data (check-ins, the plan, visits, messages) starts loading with the record and the opening
+ * holds until it is in, so home is revealed whole.
+ */
+export default function Index() {
+  const { state, step } = useMe();
+  const loads = [useCheckIns(), useFollowUps(), useDischarge(), useThread()];
+  const settled = state !== "joined" || loads.every(q => !q.isLoading);
+  return <Opening ready={state !== "loading"} settled={settled} step={step}>{state === "signed-out" ? <Welcome /> : <Home />}</Opening>;
+}
+
+function Home() {
+  const { state, me } = useMe();
+  const needs = useNeeds();
+  const now = useNow();
+  const lang = useLang(), t = tFor(lang);
+  const reduced = useReducedMotion();
+  const below = useBelowStatusBar();
+  const { fontScale } = useWindowDimensions();
+  const scroll = useRef<KeyboardAwareScrollViewRef>(null);
+  const spots = useRef({ cards: 0, today: 0 });
+  const [still] = useState(() => seen);
+  useEffect(() => { if (state === "joined") seen = true; }, [state]);
+  const health = useQuery(orpc.healthCheck.queryOptions());
+  const offline = health.isError || (health.data !== undefined && health.data !== "OK");
+  const layout = reduced ? undefined : LinearTransition.springify().duration(380).dampingRatio(1);
+  const spot = (to: keyof typeof spots.current) => (e: LayoutChangeEvent) => { spots.current[to] = e.nativeEvent.layout.y; };
+  const jump = (to: keyof typeof spots.current) => scroll.current?.scrollTo({ y: Math.max(0, spots.current[to] - 12), animated: !reduced });
+  const go = (kind: Need["kind"]) => kind === "dose" ? jump("cards") : kind === "check-in" ? jump("today") : router.push(kind === "reply" ? "/messages" : "/follow-ups");
+  // The bell means "what needs you now" (Messages has its own tab); with nothing open it still opens the thread.
+  const bell = () => needs[0] ? go(needs[0].kind) : router.push("/messages");
+  const day = daysHome(me?.dischargedAt, now);
+  const insight = day === undefined ? needsLine(needs, lang) : needs.length ? t("home.dayAt", { day, needs: needsLine(needs, lang) }) : t("home.dayAtDone", { day });
+  const stack = fontScale >= 1.35;
+  // The due dose is held in place on the medicines tile, so it gets no chip of its own (it still counts above).
+  const chips = needs.filter(n => n.kind !== "dose");
+  const calm = still || reduced;
+  // Keyboard-aware: typing a check-in reply keeps the box and its Send button above the keyboard (bottomOffset covers the button under the box).
+  return <KeyboardAwareScrollView ref={scroll} style={below} bottomOffset={140} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
+    {state === "joined" && me
+      ? <>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Initials name={me.name} label={t("home.settings", { name: me.name })} onPress={() => router.push("/settings")} />
+          <View accessible accessibilityRole="header" style={{ flex: 1, alignItems: "center" }}>
+            <Text numberOfLines={1} style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{t("home.hello", { name: me.firstName })}</Text>
+            <Text numberOfLines={1} style={{ fontSize: 18, lineHeight: 24, fontWeight: "500", letterSpacing: -0.4, color: palette.ink }}>{headerDate(now, lang)}</Text>
+          </View>
+          <View>
+            <CircleButton icon="bell" label={t("home.bell", { needs: needsLine(needs, lang) })} onPress={bell} />
+            {needs.length > 0 && <Animated.View key={needs.length} entering={reduced ? undefined : pop} pointerEvents="none"
+              style={{ position: "absolute", top: -4, right: -4, minWidth: 20, minHeight: 20, paddingHorizontal: 5, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: palette.blue, borderWidth: 2, borderColor: palette.white }}>
+              <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 11, lineHeight: 14, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{needs.length}</Text>
+            </Animated.View>}
+          </View>
+        </View>
+        <View style={{ gap: 10, marginTop: space.section - space.stack }}>
+          {/* No + here: asking, messaging and booking are each one tap away in the dock (the orb, Messages, Doctors). */}
+          <Section light={t("home.updatesLight")} bold={t("home.updatesBold")} />
+          <Text style={{ ...type.body, color: needs.length ? palette.muted : palette.green, fontWeight: needs.length ? "400" : "600" }}>{insight}</Text>
+          {chips.length > 0 && <Animated.View layout={layout} exiting={FadeOut.duration(200)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {chips.map(n => <Animated.View key={`${n.kind}:${n.label}`} layout={layout} entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
+              <Chip label={n.label} dot={n.dot} onPress={() => go(n.kind)} />
+            </Animated.View>)}
+          </Animated.View>}
+        </View>
+        {/* Asked once, after joining: never at launch, and only before the patient chooses. */}
+        <NudgeCard />
+      </>
+      : <Title overline="Sona Care" line={t("home.signedOutLine")}>{t("home.signedOutTitle")}</Title>}
+    {offline && <Text style={{ ...type.footnote, color: palette.amber }}>{t("home.offline")}</Text>}
+    {state === "not-joined" && <Card feature>
+      <Text style={{ ...type.headline, color: palette.ink }}>{t("home.linkTitle")}</Text>
+      <Text style={{ ...type.body, color: palette.muted }}>{t("home.linkLine")}</Text>
+      <Button icon="camera" label={t("home.linkButton")} onPress={() => router.push("/join")} />
+    </Card>}
+    {state === "joined" && <>
+      <View onLayout={spot("cards")} style={{ flexDirection: stack ? "column" : "row", gap: 8 }}>
+        <View style={{ flex: stack ? undefined : 1, gap: 8 }}>
+          <MedicinesTile index={0} still={calm} />
+          <LatestTile index={2} still={calm} onCheckIn={() => jump("today")} />
+        </View>
+        <View style={{ flex: stack ? undefined : 1, gap: 8 }}>
+          <ConsistencyTile index={1} still={calm} />
+          <VisitTile index={3} still={calm} hospital={me?.hospital} />
+        </View>
+      </View>
+      <SummaryTile index={4} still={calm} />
+      <Animated.View entering={rise(calm, 5)} onLayout={spot("today")} style={{ gap: 12 }}>
+        <Section light={t("home.checkInLight")} bold={t("home.checkInBold")} />
+        <TodayCard />
+      </Animated.View>
+      <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("common.emergency")}</Text>
+    </>}
+    {/* The one place Sona Care says its data is fictional, by the emergency line; tap for the details. */}
+    {state !== "loading" && <DataPill />}
+    {/* Once joined, settings live behind the initials; before that, language and sign out close the page. */}
+    {state === "not-joined" && <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", columnGap: 16 }}>
+      <LanguageRow />
+      <SignOutRow />
+    </View>}
+  </KeyboardAwareScrollView>;
+}

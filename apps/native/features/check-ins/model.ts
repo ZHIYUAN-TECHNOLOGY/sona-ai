@@ -1,0 +1,102 @@
+import { checkInMessage, checkInSchedule, readReply, replyFlag, type CheckIn, type Reply } from "@sona-ai/domain/check-ins";
+import type { DayItem } from "@/features/day/model";
+import type { DischargeState } from "@/features/discharge/model";
+import type { Patient } from "@/features/encounter/types";
+
+export * from "@sona-ai/domain/check-ins";
+
+/**
+ * Where "Call back" dials. The synthetic records hold no patient phone numbers, so it rings the
+ * ward's line (a placeholder number, not a working one) for the clinician to put the call through.
+ * ponytail: dial the patient's own number once the record carries one.
+ */
+export const WARD_PHONE = { display: "+60 3-0000 0000", tel: "+60300000000" };
+/** What the patient's Sona Care thread shows after a call-back is logged. */
+export const callBackNote = (clinician?: string | null) => `Called back by ${clinician?.trim() || "your care team"}.`;
+
+const first = (name: string) => name.split(" ")[0]!;
+const clock = (at: Date) => `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+/** "Mon 28 Sep", as the day picker writes dates. */
+export const shortDate = (at: Date) => at.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }).replace(",", "");
+
+/**
+ * Fixture mode: a discharged patient's check-ins, derived from the encounter's discharge and the
+ * replies made on this device (the same IDs and rules as the server). Replies older than the
+ * discharge belong to an earlier demo run, so a reset and a new discharge start clean.
+ */
+export function fixtureCheckIns(patient: Patient, discharge: DischargeState | undefined, replies: Record<string, Reply[]>, now: Date): CheckIn[] {
+  if (!discharge?.dischargedAt) return [];
+  const at = new Date(discharge.dischargedAt);
+  return checkInSchedule(at, discharge.checkInDays).map(({ day, dueAt }) => {
+    const id = `check-in:${patient.encounterId}:${day}`;
+    const mine = (replies[id] ?? []).filter(r => r.receivedAt >= at);
+    return {
+      id, patientId: patient.id, encounterId: patient.encounterId, day, language: discharge.language, message: checkInMessage(first(patient.name), discharge.language),
+      dueAt, sentAt: dueAt <= now ? dueAt : mine[0]?.receivedAt ?? null, replies: mine,
+    };
+  });
+}
+
+/** A reply read on the device by the keyword rule the server's stub uses; worse or urgent carries its task, keyed like the server's. */
+export function fixtureReply(patientName: string, text: string, at: Date): Reply {
+  const id = `reply-${at.getTime()}`, label = readReply(text), flag = replyFlag(first(patientName), label, text);
+  return { id, text, label, source: "fixture", receivedAt: at, task: flag ? { id, title: flag.title, completed: false } : null };
+}
+
+/** The receipt's line for the chosen days: "Day 2 Mon 28 Sep · Day 7 Sat 3 Oct". */
+export const scheduleLine = (dischargedAt: Date, days?: number[]) => checkInSchedule(dischargedAt, days).map(c => `Day ${c.day} ${shortDate(c.dueAt)}`).join(" · ");
+
+/** Tasks already shown as a flagged check-in row, so My Day does not list them twice. */
+export const flaggedTaskIds = (checkIns: CheckIn[]) => checkIns.flatMap(c => c.replies.flatMap(r => (r.task ? [r.task.id] : [])));
+
+// A flagged reply opens on the patient's sheet, where the check-in thread and her messages are: the visit's conversation
+// (where an empty `open` goes) is the stay she has left, with nothing about the reply in it.
+const CHECK_IN = { view: "check-in" };
+
+/**
+ * My Day's red rows: every worse or urgent reply whose task is still open, plus any in `keep` (just
+ * booked in, still offering its same-visit follow-ups); the row's ID carries the task's.
+ */
+export function flaggedItems(checkIns: CheckIn[], keep: string[] = []): DayItem[] {
+  return checkIns.flatMap(c => c.replies.flatMap(r => {
+    const flag = r.task && (!r.task.completed || keep.includes(r.task.id)) ? replyFlag(r.task.title.split(":")[0]!, r.label, r.text) : undefined;
+    return flag ? [{
+      id: `check-in-${r.task!.id}`, kind: "check-in" as const, title: r.task!.title, detail: `“${r.text}” · day ${c.day} check-in`,
+      reason: `${r.label === "urgent" ? "Urgent" : "Worse"} after discharge · replied ${clock(new Date(r.receivedAt))}`, tone: "urgent" as const, score: flag.score, at: new Date(r.receivedAt).getTime(), patientId: c.patientId, open: CHECK_IN,
+    }] : [];
+  }));
+}
+
+/** A server task, as far as a report's row reads it (tasks.list). */
+type ReportTask = { id: string; kind: string; title: string; completed: boolean; encounterId: string | null; createdAt: Date | string };
+
+/**
+ * A problem the patient told Sona Care (in the live call, or typed or spoken to Ask Sona Care) is a check-in task with
+ * no reply behind it: the same red row with the same Call back and Book in, named by the task's title. Tasks a reply
+ * flagged are `flaggedItems`' rows, so none shows twice. `patientOf` finds the visit's patient, when the app knows them.
+ * ponytail: the task keeps the symptom, not the patient's words or how urgent they read, so urgency is re-read from the
+ * title by the keyword rule (chest pain leads, the rest rank as worse); read the label once the server keeps it.
+ */
+export function reportItems(tasks: ReportTask[], checkIns: CheckIn[], patientOf: (encounterId: string) => string | undefined, keep: string[] = []): DayItem[] {
+  const replied = new Set(flaggedTaskIds(checkIns));
+  return tasks.filter(t => t.kind === "check-in" && !replied.has(t.id) && (!t.completed || keep.includes(t.id))).map(t => {
+    const urgent = readReply(t.title) === "urgent", at = new Date(t.createdAt);
+    return {
+      id: `check-in-${t.id}`, kind: "check-in" as const, title: t.title, detail: "Told to Sona Care",
+      reason: `${urgent ? "Urgent" : "Worse"} · reported ${clock(at)}`, tone: "urgent" as const, score: urgent ? 120 : 105, at: at.getTime(), patientId: t.encounterId ? patientOf(t.encounterId) : undefined, open: CHECK_IN,
+    };
+  });
+}
+
+/**
+ * Doses she has missed at home (the hourly check raises one "dose" task per patient, packages/api/src/routers/doses.ts):
+ * an amber row titled "Amelia: 2 Azithromycin doses missed", below a booking request, opening her sheet where the
+ * adherence line is. It leaves once she marks a dose taken again.
+ */
+export function doseItems(tasks: ReportTask[], patientOf: (encounterId: string) => string | undefined): DayItem[] {
+  return tasks.filter(t => t.kind === "dose" && !t.completed).map(t => ({
+    id: `dose-${t.id}`, kind: "task" as const, title: t.title, detail: "Missed at home",
+    reason: "Not marked taken in Sona Care", tone: "soon" as const, score: 70, at: new Date(t.createdAt).getTime(),
+    patientId: t.encounterId ? patientOf(t.encounterId) : undefined, open: CHECK_IN,
+  }));
+}

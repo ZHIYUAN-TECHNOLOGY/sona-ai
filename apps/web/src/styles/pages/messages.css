@@ -1,0 +1,53 @@
+/* Messages and Review queue (Sona Pro). Tokens only. */
+.msg-panes { display: grid; grid-template-columns: minmax(240px, 22fr) minmax(0, 46fr) minmax(260px, 32fr); gap: var(--gap-card); align-items: start; }
+/* A narrower page: the inbox beside the thread, the reply under the thread; under 660 px one column. */
+@container page (max-width: 880px) { .msg-panes { grid-template-columns: minmax(220px, 2fr) minmax(0, 3fr); } .msg-panes > .msg-reply { grid-column: 2; } }
+@container page (max-width: 660px) { .msg-panes { grid-template-columns: minmax(0, 1fr); } .msg-panes > .msg-reply { grid-column: auto; } }
+.msg-inbox { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; padding: var(--space-4) var(--space-3); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
+.msg-inbox .list-card { padding: 0; background: none; box-shadow: none; border: 0; }
+.msg-title { display: flex; align-items: baseline; gap: var(--space-2); width: 100%; }
+.msg-title strong { min-width: 0; overflow-wrap: anywhere; }
+.msg-title .msg-meta { margin-left: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.msg-preview { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); min-width: 0; }
+.msg-row-top { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.msg-row-top .msg-meta:last-child { margin-left: auto; }
+.msg-row-text { max-width: 100%; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-unread { flex: none; width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--blue); }
+.msg-thread { min-width: 0; padding: var(--pad-card); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
+
+.msg-meta { color: var(--muted); font-size: var(--text-small); margin: 0; }
+.msg-error { color: var(--red); font-size: var(--text-small); margin: 0; }
+
+.msg-thread h2 { margin: 0; font-size: var(--text-heading); }
+.msg-thread ol, .review-queue, .msg-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.msg { max-width: 85%; padding: var(--space-3) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-card); background: var(--surface); }
+.msg p { margin: 0 0 var(--space-1); overflow-wrap: anywhere; }
+.msg-earlier { align-self: center; }
+.msg-in { align-self: flex-start; background: var(--fill-field); }
+.msg-out { align-self: flex-end; background: var(--blue-wash); }
+.msg-day { align-self: center; color: var(--muted); font-size: var(--text-overline); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.msg-thread-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid var(--hairline); }
+.msg-thread-head > div { flex: 1; min-width: 0; }
+.msg-none { grid-column: 2 / -1; }
+@container page (max-width: 660px) { .msg-none { grid-column: auto; } }
+
+/* The reply sits open in Sona's panel: a light input surface with ink text on the dark blue, a white send pill. */
+/* It stays beside the conversation while a long thread scrolls. */
+@container page (min-width: 881px) { .msg-reply { position: sticky; top: 0; } }
+.msg-reply .insight-detail { color: inherit; }
+.msg-reply .insight-detail summary { display: none; }
+.msg-reply .field label { color: var(--on-ai); }
+.msg-reply .msg-editor textarea { border-color: transparent; background: var(--surface); color: var(--ink); }
+.msg-reply .msg-editor textarea:focus-visible { outline: 2px solid var(--on-ai); outline-offset: 2px; }
+.msg-reply .msg-editor .btn-primary { background: var(--on-ai); color: var(--navy); border-color: transparent; }
+.msg-reply .msg-editor .btn-quiet { background: transparent; color: var(--on-ai); border-color: var(--on-ai-soft); }
+.msg-reply .msg-error { color: var(--on-ai); }
+
+.msg-photo { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; margin: var(--space-2) 0; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-control); }
+.msg-photo img { max-width: 100%; max-height: 320px; border-radius: var(--radius-control); }
+
+.msg-checks { gap: var(--space-1); font-size: var(--text-small); margin-bottom: var(--space-2); }
+.msg-sources { margin: 0 0 var(--space-3); padding-left: var(--space-4); color: var(--muted); font-size: var(--text-small); }
+.msg-editor { display: flex; flex-direction: column; gap: var(--space-2); }
+.msg-editor textarea { width: 100%; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); font: inherit; resize: vertical; }
+.msg-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }

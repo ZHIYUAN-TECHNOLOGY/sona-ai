@@ -1,0 +1,812 @@
+[
+  {
+    "id": "infect_001",
+    "split": "train",
+    "condition": "Dengue fever",
+    "source": "Dengue fever",
+    "patient_persona": {
+      "description": "Encik Rosli bin Kassim, 42, male, production supervisor at a factory in Shah Alam; neighbour had dengue last month. Medium-pitched, tired, speaks slowly with a sore head.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Wei Jie, Malaysian Chinese man in his 30s, GP at a Shah Alam clinic. Brisk but kind; English-leaning, speaks simple Malay to Malay patients.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Rosli, silakan duduk. Demam dah berapa hari?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Empat hari dah, doktor. Mula hari Ahad malam, demam tinggi, kepala sakit sangat dekat belakang mata."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Badan sakit-sakit? Sendi, tulang?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, macam tulang nak patah. Semalam saya ada makan ubat tahan sakit, yang Ponstan tu, isteri saya punya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, Ponstan tu mefenamic acid. Kalau dengue, ubat macam tu boleh buat berdarah. Mulai hari ni, stop Ponstan, stop ibuprofen, makan Panadol saja."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, tak tahu pula. Jiran sebelah rumah saya bulan lepas kena denggi, masuk hospital Shah Alam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada muntah? Sakit perut? Gusi berdarah atau hidung berdarah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Muntah tak ada. Loya sikit je. Gusi tak berdarah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Temperature 38.6, blood pressure 118 over 76. Saya dah buat NS1 test tadi, positive. Maksudnya encik memang ada denggi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Teruk ke doktor? Kena masuk wad ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Platelet 142, masih OK. Hematocrit pun normal. Hari ni boleh balik, tapi hari ketiga sampai ketujuh ni masa paling bahaya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Minum air banyak, sekurang-kurangnya dua setengah liter sehari. Air kosong, jus, air isotonik. Panadol 1 gram, empat kali sehari, maksimum."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Air 100 Plus boleh ke doktor? Saya memang tak suka minum air kosong."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh. Esok pagi datang balik, kita check FBC setiap hari sampai demam hilang dua hari. Saya bagi MC tiga hari dulu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau jadi teruk malam ni, macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau sakit perut kuat, muntah berulang, berdarah, atau rasa nak pitam, terus pergi emergency. Jangan tunggu esok."
+      }
+    ]
+  },
+  {
+    "id": "infect_002",
+    "split": "train",
+    "condition": "Dengue fever with warning signs",
+    "source": "Dengue hemorrhagic fever",
+    "patient_persona": {
+      "description": "Ooi Hui Min, 28, female, accounts executive in Bayan Lepas, Penang; lives in a condo where fogging was done last week. Soft voice, anxious, Penang Mandarin with some Hokkien-flavoured words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Huda binti Azmi, Malay woman in her 30s, medical officer at a Penang government health clinic. Warm, methodical; English-leaning, speaks functional Mandarin mixed with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hui Min，你今天是 day 5 了对吗？昨天 platelet 是 98。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，医生。昨天晚上烧退了，我以为好了，可是今天早上开始肚子很痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "痛在哪里？指给我看。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这边，右边上面。然后我 vomit 了三次，喝水也吐。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hmm, right upper abdominal pain, persistent vomiting. 这两个是 warning signs。你刷牙的时候牙肉有没有流血？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有一点点。还有腿上有很多小红点。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看看。嗯，这个是 petechiae。今天的 blood test 出来了，platelet 剩下 41，hematocrit 从 38 升到 45。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这样是不是很严重？我妈妈说要喝木瓜叶汁，platelet 就会上来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "木瓜叶汁没有证据可以救你。现在最重要的是 fluid。Hematocrit 升高表示血管在漏水，你需要 admit 去 Hospital Pulau Pinang。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一定要住院吗？我明天还有 audit meeting。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "一定要。这个是 critical phase，可以在几个钟头里面变 shock。我给你开 MC，工作的事情可以等。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好吧……那我可以自己 drive 去吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不可以。我们用 ambulance 送你，现在先打 drip，normal saline。你家里有人可以来吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我打给我男朋友，他在 Gelugor 上班，二十分钟就到。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。在医院他们会每几个钟头验血，看你的 urine output。不要吃 Ponstan 或者 Voltaren，只能吃 Panadol。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白了。谢谢你，医生，我刚才真的很怕。"
+      }
+    ]
+  },
+  {
+    "id": "infect_003",
+    "split": "train",
+    "condition": "Severe dengue, critical phase",
+    "source": "Dengue hemorrhagic fever",
+    "patient_persona": {
+      "description": "Mr. Selvaraj a/l Pillai, 55, male, lorry transport business owner in Seremban; type 2 diabetes on metformin. Gravelly voice, weak, Malaysian Indian English with Malay words.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Farah Liyana binti Ahmad, Malay woman in her 30s, medical registrar on the morning ward round at Hospital Tuanku Ja'afar Seremban. Crisp, reassuring; English with some Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Good morning, Mr. Selvaraj. I'm Dr. Farah from the medical team. How are you feeling today, compared to last night?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Morning, doctor. Last night very bad, I felt like fainting when I went to the toilet. Now a bit better but badan lemah sangat lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, the nurses told me your blood pressure dropped to 86 over 60 around midnight. That's why we gave you the fluid bolus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is that the dengue shock thing? My son read on Google and got very takut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It was early shock, compensated. We caught it early. This morning BP is 112 over 74, pulse 96, and your urine output is back above 0.5 ml per kg."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, platelet how much now? Semalam they said very low."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Platelet is 18 today. But hematocrit came down from 49 to 42, which is good. It means the leakage is slowing."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Eighteen only? Don't need to give me platelet, ah? My sepupu last time got transfusion."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not unless you are bleeding badly. Platelets usually go up on their own once you're past this phase. Any black stools, or muntah darah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, stool normal colour. Only the gums a bit berdarah when I brush."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, use a soft brush. Your sugar was 14 this morning, so we're holding metformin and giving insulin while you're on drip."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Insulin? After this I must take insulin selama-lamanya or what?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No, this is temporary. Infection and the drip make the sugar high. Once you're eating properly we go back to metformin 1 gram twice a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "When can I go home, doctor? My business, nobody is handling. Susah lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Honestly, hari ni belum boleh. We need you stable with no fever, platelets rising, and eating well for at least a day. Maybe two or three days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo. OK lah, better safe. Thank you, doctor."
+      }
+    ]
+  },
+  {
+    "id": "infect_004",
+    "split": "train",
+    "condition": "Dengue fever in a child",
+    "source": "Dengue fever",
+    "patient_persona": {
+      "description": "Puan Wan Norazila binti Wan Ismail, 36, female, primary school teacher in Kota Bharu, Kelantan, speaking for her son Aiman, 9. Kelantanese Malay accent, quick, worried.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tengku Hafiz, Malay man in his 40s, paediatrician at a Kota Bharu private hospital. Patient, gentle; switches easily to Kelantan-friendly Malay with English medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, puan. Keputusan darah Aiman semalam dah keluar. NS1 positif, jadi memang denggi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya Allah. Doktor, dia demam dah tiga hari, tapi pagi ni dia nak makan roti sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus tu. Platelet dia 165, hematocrit 37. Hari ni masih normal. Dia kencing macam biasa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kencing ada, pagi tadi sekali, tengah hari sekali. Warna kuning sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. Saya nak puan catat berapa kali dia kencing, dan berapa banyak dia minum. Sasaran untuk berat dia, lebih kurang 1.5 liter sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, mak mertua saya suruh bagi jus daun betik. Boleh ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jus daun betik tu tak terbukti bantu, dan pahit, boleh buat budak muntah. Lebih baik air, susu, air sup, jus buah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat demam dia saya bagi Uphamol syrup. Betul ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul. Uphamol 250mg per 5ml, dia 28 kilo, bagi 8ml, setiap enam jam kalau demam. Jangan bagi Nurofen."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lapan ml, enam jam sekali. Baik. Dia boleh pergi sekolah esok?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak boleh. Rehat di rumah dulu. Hari keempat sampai ketujuh ni kita kena pantau betul-betul. Esok datang ambil darah lagi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tanda bahaya apa yang saya kena tengok, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sakit perut, muntah banyak kali, lemau sangat, tangan kaki sejuk, atau tak kencing lebih enam jam. Kalau ada, terus bawa ke emergency."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Adik dia pun batuk sikit semalam. Takut kena juga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Denggi tak berjangkit terus antara orang, dia melalui nyamuk Aedes. Cuma kena buang air bertakung sekeliling rumah, dan pasang ubat nyamuk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik doktor, nanti suami saya cuci pasu bunga tu semua. Terima kasih."
+      }
+    ]
+  },
+  {
+    "id": "infect_005",
+    "split": "train",
+    "condition": "Dengue, recovery phase follow-up",
+    "source": "Dengue fever",
+    "patient_persona": {
+      "description": "Juliana Lajim, 35, female, Kadazan hotel front-desk supervisor in Kota Kinabalu, Sabah; discharged from hospital four days ago. Bright voice, chatty, Sabahan English mixed with Malay and the particle 'bah'.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chong Mei Fong, Sabahan Chinese woman in her 40s, family physician at a Kota Kinabalu clinic. Relaxed, practical; English with Sabahan Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Juliana, you look much better than the discharge letter sounds. How's the energy?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Better, doctor, but still penat bah. I climb stairs at home, halfway already need to rest."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's normal after dengue. Fatigue can last two to three weeks. Anything else bothering you?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, ruam ni. Since two days, my legs and hands so itchy, especially at night. Red with small white spots."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Ah, this is the typical convalescent rash, what we call isles of white in a sea of red. It's a sign of recovery."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh really? I thought allergic to the ubat from hospital."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Unlikely. It usually fades in a week. For the itch, calamine lotion, and cetirizine 10mg at night if you can't sleep."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. Doctor, today's result darah macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Platelet 210, back to normal. Liver enzyme ALT is 96, still a bit high, but coming down from 180."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Liver high? Must stop anything? I take Panadol sometimes for sakit kepala."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Keep Panadol to maximum 2 grams a day for now, and no alcohol for a few weeks. We repeat the liver test in two weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "No problem, I don't drink also. When can I work? Front desk, berdiri whole day."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give you MC until Sunday. Start Monday, maybe ask your manager for half-day the first few days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK bah. And can I get dengue again? My kampung in Penampang, so many mosquito."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, there are four types, and a second infection can be more severe. So repellent, buang air bertakung, and see a doctor early next time."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, scary. OK doctor, I'll tell my keluarga also. Thank you."
+      }
+    ]
+  },
+  {
+    "id": "infect_006",
+    "split": "train",
+    "condition": "Plasmodium knowlesi malaria",
+    "source": "Malaria",
+    "patient_persona": {
+      "description": "Encik Juanis bin Gidong, 50, male, oil palm smallholder near Keningau, Sabah; often works at the forest edge. Deep voice, slow, Sabahan Malay with 'bah' and 'sia'.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ahmad Syazwan, Malay man in his 30s, medical officer doing the morning ward round at Hospital Keningau. Friendly; English-leaning, speaks Malay with patients.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Selamat pagi, Encik Juanis. Macam mana rasa pagi ni? Masih menggigil?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pagi, doktor. Sudah kurang bah. Semalam menggigil teruk, sekarang cuma lemah sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Baik. Blood film semalam tunjuk Plasmodium knowlesi, yang malaria monyet tu. Parasite count 12,000."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Malaria monyet? Memang banyak monyet ekor panjang dekat kebun sawit saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, nyamuk gigit monyet, lepas tu gigit encik. Knowlesi ni boleh naik cepat, sebab tu kita bagi IV artesunate semalam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat drip itu? Berapa kali lagi mesti cucuk?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tiga dos IV dah cukup. Hari ni kalau encik boleh makan, kita tukar ke tablet Riamet, artemether-lumefantrine, tiga hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tablet itu macam mana makan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Empat biji setiap kali, dua kali sehari, tiga hari. Kena makan dengan makanan berlemak sikit, macam susu atau roti mentega, supaya ubat masuk badan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, mesti makan dengan susu. OK. Doktor, darah saya macam mana? Kata platelet rendah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Platelet 64, rendah, memang biasa dengan knowlesi. Buah pinggang pun kita check, creatinine 98, normal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Isteri saya dan anak di rumah, boleh kena juga ka dari saya?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak berjangkit terus dari orang ke orang. Tapi pejabat kesihatan akan datang buat semburan dan check orang lain di kampung."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila saya boleh balik rumah, doktor? Sawit sudah boleh potong minggu ni."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin lusa, kalau blood film negatif dan platelet naik. Lepas balik, pakai lengan panjang dan ubat nyamuk kalau ke kebun waktu senja."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik doktor. Terima kasih banyak bah."
+      }
+    ]
+  },
+  {
+    "id": "infect_007",
+    "split": "train",
+    "condition": "Falciparum malaria in a returning traveller",
+    "source": "Malaria",
+    "patient_persona": {
+      "description": "Mr. Daniel Anyi, 38, male, Iban offshore drilling engineer from Miri, Sarawak, back from a six-week rotation in Nigeria. Mid-pitched, articulate, mostly English with a little Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Rachel Tiong, Sarawakian Chinese woman in her 30s, emergency physician at Hospital Miri. Focused, fast; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Daniel, the triage note says fever and chills for three days. When did you come back from overseas?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ten days ago, from Port Harcourt, Nigeria. Six-week rotation on the rig. Fever started Tuesday, then shivering every few hours."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Did you take any malaria prophylaxis, like Malarone or doxycycline?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "The company gave doxycycline 100mg. I took it on the rig, but I stopped once I landed. Nobody told me to continue."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Doxycycline must be continued for four weeks after leaving. That's a common mistake. Any headache, confusion, dark urine?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Headache yes, sakit sangat. Urine a bit dark this morning. Confusion, I don't think so."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Temperature 39.4, pulse 118, BP 104 over 68. The rapid test is positive for falciparum. We're sending thick and thin films now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Falciparum is the dangerous one, right? My colleague got it two years ago."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It can be, so we treat it seriously. You'll be admitted, and we start IV artesunate 2.4mg per kg straight away."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terus masuk wad? OK. How long usually?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At least three to four days, until the parasite count clears and you can take tablets. Then a full oral course to finish."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My wife is pregnant, lima bulan. Is she at risk from me?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No, malaria doesn't spread person to person here. But if she travels with you in future, she must see us first, pregnancy and malaria is serious."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Faham, doctor. I'm supposed to fly back to Nigeria in four weeks."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We'll talk about proper prophylaxis before you go. And if you get fever within three months of travel, always say you went to Africa, terus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Noted, doctor. I'll call my wife to bring my baju."
+      }
+    ]
+  },
+  {
+    "id": "infect_008",
+    "split": "train",
+    "condition": "Falciparum malaria, results review",
+    "source": "Malaria",
+    "patient_persona": {
+      "description": "Wong Chee Keong, 33, male, Foochow construction foreman from Sibu, Sarawak, recently back from a project in Papua New Guinea. Loud, direct, Mandarin with Sibu inflection and English work words.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ling Siew Hua, Foochow woman in her 40s, physician at Hospital Sibu medical clinic. Calm, thorough; Mandarin with English medical terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "黄先生，你出院两个礼拜了，今天是 follow-up。现在感觉怎样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好很多了，医生。不发烧了，胃口也回来了，就是还有一点累。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "正常的。今天的 blood film 我看了，已经没有 parasite 了。Haemoglobin 是 11.2，比出院的时候高。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那就好。住院的时候他们说我的 parasite 很多，吓死我。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，入院的时候是百分之四，算 severe。还好你那天就来了，没有拖。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "其实我在 PNG 已经发烧一次，以为是 flu，吃 Panadol 就好了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那次很可能也是 malaria。以后去那种地方，要吃 prophylaxis。你们公司有安排吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，是小公司。我下个月又要去 Lae 那边做工，三个月。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那我建议你吃 Malarone，atovaquone-proguanil，出发前一天开始，每天一粒，回来以后再吃七天。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "每天一粒，回来还要吃七天。贵不贵？一粒多少 ringgit？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "比较贵，一粒大概十几块。另一个选择是 doxycycline 100mg，便宜很多，可是回来后要吃四个礼拜，还要防晒。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我在外面晒太阳做工，那还是 Malarone 好了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。还有，住的地方要有蚊帐，晚上穿长袖，用 DEET 的驱蚊水。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我的 workers 也要吃吗？他们都是本地人。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "本地人也会得，只是比较常见。他们应该看当地的医生。你自己回来以后三个月内发烧，马上来验血。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白了。谢谢医生，这次真的学到了。"
+      }
+    ]
+  },
+  {
+    "id": "infect_009",
+    "split": "train",
+    "condition": "Plasmodium knowlesi malaria, post-treatment follow-up",
+    "source": "Malaria",
+    "patient_persona": {
+      "description": "Koperal Mohd Hafizi bin Zulkifli, 26, male, army corporal from Pasir Mas, Kelantan, back from jungle operations near the Kelantan-Perak border. Polite, crisp, Kelantanese Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Siti Aminah binti Yusof, Malay woman in her 40s, family medicine specialist at a Kota Bharu health clinic. Direct, motherly; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hafizi, hari ni hari ke-28 lepas rawatan. Kita buat blood film terakhir. Ada demam balik tak sejak keluar wad?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada, doktor. Saya dah sihat. Dah mula lari pagi dengan unit saya minggu lepas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan paksa sangat dulu. Hemoglobin masa discharge 10.8. Hari ni kita check sekali lagi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik doktor. Kawan saya satu platun pun kena malaria, tapi dia dekat Hospital Gua Musang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, pejabat kesihatan dah maklumkan. Operasi dekat hutan tu, kawasan knowlesi. Dia orang dah buat screening semua anggota."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, masa operasi kami ada ubat nyamuk, tapi tak cukup. Malam dalam hutan memang banyak nyamuk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Knowlesi ni nyamuk dia gigit waktu senja dan awal malam. Lengan panjang, seluar panjang, repellent dengan DEET, dan kelambu yang ada racun."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kelambu tu kami ada, tapi kadang tak sempat pasang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya faham, operasi. Saya akan tulis surat kepada pegawai perubatan unit awak, minta bekalan repellent yang cukup."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih doktor. Result hari ni bila keluar?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dah keluar pun. Blood film negatif, tiada parasit. Hemoglobin naik ke 13.1. Awak dah sembuh sepenuhnya."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Jadi saya boleh masuk operasi balik bulan depan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dari segi malaria, boleh. Tapi kalau demam dalam masa setahun lepas masuk hutan, beritahu doktor terus pasal hutan tu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau saya dah pernah kena, badan saya ada imun ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak. Boleh kena lagi, dan kali kedua pun boleh teruk. Jadi jangan ambil mudah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Faham, doktor. Saya akan pesan dekat kawan-kawan juga."
+      }
+    ]
+  },
+  {
+    "id": "infect_010",
+    "split": "train",
+    "condition": "Fever in a returning traveller, malaria excluded",
+    "source": "Malaria",
+    "patient_persona": {
+      "description": "Priya a/p Ramachandran, 30, female, NGO programme officer in Petaling Jaya, back from three weeks volunteering in Uganda. Clear, fast Malaysian Indian English, organised, a bit anxious.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Hazwan bin Rahim, Malay man in his 40s, infectious diseases physician at a PJ private hospital. Measured, precise; English with occasional Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Priya, I have your results. Three sets of malaria films, taken twelve hours apart, all negative. And the rapid antigen test also negative."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh thank God. I was so sure it was malaria. My demam was 39 for two days."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Three negative films makes malaria very unlikely. Your dengue NS1 is also negative. But your full blood count shows something else."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Something else? Apa dia, doctor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "White count is normal, but eosinophils are raised. And you mentioned swimming in Lake Bunyonyi, right?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, on my last weekend. The guide said it's safe, no bilharzia."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Many freshwater lakes in that region carry schistosomiasis. Fever with high eosinophils a few weeks after swimming, that's suspicious."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So what do we do now?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We'll send schistosoma serology, and a stool and urine test for eggs. Serology might take a week."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And sementara tu? I have a report due next Friday."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "You're stable, so you can go home. Paracetamol 1 gram up to four times a day for fever. If the tests confirm it, the treatment is praziquantel, usually a one-day course."
+      },
+      {
+        "speaker": "Patient",
+        "text": "One day only? Tak teruk sangat lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, but we time it right, because it works best on mature worms, so sometimes we repeat it after six to eight weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I stopped my doxycycline after one week back. Should I start balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's now past the four weeks, so no need. But if fever comes back in the next three months, come straight here and remind them about Uganda."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, I'll simpan your card. Thank you, doctor."
+      }
+    ]
+  }
+]

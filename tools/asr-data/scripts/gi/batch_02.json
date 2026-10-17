@@ -1,0 +1,764 @@
+[
+  {
+    "id": "gi_011",
+    "split": "train",
+    "condition": "Gastro-oesophageal reflux disease (GERD)",
+    "source": "Gastroesophageal reflux disease (GERD)",
+    "patient_persona": {
+      "description": "Mrs. Shanthi a/p Krishnan, 57, female, payroll clerk in Klang, Selangor; had a coronary stent in March and takes aspirin and clopidogrel. Warm, talkative Malaysian Indian English with Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wan Azlina Wan Ismail, Malay woman in her 40s, gastroenterologist at a Klang hospital clinic. Precise, reassuring; mostly English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Good morning, Mrs. Shanthi. Your GP says you have pedih ulu hati for quite some time. Tell me more."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Three years already, doctor. Burning in the dada after makan, and at night masam water comes up to my throat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Does it wake you up? Any trouble swallowing, or losing weight?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Wakes me up two, three times a week. Swallowing is okay, weight actually naik sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "What are you taking for it sekarang?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "I buy Gaviscon from the farmasi. And my heart doctor gave me aspirin 100mg and clopidogrel 75mg after the stent."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Those two together increase the risk of stomach bleeding, so you do need proper protection. Have you had any black stools?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, never hitam. Sometimes kawan punya omeprazole I take when it's very teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Please don't take omeprazole. It can reduce how well clopidogrel works, and that matters for your stent."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, I tak tahu pun. So what can I take?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll start pantoprazole 40mg, once a day, thirty minutes before breakfast. It doesn't interfere with clopidogrel the same way."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Also, jangan makan within three hours before tidur, and raise the head of your katil with blocks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dinner I always makan late, after nine. My husband balik lambat from work."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Try having a lighter dinner earlier, maybe just a small snack later. We'll book a gastroscopy since it's been three years."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Do I need to stop the ubat cair darah for the scope?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No, don't stop anything without your cardiologist. For a simple diagnostic scope we can do it safely on both."
+      }
+    ]
+  },
+  {
+    "id": "gi_012",
+    "split": "train",
+    "condition": "Gastro-oesophageal reflux disease (GERD)",
+    "source": "Gastroesophageal reflux disease (GERD)",
+    "patient_persona": {
+      "description": "Encik Zulkarnain bin Othman, 45, male, lorry driver from Kuantan, Pahang; smokes a pack a day. Gruff, straightforward East Coast Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ravindran Pillai, Malaysian Indian man in his 50s, family physician at a Kuantan klinik kesihatan. Fatherly, firm; fluent Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Zulkarnain, dah lapan minggu makan omeprazole. Macam mana pedih ulu hati?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah kurang banyak, doktor. Malam dah boleh tidur, tak rasa masam naik tekak lagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Alhamdulillah. Omeprazole 20mg tu encik makan setiap pagi sebelum makan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Selalunya pagi, tapi kadang-kadang saya lupa, makan after breakfast je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Better take it before food, thirty minutes. Barulah ubat tu berkesan betul."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena makan selama-lamanya ke ubat ni, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak semestinya. Sekarang dah baik, kita cuba kurangkan. Makan bila perlu je, on demand, bila ada simptom."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, kalau pedih baru makan. Senang sikit macam tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya. Tapi rokok tu, encik masih hisap one pack sehari?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah kurang sikit, dalam lima belas batang. Susah nak berhenti, bawak lori malam mengantuk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Rokok buat injap perut jadi longgar, sebab tu asid naik. Klinik ni ada program berhenti merokok, nak saya rujuk?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh jugak lah, doktor. Isteri pun dah bising."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Berat encik hari ini 88 kilo, turun dua kilo. Keep it up, kurangkan teh tarik manis dan late night supper."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau pedih balik teruk macam dulu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau susah telan, muntah darah atau najis hitam, datang terus. Those are warning signs, we need to do a scope."
+      }
+    ]
+  },
+  {
+    "id": "gi_013",
+    "split": "train",
+    "condition": "Gastro-oesophageal reflux disease (GERD)",
+    "source": "Gastroesophageal reflux disease (GERD)",
+    "patient_persona": {
+      "description": "Tay Hui Wen, 33, female, marketing executive in Kuala Lumpur, 28 weeks pregnant with her first child. Gentle, slightly worried KL Mandarin with English workplace words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chew Boon Hock, Malaysian Chinese man in his 40s, obstetrician-friendly GP in Petaling Jaya. Calm, reassuring; Mandarin with English drug names.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我 pregnant 二十八个星期，最近胸口一直烧，吃完饭就很难受。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个在怀孕后期很常见，因为宝宝把胃往上推，荷尔蒙也让胃的门比较松。晚上会更严重吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，躺下去就酸水上来，有时候咳嗽醒来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有没有吐？或者右上腹痛，headache，脚肿得很厉害？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，就是烧。脚有一点点肿，gynae 说正常。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好，你的血压 116/72，正常。我先确定不是其他问题，看起来是单纯的 reflux。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "怀孕可以吃药吗？我很怕影响 baby。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Gaviscon 是 safe 的，after meals 和 before bed 各 10ml。它在胃上面形成一层 protective layer，不太进入血液。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那如果 Gaviscon 不够力呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那可以加 omeprazole 20mg，一天一次。怀孕用的研究很多，算是安全的。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Coffee 会让 reflux 更严重，最好 cut down。还有 small frequent meals，睡觉前三个钟头不要吃东西。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "咖啡会让 reflux 更严重，最好减少。还有少吃多餐，睡觉前三个钟头不要吃东西。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "睡觉的时候用多两个枕头可以吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，或者把床头垫高一点，sleep on your left side 也会舒服些。After delivery，通常就会好了。"
+      }
+    ]
+  },
+  {
+    "id": "gi_014",
+    "split": "train",
+    "condition": "Gastro-oesophageal reflux disease (GERD)",
+    "source": "Gastroesophageal reflux disease (GERD)",
+    "patient_persona": {
+      "description": "Hajah Saadiah binti Ahmad, 63, female, retired school canteen operator from Alor Setar, Kedah; on long-term omeprazole. Chatty, Kedah Malay accent, slow.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Afiqah Rosli, Malay woman in her 30s, medical officer at an Alor Setar clinic doing a medication refill visit. Polite, clear; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Assalamualaikum doktor. Mai ambik ubat gastrik ni, dah habis minggu lepas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Waalaikumsalam, mak cik. Mak cik dah makan omeprazole ni berapa lama dah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lama dah, lima tahun lebih. Doktor dulu kata makan terus, long-term."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sekarang ada symptom lagi? Heartburn, masam naik ke tekak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada sangat dah. Kalau makan gulai lemak banyak, baru rasa sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mak cik, long-term PPI boleh reduce magnesium dan vitamin B12. Bone density pun boleh jadi lemah sikit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya ka? Patutlah kaki mak cik selalu kejang malam-malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin ada kaitan. Hari ini saya ambil darah untuk check magnesium dan B12 sekali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya cadang kurangkan dos. Omeprazole 20mg, tapi makan selang sehari untuk dua minggu dulu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau pedih balik macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau pedih sikit, boleh minum antacid, one tablespoon after meals. Kalau teruk, sambung balik once a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik lah. Ubat darah tinggi mak cik tu pun nak ambik sekali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Amlodipine 10mg, blood pressure today 132/78, very good. Saya sambung untuk tiga bulan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih doktor. Nanti result darah tu macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau ada yang tak normal, klinik akan panggil mak cik. Kalau tak, jumpa tiga bulan lagi."
+      }
+    ]
+  },
+  {
+    "id": "gi_015",
+    "split": "train",
+    "condition": "Gastro-oesophageal reflux disease (GERD)",
+    "source": "Gastroesophageal reflux disease (GERD)",
+    "patient_persona": {
+      "description": "Kenneth Khoo Beng Huat, 40, male, factory production manager in Bayan Lepas, Penang. English-dominant Penang Chinese, brisk, some Hokkien-style particles and Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nadia Ramli, Malay woman in her 40s, gastroenterologist at a Penang private hospital, reviewing scope results. Clear, structured; English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Kenneth, I have your gastroscopy report here. Let me show you the pictures."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doc. Serious or not? I was a bit takut the whole week."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nothing cancerous. You have reflux oesophagitis, LA grade B, meaning a few small erosions at the bottom of the food pipe."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Erosions sounds scary leh. It's from the asid ah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes. You also have a small hiatus hernia, three centimetres. Part of the stomach slides up above the diaphragm, so acid escapes more easily."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Need operation for the hernia? Kena potong ah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not for a small one. Kebanyakan orang okay dengan ubat and lifestyle changes saja."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give you esomeprazole 40mg once a day, before breakfast, for eight weeks. Then we step down."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Last time the klinik gave me ranitidine, tak jalan pun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Esomeprazole is stronger than ranitidine. Take it every day, not only when there's pain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Diet wise? I do a lot of makan-makan with clients, beer and all."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Alcohol, big late meals and extra weight all make it worse. Your BMI is 28, losing even five kilos helps a lot."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright, I'll try to kurangkan the beer. Can I still minum kopi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "One cup pagi is fine. The biopsy showed no Barrett's changes, so no need to repeat the scope unless symptoms berubah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, thanks doc. Lega already."
+      }
+    ]
+  },
+  {
+    "id": "gi_016",
+    "split": "train",
+    "condition": "Peptic ulcer / H. pylori infection",
+    "source": "H. pylori infection",
+    "patient_persona": {
+      "description": "Ng Kok Wah, 56, male, electrician in Kuantan, Pahang; takes simvastatin 40mg at night. Plain-spoken Malaysian Mandarin, a few Malay and English words.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Li Ping, Malaysian Chinese woman in her 40s, gastroenterologist at a Kuantan hospital, reviewing biopsy results. Precise, patient; Mandarin with English drug names.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "黄先生，你的 biopsy 报告出来了。十二指肠有一个溃疡，而且验到 H. pylori 细菌。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bacteria？那就是说我的胃痛是细菌引起的？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，大部分的十二指肠溃疡都是这个细菌造成的。你的血也有一点贫血，hemoglobin 11.2。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "难怪我最近爬楼梯很容易累。这个可以医好吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以。要吃三种药，十四天：omeprazole 20mg，amoxicillin 1 gram，clarithromycin 500mg，全部一天两次。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那么多药啊？一天要吃几粒？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "早上饭前一套，晚上饭前一套。我会给你一张表，照着吃，一次都不要漏。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我晚上还有吃 simvastatin，那个胆固醇药，可以一起吃吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个很重要。Clarithromycin 跟 simvastatin 一起会伤肌肉。这十四天 simvastatin 先停，吃完抗生素再吃回。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，stop 两个星期。吃药会有什么 side effect？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "嘴巴可能有 metallic taste，也可能 diarrhoea。If 拉得很严重 or 皮肤出 rash，马上回来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我老婆也要 check 吗？我们一起吃饭的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "她没有症状就不用。你吃完药之后四个星期，我们做 breath test，看细菌有没有清。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那个 breath test 之前要注意什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Test 前两个星期停 omeprazole，前一晚 midnight 后 fasting。贫血的话，我另外开 iron tablets 给你。"
+      }
+    ]
+  },
+  {
+    "id": "gi_017",
+    "split": "train",
+    "condition": "Peptic ulcer / H. pylori infection",
+    "source": "Peptic ulcer",
+    "patient_persona": {
+      "description": "Mak Som (Puan Kalsom binti Daud), 58, female, nasi kerabu seller from Pasir Mas, Kelantan; buys painkillers for knee pain from a sundry shop. Talkative, strong Kelantan dialect.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Syafiq Ab Rahman, Malay man in his 30s, medical officer at a Pasir Mas health clinic. Kind, direct; Kelantan-friendly Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, perut ambo pedih sangat dua minggu ni. Semalam berak hitam, macam tar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Black stool tu important, mak cik. Berapa kali dah jadi macam tu?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Semalam dua kali, pagi tadi sekali. Rasa pening bila bangun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mak cik ada makan ubat sakit sendi, painkiller dari kedai?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ado. Ubat sakit lutut, beli kedai runcit. Makan tiga kali sehari, dah sebulan lebih."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mak cik bawa kotak ubat tu? Ni diclofenac, an NSAID. Ubat jenis ni boleh buat ulcer dalam perut dan bleeding."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Allah, ambo tak tahu pun. Ingat ubat angin je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nadi mak cik 110, blood pressure 98/60, muka pucat. Hemoglobin cepat tadi 8.4, rendah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya rasa ada ulser yang berdarah, bleeding ulcer. Mak cik kena pergi Hospital Pasir Mas sekarang, ambulance akan hantar."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena tahan wad ko? Anak ambo kerja kat KL."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, kena admit. Doktor sana akan buat scope, tengok dan stop the bleeding kalau perlu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat lutut tu, ambo nak buang terus ko?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, jangan makan lagi. Untuk lutut, paracetamol lebih selamat. Nanti lepas keluar wad kita bincang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baiklah doktor. Ambo telefon suami dulu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh. Sementara tunggu, nil by mouth, jangan makan atau minum apa-apa, sebab mungkin kena buat endoscopy."
+      }
+    ]
+  },
+  {
+    "id": "gi_018",
+    "split": "train",
+    "condition": "Peptic ulcer / H. pylori infection",
+    "source": "H. pylori infection",
+    "patient_persona": {
+      "description": "Arun a/l Mahendran, 35, male, logistics coordinator in Johor Bahru, returning after H. pylori treatment. Friendly, fast Malaysian Indian English, some Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chin Soo Yee, Malaysian Chinese woman in her 30s, GP in Johor Bahru. Upbeat, efficient; English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Arun, you're here for the breath test result, right?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes doctor. I did the test last Jumaat at the lab, the one where you tiup into the bag."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good news. The urea breath test is negative. The H. pylori is gone."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Wah, finally. Those two weeks of ubat were terrible, my mouth rasa macam besi the whole time."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Clarithromycin does that. Did you stop the omeprazole two weeks before the test like we said?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, stopped. But the last few days a bit of pedih came back, only after nasi lemak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mild burning after oily food is common. Ada muntah, black stools, or weight loss?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "None of that. Berat actually same, 74 kilos."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay. You can take omeprazole 20mg when needed, maybe for a few weeks, then stop."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can the kuman come back?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Reinfection in adults is uncommon, maybe one to two percent a year. Good hygiene and clean water help."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My father also had ulser last time. Should he test also?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If he has symptoms, yes. He can see his GP and ask for a breath test or stool antigen test."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And painkillers? Sometimes I makan Ponstan for sakit kepala."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ponstan is an NSAID, better avoid since you had an ulcer. Makan Panadol saja, dua biji, sampai empat kali sehari."
+      }
+    ]
+  },
+  {
+    "id": "gi_019",
+    "split": "train",
+    "condition": "Peptic ulcer / H. pylori infection",
+    "source": "Peptic ulcer",
+    "patient_persona": {
+      "description": "Pak Long Ismail bin Kassim, 67, male, retired fisherman from Muar, Johor; admitted two days ago for a bleeding gastric ulcer. Hoarse, slow, Johor Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kelvin Lau Seng Chuan, Malaysian Chinese man in his 30s, surgical registrar at a Muar hospital, on morning ward round. Efficient, respectful; fluent Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Selamat pagi, pak cik. Macam mana perut hari ni? Masih sakit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah kurang, doktor. Semalam masih berak hitam sikit, pagi ni belum lagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Masa skop hari tu, kami jumpa ulser dalam perut, dua sentimeter. Kami dah klip saluran darah yang berdarah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Klip tu kekal dalam perut ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak, klip tu akan tercabut sendiri dalam beberapa minggu dan keluar dengan najis. Pak cik tak rasa apa-apa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hemoglobin semalam 8.1, lepas dua beg darah naik ke 9.6. Blood pressure 124/74, nadi 84, stabil."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila saya boleh makan nasi? Dah dua hari minum air je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Today boleh start bubur dan soft diet. Kalau tak ada muntah darah, tomorrow boleh makan biasa."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat yang masuk tangan ni, ubat apa, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tu pantoprazole, untuk reduce acid supaya ulser sembuh. Esok kita tukar ke oral tablet, 40mg twice a day untuk lapan minggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Biopsi tu dah keluar result ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Biopsi positif H. pylori, jadi pak cik perlu antibiotik juga. Tak ada tanda kanser, tapi kita ulang skop lapan minggu lagi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya selalu makan aspirin, doktor klinik yang bagi untuk jantung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Aspirin kita tahan dulu. Saya bincang dengan doktor jantung bila boleh mula semula, mungkin dalam seminggu."
+      }
+    ]
+  },
+  {
+    "id": "gi_020",
+    "split": "test",
+    "condition": "Peptic ulcer / H. pylori infection",
+    "source": "H. pylori infection",
+    "patient_persona": {
+      "description": "Wong Siew Ching, 44, female, bank officer in Kuching, Sarawak; allergic to penicillin. Soft, careful Sarawak Mandarin with English banking words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Abang Azhar Abang Hamdan, Sarawakian Malay man in his 40s, gastroenterologist in Kuching. Courteous; English-leaning, speaks passable Mandarin and switches when needed.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Miss Wong，你的 gastroscopy 看到胃发炎，biopsy 有 H. pylori。我们今天讨论治疗。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好的医生。可是我对 penicillin 敏感，以前吃 amoxicillin 全身起红点，喉咙很痒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "谢谢你讲，这个很重要。那我们不用 amoxicillin，换成 metronidazole。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "所以你吃三样药，十四天：omeprazole 20mg，clarithromycin 500mg，metronidazole 400mg，全部一天两次。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Metronidazole 要注意什么吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "吃这个药的时候，还有吃完后两天，绝对不可以喝酒，会很晕很想吐。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我不喝酒的。不过下个月公司有 annual dinner。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那时候你已经吃完了，没问题。你现在还有吃其他药吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "只有 Zyrtec，鼻子敏感的时候吃，还有月经痛吃 Ponstan。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Zyrtec 可以。Ponstan 会伤胃，这段时间换 Panadol。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我妈妈以前是胃癌走的，我这个会不会变成癌？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 biopsy 没有癌细胞。清除 H. pylori 反而可以减少胃癌的风险，所以这个治疗很值得。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那吃完药以后呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "吃完四个星期后做 breath test。因为你有 family history，one year later 我们再做一次 scope 看看。"
+      }
+    ]
+  }
+]

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambient scribe: consultation to coded note</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f6f8;
+      --color-paper-2: #e8eaee;
+      --color-ink:     #1d1f23;
+      --color-muted:   #59616b;
+      --color-soft:    #8a929e;
+      --color-rule:    rgba(29,31,35,0.12);
+      --color-accent:  #245bcc;
+      --color-link:    #0f6e66;
+      --font-sans:     'Inter', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1200px; width: 100%; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      line-height: 1.55;
+      color: var(--color-muted);
+      max-width: 72ch;
+      margin-bottom: 1.5rem;
+    }
+
+    .diagram { overflow-x: auto; }
+    svg { width: 100%; min-width: 900px; display: block; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 0.9fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+    .card {
+      background: #ffffff;
+      border-radius: 6px;
+      border: 1px solid var(--color-rule);
+      padding: 1.25rem;
+    }
+    .card-header {
+      display: flex; align-items: center; gap: 0.6rem;
+      margin-bottom: 0.875rem; padding-bottom: 0.875rem;
+      border-bottom: 1px solid rgba(29,31,35,0.08);
+    }
+    .card-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .card-dot.ink    { background: var(--color-ink); }
+    .card-dot.muted  { background: var(--color-muted); }
+    .card-dot.accent { background: var(--color-accent); }
+    .card-dot.link   { background: var(--color-link); }
+    .card-dot.soft   { background: var(--color-soft); }
+    .card h3 { font-size: 0.875rem; font-weight: 600; color: var(--color-ink); letter-spacing: -0.005em; }
+    .card ul { list-style: none; color: var(--color-muted); font-size: 0.8125rem; line-height: 1.55; }
+    .card li { margin-bottom: 0.3rem; padding-left: 0.875rem; position: relative; }
+    .card li::before { content: '\2014'; position: absolute; left: 0; color: rgba(29,31,35,0.25); font-size: 0.75rem; }
+    code { font-family: var(--font-mono); font-size: 0.75rem; }
+
+    .footer {
+      margin-top: 2rem; padding-top: 1.25rem;
+      border-top: 1px solid var(--color-rule);
+      font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em;
+      color: var(--color-soft);
+      display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Sona · staging · checked 8 Oct 2026 @ cd76571b</p>
+    <h1>Ambient scribe: consultation to coded note</h1>
+    <p class="subtitle">How a spoken consultation in any mix of English, Malay and Mandarin becomes a reviewed note with ICD-10 codes. &ldquo;Record visit&rdquo; and &ldquo;12 s parts&rdquo; are drawn as one step.</p>
+
+    <div class="diagram">
+    <svg viewBox="0 0 1328 552" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ambient-scribe-title ambient-scribe-desc">
+      <title id="ambient-scribe-title">Ambient scribe: consultation to coded note</title>
+      <desc id="ambient-scribe-desc">Swimlane showing a consultation recorded on Sona Pro in 12-second parts, transcribed per speaker on Sona Speech, named by the doctor, drafted and coded by Sona Med, and checked by the Sona server before the doctor saves it.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#59616b"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#245bcc"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f6e66"/></marker>
+        <marker id="arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1d1f23"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#f5f6f8"/>
+<!-- background: lanes, lifelines, frames -->
+<line x1="32" y1="32" x2="1296" y2="32" stroke="rgba(29,31,35,0.22)" stroke-width="1"/>
+<line x1="32" y1="136" x2="1296" y2="136" stroke="rgba(29,31,35,0.12)" stroke-width="1"/>
+<line x1="32" y1="240" x2="1296" y2="240" stroke="rgba(29,31,35,0.12)" stroke-width="1"/>
+<line x1="32" y1="344" x2="1296" y2="344" stroke="rgba(29,31,35,0.12)" stroke-width="1"/>
+<line x1="32" y1="448" x2="1296" y2="448" stroke="rgba(29,31,35,0.22)" stroke-width="1"/>
+<line x1="136" y1="32" x2="136" y2="448" stroke="rgba(29,31,35,0.22)" stroke-width="1"/>
+<text x="44" y="82" fill="#59616b" font-size="9" font-weight="500" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">SONA PRO</text>
+<text x="44" y="96" fill="#8a929e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">doctor, iPhone</text>
+<text x="44" y="186" fill="#59616b" font-size="9" font-weight="500" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">SONA SERVER</text>
+<text x="44" y="200" fill="#8a929e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">Worker</text>
+<text x="44" y="290" fill="#59616b" font-size="9" font-weight="500" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">SONA SPEECH</text>
+<text x="44" y="304" fill="#8a929e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">sona-voice</text>
+<text x="44" y="394" fill="#59616b" font-size="9" font-weight="500" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">SONA MED</text>
+<text x="44" y="408" fill="#8a929e" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">sona-brain</text>
+<!-- connectors (drawn before boxes) -->
+<path d="M 332 84 L 424 84 A 8 8 0 0 1 432 92 L 432 156" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 432 220 L 432 260" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 512 292 L 612 292 A 8 8 0 0 0 620 284 L 620 116" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 700 84 L 780 84 A 8 8 0 0 1 788 92 L 788 364" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 868 396 L 892 396 A 8 8 0 0 0 900 388 L 900 220" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 900 156 L 900 116" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 980 84 L 1068 84 A 8 8 0 0 1 1076 92 L 1076 364" fill="none" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 1156 396 L 1180 396 A 8 8 0 0 0 1188 388 L 1188 220" fill="none" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- connector labels -->
+<rect x="340" y="64" width="76" height="12" rx="2" fill="#f5f6f8"/>
+<text x="378" y="74" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">WAV + MEMORY</text>
+<rect x="520" y="272" width="84" height="12" rx="2" fill="#f5f6f8"/>
+<text x="562" y="282" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">TURNS + MEMORY</text>
+<rect x="708" y="64" width="64" height="12" rx="2" fill="#f5f6f8"/>
+<text x="740" y="74" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">NOTE.DRAFT</text>
+<rect x="908" y="128" width="84" height="12" rx="2" fill="#f5f6f8"/>
+<text x="950" y="138" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">KEPT + DROPPED</text>
+<rect x="996" y="64" width="64" height="12" rx="2" fill="#f5f6f8"/>
+<text x="1028" y="74" fill="#0f6e66" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SAVED NOTE</text>
+<!-- nodes -->
+<rect x="152" y="52" width="180" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="152" y="52" width="180" height="64" rx="6" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="242" y="76" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Record in 12 s parts</text>
+<text x="242" y="92" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">16 kHz mono, one at a time</text>
+<text x="242" y="104" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">0.3 s pause after 12 s, ≤20 s</text>
+<rect x="352" y="156" width="160" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="352" y="156" width="160" height="64" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="432" y="184" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">voice.transcribe</text>
+<text x="432" y="200" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">audio read, not stored</text>
+<rect x="352" y="260" width="160" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="352" y="260" width="160" height="64" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<text x="432" y="284" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Diarize, then ASR</text>
+<text x="432" y="300" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Nemotron + Qwen3-ASR</text>
+<text x="432" y="312" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">per turn, up to 8 voices</text>
+<rect x="540" y="52" width="160" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="540" y="52" width="160" height="64" rx="6" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<text x="620" y="76" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Name the voices</text>
+<text x="620" y="92" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">&quot;Who is Voice 3?&quot;</text>
+<text x="620" y="104" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">merging is manual</text>
+<rect x="708" y="364" width="160" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="708" y="364" width="160" height="64" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<text x="788" y="388" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Draft note</text>
+<text x="788" y="404" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">vLLM json_object</text>
+<text x="788" y="416" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">cites sentence numbers</text>
+<rect x="820" y="156" width="160" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="820" y="156" width="160" height="64" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="900" y="180" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Grounding check</text>
+<text x="900" y="196" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">numbers, medicines</text>
+<text x="900" y="208" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">and who said it</text>
+<rect x="820" y="52" width="160" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="820" y="52" width="160" height="64" rx="6" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<text x="900" y="80" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Review + save</text>
+<text x="900" y="96" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">new note revision</text>
+<rect x="996" y="364" width="160" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="996" y="364" width="160" height="64" rx="6" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<text x="1076" y="392" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">ICD-10 codes</text>
+<text x="1076" y="408" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">each cites a sentence</text>
+<rect x="1108" y="156" width="160" height="64" rx="6" fill="#f5f6f8"/>
+<rect x="1108" y="156" width="160" height="64" rx="6" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="1188" y="184" fill="#1d1f23" font-size="12" font-weight="600" font-family="'Inter', system-ui, sans-serif" text-anchor="middle">Code check</text>
+<text x="1188" y="200" fill="#59616b" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">WHO table + sentence id</text>
+<!-- legend -->
+<line x1="32" y1="480" x2="1296" y2="480" stroke="rgba(29,31,35,0.12)" stroke-width="0.8"/>
+<text x="32" y="500" fill="#59616b" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="32" y="511" width="16" height="12" rx="2" fill="rgba(89,97,107,0.1)" stroke="#8a929e" stroke-width="1"/>
+<text x="56" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Doctor&#x27;s phone step</text>
+<rect x="188" y="511" width="16" height="12" rx="2" fill="#ffffff" stroke="#1d1f23" stroke-width="1"/>
+<text x="212" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Sona server step</text>
+<rect x="328" y="511" width="16" height="12" rx="2" fill="rgba(29,31,35,0.03)" stroke="rgba(29,31,35,0.3)" stroke-width="1"/>
+<text x="352" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Model in Malaysia</text>
+<rect x="472" y="511" width="16" height="12" rx="2" fill="rgba(36,91,204,0.08)" stroke="#245bcc" stroke-width="1"/>
+<text x="496" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Doctor decides</text>
+<line x1="600" y1="517" x2="628" y2="517" stroke="#0f6e66" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<text x="640" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Call into a model</text>
+<line x1="760" y1="517" x2="788" y2="517" stroke="#59616b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="800" y="520" fill="#59616b" font-size="9" font-family="'Inter', system-ui, sans-serif">Hand-off</text>
+<text x="1296" y="520" fill="#8a929e" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.12em">STAGING · SYNTHETIC DATA ONLY</text>
+    </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header"><span class="card-dot accent"></span><h3>Measured, synthetic only</h3></div>
+        <ul>
+          <li>20 synthetic consultations of 2&ndash;8 people (<code>tools/diar-eval</code>): 97.1% of turns go to the right person with 12 s parts and memory handed on</li>
+          <li>Real rooms with several real people are not yet scored</li>
+          <li>Sona Speech keeps nothing between parts; a part with no speech keeps the last memory</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-dot ink"></span><h3>What the checks drop</h3></div>
+        <ul>
+          <li>A statement citing nothing in range, or with a number or medicine not in the transcript</li>
+          <li>An assessment or plan resting only on patient or family sentences; draft and turns logged to <code>provenance</code></li>
+          <li>A code whose evidence is not a note sentence id, or not in <code>icd10_codes</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-dot soft"></span><h3>Known limits</h3></div>
+        <ul>
+          <li>Web has no recorder; it drafts from a pasted transcript</li>
+          <li><code>json_object</code> holds valid JSON, not a schema; shape is checked in code</li>
+          <li>One real voice can be heard as two; the doctor merges them</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer"><span>Facts: docs/architecture/04-ambient-scribe.md</span><span>Staging · synthetic data · cd76571b</span></div>
+  </div>
+</body>
+</html>

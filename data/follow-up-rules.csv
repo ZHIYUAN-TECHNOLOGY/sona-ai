@@ -1,0 +1,6 @@
+id,kind,risk_band,min_mm,max_mm,interval_days,action,source
+nodule-under-6,nodule,low,0,5.9,,No routine follow-up,Fleischner Society 2017 (solid nodule; synthetic demo table)
+nodule-6-to-8,nodule,intermediate,6,8,180,CT chest at 6 to 12 months,Fleischner Society 2017 (solid nodule; synthetic demo table)
+nodule-over-8,nodule,high,8.1,100,90,"CT chest at 3 months, PET-CT or tissue sampling",Fleischner Society 2017 (solid nodule; synthetic demo table)
+cardiomegaly-borderline,cardiomegaly,intermediate,,,42,Echocardiogram,Local rule (synthetic demo table)
+effusion-small,effusion,intermediate,,,14,Repeat chest X-ray or ultrasound,Local rule (synthetic demo table)

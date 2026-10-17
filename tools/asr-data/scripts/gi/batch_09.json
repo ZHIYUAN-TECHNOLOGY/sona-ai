@@ -1,0 +1,760 @@
+[
+  {
+    "id": "gi_081",
+    "split": "train",
+    "condition": "Dialysis patient review",
+    "source": "End-stage renal disease",
+    "patient_persona": {
+      "description": "Puan Rohani binti Abu Bakar, 58, female, seamstress from Shah Alam; on haemodialysis three times a week for two years via a left arm fistula; type 2 diabetes. Tired, frank Selangor Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Leong Mun Yee, Malaysian Chinese woman in her 40s, nephrologist doing monthly rounds at a Shah Alam dialysis centre. Brisk but kind; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Rohani, apa khabar? Saya tengok berat naik 3.5 kilo dari sesi hari Jumaat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya tahu, doktor. Hujung minggu ada kenduri anak saudara, minum air sirap banyak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham, kenduri memang susah. But more than two kilos gain makes your heart work harder, dan kaki bengkak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Last week puan miss satu session, hari Rabu. Kenapa, puan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada orang hantar. Suami demam, anak kerja. Saya malu nak minta tolong jiran."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih jujur. Kita boleh minta bantuan transport dari kebajikan atau NGO. Nanti social worker jumpa puan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Darah bulan ni, phosphate 2.1, tinggi. Puan makan calcium carbonate tu macam mana?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya makan pagi, before breakfast, dua biji sekali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat tu kena makan masa makan, bukan sebelum. Satu biji setiap kali makan nasi, sebab dia ikat phosphate dalam makanan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, saya tak tahu pula. Makanan apa yang tinggi phosphate?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Air kotak, minuman cola, keju, dan makanan proses macam sosej. Ikan bilis dan kacang pun kena kurang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hemoglobin 9.8, masih rendah sikit. Erythropoietin dose we increase to 4000 units, three times a week, masa dialisis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Air sebenarnya saya boleh minum berapa banyak sehari?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lebih kurang 500ml, tambah berapa banyak puan kencing. Guna cawan kecil, dan hisap ketulan ais kalau dahaga."
+      }
+    ]
+  },
+  {
+    "id": "gi_082",
+    "split": "train",
+    "condition": "Dialysis patient review",
+    "source": "End-stage renal disease",
+    "patient_persona": {
+      "description": "Ngu Tiong Hock, 64, male, retired fishmonger from Kuching, Sarawak; on haemodialysis for four years. Loud, jovial Sarawak Mandarin with Hokkien flavour.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Aiman bin Rosli, Malay man in his 30s, nephrologist in Kuching; fluent Mandarin from Chinese school. Calm; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "吴伯，今天抽血，potassium 是 6.4，很高。这几天有没有觉得手脚没力，或者心跳怪怪的？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有一点没力啦。昨天我女儿从 Serian 带来两粒榴莲，我吃了半粒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "半粒？榴莲的 potassium 很高，对洗肾的人很危险，心脏可能会突然停。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这么严重？我以为只是比较热气而已。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "刚才的 ECG 有变化，T wave 比较尖。今天洗肾会用低 potassium 的 dialysis fluid，帮你拉下来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "洗完之后我们再 check 一次。如果还是高，就给你吃 potassium binder。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我以后都不能吃榴莲吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "最好不要。真的很想吃，就一两粒，而且要在 dialysis 前一天吃，weekend 不要吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好好好。还有什么水果比较安全？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "苹果、梨、菠萝比较低。Banana、榴莲、红毛丹、coconut water 都要 avoid。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 phosphate 1.6，还 okay。Sevelamer continue，一餐一粒，take with meals。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我最近 skin 很痒，晚上抓到流血。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可能跟 phosphate 和洗肾不够有关系。我开 cream 给你擦，也会 check parathyroid hormone。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "谢谢医生。我回去跟女儿讲，榴莲不要再拿来了。"
+      }
+    ]
+  },
+  {
+    "id": "gi_083",
+    "split": "train",
+    "condition": "Dialysis patient review",
+    "source": "End-stage renal disease",
+    "patient_persona": {
+      "description": "Ganesan a/l Periasamy, 52, male, former lorry dispatcher in Ipoh; on CAPD for one year, four exchanges a day; hypertension. Anxious Malaysian Indian English with Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chong Yee Ling, Malaysian Chinese woman in her 30s, nephrology medical officer at an Ipoh hospital. Efficient; English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, this morning the bag come out keruh, cannot see the newspaper through it. Perut also sakit since last night."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good that you came straight away. Any fever? When was your transfer set last changed?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Last night I feel macam demam, 37.9. The set changed two months ago."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Can you walk me through your exchange yesterday? Anything different?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yesterday the room very panas, so I switch on the fan during exchange. And I think I forget to wear the mask."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's probably how the germs got in. Fans blow dust and bacteria onto the connection."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The bag fluid white cell count is 850, mostly neutrophils. This is PD peritonitis, an infection of the lining of the tummy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Must stop CAPD? Must go haemodialysis?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No, usually we treat through the PD. Antibiotics go directly into your bags, cefazolin and ceftazidime."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The PD nurse akan tunjuk. Most patients continue at home, but for the first two days kita tahan dalam wad."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How long kena makan the antibiotic?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At least two weeks, depending on the culture. If it grows something tough, we'll adjust."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Also take nystatin 5ml four times a day, to prevent kulat infection from the antibiotics."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doctor. Lepas ni tak pakai kipas dah, sure pakai mask."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Cuci tangan betul-betul, satu minit penuh. We'll redo your technique training before discharge."
+      }
+    ]
+  },
+  {
+    "id": "gi_084",
+    "split": "train",
+    "condition": "Dialysis patient review",
+    "source": "End-stage renal disease",
+    "patient_persona": {
+      "description": "Mohd Zulkarnain bin Che Mat, 47, male, former taxi driver in Kota Bharu, Kelantan; haemodialysis for three years from hypertensive kidney disease. Frank Kelantanese Malay with occasional English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nadia binti Rahmat, Malay woman in her 40s, nephrologist doing rounds at a Kota Bharu dialysis unit. Warm; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, Encik Zul. Blood pressure sebelum dialisis tadi 178/102. Tinggi tu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Waalaikumsalam. Pagi tadi saya tak makan ubat, doktor. Dialysis day saya tak makan, takut pressure drop atas mesin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat mana yang encik tinggal? Amlodipine je, atau semua?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Semua. Amlodipine, bisoprolol, dengan prazosin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Amlodipine tak keluar dengan dialisis, jadi boleh makan pagi macam biasa. Prazosin boleh tangguh sampai lepas dialisis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau pening masa atas machine?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Beritahu nurse terus. But low pressure usually because we pull too much fluid. Berat encik naik tiga kilo, jadi mesin kena tarik lebih."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Fistula macam mana? Masih rasa getaran?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, macam biasa. Cuma minggu lepas nurse susah nak cucuk, cuba tiga kali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bunyi dia lain sikit. Kita buat ultrasound fistula, takut ada penyempitan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, bulan puasa dah dekat. Saya boleh puasa tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hari tak dialisis, ramai pesakit boleh puasa kalau stabil. Hari dialisis lebih baik tak puasa. Kita bincang dengan dietitian juga."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Masa berbuka tu saya selalu minum banyak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's dangerous. Berbuka dan sahur, total fluid still the same, 500ml plus urine output. Kurma pun potassium tinggi, tiga biji cukup."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Saya cuba."
+      }
+    ]
+  },
+  {
+    "id": "gi_085",
+    "split": "train",
+    "condition": "Dialysis patient review",
+    "source": "End-stage renal disease",
+    "patient_persona": {
+      "description": "Teo Lay Hoon, 70, female, retired seamstress in Johor Bahru; haemodialysis for five years via a right arm fistula; type 2 diabetes. Gentle, soft-spoken Malaysian Mandarin with Teochew words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kho Wei Ming, Malaysian Chinese man in his 50s, nephrologist at a Johor Bahru dialysis centre. Unhurried; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "张阿姨，这个月的 blood report 出来了。你说最近很痒，晚上睡不好，是吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "是啊，医生。背和脚都痒，抓到都破皮了。晚上还会抽筋。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 parathyroid hormone 是 95，很高，洗肾的人最好在 15 到 60 左右。Phosphate 也有 2.0。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Parathyroid hormone 是什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "是副甲状腺的 hormone。太高会让 bone 变弱，也会让 skin 痒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我会开 cinacalcet 25mg，一天一次，晚餐的时候吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这个药会不会伤胃？我胃不好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有些人会 nausea，跟饭一起吃比较好。如果 vomiting 得厉害，要 inform nurse。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 phosphate binder，calcium carbonate，一餐吃几粒？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我早餐不太吃饭，只喝 Milo，所以早餐那粒没吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Milo 里面也有 phosphate。喝 Milo 的时候也要吃一粒。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "原来是这样。那皮肤痒可以擦什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "洗澡用温水，不要太热，洗完擦 lotion。我也开 loratadine 10mg，两天一次，晚上吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "脚抽筋呢？每次洗肾最后一个钟头都抽。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "通常是 fluid 拉太多太快。两次 dialysis 之间，weight gain 不要超过 two kilo，就不用拉那么快。"
+      }
+    ]
+  },
+  {
+    "id": "gi_086",
+    "split": "train",
+    "condition": "Typhoid fever",
+    "source": "Typhoid fever",
+    "patient_persona": {
+      "description": "Muhammad Aiman bin Zakaria, 24, male, cook at his family's nasi kerabu stall in Pasir Mas, Kelantan; admitted with a week of fever. Weak, tired Kelantanese Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Syafiq bin Ibrahim, Malay man in his 30s, medical officer at a Kelantan hospital. Calm; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Aiman, macam mana hari ni? Fever masih naik turun?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Masih demam, doktor, tapi tak setinggi semalam. Kepala kurang sakit. Perut masih kembung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Keputusan blood culture dah keluar. Kuman Salmonella Typhi. Maksudnya Aiman kena demam kepialu, typhoid."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Typhoid? Dari mana saya dapat?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually from contaminated food or water. Ada makan kat luar, atau minum air perigi two weeks ago?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, saya pergi kenduri kat kampung, minum air ais. Kat rumah pun guna air perigi untuk masak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We'll continue IV ceftriaxone 2 gram, once a day. Selalunya demam turun dalam lima hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lama tu, doktor. Siapa nak jaga gerai?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Typhoid ni penyakit wajib lapor. Pejabat kesihatan akan datang periksa gerai dan air rumah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Aiman tak boleh masak atau pegang makanan untuk jualan sampai stool test negatif tiga kali."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Laa... Keluarga saya kena check juga ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, sesiapa yang ada symptoms kena datang. Semua orang kat rumah kena wash hands dengan sabun lepas tandas."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila saya boleh balik rumah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bila demam dah turun 48 jam dan boleh makan. Kita tukar ke azithromycin 500mg, sekali sehari, habiskan kat rumah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau tiba-tiba sakit perut teruk atau najis hitam, beritahu nurse terus. Itu tanda komplikasi."
+      }
+    ]
+  },
+  {
+    "id": "gi_087",
+    "split": "train",
+    "condition": "Typhoid fever",
+    "source": "Typhoid fever",
+    "patient_persona": {
+      "description": "Chin Mei Kuen, 36, female, runs a sundry shop in Sandakan, Sabah, speaking for her 8-year-old son Jun Hao (about 25 kg) on day four of IV antibiotics. Worried, fast Sabah Mandarin with Hakka words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Marcus Liew Kong Fatt, Sabahan Chinese man in his 30s, paediatric medical officer at a Sandakan hospital. Reassuring; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "陈太，早安。浩浩昨晚怎样？还有 fever 吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "医生早。昨晚十二点还有 38.5，吃了 Panadol 就退了。今天早上 37.4。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "比前两天好多了，前天还有四十度。他今天有没有吃东西？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "吃了半碗粥，还喝了一点美禄。他说肚子没那么痛了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很好。Ceftriaxone 今天是第四天，通常第五六天烧会退。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "医生，为什么他会得 typhoid？我们家都喝过滤水。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可能是外面的食物，比如学校门口的冰水或者 rojak。卫生局会去调查。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "他常常在学校门口买冰水，我都讲不要买。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "小孩子很难控制。以后教他 before eating、after toilet 一定要用 soap 洗手。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "等他退烧两天，就换成 azithromycin 口服，一天一次 500mg，一共七天，回家吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那他什么时候可以回学校？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "要等 stool test 连续三次 negative，才可以回 school。大概 two to three weeks。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我弟弟跟我们住，他在夜市煮 mee 卖，他要检查吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "要。卖食物的人最好也做 stool test。如果家里有人发烧超过三天，马上带来看。"
+      }
+    ]
+  },
+  {
+    "id": "gi_088",
+    "split": "train",
+    "condition": "Typhoid fever",
+    "source": "Typhoid fever",
+    "patient_persona": {
+      "description": "Deepa a/p Murugesan, 35, female, HR executive in Petaling Jaya; returned ten days ago from a family wedding in Chennai, no typhoid vaccine. Clear, fast Malaysian Indian English.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Hazwan bin Mohd Nor, Malay man in his 30s, emergency physician at a Selangor hospital. Measured; English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I've had demam for about a week. Every day it goes a bit higher. Yesterday 39.6. Panadol tak berapa jalan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm sorry to hear that. Any travel recently?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, I came back from Chennai ten days ago. Cousin's wedding. I ate a lot of street food there, pani puri, everything."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Did you get the typhoid vaccine before travelling?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, I tak tahu need to. I only took Panadol and some Ponstan for the sakit kepala."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any diarrhoea or constipation? Cough? Rash?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sembelit sikit actually. Dry cough also. And my perut feels kembung, no appetite."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your temperature is 39.4 but your pulse is only 82. That's unusual with such a high fever, and it's a clue for typhoid."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your liver enzymes are mildly raised and white cells are low. The dengue test is negative."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So it's typhoid? Or malaria? My amma is very risau about malaria."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We'll do a malaria blood film too, but typhoid is more likely. Blood cultures first, then IV ceftriaxone 2 grams daily."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Typhoid from South Asia is often resistant to ciprofloxacin, so we won't use that. You'll be admitted for a few days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena admit? Okay. Should I stop the Ponstan then?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, stop Ponstan. For demam, only paracetamol 1 gram, up to four times sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Will my husband and son kena jangkit?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It spreads through food and water, not the air. Just wash hands carefully, and don't cook for the family until you're cleared."
+      }
+    ]
+  },
+  {
+    "id": "gi_089",
+    "split": "train",
+    "condition": "Typhoid fever",
+    "source": "Typhoid fever",
+    "patient_persona": {
+      "description": "Hasnah binti Mat Isa, 40, female, sells nasi lemak at a stall in Kangar, Perlis; discharged a week ago after typhoid. Chatty northern Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ong Kah Yee, Malaysian Chinese woman in her 30s, family medicine doctor at a Kangar health clinic. Friendly; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Kak Hasnah, apa khabar? Dah one week discharge. Macam mana rasa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah, doktor. Demam dah tak ada. Selera makan dah balik, cuma badan masih lembik sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Biasa tu. Typhoid ambil masa dua tiga minggu untuk pulih betul. Azithromycin dah habis makan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah habis semalam. Seven days, satu biji sehari, macam doktor pesan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Temperature 36.8, perut lembut, no tenderness at all. Semua okey."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, bila saya boleh buka gerai balik? Dah tiga minggu tak berniaga, duit habis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham, kak. Tapi sebab kak jual makanan, kena buat stool culture dulu. Tiga sampel, selang sehari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sampel pertama paling awal 48 jam lepas habis antibiotic. Jadi mula hari Khamis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau result ada kuman lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau masih ada, itu carrier. Kita rujuk pakar, mungkin perlu antibiotic lebih lama. Tapi kebanyakan orang negatif."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Health office dah datang tengok gerai. Dia suruh change the sink, add more soap."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Bila buka nanti, wear gloves, dan jangan pegang money dengan tangan yang pegang nasi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lega dengar macam tu. Suami saya pun dah buat stool test, negatif."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Alhamdulillah. Datang balik minggu depan untuk result, dan saya bagi surat clearance."
+      }
+    ]
+  },
+  {
+    "id": "gi_090",
+    "split": "test",
+    "condition": "Typhoid fever",
+    "source": "Typhoid fever",
+    "patient_persona": {
+      "description": "Yeoh Chee Keat, 55, male, lorry driver from Kepong, Kuala Lumpur; admitted with typhoid after eating at a roadside stall. Hoarse, impatient KL Mandarin with Cantonese words.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Siow Pei Qi, Malaysian Chinese woman in her 30s, infectious diseases medical officer at a Kuala Lumpur hospital. Clear; Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "杨先生，早。今天是 day five 了，昨晚还是 fever 到 38.9。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "医生，怎么还没退？我想回家了，在这里睡不好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Typhoid 用 ceftriaxone，有时候要七天烧才会完全退，你现在还算正常。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是我肚子右边好像有点胀，今天早上大便有点黑。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "谢谢你告诉我，这个很 important。我先 check 一下肚子。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "肚子软，没有 guarding。但是黑大便要注意，typhoid 有时会让肠子出血。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "今天早上 hemoglobin 12.8，跟 admission 的时候差不多。我们会再抽血，也做 stool occult blood。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "严重吗？要开刀吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "现在看起来没有 perforation。你有没有吃什么 iron tablet，或者补药？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我太太带了当归炖鸡汤来，还有她的铁丸，她说补血，我吃了两天。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Iron tablet 会让 stool 变黑，可能就是这个 reason。先 stop，医院的药以外不要乱吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哦，原来这样。那我什么时候可以出院？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "退烧 48 小时，胃口好，血稳定，就换成 azithromycin 500mg，一天一次，回家吃完七天。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我要开 lorry，出院后可以马上做工吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "先休息一个礼拜，我给你 MC。如果突然肚子剧痛或者吐血，马上回来急诊。"
+      }
+    ]
+  }
+]

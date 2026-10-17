@@ -1,0 +1,204 @@
+import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
+import * as Haptics from "expo-haptics";
+import { router, useNavigation } from "expo-router";
+import { usePreventRemove } from "expo-router/react-navigation";
+import { createContext, use, useRef, useState, type ReactNode } from "react";
+import { ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { EdgeBlur } from "@/components/sona/edge-blur";
+import { List, ListRow } from "@/components/sona/list";
+import { SampleLabel } from "@/components/sona/model-answer";
+import { Text } from "@/components/sona/text";
+import { palette, type } from "@/components/sona/theme";
+import { Action, Notice } from "@/components/sona/ui";
+import { VoiceDock } from "@/features/encounter/voice-dock";
+import type { LiveAdapter } from "@/features/encounter/sona-live";
+import type { Attachment } from "@/components/sona/attachments-menu";
+import { carry } from "@/features/encounter/carry";
+import { openPatients, openSession } from "@/features/encounter/navigation";
+import { useEncounter } from "@/features/encounter/store";
+import { api, requestId, useLive } from "@/features/live";
+import { createServerTask } from "@/features/live/server-day";
+import { partsOf } from "@sona-ai/domain/answer-parts";
+import { startingReply, wakingOf } from "@/features/live/waking";
+import { PLACEHOLDER, SCOPE_LABEL, askContext, forWhichPatient, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
+import { AnswerCards, OpsContext, Review } from "./cards";
+import { askCatalog, validateAskSpec } from "./catalog";
+import { taskOfOp } from "./parts";
+import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
+import { routePrompt } from "@/features/encounter/state";
+import { EVIDENCE, answerOf, type Entry, type Reply } from "./thread";
+import { ThreadEntry } from "./today-thread";
+
+/** Space a page leaves at the end of its content so the ask bar never covers it. */
+export const ASK_SPACE = 132;
+const DockHeight = createContext(0);
+/** The measured height of the Sona dock over this page (0 while hidden or outside `WithSona`), to pad by instead of ASK_SPACE. */
+export const useDockHeight = () => use(DockHeight);
+const tap = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
+
+const { registry } = defineRegistry(askCatalog, {
+  components: {
+    AskColumn: ({ children }) => <View style={{ gap: 14 }}>{children}</View>,
+    AskLead: ({ props }) => <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{props.text}</Text>,
+    AskRows: ({ props }) => { const { run } = use(OpsContext); return <List>
+      {props.rows.map((r, i) => <ListRow key={r.id} title={r.title} detail={r.detail} tone={r.tone} divider={i > 0} onPress={r.op ? () => run(r.op!) : undefined} />)}
+    </List>; },
+    AskReview: ({ props }) => <Review {...props} />,
+    AskActions: ({ props }) => { const { run } = use(OpsContext); return <View style={{ gap: 8 }}>{props.items.map(a => <Action key={a.op} label={a.label} secondary={!a.primary} onPress={() => run(a.op)} />)}</View>; },
+  },
+});
+
+/** One request ID per drafted task, so confirming again after a lost reply returns the saved task instead of adding another. */
+const taskRequests = new Map<string, string>();
+
+/**
+ * The ops an answer may run, and nothing else: open a visit, go to a page, change the page's tab or
+ * filter, or mark a task done or add a drafted one (after the answer's review card). `leave` closes whatever shows the
+ * answer first. A drafted task only comes from the server, so it is saved there as the follow-up tasks screen saves one,
+ * and the op resolves once it is.
+ */
+export function useRunOp(leave: () => void, onTab?: (tab: string) => void) {
+  const { updateEncounter } = useEncounter();
+  const navigation = useNavigation();
+  return (op: string): void | Promise<unknown> => {
+    const [kind, ...rest] = op.split(":");
+    const arg = rest.join(":");
+    if (kind === "open") { leave(); setTimeout(() => openSession(arg), 250); }
+    else if (kind === "go") { leave(); setTimeout(() => router.push(arg as never), 250); }
+    else if (kind === "tab") { leave(); if (onTab) onTab(arg); else openTab(navigation, arg); }
+    else if (kind === "task-done") { const [patientId, taskId] = rest; if (patientId && taskId) updateEncounter(current => ({ ...current, tasks: current.tasks.map(t => t.id === taskId ? { ...t, completed: true } : t) }), false, patientId); }
+    else if (kind === "task-new") {
+      const task = taskOfOp(arg);
+      if (!task) return Promise.reject(new Error("Sona's draft is not a task the app can add."));
+      const id = taskRequests.get(arg) ?? requestId();
+      taskRequests.set(arg, id);
+      return createServerTask({ ...task, requestId: id });
+    }
+  };
+}
+
+/** Where a day-wide answer's page action leads by default: a Patients tab (the Patients page under this one, if open), or the ward filtered. */
+const openTab = (navigation: Parameters<typeof openPatients>[0], tab: string) => tab === "blocked" ? router.push({ pathname: "/ward", params: { filter: "blocked" } }) : openPatients(navigation, { tab });
+
+/** An answer as a view from the ask catalogue, then its cards, with its question and its label (rule-based, or the model that drafted it); nothing renders if the spec fails the checks and it has no cards. */
+export function AnswerView({ answer, run, question = true, model }: { answer: Answer; run: (op: string) => void | Promise<unknown>; question?: boolean; model?: string }) {
+  const spec = validateAskSpec(answer.spec), cards = answer.cards ?? [];
+  if (!spec && !cards.length) return null;
+  return <View style={{ gap: 14 }}>
+    {question && <Text style={{ ...type.footnote, color: palette.muted }}>{answer.question}</Text>}
+    <OpsContext value={{ run }}>
+      {spec && <JSONUIProvider initialState={{}}><Renderer spec={spec} registry={registry} includeStandard={false} /></JSONUIProvider>}
+      {/* The record's facts and a drafted step, under the words (docs/answer-parts.md); an old server sends none. */}
+      <AnswerCards cards={cards} />
+    </OpsContext>
+    {model ? <SampleLabel source="model" model={model} /> : <SampleLabel source="fixture" rule />}
+  </View>;
+}
+
+const only = (answers: Answer[]) => `Until the model is switched on, Sona answers only: ${answers.map(a => a.question).join(" · ")}`;
+/** What a page says to a question without a model: its rule answer, or (demo mode) what Sona answers here; undefined when the model should answer. */
+export function answerNow(question: string, answers: Answer[], live: boolean): Reply | undefined {
+  const rule = matchQuestion(question, answers);
+  return rule ? { answer: rule } : live ? undefined : { notice: only(answers) };
+}
+/** Live mode: the model's answer to any question (ask.free: from the page's own data, else general knowledge, marked; a clinical one from the evidence), or why not: it is starting or out of reach (ask again). */
+export async function answerFree(scope: Scope, question: string, answers: Answer[], encounterId?: string): Promise<Reply> {
+  try {
+    // A visit's question sends the visit too: the server adds its patient's record, so "her last potassium" is answered from it.
+    // `cards`: this build shows them, so the server may draft a task to confirm (an older server ignores it).
+    const r = await api.ask.free({ scope, question, context: askContext(answers), encounterId, cards: true });
+    // Its coloured words and cards ride beside the spec, read loosely: what this app cannot read is left out, never the answer.
+    const free = (spec: unknown): Answer => { const { marks, cards } = partsOf(r); return { id: "free", question, spec: spec as Answer["spec"], worth: true, ...marks && { marks }, ...cards && { cards } }; };
+    // A clinical question the literature answers (the model's own reading of it, not a word list) goes to the evidence, cited.
+    if (r.source === "model") return "evidence" in r && r.evidence ? EVIDENCE : { answer: free(r.spec), model: r.model, general: "general" in r };
+    // The model's words did not keep to the page, so the server sent the page's own lines: shown as the rules' answer.
+    if ("spec" in r && r.spec) return { answer: free(r.spec) };
+    const waking = wakingOf(r);
+    return waking ? { notice: startingReply(waking), again: true } : { notice: "unanswered" in r && r.unanswered ? "Sona couldn't answer that." : only(answers) };
+  } catch {
+    return { notice: "Sona couldn't reach the model. Ask again.", again: true };
+  }
+}
+
+/** A day-wide answer can leave the sheet or Today's thread: as its own page, or kept in the sidebar where it stays live. `leave` closes what shows it first. */
+export function KeepRow({ answer, leave }: { answer: Answer; leave: () => void }) {
+  const saved = useSaved(), kept = isSaved(saved, answer.id);
+  if (!SAVABLE.has(answer.id)) return null;
+  return <View style={{ flexDirection: "row", gap: 8 }}>
+    <View style={{ flex: 1 }}><Action label="Open as page" icon="arrow.up.left.and.arrow.down.right" secondary onPress={() => { leave(); setTimeout(() => router.push({ pathname: "/view/[id]", params: { id: answer.id } }), 250); }} /></View>
+    <View style={{ flex: 1 }}><Action label={kept ? "Saved" : "Save to sidebar"} icon={kept ? "checkmark" : "pin"} secondary disabled={kept} onPress={() => { tap(); saveView({ id: answer.id, question: answer.question }); }} /></View>
+  </View>;
+}
+
+/**
+ * Sona on a page (Ward, Messages, Tasks, Patients…), the same shell as Today and a visit: the page, then the bar
+ * ([+] [mic] [keyboard]) with the page's ✦ suggestion above it. What is asked (typed, spoken, or the ✦) starts the page's
+ * conversation in place of its content, read as Today's is (the question's bubble, the lead inked in, the answer and its
+ * ops); Back, or an op that changes the page (a filter), brings the page back, and the next Back leaves. A rule answer
+ * lands at once; live, the model answers from the page's own data; demo mode says what Sona answers here.
+ */
+export function WithSona({ scope, answers, onTab, hidden = false, children }: { scope: Scope; answers: Answer[]; onTab?: (tab: string) => void; hidden?: boolean; children: ReactNode }) {
+  const { voiceInput, patients } = useEncounter();
+  const { on } = useLive();
+  const [pending, setPending] = useState<Attachment[]>([]);
+  const backdrop = useRef<View>(null);
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const next = useRef(0);
+  const [draft, setDraft] = useState("");
+  const [notice, setNotice] = useState<string>();
+  const [dockH, setDockH] = useState(130);
+  const talking = entries.length > 0, newest = entries.at(-1);
+  const nudge = suggestion(answers);
+  const reply = (id: number, r?: Reply) => setEntries(list => list.map(e => (e.id === id ? { id, question: e.question, ...(r && { reply: r }) } : e)));
+  const settle = async (id: number, question: string) => reply(id, await answerFree(scope, question, answers));
+  /** `rule`: the answer when the question is a known one (the ✦), so it never rests on matching its words. Attachments
+   * have no reader on these pages: Sona asks whose they are, and the visit picked has them waiting (./encounter/carry). */
+  const ask = (question: string, rule?: Answer, evidence = false) => {
+    // A clinical question (or an evidence answer's follow-up) is answered from the evidence, with citations, as on Today.
+    if (!rule && !pending.length && (evidence || routePrompt(question) === "evidence")) { const id = next.current++; setEntries(list => [...list, { id, question, reply: EVIDENCE }]); return; }
+    if (!rule && pending.length) { carry(pending); setPending([]); rule = forWhichPatient(question, patients); }
+    const now = rule ? { answer: rule } : answerNow(question, answers, on), id = next.current++;
+    setEntries(list => [...list, { id, question, ...(now && { reply: now }) }]);
+    if (!now) void settle(id, question);
+  };
+  const clear = () => setEntries([]);
+  // An op that changes the page (Ward's blocked beds) shows the page: the conversation steps aside.
+  const tab = onTab && ((t: string) => { clear(); onTab(t); });
+  const submit = (text: string) => { const q = text.trim(); if (!q) return; setDraft(""); setNotice(undefined); ask(q); };
+  // Sona Live is the page's voice: a spoken question joins the conversation as a typed one does.
+  const sonaLive: LiveAdapter = { scope: SCOPE_LABEL[scope], ask: async question => { ask(question); return { shown: true }; } };
+  // Back (the header's, or the edge swipe) closes the conversation and shows the page; the next Back leaves.
+  usePreventRemove(talking, clear);
+  return <View style={{ flex: 1 }}>
+    <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>
+      {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onEvidence={q => ask(q, undefined, true)} onTab={tab} /> : <DockHeight value={hidden ? 0 : dockH}>{children}</DockHeight>}
+    </View>
+    {/* What passes under the dock and its ✦ blurs and fades into the canvas, as tall a band as Today's, so the chip reads over a calm edge. */}
+    {!hidden && <>
+      <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 16 }} />
+      <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 16, experimental_backgroundImage: "linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,0.78) 45%, rgba(245,246,248,0.94) 100%)" }} />
+    </>}
+    {!hidden && <VoiceDock backdrop={backdrop} sonaLive={sonaLive} onSubmit={submit} onCancel={() => {}} placeholder={PLACEHOLDER[scope]} draft={draft} onDraft={value => { setDraft(value); setNotice(undefined); }}
+      // The voice sample says the page's suggested question, so talking works the same as tapping it.
+      spokenPrompt={nudge?.answer.question ?? answers[0]?.question ?? "What needs me now?"}
+      voiceEnabled={voiceInput} onVoiceDisabled={() => setNotice("Voice input is turned off in Settings. Type your question instead.")} onVoiceError={setNotice}
+      // The ✦ asks into the conversation too; it steps aside while the newest answer already is it.
+      suggestion={nudge && answerOf(newest)?.id !== nudge.answer.id ? { text: nudge.text, onPress: () => ask(nudge.answer.question, nudge.answer) } : undefined}
+      attachments={pending} onAttachmentsChange={setPending} onHeight={setDockH} above={notice && <Notice>{notice}</Notice>} />}
+  </View>;
+}
+
+/** A page's conversation, laid out as Today's: each newest question, and its answer once it lands, is brought into view. */
+function PageConversation({ entries, bottom, onAgain, onEvidence, onTab }: { entries: Entry[]; bottom: number; onAgain: (entry: Entry) => void; onEvidence: (question: string) => void; onTab?: (tab: string) => void }) {
+  const insets = useSafeAreaInsets();
+  const scroll = useRef<ScrollView>(null), brought = useRef("");
+  const newest = entries.at(-1);
+  return <ScrollView ref={scroll} style={{ flex: 1, backgroundColor: palette.canvas }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
+    contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 64, paddingBottom: bottom, gap: 44 }}>
+    {entries.map(entry => <View key={entry.id} collapsable={false} onLayout={e => {
+      const key = `${entry.id}${entry.reply ? "+" : ""}`;
+      if (entry.id === newest?.id && brought.current !== key) { brought.current = key; scroll.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - 8), animated: true }); }
+    }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id} onAgain={() => onAgain(entry)} onEvidence={onEvidence} onTab={onTab} /></View>)}
+  </ScrollView>;
+}

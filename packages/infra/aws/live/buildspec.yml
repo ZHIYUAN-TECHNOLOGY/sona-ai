@@ -1,0 +1,28 @@
+# Builds box ④'s image into ECR and copies its pinned weights from Hugging Face to S3: ear1 (the model), the talker
+# voice-v3, Sona's reference clip, and the judge of turns. HF_TOKEN (private repos) comes from Parameter Store: /sona/hf-read-token.
+version: 0.2
+env:
+  parameter-store:
+    HF_TOKEN: /sona/hf-read-token
+phases:
+  build:
+    commands:
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR
+      - docker build --build-arg VOICE_IMAGE=$ECR/sona/voice:1 -t $ECR/sona/live:2 .
+      - docker push $ECR/sona/live:2
+      - docker image prune -af > /dev/null
+      - pip install -q huggingface_hub
+      - |
+        python - <<'PY'
+        from huggingface_hub import hf_hub_download as f, snapshot_download as d
+        d("zhiyuantechnology/sona-minicpmo", revision="f59feac269b9a42625f612bafa0e00fa4e84f40f", local_dir="/tmp/w/live",
+          ignore_patterns=[".*", "lora-adapter/**", "assets/*.mp4", "assets/*.mp3", "assets/*.png", "assets/*.wav"])
+        f("zhiyuantechnology/sona-minicpmo", "talker.safetensors", revision="1b4aba42310a4d54349c612408767237c9fd8087", local_dir="/tmp/w/voice")
+        f("zhiyuantechnology/sona-minicpmo-data", "code/sona_voice.wav", repo_type="dataset", local_dir="/tmp/v")
+        f("zhiyuantechnology/sona-turn", "sona-turn.onnx", revision="1a9a125c6ef76f94e633fa56e438262461e2ac6c", local_dir="/tmp/w/turn")
+        PY
+      - cp /tmp/v/code/sona_voice.wav /tmp/w/sona_voice.wav
+      - du -sh /tmp/w/*
+      - aws s3 sync /tmp/w s3://$BUCKET/live/ear1/ --only-show-errors --exclude ".cache/*" --exclude "*/.cache/*"
+      # Box ②'s weights beside them (../voice/buildspec.yml put them in S3), for its models on the third GPU.
+      - aws s3 sync s3://$BUCKET/voice/1/ s3://$BUCKET/live/ear1/voicebox/ --only-show-errors --copy-props none
